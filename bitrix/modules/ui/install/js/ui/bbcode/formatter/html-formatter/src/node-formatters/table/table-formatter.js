@@ -1,5 +1,5 @@
-import { Dom } from 'main.core';
-import { NodeFormatter, type NodeFormatterOptions } from 'ui.bbcode.formatter';
+import { Dom, Tag } from 'main.core';
+import { NodeFormatter, type NodeFormatterOptions, type AfterCallbackOptions } from 'ui.bbcode.formatter';
 
 export class TableNodeFormatter extends NodeFormatter
 {
@@ -14,6 +14,12 @@ export class TableNodeFormatter extends NodeFormatter
 						classname: 'ui-typography-table',
 					},
 				});
+			},
+			after({ element }: AfterCallbackOptions): HTMLElement {
+				const container = Tag.render`<div class="ui-typography-table-scroll"></div>`;
+				container.appendChild(element);
+
+				return container;
 			},
 			...options,
 		});

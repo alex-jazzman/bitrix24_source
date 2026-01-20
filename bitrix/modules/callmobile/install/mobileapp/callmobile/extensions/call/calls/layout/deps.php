@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'call:calls/users',
+		'call:calls/menu',
 		'bottom-sheet',
 		'tourist',
 		'ui-system/popups/aha-moment',

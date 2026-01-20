@@ -6,10 +6,5 @@ $MESS["CRM_ACTIVITY_VISIT_DESCRIPTION"] = "Запись встречи, сост
 $MESS["CRM_ACTIVITY_CREATE_ERROR"] = "Ошибка создания дела";
 $MESS["CRM_ACTIVITY_NO_RECORD_ERROR"] = "Ошибка сохранения записи";
 $MESS["CRM_ACTIVITY_FILE_ERROR"] = "Ошибка записи файла";
-$MESS["CRM_ACTIVITY_VISIT_NO_FACEID"] = "Модуль распознавания лиц не установлен";
-$MESS["CRM_ACTIVITY_VISIT_NO_PICTURE"] = "Ошибка отправки изображения";
-$MESS["CRM_ACTIVITY_VISIT_FILE_TOO_LARGE"] = "Ошибка отправки изображения: размер файла превышает лимит";
-$MESS["CRM_ACTIVITY_VISIT_FACE_SERVER_ERROR"] = "Ошибка распознавания";
-$MESS["CRM_ACTIVITY_VISIT_FACE_NOTHING_FOUND"] = "Ничего не найдено";
 
 

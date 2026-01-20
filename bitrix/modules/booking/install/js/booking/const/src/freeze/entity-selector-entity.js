@@ -4,4 +4,5 @@ export const EntitySelectorEntity = Object.freeze({
 	Room: 'room',
 	User: 'user',
 	ResourceType: 'resource-type',
+	Product: 'product',
 });

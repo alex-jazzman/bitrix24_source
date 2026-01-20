@@ -1,6 +1,6 @@
 .booking-booking-busy-slot {
 	position: absolute;
-	width: calc(280px * var(--zoom));
+	width: calc(279px * var(--zoom));
 	pointer-events: all;
 
 	--left: 0px;

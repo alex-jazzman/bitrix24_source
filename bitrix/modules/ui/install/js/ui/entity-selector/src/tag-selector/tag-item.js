@@ -509,7 +509,13 @@ export default class TagItem
 	{
 		return this.cache.remember('remove-icon', () => {
 			return Tag.render`
-				<div class="ui-tag-selector-tag-remove ui-icon-set__scope" onclick="${this.handleRemoveIconClick.bind(this)}"></div>
+				<div
+					class="ui-tag-selector-tag-remove ui-icon-set__scope"
+					onclick="${this.handleRemoveIconClick.bind(this)}"
+					data-testid="ui-tag-selector-remove-item-button"
+					data-item-entity-id="${this.getEntityId()}"
+					data-item-id="${this.getId()}"
+				></div>
 			`;
 		});
 	}

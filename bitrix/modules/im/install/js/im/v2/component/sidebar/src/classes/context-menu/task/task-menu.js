@@ -4,8 +4,9 @@ import { Loc } from 'main.core';
 import { SidebarMenu } from '../sidebar-base-menu';
 import { TaskManager } from './task-manager';
 
-import type { ImModelSidebarTaskItem } from 'im.v2.model';
 import type { MenuItemOptions } from 'ui.system.menu';
+import type { ImModelSidebarTaskItem } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 type TaskMenuContext = {
 	task: ImModelSidebarTaskItem,
@@ -18,9 +19,9 @@ export class TaskMenu extends SidebarMenu
 {
 	context: TaskMenuContext;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.id = 'im-sidebar-context-menu';
 		this.taskManager = new TaskManager();

@@ -831,7 +831,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		<?
 		if (
 			$arResult["IS_BITRIX24"]
-			&& !in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by"))
+			&& !in_array($arResult["LICENSE_PREFIX"], array("ru", "kz", "by", 'uz'))
 		)
 		{
 		?>

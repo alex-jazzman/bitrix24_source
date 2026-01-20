@@ -1,0 +1,35 @@
+<?php
+
+return [
+	'extensions' => [
+		'bbcode/parser',
+		'bottom-sheet',
+		'layout/pure-component',
+		'layout/ui/friendly-date',
+		'layout/ui/friendly-date/formatter-factory',
+		'layout/ui/simple-list/items',
+		'layout/ui/simple-list/items/base',
+		'layout/ui/stateful-list',
+		'layout/ui/stateful-list/type-generator',
+		'loc',
+		'statemanager/redux/connect',
+		'statemanager/redux/store',
+		'tasks:layout/fields/result-v2/list-item-factory',
+		'tasks:statemanager/redux/slices/tasks-results-v2',
+		'tasks:statemanager/redux/slices/tasks-results-v2/observers/stateful-list-observer',
+		'tokens',
+		'type',
+		'ui-system/blocks/avatar',
+		'ui-system/blocks/icon',
+		'ui-system/form/buttons/button',
+		'ui-system/layout/box',
+		'ui-system/layout/dialog-footer',
+		'ui-system/typography/text',
+		'utils/validation',
+	],
+	'bundle' => [
+		'./src/list-item',
+		'./src/list-item-content',
+		'./src/list-item-factory',
+	],
+];

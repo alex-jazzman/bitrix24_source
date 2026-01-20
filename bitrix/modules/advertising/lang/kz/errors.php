@@ -1,0 +1,27 @@
+<?php
+$MESS["AD_CONTRACT_DISABLE"] = "Назар аударыңыз! Модуль баптауларында шарт шектеулері өшірілген.";
+$MESS["AD_ERROR_FIXSHOW_HAVETOBE_SET"] = "Қате! \"Баннер көрсетілімдерінің санын бекіту\" жанына құсбелгі қойылуы керек.";
+$MESS["AD_ERROR_FORGOT_SID"] = "Қате! Сіз таңбалық идентификаторды (ID) енгізуді ұмыттыңыз.";
+$MESS["AD_ERROR_FROMTO_DATE_HAVETOBE_SET"] = "Қате! Көрсету аралығы міндетті түрде белгіленуі керек.";
+$MESS["AD_ERROR_FROM_TILL_DATE_MODIFY"] = "Қате! \"Дейін\" өзгерту күні \"бастап\" күнінен үлкен болуы керек.";
+$MESS["AD_ERROR_FROM_TILL_PERIOD"] = "Қате! \"Кезең \" сүзгісінде \"дейін\" \"бастап\" артық болуы керек";
+$MESS["AD_ERROR_INCORRECT_BANNER_ID"] = "Қате! Баннер ID қате";
+$MESS["AD_ERROR_INCORRECT_CONTRACT_ID"] = "Қате! Шарт ID қате";
+$MESS["AD_ERROR_INCORRECT_SID"] = "Қате! Жарамсыз идентификатор (тек латын әріптері, сандар немесе \"_\" таңбасы рұқсат етілген).";
+$MESS["AD_ERROR_LONG_STRING"] = "Қате! Сіз тым көп деректерді көрсеттіңіз. Мәтіндік өрістердегі сипаттаманы қысқартыңыз.";
+$MESS["AD_ERROR_MAX_SHOW_COUNT_HAVETOBE_SET"] = "Қате! \"Баннердің көрсетілімдерінің максималды саны\" параметрі орнатылуы керек.";
+$MESS["AD_ERROR_NOT_ENOUGH_PERMISSIONS_BANNER"] = "Қате! Баннерге қолжетімділік құқығы жеткіліксіз.";
+$MESS["AD_ERROR_NOT_ENOUGH_PERMISSIONS_CONTRACT"] = "Қате! Шартқа қолжетімділік құқығы жеткіліксіз.";
+$MESS["AD_ERROR_NOT_ENOUGH_PERMISSIONS_FOR_CREATE_TYPE"] = "Қате! Жаңа түрді жасауға құқықтар жеткіліксіз.";
+$MESS["AD_ERROR_NOT_ENOUGH_PERMISSIONS_FOR_NEW_CONTRACT"] = "Қате! Шарт жасау үшін құқықтар жеткіліксіз.";
+$MESS["AD_ERROR_NOT_ENOUGH_PERMISSIONS_TYPE"] = "Қате! Түрге қолжетімділік құқығы жеткіліксіз.";
+$MESS["AD_ERROR_ON_HANDLER"] = "#HANDLER# өңдеушісінде белгісіз қате.";
+$MESS["AD_ERROR_SID_EXISTS"] = "Қате! \"#SID#\" идентификаторы қазірдің өзінде қолданыста.";
+$MESS["AD_ERROR_WRONG_DATE_MODIFY_FROM"] = "Қате! Сүзгіге \"бастап\" өзгерту күнін дұрыс енгізіңіз.";
+$MESS["AD_ERROR_WRONG_DATE_MODIFY_TILL"] = "Қате! Сүзгіге \"дейін\" өзгерту күнін дұрыс енгізіңіз.";
+$MESS["AD_ERROR_WRONG_DATE_SHOW_FROM_BANNER"] = "Қате! \"Көрсету кезеңі\" өрісінде қате басталу күні.";
+$MESS["AD_ERROR_WRONG_DATE_SHOW_FROM_CONTRACT"] = "Қате! \"Баннерлерді көрсету кезеңі\" өрісінде қате басталу күні.";
+$MESS["AD_ERROR_WRONG_DATE_SHOW_TO_BANNER"] = "Қате! \"Көрсету кезеңі\" өрісінде қате аяқталу күні.";
+$MESS["AD_ERROR_WRONG_DATE_SHOW_TO_CONTRACT"] = "Қате! \"Баннерлерді көрсету кезеңі\" өрісінде қате аяқталу күні.";
+$MESS["AD_ERROR_WRONG_PERIOD_FROM"] = "Қате! Сүзгіге дұрыс \"Кезең\" \"бастап\" енгізіңіз";
+$MESS["AD_ERROR_WRONG_PERIOD_TILL"] = "Қате! Сүзгіге дұрыс \"Кезең\" \"дейін\" енгізіңіз";

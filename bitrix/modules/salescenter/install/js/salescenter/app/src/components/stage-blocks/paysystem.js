@@ -71,9 +71,7 @@ const PaySystem = {
 		},
 		title()
 		{
-			return this.installed === true
-				? Loc.getMessage('SALESCENTER_PAYSYSTEM_SET_BLOCK_TITLE')
-				: Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_TITLE');
+			return Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_TITLE_MSGVER_1');
 		},
 	},
 

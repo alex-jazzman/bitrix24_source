@@ -25,7 +25,6 @@ export default class Color extends BaseProcessor
 
 		this.colorSet = new ColorSet(options);
 		this.colorSet.subscribe('onChange', this.onColorSetChange.bind(this));
-		this.colorSet.subscribe('onReset', this.onReset.bind(this));
 
 		this.opacity = new Opacity();
 		this.opacity.subscribe('onChange', this.onOpacityChange.bind(this));
@@ -153,12 +152,6 @@ export default class Color extends BaseProcessor
 			this.colorSet.colorpicker.hex.setActive();
 		}
 		super.setDefaultValue(value);
-	}
-
-	onReset()
-	{
-		this.zeroing.unsetActive();
-		super.onReset();
 	}
 
 	setActiveControl(controlName)

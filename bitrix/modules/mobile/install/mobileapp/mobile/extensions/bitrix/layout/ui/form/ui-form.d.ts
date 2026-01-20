@@ -7,7 +7,7 @@ type UIFormBaseField = {
 	getId: () => string,
 	hasUploadingFiles?: () => boolean,
 	fieldContainerRef?: {},
-	getCustomContentClickHandler?: () => {},
+	getCustomContentClickHandler?: (props: { layout: null }) => boolean,
 };
 
 // eslint-disable-next-line no-unused-vars

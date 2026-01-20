@@ -77,9 +77,13 @@ export const BrowserUtil = {
 
 		return null;
 	},
-	openLink(link, target = '_blank')
+	openLink(link, target = '_blank'): void
 	{
 		window.open(link, target);
+	},
+	redirectTo(url: string): void
+	{
+		location.href = url;
 	},
 	waitForSelectionToUpdate(): Promise
 	{

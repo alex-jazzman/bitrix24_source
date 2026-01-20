@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_ENTITY_CONFIG_FILTER_CATEGORY"] = "Pipeline";

@@ -10,8 +10,12 @@ jn.define('ava-menu', (require, exports, module) => {
 	const { Calendar } = require('ava-menu/calendar');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { UserProfile, fetchNewProfileFeatureEnabled } = require('user-profile');
-	const { WhatsNewUIManager } = require('whats-new/ui-manager');
+	const { ComponentOpener } = require('whats-new/ui-manager/component-opener');
 	const { throttle } = require('utils/function');
+	const store = require('statemanager/redux/store');
+	const { usersSelector } = require('statemanager/redux/slices/users/selector');
+	const { withCurrentDomain } = require('utils/url');
+	const { getBackgroundColorStyles } = require('layout/ui/user/empty-avatar');
 
 	const entryTypes = {
 		component: 'component',
@@ -26,6 +30,11 @@ jn.define('ava-menu', (require, exports, module) => {
 		goToWeb: 'go_to_web',
 		switchAccount: 'switch_account',
 		whatsNew: 'whats_new',
+	};
+
+	const accentType = {
+		collaber: 'green',
+		extranet: 'orange',
 	};
 
 	const onAppStartedCallback = () => {
@@ -118,6 +127,7 @@ jn.define('ava-menu', (require, exports, module) => {
 
 			avaMenu.initEventListeners();
 			avaMenu.onAppStarted();
+			avaMenu.subscribeToUserStore();
 		}
 
 		static getCollabStyles()
@@ -207,7 +217,7 @@ jn.define('ava-menu', (require, exports, module) => {
 					return Calendar.open(event.customData);
 
 				case menuItemsIds.whatsNew:
-					WhatsNewUIManager.openComponent();
+					ComponentOpener.open();
 
 					return true;
 
@@ -225,7 +235,10 @@ jn.define('ava-menu', (require, exports, module) => {
 						const isNewProfileFeatureEnabled = await fetchNewProfileFeatureEnabled();
 						if (isNewProfileFeatureEnabled)
 						{
-							void UserProfile.open({ openInComponent: true });
+							void UserProfile.open({
+								openInComponent: true,
+								analyticsSection: 'ava_menu',
+							});
 
 							return;
 						}
@@ -250,6 +263,117 @@ jn.define('ava-menu', (require, exports, module) => {
 					break;
 			}
 		};
+
+		subscribeToUserStore()
+		{
+			const userInfo = menu.getUserInfo();
+
+			let prevAvatarUrl = userInfo && userInfo.imageUrl ? userInfo.imageUrl : null;
+			let prevFullName = userInfo && userInfo.fullName ? userInfo.fullName : '';
+
+			const handleChange = () => {
+				const state = store.getState();
+				const userId = AvaMenu.getCurrentUserId();
+				if (!userId)
+				{
+					return;
+				}
+
+				const user = AvaMenu.getUserFromState(state, userId);
+				if (!user)
+				{
+					return;
+				}
+
+				const avatarUrl = AvaMenu.getAvatarUri(user);
+				const fullName = AvaMenu.getFullName(user);
+
+				if (avatarUrl !== prevAvatarUrl || prevFullName !== fullName)
+				{
+					const info = AvaMenu.buildUserInfoFromUser(user);
+					AvaMenu.setUserInfo(info);
+
+					prevAvatarUrl = avatarUrl;
+					prevFullName = fullName;
+				}
+			};
+
+			return store.subscribe(handleChange);
+		}
+
+		/**
+		 * @returns {number|null}
+		 */
+		static getCurrentUserId()
+		{
+			const userId = Number(env.userId);
+
+			return Number.isFinite(userId) ? userId : null;
+		}
+
+		/**
+		 * @param {object} state
+		 * @param {number} userId
+		 * @returns {object|null}
+		 */
+		static getUserFromState(state, userId)
+		{
+			return usersSelector.selectById(state, userId);
+		}
+
+		/**
+		 * @param {object} user
+		 * @returns {object|null}
+		 */
+		static buildUserInfoFromUser(user)
+		{
+			if (!user)
+			{
+				return null;
+			}
+
+			const uri = AvaMenu.getAvatarUri(user);
+			const fullName = AvaMenu.getFullName(user);
+
+			return {
+				title: fullName,
+				imageUrl: uri,
+				avatar: {
+					title: fullName,
+					uri,
+					image: uri,
+					hideOutline: !(user.isCollaber || user.isExtranet),
+					accentType: user.isCollaber ? accentType.collaber : (user.isExtranet ? accentType.extranet : null),
+					placeholder: {
+						type: 'auto',
+						backgroundColor: user?.id && getBackgroundColorStyles(user?.id).backgroundColor,
+					},
+				},
+			};
+		}
+
+		/**
+		 * @param {object} user
+		 * @returns {string|null}
+		 */
+		static getAvatarUri(user)
+		{
+			const avatar = user?.avatarSize100 || user?.avatarSizeOriginal || null;
+
+			return withCurrentDomain(avatar);
+		}
+
+		/**
+		 * @param {object} user
+		 * @returns {string}
+		 */
+		static getFullName(user)
+		{
+			return user?.fullName
+				|| [user?.lastName, user?.name].filter(Boolean).join(' ')
+				|| user?.login
+				|| '';
+		}
 	}
 
 	module.exports = {

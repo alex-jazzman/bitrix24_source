@@ -28,5 +28,7 @@ jn.define('ui-system/blocks/avatar/src/enums/native-placeholder-type', (require,
 		}
 	}
 
-	module.exports = { AvatarNativePlaceholderType };
+	module.exports = {
+		AvatarNativePlaceholderType: AvatarNativePlaceholderType.export(),
+	};
 });

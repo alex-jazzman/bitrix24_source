@@ -1,0 +1,5 @@
+<?php
+
+$MESS['BIZPROC_AI_AGENTS_MENU_MY_AGENTS'] = 'AI-агенты';
+$MESS['BIZPROC_AI_AGENTS_MENU_FEEDBACK'] = 'Обратная связь';
+$MESS['BIZPROC_AI_AGENTS_MENU_ORDER_AGENT'] = 'Заказать агента';

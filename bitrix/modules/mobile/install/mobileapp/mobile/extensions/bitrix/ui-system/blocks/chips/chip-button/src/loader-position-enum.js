@@ -26,5 +26,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/loader-position-enum', (requir
 		}
 	}
 
-	module.exports = { LoaderPosition };
+	module.exports = {
+		LoaderPosition: LoaderPosition.export(),
+	};
 });

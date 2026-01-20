@@ -5,9 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Bitrix24\MailCounter;
 use Bitrix\Mail;
 use Bitrix\Mail\Helper\Message;
-use Bitrix\Mail\Helper\MessageFolder;
-use Bitrix\Mail\ImapCommands\MailsFlagsManager;
-use Bitrix\Mail\ImapCommands\MailsFoldersManager;
 use Bitrix\Mail\Integration\Calendar\ICal\ICalMailManager;
 use Bitrix\Mail\Integration\Intranet\Secretary;
 use Bitrix\Mail\Internals\MessageAccessTable;
@@ -74,327 +71,87 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
-	 * Move messages to folder.
-	 * @param string[] $ids
-	 * @param string $folder
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::moveToFolderAction
 	 */
 	public function moveToFolderAction($ids, $folder)
 	{
-		$resultIds = $this->getIds($ids);
-		if ($resultIds->isSuccess())
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::moveToFolder($ids, $folder, $this->getCurrentUser()->getId());
+
+		if (!$result->isSuccess())
 		{
-			$data = $resultIds->getData();
-			$mailMarkerManager = new MailsFoldersManager($data['mailboxId'], $data['messagesIds'], $this->getCurrentUser()->getId());
-			$mailboxId = $data['mailboxId'];
-
-			$idsUnseenCount = Mail\MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $data['messagesIds'],
-				'=MAILBOX_ID' => $mailboxId,
-			]);
-
-			$dirWithMessagesId = false;
-			$dirForMoveMessagesId = [];
-
-			if($idsUnseenCount)
-			{
-				$dirWithMessagesId = MessageFolder::getDirIdForMessages($mailboxId,$data['messagesIds']);
-
-				$dirForMoveMessagesId = Mail\Internals\MailboxDirectoryTable::getList([
-					'select' => [
-						'ID',
-					],
-					'filter' => [
-						'=PATH' => $folder,
-						'=MAILBOX_ID' => $mailboxId,
-					],
-					'limit' => 1,
-				])->fetchAll();
-			}
-
-			$result = $mailMarkerManager->moveMails($folder);
-
-			if (!$result->isSuccess())
-			{
-				$errors = $result->getErrors();
-				$this->addError($errors[0]);
-			}
-			else
-			{
-				if($dirWithMessagesId && isset($dirForMoveMessagesId[0]['ID']))
-				{
-					$dirForMoveMessagesId = $dirForMoveMessagesId[0]['ID'];
-
-					MessageFolder::decreaseDirCounter($mailboxId, $dirWithMessagesId, $idsUnseenCount);
-
-					$mailboxHelper = Helper\Mailbox::createInstance($mailboxId);
-					$dirForMoveMessages = $mailboxHelper->getDirsHelper()->getDirByPath($folder);
-
-					MessageFolder::increaseDirCounter($mailboxId, $dirForMoveMessages, $dirForMoveMessagesId, $idsUnseenCount);
-
-					\Bitrix\Mail\Helper::updateMailboxUnseenCounter($mailboxId);
-					$mailboxHelper->updateGlobalCounterForCurrentUser();
-				}
-			}
-		}
-	}
-
-	protected function markMessages($ids, $seen = true)
-	{
-		$method = ($seen ? 'markMailsSeen' : 'markMailsUnseen');
-
-		if (!empty($ids['for_all']))
-		{
-			[$mailboxId, $dir] = explode('-', $ids['for_all']);
-
-			$ids = array();
-
-			$res = Mail\MailMessageUidTable::getList(array(
-				'select' => array('ID'),
-				'filter' => array(
-					'=MAILBOX_ID' => $mailboxId,
-					'=DIR_MD5' => md5($dir),
-					'>MESSAGE_ID' => 0,
-					'@IS_SEEN' => $seen ? array('N', 'U') : array('Y', 'S'),
-					'==DELETE_TIME' => 0,
-				),
-			));
-			while ($item = $res->fetch())
-			{
-				$ids[] = "{$item['ID']}-{$mailboxId}";
-			}
-		}
-
-		$result = $this->getIds($ids,true);
-		if ($result->isSuccess())
-		{
-			$data = $result->getData();
-			$mailMarkerManager = new MailsFlagsManager($data['mailboxId'], $data['messagesIds']);
-			$result = $mailMarkerManager->$method();
-			if (!$result->isSuccess())
-			{
-				$errors = $result->getErrors();
-				$this->addError($errors[0]);
-			}
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
 		}
 	}
 
 	/**
-	 * Mark messages as unseen.
-	 * @param string[] $ids
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::markAsSpamAction
 	 */
-	public function markAsUnseenAction($ids)
+	public function markAsUnseenAction(array $ids)
 	{
-		$this->markMessages($ids, false);
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::markAsUnseen($ids);
+
+		if (!$result->isSuccess())
+		{
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
+		}
 	}
 
 	/**
-	 * Mark messages as seen.
-	 * @param string[] $ids
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::markAsSpamAction
 	 */
 	public function markAsSeenAction($ids)
 	{
-		$this->markMessages($ids, true);
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::markAsSeen($ids);
+
+		if (!$result->isSuccess())
+		{
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
+		}
 	}
 
 	/**
-	 * Restore messages from spam.
-	 * @param $ids
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::markAsSpamAction
 	 */
 	public function restoreFromSpamAction($ids)
 	{
-		$result = $this->getIds($ids);
-		if ($result->isSuccess())
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::markAsSpam($ids, $this->getCurrentUser()->getId());
+
+		if (!$result->isSuccess())
 		{
-			$data = $result->getData();
-			$mailboxId = $data['mailboxId'];
-			$messagesIds = $data['messagesIds'];
-
-			$idsUnseenCount = Mail\MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
-
-			$mailMarkerManager = new MailsFoldersManager($data['mailboxId'], $data['messagesIds'], $this->getCurrentUser()->getId());
-			$result = $mailMarkerManager->restoreMailsFromSpam();
-			if (!$result->isSuccess())
-			{
-				$errors = $result->getErrors();
-				$this->addError($errors[0]);
-			}
-			else
-			{
-				if($idsUnseenCount)
-				{
-					$dirForMoveMessagesId = Mail\Internals\MailboxDirectoryTable::getList([
-						'select' => [
-							'ID',
-						],
-						'filter' => [
-							'=PATH' => 'INBOX',
-							'=MAILBOX_ID' => $mailboxId,
-						],
-						'limit' => 1,
-					])->fetchAll();
-
-					if(isset($dirForMoveMessagesId[0]['ID']))
-					{
-						$dirForMoveMessagesId = $dirForMoveMessagesId[0]['ID'];
-						$mailboxHelper = Helper\Mailbox::createInstance($mailboxId);
-						$dirForMoveMessages = $mailboxHelper->getDirsHelper()->getDirByPath('INBOX');
-						MessageFolder::increaseDirCounter($mailboxId, $dirForMoveMessages, $dirForMoveMessagesId, $idsUnseenCount);
-
-						Helper::updateMailboxUnseenCounter($mailboxId);
-						$mailboxHelper->updateGlobalCounterForCurrentUser();
-					}
-				}
-			}
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
 		}
 	}
 
 	/**
-	 * Marks messages as spam.
-	 * @param string[] $ids
-	 *
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::markAsSpamAction
 	 */
 	public function markAsSpamAction($ids)
 	{
-		$result = $this->getIds($ids);
-		if ($result->isSuccess())
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::markAsSpam($ids, $this->getCurrentUser()->getId());
+
+		if (!$result->isSuccess())
 		{
-			$data = $result->getData();
-			$mailboxId = $data['mailboxId'];
-			$messagesIds = $data['messagesIds'];
-
-			$dirWithMessagesId = MessageFolder::getDirIdForMessages($mailboxId,$messagesIds);
-			$idsUnseenCount = Mail\MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
-
-			$mailMarkerManager = new MailsFoldersManager($mailboxId, $messagesIds, $this->getCurrentUser()->getId());
-			$result = $mailMarkerManager->sendMailsToSpam();
-
-			if (!$result->isSuccess())
-			{
-				$errors = $result->getErrors();
-				$this->addError($errors[0]);
-			}
-			else
-			{
-				MessageFolder::decreaseDirCounter($mailboxId, $dirWithMessagesId, $idsUnseenCount);
-
-				$mailboxHelper = Helper\Mailbox::createInstance($mailboxId);
-				Helper::updateMailboxUnseenCounter($mailboxId);
-				$mailboxHelper->updateGlobalCounterForCurrentUser();
-			}
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
 		}
 	}
 
 	/**
-	 * Deletes messages.
-	 * @param string[] $ids
-	 * @param boolean $deleteImmediately
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::deleteAction
 	 */
 	public function deleteAction($ids, $deleteImmediately = false)
 	{
-		$result = $this->getIds($ids);
-		if ($result->isSuccess())
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::delete($ids, $deleteImmediately);
+
+		if (!$result->isSuccess())
 		{
-			$data = $result->getData();
-			$mailboxId = $data['mailboxId'];
-			$messagesIds = $data['messagesIds'];
-			$mailMarkerManager = new MailsFoldersManager($mailboxId, $messagesIds);
-
-			$dirWithMessagesId = MessageFolder::getDirIdForMessages($mailboxId,$messagesIds);
-			$idsUnseenCount = Mail\MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
-
-			$result = $mailMarkerManager->deleteMails($deleteImmediately);
-
-			if (!$result->isSuccess())
-			{
-				$errors = $result->getErrors();
-				$this->addError($errors[0]);
-			}
-			else if($idsUnseenCount)
-			{
-				MessageFolder::decreaseDirCounter($mailboxId, $dirWithMessagesId, $idsUnseenCount);
-
-				$mailboxHelper = Helper\Mailbox::createInstance($mailboxId);
-				Helper::updateMailboxUnseenCounter($mailboxId);
-				$mailboxHelper->updateGlobalCounterForCurrentUser();
-			}
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
 		}
-	}
-
-	/**
-	 * @param $ids
-	 *
-	 * @return \Bitrix\Main\Result
-	 */
-	private function getIds($ids, $ignoreOld = false)
-	{
-		$result = new \Bitrix\Main\Result();
-		if (empty($ids))
-		{
-			return $result->addError(new \Bitrix\Main\Error('validation'));
-		}
-		$mailboxIds = $messIds = [];
-		foreach ($ids as $id)
-		{
-			[$messId, $mailboxId] = explode('-', $id, 2);
-
-			$mailboxIds[$mailboxId] = $mailboxId;
-			$messIds[$messId] = $messId;
-		}
-		if (count($mailboxIds) > 1)
-		{
-			return $result->addError(new \Bitrix\Main\Error('validation'));
-		}
-
-		if($ignoreOld)
-		{
-			$oldIds = Mail\MailMessageUidTable::getList(array(
-				'select' => array('ID'),
-				'filter' => array(
-					'@ID' => $messIds,
-					'=MAILBOX_ID' => current($mailboxIds),
-					'=IS_OLD' => 'Y',
-				),
-			))->fetchAll();
-
-			foreach ($oldIds as $item)
-			{
-				if(is_set($messIds[$item['ID']]))
-				{
-					unset($messIds[$item['ID']]);
-				}
-			}
-		}
-
-		if (!count($mailboxIds))
-		{
-			return $result->addError(new \Bitrix\Main\Error('validation'));
-		}
-		if (!count($messIds))
-		{
-			return $result->addError(new \Bitrix\Main\Error('validation'));
-		}
-		$result->setData([
-			'mailboxId' => array_pop($mailboxIds),
-			'messagesIds' => array_keys($messIds),
-		]);
-
-		return $result;
 	}
 
 	/**
@@ -412,18 +169,6 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			rand(0, 0xffffff),
 			$hostname
 		);
-	}
-
-	/**
-	 * Generates message Id for CRM email.
-	 * @param string $hostname
-	 * @param string $urn
-	 *
-	 * @return string
-	 */
-	private function generateCrmMessageId($hostname, $urn)
-	{
-		return sprintf('<crm.activity.%s@%s>', $urn, $hostname);
 	}
 
 	/**
@@ -451,137 +196,14 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
-	 * @param $id
-	 * @param $dir (dir path)
-	 * @param $onlySyncCurrent
-	 *
-	 * @return array
-	 * @throws Exception
+	 * @deprecated Use \Bitrix\Mail\Controller\MailboxConnecting::syncMailbox
 	 */
-	public function syncMailboxAction($id, $dir, $onlySyncCurrent = false)
+	public function syncMailboxAction($id, $dir = null, $onlySyncCurrent = false)
 	{
-		$sessionId = md5(uniqid(''));
+		$result = \Bitrix\Mail\Helper\Mailbox::quickSync($id, $dir, $onlySyncCurrent);
+		$this->errorCollection = $result->getErrorCollection();
 
-		$response = array(
-			'complete' => false,
-			'status' => 0,
-			'sessid' => $sessionId,
-			'timestamp' => microtime(true),
-			'final' => true,
-			'is_fatal_error' => false,
-		);
-
-		if(!Loader::includeModule('mail'))
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_MODULE_NOT_INSTALLED'));
-
-			//Stop attempts to resynchronize the mailbox
-			$response['is_fatal_error'] = true;
-			$response['complete'] = true;
-			return $response;
-		}
-
-		if (!Mail\Helper\LicenseManager::isSyncAvailable())
-		{
-			$response['complete'] = true;
-			$response['is_fatal_error'] = true;
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_SYNC_NOT_AVAILABLE'));
-			return $response;
-		}
-
-		global $USER;
-		if ($USER && $USER->IsAdmin())
-		{
-			$mailbox = MailboxTable::getById($id)->fetch();
-		}
-		else
-		{
-			$mailbox = MailboxTable::getUserMailbox($id);
-		}
-
-		if ($mailbox)
-		{
-			session_write_close();
-
-			$mailboxHelper = Helper\Mailbox::createInstance($id);
-			$mailboxHelper->setSyncParams(array(
-				'full' => true,
-				'currentDir' => $dir,
-				'sessid' => $sessionId,
-			));
-
-			$mailboxSyncManager = new Mail\Helper\Mailbox\MailboxSyncManager($mailbox['USER_ID']);
-			$mailboxSyncManager->setSyncStartedData($id);
-
-			$result = $mailboxHelper->syncDir($dir);
-
-			$response['timestamp'] = microtime(true);
-
-			if ($result === false)
-			{
-				$mailboxSyncManager->setSyncStatus($id, false, time());
-				$this->errorCollection->add($mailboxHelper->getWarnings()->toArray());
-				$response['complete'] = true;
-				$response['is_fatal_error'] = true;
-			}
-			else
-			{
-				/*
-					If the directory is not locked for synchronization,
-					then we will resynchronize the old messages
-					(delete the missing messages, synchronize the readability statuses).
-				*/
-				if ($result !== null)
-				{
-					$response['new'] = $result;
-
-					$lastSyncResult = $mailboxHelper->getLastSyncResult();
-
-					$response['updated'] = -$lastSyncResult['updatedMessages'];
-					$response['deleted'] = -$lastSyncResult['deletedMessages'];
-
-					$mailboxHelper->resyncDir($dir);
-
-					$lastSyncResult = $mailboxHelper->getLastSyncResult();
-
-					$response['updated'] += $lastSyncResult['updatedMessages'];
-					$response['deleted'] += $lastSyncResult['deletedMessages'];
-
-					$response['timestamp'] = microtime(true);
-				}
-
-				$onlySyncCurrent = filter_var($onlySyncCurrent, FILTER_VALIDATE_BOOLEAN);
-
-				if (!$onlySyncCurrent && count($mailboxHelper->getDirsHelper()->getSyncDirs()) > 1)
-				{
-					//If resynchronization of the entire mailbox is started
-					if($mailboxHelper->sync(false))
-					{
-						$response['complete'] = true;
-					}
-				}
-				else
-				{
-					$mailboxSyncManager->setSyncStatus($id, true, time());
-					$mailboxHelper->notifyNewMessages();
-					$response['complete'] = true;
-				}
-			}
-		}
-		else
-		{
-			$response['complete'] = true;
-			$response['is_fatal_error'] = true;
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_THE_MAILBOX_HAS_BEEN_DELETED'));
-		}
-
-		if($mailbox && $response['new'] > 0 || $response['deleted'] > 0 || $response['updated'] > 0)
-		{
-			$mailboxHelper->syncCounters();
-			$mailboxHelper->sendCountersEvent();
-		}
-
-		return $response;
+		return $result->getData();
 	}
 
 	/**
@@ -597,6 +219,14 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	 */
 	public function sendMessageAction($data)
 	{
+		$userId = (int)$this->getCurrentUser()?->getId();
+		if (!$userId)
+		{
+			$this->addError(new Error('Current user is not found'));
+
+			return;
+		}
+
 		$rawData = (array) \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->getRaw('data');
 
 		$decodedData = $rawData;
@@ -791,6 +421,12 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 				$id = ltrim($item, 'n');
 
 				if (!($diskFile = \Bitrix\Disk\File::loadById($id)))
+				{
+					continue;
+				}
+
+				$canRead = $diskFile->canRead($diskFile->getStorage()->getSecurityContext($userId));
+				if (!$canRead)
 				{
 					continue;
 				}
@@ -1023,111 +659,16 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
-	 * Creates crm activity.
-	 *
-	 * @param string $messageId
-	 *
-	 * @return array|void
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @deprecated Use \Bitrix\Mail\Controller\Message::createCrmActivityAction
 	 */
 	public function createCrmActivityAction($messageId, $iteration = 1)
 	{
-		if (!Loader::includeModule('crm'))
+		$result = \Bitrix\Mail\Helper\Message\MessageActions::createCrmActivity($messageId, $iteration);
+
+		if (!$result->isSuccess())
 		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_AJAX_ERROR'));
-			return;
-		}
-
-		$message = Mail\MailMessageTable::getList(array(
-			'runtime' => array(
-				new Main\Entity\ReferenceField(
-					'MESSAGE_UID',
-					'Bitrix\Mail\MailMessageUidTable',
-					array(
-						'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
-						'=this.ID' => 'ref.MESSAGE_ID',
-					),
-					array(
-						'join_type' => 'INNER',
-					)
-				),
-			),
-			'select' => array(
-				'*',
-				'MAILBOX_EMAIL' => 'MAILBOX.EMAIL',
-				'MAILBOX_NAME' => 'MAILBOX.NAME',
-				'MAILBOX_LOGIN' => 'MAILBOX.LOGIN',
-				'IS_SEEN' => 'MESSAGE_UID.IS_SEEN',
-				'MSG_HASH' => 'MESSAGE_UID.HEADER_MD5',
-				'DIR_MD5' => 'MESSAGE_UID.DIR_MD5',
-				'MSG_UID' => 'MESSAGE_UID.MSG_UID',
-			),
-			'filter' => array(
-				'=ID' => $messageId,
-			),
-			'order' => array(
-				'FIELD_DATE' => 'DESC',
-				'MESSAGE_UID.ID' => 'DESC',
-				'MESSAGE_UID.MSG_UID' => 'ASC',
-			),
-			'limit' => 1,
-		))->fetch();
-
-		if (empty($message))
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_ELEMENT_NOT_FOUND'));
-			return;
-		}
-
-		if (!Mail\Helper\Message::hasAccess($message))
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_ELEMENT_DENIED'));
-			return;
-		}
-
-		if ($iteration <= 1 && Mail\Helper\Message::ensureAttachments($message) > 0)
-		{
-			return $this->createCrmActivityAction($messageId, $iteration + 1);
-		}
-
-		Mail\Helper\Message::prepare($message);
-
-		$message['IS_OUTCOME'] = $message['__is_outcome'];
-		//$message['IS_TRASH'] = !empty($params['trash']);
-		//$message['IS_SPAM'] = !empty($params['spam']);
-		$message['IS_SEEN'] = in_array($message['IS_SEEN'], array('Y', 'S'));
-
-		$message['__forced'] = true;
-
-		$this->sanitizeHtmlForOldCrmModule($message);
-
-		if (!\CCrmEMail::imapEmailMessageAdd($message, null, $error))
-		{
-			$this->addError(new Error(Loc::getMessage('MAIL_MESSAGE_LIST_NOTIFY_ADD_TO_CRM_ERROR')));
-			if ($error)
-			{
-				$this->addError($error instanceof Error ? $error : new Error($error));
-			}
-		}
-	}
-
-	/**
-	 * Sanitization of mail html body if crm module not able to sanitize on view
-	 * (crm module version < 23.1300.0)
-	 *
-	 * @param array $message Message fields
-	 */
-	private function sanitizeHtmlForOldCrmModule(array &$message): void
-	{
-		$crmFilterSettings = \CCrmEMail::onGetFilterListImap();
-		if (empty($crmFilterSettings['SANITIZE_ON_VIEW'])
-			&& !empty($message[MailMessageTable::FIELD_SANITIZE_ON_VIEW])
-			&& !empty($message['BODY_HTML']))
-		{
-			$message['BODY_HTML'] = \Bitrix\Mail\Helper\Message::sanitizeHtml($message['BODY_HTML'], true);
+			$errors = $result->getErrors();
+			$this->addError($errors[0]);
 		}
 	}
 

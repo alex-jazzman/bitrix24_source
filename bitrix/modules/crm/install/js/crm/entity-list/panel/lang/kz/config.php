@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_ENTITY_LIST_PANEL_ANOTHER_PROCESS_IN_PROGRESS"] = "Басқа процестің аяқталуын күтіңіз";
+$MESS["CRM_ENTITY_LIST_PANEL_CREATE_TASK_MAX_BINDINGS_ERROR"] = "Міндетке #MAX_BINDINGS_COUNT# CRM элементтерінен артық қосуға болмайды";
 $MESS["CRM_ENTITY_LIST_PANEL_CREATE_TASK_PREFIX"] = "CRM: ";
 $MESS["CRM_ENTITY_LIST_PANEL_CREATE_TASK_TAG"] = "crm";
 $MESS["CRM_ENTITY_LIST_PANEL_DELETION_ANALYTICS_WARNING"] = "Деректерді жою аналитикалық есептердің бұрмалануына әкелуі мүмкін екенін ескеріңіз.";

@@ -4,6 +4,7 @@
 jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
 
@@ -29,7 +30,6 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			const state = {
 				isShow: true,
 				placeholder: null,
-				actionButton: null,
 				quoteParams: null,
 			};
 
@@ -121,47 +121,13 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 
 			if (this.isUiAvailable() && hasChanges)
 			{
-				this.ui.show({ animated: isAnimated });
-				this.stateManager.updateState(newState);
-			}
-		}
-
-		/**
-		 * @param { string } params.id
-		 * @param { string } params.icon.name
-		 * @param { string } params.icon.tintColor
-		 */
-		showActionButton(params)
-		{
-			const newState = { actionButton: params };
-			const hasChanges = this.stateManager.hasChanges(newState);
-
-			if (this.isUiAvailable() && hasChanges)
-			{
-				this.ui.showActionButton(params);
-				this.stateManager.updateState(newState);
-			}
-		}
-
-		/**
-		 * @param {[Array<object>, Array<object>]} params
-		 */
-		showActionButtonPopupMenu(params)
-		{
-			if (this.isUiAvailable())
-			{
-				this.ui.showActionButtonPopupMenu(...params);
-			}
-		}
-
-		hideActionButton()
-		{
-			const newState = { actionButton: null };
-			const hasChanges = this.stateManager.hasChanges(newState);
-
-			if (this.isUiAvailable() && hasChanges)
-			{
-				this.ui.hideActionButton();
+				this.ui.show({
+					animated: isAnimated,
+					spotlightIds: {
+						sendButton: 'sendButtonRef',
+						attachButton: 'attachButton',
+					},
+				});
 				this.stateManager.updateState(newState);
 			}
 		}
@@ -194,21 +160,33 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 
 		/**
 		 * @param {object} message
-		 * @param {string} type
-		 * @param {boolean} [openKeyboard=true]
-		 * @param {string?} [title=null] (56+ API)
-		 * @param {string?} [text=null] (56+ API)
+		 * @param {QuoteParams} params
 		 */
-		setQuote(message, type, openKeyboard, title, text)
+		setQuote(message, params)
 		{
-			const newState = { quoteParams: { message, type, openKeyboard, title, text } };
+			const { type, openKeyboard, title, text } = params;
+			const newState = { quoteParams: { ...params } };
 			const hasChanges = this.stateManager.hasChanges(newState);
 
-			if (this.isUiAvailable() && hasChanges)
+			if (!this.isUiAvailable() || !hasChanges)
+			{
+				return;
+			}
+
+			if (Feature.isSetQuoteParamsSupported)
+			{
+				this.ui.setQuote(message, params);
+			}
+			else if (type)
 			{
 				this.ui.setQuote(message, type, openKeyboard, title, text);
-				this.stateManager.updateState(newState);
 			}
+			else
+			{
+				this.ui.setQuote(message);
+			}
+
+			this.stateManager.updateState(newState);
 		}
 
 		/**
@@ -269,6 +247,64 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			{
 				this.ui.setSendButtonColors?.({ enabled, disabled });
 			}
+		}
+
+		/**
+		 * @param {AssistantButton[]} buttons
+		 * @param {boolean} animated
+		 * @return {Promise<any>}
+		 */
+		showAssistantButtons(buttons, animated)
+		{
+			if (this.isUiAvailable())
+			{
+				return this.ui.showAssistantButtons(buttons, animated);
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @param {boolean} animated
+		 * @return {Promise<any>}
+		 */
+		hideAssistantButtons(animated)
+		{
+			if (this.isUiAvailable())
+			{
+				return this.ui.hideAssistantButtons(animated);
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @param {AssistantButton['id']} id
+		 * @param {AssistantButton} button
+		 * @return {Promise<any>}
+		 */
+		updateAssistantButton(id, button)
+		{
+			if (this.isUiAvailable())
+			{
+				return this.ui.updateAssistantButton(id, button);
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @param {AssistantButton['id']} id
+		 * @return {Promise<any>}
+		 */
+		removeAssistantButton(id)
+		{
+			if (this.isUiAvailable())
+			{
+				return this.ui.removeAssistantButton(id);
+			}
+
+			return Promise.resolve();
 		}
 	}
 

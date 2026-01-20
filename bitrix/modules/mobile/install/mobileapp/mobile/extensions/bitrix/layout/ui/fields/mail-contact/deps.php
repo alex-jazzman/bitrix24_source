@@ -11,5 +11,8 @@ return [
 		'utils/object',
 		'haptics',
 		'user-profile',
+		'tokens',
+		'mail:message/elements/avatar',
+		'selector/widget/factory',
 	],
 ];

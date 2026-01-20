@@ -20,6 +20,7 @@ $MESS["CRM_TYPE_DETAIL_FIELD_CLIENT"] = "\"Customer\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_DATES"] = "\"Start date\" \"End date\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_MY_COMPANY"] = "\"Company details\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_OBSERVERS"] = "\"Observers\"";
+$MESS["CRM_TYPE_DETAIL_FIELD_RECURRING"] = "\"Recurring item\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_SOURCE"] = "\"Source\"";
 $MESS["CRM_TYPE_DETAIL_FIELD_TITLE"] = "Enter name";
 $MESS["CRM_TYPE_DETAIL_HIDE_DESCRIPTION"] = "Hide notification";

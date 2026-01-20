@@ -11,12 +11,41 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 
 	const sharedParamsStorage = new MemoryStorage('immobileMessengerSharedParams');
 	const entityReadySharedParamsId = 'immobile:sharedParams::ready';
+	/**
+	 * @type {ImFeatures}
+	 */
+	const DefaultImFeatures = {
+		chatDepartments: false,
+		chatV2: false,
+		collabAvailable: false,
+		collabCreationAvailable: false,
+		copilotActive: false,
+		copilotAvailable: false,
+		giphyAvailable: false,
+		sidebarBriefs: false,
+		sidebarFiles: false,
+		sidebarLinks: false,
+		zoomActive: false,
+		zoomAvailable: false,
+		intranetInviteAvailable: false,
+		messagesAutoDeleteEnabled: false,
+		voteCreationAvailable: false,
+		aiFileTranscriptionAvailable: false,
+		mentionAllAvailable: false,
+		isCopilotMentionAvailable: false,
+		isCopilotReasoningAvailable: false,
+		videoNoteAvailable: false,
+		videoNoteTranscriptionAvailable: false,
+		aiAssistantMcpSelectorAvailable: false,
+	};
 
 	/**
 	 * @class MessengerParams
 	 */
 	class MessengerParams
 	{
+		/** @type {ImFeatures} */
+		#imFeatures;
 		#entityReadySharedParamsKey = 'immobile:sharedParams::ready';
 		#isReadySharedParams = false;
 		#wasSharedParamsSaved = false;
@@ -26,7 +55,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			this.sharedParamsStorage = sharedParamsStorage;
 
 			EntityReady.addCondition(this.#entityReadySharedParamsKey, () => this.#isReadySharedParams);
-
 			this.setAiAssistantStatusMessages();
 		}
 
@@ -68,6 +96,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			this.#isReadySharedParams = true;
 
 			this.setSharedParamsFromStorage();
+			this.setAiAssistantStatusMessages();
 		}
 
 		/**
@@ -165,6 +194,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
+		 * @return boolean
+		 */
+		isAiAssistantMcpSelectorAvailable()
+		{
+			return this.get('IS_AI_ASSISTANT_MCP_SELECTOR_AVAILABLE', false);
+		}
+
+		/**
 		 * @return {PlanLimits}
 		 */
 		getPlanLimits()
@@ -201,24 +238,16 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		 */
 		getImFeatures()
 		{
-			return this.get('IM_FEATURES', {
-				chatDepartments: false,
-				chatV2: false,
-				collabAvailable: false,
-				collabCreationAvailable: false,
-				copilotActive: false,
-				copilotAvailable: false,
-				giphyAvailable: false,
-				sidebarBriefs: false,
-				sidebarFiles: false,
-				sidebarLinks: false,
-				zoomActive: false,
-				zoomAvailable: false,
-				intranetInviteAvailable: false,
-				messagesAutoDeleteEnabled: false,
-				voteCreationAvailable: false,
-				aiFileTranscriptionAvailable: false,
-			});
+			if (Type.isPlainObject(this.#imFeatures))
+			{
+				return this.#imFeatures;
+			}
+
+			/** @type {ImFeatures} */
+			const imFeatures = this.get('IM_FEATURES', {});
+			this.#imFeatures = { ...DefaultImFeatures, ...imFeatures };
+
+			return this.#imFeatures;
 		}
 
 		/**
@@ -268,6 +297,21 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getMessengerV2Enabled()
 		{
 			return this.get('IS_MESSENGER_V2_ENABLED', false);
+		}
+
+		getMultipleReactionsEnabled()
+		{
+			return this.get('IS_MULTIPLE_REACTIONS_ENABLED', true);
+		}
+
+		getCopilotSelectModelEnabled()
+		{
+			return this.get('IS_COPILOT_SELECT_MODEL_ENABLED', false);
+		}
+
+		getCopilotAvailableEngines()
+		{
+			return this.get('COPILOT_AVAILABLE_ENGINES', []);
 		}
 
 		/**

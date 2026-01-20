@@ -9,8 +9,8 @@ import {PageObject} from 'landing.pageobject';
 
 export default class Opacity extends BaseControl
 {
-	static +DEFAULT_COLOR: string = '#cccccc';
-	static +DEFAULT_OPACITY: string = 1;
+	static DEFAULT_COLOR: string = '#cccccc';
+	static DEFAULT_OPACITY: string = 1;
 
 	constructor(options: {})
 	{

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,d3,main_kanban,ui_notification,main_popup,main_core) {
+(function (exports,d3,main_kanban,ui_notification,ui_analytics,main_popup,main_core) {
 	'use strict';
 
 	var _templateObject;
@@ -2723,6 +2723,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.robotsUrl = options.robotsUrl;
 	    this.generatorUrl = options.generatorUrl;
 	    this.permissionEditUrl = options.permissionEditUrl;
+	    this.analyticsLabels = options.analyticsLabels;
 	    this.tunnelScheme = options.tunnelScheme;
 	    this.isCategoryEditable = Boolean(options.isCategoryEditable);
 	    this.isCategoryCreatable = Boolean(options.isCategoryCreatable);
@@ -2747,6 +2748,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core.Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 	    main_core.Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
 	    this.constructor.lastInstance = this;
+	    ui_analytics.sendData(this.analyticsLabels.openSliderLabel);
 	  }
 	  babelHelpers.createClass(Manager, [{
 	    key: "hasTunnels",
@@ -2796,6 +2798,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onAddCategoryClick(event) {
 	      var _this5 = this;
 	      event.preventDefault();
+	      var analyticsLabelElement = event.currentTarget === this.addCategoryButtonTop ? 'green_button' : 'gray_button';
 	      if (!this.isCategoryCreatable) {
 	        return Promise.resolve(false);
 	      }
@@ -2830,8 +2833,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (_this5.isShownCategoryStub()) {
 	          _this5.hideCategoryStub();
 	        }
+	        _this5.analyticsLabels.createFunnelLabel.status = 'success';
 	      })["catch"](function (response) {
+	        _this5.analyticsLabels.createFunnelLabel.status = 'error';
 	        _this5.showErrorPopup(makeErrorMessageFromResponse(response));
+	      })["finally"](function () {
+	        _this5.analyticsLabels.createFunnelLabel.c_element = analyticsLabelElement;
+	        ui_analytics.sendData(_this5.analyticsLabels.createFunnelLabel);
 	      });
 	    }
 	  }, {
@@ -2964,8 +2972,12 @@ this.BX.Crm = this.BX.Crm || {};
 	            category: 'save'
 	          });
 	          _this7.isChanged = true;
+	          _this7.analyticsLabels.renameFunnelLabel.status = 'success';
 	        })["catch"](function (response) {
+	          _this7.analyticsLabels.renameFunnelLabel.status = 'error';
 	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
+	        })["finally"](function () {
+	          ui_analytics.sendData(_this7.analyticsLabels.renameFunnelLabel);
 	        });
 	      }).subscribe('Category:access', function (event) {
 	        var _event$data2 = event.data,
@@ -3019,9 +3031,13 @@ this.BX.Crm = this.BX.Crm || {};
 	            Marker.adjustLinks();
 	          });
 	          _this7.isChanged = true;
+	          _this7.analyticsLabels.deleteFunnelLabel.status = 'success';
 	        })["catch"](function (response) {
 	          event.data.onCancel();
+	          _this7.analyticsLabels.deleteFunnelLabel.status = 'error';
 	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
+	        })["finally"](function () {
+	          ui_analytics.sendData(_this7.analyticsLabels.deleteFunnelLabel);
 	        });
 	      }).subscribe('Column:link', function (event) {
 	        if (!_this7.isAutomationEnabled) {
@@ -3054,10 +3070,14 @@ this.BX.Crm = this.BX.Crm || {};
 	              return String(item.CATEGORY_ID) === String(response.data.tunnel.srcCategory) && String(item.STATUS_ID) === String(response.data.tunnel.srcStage);
 	            });
 	            stage.TUNNELS.push(response.data.tunnel);
+	            _this7.analyticsLabels.createTunnelLabel.status = 'success';
 	          })["catch"](function (response) {
 	            var link = event.data.link;
 	            link.from.removeLink(link);
+	            _this7.analyticsLabels.createTunnelLabel.status = 'error';
 	            _this7.showErrorPopup(makeErrorMessageFromResponse(response));
+	          })["finally"](function () {
+	            ui_analytics.sendData(_this7.analyticsLabels.createTunnelLabel);
 	          });
 	        }
 	        _this7.hideCategoryStub();
@@ -3090,8 +3110,12 @@ this.BX.Crm = this.BX.Crm || {};
 	                autoHideDelay: 1500,
 	                category: 'save'
 	              });
+	              _this7.analyticsLabels.deleteTunnelLabel.status = 'success';
 	            })["catch"](function (response) {
+	              _this7.analyticsLabels.deleteTunnelLabel.status = 'error';
 	              _this7.showErrorPopup(makeErrorMessageFromResponse(response));
+	            })["finally"](function () {
+	              ui_analytics.sendData(_this7.analyticsLabels.deleteTunnelLabel);
 	            });
 	            var stage = _this7.getStageDataById(srcStage);
 	            stage.TUNNELS = stage.TUNNELS.filter(function (item) {
@@ -3219,9 +3243,13 @@ this.BX.Crm = this.BX.Crm || {};
 	              });
 	              _this7.isChanged = true;
 	            }
+	            _this7.analyticsLabels.deleteStageLabel.status = 'success';
 	          })["catch"](function (response) {
 	            event.data.onCancel();
+	            _this7.analyticsLabels.deleteStageLabel.status = 'error';
 	            _this7.showErrorPopup(makeErrorMessageFromResponse(response));
+	          })["finally"](function () {
+	            ui_analytics.sendData(_this7.analyticsLabels.deleteStageLabel);
 	          });
 	        }
 	      }).subscribe('Column:change', function (event) {
@@ -3241,11 +3269,14 @@ this.BX.Crm = this.BX.Crm || {};
 	              category: 'save'
 	            });
 	            _this7.isChanged = true;
+	            _this7.analyticsLabels.renameStageLabel.status = 'success';
 	          } else {
+	            _this7.analyticsLabels.renameStageLabel.status = 'error';
 	            _this7.showErrorPopup(makeErrorMessageFromResponse({
 	              data: data
 	            }));
 	          }
+	          ui_analytics.sendData(_this7.analyticsLabels.renameStageLabel);
 	        });
 	      }).subscribe('Column:addColumn', function (event) {
 	        Backend.addStage({
@@ -3292,8 +3323,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	          column.switchToEditMode();
 	          Marker.adjustLinks();
+	          _this7.analyticsLabels.createStageLabel.status = 'success';
 	        })["catch"](function (response) {
+	          _this7.analyticsLabels.createStageLabel.status = 'error';
 	          _this7.showErrorPopup(makeErrorMessageFromResponse(response));
+	        })["finally"](function () {
+	          ui_analytics.sendData(_this7.analyticsLabels.createStageLabel);
 	        });
 	      }).subscribe('Column:sort', function (event) {
 	        var sortData = event.data.columns.map(function (column, index) {
@@ -3321,11 +3356,14 @@ this.BX.Crm = this.BX.Crm || {};
 	              category: 'save'
 	            });
 	            _this7.isChanged = true;
+	            _this7.analyticsLabels.updateStageLabel.status = 'success';
 	          } else {
+	            _this7.analyticsLabels.updateStageLabel.status = 'error';
 	            _this7.showErrorPopup(makeErrorMessageFromResponse({
 	              data: data
 	            }));
 	          }
+	          ui_analytics.sendData(_this7.analyticsLabels.updateStageLabel);
 	        });
 	      }).subscribe('Category:slider:close', function () {
 	        _this7.reload();
@@ -3470,5 +3508,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Kanban = Kanban;
 	exports.Manager = Manager;
 
-}((this.BX.Crm.SalesTunnels = this.BX.Crm.SalesTunnels || {}),BX.Main,BX,BX,BX.Main,BX));
+}((this.BX.Crm.SalesTunnels = this.BX.Crm.SalesTunnels || {}),BX.Main,BX,BX,BX.UI.Analytics,BX.Main,BX));
 //# sourceMappingURL=script.js.map

@@ -2,10 +2,7 @@
 
 return [
 	'extensions' => [
-		'toast',
-		'haptics',
 		'tokens',
-		'assets/icons',
 		'statemanager/redux/connect',
 		'utils/color',
 		'utils/date',
@@ -18,5 +15,7 @@ return [
 		'tasks:layout/deadline-friendly-date',
 		'tasks:layout/online',
 		'tasks:statemanager/redux/slices/tasks',
+		'statemanager/redux/store',
+		'type',
 	],
 ];

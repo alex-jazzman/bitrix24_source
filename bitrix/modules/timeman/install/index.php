@@ -214,6 +214,14 @@ class timeman extends CModule
 			true, true
 		);
 
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/activities",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/activities",
+			true,
+			true
+		);
+
 		return true;
 	}
 

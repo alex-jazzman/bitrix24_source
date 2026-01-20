@@ -5,6 +5,7 @@ import { Menu, MenuItem } from 'main.popup';
 import { Loader } from 'main.loader';
 import { DateTimeFormat } from 'main.date';
 import type { DetailConfig } from './type/detail-config';
+import type { FilterOptions } from './type/filter-options';
 import type { DashboardEmbeddedParameters } from './type/dashboard-embedded-parameters';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { ApacheSupersetEmbeddedLoader } from 'biconnector.apache-superset-embedded-loader';
@@ -102,6 +103,8 @@ export class DetailInstance
 		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', () => {
 			this.#reloadGridAfterSliderClose();
 		});
+
+		Event.bind(window, 'message', this.#postOptionsForFilter.bind(this));
 	}
 
 	#initFrame(embeddedParams: DashboardEmbeddedParameters)
@@ -251,8 +254,7 @@ export class DetailInstance
 			angle: {
 				position: 'top',
 			},
-			offsetLeft: (parseInt(getComputedStyle(downloadButton).marginLeft, 10) + downloadButton.offsetWidth) / 2,
-			bindElement: downloadButton,
+			bindElement: this.#getRectForButtonArrow(downloadButton),
 			autoHide: true,
 			items: [
 				{
@@ -350,11 +352,6 @@ export class DetailInstance
 					},
 				},
 			],
-			events: {
-				onAfterShow: () => {
-					Dom.style(downloadMenu.popupWindow.angle.element, 'left', '17px');
-				},
-			},
 		});
 
 		Event.bind(downloadButton, 'click', () => {
@@ -376,8 +373,7 @@ export class DetailInstance
 			angle: {
 				position: 'top',
 			},
-			offsetLeft: (parseInt(getComputedStyle(shareButton).marginLeft, 10) + shareButton.offsetWidth) / 2,
-			bindElement: shareButton,
+			bindElement: this.#getRectForButtonArrow(shareButton),
 			autoHide: true,
 			items: [
 				{
@@ -425,11 +421,6 @@ export class DetailInstance
 					},
 				},
 			],
-			events: {
-				onAfterShow: () => {
-					Dom.style(downloadMenu.popupWindow.angle.element, 'left', '17px');
-				},
-			},
 		});
 
 		Event.bind(shareButton, 'click', () => {
@@ -550,5 +541,47 @@ export class DetailInstance
 	#getMoreMenu(): Menu
 	{
 		return this.#moreMenu;
+	}
+
+	#postOptionsForFilter(event): void
+	{
+		if (event.origin === this.#embeddedParams.supersetDomain)
+		{
+			const { type, filterId } = event.data;
+
+			if (type === 'superset-filter-request-options' && filterId)
+			{
+				event.source.postMessage({
+					type: 'superset-filter-options',
+					filterId,
+					options: this.#getOptionsForFilter(filterId),
+				}, event.origin);
+			}
+		}
+	}
+
+	#getOptionsForFilter(filterId): FilterOptions[]
+	{
+		return this.#embeddedParams.filters[filterId] || [];
+	}
+
+	#getRectForButtonArrow(button: HTMLElement): Object
+	{
+		const buttonRect = button.getBoundingClientRect();
+
+		const buttonStyle = window.getComputedStyle(button);
+		const paddingRight = parseFloat(buttonStyle.paddingRight) || 0;
+
+		const arrowStyle = window.getComputedStyle(button, '::after');
+		const arrowWidth = parseFloat(arrowStyle.width) || 0;
+
+		const arrowCenterX = buttonRect.right - (paddingRight + arrowWidth / 2);
+
+		return {
+			top: buttonRect.top,
+			bottom: buttonRect.bottom,
+			left: arrowCenterX,
+			right: arrowCenterX,
+		};
 	}
 }

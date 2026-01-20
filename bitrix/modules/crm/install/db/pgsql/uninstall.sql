@@ -251,3 +251,5 @@ DROP TABLE IF EXISTS b_crm_ai_queue_buffer;
 DROP TABLE IF EXISTS b_crm_last_communication;
 DROP TABLE IF EXISTS b_crm_dynamic_recurring;
 DROP TABLE IF EXISTS b_crm_documentgenerator_template_custom_field;
+DROP TABLE IF EXISTS b_crm_dynamic_recurring_document;
+DROP TABLE IF EXISTS b_crm_entity_perms_notification;

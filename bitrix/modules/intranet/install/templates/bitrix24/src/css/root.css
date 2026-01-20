@@ -1,3 +1,7 @@
+@view-transition {
+	navigation: auto;
+}
+
 body {
 	--air-fixed-layout-top-shift: 0px;
 	--air-admin-panel-height: 0px;

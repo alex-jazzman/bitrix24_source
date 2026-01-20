@@ -62,4 +62,8 @@ export type TextEditorOptions = {
 		mode?: 'disk' | 'file',
 		files?: UploaderFileInfo[],
 	},
+
+	list?: {
+		maxIndent?: number,
+	},
 };

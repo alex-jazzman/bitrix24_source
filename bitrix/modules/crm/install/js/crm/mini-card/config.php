@@ -27,6 +27,7 @@ return [
 		'ui.icon-set.api.core',
 		'ui.vue3',
 		'main.core',
+		'main.core.cache',
 		'crm_common',
 		'ui.design-tokens',
 	],

@@ -1,10 +1,10 @@
 import { Type } from 'main.core';
+import { Outline } from 'ui.icon-set.api.vue';
 
 import { Utils } from 'im.v2.lib.utils';
 import { FileViewerContext, FileStatus } from 'im.v2.const';
-import { VideoPlayer } from	'im.v2.component.elements.videoplayer';
+import { DefaultVideoPlayer } from 'im.v2.component.elements.player';
 import { ProgressBar } from 'im.v2.component.elements.progressbar';
-import { Outline } from 'ui.icon-set.api.vue';
 
 import '../../css/items/video.css';
 
@@ -21,9 +21,8 @@ const DEFAULT_HEIGHT = 180;
 // @vue/component
 export const VideoItem = {
 	name: 'VideoItem',
-	components: { VideoPlayer, ProgressBar },
-	props:
-	{
+	components: { DefaultVideoPlayer, ProgressBar },
+	props: {
 		id: {
 			type: [String, Number],
 			required: true,
@@ -34,8 +33,7 @@ export const VideoItem = {
 		},
 	},
 	emits: ['cancelClick'],
-	computed:
-	{
+	computed: {
 		messageItem(): ImModelMessage
 		{
 			return this.message;
@@ -110,8 +108,7 @@ export const VideoItem = {
 			return Type.isStringFilled(this.messageItem.forward.id);
 		},
 	},
-	methods:
-	{
+	methods: {
 		download()
 		{
 			if (this.file.progress !== 100 || this.canBeOpenedWithViewer)
@@ -155,7 +152,7 @@ export const VideoItem = {
 				:statusMap="getStatusMap()"
 				@cancelClick="onCancelClick"
 			/>
-			<VideoPlayer
+			<DefaultVideoPlayer
 				:fileId="file.id"
 				:src="file.urlDownload"
 				:previewImageUrl="file.urlPreview"

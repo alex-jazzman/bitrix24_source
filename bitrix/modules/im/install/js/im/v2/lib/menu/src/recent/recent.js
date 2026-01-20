@@ -1,6 +1,4 @@
-import { Analytics } from 'im.v2.lib.analytics';
 import { Loc, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Core } from 'im.v2.application.core';
@@ -14,11 +12,14 @@ import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { Messenger } from 'im.public';
 import { InviteManager } from 'im.v2.lib.invite';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import { BaseMenu } from '../base/base';
 
-import type { ImModelRecentItem, ImModelUser, ImModelChat } from 'im.v2.model';
+import type { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions, MenuSectionOptions, MenuOptions } from 'ui.system.menu';
+import type { ImModelRecentItem, ImModelUser, ImModelChat } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 type MenuItemContext = {
 	dialogId: string,
@@ -26,19 +27,21 @@ type MenuItemContext = {
 	recentItem?: ImModelRecentItem
 }
 
-const MenuSectionCode = Object.freeze({
-	main: 'main',
-	invite: 'invite',
-});
+const MenuSectionCode = {
+	first: 'first',
+	second: 'second',
+	third: 'third',
+};
 
 export class RecentMenu extends BaseMenu
 {
+	emitter: EventEmitter;
 	context: MenuItemContext;
 	callManager: CallManager;
 	permissionManager: PermissionManager;
 	chatService: ChatService;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
 		super();
 
@@ -46,6 +49,9 @@ export class RecentMenu extends BaseMenu
 		this.chatService = new ChatService();
 		this.callManager = CallManager.getInstance();
 		this.permissionManager = PermissionManager.getInstance();
+
+		const { emitter } = applicationContext;
+		this.emitter = emitter;
 	}
 
 	getMenuOptions(): MenuOptions
@@ -65,14 +71,14 @@ export class RecentMenu extends BaseMenu
 	{
 		if (this.#isInvitationActive())
 		{
-			const mainGroupItems = [
+			const firstGroupItems = [
 				this.getSendMessageItem(),
 				this.getOpenProfileItem(),
 			];
 
 			return [
-				...this.groupItems(mainGroupItems, MenuSectionCode.main),
-				...this.groupItems(this.getInviteItems(), MenuSectionCode.invite),
+				...this.groupItems(firstGroupItems, MenuSectionCode.first),
+				...this.groupItems(this.getInviteItems(), MenuSectionCode.second),
 			];
 		}
 
@@ -92,8 +98,8 @@ export class RecentMenu extends BaseMenu
 		if (this.#isInvitationActive())
 		{
 			return [
-				{ code: MenuSectionCode.main },
-				{ code: MenuSectionCode.invite },
+				{ code: MenuSectionCode.first },
+				{ code: MenuSectionCode.second },
 			];
 		}
 
@@ -266,7 +272,7 @@ export class RecentMenu extends BaseMenu
 					await Messenger.openChat(this.context.dialogId);
 				}
 
-				EventEmitter.emit(EventType.sidebar.open, {
+				this.emitter.emit(EventType.sidebar.open, {
 					panel: SidebarDetailBlock.chatsWithUser,
 					standalone: true,
 					dialogId: this.context.dialogId,

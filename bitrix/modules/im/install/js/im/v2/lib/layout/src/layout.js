@@ -13,16 +13,17 @@ import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 
 import type { SettingsCollection } from 'main.core.collections';
 import type { ImModelLayout, ImModelChat } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 type EntityId = string;
 
 const TypesWithoutContext: Set<string> = new Set([ChatType.comment]);
-const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel, Layout.market]);
+const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel, Layout.market, Layout.taskComments]);
 
 export class LayoutManager
 {
 	static #instance: LayoutManager;
-
+	#emitter: EventEmitter;
 	#lastOpenedElement: { [layoutName: string]: EntityId } = {};
 
 	static getInstance(): LayoutManager
@@ -35,14 +36,12 @@ export class LayoutManager
 		return this.#instance;
 	}
 
-	static init(): void
+	bindEvents(context: ApplicationContext)
 	{
-		LayoutManager.getInstance();
-	}
+		const { emitter } = context;
+		this.#emitter = emitter;
 
-	constructor()
-	{
-		EventEmitter.subscribe(EventType.dialog.goToMessageContext, this.#onGoToMessageContext.bind(this));
+		this.#emitter.subscribe(EventType.dialog.goToMessageContext, this.#onGoToMessageContext.bind(this));
 		EventEmitter.subscribe(EventType.desktop.onReload, this.#onDesktopReload.bind(this));
 	}
 
@@ -142,7 +141,7 @@ export class LayoutManager
 
 	destroy(): void
 	{
-		EventEmitter.unsubscribe(EventType.dialog.goToMessageContext, this.#onGoToMessageContext);
+		this.#emitter.unsubscribe(EventType.dialog.goToMessageContext, this.#onGoToMessageContext);
 		EventEmitter.unsubscribe(EventType.desktop.onReload, this.#onDesktopReload.bind(this));
 	}
 
@@ -272,7 +271,7 @@ export class LayoutManager
 
 		if (contextId)
 		{
-			EventEmitter.emit(EventType.dialog.goToMessageContext, {
+			this.#emitter.emit(EventType.dialog.goToMessageContext, {
 				messageId: contextId,
 				dialogId,
 			});
@@ -290,7 +289,7 @@ export class LayoutManager
 		const isChannelOpened = ChannelManager.isChannel(dialogId);
 		if (isChannelOpened)
 		{
-			EventEmitter.emit(EventType.dialog.closeComments);
+			this.#emitter.emit(EventType.dialog.closeComments);
 		}
 	}
 

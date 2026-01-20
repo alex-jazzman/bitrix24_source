@@ -112,7 +112,6 @@ class main extends CModule
 
 		RegisterModule("main");
 		RegisterModuleDependences('iblock', 'OnIBlockPropertyBuildList', 'main', 'CIBlockPropertyUserID', 'GetUserTypeDescription', 100, '/modules/main/tools/prop_userid.php');
-		RegisterModuleDependences('main', 'OnUserDelete', 'main', 'CUserOptions', 'OnUserDelete');
 		RegisterModuleDependences('main', 'OnChangeFile', 'main', 'CMain', 'OnChangeFileComponent');
 		RegisterModuleDependences('main', 'OnUserTypeRightsCheck', 'main', 'CUser', 'UserTypeRightsCheck');
 		RegisterModuleDependences('main', 'OnUserLogin', 'main', 'UpdateTools', 'CheckUpdates');
@@ -227,7 +226,6 @@ class main extends CModule
 		/* geolocation handlers */
 		GeoIp\HandlerTable::add(['SORT' => 100, 'ACTIVE' => 'Y', 'CLASS_NAME' => '\\Bitrix\\Main\\Service\\GeoIp\\GeoIP2']);
 		GeoIp\HandlerTable::add(['SORT' => 110, 'ACTIVE' => 'N', 'CLASS_NAME' => '\\Bitrix\\Main\\Service\\GeoIp\\MaxMind']);
-		GeoIp\HandlerTable::add(['SORT' => 120, 'ACTIVE' => 'N', 'CLASS_NAME' => '\\Bitrix\\Main\\Service\\GeoIp\\SypexGeo']);
 
 		return true;
 	}

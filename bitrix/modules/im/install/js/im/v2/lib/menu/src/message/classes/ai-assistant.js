@@ -4,50 +4,48 @@ import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { Core } from 'im.v2.application.core';
 import { FeedbackManager } from 'im.v2.lib.feedback';
 
-import { MessageMenu } from './message-base';
+import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
-import type { MenuItemOptions } from 'ui.system.menu';
-
-const MenuSectionCode = Object.freeze({
-	main: 'main',
-	select: 'select',
-	create: 'create',
-	market: 'market',
-});
+import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
 
 export class AiAssistantMessageMenu extends MessageMenu
 {
 	getMenuItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
 			this.getCopyItem(),
 			this.getDownloadFileItem(),
 			this.getForwardItem(),
+			this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
 		];
 
-		return this.groupItems(mainGroupItems, MenuSectionCode.main);
+		return this.groupItems(firstGroupItems, MenuSectionCode.first);
 	}
 
 	getNestedItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
 			this.getCopyFileItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
-		];
-
-		const createGroupItems = [
-			this.getSendFeedbackItem(),
-			this.getCreateTaskItem(),
 			this.getCreateMeetingItem(),
 		];
 
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems(createGroupItems, MenuSectionCode.create),
-			...this.groupItems(this.getMarketItems(), MenuSectionCode.market),
+			...this.groupItems(firstGroupItems, NestedMenuSectionCode.first),
+			...this.groupItems([this.getSendFeedbackItem()], NestedMenuSectionCode.second),
+			...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.third),
+		];
+	}
+
+	getNestedMenuGroups(): MenuSectionOptions[]
+	{
+		return [
+			{ code: NestedMenuSectionCode.first },
+			{ code: NestedMenuSectionCode.second },
+			{ code: NestedMenuSectionCode.third },
 		];
 	}
 

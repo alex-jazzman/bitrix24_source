@@ -9,6 +9,7 @@ $MESS["SUPPORT_BOX_CHANGE_LINE_USER"] = "Hello #USER_NAME#!
 Your support level has changed. Important: if you submitted a request prior to the change, post it again in this chat so we could see it.";
 $MESS["SUPPORT_BOX_CLOSE_LINE"] = "The current conversation has been closed because Support Open Channel was disconnected.";
 $MESS["SUPPORT_BOX_NAME"] = "Support for Bitrix24 On-premise editions";
+$MESS["SUPPORT_BOX_NOTIFY_TITLE"] = "Open Channels";
 $MESS["SUPPORT_BOX_POSITION"] = "Open Channel";
 $MESS["SUPPORT_BOX_REFRESH_ERROR"] = "Error autoupdating Support Open Channel parameters: [B]#ERROR#[/B]
 [URL=https://helpdesk.bitrix24.com/open/12448068]Connection setup instructions[/URL]";

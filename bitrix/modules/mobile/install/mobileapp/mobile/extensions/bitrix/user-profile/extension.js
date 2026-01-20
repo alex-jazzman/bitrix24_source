@@ -10,6 +10,7 @@ jn.define('user-profile', (require, exports, module) => {
 	const { fetchTabs, fetchNewProfileFeatureEnabled } = require('user-profile/api');
 	const { openUserProfile, ProfileView } = require('user/profile');
 	const { showErrorToast } = require('toast');
+	const { UserProfileAnalytics, getInviteStatusFromTabsData } = require('user-profile/analytics');
 
 	/**
 	 * @class UserProfile
@@ -23,6 +24,7 @@ jn.define('user-profile', (require, exports, module) => {
 		 * @param {number} [params.ownerId=env.userId]
 		 * @param {string} [params.selectedTabId=TabType.COMMON]
 		 * @param {boolean} [params.openInComponent=false]
+		 * @param {string} [params.analyticsSection='']
 		 * @param {PageManager} [params.parentWidget=PageManager]
 		 */
 		static async open({
@@ -30,6 +32,7 @@ jn.define('user-profile', (require, exports, module) => {
 			selectedTabId = TabType.COMMON,
 			openInComponent = false,
 			parentWidget = PageManager,
+			analyticsSection = '',
 			widgetParams = {},
 		} = {})
 		{
@@ -87,6 +90,7 @@ jn.define('user-profile', (require, exports, module) => {
 					...Object.fromEntries(preparedTabs.map((tab) => [tab.id, tab.params])),
 					closeIcon,
 				};
+				UserProfileAnalytics.sendProfileView(ownerId, getInviteStatusFromTabsData(preparedTabs), analyticsSection);
 
 				if (openInComponent)
 				{

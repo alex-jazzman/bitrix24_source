@@ -60,13 +60,13 @@ export class BotsModel extends BuilderModel
 			isAiAssistant: (state: BotsState) => (userId: string | number): boolean => {
 				return state.collection[userId]?.code === BotCode.aiAssistant;
 			},
-			/** @function users/bots/getCopilotUserId */
-			getCopilotUserId: (state: BotsState): ?number => {
+			/** @function users/bots/getCopilotBotDialogId */
+			getCopilotBotDialogId: (state: BotsState): ?string => {
 				for (const [userId, bot] of Object.entries(state.collection))
 				{
 					if (bot.code === BotCode.copilot)
 					{
-						return Number.parseInt(userId, 10);
+						return userId;
 					}
 				}
 
@@ -74,7 +74,7 @@ export class BotsModel extends BuilderModel
 			},
 			/** @function users/bots/isCopilot */
 			isCopilot: (state: BotsState, getters) => (userId: number | string): boolean => {
-				const copilotUserId = getters.getCopilotUserId;
+				const copilotUserId = Number(getters.getCopilotBotDialogId);
 
 				return copilotUserId === Number.parseInt(userId, 10);
 			},

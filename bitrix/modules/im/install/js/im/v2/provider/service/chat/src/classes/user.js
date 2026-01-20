@@ -170,7 +170,7 @@ export class UserService
 			dialogId,
 			fields: { inited: false },
 		});
-		void this.#store.dispatch('recent/delete', { id: dialogId });
+		void this.#store.dispatch('recent/hide', { id: dialogId });
 
 		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
 		if (chatIsOpened)

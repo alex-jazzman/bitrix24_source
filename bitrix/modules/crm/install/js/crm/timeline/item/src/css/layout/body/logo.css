@@ -190,6 +190,10 @@
 	mask-image: url('../../../images/timeline-card-logos/call/crm-timeline__incoming-call.svg');
 }
 
+.crm-timeline__card-logo_icon.--openline > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__openline.svg');
+}
+
 .crm-timeline__card-logo_icon.--channel-vk > i {
 	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__vk-icon.svg');
 }
@@ -244,10 +248,6 @@
 
 .crm-timeline__card-logo_icon.--channel-telegram > i {
 	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__telegram.svg');
-}
-
-.crm-timeline__card-logo_icon.--channel-whatsapp-bitrix-2 > i {
-	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__whatsapp-bitrix-2.svg');
 }
 
 .crm-timeline__card-logo_icon.--channel-whatsapp > i {
@@ -351,6 +351,7 @@
 	background-image: url('../../../images/timeline-card-logos/zoom/crm-timeline__zoom.svg');
 }
 
+/* region Additional icons styles */
 .crm-timeline__card-logo_add-icon {
 	--add-icon-size: var(--ui-size-3xl, 34px);
 	display: block;
@@ -479,6 +480,83 @@
 	mask-image: url('../../../images/timeline-card-logos/zoom/additions/crm-timeline__cloud.svg');
 }
 
+.crm-timeline__card-logo_add-icon.--icon-clock > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__clock.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-comment > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__comment.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-livechat > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__channel-chat.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-avito > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__avito-icon.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-wechat > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__wechat.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-olx > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__olx.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-imessage > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__apple.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-facebook > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__fb.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-facebookmessenger > i,
+.crm-timeline__card-logo_add-icon.--icon-facebookcomments > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__fb-chat.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-fbinstagram > i,
+.crm-timeline__card-logo_add-icon.--icon-fbinstagramdirect > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__instagram-direct.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-network > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__bitrix.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-ok > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__ok.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-telegram > i,
+.crm-timeline__card-logo_add-icon.--icon-telegrambot > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__telegram.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-viber > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__viber.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-vkgroup > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__vk-icon.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-vkgrouporder > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__vk-order.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-notifications > i,
+.crm-timeline__card-logo_add-icon.--icon-whatsappbytwilio > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__whatsapp-bitrix.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-whatsappbyedna > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__whatsapp.svg');
+}
+/* endregion */
+
 .crm-timeline__card-logo_icon.--delivery > i {
 	background-color: transparent;
 	mask-image: none;
@@ -529,14 +607,6 @@
 	background-color: transparent;
 	mask-image: none;
 	background-image: url('../../../images/timeline-card-logos/bizproc/crm-timeline__bizproc-task.svg');
-}
-
-.crm-timeline__card-logo_add-icon.--icon-clock > i {
-	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__clock.svg');
-}
-
-.crm-timeline__card-logo_add-icon.--icon-comment > i {
-	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__comment.svg');
 }
 
 .crm-timeline__card-logo_icon.--booking-wait-list-item > i {

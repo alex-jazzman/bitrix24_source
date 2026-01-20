@@ -109,7 +109,10 @@ jn.define('layout/ui/safe-image/src/safe-image', (require, exports, module) => {
 
 			return View(
 				{
-					style: this.getImageExternalStyle(),
+					style: {
+						display: this.isSuccess() ? 'none' : 'flex',
+						...this.getImageExternalStyle(),
+					},
 				},
 				Image({
 					resizeMode: 'contain',

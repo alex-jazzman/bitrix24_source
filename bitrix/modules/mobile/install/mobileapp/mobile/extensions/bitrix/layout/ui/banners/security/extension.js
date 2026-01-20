@@ -26,7 +26,7 @@ jn.define('layout/ui/banners/security', (require, exports, module) => {
 				testId: this.#getTestId(),
 				progressSize: this.#getProgressSize(),
 				progressCount: this.#getProgressCount(),
-				description: this.#getDescription(safetyType),
+				description: this.#getDescription(progress, safetyType),
 			};
 
 			if (progress)
@@ -76,9 +76,9 @@ jn.define('layout/ui/banners/security', (require, exports, module) => {
 		#getSafetyType()
 		{
 			const { progress, safetyType } = this.props;
-			if (!progress)
+			if (!progress && safetyType)
 			{
-				return safetyType ?? SafetyType.SUCCESS;
+				return safetyType;
 			}
 
 			const progressCount = this.#getProgressCount();
@@ -98,14 +98,20 @@ jn.define('layout/ui/banners/security', (require, exports, module) => {
 		}
 
 		/**
+		 * @param progress
 		 * @param safetyType
 		 * @returns {string}
 		 */
-		#getDescription(safetyType)
+		#getDescription(progress, safetyType)
 		{
+			if (progress !== true)
+			{
+				return Loc.getMessage('SAFETY_BANNER_CENTER_MODE_DESCRIPTION');
+			}
+
 			const descriptionTypeMap = {
-				[SafetyType.SUCCESS]: Loc.getMessage('SAFETY_BANNER_CENTER_MODE_DESCRIPTION'),
-				[SafetyType.ATTENTION]: Loc.getMessage('SAFETY_BANNER_PROGRESS_MODE_SUCCESS_DESCRIPTION'),
+				[SafetyType.SUCCESS]: Loc.getMessage('SAFETY_BANNER_PROGRESS_MODE_SUCCESS_DESCRIPTION'),
+				[SafetyType.ATTENTION]: Loc.getMessage('SAFETY_BANNER_PROGRESS_MODE_WARNING_DESCRIPTION'),
 				[SafetyType.WARNING]: Loc.getMessage('SAFETY_BANNER_PROGRESS_MODE_WARNING_DESCRIPTION'),
 			};
 

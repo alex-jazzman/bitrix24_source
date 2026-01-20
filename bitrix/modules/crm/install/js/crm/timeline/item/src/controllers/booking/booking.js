@@ -21,6 +21,11 @@ export class Booking extends Base
 			});
 		}
 
+		if (action === `${item.getType()}:ShowSku`)
+		{
+			BX.SidePanel.Instance.open(actionData.url);
+		}
+
 		if (action === `${item.getType()}:ShowCyclePopup`)
 		{
 			showCyclePopup(actionData.status);

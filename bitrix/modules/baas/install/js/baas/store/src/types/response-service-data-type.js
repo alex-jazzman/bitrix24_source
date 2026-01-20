@@ -7,6 +7,7 @@ export type ResponseServiceDataType = {
 	description: string,
 	featurePromotionCode: string,
 	helperCode: string,
+	advertisingStrategy: string,
 	icon: {
 		className: string,
 		color: string,

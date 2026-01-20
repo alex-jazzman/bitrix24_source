@@ -11,7 +11,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-class CAllAgent
+class CAgent
 {
 	protected const LOCK_TIME = 600;
 
@@ -559,8 +559,4 @@ class CAllAgent
 
 		return null;
 	}
-}
-
-class CAgent extends CAllAgent
-{
 }

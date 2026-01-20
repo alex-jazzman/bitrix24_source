@@ -485,8 +485,15 @@
 	max-width: 100%;
 }
 
+.mail-connect-lock-item-container {
+	display: flex;
+	align-items: center;
+}
 
-
+.mail-connect-lock-item-icon {
+	margin-left: -8px;
+	background-color: var(--ui-color-base-5, #C9CCD0);
+}
 
 .mail-connect-lock-text {
 	vertical-align: middle;

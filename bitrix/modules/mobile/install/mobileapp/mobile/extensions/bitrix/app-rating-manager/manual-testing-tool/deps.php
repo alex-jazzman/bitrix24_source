@@ -14,6 +14,7 @@ return [
 		'ui-system/blocks/switcher',
 		'ui-system/typography/text',
 		'utils/function',
+		'manual-testing-tools',
 	],
 	'bundle' => [
 		'./src/field',

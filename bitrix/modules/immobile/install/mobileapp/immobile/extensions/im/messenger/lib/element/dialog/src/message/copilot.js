@@ -4,24 +4,33 @@
 jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
 
-	const { MessageType } = require('im/messenger/const');
+	const {
+		MessageType,
+		CopilotButtonType,
+	} = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
-	const { CopilotButtonType } = require('im/messenger/const');
 
 	class CopilotMessage extends TextMessage
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 */
 		constructor(modelMessage = {}, options = {})
 		{
 			super(modelMessage, options);
 
 			/** @type {CopilotMessageCopilotData} */
 			this.copilot = {};
+			const dialogHelper = DialogHelper.createByDialogId(options.dialogId);
+			const canBeQuoted = Boolean(dialogHelper && !dialogHelper.isCopilot);
 
 			this
 				.setButtons()
 				.setFootNote()
-				.setCanBeQuoted(false)
-				.setCanBeChecked(false)
+				.setCanBeQuoted(canBeQuoted)
+				.setCanBeChecked(true)
 			;
 		}
 
@@ -59,6 +68,11 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 		{
 			this.copilot.footnote = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC')} [U]${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE')}[/U]`;
 
+			return this;
+		}
+
+		setCommentInfo(modelMessage, showCommentInfo)
+		{
 			return this;
 		}
 	}

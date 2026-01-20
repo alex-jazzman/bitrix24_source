@@ -10,10 +10,16 @@ import {
 } from './call_api';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
-import { CallAI } from './call_ai';
 
-import {EventEmitter} from 'main.core.events'
-import {Event} from 'main.core';
+import { Event } from 'main.core';
+
+const MediaKind = {
+	[MediaStreamsKinds.Camera]: 'video',
+	[MediaStreamsKinds.Microphone]: 'audio',
+	[MediaStreamsKinds.Screen]: 'sharing',
+	[MediaStreamsKinds.ScreenAudio]: 'sharingAudio',
+};
+import { CallCommonRecordState } from './call_common_record';
 
 const blankAvatar = '/bitrix/js/im/images/blank.gif';
 
@@ -871,7 +877,7 @@ function formatPacketsLostData(data)
 
 function getAvatarBackground()
 {
-	const colorList = ['#006484', '#00A2E8', '#559BE6', '#688800', '#7FA800', '#11A9D9', '#0B66C3', '#004F69', '#00789E', '#506900', '#828B95'];
+	const colorList = ['#0154C8', '#1BCE7B', '#B15EF5', '#55D0E0', '#F85E9E', '#0075FF', '#00A94E'];
 
 	return colorList[Math.floor(Math.random() * colorList.length)];
 }
@@ -885,48 +891,42 @@ function getRecordTimeText(recordState, returnInSeconds = false)
 
 	const nowDate = new Date();
 	let startDate = new Date(recordState.date.start);
-	if (startDate.getTime() < nowDate.getDate())
+
+	if (startDate > nowDate)
 	{
 		startDate = nowDate;
 	}
 
 	const pauseTime = recordState.date.pause
-		.map((element) =>
-		{
-			const finish = element.finish ? new Date(element.finish) : nowDate;
-			return finish - new Date(element.start);
+		.map(({ start, finish }) => {
+			const startTime = new Date(start);
+			const finishTime = finish ? new Date(finish) : nowDate;
+
+			return finishTime - startTime;
 		})
-		.reduce((sum, element) => sum + element, 0);
+		.reduce((sum, diff) => sum + diff, 0);
 
 	let totalTime = nowDate - startDate - pauseTime;
-	if (totalTime <= 0)
+	if (totalTime < 0)
 	{
 		totalTime = 0;
 	}
 
-	let second = Math.floor(totalTime / 1000);
-
+	let seconds = Math.round(totalTime / 1000);
 	if (returnInSeconds)
 	{
-		return second;
+		return seconds;
 	}
 
-	let hour = Math.floor(second / 60 / 60);
-	if (hour > 0)
-	{
-		second -= hour * 60 * 60;
-	}
+	const hours = Math.floor(seconds / 3600);
+	seconds %= 3600;
 
-	const minute = Math.floor(second / 60);
-	if (minute > 0)
-	{
-		second -= minute * 60;
-	}
+	const minutes = Math.floor(seconds / 60);
+	seconds %= 60;
 
-	return (hour > 0 ? hour + ':' : '')
-		+ (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':')
-		+ second.toString().padStart(2, "0")
-		;
+	return hours > 0
+		? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+		: `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
 function getTimeText(startTime)
@@ -938,7 +938,7 @@ function getTimeText(startTime)
 
 	const nowDate = new Date();
 	let startDate = new Date(startTime);
-	if (startDate.getTime() < nowDate.getDate())
+	if (startDate.getTime() < nowDate.getTime())
 	{
 		startDate = nowDate;
 	}
@@ -1136,6 +1136,10 @@ const getAiSettings = () =>
 	return Extension.getSettings('call.core')?.ai || {};
 }
 
+const getCloudRecordSettings = () => {
+	return Extension.getSettings('call.core')?.cloudRecord || {}
+}
+
 const isUserControlFeatureEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isUserControlFeatureEnabled;
@@ -1171,6 +1175,22 @@ const isChatMountInPage = () =>
 	return Extension.getSettings('call.core')?.isAirDesignEnabled && Extension.getSettings('call.core')?.shouldHideQuickAccess;
 }
 
+const isCloudRecordEnabled = () => {
+	return Extension.getSettings('call.core')?.isCloudRecordEnabled;
+};
+
+const isCloudRecordTariffEnabled = () => {
+	return Extension.getSettings('call.core')?.isCloudRecordTariffEnabled;
+};
+
+const isCloudRecordLogEnabled = () => {
+	return Extension.getSettings('call.core')?.isCloudRecordLogEnabled;
+};
+
+const isCommonRecordStateInactive = (state) => {
+	return [CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(state);
+};
+
 /* ws logger */
 
 function sendLog(params)
@@ -1179,8 +1199,45 @@ function sendLog(params)
 	Event.EventEmitter.emit('BX.Call.Logger:sendLog', evnt);
 }
 
+function deepParseJSON(value)
+{
+	if (typeof value === 'string')
+	{
+		try
+		{
+			const parsed = JSON.parse(value);
+			if (typeof parsed === 'object' && parsed !== null)
+			{
+				return deepParseJSON(parsed);
+			}
+			return parsed;
+		}
+		catch (e)
+		{
+			return value;
+		}
+	}
+	else if (Array.isArray(value))
+	{
+		return value.map(item => deepParseJSON(item));
+	}
+	else if (typeof value === 'object' && value !== null)
+	{
+		const result = {};
+		Object.keys(value).forEach(key => {
+			result[key] = deepParseJSON(value[key]);
+		});
+		return result;
+	}
+	else
+	{
+		return value;
+	}
+}
+
 
 export default {
+	MediaKind,
 	updateUserData,
 	setUserData,
 	getDateForLog,
@@ -1242,6 +1299,7 @@ export default {
 	useTcpSdp,
 	openArticle,
 	getAiSettings,
+	getCloudRecordSettings,
 	isUserControlFeatureEnabled,
 	isPictureInPictureFeatureEnabled,
 	isNewQOSEnabled,
@@ -1265,4 +1323,9 @@ export default {
 	isDisableCameraNewJoinedUsersFeatureEnabled,
 	countDisableCameraNewJoinedUsersFeature,
 	isKibanaLogsEnabled,
-}
+	deepParseJSON,
+	isCloudRecordEnabled,
+	isCloudRecordTariffEnabled,
+	isCommonRecordStateInactive,
+	isCloudRecordLogEnabled,
+};

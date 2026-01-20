@@ -6,8 +6,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const TypesWithoutContext = new Set([im_v2_const.ChatType.comment]);
-	const LayoutsWithoutLastOpenedElement = new Set([im_v2_const.Layout.channel, im_v2_const.Layout.market]);
+	const LayoutsWithoutLastOpenedElement = new Set([im_v2_const.Layout.channel, im_v2_const.Layout.market, im_v2_const.Layout.taskComments]);
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
+	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
 	var _lastOpenedElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastOpenedElement");
 	var _onGoToMessageContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onGoToMessageContext");
 	var _onDesktopReload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDesktopReload");
@@ -21,15 +22,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _handleContextAccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleContextAccess");
 	var _getChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChat");
 	class LayoutManager {
-	  static getInstance() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this();
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
-	  }
-	  static init() {
-	    LayoutManager.getInstance();
-	  }
 	  constructor() {
 	    Object.defineProperty(this, _getChat, {
 	      value: _getChat2
@@ -64,11 +56,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _onGoToMessageContext, {
 	      value: _onGoToMessageContext2
 	    });
+	    Object.defineProperty(this, _emitter, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _lastOpenedElement, {
 	      writable: true,
 	      value: {}
 	    });
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.goToMessageContext, babelHelpers.classPrivateFieldLooseBase(this, _onGoToMessageContext)[_onGoToMessageContext].bind(this));
+	  }
+	  static getInstance() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this();
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
+	  }
+	  bindEvents(context) {
+	    const {
+	      emitter
+	    } = context;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].subscribe(im_v2_const.EventType.dialog.goToMessageContext, babelHelpers.classPrivateFieldLooseBase(this, _onGoToMessageContext)[_onGoToMessageContext].bind(this));
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.desktop.onReload, babelHelpers.classPrivateFieldLooseBase(this, _onDesktopReload)[_onDesktopReload].bind(this));
 	  }
 	  async setLayout(config) {
@@ -137,7 +145,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return !TypesWithoutContext.has(type);
 	  }
 	  destroy() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.goToMessageContext, babelHelpers.classPrivateFieldLooseBase(this, _onGoToMessageContext)[_onGoToMessageContext]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].unsubscribe(im_v2_const.EventType.dialog.goToMessageContext, babelHelpers.classPrivateFieldLooseBase(this, _onGoToMessageContext)[_onGoToMessageContext]);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.desktop.onReload, babelHelpers.classPrivateFieldLooseBase(this, _onDesktopReload)[_onDesktopReload].bind(this));
 	  }
 	  deleteLastOpenedElement(layoutName) {
@@ -230,7 +238,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  } = config;
 	  babelHelpers.classPrivateFieldLooseBase(this, _closeChannelComments)[_closeChannelComments]();
 	  if (contextId) {
-	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	      messageId: contextId,
 	      dialogId
 	    });
@@ -245,7 +253,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  } = this.getLayout();
 	  const isChannelOpened = im_v2_lib_channel.ChannelManager.isChannel(dialogId);
 	  if (isChannelOpened) {
-	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.dialog.closeComments);
 	  }
 	}
 	async function _handleContextAccess2(config) {

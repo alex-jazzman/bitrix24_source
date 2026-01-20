@@ -1,16 +1,15 @@
-import { Type } from 'main.core';
+import { Text } from 'main.core';
 
-import { mapGetters } from 'ui.vue3.vuex';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
-import 'ui.icon-set.outline';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
+import 'ui.icon-set.outline';
 
-import { UserFieldWidgetComponent, type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
-import { Model } from 'tasks.v2.const';
+import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
 import { DropZone } from 'tasks.v2.component.drop-zone';
-import { type FileService, fileService } from 'tasks.v2.provider.service.file-service';
+import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
+import { fileService, EntityTypes, type FileService } from 'tasks.v2.provider.service.file-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { UploadButton } from './component/upload-button';
@@ -20,36 +19,33 @@ import { DownloadArchiveButton } from './component/download-archive-button';
 export const FilesSheet = {
 	name: 'TaskFilesSheet',
 	components: {
-		UserFieldWidgetComponent,
 		UploadButton,
 		DownloadArchiveButton,
 		BottomSheet,
 		BIcon,
 		DropZone,
+		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
+	},
+	inject: {
+		task: {},
+		isEdit: {},
 	},
 	props: {
 		taskId: {
 			type: [Number, String],
 			required: true,
 		},
-		isShown: {
-			type: Boolean,
+		sheetBindProps: {
+			type: Object,
 			required: true,
-		},
-		getBindElement: {
-			type: Function,
-			default: null,
-		},
-		getTargetContainer: {
-			type: Function,
-			default: null,
 		},
 	},
 	emits: ['close'],
-	setup(props): { fileService: FileService, uploaderAdapter: VueUploaderAdapter }
+	setup(props): { task: TaskModel, fileService: FileService, uploaderAdapter: VueUploaderAdapter }
 	{
 		return {
 			Outline,
+			EntityTypes,
 			fileService: fileService.get(props.taskId),
 			uploaderAdapter: fileService.get(props.taskId).getAdapter(),
 		};
@@ -57,17 +53,11 @@ export const FilesSheet = {
 	data(): Object
 	{
 		return {
+			uniqueKey: Text.getRandom(),
 			files: this.fileService.getFiles(),
 		};
 	},
 	computed: {
-		...mapGetters({
-			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
-		}),
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		canAttachFiles(): boolean
 		{
 			return this.task.rights.attachFile || this.task.rights.edit;
@@ -79,10 +69,6 @@ export const FilesSheet = {
 		archiveLink(): ?string
 		{
 			return this.task.archiveLink;
-		},
-		isEdit(): boolean
-		{
-			return Type.isNumber(this.taskId) && this.taskId > 0;
 		},
 		widgetOptions(): UserFieldWidgetOptions
 		{
@@ -109,53 +95,47 @@ export const FilesSheet = {
 		{
 			return this.filesCount > 1 && this.archiveLink;
 		},
-	},
-	watch: {
-		titleFieldOffsetHeight(): void
+		bottomSheetContainer(): HTMLElement | null
 		{
-			this.$refs.bottomSheet?.adjustPosition();
+			return document.getElementById(`b24-bottom-sheet-${this.uniqueKey}`) || null;
 		},
 	},
 	template: `
 		<BottomSheet
-			v-if="isShown"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="bottomSheet"
+			:sheetBindProps
+			:padding="0"
+			:uniqueKey
+			@close="$emit('close')"
 		>
-			<div class="tasks-field-files-sheet" :data-task-id="taskId">
+			<div class="tasks-field-files-sheet" :data-task-id="taskId" ref="content">
 				<div class="tasks-field-files-header">
-					<div class="tasks-field-files-title">
-						{{ loc('TASKS_V2_FILES_TITLE') }}
-					</div>
+					<div class="tasks-field-files-title">{{ loc('TASKS_V2_FILES_TITLE') }}</div>
 					<BIcon
 						data-task-files-close
 						class="tasks-field-files-close"
-						:hoverable="true"
+						hoverable
 						:name="Outline.CROSS_L"
 						@click="$emit('close')"
 					/>
 				</div>
 				<div class="tasks-field-files-list">
-					<UserFieldWidgetComponent
-						:uploaderAdapter="uploaderAdapter"
-						:widgetOptions="widgetOptions"
-					/>
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 				</div>
 				<div
 					v-if="showFooter"
 					class="tasks-field-files-footer"
 					:class="{ '--with-archive': canDownloadArchive }"
 				>
-					<DownloadArchiveButton
-						v-if="canDownloadArchive"
-						:taskId="taskId"
-						:files="files"
-					/>
-					<UploadButton v-if="canAttachFiles" :taskId="taskId"/>
+					<DownloadArchiveButton v-if="canDownloadArchive" :files/>
+					<UploadButton v-if="canAttachFiles"/>
 				</div>
 			</div>
-			<DropZone :taskId="taskId"/>
+			<DropZone
+				v-if="canAttachFiles"
+				:container="bottomSheetContainer || {}"
+				:entityId="taskId"
+				:entityType="EntityTypes.Task"
+			/>
 		</BottomSheet>
 	`,
 };

@@ -4,6 +4,7 @@ export const Option = Object.freeze({
 	WaitListExpanded: 'wait_list_expanded',
 	CalendarExpanded: 'calendar_expanded',
 	NotificationsExpanded: 'notificationsExpanded',
+	whatsAppEmergencyNotified: 'whatsapp_emergency_notified',
 
 	// AhaMoments
 	AhaBanner: 'aha_banner',
@@ -17,4 +18,5 @@ export const Option = Object.freeze({
 	AhaSelectResources: 'aha_select_resources',
 	AhaCyclePopup: 'aha_cycle_popup',
 	AhaSearchNavigation: 'aha_search_navigation',
+	AhaIntegrationMapsYa: 'aha_integration_maps_ya',
 });

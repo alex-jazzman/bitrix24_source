@@ -65,6 +65,7 @@ $APPLICATION->IncludeComponent(
 			errorsContainerDiv: document.getElementById('bp-workflow-start-list-errors-container'),
 			canEdit: '<?= $arResult['canEdit'] ?>',
 			bizprocEditorUrl: '<?= CUtil::JSEscape($arResult['bizprocEditorUrl']) ?>',
+			bizprocNewEditorUrl: '<?= CUtil::JSEscape($arResult['bizprocNewEditorUrl']) ?>',
 			signedDocumentType: '<?= CUtil::JSEscape($arResult['signedDocumentType']) ?>',
 			signedDocumentId:  '<?= CUtil::JSEscape($arResult['signedDocumentId']) ?>',
 		});

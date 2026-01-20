@@ -157,6 +157,11 @@ export class BasePullHandler
 		this.#chatHandler.handleReadAllChats();
 	}
 
+	handleReadAllChatsByType(params)
+	{
+		this.#chatHandler.handleReadAllChatsByType(params);
+	}
+
 	handleChatMuteNotify(params)
 	{
 		this.#chatHandler.handleChatMuteNotify(params);

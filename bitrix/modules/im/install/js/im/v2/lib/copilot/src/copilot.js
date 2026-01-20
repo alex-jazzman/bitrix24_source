@@ -4,7 +4,7 @@ import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import type { JsonObject } from 'main.core';
 import type { Store } from 'ui.vue3.vuex';
-import type { ImModelMessage, ImModelUser, ImModelChat } from 'im.v2.model';
+import type { ImModelMessage, ImModelUser, ImModelChat, ImModelCopilotRole } from 'im.v2.model';
 
 export class CopilotManager
 {
@@ -29,7 +29,7 @@ export class CopilotManager
 		}
 
 		return Promise.all([
-			this.store.dispatch('copilot/chats/add', chats),
+			this.store.dispatch('copilot/chats/set', chats),
 			this.store.dispatch('copilot/roles/add', roles),
 			this.store.dispatch('copilot/setRecommendedRoles', recommendedRoles),
 			this.store.dispatch('copilot/messages/add', messages),
@@ -52,7 +52,7 @@ export class CopilotManager
 		return Promise.all([
 			this.store.dispatch('copilot/setProvider', aiProvider),
 			this.store.dispatch('copilot/roles/add', roles),
-			this.store.dispatch('copilot/chats/add', chats),
+			this.store.dispatch('copilot/chats/set', chats),
 			this.store.dispatch('copilot/messages/add', messages),
 		]);
 	}
@@ -67,7 +67,7 @@ export class CopilotManager
 
 		return Promise.all([
 			this.store.dispatch('copilot/roles/add', roles),
-			this.store.dispatch('copilot/chats/add', chats),
+			this.store.dispatch('copilot/chats/set', chats),
 		]);
 	}
 
@@ -81,19 +81,25 @@ export class CopilotManager
 
 		return Promise.all([
 			this.store.dispatch('copilot/roles/add', roles),
-			this.store.dispatch('copilot/chats/add', chats),
+			this.store.dispatch('copilot/chats/set', chats),
 			this.store.dispatch('copilot/messages/add', messages),
 		]);
 	}
 
-	getRoleAvatarUrl({ avatarDialogId, contextDialogId }: { avatarDialogId: string, contextDialogId: string }): ?string
+	getRoleAvatarUrl(payload: { avatarDialogId: string, contextDialogId: string }): string
 	{
+		const { avatarDialogId, contextDialogId } = payload;
 		if (!this.isCopilotChatOrBot(avatarDialogId))
 		{
 			return '';
 		}
 
 		return this.store.getters['copilot/chats/getRoleAvatar'](contextDialogId);
+	}
+
+	getDefaultAvatarUrl(): string
+	{
+		return this.store.getters['copilot/roles/getDefaultAvatar']();
 	}
 
 	isCopilotBot(userId: string | number): boolean
@@ -139,12 +145,17 @@ export class CopilotManager
 		return this.store.getters['copilot/messages/getRole'](messageId)?.avatar?.medium;
 	}
 
-	getNameWithRole({ dialogId, messageId }): string
+	getName({ dialogId, messageId }): string
 	{
-		const user: ImModelUser = this.store.getters['users/get'](dialogId);
-		const roleName = this.store.getters['copilot/messages/getRole'](messageId).name;
+		const { name: userName }: ImModelUser = this.store.getters['users/get'](dialogId);
+		const { default: isDefaultRole, name: roleName }: ImModelCopilotRole = this.store.getters['copilot/messages/getRole'](messageId);
 
-		return `${user.name} (${roleName})`;
+		if (isDefaultRole)
+		{
+			return userName;
+		}
+
+		return `${userName} (${roleName})`;
 	}
 
 	getAIModelName(dialogId: string): string

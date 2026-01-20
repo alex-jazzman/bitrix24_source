@@ -35,7 +35,11 @@ export class WebScreenSharePopup
 			offsetTop: -135,
 			offsetLeft: (this.options.bindElement.offsetWidth / 2) - (popupWidth / 2) + (this.options.bindElement.offsetWidth / 2),
 			className: 'bx-call-view-popup-web-screenshare',
-			contentBackground: 'unset',
+			background: '#00428F',
+			contentBackground: '#00428F',
+			darkMode: true,
+			contentBorderRadius: '27px',
+			borderRadius: '27px',
 			angle: false,
 			cacheable: false,
 			events: {
@@ -67,8 +71,16 @@ export class WebScreenSharePopup
 					props: {className: "bx-call-view-popup-web-screenshare-right"},
 					children: [
 						Dom.create("div", {
-							props: {className: "bx-call-view-popup-web-screenshare-stop ui-btn ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps ui-btn-icon-stop"},
-							text: BX.message("IM_CALL_WEB_SCREENSHARE_STOP"),
+							props: {className: "bx-call-view-popup-web-screenshare-stop"},
+							children: [
+								Dom.create("div", {
+									props: {className: "bx-call-view-popup-web-screenshare-stop-icon"},
+								}),
+								Dom.create("div", {
+									props: {className: "bx-call-view-popup-web-screenshare-stop-text"},
+									text: BX.message("IM_CALL_WEB_SCREENSHARE_STOP"),
+								}),
+							],
 							events: {
 								click: () => this.callbacks.onStopSharingClick()
 							}

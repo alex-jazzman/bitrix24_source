@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.core',
 		'im.v2.application.core',
-		'im.v2.provider.pull',
 		'im.v2.css.classes',
 		'im.v2.css.icons',
 		'im.v2.css.tokens',

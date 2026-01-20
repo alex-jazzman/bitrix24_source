@@ -6,6 +6,7 @@ $MESS["MENU_BIZPROC_DISK"] = "Жалпы дисктегі процестер";
 $MESS["MENU_BIZPROC_TASKS"] = "Бизнес-процестердің тапсырмалары";
 $MESS["MENU_BIZPROC_TASKS_1"] = "Бизнес-процестердің тапсырмалары";
 $MESS["MENU_BIZPROC_TASKS_2"] = "Орындау керек";
+$MESS["MENU_BIZPROC_TEMPLATE_PROCESSES"] = "Процесс қалыптары";
 $MESS["MENU_MY_PROCESS"] = "Менің процестерім";
 $MESS["MENU_MY_PROCESS_1"] = "Менің процестерім";
 $MESS["MENU_PROCESS_STREAM"] = "Лентадағы процестер";

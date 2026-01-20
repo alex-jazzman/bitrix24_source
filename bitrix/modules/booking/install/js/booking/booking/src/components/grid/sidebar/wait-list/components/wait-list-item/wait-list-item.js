@@ -54,6 +54,7 @@ export const WaitListItem = {
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			isWaitListItemCreatedFromEmbed: `${Model.Interface}/isWaitListItemCreatedFromEmbed`,
 			animationPause: `${Model.Interface}/animationPause`,
+			isMenuOpenedForWaitListItem: `${Model.Interface}/isMenuOpenedForWaitListItem`,
 		}),
 		hasClient(): boolean
 		{
@@ -73,7 +74,10 @@ export const WaitListItem = {
 		},
 		hasAccent(): boolean
 		{
-			return this.editingWaitListItemId === this.item.id || this.isWaitListItemCreatedFromEmbed(this.item.id);
+			return this.editingWaitListItemId === this.item.id
+				|| this.isWaitListItemCreatedFromEmbed(this.item.id)
+				|| this.isMenuOpenedForWaitListItem(this.item.id)
+			;
 		},
 	},
 	methods: {

@@ -25,6 +25,7 @@ return [
 
 		'crm:in-app-url/background',
 		"sign:background",
+		"mail:background",
 		'crm:background/crm-notifications',
 
 		'files/background-manager', // files background processes (upload, .etc)
@@ -43,5 +44,8 @@ return [
 		'whats-new/background',
 		'timeman/analytics',
 		'layout/ui/gratitude-list/subscriptions',
+		'onboarding/background',
+		'pull-listener',
+		'pull-listener/aiassistant-client',
 	],
 ];

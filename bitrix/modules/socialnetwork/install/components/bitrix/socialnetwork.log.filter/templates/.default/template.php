@@ -1,8 +1,4 @@
 <?php
-
-use Bitrix\UI\Buttons;
-use Bitrix\UI\Toolbar;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -19,6 +15,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 use Bitrix\Socialnetwork\LogViewTable;
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar;
 
 UI\Extension::load([
 	"ui.design-tokens",
@@ -26,6 +26,8 @@ UI\Extension::load([
 	"ui.buttons",
 	"ui.buttons.icons",
 ]);
+
+$isTasksV2Form = Loader::includeModule('tasks') && FormV2Feature::isOn();
 
 if (SITE_TEMPLATE_ID === 'bitrix24')
 {
@@ -431,9 +433,9 @@ BX.ready(function() {
 			},
 			<?php
 		}
-
 		if (
-			$arParams["SHOW_EXPERT_MODE"] !== "N"
+			!$isTasksV2Form
+			&& $arParams["SHOW_EXPERT_MODE"] !== "N"
 			&& class_exists('\Bitrix\Socialnetwork\LogViewTable') // socialnetwork 16.5.0
 		)
 		{
@@ -693,5 +695,5 @@ elseif (isset($_SESSION["SL_EXPERT_MODE_HINT"]))
 			BX.addClass(BX('feed_filter_hint_expert'), 'feed-smart-follow-hint-hidden');
 		});
 	});
-	</script><?php
+</script><?php
 }

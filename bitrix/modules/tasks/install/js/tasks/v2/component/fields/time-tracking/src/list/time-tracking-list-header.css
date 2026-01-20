@@ -1,0 +1,20 @@
+.tasks-time-tracking-list-row.--header {
+	flex: 1;
+	padding: 0;
+	min-height: 44px;
+}
+
+.tasks-time-tracking-list-column.--header {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-time-tracking-list-column.--header .ui-text {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-time-tracking-list-column.--header.--author {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}

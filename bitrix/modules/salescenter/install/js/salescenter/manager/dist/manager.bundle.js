@@ -826,7 +826,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openHowToSell",
 	    value: function openHowToSell(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'crmstore_connect');
+	      Manager.openHelper(event, 'redirect=detail&code=18213518', 'crmstore_connect');
 	    }
 	  }, {
 	    key: "openHowToWork",

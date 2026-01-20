@@ -27,8 +27,6 @@ $byEmployeeEnabled = $arResult['BY_EMPLOYEE_ENABLED'] ?? false;
 $showWelcomeTour = $arResult['SHOW_WELCOME_TOUR'] ?? false;
 $showWelcomeTourWithTestSigning = $arResult['SHOW_WELCOME_TOUR_TEST_SIGNING'] ?? false;
 $showOnboardingBanner = $arResult['SHOW_ONBOARDING_SIGNING_BANNER'] ?? false;
-$company = $arResult['COMPANY'] ?? null;
-$hasCompanies = $company !== null;
 $showTariffSlider = $arResult['SHOW_TARIFF_SLIDER'] ?? false;
 $tourId = $arResult['TOUR_ID'] ?? null;
 $canCreateDocument = $arResult['CAN_ADD_DOCUMENT'] ?? false;
@@ -96,7 +94,6 @@ endif;
 			new BX.Sign.Onboarding().startB2eWelcomeOnboardingWithTestSigning(
 				{
 					region: '<?= CUtil::JSescape($portalRegion) ?>',
-					hasCompanies: <?= $hasCompanies ? 'true' : 'false' ?>,
 					byEmployeeEnabled: <?= $byEmployeeEnabled ? 'true' : 'false' ?>,
 					showTariffSlider: <?= $showTariffSlider ? 'true' : 'false' ?>,
 					canEditDocument: <?= $canEditDocument ? 'true' : 'false' ?>,
@@ -112,7 +109,6 @@ endif;
 	BX.ready(() => {
 		(new BX.Sign.Onboarding()).showTestSigningBanner(
 			{
-				hasCompanies: <?= $hasCompanies ? 'true' : 'false' ?>,
 				showTariffSlider: <?= $showTariffSlider ? 'true' : 'false' ?>,
 			}
 		);

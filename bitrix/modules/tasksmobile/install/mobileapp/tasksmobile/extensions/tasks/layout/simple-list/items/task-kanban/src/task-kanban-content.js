@@ -43,6 +43,9 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	const { Color, Indent } = require('tokens');
 	const { Text5 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Onboarding, CaseName } = require('tasks/onboarding');
+	const { DeadlineRestrictions } = require('tasks/deadline-picker/deadline-restrictions');
+	const { ReasonWidget } = require('tasks/deadline-picker/reason-widget');
 
 	class TaskKanbanContent extends PureComponent
 	{
@@ -56,14 +59,45 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			this.onChangeDeadline = this.onChangeDeadline.bind(this);
 			this.prepareHiddenFilesCounterText = this.prepareHiddenFilesCounterText.bind(this);
 			this.bindStageSelectorRef = this.bindStageSelectorRef.bind(this);
+			this.showCounterOnboarding = this.showCounterOnboarding.bind(this);
 
 			/** @type {TasksStageSelector|undefined} */
 			this.stageSelectorRef = undefined;
+			this.counterRef = null;
+			this.subscribedEvents = new Set();
+			this.deadlineRestrictions = new DeadlineRestrictions({ task: this.task });
 		}
 
 		get task()
 		{
 			return this.props.task;
+		}
+
+		componentWillReceiveProps(props)
+		{
+			super.componentWillReceiveProps(props);
+
+			this.deadlineRestrictions.updateTask(props.task);
+		}
+
+		componentDidUpdate(prevProps, prevState)
+		{
+			if (this.task?.isCompleted)
+			{
+				BX.postComponentEvent('TasksDashboard::onSupposedlyCompletedTaskAppeared', [this.task]);
+			}
+
+			if (!this.subscribedEvents.has('UI.SimpleList::onAllItemsPositionStable'))
+			{
+				BX.addCustomEvent('UI.SimpleList::onAllItemsPositionStable', this.showCounterOnboarding);
+				this.subscribedEvents.add('UI.SimpleList::onAllItemsPositionStable');
+			}
+		}
+
+		componentWillUnmount()
+		{
+			this.subscribedEvents.clear();
+			BX.removeCustomEvent('UI.SimpleList::onAllItemsPositionStable', this.showCounterOnboarding);
 		}
 
 		/**
@@ -139,6 +173,20 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				const { deadline } = selectStageById(store.getState(), stageId) || {};
 
 				const ts = Number.isInteger(deadline) ? deadline * 1000 : null;
+
+				if (this.deadlineRestrictions.isReasonRequired())
+				{
+					return new ReasonWidget()
+						.show({ layout: this.props.layout })
+						.then((reason) => {
+							dispatch(updateDeadline({
+								taskId: this.task.id,
+								deadline: ts,
+								reason,
+							}));
+						})
+						.catch(console.error);
+				}
 
 				dispatch(updateDeadline({
 					taskId: this.task.id,
@@ -452,7 +500,14 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				}
 
 				return View(
-					{},
+					{
+						ref: (ref) => {
+							if (ref)
+							{
+								this.counterRef = ref;
+							}
+						},
+					},
 					CounterView(
 						counter.value,
 						{
@@ -476,13 +531,10 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 			const isDeadline = this.props.view === ViewMode.DEADLINE;
 
+			const { isReadOnly } = this.deadlineRestrictions.isReadOnly();
 			const isEditable = isDeadline
-				? (this.task.canMoveStage && this.task.canChangeDeadline)
+				? (this.task.canMoveStage && !isReadOnly)
 				: this.task.canMoveStage;
-
-			const readonlyNotificationMessage = (isDeadline && !this.task.canChangeDeadline)
-				? Loc.getMessage('M_TASKS_DENIED_UPDATEDEADLINE')
-				: undefined;
 
 			return TasksStageSelector({
 				showTitle: false,
@@ -492,13 +544,13 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				ownerId: this.props.ownerId,
 				readOnly: !isEditable,
 				config: {
-					readonlyNotificationMessage,
 					isReversed: isDeadline,
 					useStageChangeMenu: true,
 					showReadonlyNotification: true,
 					animationMode: 'animateBeforeUpdate',
 					parentWidget: this.props.layout,
 				},
+				task: this.task,
 				showReadonlyNotification: true,
 				onChange: this.onChangeStage,
 				forceUpdate: this.onChangeStageAnimationCompleted,
@@ -843,6 +895,15 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			});
 		}
 
+		showCounterOnboarding = () => {
+			if (this.counterRef)
+			{
+				void Onboarding.tryToShow(CaseName.UNREAD_TASKS_COUNTERS, {
+					targetRef: this.counterRef,
+				});
+			}
+		};
+
 		// endregion
 	}
 
@@ -953,6 +1014,9 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			crm,
 			timeElapsed,
 			isCreationErrorExist,
+			deadlineChangesLeft,
+			maxDeadlineChangeDate,
+			requireDeadlineChangeReason,
 		} = task;
 
 		const { stageId, canMoveStage } = selectTaskStageByTaskIdOrGuid(
@@ -988,7 +1052,11 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				activityDate: activityDate - (activityDate % 60),
 				counter: selectCounter(task),
 				isCompleted: selectIsCompleted(task),
-				canChangeDeadline: selectActions({ task }).updateDeadline,
+				canUpdateDeadline: selectActions({ task }).updateDeadline,
+				canUpdate: selectActions({ task }).update,
+				deadlineChangesLeft,
+				maxDeadlineChangeDate,
+				requireDeadlineChangeReason,
 				stageId,
 				canMoveStage,
 			},

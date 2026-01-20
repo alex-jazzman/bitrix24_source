@@ -3,8 +3,6 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/search/src/analytics', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-
-	const { DialogType } = require('im/messenger/const');
 	const { Analytics } = require('im/messenger/const/analytics');
 
 	/**
@@ -96,11 +94,15 @@ jn.define('im/messenger/controller/sidebar-v2/search/src/analytics', (require, e
 
 		getCommonAnalyticsData()
 		{
+			const analyticsType = this.dialogHelper?.isAiAssistant
+				? Analytics.Type.aiAssistant
+				: this.dialogType;
+
 			return new AnalyticsEvent()
 				.setTool('im')
 				.setCategory(this.dialogType)
 				.setSection(Analytics.Section.chatSidebar)
-				.setType(Analytics.Type[this.dialogType] ?? Analytics.Type.custom)
+				.setType(analyticsType ?? Analytics.Type.custom)
 			;
 		}
 	}

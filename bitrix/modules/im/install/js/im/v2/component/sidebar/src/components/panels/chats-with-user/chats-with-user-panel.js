@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Messenger } from 'im.public';
 import { Loader } from 'im.v2.component.elements.loader';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
@@ -12,6 +10,7 @@ import { ChatsWithUser } from '../../../classes/panels/chats-with-user';
 import './css/chats-with-user-panel.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -105,7 +104,11 @@ export const ChatsWithUserPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.chatsWithUser });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.chatsWithUser });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phrase: string): string
 		{

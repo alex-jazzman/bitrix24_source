@@ -4083,6 +4083,7 @@ this.BX = this.BX || {};
 	var _useText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useText");
 	var _useImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useImage");
 	var _showResultInCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResultInCopilot");
+	var _menuForceTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuForceTop");
 	var _windowResizeHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("windowResizeHandler");
 	var _staticEulaRestrictCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("staticEulaRestrictCallback");
 	var _getBaasPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBaasPopup");
@@ -4135,7 +4136,7 @@ this.BX = this.BX || {};
 	    return main_core.Type.isFunction(babelHelpers.classPrivateFieldLooseBase(Copilot, _staticEulaRestrictCallback)[_staticEulaRestrictCallback]);
 	  }
 	  constructor(_options) {
-	    var _options$autoHide;
+	    var _options$autoHide, _options$menuForceTop;
 	    super(_options);
 	    Object.defineProperty(this, _showCopilotAfterApplyAgreement, {
 	      value: _showCopilotAfterApplyAgreement2
@@ -4265,6 +4266,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _menuForceTop, {
+	      writable: true,
+	      value: true
+	    });
 	    Object.defineProperty(this, _windowResizeHandler, {
 	      writable: true,
 	      value: void 0
@@ -4291,6 +4296,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _warningField)[_warningField] = new CopilotWarningResultField();
 	    babelHelpers.classPrivateFieldLooseBase(this, _autoHide$1)[_autoHide$1] = (_options$autoHide = _options.autoHide) != null ? _options$autoHide : false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _preventAutoHide)[_preventAutoHide] = main_core.Type.isFunction(_options.preventAutoHide) ? _options.preventAutoHide : () => false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop] = (_options$menuForceTop = _options.menuForceTop) != null ? _options$menuForceTop : true;
 	  }
 	  render() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7] = main_core.Tag.render(_t$a || (_t$a = _$a`
@@ -4590,7 +4596,8 @@ this.BX = this.BX || {};
 	    copilotMenu: CopilotMenu$$1,
 	    copilotMenuEvents: CopilotMenuEvents$$1,
 	    analytics: babelHelpers.classPrivateFieldLooseBase(this, _getAnalytics)[_getAnalytics](),
-	    showResultInCopilot: babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot]
+	    showResultInCopilot: babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot],
+	    menuForceTop: babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop]
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController].subscribe('aiResult', event => {
 	    this.emit('aiResult', {
@@ -4644,18 +4651,19 @@ this.BX = this.BX || {};
 	}
 	function _autoHideHandler2(event) {
 	  var _babelHelpers$classPr32, _babelHelpers$classPr33, _babelHelpers$classPr34, _babelHelpers$classPr35;
+	  const copilotZIndex = babelHelpers.classPrivateFieldLooseBase(this, _copilotPopup)[_copilotPopup].getZindex();
 	  const target = event.target;
 	  const isSelf = babelHelpers.classPrivateFieldLooseBase(this, _copilotPopup)[_copilotPopup].getPopupContainer().contains(target);
 	  const isWarningFieldInfoSlider = (_babelHelpers$classPr32 = babelHelpers.classPrivateFieldLooseBase(this, _warningField)[_warningField].getInfoSliderContainer()) == null ? void 0 : _babelHelpers$classPr32.contains(target);
 	  const preventAutoHide = babelHelpers.classPrivateFieldLooseBase(this, _preventAutoHide)[_preventAutoHide](event);
-	  const isClickOnSlider = Boolean(event.target.closest('.side-panel'));
+	  const isClickOnOverlaySlider = main_core.Dom.style(event.target.closest('.side-panel-overlay'), 'z-index') > copilotZIndex;
 	  const isClickOnRolesDialog = Boolean(event.target.closest('.ai_roles-dialog_popup'));
 	  const isClickOnPromptMasterPopup = Boolean(event.target.closest('.ai__prompt-master-popup'));
 	  const isClickOnOverlay = Boolean(event.target.closest('.popup-window-overlay'));
-	  const isClickOnAnotherPopup = Boolean(event.target.closest('.popup-window'));
+	  const isClickOnOverlayPopup = main_core.Dom.style(event.target.closest('.popup-window'), 'z-index') > copilotZIndex;
 	  const isClickOnBaasPopup = Boolean((_babelHelpers$classPr33 = babelHelpers.classPrivateFieldLooseBase(this, _getBaasPopup)[_getBaasPopup]()) == null ? void 0 : _babelHelpers$classPr33.getPopupContainer().contains(target));
 	  const isClickOnNotificationBalloon = Boolean(event.target.closest('.ui-notification-balloon'));
-	  const shouldBeHidden = !isSelf && !((_babelHelpers$classPr34 = babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController]) != null && _babelHelpers$classPr34.isContainsElem(target)) && !((_babelHelpers$classPr35 = babelHelpers.classPrivateFieldLooseBase(this, _copilotImageController)[_copilotImageController]) != null && _babelHelpers$classPr35.isContainsTarget(target)) && !preventAutoHide && !this.wasMouseDownOnSelf && !isWarningFieldInfoSlider && !isClickOnSlider && !isClickOnRolesDialog && !isClickOnPromptMasterPopup && !isClickOnAnotherPopup && !isClickOnBaasPopup && !isClickOnOverlay && !isClickOnNotificationBalloon;
+	  const shouldBeHidden = !isSelf && !((_babelHelpers$classPr34 = babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController]) != null && _babelHelpers$classPr34.isContainsElem(target)) && !((_babelHelpers$classPr35 = babelHelpers.classPrivateFieldLooseBase(this, _copilotImageController)[_copilotImageController]) != null && _babelHelpers$classPr35.isContainsTarget(target)) && !preventAutoHide && !this.wasMouseDownOnSelf && !isWarningFieldInfoSlider && !isClickOnOverlaySlider && !isClickOnRolesDialog && !isClickOnPromptMasterPopup && !isClickOnOverlayPopup && !isClickOnBaasPopup && !isClickOnOverlay && !isClickOnNotificationBalloon;
 	  if (shouldBeHidden) {
 	    this.hide();
 	  }

@@ -22,6 +22,7 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 	} = require('im/messenger/lib/helper/file');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper/entity-selector');
 	const { CounterHelper } = require('im/messenger/lib/helper/counter');
+	const { StickerHelper } = require('im/messenger/lib/helper/sticker');
 
 	module.exports = {
 		DateHelper: new DateHelper(),
@@ -40,5 +41,6 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		getAudioRecordFormat,
 		EntitySelectorHelper,
 		CounterHelper,
+		StickerHelper,
 	};
 });

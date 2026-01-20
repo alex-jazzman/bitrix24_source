@@ -68,6 +68,7 @@ $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1"] = "Интранетке
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"] = "Интранетке аудару";
 $MESS["INTRANET_USER_PROFILE_MSG_1_invited"] = "Шақыру қабылданбады";
 $MESS["INTRANET_USER_PROFILE_NO"] = "Жоқ";
+$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATED"] = "Аккаунтты қорғау өшірулі";
 $MESS["INTRANET_USER_PROFILE_PASSWORDS"] = "Құпиясөздер";
 $MESS["INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"] = "Фотосуретті жойғыңыз келетініне сенімдісіз бе?";
 $MESS["INTRANET_USER_PROFILE_QUIT_ADMIN_MODE"] = "Әкімші режимінен шығу";

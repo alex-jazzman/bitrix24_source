@@ -17,6 +17,7 @@ import type { ResourceTypeDto } from 'booking.provider.service.resources-type-se
 import type { FormsMenuModel } from 'booking.model.forms-menu';
 import type { WaitListItemModel } from 'booking.model.wait-list';
 import type { WaitListItemDto } from 'booking.provider.service.wait-list-service';
+import type { CatalogSkuEntityOptions } from './types';
 
 import type { MainPageGetResponse } from './types';
 
@@ -129,8 +130,18 @@ export class MainPageDataExtractor
 		return this.#response.isCurrentSenderAvailable;
 	}
 
+	getShouldShowWhatsAppEmergency(): boolean
+	{
+		return this.#response.shouldShowWhatsAppEmergency;
+	}
+
 	getFormsMenu(): FormsMenuModel
 	{
 		return this.#response.formsMenu;
+	}
+
+	getCatalogSkuEntityOptions(): CatalogSkuEntityOptions
+	{
+		return this.#response.catalogSkuEntityOptions;
 	}
 }

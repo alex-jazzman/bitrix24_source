@@ -928,7 +928,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 									addButtonText: this.getAddButtonText(),
 									onAddButtonClick: () => this.openFilePicker(),
 									onFilePreviewMenuClick: this.onFilePreviewMenuClick,
-									onViewHidden: () => {
+									onViewRemoved: () => {
 										if (!this.isShowImagePickerOpen)
 										{
 											this.onFileAttachmentViewHidden?.();

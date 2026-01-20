@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
+import { Utils } from 'im.v2.lib.utils';
 
 import { UserService } from '../../../classes/user-service';
 
@@ -47,7 +48,7 @@ export const AdditionalUsers = {
 			this.loadingAdditionalUsers = true;
 			try
 			{
-				const userIds = await this.getUserService().loadReadUsers(this.dialog.lastMessageId);
+				const userIds = await this.getUserService().loadFirstPage(this.dialog.lastMessageId);
 				this.additionalUsers = this.prepareAdditionalUsers(userIds);
 				this.loadingAdditionalUsers = false;
 			}
@@ -60,6 +61,22 @@ export const AdditionalUsers = {
 		{
 			this.showPopup = false;
 			this.$emit('close');
+		},
+		async onScroll(event: Event)
+		{
+			if (!Utils.dom.isOneScreenRemaining(event.target) || !this.getUserService().hasMoreItemsToLoad())
+			{
+				return;
+			}
+
+			const userIds = await this.getUserService().loadNextPage(this.dialog.lastMessageId);
+
+			if (!userIds)
+			{
+				return;
+			}
+
+			this.additionalUsers = [...this.additionalUsers, ...this.prepareAdditionalUsers(userIds)];
 		},
 		prepareAdditionalUsers(userIds: number[]): number[]
 		{
@@ -90,6 +107,7 @@ export const AdditionalUsers = {
 			:withAngle="false"
 			:forceTop="true"
 			@close="onPopupClose"
+			@scroll="onScroll"
 		/>
 	`,
 };

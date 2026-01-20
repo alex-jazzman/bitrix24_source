@@ -14,6 +14,7 @@ jn.define('ui-system/blocks/department-card/src/redux-provider', (require, expor
 		userId = null,
 		departmentsCount,
 		chevron = true,
+		withPressed = false,
 	}) => {
 		const department = selectDepartmentById(state, departmentId);
 		if (Type.isNil(department))
@@ -57,6 +58,7 @@ jn.define('ui-system/blocks/department-card/src/redux-provider', (require, expor
 				},
 				employeesCountText,
 				chevron,
+				withPressed,
 				depth,
 				accent: isLastDepartment,
 				...managerProps,
@@ -75,6 +77,7 @@ jn.define('ui-system/blocks/department-card/src/redux-provider', (require, expor
 			},
 			employeesCountText,
 			chevron,
+			withPressed,
 			depth,
 			accent: isLastDepartment,
 		};

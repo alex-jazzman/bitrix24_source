@@ -1,5 +1,5 @@
 import {Text} from "main.core";
-import {ConferenceFieldState} from "im.const";
+import {ConferenceFieldState} from "call.const";
 
 export const FieldInvitation =
 	{

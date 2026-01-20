@@ -33,6 +33,7 @@ const AgreementBlock = {
 				:title="title" 
 				:maxWidth="maxWidth" 
 				:zIndex="199999"
+				:isOnTop="true"
 				:scrollDown="true"
 				:scrollDownText="messages.get('consentReadAll')"
 				@hide="reject"

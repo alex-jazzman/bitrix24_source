@@ -9,11 +9,14 @@ return [
 	'js' => 'dist/add-task-button.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.vue3.vuex',
 		'ui.vue3.components.button',
+		'ui.dialogs.messagebox',
 		'tasks.v2.component.elements.hint',
 		'tasks.v2.const',
 		'tasks.v2.lib.field-highlighter',
 		'tasks.v2.provider.service.file-service',
+		'tasks.v2.component.fields.user-fields',
 	],
 	'skip_core' => false,
 ];

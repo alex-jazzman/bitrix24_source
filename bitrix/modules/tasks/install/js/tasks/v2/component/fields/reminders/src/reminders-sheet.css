@@ -1,0 +1,35 @@
+.tasks-field-reminders-sheet {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-reminders-sheet-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-md2);
+}
+
+.tasks-field-reminders-sheet-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-reminders-sheet-content {
+	position: relative;
+	overflow: auto;
+	scrollbar-width: none;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-reminders-sheet-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	margin-top: auto;
+	padding: var(--ui-space-inline-xl) 0 0;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}

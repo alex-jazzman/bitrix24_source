@@ -2012,3 +2012,38 @@ form.profile-post-form {
 .bitrix24-dark-theme .intranet-user-profile-bottom-information {
 	color: #525c69;
 }
+
+.intranet-user-profile-otp-deactivate__status {
+	width: 260px;
+	height: 44px;
+	background-color: var(--ui-color-red-50);
+	border-radius: 40px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 0 auto;
+}
+
+.intranet-user-profile-otp-deactivate-status__wrapper {
+	position: absolute;
+	top: 60%;
+	width: 320px;
+	z-index: 1000;
+}
+
+.intranet-user-profile-otp-deactivate-status__icon {
+	margin-right: 8px;
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+}
+
+.intranet-user-profile-otp-deactivate-status__title {
+	color: var(--ui-color-base-white-fixed);
+	font-size: 14px;
+}
+
+.intranet-user-profile-otp-deactivate-status__description {
+	color: var(--ui-color-gray-40);
+	font-size: 14px;
+	margin-bottom: 17px;
+	text-align: center;
+}

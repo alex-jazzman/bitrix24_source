@@ -2,11 +2,7 @@
 
 return [
 	'extensions' => [
-		'module',
-		'tokens',
 		'background/ui-manager',
-	],
-	'components' => [
-		'whats.new',
+		'whats-new/ui-manager/component-opener',
 	],
 ];

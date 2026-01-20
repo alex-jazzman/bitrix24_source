@@ -191,6 +191,15 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 
 			this.view.setInputPlaceholder(placeholder);
 		}
+
+		/**
+		 * @param {AssistantButton[]} buttons
+		 * @param {boolean?} animated
+		 */
+		setAssistantButtons(buttons, animated)
+		{
+			void this.view.showAssistantButtons(buttons, animated);
+		}
 	}
 
 	module.exports = { DialogTextFieldManager };

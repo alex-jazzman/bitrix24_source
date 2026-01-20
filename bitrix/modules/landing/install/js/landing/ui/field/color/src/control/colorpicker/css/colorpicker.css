@@ -1,6 +1,38 @@
-.landing-ui-field-color-popup-footer
-{
-	margin-top: 14px;
-	display: flex;
-	justify-content: center;
+.landing-ui-field-color-presets-list {
+	padding: 3px 0 0 0;
+	max-height: 100%;
+	scrollbar-arrow-color: #ccc;
+	scrollbar-track-color: transparent;
+	scrollbar-base-color: #ccc;
+	scrollbar-shadow-color: #fff;
+	scrollbar-highlight-color: #fff;
+	/*Firefox fix */
+	scrollbar-width: thin;
+	scrollbar-color: #ccc transparent;
+	overflow-y: auto;
+}
+
+.landing-ui-field-color-presets-list::-webkit-scrollbar {
+	cursor: pointer;
+	width: 6px;
+}
+
+.landing-ui-field-color-presets-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.landing-ui-field-color-presets-list::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	border-radius: 5px;
+	cursor: pointer;
+	opacity: .4;
+	transition: .2s;
+}
+
+.landing-ui-field-color-presets-list:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+.landing-ui-field-color-colorpicker {
+	cursor: pointer;
 }

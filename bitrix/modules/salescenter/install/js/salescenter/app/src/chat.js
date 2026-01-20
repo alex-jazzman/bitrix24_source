@@ -633,10 +633,6 @@ export default {
 
 	computed:
 		{
-			ModeDictionary()
-			{
-				return ModeDictionary
-			},
 			config: () => config,
 			currentPage()
 			{

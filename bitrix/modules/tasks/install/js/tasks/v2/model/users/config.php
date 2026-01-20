@@ -10,6 +10,7 @@ return [
 		'main.polyfill.core',
 		'ui.vue3.vuex',
 		'tasks.v2.const',
+		'tasks.v2.provider.service.user-service',
 	],
 	'skip_core' => true,
 ];

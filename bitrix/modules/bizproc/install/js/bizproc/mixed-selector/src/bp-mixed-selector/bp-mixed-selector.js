@@ -439,12 +439,11 @@ export class BpMixedSelector extends EventEmitter
 
 			const returnActivityData = activityData.RETURN;
 			const additionalResult = activityData.ADDITIONAL_RESULT;
+			const activityResult = [];
 
 			if (returnActivityData)
 			{
 				const keys = Object.keys(returnActivityData);
-				const activityResult = [];
-
 				for (const j in keys)
 				{
 					activityResult.push({
@@ -460,21 +459,15 @@ export class BpMixedSelector extends EventEmitter
 						},
 					});
 				}
-
-				if (activityResult.length > 0)
-				{
-					result.push(activityResult);
-				}
 			}
-			else if (Type.isArray(additionalResult))
+
+			if (Type.isArray(additionalResult))
 			{
 				const properties = template[i].Properties;
 				additionalResult.forEach((addProp) => {
 					if (properties[addProp])
 					{
 						const keys = Object.keys(properties[addProp]);
-						const activityResult = [];
-
 						for (const j in keys)
 						{
 							const field = properties[addProp][keys[j]];
@@ -487,13 +480,13 @@ export class BpMixedSelector extends EventEmitter
 								property: field,
 							});
 						}
-
-						if (activityResult.length > 0)
-						{
-							result.push(activityResult);
-						}
 					}
 				});
+			}
+
+			if (activityResult.length > 0)
+			{
+				result.push(activityResult);
 			}
 
 			if (template[i].Children && template[i].Children.length > 0)

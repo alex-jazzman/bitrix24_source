@@ -11,6 +11,7 @@ jn.define('in-app-url', (require, exports, module) => {
 	 * and don't forget to add them into deps.php
 	 */
 	const routes = [
+		'mail/in-app-url/routes',
 		'sign/in-app-url/routes',
 		'crm/in-app-url/routes',
 		'tasks/in-app-url/routes',

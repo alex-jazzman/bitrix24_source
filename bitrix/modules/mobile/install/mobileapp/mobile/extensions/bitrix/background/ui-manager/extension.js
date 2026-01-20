@@ -6,6 +6,7 @@ jn.define('background/ui-manager', (require, exports, module) => {
 	const BackgroundUIManagerEvents = {
 		tryToOpenComponentFromAnotherContext: 'BackgroundUIManagerEvents::tryToOpenComponentFromAnotherContext',
 		openComponentInAnotherContext: 'BackgroundUIManager::openComponentInAnotherContext',
+		onCloseActiveComponent: 'BackgroundUIManager::onCloseActiveComponent',
 	};
 
 	/**
@@ -19,9 +20,12 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		{
 			this.currentComponent = null;
 
-			this.debounceedOpenComponentCallback = debounce(this.openComponentCallback, 3000, this);
+			this.defaultDebounce = 3000;
 			this.isComponentOpened = false;
 			this.openComponentInAnotherContext = this.openComponentInAnotherContext.bind(this);
+			this.onCloseActiveComponent = this.onCloseActiveComponent.bind(this);
+			this.openComponentCallback = this.openComponentCallback.bind(this);
+
 			this.bindEvents();
 		}
 
@@ -33,6 +37,7 @@ jn.define('background/ui-manager', (require, exports, module) => {
 					const {
 						componentName = null,
 						priority = 0,
+						debounceMs = null,
 					} = data;
 
 					if (componentName)
@@ -41,9 +46,15 @@ jn.define('background/ui-manager', (require, exports, module) => {
 							componentName,
 							this.openComponentInAnotherContext,
 							priority,
+							debounceMs,
 						);
 					}
 				},
+			);
+
+			BX.addCustomEvent(
+				BackgroundUIManagerEvents.onCloseActiveComponent,
+				this.onCloseActiveComponent,
 			);
 		}
 
@@ -62,7 +73,7 @@ jn.define('background/ui-manager', (require, exports, module) => {
 
 		openComponentCallback()
 		{
-			if (!this.currentComponent)
+			if (!this.currentComponent || this.isComponentOpened)
 			{
 				return;
 			}
@@ -75,7 +86,7 @@ jn.define('background/ui-manager', (require, exports, module) => {
 
 			const componentWasOpened = window?.backgroundUiManager?.[componentName];
 
-			if (this.currentComponent.openCallback && componentWasOpened === undefined)
+			if (this.currentComponent.openCallback && !componentWasOpened)
 			{
 				this.isComponentOpened = true;
 				this.currentComponent.openCallback();
@@ -98,9 +109,10 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		 */
 		onCloseActiveComponent()
 		{
-			this.currentComponent = null;
+			this.isComponentOpened = false;
 			window.backgroundUiManager = window.backgroundUiManager || {};
 			window.backgroundUiManager[this.currentComponent?.componentName] = null;
+			this.currentComponent = null;
 		}
 
 		/**
@@ -108,8 +120,9 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		 * @param {string} componentName
 		 * @param {function} openCallback
 		 * @param {number} priority
+		 * @param {number} [debounceMs=3000]
 		 */
-		openComponent(componentName, openCallback, priority)
+		openComponent(componentName, openCallback, priority, debounceMs)
 		{
 			if (
 				this.canOpenComponentInBackground()
@@ -126,7 +139,21 @@ jn.define('background/ui-manager', (require, exports, module) => {
 					priority,
 				};
 
-				this.debounceedOpenComponentCallback();
+				const delay = typeof debounceMs === 'number' ? debounceMs : this.defaultDebounce;
+
+				const scheduledName = componentName;
+				this.lastScheduledName = scheduledName;
+
+				const debounced = debounce(() => {
+					if (this.lastScheduledName !== scheduledName)
+					{
+						return;
+					}
+
+					this.openComponentCallback();
+				}, delay, this);
+
+				debounced();
 			}
 		}
 	}

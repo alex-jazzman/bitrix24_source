@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/base-message.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.core.events',
 		'im.v2.lib.utils',
 		'im.v2.application.core',
 		'im.v2.lib.parser',
@@ -17,6 +16,7 @@ return [
 		'im.v2.const',
 		'im.v2.lib.permission',
 		'im.v2.lib.channel',
+		'im.v2.lib.menu',
 	],
 	'skip_core' => false,
 ];

@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Messenger } from 'im.public';
 import { EventType, SidebarDetailBlock, MultidialogStatus } from 'im.v2.const';
 import { Loader } from 'im.v2.component.elements.loader';
@@ -11,8 +9,9 @@ import { MultidialogItem } from './multidialog-item';
 
 import './css/multidialog-panel.css';
 
-import type { ImModelSidebarMultidialogItem } from 'im.v2.model';
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
+import type { ImModelSidebarMultidialogItem } from 'im.v2.model';
 
 // @vue/component
 export const MultidialogPanel = {
@@ -98,7 +97,7 @@ export const MultidialogPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.multidialog });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.multidialog });
 		},
 		needToLoadNextPage(event: Event): boolean
 		{
@@ -148,6 +147,10 @@ export const MultidialogPanel = {
 		openChat(dialogId)
 		{
 			void Messenger.openChat(dialogId);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

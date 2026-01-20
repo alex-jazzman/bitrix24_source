@@ -7,5 +7,6 @@ return [
 		'helpers/holder',
 		'rest/run-action-executor',
 		'utils',
+		'utils/object',
 	],
 ];

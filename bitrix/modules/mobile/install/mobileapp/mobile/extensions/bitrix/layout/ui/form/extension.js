@@ -549,11 +549,20 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		 * @param {any} extendedValue
 		 * @param {...any} rest
 		 */
-		onChangeRegularField(fieldId, value, extendedValue, ...rest)
+		async onChangeRegularField(fieldId, value, extendedValue, ...rest)
 		{
-			this.updateFieldValue(fieldId, value, extendedValue)
-				.then(() => this.invokeCustomOnChangeHandler(fieldId, value, extendedValue, ...rest))
-				.catch((err) => logger.error('layout/ui/form: onChangeRegularField', err));
+			try
+			{
+				await this.updateFieldValue(fieldId, value, extendedValue);
+
+				return this.invokeCustomOnChangeHandler(fieldId, value, extendedValue, ...rest);
+			}
+			catch (err)
+			{
+				logger.error('layout/ui/form: onChangeRegularField', err);
+
+				return Promise.reject(err);
+			}
 		}
 
 		/**
@@ -587,7 +596,7 @@ jn.define('layout/ui/form', (require, exports, module) => {
 
 						this.invokeCustomOnChangeHandler(fieldId, value, extendedValue, ...rest);
 					})
-					.catch(() => {});
+					.catch(console.error);
 			};
 
 			if (needHide)
@@ -608,10 +617,9 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
 		 * @param {string} fieldId
 		 * @param {any} value
-		 * @param {any} extendedValue
+		 * @param {any} [extendedValue]
 		 * @return {Promise}
 		 */
 		updateFieldValue(fieldId, value, extendedValue)
@@ -652,7 +660,7 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		{
 			this.getFieldSchema(fieldId).onChange(value, extendedValue, ...rest);
 
-			this.props.onChange?.({
+			return this.props.onChange?.({
 				fieldId,
 				value,
 				extendedValue,
@@ -825,14 +833,29 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		renderField(schema)
 		{
 			const fieldId = schema.getId();
+			const { animateAfterChange } = schema.getProps();
 
-			const changeHandler = async (nextValue, extendedValue, ...rest) => {
-				if (!schema.isPrimary())
+			const runAnimation = async (nextValue, condition) => {
+				if (!schema.isPrimary() && condition)
 				{
-					await this.animateFieldAppearance(fieldId, nextValue);
+					return this.animateFieldAppearance(fieldId, nextValue);
 				}
 
-				this.onChangeRegularField(fieldId, nextValue, extendedValue, ...rest);
+				return Promise.resolve();
+			};
+
+			const changeHandler = async (nextValue, extendedValue, ...rest) => {
+				if (animateAfterChange)
+				{
+					const changeResult = await this.onChangeRegularField(fieldId, nextValue, extendedValue, ...rest);
+
+					void runAnimation(nextValue, Boolean(changeResult));
+				}
+				else
+				{
+					await runAnimation(nextValue, true);
+					void this.onChangeRegularField(fieldId, nextValue, extendedValue, ...rest);
+				}
 			};
 
 			const debouncedChangeHandler = debounce(changeHandler, schema.getDebounceTimeout());

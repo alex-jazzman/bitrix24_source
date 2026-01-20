@@ -1,0 +1,114 @@
+.mail_massconnect__wizard_container {
+	background-color: #f0f2f5;
+	font-family: var(--ui-font-family-primary);
+}
+
+.mail_massconnect__wizard_step_title {
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-black-solid);
+	margin-bottom: var(--ui-space-stack-3xl);
+	letter-spacing: var(--ui-text-letter-spacing-auto);
+}
+
+.mail_massconnect__wizard_card {
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100vh - 175px);
+	overflow-y: auto;
+}
+
+.mail_massconnect__wizard_connection_status_container {
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+}
+
+.mail_massconnect__wizard_card_content {
+	background-color: #ffffff;
+	border: 1px solid #eef2f4;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	padding: 26px 28px;
+	box-sizing: border-box;
+}
+
+.mail_massconnect__wizard_card_hint {
+	background-color: var(--ui-color-accent-soft-blue-2);
+	border: 1px solid var(--ui-color-accent-soft-blue-1);
+	border-radius: 12px;
+	box-shadow: 0 1px 1px 0 #0000000A;
+	padding: 20px 28px;
+	box-sizing: border-box;
+	margin-bottom: 16px;
+}
+
+.mail_massconnect__wizard_progress-bar {
+	display: flex;
+	gap: 4px;
+	width: 100%;
+	margin-bottom: 16px;
+}
+
+.mail_massconnect__wizard_progress-bar__item {
+	height: 3px;
+	flex-grow: 1;
+	background-color: var(--ui-color-base-6);
+	border-radius: 2px;
+	transition: background-color 0.3s ease;
+}
+
+.mail_massconnect__wizard_progress-bar__item--active {
+	background-color: var(--ui-color-design-filled-bg);
+}
+
+.mail_massconnect__wizard_navigation {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 100;
+
+	background-color: #ffffff;
+	padding: 16px 24px;
+	box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+	border-top: 1px solid #eef2f4;
+
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.mail_massconnect__section-title_container {
+	display: flex;
+	flex-direction: column;
+	max-width: 65%;
+	gap: var(--ui-size-2xs)
+}
+
+.mail_massconnect__wizard_card_hint .mail_massconnect__section-title_container {
+	max-width: 93%;
+}
+
+.mail_massconnect__section-description {
+	font-size: 14px;
+	color: var(--ui-color-base-2);
+}
+
+.mail_massconnect__section-description .mail_massconnect__section-description_hint-link {
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-font-size-md);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	letter-spacing: var(--ui-letter-spacing-l);
+	cursor: pointer;
+	border-bottom: 1px rgba(130, 139, 149, 0.28) dashed;
+}
+
+.mail_massconnect__section-title {
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+	margin: 0;
+}

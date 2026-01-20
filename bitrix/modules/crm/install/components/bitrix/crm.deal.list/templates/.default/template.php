@@ -172,6 +172,14 @@ if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 /** @var \Bitrix\Crm\Conversion\EntityConversionConfig $conversionConfig */
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
 
+$userIds = array_merge(
+	array_column($arResult['DEAL'], 'ASSIGNED_BY_ID'),
+	array_column($arResult['DEAL'], 'MODIFY_BY'),
+	array_column($arResult['DEAL'], 'CREATED_BY'),
+	array_column($arResult['DEAL'], 'MOVED_BY'),
+);
+$userRender = \Bitrix\Crm\Grid\Render\User\ClickableUser::createByUserIds($userIds);
+
 foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 {
 	$jsTitle = isset($arDeal['~TITLE']) ? CUtil::JSEscape($arDeal['~TITLE']) : '';
@@ -505,14 +513,13 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 					? GetMessage('MAIN_YES')
 					: GetMessage('MAIN_NO'),
 				'ASSIGNED_BY' => isset($arDeal['~ASSIGNED_BY_ID']) && $arDeal['~ASSIGNED_BY_ID'] > 0
-					? CCrmViewHelper::PrepareUserBaloonHtml(
-						[
-							'PREFIX' => "DEAL_{$arDeal['~ID']}_RESPONSIBLE",
-							'USER_ID' => $arDeal['~ASSIGNED_BY_ID'],
-							'USER_NAME'=> $arDeal['ASSIGNED_BY'],
-							'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_PROFILE'],
-						]
-					) : '',
+					? $userRender->render(
+						$arDeal['~ASSIGNED_BY_ID'],
+						'ASSIGNED_BY_ID',
+						$arResult['GRID_ID'],
+						$arResult['DB_FILTER'],
+					)
+					: '',
 				'COMMENTS' => htmlspecialcharsback($arDeal['COMMENTS'] ?? ''),
 				'SUM' => $arDeal['FORMATTED_OPPORTUNITY'],
 				'OPPORTUNITY' => $arDeal['OPPORTUNITY'] ?? 0.0,
@@ -546,31 +553,34 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'IS_REPEATED_APPROACH' => $arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'ORIGINATOR_ID' => $arDeal['ORIGINATOR_NAME'] ?? '',
 				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && isset($arDeal['CREATED_BY_FORMATTED_NAME']) && $arDeal['~CREATED_BY'] > 0
-					? CCrmViewHelper::PrepareUserBaloonHtml([
-						'PREFIX' => "DEAL_{$arDeal['~ID']}_CREATOR",
-						'USER_ID' => $arDeal['~CREATED_BY'],
-						'USER_NAME'=> $arDeal['CREATED_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_CREATOR']
-					])
+					? $userRender->render(
+						$arDeal['~CREATED_BY'],
+						'CREATED_BY_ID',
+						$arResult['GRID_ID'],
+						$arResult['DB_FILTER'],
+					)
 					: '',
 				'MOVED_BY' => isset($arDeal['~MOVED_BY']) && isset($arDeal['MOVED_BY_FORMATTED_NAME']) && $arDeal['~MOVED_BY'] > 0
-					? CCrmViewHelper::PrepareUserBaloonHtml([
-						'PREFIX' => "DEAL_{$arDeal['~ID']}_MOVED",
-						'USER_ID' => $arDeal['~MOVED_BY'],
-						'USER_NAME' => $arDeal['MOVED_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MOVED'],
-					])
+					? $userRender->render(
+						$arDeal['~MOVED_BY'],
+						'MOVED_BY_ID',
+						$arResult['GRID_ID'],
+						$arResult['DB_FILTER'],
+					)
 					: '',
 				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && isset($arDeal['MODIFY_BY_FORMATTED_NAME']) && $arDeal['~MODIFY_BY'] > 0
-					? CCrmViewHelper::PrepareUserBaloonHtml(
-						array(
-							'PREFIX' => "DEAL_{$arDeal['~ID']}_MODIFIER",
-							'USER_ID' => $arDeal['~MODIFY_BY'],
-							'USER_NAME'=> $arDeal['MODIFY_BY_FORMATTED_NAME'],
-							'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MODIFIER']
-						)
-					) : '',
-				'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Deal, $arDeal['ID'], $arDeal['~OBSERVERS'] ?? []),
+					? $userRender->render(
+						$arDeal['~MODIFY_BY'],
+						'MODIFY_BY_ID',
+						$arResult['GRID_ID'],
+						$arResult['DB_FILTER'],
+					)
+					: '',
+				'OBSERVERS' => CCrmViewHelper::renderObservers(
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+					$arDeal['~OBSERVERS'] ?? [],
+				),
 			) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
 

@@ -1,11 +1,12 @@
-import { Popup } from 'main.popup';
 import type { Store } from 'ui.vue3.vuex';
 
 import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
+import { Hint } from 'tasks.v2.lib.hint';
 
-class RelationError
+class RelationError extends Hint
 {
+	#popupId: string = 'tasks-relation-error';
 	#taskId: number | string;
 
 	setTaskId(taskId: number | string): RelationError
@@ -29,24 +30,16 @@ class RelationError
 		const scrollContainer = document.querySelector(`[data-task-card-scroll="${this.#taskId}"]`);
 		const addButton = scrollContainer.querySelector(`[data-task-relation-add="${fieldId}"]`);
 
-		const popup = new Popup({
-			id: 'tasks-relation-error',
-			className: 'tasks-hint',
-			background: 'var(--ui-color-bg-content-inapp)',
+		const options = {
+			id: this.#popupId,
 			bindElement: addButton,
 			content: errorText,
-			angle: true,
-			autoHide: true,
-			autoHideHandler: () => true,
-			cacheable: false,
-			animation: 'fading',
+			maxWidth: 470,
 			offsetLeft: addButton.offsetWidth / 2,
 			targetContainer: scrollContainer,
-		});
+		};
 
-		popup.show();
-
-		setTimeout(() => popup.close(), 3000);
+		await super.showHint(options);
 	}
 
 	get $store(): Store

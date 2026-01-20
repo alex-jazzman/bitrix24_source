@@ -34,6 +34,27 @@ return [
 					'dynamicSearch' => true,
 				],
 			],
+			[
+				'id' => 'bizproc-document',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => false,
+				],
+			],
+			[
+				'id' => 'bizproc-system',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => false,
+				],
+			],
+			[
+				'id' => 'bizproc-document-type',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => false,
+				],
+			],
 		],
 	],
 ];

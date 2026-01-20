@@ -7,6 +7,7 @@ import { MessengerSlider } from 'im.v2.lib.slider';
 import '../css/quote-button.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelMessage } from 'im.v2.model';
 
 const CONTAINER_HEIGHT = 44;
@@ -128,30 +129,20 @@ export const QuoteButton = {
 		{
 			return node.nodeName === '#text';
 		},
-		isMessageTextNode(node: HTMLElement): boolean
-		{
-			if (!(node instanceof HTMLElement))
-			{
-				return false;
-			}
-			const textNode = node.matches(MESSAGE_TEXT_NODE_CLASS);
-
-			return Boolean(textNode);
-		},
-		extractTextFromMessageNode(node: HTMLElement): string
-		{
-			const textNode = node.querySelector(MESSAGE_TEXT_NODE_CLASS);
-			if (!textNode)
-			{
-				return node.textContent;
-			}
-
-			return textNode.textContent;
-		},
 		onQuoteClick()
 		{
-			Quote.sendQuoteEvent(this.message, this.text, this.dialogId);
+			Quote.sendQuoteEvent({
+				message: this.message,
+				text: this.text,
+				dialogId: this.dialogId,
+				context: { emitter: this.getEmitter() },
+			});
+
 			this.$emit('close');
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

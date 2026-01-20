@@ -1,3 +1,5 @@
+import { ActivityProvider } from 'crm.ai.call';
+
 import type { ConflictField } from './types';
 import { EntityInfo, FEEDBACK_TRIGGER_CONTROL } from './types';
 
@@ -11,6 +13,12 @@ export default {
 	},
 	setActivityDirection: (state, val) => {
 		state.activityDirection = val;
+	},
+	setActivityProvider: (state, val) => {
+		state.activityProvider = val;
+	},
+	setSummarizeJobId: (state, val) => {
+		state.summarizeJobId = val;
 	},
 	startLoading: (state) => {
 		state.isLoading = true;
@@ -108,6 +116,7 @@ export default {
 		if (
 			state.aiFeedback.feedbackWasSent
 			|| (source === FEEDBACK_TRIGGER_CONTROL && state.aiFeedback.isShownByReturnBtn)
+			|| state.activityProvider === ActivityProvider.openLine
 		)
 		{
 			return;

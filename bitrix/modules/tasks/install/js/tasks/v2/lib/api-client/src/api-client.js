@@ -32,6 +32,16 @@ export class ApiClient
 		return this.handleResponse(response);
 	}
 
+	async postComponent(component, endpoint, data, mode = 'class'): Promise<any>
+	{
+		const response = await ajax.runComponentAction(component, endpoint, {
+			mode,
+			data,
+		});
+
+		return this.handleResponse(response);
+	}
+
 	async put(endpoint, data): Promise<any>
 	{
 		const url = this.buildUrl(endpoint);

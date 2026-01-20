@@ -351,10 +351,11 @@ Toolbar::deleteFavoriteStar();
 			$metrika = new Metrika\Metrika(
 				Metrika\Categories::getBySiteType($arParams['TYPE']),
 				Metrika\Events::openMarket,
+				Metrika\Tools::getBySiteType($arParams['TYPE']),
 			);
 			$metrika
 				->setSection(Metrika\Sections::page)
-				->setSubSection('from_page_list')
+				->setSubSection('from_folder_edit')
 			;
 		?>
 		BX.UI.Switcher.initByClassName();

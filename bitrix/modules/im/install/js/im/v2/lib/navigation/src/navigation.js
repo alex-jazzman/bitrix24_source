@@ -1,12 +1,24 @@
 import { FeaturePromoter } from 'ui.info-helper';
 
-import { Layout, SliderCode, NavigationMenuItem } from 'im.v2.const';
+import { Layout, SliderCode, NavigationMenuItem, Path, GetParameter } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { PhoneManager } from 'im.v2.lib.phone';
 import { Utils } from 'im.v2.lib.utils';
 import { MarketManager } from 'im.v2.lib.market';
+
+export type NavigationMenuItemParams = {
+	id: string,
+	entityId?: string,
+	target?: HTMLElement,
+	asLink?: boolean,
+};
+
+type LayoutParams = {
+	layoutName: string,
+	layoutEntityId?: string | number
+};
 
 const customClickHandler = {
 	[NavigationMenuItem.copilot]: onCopilotClick,
@@ -16,16 +28,10 @@ const customClickHandler = {
 	[NavigationMenuItem.market]: onMarketClick,
 };
 
-export type NavigationMenuItemParams = {
-	id: string,
-	entityId?: string,
-	target?: HTMLElement,
-};
-
 export const NavigationManager = {
-	open(menuItem: NavigationMenuItemParams): void
+	open(payload: NavigationMenuItemParams): void
 	{
-		const { id, entityId } = menuItem;
+		const { id } = payload;
 		if (!NavigationMenuItem[id])
 		{
 			return;
@@ -33,19 +39,12 @@ export const NavigationManager = {
 
 		if (customClickHandler[id])
 		{
-			customClickHandler[id](menuItem);
+			customClickHandler[id](payload);
 
 			return;
 		}
 
-		changeLayout({
-			layoutName: id,
-			layoutEntityId: entityId,
-		});
-	},
-	isLayout(id: string): boolean
-	{
-		return Boolean(Layout[id]);
+		handleMenuItem(payload);
 	},
 	isMarketApp(payload: NavigationMenuItemParams): boolean
 	{
@@ -67,10 +66,7 @@ function onCopilotClick(payload: NavigationMenuItemParams)
 		return;
 	}
 
-	changeLayout({
-		layoutName: Layout.copilot,
-		layoutEntityId: payload.entityId,
-	});
+	handleMenuItem(payload);
 }
 
 function onCallClick(payload: NavigationMenuItemParams)
@@ -100,6 +96,7 @@ function onMarketClick(payload: NavigationMenuItemParams)
 	const { entityId } = payload;
 	if (entityId)
 	{
+		// specific apps should be opened as layouts
 		changeLayout({
 			layoutName: Layout.market,
 			layoutEntityId: entityId,
@@ -108,7 +105,8 @@ function onMarketClick(payload: NavigationMenuItemParams)
 		return;
 	}
 
-	MarketManager.openMarketplace();
+	// marketplace should be opened as slider
+	MarketManager.openChatMarket();
 }
 
 function handleMenuItem(payload: NavigationMenuItemParams): void
@@ -175,9 +173,21 @@ function openLink({ layoutName, layoutEntityId }: LayoutParams): void
 	{
 		return;
 	}
+
+	let finalUrl = basePath;
+	if (urlConfig.canUseId && layoutEntityId)
+	{
+		finalUrl += `?${urlConfig.paramName}=${layoutEntityId}`;
+	}
+	else if (urlConfig.useParamByDefault)
+	{
+		finalUrl += `?${urlConfig.paramName}`;
+	}
+
+	location.href = finalUrl;
 }
 
-function changeLayout({ layoutName, layoutEntityId }: { layoutName: string, layoutEntityId?: string | number })
+function changeLayout({ layoutName, layoutEntityId }: LayoutParams)
 {
 	const layoutManager = LayoutManager.getInstance();
 	if (!layoutManager.isValidLayout(layoutName))

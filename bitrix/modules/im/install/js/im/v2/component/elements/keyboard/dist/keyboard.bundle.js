@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,im_v2_lib_logger,im_v2_lib_utils,main_core_events,im_public,im_v2_provider_service_sending,im_v2_lib_phone,im_v2_lib_notifier,im_v2_application_core,im_v2_const) {
+(function (exports,main_core,im_v2_lib_logger,im_v2_lib_utils,im_public,im_v2_provider_service_sending,im_v2_lib_phone,im_v2_lib_notifier,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	// @vue/component
@@ -26,6 +26,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  computed: {
 	    button() {
 	      return this.config;
+	    },
+	    commonAttributes() {
+	      return {
+	        class: ['bx-im-keyboard-button__container', this.buttonClasses],
+	        style: this.buttonStyles
+	      };
 	    },
 	    buttonClasses() {
 	      const {
@@ -53,20 +59,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        styles.width = `${width}px`;
 	      }
 	      return styles;
+	    },
+	    preparedLink() {
+	      if (!this.button.link) {
+	        return '';
+	      }
+	      return main_core.Text.decode(this.button.link);
 	    }
 	  },
 	  methods: {
-	    onClick() {
+	    onClick(event) {
 	      if (this.keyboardBlocked || this.button.disabled || this.button.wait) {
+	        event.preventDefault();
+	        return;
+	      }
+
+	      // proceed with native link handling
+	      if (this.button.link) {
 	        return;
 	      }
 	      if (this.button.action && this.button.actionValue) {
 	        this.handleAction();
 	      } else if (this.button.appId) {
 	        im_v2_lib_logger.Logger.warn('Messenger keyboard: open app is not implemented.');
-	      } else if (this.button.link) {
-	        const preparedLink = main_core.Text.decode(this.button.link);
-	        im_v2_lib_utils.Utils.browser.openLink(preparedLink);
 	      } else if (this.button.command) {
 	        this.handleCustomCommand();
 	      }
@@ -90,10 +105,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
+		<a
+			v-if="button.link"
+			:href="preparedLink"
+			target="_blank"
+			v-bind="commonAttributes"
+			@click="onClick"
+		>
+			{{ button.text }}
+		</a>
 		<div
-			class="bx-im-keyboard-button__container"
-			:class="buttonClasses"
-			:style="buttonStyles"
+			v-else
+			v-bind="commonAttributes"
 			@click="onClick"
 		>
 			{{ button.text }}
@@ -113,6 +136,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
+	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
 	var _actionHandlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionHandlers");
 	var _sendMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendMessage");
 	var _insertText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertText");
@@ -120,7 +144,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	var _copyText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copyText");
 	var _openChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openChat");
 	class ActionManager {
-	  constructor(dialogId) {
+	  constructor(_payload) {
 	    Object.defineProperty(this, _openChat, {
 	      value: _openChat2
 	    });
@@ -140,6 +164,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _emitter, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _actionHandlers, {
 	      writable: true,
 	      value: {
@@ -150,7 +178,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        [im_v2_const.KeyboardButtonAction.dialog]: babelHelpers.classPrivateFieldLooseBase(this, _openChat)[_openChat].bind(this)
 	      }
 	    });
+	    const {
+	      dialogId,
+	      context: {
+	        emitter
+	      }
+	    } = _payload;
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId] = dialogId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
 	  }
 	  handleAction(event) {
 	    const {
@@ -171,13 +206,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  });
 	}
 	function _insertText2(payload) {
-	  main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.textarea.insertText, {
 	    text: payload,
 	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]
 	  });
 	}
 	function _startCall2(payload) {
-	  im_v2_lib_phone.PhoneManager.getInstance().startCall(payload);
+	  void im_v2_lib_phone.PhoneManager.getInstance().startCall(payload);
 	}
 	function _copyText2(payload) {
 	  var _BX$clipboard;
@@ -186,7 +221,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  }
 	}
 	function _openChat2(payload) {
-	  im_public.Messenger.openChat(payload);
+	  void im_public.Messenger.openChat(payload);
 	}
 
 	var _messageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messageId");
@@ -274,7 +309,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getActionManager() {
 	      if (!this.actionManager) {
-	        this.actionManager = new ActionManager(this.dialogId);
+	        this.actionManager = new ActionManager({
+	          dialogId: this.dialogId,
+	          context: {
+	            emitter: this.getEmitter()
+	          }
+	        });
 	      }
 	      return this.actionManager;
 	    },
@@ -286,6 +326,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        });
 	      }
 	      return this.botService;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -307,5 +350,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.Keyboard = Keyboard;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=keyboard.bundle.js.map

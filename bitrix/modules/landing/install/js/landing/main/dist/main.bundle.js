@@ -905,9 +905,9 @@ this.BX = this.BX || {};
 	    key: "showBlocksPanel",
 	    value: function showBlocksPanel(block, area, button, insertBefore) {
 	      BX.UI.Analytics.sendData({
-	        tool: 'landing',
-	        category: BX.Landing.Main.getAnalyticsCategoryByType(),
-	        event: 'open_list'
+	        tool: BX.Landing.Main.getAnalyticsCategoryByType(),
+	        category: 'widget_list',
+	        event: 'open_widget_list'
 	      });
 	      this.currentBlock = block;
 	      this.currentArea = area;
@@ -1171,9 +1171,10 @@ this.BX = this.BX || {};
 	              this.currentCategory = category;
 	              if (this.currentCategory === 'favourite') {
 	                BX.UI.Analytics.sendData({
-	                  tool: 'landing',
-	                  category: BX.Landing.Main.getAnalyticsCategoryByType(),
-	                  event: 'click_on_favourite'
+	                  tool: BX.Landing.Main.getAnalyticsCategoryByType(),
+	                  category: 'widget_list',
+	                  event: 'open_favorites',
+	                  c_section: 'site_editor'
 	                });
 	              }
 	              templateCode = this.getTemplateCode();

@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { SidebarDetailBlock, EventType } from 'im.v2.const';
 
 import { FilePreviewItem } from '../../file/components/file-preview-item';
@@ -7,6 +5,7 @@ import { DetailEmptyState } from '../../../elements/detail-empty-state/detail-em
 
 import '../css/file.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelSidebarFileItem } from 'im.v2.model';
 
 // @vue/component
@@ -60,10 +59,14 @@ export const FileListPreview = {
 
 			const panel = this.isMigrationFinished ? SidebarDetailBlock.file : SidebarDetailBlock.fileUnsorted;
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

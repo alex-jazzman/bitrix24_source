@@ -1,0 +1,78 @@
+.tasks-task-time-tracking-sheet {
+	background-color: var(--ui-color-bg-vibrant-less);
+	backdrop-filter: blur(24px);
+}
+
+.tasks-task-time-tracking-sheet-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-time-tracking-sheet-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-md2);
+}
+
+.tasks-task-time-tracking-sheet-header-icons {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+}
+
+.tasks-task-time-tracking-sheet-filter,
+.tasks-task-time-tracking-sheet-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-task-time-tracking-sheet-content {
+	position: relative;
+	overflow: auto;
+	scrollbar-width: none;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-task-time-tracking-sheet-footer {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 24px;
+	padding: 18px;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-task-time-tracking-sheet-timer {
+	display: flex;
+	justify-content: left;
+	align-items: center;
+	gap: 14px;
+}
+
+.tasks-task-time-tracking-sheet-timer div {
+	font-size: var(--ui-font-size-2xl);
+}
+
+.tasks-task-time-tracking-sheet-users {
+	display: flex;
+	justify-content: left;
+	align-items: center;
+}
+
+.tasks-task-time-tracking-sheet-invoice {
+	display: inline-flex;
+	width: auto;
+	justify-content: flex-start;
+}

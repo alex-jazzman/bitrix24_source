@@ -286,6 +286,7 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 						testId: action.testId,
 						title: action.title,
 						subtitle: action.subtitle,
+						titleBadgeValue: action.titleBadgeValue,
 						iconUrl: this.getIconUrl(action),
 						iconName: this.getIconName(action),
 						showTopSeparator: action.showTopSeparator || false,

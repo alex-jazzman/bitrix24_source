@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_core,booking_const,booking_lib_apiClient) {
+(function (exports,booking_utils,booking_core,booking_const,booking_lib_apiClient) {
 	'use strict';
 
 	function mapDtoToModel(resourceDto) {
@@ -11,12 +11,17 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    typeId: resourceDto.type.id,
 	    name: resourceDto.name,
 	    description: resourceDto.description,
+	    avatar: resourceDto != null && resourceDto.avatar ? {
+	      id: resourceDto.avatar.id,
+	      url: resourceDto.avatar.url
+	    } : null,
 	    slotRanges: resourceDto.slotRanges.map(slotRange => ({
 	      ...slotRange,
 	      weekDays: Object.values(slotRange.weekDays)
 	    })),
 	    counter: resourceDto.counter,
 	    isMain: resourceDto.isMain,
+	    isPrimary: resourceDto.isPrimary,
 	    isDeleted: resourceDto.isDeleted,
 	    createdBy: resourceDto.createdBy,
 	    createdAt: resourceDto.createdAt,
@@ -46,10 +51,13 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
 	    templateTypeFeedback: resourceDto.templateTypeFeedback,
 	    // integrationCalendar
-	    entities: resourceDto.entities || []
+	    entities: resourceDto.entities || [],
+	    // skus
+	    skus: resourceDto.skus,
+	    skusYandex: resourceDto.skusYandex
 	  };
 	}
-	function mapModelToDto(resource) {
+	async function mapModelToDto(resource) {
 	  return {
 	    id: resource.id,
 	    type: {
@@ -57,6 +65,11 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    },
 	    name: resource.name,
 	    description: resource.description,
+	    avatar: resource != null && resource.avatar ? {
+	      id: resource.avatar.id,
+	      url: resource.avatar.url,
+	      encodedFile: resource.avatar.file ? await booking_utils.Utils.file.getBase64(resource.avatar.file) : null
+	    } : null,
 	    slotRanges: resource.slotRanges,
 	    counter: null,
 	    isMain: resource.isMain,
@@ -88,7 +101,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
 	    templateTypeFeedback: resource.templateTypeFeedback,
 	    // integrationCalendar
-	    entities: entitiesToDto(resource.entities)
+	    entities: entitiesToDto(resource.entities),
+	    // skus
+	    skus: resource.skus,
+	    skusYandex: resource.skusYandex
 	  };
 	}
 	function entitiesToDto(entities) {
@@ -115,7 +131,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	  async add(resource) {
 	    try {
-	      const resourceDto = mapModelToDto(resource);
+	      const resourceDto = await mapModelToDto(resource);
 	      const data = await new booking_lib_apiClient.ApiClient().post('Resource.add', {
 	        resource: resourceDto
 	      });
@@ -140,7 +156,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      ...booking_core.Core.getStore().getters['resources/getById'](id)
 	    };
 	    try {
-	      const resourceDto = mapModelToDto(resource);
+	      const resourceDto = await mapModelToDto(resource);
 	      const data = await new booking_lib_apiClient.ApiClient().post('Resource.update', {
 	        resource: resourceDto
 	      });
@@ -208,5 +224,5 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	exports.ResourceMappers = ResourceMappers;
 	exports.resourceService = resourceService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Const,BX.Booking.Lib));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking,BX.Booking.Const,BX.Booking.Lib));
 //# sourceMappingURL=resources-service.bundle.js.map

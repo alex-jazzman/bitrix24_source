@@ -1,5 +1,4 @@
 import { Runtime, Extension } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { Loader } from 'im.v2.component.elements.loader';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
@@ -19,6 +18,7 @@ import { SidebarCollectionFormatter } from '../../../classes/sidebar-collection-
 import './css/link-panel.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelSidebarLinkItem } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -116,7 +116,7 @@ export const LinkPanel = {
 	{
 		this.initSettings();
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new LinkMenu();
+		this.contextMenu = new LinkMenu({ emitter: this.getEmitter() });
 		this.service = new Link({ dialogId: this.dialogId });
 		this.serviceSearch = new LinkSearch({ dialogId: this.dialogId });
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 500, this);
@@ -205,7 +205,7 @@ export const LinkPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.link });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.link });
 		},
 		needToLoadNextPage(event: Event): boolean
 		{
@@ -236,6 +236,10 @@ export const LinkPanel = {
 			}
 			this.isLoading = false;
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -259,7 +263,6 @@ export const LinkPanel = {
 					<DateGroup :dateText="dateGroup.dateGroupTitle" />
 					<template v-for="link in dateGroup.items">
 						<LinkItem
-							:contextDialogId="dialogId"
 							:searchQuery="searchQuery"
 							:link="link" 
 							@contextMenuClick="onContextMenuClick"

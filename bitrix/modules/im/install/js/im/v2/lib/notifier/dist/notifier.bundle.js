@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_notification,im_v2_application_core,im_public,im_v2_const,main_core) {
+(function (exports,ui_notification,im_v2_application_core,im_public,im_v2_const,im_v2_provider_service_settings,main_core) {
 	'use strict';
 
 	const showNotification = (text, params) => {
@@ -271,6 +271,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const NotificationNotifier = {
+	  onSubscribeComplete(type) {
+	    const phrase = main_core.Loc.getMessage('IM_NOTIFIER_SUBSCRIBE_COMPLETE', {
+	      '#TYPE#': type
+	    });
+	    showNotification(phrase);
+	  },
+	  onUnsubscribeComplete(type, callback) {
+	    const params = {
+	      autoHideDelay: 5000,
+	      actions: [{
+	        title: main_core.Loc.getMessage('IM_NOTIFICATIONS_ITEM_MENU_UNSUBSCRIBE_CANCEL'),
+	        events: {
+	          click: callback
+	        }
+	      }]
+	    };
+	    const phrase = main_core.Loc.getMessage('IM_NOTIFIER_UNSUBSCRIBE_COMPLETE', {
+	      '#TYPE#': type
+	    });
+	    showNotification(phrase, params);
+	  }
+	};
+
 	const Notifier = {
 	  chat: ChatNotifier,
 	  message: MessageNotifier,
@@ -282,6 +306,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  speech: SpeechNotifier,
 	  call: CallNotifier,
 	  recent: RecentNotifier,
+	  notification: NotificationNotifier,
 	  onCopyTextComplete() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_TEXT_COPY_COMPLETE'));
 	  },
@@ -298,5 +323,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Notifier = Notifier;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX));
 //# sourceMappingURL=notifier.bundle.js.map

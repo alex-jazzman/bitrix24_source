@@ -1,0 +1,2 @@
+<?php
+$MESS["M_INTRANET_RESULTS_YEAR_MORE_MENU_BUTTON_TEXT"] = "Your Bitrix24 Year in Review";

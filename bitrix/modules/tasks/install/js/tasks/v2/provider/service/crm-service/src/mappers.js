@@ -10,7 +10,17 @@ const entityPrefixMap = {
 	[EntitySelectorEntity.SmartInvoice]: 'SI',
 };
 
+const prefixSortMap = Object.fromEntries(Object.values(entityPrefixMap).map((it, index) => [it, index]));
+
 const prefixEntityMap = Object.fromEntries(Object.entries(entityPrefixMap).map((it) => it.reverse()));
+
+const entityTypeIdMap = {
+	[EntitySelectorEntity.Deal]: 2,
+	[EntitySelectorEntity.Contact]: 3,
+	[EntitySelectorEntity.Company]: 4,
+	[EntitySelectorEntity.Lead]: 1,
+	[EntitySelectorEntity.SmartInvoice]: 31,
+};
 
 export function mapDtoToModel(crmItemDto: CrmItemDto): CrmItemModel
 {
@@ -41,8 +51,35 @@ export function splitId(id: string): string
 	const [prefix, entityId] = id.split('_');
 	if (!prefixEntityMap[prefix])
 	{
-		return [EntitySelectorEntity.DynamicMultiple, `${parseInt(prefix.slice(1), 16)}:${entityId}`];
+		return [EntitySelectorEntity.DynamicMultiple, `${getEntityTypeId(id)}:${entityId}`];
 	}
 
 	return [prefixEntityMap[prefix], Number(entityId)];
+}
+
+export function compareIds(idA: string, idB: string): number
+{
+	const [prefixA, entityIdA] = idA.split('_');
+	const [prefixB, entityIdB] = idB.split('_');
+
+	const sortA = prefixSortMap[prefixA] ?? getEntityTypeId(idA);
+	const sortB = prefixSortMap[prefixB] ?? getEntityTypeId(idB);
+
+	if (sortA === sortB)
+	{
+		return entityIdA - entityIdB;
+	}
+
+	return sortA - sortB;
+}
+
+export function getEntityTypeId(id: string): number
+{
+	const [prefix] = id.split('_');
+	if (!prefixEntityMap[prefix])
+	{
+		return parseInt(prefix.slice(1), 16);
+	}
+
+	return entityTypeIdMap[prefixEntityMap[prefix]];
 }

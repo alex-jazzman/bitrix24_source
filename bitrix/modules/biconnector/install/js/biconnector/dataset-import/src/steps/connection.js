@@ -51,6 +51,10 @@ export const ConnectionStep = {
 		{
 			return this.$store.getters.connectionProperties?.connectionType;
 		},
+		selectedConnectionIsSupportMapping(): boolean
+		{
+			return this.$store.getters.connectionProperties?.connectionIsSupportMapping;
+		},
 		selectedConnectionAvatar(): ?string
 		{
 			const id = this.selectedConnectionId;
@@ -98,6 +102,7 @@ export const ConnectionStep = {
 
 			this.$store.commit('setConnectionProperties', {
 				connectionType: event.data.tag.getCustomData().get('connectionType'),
+				connectionIsSupportMapping: Boolean(event.data.tag.getCustomData().get('isSupportMapping')),
 				connectionId: sourceId,
 				tableName: null,
 			});
@@ -125,6 +130,7 @@ export const ConnectionStep = {
 		{
 			this.$store.commit('setConnectionProperties', {
 				connectionType: null,
+				connectionIsSupportMapping: null,
 				connectionId: null,
 				tableName: null,
 			});
@@ -135,6 +141,7 @@ export const ConnectionStep = {
 		{
 			this.$store.commit('setConnectionProperties', {
 				connectionType: this.selectedConnectionType,
+				connectionIsSupportMapping: this.selectedConnectionIsSupportMapping,
 				connectionId: this.selectedConnectionId,
 				tableName: event.data.tag.getTitle(),
 			});
@@ -165,6 +172,7 @@ export const ConnectionStep = {
 		{
 			this.$store.commit('setConnectionProperties', {
 				connectionType: this.selectedConnectionType,
+				connectionIsSupportMapping: this.selectedConnectionIsSupportMapping,
 				connectionId: this.selectedConnectionId,
 				tableName: null,
 			});
@@ -196,6 +204,7 @@ export const ConnectionStep = {
 			{
 				const connectionProperties = this.$store.getters.connectionProperties;
 				connectionProperties.connectionName = Text.decode(messageEvent.data.connection.name);
+				connectionProperties.connectionIsSupportMapping = Boolean(messageEvent.data.connection.isSupportMapping ?? null);
 				this.$store.commit('setConnectionProperties', connectionProperties);
 			}
 		},

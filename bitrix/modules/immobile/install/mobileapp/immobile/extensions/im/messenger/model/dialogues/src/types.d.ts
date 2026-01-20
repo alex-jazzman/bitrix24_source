@@ -23,6 +23,7 @@ export enum DialogType {
 	comment = 'comment',
 	generalChannel = 'generalChannel',
 	collab = 'collab',
+	tasksTask = 'tasksTask',
 }
 
 export type DialoguesModelState = {

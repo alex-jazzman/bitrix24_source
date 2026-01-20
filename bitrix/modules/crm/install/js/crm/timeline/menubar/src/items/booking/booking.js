@@ -27,6 +27,13 @@ export default class Booking extends Item
 
 	showSlider(): void
 	{
+		if (!this.#isFeatureEnabled())
+		{
+			this.#showFeaturePromoter();
+
+			return;
+		}
+
 		const entities = this.getSettings()?.entities;
 		const embedEntities = JSON.stringify(entities);
 
@@ -198,5 +205,31 @@ export default class Booking extends Item
 			text: Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TEXT'),
 			userOptionName: Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME,
 		};
+	}
+
+	#getFeature(): ?Object
+	{
+		return this.getSetting('feature') || null;
+	}
+
+	#isFeatureEnabled(): Boolean
+	{
+		return Boolean(this.#getFeature()?.isEnabled);
+	}
+
+	#showFeaturePromoter(): void
+	{
+		const featureId = this.#getFeature()?.id;
+		if (featureId)
+		{
+			Runtime.loadExtension('ui.info-helper')
+				.then(({ FeaturePromotersRegistry }) => {
+					FeaturePromotersRegistry.getPromoter({ featureId }).show();
+				})
+				.catch((error) => {
+					console.error(error);
+				})
+			;
+		}
 	}
 }

@@ -47,7 +47,8 @@ BX.timeman_query = function(action, data, callback, bForce)
 		},
 		'onfailure': function(type, e) {
 			BX.timeman.closeWait();
-			if (e && e.type == 'json_failure')
+			const avatarPopup = BX.Main.PopupManager.getPopupById('bx-avatar-header-popup');
+			if (e && e.type == 'json_failure' && avatarPopup?.isShown())
 			{
 				(new BX.PopupWindow('timeman_failure_' + Math.random(), null, {
 					content: BX.create('DIV', {
@@ -449,7 +450,7 @@ BX.CTimeMan.prototype.Update = function(force)
 BX.CTimeMan.prototype._Update = function(data, action)
 {
 	var operationSuccessful = this._checkQueryError(data);
-	
+
 	if (operationSuccessful)
 	{
 		if (this.WND.CLOCKWND && !this.WND.CLOCKWND.SHOW)
@@ -661,39 +662,6 @@ BX.CTimeMan.prototype.Open = function()
 	}
 }
 
-BX.CTimeMan.prototype.OpenVue = function()
-{
-	if (BX.type.isFunction(BX.UI?.Analytics?.sendData))
-	{
-		BX.UI.Analytics.sendData({
-			tool: 'timeman',
-			category: 'workday',
-			event: 'popup_open',
-		});
-	}
-
-	if (this.WND.isShown())
-	{
-		this.WND.Hide();
-
-		return;
-	}
-	else
-	{
-		// todo http://jabber.bx/view.php?id=165797
-		this.Query('check_module', {}, function (data) {
-			if (data && data.error && data.type === 'fatal')
-			{
-				return;
-			}
-			if (this.WND.ShowVue())
-			{
-				this.Update(true);
-			}
-		}.bind(this), true);
-	}
-}
-
 BX.CTimeMan.prototype.setTimestamp = function(ts)
 {
 	selectedTimestamp = parseInt(ts);
@@ -840,6 +808,7 @@ BX.CTimeMan.prototype.getActionBtn = function(e)
 	if (
 		e.target.classList.contains('popup-window-button')
 		|| e.target.classList.contains('ui-btn')
+		|| e.target.classList.contains('ui-btn-split')
 	)
 	{
 		return e.target;
@@ -860,7 +829,7 @@ BX.CTimeMan.prototype.blockActionBtn = function(e)
 	}
 	else
 	{
-		const btnNode = this.blockedBtn.closest('.ui-btn');
+		const btnNode = this.blockedBtn.closest('.ui-btn') || this.blockedBtn.closest('.ui-btn-split');
 		if (btnNode)
 		{
 			BX.addClass(btnNode, 'ui-btn-wait');
@@ -1209,171 +1178,6 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(function(DATA){
 			if(!!DATA.PLANNER)
 				this.update(DATA.PLANNER);
-		}, this.PLANNER));
-	}
-
-	BX.onCustomEvent(this, 'onTimeManWindowBuild', [this, this.LAYOUT, DATA])
-
-	if (!this.stafftrackDisplayed)
-	{
-		BX.Runtime.loadExtension('timeman.stafftrack-check-in').then(({ StafftrackCheckIn }) => {
-			new StafftrackCheckIn({
-				container: this.LAYOUT,
-			});
-		})
-		this.stafftrackDisplayed = true;
-	}
-
-	if (!this.isPwtAlertDisplayed)
-	{
-		this.addPwt();
-		this.isPwtAlertDisplayed = true;
-	}
-
-	this.Align();
-}
-
-
-BX.CTimeManWindow.prototype.CreateVue = function(DATA)
-{
-	if (!this.CREATE)
-		return;
-
-	if (this.NOTICE_TIMER)
-	{
-		BX.timer.stop(this.NOTICE_TIMER);
-		this.NOTICE_TIMER = null;
-	}
-
-	if (this.bindOptions.mode == 'popup')
-	{
-		if (!this.POPUP)
-		{
-			var p = this.bindOptions.popupOptions || {
-				autoHide: true,
-				lightShadow: true,
-				bindOptions : {
-					forceBindPosition : true,
-					forceTop : true
-				},
-				angle : {
-					position: "top",
-					offset : 50
-				}
-			};
-
-			p.lightShadow = true;
-
-			const settings = BX.Extension.getSettings('timeman');
-			const isAirTemplate = settings.get('isAirTemplate');
-			if (isAirTemplate)
-			{
-				p.className = 'template-air-popup';
-			}
-
-			this.POPUP = new BX.PopupWindow('timeman_main', this.bindOptions.node, p);
-		}
-
-		this.POPUP.setContent(this.CreateLayoutTable(DATA));
-	}
-	else
-	{
-		if (this.DIV)
-		{
-			BX.cleanNode(this.DIV);
-			this.DIV = null;
-		}
-
-		if (null == this.DIV)
-		{
-			this.DIV = document.body.appendChild(BX.create('DIV', {
-				props: {id: 'tm-popup'},
-				events: {
-					click: BX.eventCancelBubble
-				},
-				style: {
-					position: 'absolute',
-					display: this.SHOW ? 'block' : 'none'
-				}
-			}));
-
-			this.DIV.appendChild(this.CreateLayoutTable());
-		}
-
-		BX.cleanNode(this.LAYOUT);
-
-		this.LAYOUT.appendChild(this.CreateDashboard(DATA));
-		this.LAYOUT.appendChild(_createHR());
-	}
-
-	this.LAYOUT.appendChild(this.CreateNoticeRow(DATA));
-	this.LAYOUT.appendChild(this.CreateMainRow(DATA));
-
-	if (DATA.INFO)
-	{
-		if(DATA.PLANNER)
-		{
-			this.PLANNER = new BX.CPlanner(DATA.PLANNER);
-			this.PLANNER.WND = this;
-
-			this.LAYOUT.appendChild(this.PLANNER.drawAdditional());
-		}
-
-		this.TABCONTROL = new BX.CTimeManTabControl(
-			this.LAYOUT.appendChild(BX.create('DIV'))
-		);
-
-		if (DATA.PLANNER)
-		{
-			this.TABCONTROL.addTab({
-				id: 'plans',
-				title: BX.message('JS_CORE_TM_PLAN'),
-				content: [
-					this.PLANNER.draw()
-				]
-			});
-		}
-
-		this.TABCONTROL.addTab({
-			id: 'report',
-			title: BX.message('JS_CORE_TM_REPORT'),
-			content: this.CreateReport()
-		});
-
-		if(this.PARENT.REPORT_FULL_MODE)
-		{
-			this.call_report = BX.create("SPAN", {
-				attrs: {id: "work_report_call_link"},
-				props: {className: "wr-call-lable"},
-				html: BX.message("JS_CORE_TMR_REPORT_FULL_" + this.PARENT.REPORT_FULL_MODE),
-				events: {"click": BX.proxy(BXTIMEMAN.CheckNeedToReportImm, BXTIMEMAN)}
-			});
-
-			if (BXTIMEMAN.ShowCallReport == true)
-			{
-				this.call_report.style.display = "inline-block";
-			}
-			else
-			{
-				this.call_report.style.display = "none";
-			}
-
-			this.TABCONTROL.HEAD.appendChild(this.call_report);
-		}
-
-		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateDashboard, this));
-		BX.addCustomEvent('onPlannerQueryResult', BX.delegate(function(data){
-			this.DATA.PLANNER = data;
-			this.CreateDashboard(this.DATA);
-		}, this));
-		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateNoticeRow, this));
-		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateMainRow, this));
-
-		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(function(DATA){
-			if(!!DATA.PLANNER)
-			{
-				this.update(DATA.PLANNER);
-			}
 		}, this.PLANNER));
 	}
 
@@ -2687,6 +2491,8 @@ BX.CTimeManWindow.prototype.ShowClock = function(error_string, start_time)
 		}
 	}
 
+	this.POPUP?.setAutoHide(false);
+
 	this.CLOCKWND.Show();
 }
 
@@ -2706,6 +2512,8 @@ BX.CTimeManWindow.prototype.ShowEdit = function()
 		this.EDITWND.setNode(this.NOTICE);
 		this.EDITWND.setData(this.PARENT.DATA);
 	}
+
+	this.POPUP?.setAutoHide(false);
 
 	this.EDITWND.Show();
 }
@@ -2757,9 +2565,16 @@ BX.CTimeManWindow.prototype.MainButtonClick = function(e)
 
 	// TODO: look at this (submitting editing expired working day in old popup
 	//  throws error in the last line of this method without this line)
+	//  same workaround in BX.CTimeManClock
 	if (!this.MAIN_BTN_HANDLER)
 	{
-		this.MAIN_BTN_HANDLER = this.ACTIONS.CLOSE;
+		var btn = 'OPEN';
+		if (this.DATA.STATE == 'EXPIRED' || this.DATA.STATE == 'OPENED' || this.DATA.STATE == 'PAUSED')
+			btn = 'CLOSE';
+		else if (this.DATA.STATE == 'CLOSED' && this.DATA.CAN_OPEN == 'REOPEN')
+			btn = 'REOPEN';
+
+		this.MAIN_BTN_HANDLER = this.ACTIONS[btn];
 	}
 
 	if ((this.MAIN_BTN_HANDLER == this.ACTIONS.OPEN) && this.REPORT)
@@ -2933,52 +2748,6 @@ BX.CTimeManWindow.prototype.Show = function()
 	return true;
 }
 
-BX.CTimeManWindow.prototype.ShowVue = function()
-{
-	if (!this.PARENT.DATA || !this.PARENT.DATA.STATE)
-		return false;
-
-	this.CREATE = true;
-
-	if (null == this.DIV && null == this.POPUP)
-		this.CreateVue(this.PARENT.DATA);
-
-	this.DATA = this.PARENT.DATA;
-
-	if (this.bindOptions.mode == 'popup')
-	{
-		if (this.POPUP.isShown())
-		{
-			this.Hide();
-			return false;
-		}
-		else
-		{
-			this.POPUP.show();
-		}
-	}
-	else
-	{
-		if (this.DIV.style.display == 'block')
-		{
-			this.Hide()
-			return false;
-		}
-		else
-		{
-			this.SHOW = true;
-			this.Align();
-			this.DIV.style.display = 'block';
-
-			setTimeout(BX.proxy(this.onAfterShow, this), 10);
-
-		}
-	}
-
-	BX.onCustomEvent('onTimeManWindowOpen', [this]);
-	return true;
-}
-
 BX.CTimeManWindow.prototype.onAfterShow = function()
 {
 	BX.bind(document, 'click', BX.proxy(this.HideClick, this));
@@ -3009,10 +2778,18 @@ BX.CTimeManWindow.prototype.Hide = function()
 
 /********************************************/
 
-BX.CTimeManClock = function(parent, params)
+BX.CTimeManClock = function(parentNew, paramsNew)
 {
-	this.parent = parent;
-	this.params = params;
+	this.parent = parentNew;
+	this.params = paramsNew;
+
+	// TODO: look at this. workaround for editing time
+	//  without this there is no header in editing popup
+	//  same workaround in BX.CTimeManWindow.prototype.MainButtonClick
+	if (this.parent.DATA && !this.parent.DATA.STATE)
+	{
+		this.parent.DATA.STATE = this.parent.PARENT.DATA.STATE;
+	}
 
 	this.params.popup_buttons = this.params.popup_buttons || [
 		new BX.PopupWindowButton({
@@ -3024,7 +2801,7 @@ BX.CTimeManClock = function(parent, params)
 
 	this.isReady = false;
 
-	var p = this.params.popup_config || {
+	var paramsForPopup = this.params.popup_config || {
 		offsetLeft: -45,
 		offsetTop: -135,
 		autoHide: true,
@@ -3032,13 +2809,18 @@ BX.CTimeManClock = function(parent, params)
 		closeByEsc: true
 	};
 
-	p.lightShadow = true;
+	paramsForPopup.lightShadow = true;
 
-	this.WND = new BX.PopupWindow(
-		this.params.popup_id || 'timeman_clock_popup',
-		this.params.node,
-		p
-	);
+	this.WND = new BX.PopupWindow({
+		...paramsForPopup,
+		id: this.params.popup_id || 'timeman_clock_popup',
+		bindElement: this.params.node,
+		events: {
+			onPopupClose: () => {
+				this.parent.POPUP?.setAutoHide(true);
+			},
+		},
+	});
 
 	this.SHOW = false;
 	BX.addCustomEvent(this.WND, "onPopupClose", BX.delegate(this.onPopupClose, this));
@@ -3157,9 +2939,10 @@ BX.CTimeManTimeSelector = function(parent, params)
 
 	params.popup_id = 'timeman_time_selector_popup' + Math.random();
 	params.popup_config = {
+		fixed: true,
 		offsetLeft: -50,
 		offsetTop: -30,
-		autoHide: true,
+		autoHide: false,
 		closeIcon: true,
 		closeByEsc: true
 	};
@@ -3234,6 +3017,10 @@ BX.extend(BX.CTimeManTimeSelector, BX.CTimeManClock);
 
 BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
 {
+	const openCalendar = (props) => {
+		const { node, field } = props;
+		BX.calendar({ node, field, bTime: false, fixed: true });
+	};
 	var defaultDate = new Date();
 	if (this.parent && this.parent.DATA && this.parent.DATA.INFO && this.parent.DATA.INFO.DATE_START
 		&& this.parent.DATA.INFO.CURRENT_STATUS && this.parent.DATA.INFO.CURRENT_STATUS !== 'CLOSED')
@@ -3260,7 +3047,7 @@ BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
 		events: {
 			click: function (event)
 			{
-				BX.calendar({node: event.currentTarget, field: event.currentTarget, bTime: false});
+				openCalendar({node: event.currentTarget, field: event.currentTarget});
 			},
 			change: BX.delegate(function (event)
 				{
@@ -3314,7 +3101,7 @@ BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
 	event.currentTarget.parentNode.appendChild(title);
 	title.style.width = title.value.length.toString() + 'px!important';
 	event.currentTarget.classList.add('timeman-hide');
-	BX.calendar({node: title, field: title, bTime: false});
+	openCalendar({node: title, field: title});
 };
 BX.CTimeManTimeSelector.prototype.buildCustomDatePicker = function()
 {
@@ -3472,11 +3259,17 @@ BX.CTimeManEditPopup = function(parent, params)
 
 	params.popup_id = 'timeman_edit_popup_' + (Math.random() * 100000);
 	params.popup_config = {
+		fixed: true,
 		offsetLeft: -50,
 		offsetTop: -30,
-		autoHide: true,
+		autoHide: false,
 		closeIcon: true,
-		closeByEsc: true
+		closeByEsc: true,
+		events: {
+			onPopupClose: () => {
+				parent.POPUP?.setAutoHide(true);
+			},
+		},
 	};
 
 	this.bChanged = false;
@@ -3914,7 +3707,7 @@ BX.CTimeManTasksSelector = function(parent, params)
 	this.WND = BX.PopupWindowManager.create(
 		'timeman_tasks_selector_' + parseInt(Math.random() * 10000), this.params.node,
 		{
-			autoHide: true,
+			autoHide: false,
 			content: (this.content = BX.create('DIV')),
 			buttons: [
 				new BX.PopupWindowButtonLink({

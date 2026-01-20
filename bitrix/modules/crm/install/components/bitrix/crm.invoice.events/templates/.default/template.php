@@ -143,18 +143,6 @@ for ($i=0, $ic=sizeof($arResult['FILTER']); $i < $ic; $i++)
 			'EVENT_DESC' => $arEvent['EVENT_DESC'].$arEvent['FILE_HTML'],
 			'DATE_CREATE' => FormatDate('x', MakeTimeStamp($arEvent['DATE_CREATE']), (time() + CTimeZone::GetOffset()))
 		);
-//			if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
-//			{
-//				$arColumns['ENTITY_TYPE'] = !empty($arEvent['ENTITY_TYPE'])? GetMessage('CRM_EVENT_ENTITY_TYPE_'.$arEvent['ENTITY_TYPE']): '';
-//				$arColumns['ENTITY_TITLE'] = !empty($arEvent['ENTITY_TITLE'])?
-//					'<a href="'.$arEvent['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arEvent['ENTITY_TYPE'].'_'.$arEvent['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.strtolower($arEvent['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.strtolower($arEvent['ENTITY_TYPE'])).'">'.$arEvent['ENTITY_TITLE'].'</a>'
-//					: '';
-//			}
-//			else
-//			{
-//			unset($arEvent['ENTITY_TYPE']);
-//			unset($arEvent['ENTITY_TITLE']);
-//			}
 
 		$arResult['GRID_DATA'][] = array(
 			'id' => $arEvent['ID'],

@@ -1,14 +1,16 @@
 import { ItemIdentifier } from 'crm.data-structures';
+
+import type { JsonObject } from 'main.core';
 import { ensureIsItemIdentifier, ensureIsValidMultifieldValue, ensureIsValidSourceData } from './internal/validation';
 
 export type MultifieldValue = {
 	id: ?number,
 	typeId: string,
 	valueType: string,
+	valueTypeCaption: string,
 	value: string,
-	valueFormatted: ?string,
+	valueFormatted: string,
 	complexId: ?string,
-	complexName: ?string,
 };
 
 export type SourceData = {
@@ -40,6 +42,8 @@ export class Receiver
 			id: address.id,
 			typeId: address.typeId,
 			valueType: address.valueType,
+			valueTypeCaption: address.valueTypeCaption,
+			complexId: address.complexId,
 			value: address.value,
 			valueFormatted: address.valueFormatted,
 		});
@@ -112,5 +116,15 @@ export class Receiver
 			&& String(this.address.valueType) === String(another.address.valueType)
 			&& String(this.address.value) === String(another.address.value)
 		);
+	}
+
+	toJSON(): JsonObject
+	{
+		return {
+			rootSource: this.rootSource,
+			addressSource: this.addressSource,
+			addressSourceData: this.addressSourceData,
+			address: this.address,
+		};
 	}
 }

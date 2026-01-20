@@ -1,0 +1,31 @@
+.bizproc-setuptemplateactivity-field-wrapper.--ghost {
+	position: absolute;
+	width: 430px;
+	pointer-events: none;
+	z-index: 999;
+	background: var(--ui-color-base-8);;
+	transform: rotate(5deg);
+	box-sizing: border-box;
+	padding-bottom: 10px;
+	padding-left: 15px;
+}
+
+.bizproc-setuptemplateactivity-draggable-wrapper {
+	padding-bottom: 12px;
+	margin-bottom: -12px;
+	position: relative;
+}
+
+.bizproc-setuptemplateactivity-field-wrapper.--dragging {
+	opacity: 0;
+	height: 0;
+}
+
+body.--user-dragging .bizproc-setuptemplateactivity-draggable-wrapper:hover .bizproc-setuptemplateactivity-field-drag-icon {
+	pointer-events: none;
+	opacity: 0;
+}
+
+body.--user-dragging .bizproc-setuptemplateactivity-draggable-wrapper:hover .ui-ctl-element {
+	pointer-events: none;
+}

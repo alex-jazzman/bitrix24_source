@@ -26,7 +26,6 @@ import Wait from "../items/wait";
 import Document from "../items/document";
 import Sender from "../items/sender";
 import Bizproc from "../items/bizproc";
-import Scoring from "../items/scoring";
 import {ConfigurableItem, StreamType} from "crm.timeline.item";
 import Expand from "../animations/expand";
 
@@ -928,19 +927,6 @@ export default class History extends Stream
 		else if (typeId === ItemType.bizproc)
 		{
 			return Bizproc.create(
-				data["ID"],
-				{
-					history: this._history,
-					fixedHistory: this._fixedHistory,
-					container: this._wrapper,
-					activityEditor: this._activityEditor,
-					data: data
-				}
-			);
-		}
-		else if (typeId === ItemType.scoring)
-		{
-			return Scoring.create(
 				data["ID"],
 				{
 					history: this._history,

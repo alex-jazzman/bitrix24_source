@@ -295,9 +295,9 @@ jn.define('im/messenger/controller/dialog/lib/audio-panel/src/audio-panel', (req
 			const { messageList } = await this.#getViewableMessages().catch(console.error);
 			this.readMessageList(messageList);
 
-			return this.store.dispatch('messagesModel/setAudioState', {
+			return this.store.dispatch('messagesModel/setPlayingState', {
 				id: messageId,
-				audioPlaying: isPlaying,
+				isPlaying,
 				playingTime,
 			});
 		}

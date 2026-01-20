@@ -1,0 +1,4 @@
+<?php
+
+$MESS['MOBILE_MENU_AHA_MOMENT_INVITATION_BUTTON'] = 'Да, пригласить';
+$MESS['MOBILE_MENU_AHA_MOMENT_MENU_SETTINGS_BUTTON'] = 'Настроить меню';

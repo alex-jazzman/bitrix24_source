@@ -1,44 +1,29 @@
+import { Extension, Loc, Reflection, Text, Type, userOptions as UserOptions } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Menu, MenuItemOptions } from 'main.popup';
+import { Dialog } from 'ui.entity-selector';
 import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
 import { TodoPingSettingsMenu } from 'crm.activity.todo-ping-settings-menu';
 import { Restriction } from 'crm.kanban.restriction';
 import { SettingsController, Type as SortType } from 'crm.kanban.sort';
+
+import { SortController as GridSortController } from './grid/sort-controller.js';
+import { SettingsMigrator } from './settings-migrator';
+import { AISettingsService } from './ai-settings-service';
+import { BaseChannelHandler } from './handlers/base-channel-handler';
 import {
-	ajax as Ajax,
-	type Collections,
-	Extension,
-	Loc,
-	Reflection,
-	Text,
-	Type,
-	userOptions as UserOptions,
-} from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Menu, MenuItem, MenuItemOptions } from 'main.popup';
-import { Dialog } from 'ui.entity-selector';
-import { SortController as GridSortController } from './grid/sort-controller';
-import {
-	requireClass,
-	requireClassOrNull,
-	requireStringOrNull,
-	requireArrayOfString,
-} from './params-handling';
+	CHANNEL_TYPE_CALL,
+	CHANNEL_TYPE_CHAT,
+	CHECKED_CLASS,
+	COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY,
+	COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH,
+	NOT_CHECKED_CLASS,
+} from './constants';
+
+import { requireArrayOfString, requireClass, requireClassOrNull, requireStringOrNull } from './params-handling';
+import { ChannelHandlerFactory } from './handlers/channel-handler-factory';
 
 const EntityType = Reflection.getClass('BX.CrmEntityType');
-
-const CHECKED_CLASS = 'menu-popup-item-accept';
-const NOT_CHECKED_CLASS = 'menu-popup-item-none';
-
-const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
-const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
-
-const AUTOSTART_CALL_DIRECTION_INCOMING = 1;
-const AUTOSTART_CALL_DIRECTION_OUTGOING = 2;
-
-type AISettings = {
-	autostartOperationTypes: number[],
-	autostartTranscriptionOnlyOnFirstCallWithRecording: boolean,
-	autostartCallDirections: number[],
-};
 
 export type SettingsButtonExtenderParams = {
 	entityTypeId: number,
@@ -53,6 +38,7 @@ export type SettingsButtonExtenderParams = {
 	controller: ?SettingsController,
 	restriction: ?Restriction,
 	grid: ?BX.Main.grid,
+	smartActivityNotificationSupported: ?boolean,
 };
 
 /**
@@ -76,13 +62,31 @@ export class SettingsButtonExtender
 	#isSetSortRequestRunning: boolean = false;
 	#smartActivityNotificationSupported: boolean = false;
 
-	#aiAutostartSettings: null | AISettings = null;
+	#aiAutostartSettings: null | Object = null;
 	#aiCopilotLanguageId: null | string = null;
 	#isSetAiSettingsRequestRunning: boolean = false;
 
 	#extensionSettings: Collections.SettingsCollection = Extension.getSettings('crm.settings-button-extender');
+	#channelHandlers = new Map();
+	#aiSettingsService: AISettingsService;
 
 	constructor(params: SettingsButtonExtenderParams)
+	{
+		this.#initializeProperties(params);
+		this.#initializeMenus(params);
+		this.#parseAISettings(params.aiAutostartSettings);
+		this.#initializeChannelHandlers();
+		this.#bindEvents();
+	}
+
+	destroy(): void
+	{
+		this.#channelHandlers.clear();
+
+		EventEmitter.unsubscribeAll(EventEmitter.GLOBAL_TARGET, 'onPopupShow');
+	}
+
+	#initializeProperties(params: SettingsButtonExtenderParams): void
 	{
 		this.#entityTypeId = Text.toInteger(params.entityTypeId);
 		this.#categoryId = Type.isInteger(params.categoryId) ? params.categoryId : null;
@@ -106,6 +110,12 @@ export class SettingsButtonExtender
 			this.#gridController = new GridSortController(this.#entityTypeId, params.grid);
 		}
 
+		this.#aiCopilotLanguageId = params.aiCopilotLanguageId;
+		this.#aiSettingsService = new AISettingsService(this.#entityTypeId, this.#categoryId);
+	}
+
+	#initializeMenus(params: SettingsButtonExtenderParams): void
+	{
 		this.#todoSkipMenu = new TodoNotificationSkipMenu({
 			entityTypeId: this.#entityTypeId,
 			selectedValue: requireStringOrNull(params.todoCreateNotificationSkipPeriod, 'params.todoCreateNotificationSkipPeriod'),
@@ -118,20 +128,50 @@ export class SettingsButtonExtender
 				settings: this.#pingSettings,
 			});
 		}
+	}
 
-		const aiSettingsJson = requireStringOrNull(params.aiAutostartSettings, 'params.aiAutostartSettings');
-		if (Type.isStringFilled(aiSettingsJson))
+	#parseAISettings(aiSettingsJson: string | null): void
+	{
+		const settingsJson = requireStringOrNull(aiSettingsJson, 'params.aiAutostartSettings');
+		if (!Type.isStringFilled(settingsJson))
 		{
-			const candidate = JSON.parse(aiSettingsJson);
-			if (Type.isPlainObject(candidate))
-			{
-				this.#aiAutostartSettings = candidate;
-			}
+			return;
 		}
 
-		this.#aiCopilotLanguageId = params.aiCopilotLanguageId;
+		try
+		{
+			const rawSettings = JSON.parse(settingsJson);
+			if (Type.isPlainObject(rawSettings))
+			{
+				this.#aiAutostartSettings = SettingsMigrator.migrateToChannelFormat(rawSettings);
+			}
+		}
+		catch (error)
+		{
+			throw new Error('Failed to parse AI settings:', error);
+		}
+	}
 
-		this.#bindEvents();
+	#initializeChannelHandlers(): void
+	{
+		this.#channelHandlers.clear();
+
+		if (!this.#aiAutostartSettings?.channels)
+		{
+			return;
+		}
+
+		Object.entries(this.#aiAutostartSettings.channels).forEach(([channelType, settings]) => {
+			const handler = ChannelHandlerFactory.create(channelType, settings, this.#extensionSettings);
+			if (handler)
+			{
+				handler.setActionClickHandler((event, menuItem, action) => {
+					this.#handleChannelAction(channelType, action, event, menuItem);
+				});
+
+				this.#channelHandlers.set(channelType, handler);
+			}
+		});
 	}
 
 	#bindEvents(): void
@@ -192,7 +232,7 @@ export class SettingsButtonExtender
 		return items;
 	}
 
-	#resolveEarlyTargetId(): ?string
+	#resolveEarlyTargetId(): string | null
 	{
 		const items = this.#rootMenu.getMenuItems();
 		const earlyItem = items.find((item: MenuItem) => this.#expandsBehindThan.includes(item.getId()));
@@ -281,17 +321,10 @@ export class SettingsButtonExtender
 
 			const settings = this.#kanbanController.getCurrentSettings();
 
-			// eslint-disable-next-line init-declarations
-			let newSortType: string;
-			if (settings.getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME)
-			{
-				// first different type
-				newSortType = settings.getSupportedTypes().find(sortType => sortType !== SortType.BY_LAST_ACTIVITY_TIME);
-			}
-			else
-			{
-				newSortType = SortType.BY_LAST_ACTIVITY_TIME;
-			}
+			const newSortType = settings.getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME
+				? settings.getSupportedTypes().find((sortType) => sortType !== SortType.BY_LAST_ACTIVITY_TIME)
+				: SortType.BY_LAST_ACTIVITY_TIME
+			;
 
 			this.#kanbanController.setCurrentSortType(newSortType)
 				.then(() => {})
@@ -309,13 +342,8 @@ export class SettingsButtonExtender
 		}
 		else
 		{
-			console.error('Can not handle last activity toggle click');
+			throw new Error('Can not handle last activity toggle click');
 		}
-	}
-
-	#closeMenuWindow(event: PointerEvent, item: MenuItem): void
-	{
-		item.getMenuWindow()?.close();
 	}
 
 	#shouldShowTodoSkipMenu(): boolean
@@ -332,58 +360,26 @@ export class SettingsButtonExtender
 	{
 		const showInfoHelper = this.#getInfoHelper();
 		const menuItems = [];
-		if (Type.isPlainObject(this.#aiAutostartSettings))
+
+		// call settings
+		const callHandler = this.#channelHandlers.get(CHANNEL_TYPE_CALL);
+		if (callHandler)
 		{
-			const autoCallItems = [];
-			const isTranscriptionAutoStarted = this.#aiAutostartSettings
-				?.autostartOperationTypes
-				?.includes(this.#getTranscribeAIOperationType())
-			;
-			const isOnlyFirst = this.#aiAutostartSettings?.autostartTranscriptionOnlyOnFirstCallWithRecording;
-			const isOnlyIncoming = this.#aiAutostartSettings?.autostartCallDirections?.length === 1
-				&& this.#aiAutostartSettings?.autostartCallDirections?.includes(AUTOSTART_CALL_DIRECTION_INCOMING)
-			;
-			const isOnlyOutgoing = this.#aiAutostartSettings?.autostartCallDirections?.length === 1
-				&& this.#aiAutostartSettings?.autostartCallDirections?.includes(AUTOSTART_CALL_DIRECTION_OUTGOING)
-			;
-			const isAIHasPackages = this.#extensionSettings.get('isAIHasPackages');
-
-			autoCallItems.push({
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING_MSGVER_1'),
-				className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyFirst && isOnlyIncoming
-					? CHECKED_CLASS
-					: NOT_CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'firstCall'),
-			}, {
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_INCOMING'),
-				className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyIncoming && !isOnlyFirst
-					? CHECKED_CLASS
-					: NOT_CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allCalls'), // all incoming
-			}, {
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_OUTGOING'),
-				className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyOutgoing && !isOnlyFirst
-					? CHECKED_CLASS
-					: NOT_CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'outgoingCalls'),
-			}, {
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL_MSGVER_1'),
-				className: isTranscriptionAutoStarted && isAIHasPackages && !isOnlyIncoming && !isOnlyOutgoing && !isOnlyFirst
-					? CHECKED_CLASS
-					: NOT_CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allIncomingOutgoingCalls'),
-			}, {
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING_MSGVER_1'),
-				className: isTranscriptionAutoStarted && isAIHasPackages
-					? NOT_CHECKED_CLASS
-					: CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'manual'),
-			});
-
 			menuItems.push({
 				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS'),
 				disabled: this.#isSetAiSettingsRequestRunning,
-				items: autoCallItems,
+				items: callHandler.getMenuItems(showInfoHelper),
+			});
+		}
+
+		// chat settings
+		const chatHandler = this.#channelHandlers.get(CHANNEL_TYPE_CHAT);
+		if (chatHandler)
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_OPEN_LINES'),
+				disabled: this.#isSetAiSettingsRequestRunning,
+				items: chatHandler.getMenuItems(showInfoHelper),
 			});
 		}
 
@@ -401,17 +397,13 @@ export class SettingsButtonExtender
 		}
 
 		return {
-			text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CALLS'),
+			text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CRM'),
 			disabled: this.#isSetAiSettingsRequestRunning,
 			items: menuItems,
 		};
 	}
 
-	#handleCoPilotMenuItemClick(
-		action: 'firstCall' | 'allCalls' | 'outgoingCalls' | 'allIncomingOutgoingCalls' | 'manual',
-		event: PointerEvent,
-		menuItem: MenuItem,
-	): void
+	#handleChannelAction(channelType: string, action: string, event: PointerEvent, menuItem: MenuItem): void
 	{
 		menuItem.getMenuWindow()?.getRootMenuWindow()?.close();
 		menuItem.getMenuWindow()?.getParentMenuItem()?.disable();
@@ -423,84 +415,28 @@ export class SettingsButtonExtender
 
 		this.#isSetAiSettingsRequestRunning = true;
 
-		// eslint-disable-next-line default-case
-		switch (action)
+		setTimeout(() => {
+			this.#saveAISettings(menuItem);
+		}, 50);
+	}
+
+	async #saveAISettings(menuItem: MenuItem): void
+	{
+		try
 		{
-			case 'manual':
-				// autostart all except first step
-				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes().filter(
-					(typeId) => typeId !== this.#getTranscribeAIOperationType(),
-				);
-
-				break;
-
-			case 'firstCall':
-				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
-				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = true;
-				this.#aiAutostartSettings.autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING];
-
-				break;
-
-			case 'allCalls': // all incoming
-				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
-				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = false;
-				this.#aiAutostartSettings.autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING];
-
-				break;
-
-			case 'outgoingCalls':
-				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
-				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = false;
-				this.#aiAutostartSettings.autostartCallDirections = [AUTOSTART_CALL_DIRECTION_OUTGOING];
-
-				break;
-
-			case 'allIncomingOutgoingCalls':
-				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
-				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = false;
-				this.#aiAutostartSettings.autostartCallDirections = [
-					AUTOSTART_CALL_DIRECTION_INCOMING,
-					AUTOSTART_CALL_DIRECTION_OUTGOING,
-				];
-
-				break;
+			this.#aiAutostartSettings = await this.#aiSettingsService.saveWithErrorHandling(this.#aiAutostartSettings);
+			this.#initializeChannelHandlers();
 		}
-
-		Ajax.runAction(
-			'crm.settings.ai.saveAutostartSettings',
-			{
-				json: {
-					entityTypeId: this.#entityTypeId,
-					categoryId: this.#categoryId,
-					settings: this.#aiAutostartSettings,
-				},
-			},
-		).then(({ data }) => {
-			this.#aiAutostartSettings = data.settings;
-
+		catch
+		{
+			// error already handled in service
+		}
+		finally
+		{
 			menuItem.getMenuWindow()?.getParentMenuItem()?.enable();
-			this.#isSetAiSettingsRequestRunning = false;
-		}).catch(({ errors }) => {
-			console.error('Could not save ai settings', errors);
 
-			// refresh settings, we need to know relevant state
-			return Ajax.runAction('crm.settings.ai.getAutostartSettings', {
-				json: {
-					entityTypeId: this.#entityTypeId,
-					categoryId: this.#categoryId,
-				},
-			});
-		}).then(({ data }) => {
-			this.#aiAutostartSettings = data.settings;
-
-			menuItem.getMenuWindow()?.getParentMenuItem()?.enable();
 			this.#isSetAiSettingsRequestRunning = false;
-		}).catch(({ errors }) => {
-			console.error('Could not fetch ai settings after error in save', errors);
-
-			menuItem.getMenuWindow()?.getParentMenuItem()?.enable();
-			this.#isSetAiSettingsRequestRunning = false;
-		});
+		}
 	}
 
 	#handleCoPilotLanguageSelect(event: PointerEvent): void
@@ -554,16 +490,6 @@ export class SettingsButtonExtender
 		languageSelector.show();
 	}
 
-	#getAllOperationTypes(): number[]
-	{
-		return this.#extensionSettings.get('allAIOperationTypes').map((id) => Text.toInteger(id));
-	}
-
-	#getTranscribeAIOperationType(): number
-	{
-		return Text.toInteger(this.#extensionSettings.get('transcribeAIOperationType'));
-	}
-
 	#getInfoHelper(skipPackagesCheck: boolean = false): ?Function
 	{
 		if (skipPackagesCheck)
@@ -603,4 +529,32 @@ export class SettingsButtonExtender
 			}
 		};
 	}
+
+	// region Public methods
+	updateAISettings(settings: Object): void
+	{
+		if (!SettingsMigrator.isValidChannelFormat(settings))
+		{
+			throw new Error('Invalid settings format', settings);
+		}
+
+		this.#aiAutostartSettings = settings;
+		this.#initializeChannelHandlers();
+	}
+
+	getChannelHandler(channelType: string): BaseChannelHandler | null
+	{
+		return this.#channelHandlers.get(channelType);
+	}
+
+	isChannelAvailable(channelType: string): boolean
+	{
+		return this.#channelHandlers.has(channelType);
+	}
+
+	getAvailableChannels(): string[]
+	{
+		return [...this.#channelHandlers.keys()];
+	}
+	// endregion
 }

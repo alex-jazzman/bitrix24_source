@@ -128,7 +128,6 @@ this.BX.UI.System = this.BX.UI.System || {};
 					'--rounded': rounded,
 					'--compact': compact,
 					'--trimmable': trimmable,
-					'--lock': lock,
 					'--with-right-icon': withClear || dropdown,
 					'--no-text': text.length === 0,
 				},
@@ -558,9 +557,6 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _trimmable)[_trimmable]) {
 	    classes.push('--trimmable');
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _lock)[_lock]) {
-	    classes.push('--lock');
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _withClear)[_withClear] || babelHelpers.classPrivateFieldLooseBase(this, _dropdown)[_dropdown]) {
 	    classes.push('--with-right-icon');

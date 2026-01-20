@@ -1,0 +1,4 @@
+<?php
+$MESS["BIZPROC_READ_DATA_ACTIVITY_DESCRIPTION"] = "Қоймадан деректерді оқиды";
+$MESS["BIZPROC_READ_DATA_ACTIVITY_NAME"] = "Деректерді оқу";
+$MESS["BIZPROC_READ_DATA_STORAGE_CATEGORY"] = "Қойма";

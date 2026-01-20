@@ -3,4 +3,5 @@ declare type ScrollToBottomEvent = {
 	messageId?: string | number,
 	withAnimation?: boolean,
 	force?: boolean,
+	position?: 'top' | 'center' | 'bottom',
 }

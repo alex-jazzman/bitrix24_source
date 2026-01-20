@@ -1,0 +1,5 @@
+<?php
+$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_ACCESS_TO_TASK_DENIED"] = "Insufficient permission to view task.";
+$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_CHAT_NOT_FOUND"] = "Task chat was not found.";
+$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_CHAT_NOT_TASK_CHAT"] = "This chat is not a task chat.";
+$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_TASK_ID_NOT_FOUND"] = "Task was not found.";

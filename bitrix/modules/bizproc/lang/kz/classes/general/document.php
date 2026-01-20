@@ -6,7 +6,9 @@ $MESS["BPCGDOC_AUTO_EXECUTE_EDIT"] = "Өзгерту";
 $MESS["BPCGDOC_AUTO_EXECUTE_NONE"] = "Жоқ";
 $MESS["BPCGDOC_DELEGATE_LOG_MSGVER_1"] = "Пайдаланушы #FROM#, \"#NAME#\" тапсырмасын #TO# пайдаланушыға табыстады";
 $MESS["BPCGDOC_DELEGATE_LOG_TITLE"] = "Табыстау";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_DEFAULT"] = "#AUTHOR# сізге бизнес-процестің тапсырмасын берді";
 $MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_MSGVER_1"] = "Сізге [URL=#TASK_URL#]#TASK_NAME#[/URL] бизнес-процестің тапсырмасы табысталды";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_SIMPLE"] = "Сізге #PROCESS_NAME# бизнес-процестің тапсырмасын берді : #TASK_NAME#";
 $MESS["BPCGDOC_EMPTY_WD_ID_MSGVER_1"] = "Бизнес-процесс қалыбының коды көрсетілмеген";
 $MESS["BPCGDOC_ERROR_ACTION_MSGVER_1"] = "\"#NAME#\" тапсырмасы: #ERROR#";
 $MESS["BPCGDOC_ERROR_DELEGATE_0_MSGVER_1"] = "\"#NAME#\" тапсырмасы табыстала алмайды, өйткені таңдалған қызметкер сізге бағынышты емес";
@@ -26,5 +28,8 @@ $MESS["BPCGDOC_WAIT"] = "күтіңіз...";
 $MESS["BPCGDOC_WI_B24_LIMITS_MESSAGE"] = "Сіздің порталыңызда кейбір құжаттарда бір уақытта екіден астам бизнес-процесстер орындалады. Біраз уақыттан кейін бір құжатқа бір уақытта іске қосылған ең көп дегенде екі бизнес-процеске шектеу енгізіледі. Жақын арада бизнес-процестердің логикасын түзетуге кеңес береміз. [URL=https://helpdesk.bitrix24.ru/open/4662427/] Толығырақ[/URL]";
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE"] = "Сіз іске қосқан кейбір бизнес-процестер(#CNT#) дұрыс аяқталмады.
 [URL=#PATH#]Олармен танысып шығу үшін тізімге өтіңіз [/URL].";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE_DEFAULT"] = "Сіз іске қосқан кейбір бизнес-процестер(#CNT#) дұрыс аяқталмады.
+[URL=#PATH#]Олармен танысып шығу үшін тізімге өтіңіз [/URL].";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE_DEFAULT_TITLE"] = "Бизнес-процестер";
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_TITLE_MSGVER_1"] = "Портал көмекшісі";
 $MESS["BPCGDOC_YES"] = "Иә";

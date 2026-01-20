@@ -1,3 +1,4 @@
+import { Dom, Type } from 'main.core';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserModel } from 'tasks.v2.model.users';
 
@@ -18,7 +19,14 @@ export class CheckListManager
 
 	getItem(itemId: number | string): ?CheckListModel
 	{
-		return this.#getCheckLists().find((item: CheckListModel) => item.id === itemId);
+		return this.#getCheckLists().find((item: CheckListModel) => item.id === this.prepareItemId(itemId));
+	}
+
+	getItems(itemIds: [number | string]): CheckListModel[]
+	{
+		const itemIdsSet = new Set(itemIds);
+
+		return this.#getCheckLists().filter((item: CheckListModel) => itemIdsSet.has(item.id));
 	}
 
 	getItemsOnLevel(parentId: number | string): CheckListModel[]
@@ -55,6 +63,13 @@ export class CheckListManager
 		}
 
 		return level;
+	}
+
+	isParentItem(itemId: number | string): boolean
+	{
+		const item = this.getItem(itemId);
+
+		return item && item.parentId === 0;
 	}
 
 	isItemDescendant(potentialAncestor: ?CheckListModel, item?: CheckListModel): boolean
@@ -272,6 +287,28 @@ export class CheckListManager
 		}
 	}
 
+	resortItemsBeforeIndex(
+		parentId: number | string,
+		sortIndex: number,
+		updateFn: (updates: CheckListModel[]) => void,
+	): void
+	{
+		const allItems = this.#getCheckLists()
+			.filter((item: CheckListModel) => item.parentId === parentId);
+
+		const itemsToResort = allItems
+			.filter((item: CheckListModel) => item.sortIndex <= sortIndex)
+			.sort((a: CheckListModel, b: CheckListModel) => a.sortIndex - b.sortIndex);
+
+		const updates = itemsToResort
+			.map((item: CheckListModel, index: number) => ({
+				...item,
+				sortIndex: index,
+			}));
+
+		updateFn(updates);
+	}
+
 	resortItemsAfterIndex(
 		parentId: number | string,
 		sortIndex: number,
@@ -286,15 +323,12 @@ export class CheckListManager
 			.sort((a: CheckListModel, b: CheckListModel) => a.sortIndex - b.sortIndex);
 
 		const updates = itemsToResort
-			.map((item: CheckListModel) => ({
+			.map((item: CheckListModel, index: number) => ({
 				...item,
-				sortIndex: item.sortIndex + 1,
+				sortIndex: (sortIndex + 1) + index,
 			}));
 
-		if (updates.length > 0)
-		{
-			updateFn(updates);
-		}
+		updateFn(updates);
 	}
 
 	moveRight(item: CheckListModel, updateFn: (updates: CheckListModel[]) => void): void
@@ -462,26 +496,26 @@ export class CheckListManager
 		});
 	}
 
-	getFirstChild(itemId: number | string): ?CheckListModel
+	getFirstVisibleChild(itemId: number | string): ?CheckListModel
 	{
 		const children = this.#getCheckLists()
-			.filter((item: CheckListModel) => item.parentId === itemId)
+			.filter((item: CheckListModel) => item.parentId === itemId && !item.hidden)
 			.sort((a: CheckListModel, b: CheckListModel) => a.sortIndex - b.sortIndex);
 
 		return children[0] || null;
+	}
+
+	getEmptiesItem(): CheckListModel[]
+	{
+		return this.#getCheckLists().filter((item: CheckListModel) => {
+			return item.title === '';
+		});
 	}
 
 	hasEmptyItemWithFiles(hasItemFiles: (item: CheckListModel) => boolean): boolean
 	{
 		return this.#getCheckLists().some((item: CheckListModel) => {
 			return item.title === '' && hasItemFiles(item);
-		});
-	}
-
-	hasItemWithFiles(hasItemFiles: (item: CheckListModel) => boolean): boolean
-	{
-		return this.#getCheckLists().some((item: CheckListModel) => {
-			return hasItemFiles(item);
 		});
 	}
 
@@ -513,7 +547,10 @@ export class CheckListManager
 
 	isItemCollapsed(item: CheckListModel, isPreview: boolean, positionIndex: number): boolean
 	{
-		if (item.localCollapsedState !== null)
+		if (
+			!Type.isNull(item.localCollapsedState)
+			&& !Type.isUndefined(item.localCollapsedState)
+		)
 		{
 			return item.localCollapsedState;
 		}
@@ -621,6 +658,179 @@ export class CheckListManager
 		});
 
 		return result;
+	}
+
+	prepareItemId(itemId: number | string): number | string
+	{
+		const num = parseInt(itemId, 10);
+
+		const isStringExactlyAnInteger = !Number.isNaN(num) && num.toString() === itemId;
+
+		return isStringExactlyAnInteger ? parseInt(itemId, 10) : itemId;
+	}
+
+	isFirstItemHigherLevelThan(firstItem: CheckListModel, secondItem: CheckListModel): boolean
+	{
+		const firstItemLevel = this.getItemLevel(firstItem);
+		const secondItemLevel = this.getItemLevel(secondItem);
+
+		return firstItemLevel < secondItemLevel;
+	}
+
+	hasItemChildren(item: CheckListModel): boolean
+	{
+		return this.#getCheckLists().some((child: CheckListModel) => child.parentId === item.id);
+	}
+
+	isItemCompleted(item: CheckListModel): boolean
+	{
+		return item.localCompleteState ?? item.isComplete;
+	}
+
+	scrollToCheckList(container: HTMLElement, checkListId: number | string, behavior: string = 'instant'): void
+	{
+		let scrollContainer = container.closest('[data-task-card-scroll]');
+		if (!scrollContainer)
+		{
+			scrollContainer = container.querySelector('[data-task-card-scroll]');
+		}
+		const checkListNode = container.querySelector([`[data-id="${checkListId}"]`]);
+
+		if (scrollContainer && checkListNode)
+		{
+			const checkListRect = Dom.getPosition(checkListNode);
+			const containerRect = Dom.getPosition(scrollContainer);
+
+			const offsetTopInsideContainer = (
+				checkListRect.top
+				- containerRect.top
+				+ scrollContainer.scrollTop
+			);
+
+			scrollContainer.scrollTo({
+				top: offsetTopInsideContainer - 200,
+				behavior,
+			});
+		}
+	}
+
+	handleTargetParentFilter(
+		movedItem: CheckListModel,
+		currentUserId: number,
+		updateFn: (updates: CheckListModel[]) => void,
+	): boolean
+	{
+		const itemIdsToUpdateInNewParent = new Map();
+		const targetParentItem = this.getRootParentByChildId(movedItem.id);
+		const draggedChildren = this.#getDraggedChildren(movedItem);
+
+		this.#processCompletedFilter(movedItem, targetParentItem, itemIdsToUpdateInNewParent);
+		draggedChildren.forEach((child: CheckListModel) => {
+			this.#processCompletedFilter(child, targetParentItem, itemIdsToUpdateInNewParent);
+		});
+
+		const myItemIds = this.findItemIdsWithUser(targetParentItem.id, currentUserId);
+		this.#processUserFilter(movedItem, targetParentItem, myItemIds, itemIdsToUpdateInNewParent);
+		draggedChildren.forEach((child: CheckListModel) => {
+			this.#processUserFilter(child, targetParentItem, myItemIds, itemIdsToUpdateInNewParent);
+		});
+
+		this.#applyVisibilityChanges(itemIdsToUpdateInNewParent, updateFn);
+
+		return true;
+	}
+
+	#getDraggedChildren(movedItem: CheckListModel): CheckListModel[]
+	{
+		return this.getAllChildren(movedItem.id);
+	}
+
+	#processCompletedFilter(
+		item: CheckListModel,
+		targetParentItem: any,
+		itemIdsMap: Map<string | number, string>,
+	): void
+	{
+		if (targetParentItem.areCompletedCollapsed && this.isItemCompleted(item))
+		{
+			itemIdsMap.set(item.id, 'hide');
+		}
+
+		if (!targetParentItem.areCompletedCollapsed && this.isItemCompleted(item))
+		{
+			itemIdsMap.set(item.id, 'show');
+		}
+	}
+
+	#processUserFilter(
+		item: CheckListModel,
+		targetParentItem: any,
+		myItemIds: Set<string | number>,
+		itemIdsMap: Map<string | number, string>,
+	): void
+	{
+		if (targetParentItem.myFilterActive && !myItemIds.has(item.id))
+		{
+			itemIdsMap.set(item.id, 'hide');
+		}
+
+		if (
+			!targetParentItem.myFilterActive
+			&& myItemIds.has(item.id)
+			&& !itemIdsMap.has(item.id)
+		)
+		{
+			itemIdsMap.set(item.id, 'show');
+		}
+	}
+
+	#applyVisibilityChanges(
+		itemIdsToUpdateInNewParent: Map<string | number, string>,
+		updateFn: (updates: CheckListModel[]) => void,
+	): void
+	{
+		const { hideIds, showIds } = this.#splitIdsByAction(itemIdsToUpdateInNewParent);
+
+		const updates = this.#createVisibilityUpdates(hideIds, showIds);
+		if (updates.length > 0)
+		{
+			updateFn(updates);
+		}
+	}
+
+	#splitIdsByAction(itemIdsMap: Map<string | number, string>): Object
+	{
+		const hideIds = [];
+		const showIds = [];
+
+		for (const [id, action] of itemIdsMap)
+		{
+			if (action === 'hide')
+			{
+				hideIds.push(id);
+			}
+			else if (action === 'show')
+			{
+				showIds.push(id);
+			}
+		}
+
+		return { hideIds, showIds };
+	}
+
+	#createVisibilityUpdates(hideIds: Array<string | number>, showIds: Array<string | number>): CheckListModel[]
+	{
+		const updates = [];
+
+		this.getItems(showIds).forEach((item: CheckListModel) => {
+			updates.push({ ...item, hidden: false });
+		});
+
+		this.getItems(hideIds).forEach((item: CheckListModel) => {
+			updates.push({ ...item, hidden: true });
+		});
+
+		return updates;
 	}
 
 	#setItemsVisibility(

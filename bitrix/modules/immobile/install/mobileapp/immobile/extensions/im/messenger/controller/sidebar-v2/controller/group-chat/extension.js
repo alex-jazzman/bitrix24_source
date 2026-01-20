@@ -113,7 +113,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 		{
 			const muted = this.dialogHelper.isMuted;
 
-			const buttons = [
+			return [
 				createVideoCallButton({
 					onClick: () => this.handleVideoCallAction(),
 					disabled: !this.permissionManager.canCall(),
@@ -134,30 +134,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 					selected: this.dialogHelper.isMessagesAutoDeleteDelayEnabled,
 				}),
 			];
-
-			// TODO: task-tab refactor this and make it part of the integration in the final version
-			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (dialog.type === DialogType.tasksTask)
-			{
-				const openTaskButton = {
-					id: 'open_task',
-					icon: Icon.GO_TO,
-					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_GO_TO_TASK'),
-					onClick: () => {
-						if (!Type.isStringFilled(dialog.entityLink.url))
-						{
-							return;
-						}
-
-						const url = `${currentDomain}${dialog.entityLink.url}`;
-						inAppUrl.open(url);
-					},
-				};
-
-				buttons.unshift(openTaskButton);
-			}
-
-			return buttons;
 		}
 
 		// endregion

@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
+		'assets/icons',
 		'tokens',
+		'ui-system/blocks/icon',
+		'utils/object',
 		'utils/validation',
 		'utils/enums/base',
-		'ui-system/blocks/icon',
-		'assets/icons',
 	],
 	'bundle' => [
 		'./src/design-enum',

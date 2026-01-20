@@ -1,9 +1,7 @@
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
-import { AddBackground } from 'tasks.v2.component.elements.add-background';
+import { AddButton } from 'tasks.v2.component.elements.add-button';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -16,16 +14,14 @@ import './tags.css';
 export const Tags = {
 	components: {
 		BIcon,
-		AddBackground,
+		AddButton,
 		FieldAdd,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -37,13 +33,10 @@ export const Tags = {
 		return {
 			isDialogShown: false,
 			tagsIndexes: {},
+			isHovered: false,
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		tags(): string[]
 		{
 			return [...this.task.tags].sort((a, b) => this.tagsIndexes[a] - this.tagsIndexes[b]);
@@ -56,11 +49,13 @@ export const Tags = {
 		{
 			return !this.task.rights.edit;
 		},
-	},
-	watch: {
-		tags(): void
+		isAddActive(): boolean
 		{
-			tagsDialog.setTaskId(this.taskId).updateItems();
+			return !this.readonly && this.isFilled;
+		},
+		isAddVisible(): boolean
+		{
+			return this.isDialogShown || this.isHovered;
 		},
 	},
 	created(): void
@@ -75,14 +70,18 @@ export const Tags = {
 				return;
 			}
 
-			tagsDialog.setTaskId(this.taskId).onCloseOnce(this.handleClose).showTo(this.$refs.anchor);
-			tagsDialog.onUpdateOnce(this.rememberTagsIndexes);
+			tagsDialog.show({
+				targetNode: this.$refs.anchor,
+				taskId: this.taskId,
+				onClose: this.handleDialogClose,
+			});
 
 			this.isDialogShown = true;
 		},
-		handleClose(): void
+		handleDialogClose(tags: string[]): void
 		{
 			this.isDialogShown = false;
+			this.rememberTagsIndexes(tags);
 		},
 		handleCrossClick(tag: string): void
 		{
@@ -105,19 +104,20 @@ export const Tags = {
 			:data-task-id="taskId"
 			:data-task-field-id="tagsMeta.id"
 			:data-task-field-value="task.tags.join(',')"
-			@click="handleClick"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
-			<AddBackground v-if="!readonly && isFilled" :isActive="isDialogShown"/>
+			<AddButton v-if="isAddActive" :isVisible="isAddVisible" @click="handleClick"/>
 			<template v-for="tag in tags" :key="tag">
 				<div class="tasks-field-tag">
 					<span>{{ tag }}</span>
 					<div v-if="!readonly" class="tasks-field-tag-cross" @click.capture.stop="handleCrossClick(tag)">
-						<BIcon :name="Outline.CROSS_L" :hoverable="true"/>
+						<BIcon :name="Outline.CROSS_L" hoverable/>
 					</div>
 				</div>
 			</template>
-			<FieldAdd v-if="!isFilled" :icon="Outline.TAG"/>
-			<div class="tasks-field-tags-anchor" ref="anchor"></div>
+			<FieldAdd v-if="!isFilled" :icon="Outline.TAG" @click="handleClick"/>
+			<div class="tasks-field-tags-anchor" ref="anchor"/>
 		</div>
 	`,
 };

@@ -55,7 +55,7 @@ export const UserListPopup = {
 			default: 0,
 		},
 	},
-	emits: ['close'],
+	emits: ['close', 'scroll'],
 	computed:
 	{
 		POPUP_ID: () => POPUP_ID,
@@ -91,6 +91,7 @@ export const UserListPopup = {
 				:contextDialogId="contextDialogId"
 				:loading="loading" 
 				:adjustPopupFunction="adjustPosition"
+				@scroll="$emit('scroll', $event)"
 			/>
 		</MessengerPopup>
 	`,

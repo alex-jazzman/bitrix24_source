@@ -42,6 +42,8 @@ $MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_PORTAL"] = "Create a comfortable and i
 $MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_REQUISITE"] = "Enter your company details to have them added to the CRM. Create a landing page and use it as your business card.";
 $MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_SCHEDULE"] = "Specify business days and hours for your company. This will make working time management and task deadline planning more accurate.";
 $MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY"] = "Make user accounts more secure to prevent unauthorized access.";
+$MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY_MSGVER_1"] = "Secure your personal and corporate data.";
+$MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY_MSGVER_2"] = "Secure employee accounts, your personal and corporate data.";
 $MESS["INTRANET_SETTINGS_DESCRIPTION_PAGE_TOOLS"] = "Make your company workspace more comfortable and less crowded. Enable only the tools that your employees really need.";
 $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_DOMAIN_EXISTS_ERROR"] = "This address already exists.";
 $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_FORMAT_ERROR"] = "Address can only include Latin characters and numbers.";
@@ -67,7 +69,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1"] = "User
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL"] = "This address will be used for all outgoing emails unless the email settings specify different senders.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DESC_LIKE"] = "<div class=\"intranet-settings__like_box\"><span class=\"intranet-settings__like_icon\"><span class=\"ui-icon-set --like\"></span></span> <span class=\"intranet-settings__like_text\">You and 24 more</span></div>";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1"] = "Enable this option to allow external users in your Bitrix24. These users will be added to a special user group with restricted access permissions, any access to internal company data denied. #MORE_DETAILS#";
-$MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = "New users can quick register by clicking a link created by existing users. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = "New users can quickly register by clicking a link created by existing users. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_OVERDUE_CHATS_ON_MSGVER_1"] = "When the task exceeds the deadline, the system will create a chat for everyone involved in the task. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_POST_FEED_ON"] = "Broadcast posting is allowed in Feed. These posts will be visible to everyone.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_PUBLISH_TO_ALL_DEFAULT_ON"] = "New Feed posts will have all users selected as recipients.";
@@ -128,6 +130,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_NAME_FORMAT"] = "Name format:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL"] = "Send notifications to email:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT"] = "Send authentication code to Notifications";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD"] = "Employees have to enable two-factor authentication within:";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD_MSGVER_1"] = "2FA grace period:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "All employees can post to Feed";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = 'Allow broadcast posts';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Add all employees to recipients by default (broadcast)";
@@ -161,6 +164,7 @@ $MESS["INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK"] = "View event log";
 $MESS["INTRANET_SETTINGS_GO_TO_USER_LIST_LINK"] = "View employees";
 $MESS["INTRANET_SETTINGS_GUIDE"] = "Configuration guide";
 $MESS["INTRANET_SETTINGS_LOGIN_EVENTS"] = "Event log";
+$MESS["INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT"] = "The dashboard language will be changed for all users. This will not change the language of the Bitrix24 user interface. Your dashboards will be reinstalled after you change the language; it will take a few minutes.";
 $MESS["INTRANET_SETTINGS_MAINPAGE_BUTTON_EDIT"] = "Edit";
 $MESS["INTRANET_SETTINGS_MAINPAGE_BUTTON_MARKET"] = "Select template";
 $MESS["INTRANET_SETTINGS_MAINPAGE_BUTTON_PARTNERS"] = "Order from partners";
@@ -218,8 +222,20 @@ $MESS["INTRANET_SETTINGS_SECTION_GDPR_DESCRIPTION"] = "GDPR Compliance details a
 $MESS["INTRANET_SETTINGS_SECTION_REQUISITE_DESCRIPTION"] = "If you have more than one company, you can specify details for each of them individually.";
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_DEVICE_HISTORY"] = "Login history will help you investigate security breaches. You will see all devices and IP addresses a user used to log on to their account. You can also log out the offending user on all devices.";
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_EVENT_LOG"] = "The event log shows important events (usually user log-ons). You can always quickly check every log on: who, when and the user's IP address.";
-$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_FIRST"] = "To improve security and prevent unauthorized log in, use a one-time code word we will create and send to the employee every time they make a log in attempt. If you make two-factor authentication mandatory for everyone, every employee will receive a message with instructions to enable this function and a time frame to do so.";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_FIRST"] = "To improve security and prevent unauthorized login, use a one-time code we will create and send to the user every time they make a login attempt. If you make two-factor authentication mandatory for everyone, all users will receive a message with instructions to enable this function and a time frame to do so.";
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_IP_ACCESS"] = "Restrict access to your Bitrix24 by IP address.";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP"] = "Attackers won't be able to access corporate data via user accounts even if the passwords got leaked. Users will have to confirm their login in the mobile app, using SMS or a recovery code.
+[BR]
+Enable two-factor authentication for everyone. The users will be notified they have to enable the new security feature within a specified time period, and a set of instructions.";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_HIGH_MODE"] = "Two-factor authentication protects corporate data and mitigates the risk of attacks. Unprotected, your system remains vulnerable to attacks which may result in financial and reputational damage.
+[BR]
+Two-factor authentication is enabled for all accounts, and is mandatory. Attackers cannot access your accounts even if your password got leaked. Users will have to confirm their login in the mobile app, using SMS or a recovery code.
+[BR]
+The users have received notifications requiring to enable the TFA, and a set of instructions.
+[BR]
+Please [HELP_LINK]contact the Helpdesk[/HELP_LINK] if you encounter issues using two-factor authentication.
+";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_WARNING"] = "Users who fail to enable the TFA within the specified time period, [SPAN]won't be able to log in to Bitrix24[/SPAN].";
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_SECOND"] = "Employees who have failed to enable two-factor authentication within the time allotted, will not be able to log in to their accounts.";
 $MESS["INTRANET_SETTINGS_SECTION_TAB_INFO"] = "If there are departments in your company that have specific business hours or work in shifts, you can create individual work schedules for them.";
 $MESS["INTRANET_SETTINGS_SECTION_TAB_TITLE_COMPANY"] = "Company";
@@ -268,6 +284,8 @@ $MESS["INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL"] = "Your Bitrix24
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_TOOLS_SHOW"] = "Main menu tools";
 $MESS["INTRANET_SETTINGS_SECTION_TOOLS_DESCRIPTION"] = "Select the tools you will use in your Bitrix24.</br>Other tools will not be available to the employees.";
 $MESS["INTRANET_SETTINGS_SECTION_TOOLS_LINK_SETTINGS"] = "Open";
+$MESS["INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TEXT"] = "Protect personal and corporate data. Users will receive a request to their trusted device to confirm login to Bitrix24.";
+$MESS["INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TITLE"] = "Enable new two-factor authentication";
 $MESS["INTRANET_SETTINGS_THEME_UPLOAD_BTN"] = "Use custom theme";
 $MESS["INTRANET_SETTINGS_TITLE_DESCRIPTION_PAGE_MAINPAGE"] = "The start page is the first page the users see when they log in to your Bitrix24.";
 $MESS["INTRANET_SETTINGS_TITLE_MENU"] = "Settings";

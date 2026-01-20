@@ -12,6 +12,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 	const { MessengerMutationManager } = require('im/messenger/lib/state-manager/vuex-manager/mutation-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const {
 		OptionRepository,
@@ -47,6 +48,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		queueModel,
 		commentModel,
 		anchorModel,
+		stickerPackModel,
 	} = require('im/messenger/model');
 
 	const {
@@ -115,6 +117,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 		async init()
 		{
+			this.initEmitter();
 			await this.initDatabase();
 			this.initStore();
 			this.initMutationManager();
@@ -122,6 +125,12 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			this.initLocalStorageWriter();
 
 			this.initComplete();
+		}
+
+		initEmitter()
+		{
+			const emitter = new JNEventEmitter();
+			serviceLocator.add('emitter', emitter);
 		}
 
 		async initDatabase()
@@ -266,6 +275,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				queueModel,
 				commentModel,
 				anchorModel,
+				stickerPackModel,
 			});
 		}
 

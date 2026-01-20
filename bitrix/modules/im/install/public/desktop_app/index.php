@@ -1,26 +1,48 @@
-<?
-define("BX_SKIP_USER_LIMIT_CHECK", true);
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/desktop_app/headers.php");
+define("BX_SKIP_USER_LIMIT_CHECK", true);
+define("AIR_TEMPLATE_HIDE_CHAR_BAR", true);
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+
+if (!CModule::IncludeModule('im'))
+{
+	return;
+}
+
+global $USER;
+global $APPLICATION;
+?>
+
+<!DOCTYPE html>
+
+<?php if ((int)$USER->GetID() <= 0 || \Bitrix\Im\User::getInstance()->isConnector()): ?>
+	<script>
+		if (typeof(BXDesktopSystem) != 'undefined')
+		{
+			console.log('desktop_app: no auth, calling desktop login function')
+			BXDesktopSystem.Login({});
+		}
+		else
+		{
+			location.href = '/';
+		}
+	</script>
+	<?php return true; ?>
+<?php endif ?>
+
+<?php
+$isDesktop = isset($_GET['BXD_API_VERSION']) || mb_strpos($_SERVER['HTTP_USER_AGENT'], 'BitrixDesktop') !== false;
+$isIframe = isset($_GET['IFRAME']) && $_GET['IFRAME'] === 'Y';
+$isLegacyChat = !$isDesktop && \Bitrix\Im\Settings::isLegacyChatActivated();
+
+if (!$isIframe && !$isLegacyChat)
+{
+	define("BX_DESKTOP", true);
+}
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
 \Bitrix\Main\Page\Asset::getInstance()->setJsToBody(false);
-
-if (!CModule::IncludeModule('im'))
-	return;
-
-$isDesktop = isset($_GET['BXD_API_VERSION']) || mb_strpos($_SERVER['HTTP_USER_AGENT'], 'BitrixDesktop') !== false;
-
-if (intval($USER->GetID()) <= 0 || \Bitrix\Im\User::getInstance()->isConnector())
-{
-	?>
-<script>
-	if (typeof(BXDesktopSystem) != 'undefined')
-		BXDesktopSystem.Login({});
-	else
-		location.href = '/';
-</script><?
-	return true;
-}
 
 if (
 	\Bitrix\Main\Loader::includeModule('bitrix24')
@@ -28,7 +50,6 @@ if (
 )
 {
 	LocalRedirect('/desktop_app/limit.php');
-	return false;
 }
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public/desktop_app/index.php");
@@ -38,14 +59,14 @@ if (IsModuleInstalled('ui'))
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 }
 
-if (isset($_GET['IFRAME']) && $_GET['IFRAME'] == 'Y')
+if ($isIframe)
 {
 	$APPLICATION->IncludeComponent("bitrix:im.messenger", "iframe", Array(
 		"CONTEXT" => "FULLSCREEN",
 		"DESKTOP" => $isDesktop,
 	), false, Array("HIDE_ICONS" => "Y"));
 }
-else if (!$isDesktop && \Bitrix\Im\Settings::isLegacyChatActivated())
+else if ($isLegacyChat)
 {
 	$APPLICATION->IncludeComponent("bitrix:im.messenger", "fullscreen", Array(
 		"CONTEXT" => "FULLSCREEN",
@@ -55,21 +76,17 @@ else if (!$isDesktop && \Bitrix\Im\Settings::isLegacyChatActivated())
 }
 else
 {
-	define("BX_DESKTOP", true);
 	?>
 	<script>
 		if (typeof(BXDesktopSystem) != 'undefined')
 			BX.desktop.init();
-		<?if (!isset($_GET['BXD_MODE'])):?>
+		<?php if (!isset($_GET['BXD_MODE'])): ?>
 		else
 			location.href = '/';
-		<?endif;?>
+		<?php endif ?>
 	</script>
-	<?
-	$APPLICATION->IncludeComponent("bitrix:im.messenger", "", Array(
-		"CONTEXT" => "DESKTOP",
-		"DESKTOP" => true,
-	), false, Array("HIDE_ICONS" => "Y"));
+	<?php
+	$APPLICATION->IncludeComponent("bitrix:im.router", "", Array(), false, Array("HIDE_ICONS" => "Y"));
 
 	$diskEnabled = false;
 	if(IsModuleInstalled('disk'))
@@ -99,10 +116,11 @@ else
 		if (class_exists('\Bitrix\Timeman\Monitor\Config'))
 		{
 			\Bitrix\Main\UI\Extension::load('timeman.monitor');
-
-			?><script>
-			BX.Timeman.Monitor.init(<?=\Bitrix\Timeman\Monitor\Config::json()?>);
-			</script><?
+			?>
+				<script>
+					BX.Timeman.Monitor.init(<?= \Bitrix\Timeman\Monitor\Config::json() ?>);
+				</script>
+			<?php
 		}
 	}
 }

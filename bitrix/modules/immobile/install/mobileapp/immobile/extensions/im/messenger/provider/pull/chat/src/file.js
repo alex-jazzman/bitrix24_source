@@ -5,6 +5,7 @@ jn.define('im/messenger/provider/pull/chat/file', (require, exports, module) => 
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
 	const { getLogger } = require('im/messenger/lib/logger');
+
 	const logger = getLogger('pull-handler--chat-file');
 
 	/**

@@ -11,7 +11,7 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 	#groups: Set;
 	#scopes: Set;
 	#params: Set;
-	#scopeParamsMap: {[scopeCode: string]: Parameter[]};
+	#paramList: {[scopeCode: string]: Parameter[]};
 
 	static create(id, settings): this
 	{
@@ -42,7 +42,7 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 			this.#groups.add(Text.toNumber(groupId));
 		});
 
-		this.#scopeParamsMap = this._model.getField('SCOPE_PARAMS_MAP', {});
+		this.#paramList = this._model.getField('PARAM_LIST', {});
 
 		EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onChange', this.onChange.bind(this));
 	}
@@ -84,7 +84,7 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 			groups: this.#groups,
 			scopes: this.#scopes,
 			params: this.#params,
-			scopeParamsMap: this.#scopeParamsMap,
+			paramList: this.#paramList,
 		};
 
 		const selector = new DashboardParametersSelector(selectorParams);

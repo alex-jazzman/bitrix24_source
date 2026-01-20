@@ -67,3 +67,4 @@ $MESS['LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2'] = 'AI сам подберё
 $MESS['LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3'] = 'Вы получите готовый сайт за пару минут';
 $MESS['LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION'] = 'Демо-режим включится автоматически ↓';
 $MESS['LANDING_SITE_TILE_POPUP_COPILOT_BUTTON'] = 'Создать сайт с AI';
+$MESS['LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION_2'] = '<p>Демо тарифа и пробный период подписки</p><p>BitrixGPT + Маркетплейс включится автоматическии ↓</p>';

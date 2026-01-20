@@ -51,7 +51,9 @@ export class UserSelector extends BaseField
 					id: 'department',
 					options: {
 						selectMode: this.#getDepartamentsSelectMode(),
-						allowFlatDepartments: this.#enableDepartments,
+						allowFlatDepartments: Type.isNil(params.allowFlatDepartments)
+							? this.#enableDepartments
+							: params.allowFlatDepartments,
 						allowSelectRootDepartment: this.#enableDepartments,
 					},
 				},

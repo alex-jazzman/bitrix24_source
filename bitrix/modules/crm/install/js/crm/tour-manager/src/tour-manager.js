@@ -1,6 +1,6 @@
-import { TourInterface } from './tour.js';
 import { BannerDispatcher } from 'crm.integration.ui.banner-dispatcher';
 import Queue from './queue.js';
+import { TourInterface } from './tour.js';
 
 export class TourManager
 {
@@ -69,8 +69,15 @@ export class TourManager
 	#toBannerDispatcherQueue(tour: TourInterface): void
 	{
 		this.#bannerDispatcher.toQueue((onDone: Function) => {
-			tour.getGuide().subscribe(TourManager.TOUR_FINISH_EVENT, onDone);
-			tour.show();
+			if (tour.canShow())
+			{
+				tour.getGuide().subscribe(TourManager.TOUR_FINISH_EVENT, onDone);
+				tour.show();
+			}
+			else
+			{
+				onDone();
+			}
 		});
 	}
 

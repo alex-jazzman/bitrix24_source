@@ -7,10 +7,6 @@ jn.define('im/messenger-v2/application/lib/update-notifier', (require, exports, 
 
 	function showUpdateAppScreenIfNeeded()
 	{
-		// TODO: MessengerV2 remove after widget preload release
-
-		return false;
-
 		if (Feature.isMessengerV2Enabled && !Feature.isTabsWidgetApiV2Supported)
 		{
 			Feature.showUnsupportedWidget({

@@ -7,6 +7,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	const { outline, Icon } = require('assets/icons');
 	const { OutlineIconTypes } = require('assets/icons/types');
 	const { mergeImmutable } = require('utils/object');
+	const { isNil } = require('utils/type');
 	const { withCurrentDomain } = require('utils/url');
 
 	const DEFAULT_ICON_SIZE = {
@@ -25,6 +26,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	 * @property {number} [size.height]
 	 * @property {number} [size.width]
 	 * @property {boolean} [disabled]
+	 * @property {boolean} [solid]
 	 * @property {Object} [style]
 	 * @property {Function} [onClick]
 	 *
@@ -36,11 +38,18 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		{
 			const { testId, forwardRef } = this.props;
 
-			return Image({
+			if (!this.#hasIcon())
+			{
+				return null;
+			}
+
+			const imageProps = this.#removeEmptyValues({
 				ref: forwardRef,
 				testId,
 				...this.getProps(),
 			});
+
+			return Image(imageProps);
 		}
 
 		getProps()
@@ -84,8 +93,10 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 		getEnumIconParams()
 		{
-			const { icon } = this.props;
+			const { icon, solid } = this.props;
 			const svgContent = icon.getSvg();
+
+			let iconEnum = icon;
 
 			if (svgContent)
 			{
@@ -96,12 +107,29 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				};
 			}
 
+			if (solid)
+			{
+				const solidIconKey = this.#getSolidEnumKey();
+				if (Icon.hasEnum(solidIconKey))
+				{
+					iconEnum = Icon.getEnum(solidIconKey);
+				}
+			}
+
 			return {
 				named: {
-					named: icon.getIconName(),
-					fallbackUrl: withCurrentDomain(icon.getPath()),
+					named: iconEnum.getIconName(),
+					fallbackUrl: withCurrentDomain(iconEnum.getPath()),
 				},
 			};
+		}
+
+		#getSolidEnumKey()
+		{
+			const icon = this.#getIcon();
+			const iconName = icon.getIconName();
+
+			return `solid_${iconName}`.toUpperCase();
 		}
 
 		getIconContent()
@@ -116,7 +144,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 		isIconContent()
 		{
-			const { icon } = this.props;
+			const icon = this.#getIcon();
 
 			return typeof icon === 'string' && outline[icon];
 		}
@@ -177,12 +205,31 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 			};
 		}
 
+		#getIcon()
+		{
+			const { icon } = this.props;
+
+			return icon;
+		}
+
+		#hasIcon()
+		{
+			return this.#getIcon() && (this.isIconContent() || this.#getIcon() instanceof Icon);
+		}
+
 		handleOnFailure = () => {
 			if (Application.isBeta())
 			{
 				console.warn(`IconView: The image with the parameters ${JSON.stringify(this.getEnumIconParams())} was not uploaded. The icon enum must be updated`);
 			}
 		};
+
+		#removeEmptyValues(obj)
+		{
+			return Object.fromEntries(
+				Object.entries(obj).filter(([_, value]) => !isNil(value)),
+			);
+		}
 	}
 
 	IconView.propTypes = {
@@ -192,6 +239,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 			PropTypes.instanceOf(Icon),
 			PropTypes.string,
 		]),
+		solid: PropTypes.bool,
 		color: PropTypes.instanceOf(Color),
 		opacity: PropTypes.number,
 		size: PropTypes.oneOfType([

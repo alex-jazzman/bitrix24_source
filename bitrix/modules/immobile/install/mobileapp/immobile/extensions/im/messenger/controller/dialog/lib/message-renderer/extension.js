@@ -700,12 +700,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const updateMessagesObj = {};
 			for (const message of viewMessageList)
 			{
-				let messageObj = message;
-				if (message.type === MessageType.audio)
-				{
-					messageObj = this.updatePlayingTimeByMessage(message);
-				}
-
+				const messageObj = this.#updateMessageByType(message);
 				updateMessagesObj[messageObj.id] = messageObj;
 				this.viewMessageCollection[messageObj.id] = messageObj;
 				await this.view.updateMessageListById(messageObj.id, messageObj);
@@ -719,18 +714,44 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 * @desc update view message by id
 		 * @param {number} id
 		 * @param {Message} message
-		 * @param {string | null} section
+		 * @param {string | object | null} updatingBlocks
 		 * @return {Promise}
 		 */
-		async #updateMessageById(id, message, section)
+		async #updateMessageById(id, message, updatingBlocks)
 		{
-			let messageObj = message;
-			if (message.type === MessageType.audio)
+			const messageObj = this.#updateMessageByType(message);
+
+			let updatingBlock = null;
+			if (Type.isString(updatingBlocks))
 			{
-				messageObj = this.updatePlayingTimeByMessage(message);
+				updatingBlock = updatingBlocks;
 			}
 
-			await this.view.updateMessageById(id, messageObj, section);
+			if (Type.isString(updatingBlocks?.[id]))
+			{
+				updatingBlock = updatingBlocks[id];
+			}
+
+			await this.view.updateMessageById(id, messageObj, updatingBlock);
+		}
+
+		/**
+		 * @param {Message} message
+		 * @return {Message}
+		 */
+		#updateMessageByType(message)
+		{
+			if (message.type === MessageType.audio)
+			{
+				return this.updatePlayingTimeByMessage(message);
+			}
+
+			if (message.type === MessageType.videoNote)
+			{
+				return this.updateVideoNoteByMessageId(message);
+			}
+
+			return message;
 		}
 
 		/**
@@ -747,6 +768,18 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			const currentPlayingTime = this.view.getPlayingTime(message.id);
 			message.setPlayingTime(currentPlayingTime);
+
+			return message;
+		}
+
+		/**
+		 * @param {VideoNoteMessage} message
+		 * @return {VideoNoteMessage}
+		 */
+		updateVideoNoteByMessageId(message)
+		{
+			const messageModel = this.getMessage(message.id);
+			message.setPlayVideoNote(messageModel.isPlaying, messageModel.playingTime);
 
 			return message;
 		}
@@ -1024,12 +1057,12 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 		/**
 		 * @param {Array<MessagesModelState>} messageList
-		 * @param {string | null} section
+		 * @param {string | object | null} updatingBlocks
 		 * @param {boolean} skipCheckEquality
 		 */
-		async updateMessageList(messageList, section = null, skipCheckEquality = false)
+		async updateMessageList(messageList, updatingBlocks = null, skipCheckEquality = false)
 		{
-			logger.info('MessageRenderer.updateMessageList:', messageList);
+			logger.info(`${this.constructor.name}.updateMessageList:`, messageList, updatingBlocks, skipCheckEquality);
 
 			messageList.forEach((message) => {
 				if (this.messageIdCollection.has(message.templateId))
@@ -1073,7 +1106,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					logger.log(`${this.constructor.name}.updateMessageList update message by id`, formattedMessage.id);
 
-					await this.#updateMessageById(formattedMessage.id, formattedMessage, section);
+					await this.#updateMessageById(formattedMessage.id, formattedMessage, updatingBlocks);
 					this.viewMessageCollection[formattedMessage.id] = formattedMessage;
 				}
 
@@ -1085,7 +1118,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					logger.log(`${this.constructor.name}.updateMessageList update message by template id`, messageListItem.templateId);
 
-					await this.#updateMessageById(messageListItem.templateId, formattedMessage, section);
+					await this.#updateMessageById(messageListItem.templateId, formattedMessage, updatingBlocks);
 
 					if (Type.isNumber(messageListItem.id))
 					{

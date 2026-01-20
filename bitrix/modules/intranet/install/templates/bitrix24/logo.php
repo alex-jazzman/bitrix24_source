@@ -22,7 +22,7 @@ $logo24 = Intranet\Util::getLogo24()
 
 ?>
 <div class="logo">
-	<a href="<?=$siteUrl?>" title="<?=GetMessage("BITRIX24_LOGO_TOOLTIP")?>" class="logo-link"><?php
+	<a href="<?=$siteUrl?>" class="logo-link"><?php
 		if (isset($siteLogo['src'])):
 			?><span class="logo-image-container"><?php
 			?><img src="<?=$siteLogo['src']?>"

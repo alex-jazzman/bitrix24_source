@@ -24,13 +24,10 @@ export const Hint = {
 	},
 	emits: ['close'],
 	computed: {
-		popupId(): string
-		{
-			return `tasks-hint-${Text.getRandom(10)}`;
-		},
 		popupOptions(): PopupOptions
 		{
 			return {
+				id: `tasks-hint-${Text.getRandom(10)}`,
 				bindElement: this.bindElement,
 				maxWidth: 320,
 				offsetLeft: 40,
@@ -38,18 +35,15 @@ export const Hint = {
 				padding: 13,
 				angle: true,
 				targetContainer: document.body,
+				className: 'tasks-hint-popup',
 				...this.options,
 			};
 		},
 	},
 	template: `
-		<Popup
-			:id="popupId"
-			:options="popupOptions"
-			@close="$emit('close')"
-		>
+		<Popup :options="popupOptions" @close="$emit('close')">
 			<div class="tasks-hint">
-				<slot></slot>
+				<slot/>
 			</div>
 		</Popup>
 	`,

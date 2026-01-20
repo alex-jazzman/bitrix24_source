@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Types\EnumType;
+use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -108,6 +109,48 @@ foreach($arResult['LANGUAGES'] as $lid => $arLang)
 	);
 
 	$arLabelInputNames[] = $inputName;
+}
+
+$arTab1Fields[] = [
+	'id' => 'USE_MULTI_LANG_HELP_MESSAGE',
+	'name' => Loc::getMessage('CRM_FIELDS_EDIT_TOOLTIP_TOGGLE_ALL_LANGUAGES'),
+	'type' => 'checkbox',
+	'value' => $arResult['USE_MULTI_LANG_HELP_MESSAGE'] ? 'Y' : 'N',
+];
+
+$tooltipLabel = Loc::getMessage('CRM_FIELDS_EDIT_TOOLTIP_TEXT');
+
+$arTab1Fields[] = [
+	'id' => 'COMMON_EDIT_FORM_HELP_MESSAGE',
+	'name' => $tooltipLabel,
+	'type' => 'textarea',
+	'params' => [
+		'rows' => 5,
+	],
+];
+
+$tooltipInputNames = [];
+foreach ($arResult['LANGUAGES'] as $lid => $arLang)
+{
+	$langName = !empty($arLang['NAME']) ? $arLang['NAME'] : $lid;
+	$inputLabel = Loc::getMessage(
+		'CRM_FIELDS_EDIT_TOOLTIP_TEXT_MULTILANG',
+		[
+			'#LANGUAGE_NAME#' => $langName,
+		],
+	);
+	$inputName = "HELP_MESSAGE[{$lid}]";
+
+	$arTab1Fields[] = [
+		'id' => $inputName,
+		'name' => $inputLabel,
+		'type' => 'textarea',
+		'params' => [
+			'rows' => 5,
+		],
+	];
+
+	$tooltipInputNames[] = $inputName;
 }
 
 if (!$arResult["DISABLE_MANDATORY"])
@@ -313,52 +356,58 @@ $APPLICATION->IncludeComponent(
 	BX.ready(
 		function()
 		{
-			var form = BX('form_field_edit');
-			<?if (isset($arResult['RESTRICTION_CALLBACK']) && $arResult['RESTRICTION_CALLBACK'] !== ''):?>
+			const form = BX('form_field_edit');
+			<?php if (isset($arResult['RESTRICTION_CALLBACK']) && $arResult['RESTRICTION_CALLBACK'] !== ''): ?>
 				form.onsubmit = function()
 				{
 					<?=$arResult['RESTRICTION_CALLBACK']?>;
 					return false;
 				};
-			<?endif?>
-			var commonLabelInput = BX.findChild(form, { "tagName":"INPUT", "attr":{ "name":"COMMON_EDIT_FORM_LABEL" }  }, true, false);
-			var commonLabelContainer = BX.findParent(commonLabelInput, { "tagName":"TR"});
+			<?php endif ?>
 
-			var labelContainers = [];
-			var labelInputNames = <?= CUtil::PhpToJSObject($arLabelInputNames)?>;
-			for(var i = 0; i < labelInputNames.length; i++)
-			{
-				var labelInput = BX.findChild(form, { "tagName":"INPUT", "attr":{ "name":labelInputNames[i] } }, true, false);
-				var labelContainer = BX.findParent(labelInput, { "tagName":"TR"});
-				if(labelContainer)
-				{
-					labelContainers.push(labelContainer);
-				}
-			}
+			const commonLabelInputName = 'COMMON_EDIT_FORM_LABEL';
+			const multiLangLabelInputNames = <?= JSON::encode($arLabelInputNames) ?>;
+			const multiLangLabelCheckboxName = 'USE_MULTI_LANG_LABEL';
 
-			var useLangLabelChbx = BX.findChild(form, { "tagName":"INPUT", "attr":{ "type":"checkbox", "name":"USE_MULTI_LANG_LABEL" }  }, true, false);
-			BX.bind(
-				useLangLabelChbx,
-				"change",
-				function()
-				{
-					layoutLabels(useLangLabelChbx.checked);
-				}
+			const {
+				commonInputContainer: commonLabelContainer,
+				multiLangInputContainers: multiLangLabelContainers,
+				multiLangToggleCheckbox: multiLangLabelCheckbox,
+			} = getMultiLangNodes(commonLabelInputName, multiLangLabelInputNames, multiLangLabelCheckboxName);
+
+			BX.Event.bind(
+				multiLangLabelCheckbox,
+				'change',
+				adjustMultiLangInputsVisibility.bind(
+					this,
+					commonLabelContainer,
+					multiLangLabelContainers,
+					multiLangLabelCheckbox,
+				),
 			);
+			adjustMultiLangInputsVisibility(commonLabelContainer, multiLangLabelContainers, multiLangLabelCheckbox);
 
-			function layoutLabels(useLangLabel)
-			{
-				if(commonLabelContainer)
-				{
-					commonLabelContainer.style.display = !useLangLabel ? "" : "none";
-					for(var j = 0; j < labelContainers.length; j++)
-					{
-						labelContainers[j].style.display = useLangLabel ? "" : "none";
-					}
-				}
-			}
+			const commonTooltipInputName = 'COMMON_EDIT_FORM_HELP_MESSAGE';
+			const multiLangTooltipInputNames = <?= JSON::encode($tooltipInputNames) ?>;
+			const multiLangTooltipCheckboxName = 'USE_MULTI_LANG_HELP_MESSAGE';
 
-			layoutLabels(<?=$arResult['USE_MULTI_LANG_LABEL'] ? 'true' : 'false'?>);
+			const {
+				commonInputContainer: commonTooltipContainer,
+				multiLangInputContainers: multiLangTooltipContainers,
+				multiLangToggleCheckbox: multiLangTooltipCheckbox,
+			} = getMultiLangNodes(commonTooltipInputName, multiLangTooltipInputNames, multiLangTooltipCheckboxName);
+
+			BX.Event.bind(
+				multiLangTooltipCheckbox,
+				'change',
+				adjustMultiLangInputsVisibility.bind(
+					this,
+					commonTooltipContainer,
+					multiLangTooltipContainers,
+					multiLangTooltipCheckbox,
+				),
+			);
+			adjustMultiLangInputsVisibility(commonTooltipContainer, multiLangTooltipContainers, multiLangTooltipCheckbox);
 		}
 	);
 </script>

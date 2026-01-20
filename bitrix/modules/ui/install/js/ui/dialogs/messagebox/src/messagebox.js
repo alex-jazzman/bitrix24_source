@@ -46,6 +46,7 @@ export default class MessageBox
 		this.setYesCallback(options.onYes);
 		this.setNoCallback(options.onNo);
 		this.useAirDesign = options.useAirDesign === true;
+		this.useWideButtons = options.useAirDesign === true;
 
 		if (Type.isBoolean(options.mediumButtonSize))
 		{
@@ -208,19 +209,26 @@ export default class MessageBox
 	{
 		if (this.popupWindow === null)
 		{
-			let className = this.isMediumButtonSize()
+			const content = this.getMessage();
+			const isAir = this.useAirDesign;
+			const isContentText = Type.isString(content);
+
+			const classBase = this.isMediumButtonSize()
 				? 'ui-message-box ui-message-box-medium-buttons'
 				: 'ui-message-box';
+			const classAir = isAir ? ' --air' : '';
+			const classWithCloser = isAir && this.popupOptions.closeIcon === true ? ' --with-closer' : '';
+			const classContentText = isAir && isContentText ? ' --content-text' : '';
 
-			if (this.useAirDesign)
-			{
-				className += ' --air';
-			}
+			const classSumm = classBase
+				+ classAir
+				+ classWithCloser
+				+ classContentText;
 
 			this.popupWindow = new Popup({
 				bindElement: null,
-				className,
-				content: this.getMessage(),
+				className: classSumm,
+				content,
 				titleBar: this.getTitle(),
 				minWidth: this.minWidth,
 				minHeight: this.minHeight,
@@ -231,7 +239,7 @@ export default class MessageBox
 				contentBackground: 'transparent',
 				padding: 0,
 				buttons: this.getButtons(),
-				...this.popupOptions
+				...this.popupOptions,
 			});
 		}
 
@@ -401,6 +409,7 @@ export default class MessageBox
 					click: this.handleButtonClick
 				},
 				useAirDesign: this.useAirDesign,
+				wide: this.useWideButtons,
 			});
 		});
 	}
@@ -409,7 +418,7 @@ export default class MessageBox
 	 *
 	 * @returns {BX.UI.Button}
 	 */
-	getCancelButton()
+	getCancelButton(options)
 	{
 		return this.cache.remember('cancelBtn', () => {
 			return new BX.UI.CancelButton({
@@ -420,7 +429,8 @@ export default class MessageBox
 					click: this.handleButtonClick
 				},
 				useAirDesign: this.useAirDesign,
-				style: AirButtonStyle.PLAIN,
+				wide: this.useWideButtons,
+				style: (options?.style || AirButtonStyle.OUTLINE),
 			});
 		});
 	}
@@ -441,6 +451,7 @@ export default class MessageBox
 					click: this.handleButtonClick
 				},
 				useAirDesign: this.useAirDesign,
+				wide: this.useWideButtons,
 			});
 		});
 	}
@@ -461,7 +472,8 @@ export default class MessageBox
 					click: this.handleButtonClick
 				},
 				useAirDesign: this.useAirDesign,
-				style: AirButtonStyle.PLAIN,
+				wide: this.useWideButtons,
+				style: AirButtonStyle.OUTLINE,
 			});
 		});
 	}
@@ -510,7 +522,7 @@ export default class MessageBox
 				return [
 					this.getYesButton(),
 					this.getNoButton(),
-					this.getCancelButton()
+					this.getCancelButton({ style: AirButtonStyle.PLAIN })
 				];
 			default:
 				return [];

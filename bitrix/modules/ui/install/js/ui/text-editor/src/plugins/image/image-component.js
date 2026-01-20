@@ -1,4 +1,4 @@
-import { Dom, Tag, Type } from 'main.core';
+import { Dom, Tag } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import type { BaseEvent } from 'main.core.events';
 import type { EditorConfig } from 'ui.lexical.core';

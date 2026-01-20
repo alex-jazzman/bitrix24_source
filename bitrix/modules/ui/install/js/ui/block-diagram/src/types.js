@@ -5,11 +5,10 @@ export type Point = {
 	y: number,
 }
 
-export type DiagramNewConnectionViewType = 'bezier' | 'line';
-
 export type DiagramNewConnection = {
 	sourceBlockId: DiagramBlockId,
 	sourcePortId: DiagramPortId,
+	sourcePortPosition: DiagramPortPosition;
 	targetBlockId: DiagramBlockId | null;
 	targetPortId: DiagramPortId | null;
 	start: Point,
@@ -35,6 +34,7 @@ export type DiagramPortId = string;
 export type DiagramPort = {
 	id: DiagramPortId;
 	position: DiagramPortPosition;
+	type: string;
 }
 
 export type DiagramPortRect = {
@@ -62,12 +62,9 @@ export type BlockGroupNames = Array<string>;
 
 export type DiagramConnectionId = string;
 
-export type DiagramConnectionViewType = 'smoothstep' | 'bezier' | 'line';
-
 export type DiagramConnection = {
 	id: DiagramConnectionId;
 	type?: string;
-	viewType?: DiagramConnectionViewType;
 	sourceBlockId: DiagramBlockId;
 	sourcePortId: DiagramPortId;
 	targetBlockId: DiagramBlockId;
@@ -104,6 +101,8 @@ export type DragData = {
 	dragImage: HTMLElement,
 };
 
+export type DiagramValidationPortRuleFn = (newConnection: DiagramNewConnection) => boolean;
+
 export type State = {
 	blockDiagramRef: HTMLElement | null;
 	blockDiagramTop: number;
@@ -118,6 +117,7 @@ export type State = {
 	portsRectMap: { [DiagramBlockId]: { [DiagramPortId]: DiagramPortRect } };
 
 	newConnection: DiagramNewConnection | null;
+	isValidNewConnection: boolean;
 
 	movingBlock: DiagramBlock | null;
 	movingConnections: Array<Connection>;

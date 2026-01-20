@@ -17,6 +17,11 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 			backgroundColor: Color.accentMainPrimary,
 		});
 
+		static PRIMARY_EFFECTIVINESS = new BadgeCounterDesign('PRIMARY', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: Color.accentMainWarning,
+		});
+
 		static ALERT = new BadgeCounterDesign('ALERT', {
 			color: Color.baseWhiteFixed,
 			backgroundColor: Color.accentMainAlert,

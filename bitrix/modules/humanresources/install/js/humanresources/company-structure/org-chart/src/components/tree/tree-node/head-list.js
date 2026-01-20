@@ -110,6 +110,7 @@ export const HeadList = {
 		handleUserClick(url: string): void
 		{
 			BX.SidePanel.Instance.open(url, {
+				width: 1100,
 				cacheable: false,
 			});
 		},

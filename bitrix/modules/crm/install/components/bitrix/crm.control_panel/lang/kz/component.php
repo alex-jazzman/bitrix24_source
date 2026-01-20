@@ -28,6 +28,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_CRM_TRACKING"] = "Өтпелі аналитика";
 $MESS["CRM_CTRL_PANEL_ITEM_DEAL"] = "Мәмілелер";
 $MESS["CRM_CTRL_PANEL_ITEM_DEAL_TITLE"] = "Мәмілелер тізімі";
 $MESS["CRM_CTRL_PANEL_ITEM_DEVOPS"] = "Rest API";
+$MESS["CRM_CTRL_PANEL_ITEM_DOCUMENT_PERMISSIONS"] = "CRM құжаттарына қол жеткізу құқықтары";
 $MESS["CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST"] = "Смарт-процестер";
 $MESS["CRM_CTRL_PANEL_ITEM_EVENT"] = "Оқиғалар";
 $MESS["CRM_CTRL_PANEL_ITEM_EVENT_2"] = "Тарих";

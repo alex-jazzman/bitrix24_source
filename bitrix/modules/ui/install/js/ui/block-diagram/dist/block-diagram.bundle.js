@@ -16,6 +16,7 @@ this.BX = this.BX || {};
 	    portsElMap: ui_vue3.markRaw(new Map()),
 	    portsRectMap: {},
 	    newConnection: null,
+	    isValidNewConnection: true,
 	    movingBlock: null,
 	    movingConnections: [],
 	    resizingBlock: null,
@@ -90,14 +91,6 @@ this.BX = this.BX || {};
 	  RIGHT: 'right',
 	  LEFT: 'left'
 	};
-	const CONNECTION_VIEW_TYPE = {
-	  BEZIER: 'bezier',
-	  SMOOTHSTEP: 'smoothstep'
-	};
-	const NEW_CONNECTION_VIEW_TYPE = {
-	  BEZIER: 'bezier',
-	  LINE: 'line'
-	};
 	const ANIMATED_TYPES = {
 	  BLOCK: 'block',
 	  CONNECTION: 'connection',
@@ -118,7 +111,7 @@ this.BX = this.BX || {};
 	};
 
 	const DIR_ACCESSOR_X = 'x';
-	const DIR_ACCESSOR_Y = 'x';
+	const DIR_ACCESSOR_Y = 'y';
 	const DIRECTIONS_BY_POSITION = {
 	  [PORT_POSITION.LEFT]: {
 	    x: -1,
@@ -137,23 +130,13 @@ this.BX = this.BX || {};
 	    y: 1
 	  }
 	};
-	function getLinePath(start, end) {
-	  const [x, y] = getConnectionCenter({
-	    sourceX: start.x,
-	    sourceY: start.y,
-	    targetX: end.x,
-	    targetY: end.y
-	  });
-	  return {
-	    path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
-	    center: {
-	      x,
-	      y
-	    }
-	  };
-	}
-	function getBeziePath(start, end) {
+	const BEZIER_DIR = {
+	  VERTICAL: 'vertical',
+	  HORIZONTAL: 'horizontal'
+	};
+	function getBeziePath(start, end, dir = BEZIER_DIR.VERTICAL) {
 	  const midX = (start.x + end.x) / 2;
+	  const midY = (start.y + end.y) / 2;
 	  const [centerX, centerY] = getConnectionCenter({
 	    sourceX: start.x,
 	    sourceY: start.y,
@@ -161,7 +144,7 @@ this.BX = this.BX || {};
 	    targetY: end.y
 	  });
 	  return {
-	    path: `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}`,
+	    path: dir === BEZIER_DIR.HORIZONTAL ? `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}` : `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`,
 	    center: {
 	      x: centerX,
 	      y: centerY
@@ -415,6 +398,7 @@ this.BX = this.BX || {};
 	  }, '');
 	  return {
 	    path,
+	    points,
 	    center: {
 	      x: pointsCenterX,
 	      y: pointsCenterY
@@ -530,7 +514,7 @@ this.BX = this.BX || {};
 	  return `block:${group}`;
 	}
 	function getGroupConnectionSlotName(group) {
-	  return `conenction:${group}`;
+	  return `connection:${group}`;
 	}
 
 	/**
@@ -2805,10 +2789,11 @@ this.BX = this.BX || {};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
-	function useNewConnection(block, port) {
+	function useNewConnection(options) {
 	  const {
 	    isDisabledBlockDiagram,
 	    newConnection,
+	    isValidNewConnection,
 	    portsRectMap,
 	    blockDiagramTop,
 	    blockDiagramLeft,
@@ -2817,7 +2802,57 @@ this.BX = this.BX || {};
 	    transformY,
 	    addConnection
 	  } = useBlockDiagram();
+	  const {
+	    block,
+	    port,
+	    position,
+	    validationRules = null,
+	    normalyzeConnectionFn = null
+	  } = options;
 	  const isSourcePort = ui_vue3.ref(false);
+	  const isValid = ui_vue3.computed(() => {
+	    if (ui_vue3.toValue(newConnection) === null) {
+	      return true;
+	    }
+	    const {
+	      sourceBlockId,
+	      sourcePortId,
+	      targetBlockId,
+	      targetPortId
+	    } = ui_vue3.toValue(newConnection);
+	    if (targetPortId === null) {
+	      return true;
+	    }
+	    const isSource = ui_vue3.toValue(block).id === sourceBlockId && ui_vue3.toValue(port).id === sourcePortId;
+	    const isTarget = ui_vue3.toValue(block).id === targetBlockId && ui_vue3.toValue(port).id === targetPortId;
+	    if (isSource || isTarget) {
+	      return ui_vue3.toValue(isValidNewConnection);
+	    }
+	    return true;
+	  });
+	  function validateNewConnection(rules) {
+	    if (rules === null) {
+	      return true;
+	    }
+	    if (main_core.Type.isArray(rules)) {
+	      return rules.every(rule => rule(ui_vue3.toValue(newConnection)));
+	    }
+	    if (!main_core.Type.isFunction(rules)) {
+	      return true;
+	    }
+	    return rules(ui_vue3.toValue(newConnection));
+	  }
+	  function normalyzeNewConnection(newConnection, normalyzeFn = null) {
+	    if (main_core.Type.isFunction(normalyzeFn)) {
+	      return normalyzeFn(newConnection);
+	    }
+	    return {
+	      sourceBlockId: newConnection.sourceBlockId,
+	      sourcePortId: newConnection.sourcePortId,
+	      targetBlockId: newConnection.targetBlockId,
+	      targetPortId: newConnection.targetPortId
+	    };
+	  }
 	  function onMouseDownPort(event) {
 	    var _toValue, _toValue$toValue$id;
 	    event.stopPropagation();
@@ -2833,8 +2868,13 @@ this.BX = this.BX || {};
 	    newConnection.value = {
 	      sourceBlockId: ui_vue3.toValue(block).id,
 	      sourcePortId: ui_vue3.toValue(port).id,
+	      sourcePort: {
+	        ...ui_vue3.toValue(port)
+	      },
+	      sourcePortPosition: position,
 	      targetBlockId: null,
 	      targetPortId: null,
+	      targetPort: null,
 	      start: startPosition,
 	      end: startPosition
 	    };
@@ -2865,13 +2905,8 @@ this.BX = this.BX || {};
 	    const isSamePort = sourceBlockId === targetBlockId && sourcePortId === targetPortId;
 	    const hasSourceIds = sourceBlockId !== null && sourcePortId !== null;
 	    const hasTargetIds = targetBlockId !== null && targetPortId !== null;
-	    if (!isSamePort && hasSourceIds && hasTargetIds) {
-	      addConnection({
-	        sourceBlockId,
-	        sourcePortId,
-	        targetBlockId,
-	        targetPortId
-	      });
+	    if (!isSamePort && hasSourceIds && hasTargetIds && ui_vue3.toValue(isValidNewConnection)) {
+	      addConnection(normalyzeNewConnection(ui_vue3.toValue(newConnection), normalyzeConnectionFn));
 	    }
 	    newConnection.value = null;
 	    isSourcePort.value = false;
@@ -2885,6 +2920,10 @@ this.BX = this.BX || {};
 	    if (ui_vue3.toValue(newConnection) !== null) {
 	      newConnection.value.targetBlockId = ui_vue3.toValue(block).id;
 	      newConnection.value.targetPortId = ui_vue3.toValue(port).id;
+	      newConnection.value.targetPort = {
+	        ...ui_vue3.toValue(port)
+	      };
+	      isValidNewConnection.value = validateNewConnection(ui_vue3.toValue(validationRules));
 	    }
 	  }
 	  function onMouseLeavePort() {
@@ -2894,10 +2933,13 @@ this.BX = this.BX || {};
 	    if (ui_vue3.toValue(newConnection) !== null) {
 	      newConnection.value.targetBlockId = null;
 	      newConnection.value.targetPortId = null;
+	      newConnection.value.targetPort = null;
+	      isValidNewConnection.value = true;
 	    }
 	  }
 	  return {
 	    isSourcePort,
+	    isValid,
 	    onMouseDownPort,
 	    onMouseOverPort,
 	    onMouseLeavePort
@@ -3381,18 +3423,22 @@ this.BX = this.BX || {};
 	  };
 	}
 
-	// eslint-disable-next-line no-unused-vars
+	const DEFAULT_PATH_INFO = {
+	  path: '',
+	  center: {
+	    x: 0,
+	    y: 0
+	  }
+	};
+	const SMOOTHSTEP_OFFSET = 30;
+	const SMOOTHSTEP_BORDER_RADIUS = 10;
 
 	// eslint-disable-next-line max-lines-per-function
-	function useConnectionState(options) {
+	function useConnectionState(connection) {
 	  const {
 	    portsRectMap,
 	    isDisabledBlockDiagram
 	  } = useBlockDiagram();
-	  const {
-	    connection,
-	    viewType
-	  } = options;
 	  const connectionPortsPosition = ui_vue3.computed(() => {
 	    const {
 	      sourceBlockId,
@@ -3436,27 +3482,36 @@ this.BX = this.BX || {};
 	  });
 	  const connectionPathInfo = ui_vue3.computed(() => {
 	    if (ui_vue3.toValue(connectionPortsPosition) === null) {
-	      return {
-	        path: '',
-	        center: {
-	          x: 0,
-	          y: 0
-	        }
-	      };
+	      return DEFAULT_PATH_INFO;
 	    }
-	    if (ui_vue3.toValue(viewType) === CONNECTION_VIEW_TYPE.BEZIER) {
-	      return getBeziePath(ui_vue3.toValue(connectionPortsPosition).sourcePort, ui_vue3.toValue(connectionPortsPosition).targetPort);
-	    }
-	    return getSmoothStepPath({
+	    const sourcePosition = ui_vue3.toValue(connectionPortsPosition).sourcePort.position;
+	    const targetPosition = ui_vue3.toValue(connectionPortsPosition).targetPort.position;
+	    const isVerticalDirBezier = sourcePosition !== targetPosition && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(sourcePosition) && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(targetPosition);
+	    const isHorizontalDirBezier = sourcePosition !== targetPosition && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(sourcePosition) && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(targetPosition);
+	    const {
+	      path: smoothStepPath,
+	      center,
+	      points
+	    } = getSmoothStepPath({
 	      sourceX: ui_vue3.toValue(connectionPortsPosition).sourcePort.x,
 	      sourceY: ui_vue3.toValue(connectionPortsPosition).sourcePort.y,
-	      sourcePosition: ui_vue3.toValue(connectionPortsPosition).sourcePort.position,
+	      sourcePosition,
 	      targetX: ui_vue3.toValue(connectionPortsPosition).targetPort.x,
 	      targetY: ui_vue3.toValue(connectionPortsPosition).targetPort.y,
-	      targetPosition: ui_vue3.toValue(connectionPortsPosition).targetPort.position,
-	      borderRadius: 10,
-	      offset: 30
+	      targetPosition,
+	      borderRadius: SMOOTHSTEP_BORDER_RADIUS,
+	      offset: SMOOTHSTEP_OFFSET
 	    });
+	    const [p1, p2, p3, p4, p5, p6] = points;
+	    const isXConsistOfThreeParts = p1.x === p2.x && p1.x === p3.x && p4.x === p5.x && p4.x === p6.x;
+	    const isYConsistOfThreeParts = p1.y === p2.y && p1.y === p3.y && p4.y === p5.y && p4.y === p6.y;
+	    if (isXConsistOfThreeParts && isVerticalDirBezier || isYConsistOfThreeParts && isHorizontalDirBezier) {
+	      return getBeziePath(ui_vue3.toValue(connectionPortsPosition).sourcePort, ui_vue3.toValue(connectionPortsPosition).targetPort, isVerticalDirBezier ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL);
+	    }
+	    return {
+	      path: smoothStepPath,
+	      center
+	    };
 	  });
 	  const isDisabled = ui_vue3.computed(() => {
 	    return ui_vue3.toValue(isDisabledBlockDiagram);
@@ -3508,13 +3563,11 @@ this.BX = this.BX || {};
 	  };
 	}
 
-	function useNewConnectionState(options) {
+	function useNewConnectionState() {
 	  const {
-	    newConnection
+	    newConnection,
+	    isValidNewConnection
 	  } = useBlockDiagram();
-	  const {
-	    viewType
-	  } = options;
 	  const hasNewConnection = ui_vue3.computed(() => {
 	    return ui_vue3.toValue(newConnection) !== null;
 	  });
@@ -3528,14 +3581,19 @@ this.BX = this.BX || {};
 	        }
 	      };
 	    }
-	    if (ui_vue3.toValue(viewType) === CONNECTION_VIEW_TYPE.BEZIER) {
-	      return getBeziePath(ui_vue3.toValue(newConnection).start, ui_vue3.toValue(newConnection).end);
+	    const isHorizontalBezier = [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(ui_vue3.toValue(newConnection).sourcePortPosition);
+	    return getBeziePath(ui_vue3.toValue(newConnection).start, ui_vue3.toValue(newConnection).end, isHorizontalBezier ? BEZIER_DIR.HORIZONTAL : BEZIER_DIR.VERTICAL);
+	  });
+	  const isValid = ui_vue3.computed(() => {
+	    if (ui_vue3.toValue(newConnection) === null) {
+	      return true;
 	    }
-	    return getLinePath(ui_vue3.toValue(newConnection).start, ui_vue3.toValue(newConnection).end);
+	    return ui_vue3.toValue(isValidNewConnection);
 	  });
 	  return {
 	    hasNewConnection,
-	    newConnectionPathInfo
+	    newConnectionPathInfo,
+	    isValid
 	  };
 	}
 
@@ -4215,14 +4273,6 @@ this.BX = this.BX || {};
 	      type: Object,
 	      required: true
 	    },
-	    /** @type DiagramConnectionViewType */
-	    viewType: {
-	      type: String,
-	      default: CONNECTION_VIEW_TYPE.SMOOTHSTEP,
-	      validator(viewType) {
-	        return Object.values(CONNECTION_VIEW_TYPE).includes(viewType);
-	      }
-	    },
 	    barWidth: {
 	      type: Number,
 	      default: 22
@@ -4244,10 +4294,7 @@ this.BX = this.BX || {};
 	    const {
 	      connectionPathInfo,
 	      isDisabled
-	    } = useConnectionState({
-	      connection: props.connection,
-	      viewType: props.viewType
-	    });
+	    } = useConnectionState(props.connection);
 	    const {
 	      deleteConnectionById
 	    } = useBlockDiagram();
@@ -4494,29 +4541,28 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const PATH_CLASS_NAMES = {
+	  base: 'ui-block-diagram-new-connection__path',
+	  error: '--error'
+	};
+
 	// @vue/component
 	const NewConnection = {
-	  name: 'new-connection',
-	  props: {
-	    /** @type DiagramNewConnectionViewType */
-	    viewType: {
-	      type: String,
-	      default: NEW_CONNECTION_VIEW_TYPE.BEZIER,
-	      validator(viewType) {
-	        return Object.values(NEW_CONNECTION_VIEW_TYPE).includes(viewType);
-	      }
-	    }
-	  },
+	  name: 'NewConnection',
 	  setup(props) {
 	    const {
 	      hasNewConnection,
-	      newConnectionPathInfo
-	    } = useNewConnectionState({
-	      viewType: props.viewType
-	    });
+	      newConnectionPathInfo,
+	      isValid
+	    } = useNewConnectionState();
+	    const pathClassNames = ui_vue3.computed(() => ({
+	      [PATH_CLASS_NAMES.base]: true,
+	      [PATH_CLASS_NAMES.error]: !ui_vue3.toValue(isValid)
+	    }));
 	    return {
 	      hasNewConnection,
-	      newConnectionPathInfo
+	      newConnectionPathInfo,
+	      pathClassNames
 	    };
 	  },
 	  template: `
@@ -4526,7 +4572,7 @@ this.BX = this.BX || {};
 		>
 			<path
 				:d="newConnectionPathInfo.path"
-				class="ui-block-diagram-new-connection__path"
+				:class="pathClassNames"
 			/>
 		</svg>
 	`
@@ -4712,12 +4758,13 @@ this.BX = this.BX || {};
 	const PORT_CLASS_NAMES = {
 	  base: 'ui-block-diagram-port',
 	  disabled: '--disabled',
-	  active: '--active'
+	  active: '--active',
+	  error: '--error'
 	};
 
 	// @vue/component
 	const Port = {
-	  name: 'diagram-port',
+	  name: 'DiagramPort',
 	  props: {
 	    /** @type DiagramBlock */
 	    block: {
@@ -4737,6 +4784,16 @@ this.BX = this.BX || {};
 	        return Object.values(PORT_POSITION).includes(position);
 	      }
 	    },
+	    /** @type Array<DiagramValidationPortRuleFn> */
+	    validationRules: {
+	      type: Array,
+	      default: () => []
+	    },
+	    /** @type DiagramNormalyzeConnectionFn | null */
+	    normalyzeConnectionFn: {
+	      type: Function,
+	      default: null
+	    },
 	    disabled: {
 	      type: Boolean,
 	      default: false
@@ -4755,14 +4812,22 @@ this.BX = this.BX || {};
 	    });
 	    const {
 	      isSourcePort,
+	      isValid,
 	      onMouseDownPort,
 	      onMouseOverPort,
 	      onMouseLeavePort
-	    } = useNewConnection(props.block, props.port);
+	    } = useNewConnection({
+	      block: props.block,
+	      port: props.port,
+	      position: props.position,
+	      validationRules: props.validationRules,
+	      normalyzeConnectionFn: props.normalyzeConnectionFn
+	    });
 	    const portClassNames = ui_vue3.computed(() => ({
 	      [PORT_CLASS_NAMES.base]: true,
 	      [PORT_CLASS_NAMES.active]: ui_vue3.toValue(isSourcePort),
-	      [PORT_CLASS_NAMES.disabled]: ui_vue3.toValue(isDisabled)
+	      [PORT_CLASS_NAMES.disabled]: ui_vue3.toValue(isDisabled),
+	      [PORT_CLASS_NAMES.error]: !ui_vue3.toValue(isValid)
 	    }));
 	    ui_vue3.onMounted(() => {
 	      onMountedPort();
@@ -4912,7 +4977,8 @@ this.BX = this.BX || {};
 	  nsResize: '--cursor-ns-resize',
 	  nwSeResize: '--cursor-nwse-resize',
 	  neSwResize: '--cursor-nesw-resize',
-	  grabbing: '--grabbing'
+	  grabbing: '--grabbing',
+	  disabled: '--disabled'
 	};
 
 	// @vue/component
@@ -5028,6 +5094,7 @@ this.BX = this.BX || {};
 	    const blockDiagramClassNames = ui_vue3.computed(() => ({
 	      [BLOCK_DIAGRAM_CLASS_NAMES.base]: true,
 	      [BLOCK_DIAGRAM_CLASS_NAMES.grabbing]: isGrabbing.value,
+	      [BLOCK_DIAGRAM_CLASS_NAMES.disabled]: props.disabled,
 	      [BLOCK_DIAGRAM_CLASS_NAMES.ewResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.EW_RESIZE,
 	      [BLOCK_DIAGRAM_CLASS_NAMES.nsResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NS_RESIZE,
 	      [BLOCK_DIAGRAM_CLASS_NAMES.nwSeResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NWSE_RESIZE,
@@ -5815,97 +5882,6 @@ this.BX = this.BX || {};
 	};
 
 	// @vue/component
-	const SearchInput = {
-	  name: 'search-input',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    value: {
-	      type: String,
-	      default: ''
-	    },
-	    placeholder: {
-	      type: String,
-	      default: ''
-	    },
-	    focusable: {
-	      type: Boolean,
-	      default: false
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emit: ['update:value', 'clear'],
-	  setup(props, {
-	    emit
-	  }) {
-	    const loc = useLoc();
-	    const searchInput = ui_vue3.useTemplateRef('searchInput');
-	    const placeholderOrDefaultValue = ui_vue3.computed(() => {
-	      if (props.placeholder) {
-	        return props.placeholder;
-	      }
-	      return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_PLACEHOLDER');
-	    });
-	    ui_vue3.onMounted(() => {
-	      if (ui_vue3.toValue(props.focusable)) {
-	        ui_vue3.toValue(searchInput).focus();
-	      }
-	    });
-	    function onInput(event) {
-	      if (props.disabled) {
-	        return;
-	      }
-	      emit('update:value', event.target.value);
-	    }
-	    function onClear() {
-	      if (props.disabled) {
-	        return;
-	      }
-	      emit('clear');
-	    }
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline,
-	      placeholderOrDefaultValue,
-	      onInput,
-	      onClear
-	    };
-	  },
-	  template: `
-		<div class="ui-block-diagram-search-input">
-			<BIcon
-				:name="iconSet.SEARCH"
-				:size="24"
-				class="ui-block-diagram-search-input__icon"
-			/>
-			<input
-				:value="value"
-				:placeholder="placeholderOrDefaultValue"
-				:data-test-id="$blockDiagramTestId('searchInput')"
-				ref="searchInput"
-				type="text"
-				class="ui-block-diagram-search-input__input"
-				@input="onInput"
-			/>
-			<button
-				class="ui-block-diagram-search-input__clear-btn"
-				:data-test-id="$blockDiagramTestId('searchClearInputBtn')"
-				@click="onClear"
-			>
-				<BIcon
-					:name="iconSet.CROSS_L"
-					:size="24"
-					class="ui-block-diagram-search-input__clear-btn-icon"
-				/>
-			</button>
-		</div>
-	`
-	};
-
-	// @vue/component
 	const OpenSearchBtn = {
 	  name: 'open-search-btn',
 	  components: {
@@ -5927,9 +5903,144 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const SEARCH_INPUT_CLASS_NAMES = {
+	  base: 'ui-block-diagram-search-input',
+	  open: '--open'
+	};
+
+	// @vue/component
+	const SearchInput = {
+	  name: 'SearchInput',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    OpenSearchBtn
+	  },
+	  props: {
+	    value: {
+	      type: String,
+	      default: ''
+	    },
+	    placeholder: {
+	      type: String,
+	      default: ''
+	    },
+	    disabled: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['update:value', 'clear'],
+	  setup(props, {
+	    emit
+	  }) {
+	    const loc = useLoc();
+	    const searchInput = ui_vue3.useTemplateRef('searchInput');
+	    const showSearchBtn = ui_vue3.ref(true);
+	    const showSearchBar = ui_vue3.ref(false);
+	    const placeholderOrDefaultValue = ui_vue3.computed(() => {
+	      if (props.placeholder) {
+	        return props.placeholder;
+	      }
+	      return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_PLACEHOLDER');
+	    });
+	    const searchInputClassNames = ui_vue3.computed(() => ({
+	      [SEARCH_INPUT_CLASS_NAMES.base]: true,
+	      [SEARCH_INPUT_CLASS_NAMES.open]: ui_vue3.toValue(showSearchBar)
+	    }));
+	    function onInput(event) {
+	      if (props.disabled) {
+	        return;
+	      }
+	      emit('update:value', event.target.value);
+	    }
+	    function onClear() {
+	      if (props.disabled) {
+	        return;
+	      }
+	      showSearchBar.value = false;
+	      emit('clear');
+	    }
+	    function onAfterEnterTransition() {
+	      ui_vue3.nextTick(() => {
+	        var _toValue;
+	        return (_toValue = ui_vue3.toValue(searchInput)) == null ? void 0 : _toValue.focus();
+	      });
+	    }
+	    function onLeaveTransition() {
+	      showSearchBtn.value = true;
+	    }
+	    function onOpenSearchBar() {
+	      showSearchBar.value = true;
+	      showSearchBtn.value = false;
+	    }
+	    function collapseSearchBar() {
+	      showSearchBar.value = false;
+	    }
+	    return {
+	      iconSet: ui_iconSet_api_vue.Outline,
+	      showSearchBar,
+	      showSearchBtn,
+	      placeholderOrDefaultValue,
+	      searchInputClassNames,
+	      onInput,
+	      onClear,
+	      onAfterEnterTransition,
+	      onLeaveTransition,
+	      onOpenSearchBar,
+	      collapseSearchBar
+	    };
+	  },
+	  template: `
+		<OpenSearchBtn
+			v-show="showSearchBtn"
+			:data-test-id="$blockDiagramTestId('searchOpenBtn')"
+			@click="onOpenSearchBar"
+		/>
+		<transition
+			name="ui-block-diagram-search-bar-fade"
+			enter-active-class="ui-block-diagram-open-search-bar"
+			leave-active-class="ui-block-diagram-close-search-bar"
+			@after-enter="onAfterEnterTransition"
+			@after-leave="onLeaveTransition"
+		>
+			<div
+				v-show="showSearchBar"
+				:class="searchInputClassNames"
+				ref="searchBar"
+			>
+				<BIcon
+					:name="iconSet.SEARCH"
+					:size="24"
+					class="ui-block-diagram-search-input__icon"
+				/>
+				<input
+					:value="value"
+					:placeholder="placeholderOrDefaultValue"
+					:data-test-id="$blockDiagramTestId('searchInput')"
+					ref="searchInput"
+					type="text"
+					class="ui-block-diagram-search-input__input"
+					@input="onInput"
+				/>
+				<button
+					class="ui-block-diagram-search-input__clear-btn"
+					:data-test-id="$blockDiagramTestId('searchClearInputBtn')"
+					@click="onClear"
+				>
+					<BIcon
+						:name="iconSet.CROSS_L"
+						:size="24"
+						class="ui-block-diagram-search-input__clear-btn-icon"
+					/>
+				</button>
+			</div>
+		</transition>
+	`
+	};
+
 	// @vue/component
 	const SearchBar = {
-	  name: 'search-bar',
+	  name: 'SearchBar',
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    SearchResult,
@@ -5982,8 +6093,7 @@ this.BX = this.BX || {};
 	      goToBlockById
 	    } = useCanvas();
 	    const searchPanel = ui_vue3.useTemplateRef('searchPanel');
-	    const isShowSearchBar = ui_vue3.ref(false);
-	    const isShowOpenBtn = ui_vue3.ref(true);
+	    const searchInputRef = ui_vue3.useTemplateRef('searchInput');
 	    const currentBlockIndex = ui_vue3.ref(0);
 	    const isDisabled = ui_vue3.computed(() => {
 	      return props.disabled || ui_vue3.toValue(isDisabledBlockDiagram);
@@ -6020,16 +6130,6 @@ this.BX = this.BX || {};
 	    ui_vue3.onUnmounted(() => {
 	      main_core.Event.unbind(document, 'mousedown', onClickOutside);
 	    });
-	    function onOpenSearchBar() {
-	      if (ui_vue3.toValue(isDisabled)) {
-	        return;
-	      }
-	      isShowOpenBtn.value = false;
-	      isShowSearchBar.value = true;
-	    }
-	    function onLeaveTransition() {
-	      isShowOpenBtn.value = true;
-	    }
 	    function onGoToNextBlock() {
 	      if (ui_vue3.toValue(isDisabled)) {
 	        return;
@@ -6059,12 +6159,13 @@ this.BX = this.BX || {};
 	    function closeAndResetSearch() {
 	      highlitedBlocks.clear();
 	      onClearSearch();
-	      isShowSearchBar.value = false;
 	      currentBlockIndex.value = 0;
 	    }
 	    function onClickOutside(event) {
 	      if (ui_vue3.toValue(searchPanel) && !ui_vue3.toValue(searchPanel).contains(event.target)) {
+	        var _toValue;
 	        closeAndResetSearch();
+	        (_toValue = ui_vue3.toValue(searchInputRef)) == null ? void 0 : _toValue.collapseSearchBar();
 	      }
 	    }
 	    return {
@@ -6074,11 +6175,7 @@ this.BX = this.BX || {};
 	      searchResultTitleOrDefaultValue,
 	      seachText,
 	      labelResult,
-	      isShowOpenBtn,
-	      isShowSearchBar,
 	      foundBlocks,
-	      onOpenSearchBar,
-	      onLeaveTransition,
 	      onSearchBlocks,
 	      onClearSearch,
 	      closeAndResetSearch,
@@ -6088,32 +6185,19 @@ this.BX = this.BX || {};
 	  },
 	  template: `
 		<div
-			:class="{ '--opened': isShowSearchBar }"
 			class="ui-block-diagram-search-bar"
 			ref="searchPanel"
 		>
-			<OpenSearchBtn
-				v-if="isShowOpenBtn"
-				:data-test-id="$blockDiagramTestId('searchOpenBtn')"
-				@click="onOpenSearchBar"
+			<SearchInput
+				:value="seachText"
+				:placeholder="placeholderOrDefaultValue"
+				:disabled="isDisabled"
+				ref="searchInput"
+				@update:value="onSearchBlocks"
+				@clear="closeAndResetSearch"
 			/>
-			<transition
-				name="ui-block-diagram-search-bar-fade"
-				mode="in-out"
-				@after-leave="onLeaveTransition"
-			>
-				<SearchInput
-					v-if="isShowSearchBar"
-					:value="seachText"
-					:placeholder="placeholderOrDefaultValue"
-					:disabled="isDisabled"
-					focusable
-					@update:value="onSearchBlocks"
-					@clear="closeAndResetSearch"
-				/>
-			</transition>
 			<div
-				v-if="isShowSearchBar && foundBlocks.length > 0"
+				v-if="foundBlocks.length > 0"
 				class="ui-block-diagram-search-bar__search-result"
 			>
 				<SearchResult
@@ -6361,6 +6445,8 @@ this.BX = this.BX || {};
 	exports.MoveableBlock = MoveableBlock;
 	exports.ResizableBlock = ResizableBlock;
 	exports.Port = Port;
+	exports.Connection = Connection;
+	exports.DeleteConnectionBtn = DeleteConnectionBtn;
 	exports.transformPoint = transformPoint;
 	exports.useBlockDiagram = useBlockDiagram;
 	exports.useContextMenu = useContextMenu;

@@ -1,2 +1,3 @@
 <?php
+$MESS["MENU_BITRIX24_SECTION_EXTRANET"] = "Extranet";
 $MESS["MENU_BITRIX24_SECTION_GROUPS"] = "Workgroups";

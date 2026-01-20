@@ -23,6 +23,7 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 			}
 
 			this.senderPage = props.senderPage ?? '';
+			this.extraHiddenFields = props.extraHiddenFields ?? {};
 		}
 
 		/**
@@ -80,6 +81,7 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 					phone_model: device.model,
 					os_version: device.version,
 					sender_page: this.senderPage,
+					...this.extraHiddenFields,
 				}),
 			);
 		}

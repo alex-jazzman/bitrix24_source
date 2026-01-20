@@ -86,7 +86,7 @@
 	    key: "fillTabs",
 	    value: function fillTabs() {
 	      var _this = this;
-	      var tabNames = ['common', 'labels', 'additional', 'list'];
+	      var tabNames = ['common', 'labels', 'tooltips', 'additional', 'list'];
 	      if (this.container) {
 	        tabNames.forEach(function (name) {
 	          var tab = _this.container.querySelector('[data-tab="' + name + '"]');
@@ -151,10 +151,23 @@
 	        var currentLanguageLabelInput = this.getInput('editFormLabel-' + languageId);
 	        if (currentLanguageLabelInput) {
 	          main_core.Event.bind(commonLabelInput, 'change', function () {
-	            _this3.syncLabelInputs(commonLabelInput, currentLanguageLabelInput);
+	            _this3.syncInputs(commonLabelInput, currentLanguageLabelInput);
 	          });
 	          main_core.Event.bind(currentLanguageLabelInput, 'change', function () {
-	            _this3.syncLabelInputs(currentLanguageLabelInput, commonLabelInput);
+	            _this3.syncInputs(currentLanguageLabelInput, commonLabelInput);
+	          });
+	        }
+	      }
+	      var commonTooltipInput = this.getInput('editFormTooltip');
+	      if (commonTooltipInput && !main_core.Type.isNull(commonTooltipInput.parentElement) && !main_core.Type.isNull(commonTooltipInput.parentElement.parentElement)) {
+	        var _languageId = commonTooltipInput.parentElement.parentElement.dataset['language'];
+	        var currentLanguageTooltipInput = this.getInput('editFormTooltip-' + _languageId);
+	        if (!main_core.Type.isNull(currentLanguageTooltipInput)) {
+	          main_core.Event.bind(commonTooltipInput, 'change', function () {
+	            return _this3.syncInputs(commonTooltipInput, currentLanguageTooltipInput);
+	          });
+	          main_core.Event.bind(currentLanguageTooltipInput, 'change', function () {
+	            return _this3.syncInputs(currentLanguageTooltipInput, commonTooltipInput);
 	          });
 	        }
 	      }
@@ -343,6 +356,12 @@
 	        var languageId = labelContainer.dataset['language'];
 	        editFormLabel[languageId] = _this6.getInputValue('editFormLabel-' + languageId);
 	      });
+	      var helpMessage = {};
+	      var tooltipInputs = Array.from(this.container.querySelectorAll('[data-role="main-user-field-label-container"]'));
+	      tooltipInputs.forEach(function (tooltipContainer) {
+	        var languageId = tooltipContainer.dataset['language'];
+	        helpMessage[languageId] = _this6.getInputValue('editFormTooltip-' + languageId);
+	      });
 	      var list = [];
 	      var userTypeId = this.getInputValue('userTypeId');
 	      if (userTypeId === 'enumeration') {
@@ -379,6 +398,7 @@
 	      return {
 	        id: id,
 	        editFormLabel: editFormLabel,
+	        helpMessage: helpMessage,
 	        entityId: this.getInputValue('entityId'),
 	        fieldName: fieldName,
 	        sort: this.getInputValue('sort'),
@@ -543,11 +563,11 @@
 	      }
 	    }
 	  }, {
-	    key: "syncLabelInputs",
-	    value: function syncLabelInputs(fromLabel, toLabel) {
-	      var tab = fromLabel.closest('.main-user-field-edit-tab');
+	    key: "syncInputs",
+	    value: function syncInputs(fromInput, toInput) {
+	      var tab = fromInput.closest('.main-user-field-edit-tab');
 	      if (tab && tab.classList.contains('main-user-field-edit-tab-current')) {
-	        toLabel.value = fromLabel.value;
+	        toInput.value = fromInput.value;
 	      }
 	    }
 	  }, {

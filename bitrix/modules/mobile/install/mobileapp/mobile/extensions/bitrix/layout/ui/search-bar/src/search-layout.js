@@ -128,6 +128,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			return {
 				type: 'search',
 				id: 'search',
+				badgeCode: 'tasks_search',
 				testId: 'search',
 				callback: this.show,
 				accent: this.hasChanges(),

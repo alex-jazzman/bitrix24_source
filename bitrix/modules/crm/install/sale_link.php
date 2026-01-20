@@ -8,6 +8,7 @@ use Bitrix\Crm\RequisiteAddress;
 use	Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Internals\BusinessValuePersonDomainTable;
 use Bitrix\Catalog;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * @global $DB CDatabase
@@ -450,9 +451,14 @@ foreach ($arOrderUserFields as $field)
 	foreach ($field as $k => $v)
 		$arFields[$k] = $v;
 
+	$logger = \Bitrix\Crm\Service\Container::getInstance()->getLogger('Default');
+	$logger->info('installExternalEntities Try to add UF ' . $arFields['FIELD_NAME'] . ' to ' . $arFields['ENTITY_ID'] . ' ' . microtime(true));
+
 	$ID = $obUserField->Add($arFields);
 	if ($ID <= 0)
 	{
+		global $APPLICATION;
+		$logger->critical('installExternalEntitiesError Add UF ' .  $arFields['FIELD_NAME'] . ' to ' . $arFields['ENTITY_ID'] . ' error: ' .$APPLICATION->GetException()->GetString() . ' [' . $APPLICATION->GetException()->GetID() . ']');
 		$errMsg[] = Loc::getMessage(
 			'CRM_CANT_ADD_USER_FIELD1',
 			[
@@ -2073,22 +2079,37 @@ if($billPsLocalization === 'ru')
 			'RATE' => 0,
 		]);
 	}
+	// TODO:: Remove DateTime check after 01.01.2026
+	$vat22BeginDateString = Main\Config\Option::get('crm', 'vat22BeginDate', '2026-01-01 00:00:00');
+	$vat22BeginDate = new DateTime($vat22BeginDateString, 'Y-m-d H:i:s');
+	$nowDate = new DateTime();
+
+	if ($nowDate->getTimestamp() >= $vat22BeginDate->getTimestamp() - \CTimeZone::GetOffset())
+	{
+		$vatRateValue = 22;
+		$vatNamePhraseCode = 'CRM_VAT_22';
+	}
+	else
+	{
+		$vatRateValue = 20;
+		$vatNamePhraseCode = 'CRM_VAT_21';
+	}
 	$vat = Catalog\Model\Vat::getRow([
 		'select' => [
 			'ID',
 		],
 		'filter' => [
-			'=RATE' => 20,
+			'=RATE' => $vatRateValue,
 		],
 	]);
 	if ($vat === null)
 	{
 		Catalog\Model\Vat::add([
-			'NAME' => Loc::getMessage('CRM_VAT_21'),
+			'NAME' => Loc::getMessage($vatNamePhraseCode),
 			'ACTIVE' => 'Y',
 			'SORT' => 300,
 			'EXCLUDE_VAT' => 'N',
-			'RATE' => 20,
+			'RATE' => $vatRateValue,
 		]);
 	}
 }

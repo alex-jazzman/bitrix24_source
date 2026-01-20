@@ -17,6 +17,7 @@ export const Button = {
 			type: String,
 			default: '',
 		},
+		rightCounter: Object,
 		size: String,
 		state: {
 			type: String,
@@ -30,6 +31,7 @@ export const Button = {
 		color: String,
 		round: Boolean,
 		icon: String,
+		style: String,
 		iconPosition: {
 			type: String,
 			validator(position: ?string): boolean
@@ -45,6 +47,8 @@ export const Button = {
 		dataset: Object,
 		buttonClass: [String, Array],
 	},
+	computed:
+	{},
 	created(): void
 	{
 		this.button = new UIButton({
@@ -54,6 +58,7 @@ export const Button = {
 			color: this.color,
 			round: this.round,
 			icon: this.icon,
+			style: this.style,
 			iconPosition: this.iconPosition,
 			useAirDesign: Boolean(this.useAirDesign),
 			noCaps: this.noCaps,
@@ -87,6 +92,13 @@ export const Button = {
 		}
 	},
 	watch: {
+		rightCounter: {
+			handler(rightCounterNew): void
+			{
+				const rightCounterFiltered = rightCounterNew?.value ? rightCounterNew : null;
+				this.button?.setRightCounter(rightCounterFiltered);
+			},
+		},
 		text: {
 			handler(text): void
 			{
@@ -102,7 +114,7 @@ export const Button = {
 		color: {
 			handler(color): void
 			{
-				this.button?.setColor(color);
+				this.button?.setState(color);
 			},
 		},
 		state: {
@@ -134,6 +146,12 @@ export const Button = {
 				}
 			},
 			immediate: true,
+		},
+		style: {
+			handler(style): void
+			{
+				this.button?.setStyle(style);
+			},
 		},
 		clocking: {
 			handler(clocking): void

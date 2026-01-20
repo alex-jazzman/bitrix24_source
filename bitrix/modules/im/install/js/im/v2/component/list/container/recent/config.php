@@ -13,6 +13,8 @@ return [
 		'im.v2.component.search',
 		'im.v2.lib.logger',
 		'im.v2.provider.service.chat',
+		'im.v2.lib.confirm',
+		'im.v2.component.list.container.elements.base-header-menu',
 		'ui.info-helper',
 		'im.public',
 		'im.v2.component.elements.menu',

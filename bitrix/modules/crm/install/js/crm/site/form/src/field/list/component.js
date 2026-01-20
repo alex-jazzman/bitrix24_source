@@ -65,13 +65,13 @@ const fieldListMixin = {
 		},
 		select(item)
 		{
-			this.closeDropDown();
 			let select = () => {
 				if (this.item)
 				{
 					this.item.selected = false;
 				}
 				item.selected = true;
+				this.closeDropDown();
 			};
 			if (this.item && this.item.selected)
 			{
@@ -79,7 +79,7 @@ const fieldListMixin = {
 			}
 			else
 			{
-				setTimeout(select, 300);
+				setTimeout(select, 0);
 			}
 		},
 		unselect: function () {

@@ -1,0 +1,23 @@
+<?php
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL_TYPE_TELEGRAM"] = "Telegram";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL_TYPE_TELEGRAM_BOT"] = "Telegram Bot";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL_TYPE_WHATSAPP"] = "WhatsApp";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL_TYPE_WHATSAPP_WABA"] = "WhatsApp WABA";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_MODULE_NOT_INSTALLED_MSGVER_1"] = "The Messenger Connector module is not installed.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_ACTIVE_CONNECTOR"] = "This connector is not active.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_ACTIVE_CONNECTOR_MSGVER_1"] = "This connector is not active.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_ANSWER_CLIENT"] = "The server was unable to access the portal. Please check your network settings.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_ANSWER_CLIENT_MSGVER_1"] = "The server was unable to access the portal. Please check your network settings.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_CONNECT"] = "A test connection with the specified data could not be established.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_CONNECT_MSGVER_1"] = "A test connection with the specified data could not be established.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_DATA_SAVE"] = "No data to save.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_SAVE"] = "An error occurred while saving. Please check the entered data and try again.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_SAVE_MSGVER_1"] = "An error occurred while saving. Please check the entered data and try again.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_CONNECT"] = "Test connection successful.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_CONNECT_MSGVER_1"] = "Test connection successful.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_SAVE"] = "Data saved successfully.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_SAVE_MSGVER_1"] = "Data saved successfully.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_SELECT_CHANNEL"] = "Select a channel from the list.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_SESSION_HAS_EXPIRED"] = "Your session has expired. Please submit the form again.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_SESSION_HAS_EXPIRED_MSGVER_1"] = "Your session has expired. Please submit the form again.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_SETTINGS_INCORRECT"] = "Incorrect settings were specified.";

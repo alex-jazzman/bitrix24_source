@@ -1,9 +1,10 @@
 import { Event, Text } from 'main.core';
 
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
-import { BIcon } from 'ui.icon-set.api.vue';
 import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
-import { Actions, Outline } from 'ui.icon-set.api.core';
+import { BIcon, Actions, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.actions';
+import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
 import { GrowingTextArea } from 'tasks.v2.component.elements.growing-text-area';
@@ -17,7 +18,6 @@ import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserModel } from 'tasks.v2.model.users';
 
 import { CheckListItemMixin } from './check-list-item-mixin';
-import { CheckListManager } from '../../../lib/check-list-manager';
 
 // @vue/component
 export const CheckListParentItem = {
@@ -105,7 +105,7 @@ export const CheckListParentItem = {
 					id: `MenuProfileGroup-${this.id}`,
 				},
 				onClick: () => {
-					if (this.isCollapsed(this.item))
+					if (this.collapsed)
 					{
 						this.toggleCollapse();
 					}
@@ -121,7 +121,7 @@ export const CheckListParentItem = {
 					id: `MenuProfileEdit-${this.id}`,
 				},
 				onClick: () => {
-					if (this.canEdit)
+					if (this.canModify)
 					{
 						this.$emit('openCheckList', this.id);
 					}
@@ -144,14 +144,14 @@ export const CheckListParentItem = {
 				return [
 					collapseItem,
 					this.canModify ? editItem : null,
-					this.canModify ? removeItem : null,
+					this.canRemove ? removeItem : null,
 				];
 			}
 
 			return [
 				collapseItem,
-				groupActionsItem,
-				removeItem,
+				this.canModify ? groupActionsItem : null,
+				this.canRemove ? removeItem : null,
 			];
 		},
 		itemIcon(): string
@@ -169,10 +169,12 @@ export const CheckListParentItem = {
 		completedCount(): number
 		{
 			return this.checkLists.filter((checklist: CheckListModel) => {
-				return (
-					checklist.parentId === this.id
-					&& (checklist.isComplete || checklist.localCompleteState)
-				);
+				if (checklist.parentId !== this.id)
+				{
+					return false;
+				}
+
+				return checklist.localCompleteState ?? checklist.isComplete;
 			}).length;
 		},
 		totalCount(): number
@@ -183,7 +185,7 @@ export const CheckListParentItem = {
 		},
 		currentUserResponsible(): boolean
 		{
-			return this.currentUserId === this.task.responsibleId;
+			return this.task.responsibleIds.includes(this.currentUserId);
 		},
 		currentUser(): UserModel
 		{
@@ -210,20 +212,34 @@ export const CheckListParentItem = {
 		{
 			return this.item.myFilterActive;
 		},
+		fontSize(): number
+		{
+			return this.isPreview ? 15 : 17;
+		},
+		collapsed(): boolean
+		{
+			if (this.checkListManager.isParentItem(this.draggedCheckListId))
+			{
+				return true;
+			}
+
+			return this.checkListManager.isItemCollapsed(this.item, this.isPreview, this.positionIndex);
+		},
 	},
 	watch: {
 		myFilterActive(value: boolean): void
 		{
 			this.handleMyFilter(value);
 		},
-	},
-	created(): void
-	{
-		this.checkListManager = new CheckListManager({
-			computed: {
-				checkLists: () => this.checkLists,
-			},
-		});
+		totalCount(): void
+		{
+			this.handleCompleteState();
+
+			if (!this.numberMyItems && this.myFilterActive)
+			{
+				this.handleMyFilter(false);
+			}
+		},
 	},
 	mounted(): void
 	{
@@ -250,6 +266,11 @@ export const CheckListParentItem = {
 					subtree: true,
 				},
 			);
+		}
+
+		if (!this.isPreview)
+		{
+			this.handleCompleteState();
 		}
 	},
 	beforeUnmount(): void
@@ -308,12 +329,28 @@ export const CheckListParentItem = {
 			{
 				const childrenIds = this.checkListManager
 					.getAllChildren(this.id)
+					.filter((item: CheckListModel) => {
+						const completed = (item.localCompleteState ?? item.isComplete);
+
+						return !this.item.areCompletedCollapsed || !completed;
+					})
 					.map((item: CheckListModel) => item.id);
 
 				this.checkListManager.showItems(
 					childrenIds,
 					(updates: CheckListModel[]) => this.upsertCheckLists(updates),
 				);
+			}
+		},
+		handleCompleteState(): void
+		{
+			if (this.totalCount > 0)
+			{
+				this.complete(this.totalCount === this.completedCount);
+			}
+			else if (this.completed)
+			{
+				this.complete(false);
 			}
 		},
 		checkSticky(): void
@@ -334,7 +371,7 @@ export const CheckListParentItem = {
 		},
 		toggleCollapse(): void
 		{
-			const localCollapsedState = !this.isCollapsed(this.item);
+			const localCollapsedState = !this.collapsed;
 
 			if (this.isPreview && this.isEdit)
 			{
@@ -353,13 +390,24 @@ export const CheckListParentItem = {
 				fields: { localCollapsedState },
 			});
 		},
-		isCollapsed(item: CheckListModel): boolean
+		collapse(): void
 		{
-			return this.checkListManager.isItemCollapsed(item, this.isPreview, this.positionIndex);
+			this.$store.dispatch(`${Model.CheckList}/update`, {
+				id: this.id,
+				fields: { localCollapsedState: true },
+			});
 		},
 		toggleCompleted(itemId: number | string, collapsed: boolean): void
 		{
+			const myItemIds = this.checkListManager.findItemIdsWithUser(
+				this.id,
+				this.currentUserId,
+			);
+
 			this.checkListManager.getAllCompletedChildren(itemId)
+				.filter((item: CheckListModel) => {
+					return !this.myFilterActive || myItemIds.has(item.id);
+				})
 				.forEach((item: CheckListModel) => {
 					if (collapsed === false)
 					{
@@ -384,15 +432,28 @@ export const CheckListParentItem = {
 			class="check-list-widget-parent-item"
 			:class="{
 				'--complete': completed,
-				'--collapsed': isCollapsed(item),
+				'--collapsed': collapsed,
 				'--preview': isPreview,
 				'--editable': canModify,
 			}"
 			:data-id="id"
 			:data-parent="id"
+			@mouseover="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
 			<div class="check-list-widget-parent-item-label-container">
-				<BIcon :name="itemIcon"/>
+				<div
+					v-if="!readOnly"
+					class="check-list-widget-item-drag"
+					:class="{
+						'check-list-drag-list': canDragItem,
+					}"
+				>
+					<BIcon v-if="canDragItem" :name="Outline.DRAG_L"/>
+				</div>
+				<div class="check-list-widget-item-icon">
+					<BIcon :name="itemIcon"/>
+				</div>
 			</div>
 			<div class="check-list-widget-parent-item-title-container">
 				<GrowingTextArea
@@ -400,17 +461,17 @@ export const CheckListParentItem = {
 					class="check-list-widget-parent-item-title"
 					:data-check-list-id="'check-list-parent-item-title-' + id"
 					:modelValue="item.title"
-					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
-					:readonly="groupMode || isPreview"
+					:placeholder="loc('TASKS_V2_CHECK_LIST_LIST_PLACEHOLDER')"
+					:readonly="textReadOnly"
 					:fontColor="textColor"
-					:fontSize="17"
+					:fontSize
 					:lineHeight="20"
 					:fontWeight="500"
 					@click="handleTextClick"
 					@update:modelValue="updateTitle"
 					@input="updateTitle"
 					@focus="handleFocus"
-					@emptyFocus="focusToItem"
+					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
 				/>
@@ -458,14 +519,14 @@ export const CheckListParentItem = {
 						/>
 					</div>
 					<div class="check-list-widget-parent-item-main-action-actions">
-						<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu" />
+						<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu"/>
 						<BIcon
-							:name="isCollapsed(item) ? Actions.CHEVRON_DOWN : Actions.CHEVRON_UP"
+							:name="collapsed ? Outline.CHEVRON_DOWN_L : Outline.CHEVRON_TOP_L"
 							@click="toggleCollapse()"
 						/>
 					</div>
 				</div>
-				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"></div>
+				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"/>
 			</div>
 			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		</div>

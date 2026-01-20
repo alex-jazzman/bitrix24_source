@@ -1,16 +1,15 @@
-import type { DealData } from 'booking.model.bookings';
+import type { SkuModel } from 'booking.model.bookings';
+import { currencyFormat } from 'booking.lib.currency-format';
 import './profit.css';
 
 // @vue/component
 export const Profit = {
 	name: 'Profit',
 	props: {
-		/**
-		 * @type {DealData}
-		 */
-		deal: {
-			type: Object,
-			default: null,
+		/** @type {SkuModel[]} */
+		skus: {
+			type: Array,
+			default: Array,
 		},
 		className: {
 			type: [Object, String, Array],
@@ -21,14 +20,36 @@ export const Profit = {
 			default: null,
 		},
 	},
+	computed: {
+		totalPrice(): number
+		{
+			return this.skus.reduce((acc: number, sku: SkuModel) => {
+				const priceNum = Number(sku?.price);
+
+				return acc + (Number.isFinite(priceNum) ? priceNum : 0);
+			}, 0);
+		},
+		hasSkus(): boolean
+		{
+			return this.skus.length > 0;
+		},
+		currencyId(): string
+		{
+			return this.hasSkus ? this.skus[0]?.currencyId : '';
+		},
+		formattedTotalPrice(): string
+		{
+			return this.currencyId ? currencyFormat.format(this.currencyId, this.totalPrice) : '';
+		},
+	},
 	template: `
 		<div
-			v-if="deal"
+			v-if="hasSkus"
 			class="booking--booking-base-profit"
 			:class="className"
-			:data-profit="deal.data.opportunity"
+			:dataProfit="totalPrice"
 			v-bind="$props.dataAttributes"
-			v-html="deal.data.formattedOpportunity"
+			v-html="formattedTotalPrice"
 		></div>
 	`,
 };

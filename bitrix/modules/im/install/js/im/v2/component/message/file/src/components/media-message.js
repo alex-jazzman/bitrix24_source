@@ -149,7 +149,7 @@ export const MediaMessage = {
 			</div>
 			<template #after-message>
 				<div v-if="!showBottomContainer" class="bx-im-message-image__reaction-list-container">
-					<ReactionList :messageId="message.id" :contextDialogId="dialogId" />
+					<ReactionList :messageId="message.id" />
 				</div>
 			</template>
 		</BaseMessage>

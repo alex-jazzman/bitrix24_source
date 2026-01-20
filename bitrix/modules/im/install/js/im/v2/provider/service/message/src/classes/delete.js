@@ -2,10 +2,11 @@ import { EventEmitter } from 'main.core.events';
 import { Store } from 'ui.vue3.vuex';
 
 import { Utils } from 'im.v2.lib.utils';
-import { RestMethod, EventType, ChatType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
 import { Core } from 'im.v2.application.core';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { ChatType, RestMethod, EventType, ActionByRole } from 'im.v2.const';
 
 import type { ImModelChat, ImModelMessage, ImModelRecentItem } from 'im.v2.model';
 
@@ -76,18 +77,19 @@ export class DeleteService
 
 	#canDeleteCompletely(message: ImModelMessage): boolean
 	{
-		const alwaysCompleteDeleteChats = [ChatType.channel, ChatType.openChannel, ChatType.generalChannel];
-		const neverCompleteDeleteChats = [ChatType.comment, ChatType.lines];
-
 		const chat = this.#getChat();
-		if (alwaysCompleteDeleteChats.includes(chat.type))
-		{
-			return true;
-		}
-
+		const neverCompleteDeleteChats = [ChatType.comment, ChatType.lines];
 		if (neverCompleteDeleteChats.includes(chat.type))
 		{
 			return false;
+		}
+
+		const isMyOwnMessage = message.authorId === Core.getUserId();
+		const action = isMyOwnMessage ? ActionByRole.deleteCompleteOwnMessage : ActionByRole.deleteOthersMessage;
+		const hasPermission = PermissionManager.getInstance().canPerformActionByRole(action, chat.dialogId);
+		if (hasPermission)
+		{
+			return true;
 		}
 
 		return !message.viewedByOthers;
@@ -113,7 +115,7 @@ export class DeleteService
 		const chat = this.#getChat();
 		if (!newLastId)
 		{
-			this.#store.dispatch('recent/delete', { id: chat.dialogId });
+			this.#store.dispatch('recent/hide', { id: chat.dialogId });
 
 			return;
 		}

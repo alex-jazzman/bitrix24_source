@@ -64,7 +64,7 @@ export const ProgressBar = {
 	},
 	template: `
 		<div class="progress-bar-container" :style="containerStyle">
-			<div class="progress-bar" :style="progressStyle"></div>
+			<div class="progress-bar" :style="progressStyle"/>
 		</div>
 	`,
 };

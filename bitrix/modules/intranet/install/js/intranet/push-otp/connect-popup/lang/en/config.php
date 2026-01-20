@@ -1,0 +1,25 @@
+<?php
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_BUTTON_BACK"] = "Back";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CHANGE_NUMBER_BTN"] = "Change number";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECTED_TITLE"] = "Done!";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN"] = "Confirm";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_DESC"] = "You can now confirm your login on this device.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_NEXT_BTN"] = "Next";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_QR_DESCRIPTION"] = "Install the mobile app. If you already have the app installed, open it by scanning the QR code. You will need the mobile app to confirm your login.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE"] = "Install mobile app";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_COOLDOWN"] = "Request a new code in #SEC# seconds.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_DANGER"] = "Never show this code to anyone. It contains your personal login information.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESC"] = "Enter the code you see in SMS message.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESCRIPTION"] = "Confirmation code has been sent to #PHONE_NUMBER#.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_SUBTITLE"] = "Enter phone number:";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_TITLE"] = "Confirm phone number";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1"] = "Scan the QR code with your device.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1_MSGVER_1"] = "Scan the QR code with your mobile phone. On a Huawei device, [LINK]open this link[/LINK].";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_2"] = "Follow the link on the screen.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_3"] = "Install the app.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4"] = "Scan the QR code again to log in in the app.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_DESC"] = "You can still log in using an SMS code if you don't have access to the app.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_TITLE"] = "Backup phone number to receive confirmation code";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_RESEND_CODE"] = "Get a new code";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_SUBTITLE"] = "Your account is protected.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_TITLE"] = "Done!";

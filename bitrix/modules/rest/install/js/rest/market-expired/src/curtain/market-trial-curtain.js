@@ -25,9 +25,18 @@ export class MarketTrialCurtain extends MarketExpiredCurtain
 
 	getContent(): string
 	{
-		return this.options.type === PopupType.FINAL
-			? Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT${this.marketLabel}`)
-			: Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT${this.marketLabel}`, {
+		if (this.options.type === PopupType.FINAL)
+		{
+			return this.options.isRenamedMarket
+				? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_BITRIX_GPT')
+				: Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_MARKET_PLUS');
+		}
+
+		return this.options.isRenamedMarket
+			? Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_BITRIX_GPT', {
+				'#DAYS#': this.options.expireDays,
+			})
+			: Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_MARKET_PLUS', {
 				'#DAYS#': this.options.expireDays,
 			});
 	}

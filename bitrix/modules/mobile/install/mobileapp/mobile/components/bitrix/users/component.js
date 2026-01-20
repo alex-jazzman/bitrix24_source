@@ -91,6 +91,7 @@
 		{
 			void UserProfile.open({
 				ownerId: user.params.id,
+				analyticsSection: 'mobile_user_list',
 				widgetParams: {
 					userId: user.params.id,
 					imageUrl: encodeURI(user.imageUrl),

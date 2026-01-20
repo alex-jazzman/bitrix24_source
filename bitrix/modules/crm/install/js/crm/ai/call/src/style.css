@@ -1,0 +1,8 @@
+
+.openline-element-container {
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+	color: #0154C8;
+	word-break: break-all;
+	cursor: pointer;
+}

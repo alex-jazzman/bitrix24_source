@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIZPROC_AI_AGENTS_ACTION_EDIT_TITLE'] = 'Редактировать';

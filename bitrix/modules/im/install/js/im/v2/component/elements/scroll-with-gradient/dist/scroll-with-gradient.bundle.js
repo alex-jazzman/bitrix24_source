@@ -9,6 +9,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const ScrollWithGradient = {
 	  name: 'ScrollWithGradient',
+	  expose: ['getContainer'],
 	  props: {
 	    containerMaxHeight: {
 	      type: Number,
@@ -52,6 +53,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    // this.showBottomGradient = container.scrollHeight > container.clientHeight;
 	  },
 	  methods: {
+	    getContainer() {
+	      return this.$refs['scroll-container'];
+	    },
 	    onScroll(event) {
 	      this.$emit('scroll', event);
 	      const scrollPosition = Math.floor(event.target.scrollTop + event.target.clientHeight);

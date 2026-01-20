@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { ChatService } from 'im.v2.provider.service.chat';
 import { EditableChatTitle } from 'im.v2.component.elements.chat-title';
@@ -13,6 +12,7 @@ import { AddToChatButton } from './add-to-chat/add-to-chat-button';
 import '../css/chat-header.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -74,12 +74,12 @@ export const CopilotChatHeader = {
 
 			if (this.currentSidebarPanel === SidebarDetailBlock.members)
 			{
-				EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
+				this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
 
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.members,
 				dialogId: this.dialogId,
 			});
@@ -96,6 +96,10 @@ export const CopilotChatHeader = {
 			}
 
 			return this.chatService;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{

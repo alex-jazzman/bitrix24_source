@@ -1,10 +1,10 @@
 import { ajax as Ajax, Loc, Tag, Text, Type, Uri, UI } from 'main.core';
-import { Popup } from 'main.popup';
-import { Button } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import 'sidepanel';
 import { DashboardExportMaster } from 'biconnector.dashboard-export-master';
 import { DashboardGroup } from 'biconnector.dashboard-group';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
+import { Dialog } from 'ui.system.dialog';
 
 import './css/main.css';
 
@@ -90,7 +90,9 @@ export class DashboardManager
 
 		const continueBtn = new Button({
 			text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_CONTINUE_BTN'),
-			color: Button.Color.PRIMARY,
+			size: ButtonSize.LARGE,
+			style: AirButtonStyle.FILLED,
+			useAirDesign: true,
 			onclick: () => {
 				continueBtn.setWaiting(true);
 				this.duplicateDashboard(dashboardInfo.id)
@@ -123,7 +125,7 @@ export class DashboardManager
 							copiedDashboardInfo,
 							() => {
 								onCloseProcessing();
-								popup.close();
+								popup.hide();
 								EventEmitter.emit('BIConnector.DashboardManager:onEmbeddedDataLoaded');
 							},
 							onCompleteProcessing,
@@ -142,27 +144,26 @@ export class DashboardManager
 			},
 		});
 
-		const popup = new Popup({
+		const popup = new Dialog({
 			content: confirmContent,
 			overlay: true,
-			width: 620,
-			className: 'dashboard-login-popup',
-			closeIcon: true,
-			closeByEsc: true,
-			disableScroll: true,
-			titleBar: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_TITLE'),
-			buttons: [
+			width: 400,
+			hasOverlay: true,
+			title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_TITLE'),
+			centerButtons: [
 				continueBtn,
 				new Button({
 					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_LOGIN_POPUP_CANCEL_BTN'),
-					color: Button.Color.LIGHT,
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.PLAIN,
+					useAirDesign: true,
 					onclick: () => {
-						popup.close();
+						popup.hide();
 					},
 				}),
 			],
 			events: {
-				onClose: () => {
+				onHide: () => {
 					onCloseProcessing('popup_copy');
 				},
 			},
@@ -486,5 +487,24 @@ export class DashboardManager
 				publish: publish ? 1 : 0,
 			},
 		});
+	}
+
+	createEventOpenNotInstalledDashboard(dashboardId: number, fallbackUrl: string): void
+	{
+		this.getDashboardEmbeddedData(dashboardId)
+			.then((response) => {
+				const dashboard = response.data.dashboard;
+				if (dashboard?.embeddedUrl)
+				{
+					window.open(dashboard.embeddedUrl, '_blank');
+				}
+				else
+				{
+					window.open(fallbackUrl, '_blank');
+				}
+			})
+			.catch(() => {
+				window.open(fallbackUrl, '_blank');
+			});
 	}
 }

@@ -10,6 +10,7 @@ export const MessageComponent = Object.freeze({
 	default: 'DefaultMessage',
 	file: 'FileMessage',
 	smile: 'SmileMessage',
+	sticker: 'StickerMessage',
 	unsupported: 'UnsupportedMessage',
 	deleted: 'DeletedMessage',
 	error: 'ErrorMessage',

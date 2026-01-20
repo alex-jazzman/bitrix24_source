@@ -26,11 +26,13 @@ this.BX.Booking = this.BX.Booking || {};
 	      type: '',
 	      name: '',
 	      description: '',
+	      avatar: null,
 	      linkedResources: [],
 	      slotRanges: [],
 	      workLoad: null,
 	      counter: null,
 	      isMain: false,
+	      isPrimary: false,
 	      isDeleted: false,
 	      isConfirmationNotificationOn: true,
 	      isFeedbackNotificationOn: true,
@@ -46,7 +48,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      createdAt: 0,
 	      updatedAt: 0,
 	      deletedAt: 0,
-	      entities: []
+	      entities: [],
+	      skus: [],
+	      skusYandex: []
 	    };
 	  }
 	  getGetters() {
@@ -63,6 +67,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function resources/getByIds */
 	      getByIds: state => ids => {
 	        return ids.map(id => state.collection[id]);
+	      },
+	      /** @function resources/getBySkuIds */
+	      getBySkuIds: state => ids => {
+	        return Object.values(state.collection).filter(resource => resource.skus.some(sku => ids.includes(sku.id)));
 	      }
 	    };
 	  }

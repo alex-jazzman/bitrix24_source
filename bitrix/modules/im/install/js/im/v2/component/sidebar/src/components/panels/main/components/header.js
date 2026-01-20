@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { EventType, ChatType, ActionByRole } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { SidebarManager, SidebarConfig } from 'im.v2.lib.sidebar';
@@ -10,6 +8,7 @@ import { MainMenu } from '../../../../classes/context-menu/main/main-menu';
 import '../css/header.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelRecentItem, ImModelChat } from 'im.v2.model';
 
@@ -67,7 +66,7 @@ export const MainHeader = {
 	},
 	created()
 	{
-		this.contextMenu = new MainMenu();
+		this.contextMenu = new MainMenu({ emitter: this.getEmitter() });
 		this.contextMenu.subscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
 	},
 	beforeUnmount()
@@ -92,7 +91,11 @@ export const MainHeader = {
 		},
 		onSidebarCloseClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close);
+			this.getEmitter().emit(EventType.sidebar.close);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

@@ -70,6 +70,7 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 		const isSlider = <?= $arResult['IS_SLIDER'] ? 'true' : 'false'?>;
 		const currentUserId = <?= (int)$arResult['currentUserId'] ?>;
 		const isFeatureEnabled = <?= $arResult['isFeatureEnabled'] ? 'true' : 'false'?>;
+		const features = <?= Json::encode($arResult['features']) ?>;
 		const canTurnOnTrial = <?= $arResult['canTurnOnTrial'] ? 'true' : 'false'?>;
 		const canTurnOnDemo = <?= $arResult['canTurnOnDemo'] ? 'true' : 'false'?>;
 		const timezone = '<?= $arResult['timezone'] ?>' || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -92,6 +93,7 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 			isSlider,
 			currentUserId,
 			isFeatureEnabled,
+			features,
 			canTurnOnTrial,
 			canTurnOnDemo,
 			timezone,

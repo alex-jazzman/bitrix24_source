@@ -31,6 +31,7 @@ export { SelectorContext } from './context/selector-context';
 export { AutomationGlobals } from './automation-globals';
 export { Statuses } from './statuses';
 export { SelectorItemsManager } from './selectors/group/manager';
+export { EntitySelector } from './selectors/entity-selector';
 
 import enrichFieldsWithModifiers from './selectors/enrich-fields-with-modifiers';
 

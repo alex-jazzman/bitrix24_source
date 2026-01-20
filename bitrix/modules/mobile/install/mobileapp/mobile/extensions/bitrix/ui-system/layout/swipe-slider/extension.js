@@ -2,28 +2,38 @@
  * @module ui-system/layout/swipe-slider
  */
 jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
+	const { Animated } = require('animation/animated');
 	const { createTestIdGenerator } = require('utils/test');
-	const { SliderNavigationMode } = require('ui-system/layout/swipe-slider/src/enum');
+	const { SliderNavigationMode } = require('ui-system/layout/swipe-slider/src/navigation-mode-enum');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Indent } = require('tokens');
-	const { Type } = require('type');
+	const { PropTypes } = require('utils/validation');
 
 	const PAGE_INDICATOR_HEIGHT = 38;
+
 	/**
 	 * @typedef {Object} SwipeSliderProps
-	 * @property {Array<LayoutComponent>} children
-	 * @property {number} contentHeight
-	 * @property {number[]} pageHeights
-	 * @property {number} [width]
 	 * @property {string} testId
-	 * @property {SliderNavigationMode} [navigationMode=SliderNavigationMode.BUTTON]
+	 * @property {Function} [forwardRef]
+	 * @property {Array<LayoutComponent>} children
+	 * @property {number} [contentHeight = 520]
+	 * @property {function} [onPageChange]
+	 * @property {function} [onPageWillChange]
+	 * @property {number} [width]
+	 * @property {number} [pageIndex=0]
+	 * @property {Object} [style={}]
+	 * @property {SliderNavigationMode} [navigationMode]
 
 	 * @class SwipeSlider
 	 */
 	class SwipeSlider extends LayoutComponent
 	{
-		constructor(props) {
+		#sliderRef = null;
+		#containerHeight = null;
+		#navigationMode = null;
+
+		constructor(props)
+		{
 			super(props);
 
 			this.scrollOffset = Animated.newCalculatedValue2D(0, 0);
@@ -32,13 +42,19 @@ jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
 			this.getTestId = createTestIdGenerator({
 				context: this,
 			});
-			this.sliderRef = null;
+
 			this.#initState(props);
 		}
 
 		componentWillReceiveProps(props)
 		{
 			this.#initState(props);
+			this.#goToPage(this.state.pageIndex, false);
+		}
+
+		componentDidMount()
+		{
+			this.#goToPage(this.state.pageIndex, false);
 		}
 
 		#initState(props)
@@ -46,33 +62,36 @@ jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
 			this.state = {
 				pageIndex: props.pageIndex ?? 0,
 			};
+
+			this.#navigationMode = this.#getNavigationMode(props);
+			this.#containerHeight = this.#getContainerHeight(props);
+
 			const calculatedPageHeight = this.#getCalculatedPageHeight(props);
 			this.height = Animated.newCalculatedValue(calculatedPageHeight);
 		}
 
-		#changeHeightAnimated(height, duration = 0.1)
+		#getContainerHeight(props)
 		{
-			return new Promise((resolve) => {
-				const config = {
-					toValue: height,
-					duration,
-					type: 'easeInQuad',
-				};
-				Animated.timing(this.height, config).start(() => resolve());
-			});
+			if (!this.#hasNavigationMode())
+			{
+				return null;
+			}
+
+			const calculatedPageHeight = this.#getCalculatedPageHeight(props);
+
+			return Animated.newCalculatedValue(calculatedPageHeight);
 		}
 
 		render()
 		{
-			const {
-				children = [],
-				navigationMode = SliderNavigationMode.BUTTON,
-				style = {},
-			} = this.props;
-			const containerStyle = {
-				...style,
-				height: this.height,
-			};
+			const { children = [], style } = this.props;
+
+			const containerStyle = style || {};
+
+			if (this.#containerHeight)
+			{
+				containerStyle.height = this.#containerHeight;
+			}
 
 			return View(
 				{
@@ -88,38 +107,92 @@ jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
 						onScrollCalculated: {
 							contentOffset: this.scrollOffset,
 						},
-						swipeEnabled: navigationMode === SliderNavigationMode.SWIPE,
+						swipeEnabled: this.#isSwipeEnabled(),
 						onPageChange: this.#onPageChange,
+						onPageWillChange: this.#onPageWillChange,
 					},
 					...children,
 				),
-				navigationMode === SliderNavigationMode.SWIPE && this.#renderPageIndicator(),
-				navigationMode === SliderNavigationMode.BUTTON && this.#renderNavigationButtons(),
+				this.#renderBottomNavigation(),
 			);
 		}
 
-		#getCalculatedPageHeight = (props) => {
-			const { pageHeights = [], contentHeight, pageIndex = 0 } = props;
-			if (Type.isArrayFilled(pageHeights))
+		#isSwipeEnabled()
+		{
+			return !this.#isButtonNavigationMode();
+		}
+
+		#renderBottomNavigation()
+		{
+			if (!this.#navigationMode)
 			{
-				return pageHeights[pageIndex] + PAGE_INDICATOR_HEIGHT || 0;
+				return null;
 			}
 
+			if (this.#navigationMode.equal(SliderNavigationMode.SWIPE))
+			{
+				return this.#renderPageIndicator();
+			}
+
+			if (this.#isButtonNavigationMode())
+			{
+				return this.#renderNavigationButtons();
+			}
+
+			return null;
+		}
+
+		#isButtonNavigationMode()
+		{
+			return Boolean(this.#navigationMode?.equal(SliderNavigationMode.BUTTON));
+		}
+
+		/**
+		 * @returns {SliderNavigationMode}
+		 */
+		#getNavigationMode(props)
+		{
+			const { navigationMode } = props;
+
+			return SliderNavigationMode.has(navigationMode) ? navigationMode : null;
+		}
+
+		#hasNavigationMode()
+		{
+			return Boolean(this.#navigationMode);
+		}
+
+		#getCalculatedPageHeight(props)
+		{
+			const { contentHeight = 520 } = props;
+
 			return contentHeight + PAGE_INDICATOR_HEIGHT;
+		}
+
+		#onPageWillChange = () => {
+			const { onPageWillChange } = this.props;
+
+			onPageWillChange?.();
 		};
 
 		#onPageChange = async (pageIndex) => {
-			await this.#changeHeightAnimated(this.#getCalculatedPageHeight({
-				...this.props,
-				pageIndex,
-			}));
 			this.setState({
 				pageIndex,
 			});
+
+			const { onPageChange } = this.props;
+
+			onPageChange?.(pageIndex);
 		};
 
 		#bindSliderRef = (ref) => {
-			this.sliderRef = ref;
+			this.#sliderRef = ref;
+
+			this.#handleOnForwardRef(ref);
+		};
+
+		#goToPage = (pageIndex, withAnimation = true) => {
+			this.#sliderRef?.scrollToPage(pageIndex, withAnimation);
 		};
 
 		#renderNavigationButtons()
@@ -137,7 +210,8 @@ jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
 			);
 		}
 
-		#renderNavigationButton(isLeft = true) {
+		#renderNavigationButton(isLeft = true)
+		{
 			const icon = isLeft ? Icon.CHEVRON_TO_THE_LEFT : Icon.CHEVRON_TO_THE_RIGHT;
 			const testId = isLeft ? this.getTestId('left-button') : this.getTestId('right-button');
 
@@ -174,15 +248,16 @@ jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
 		#onButtonClick = (isLeft) => {
 			if (isLeft)
 			{
-				this.sliderRef?.prevSlide();
+				this.#sliderRef?.prevSlide();
 
 				return;
 			}
 
-			this.sliderRef?.nextSlide();
+			this.#sliderRef?.nextSlide();
 		};
 
-		#renderPageIndicator() {
+		#renderPageIndicator()
+		{
 			const renderDot = (index) => {
 				const { width } = this.props;
 
@@ -230,7 +305,29 @@ jn.define('ui-system/layout/swipe-slider', (require, exports, module) => {
 				...renderDots(),
 			);
 		}
+
+		#handleOnForwardRef = (ref) => {
+			const { forwardRef } = this.props;
+
+			if (forwardRef)
+			{
+				forwardRef(ref);
+			}
+		};
 	}
+
+	SwipeSlider.propTypes = {
+		testId: PropTypes.string.isRequired,
+		children: PropTypes.array.isRequired,
+		forwardRef: PropTypes.func,
+		onPageChange: PropTypes.func,
+		onPageWillChange: PropTypes.func,
+		width: PropTypes.number,
+		pageIndex: PropTypes.number,
+		style: PropTypes.object,
+		navigationMode: PropTypes.instanceOf(SliderNavigationMode),
+		contentHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+	};
 
 	module.exports = {
 		/**

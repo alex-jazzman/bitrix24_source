@@ -1,7 +1,5 @@
-'use strict';
+jn.define('call/calls/bitrix', (require, exports, module) => {
 
-(function()
-{
 	BX.DoNothing = function()
 	{};
 
@@ -56,6 +54,7 @@
 		}
 	}
 
-	window.BitrixCall = BitrixCall;
-})
-();
+	module.exports = {
+		BitrixCall,
+	};
+});

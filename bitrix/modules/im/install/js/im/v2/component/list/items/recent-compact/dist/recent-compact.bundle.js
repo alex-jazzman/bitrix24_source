@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_lib_menu,im_v2_css_tokens,ui_designTokens_air,main_core,ui_iconSet_api_vue,im_public,im_v2_application_core,im_v2_const,im_v2_component_elements_avatar) {
+(function (exports,im_v2_css_tokens,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_lib_menu,ui_designTokens_air,main_core,ui_iconSet_api_vue,im_public,im_v2_application_core,im_v2_const,im_v2_component_elements_avatar,call_component_compactActiveCallList) {
 	'use strict';
 
 	const NavigationItemToIcon = Object.freeze({
@@ -203,57 +203,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const ActiveCall = {
-	  name: 'ActiveCall',
-	  components: {
-	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['click'],
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-	    activeCall() {
-	      return this.item;
-	    }
-	  },
-	  methods: {
-	    onClick(event) {
-	      const recentItem = this.$store.getters['recent/get'](this.activeCall.dialogId);
-	      if (!recentItem) {
-	        return;
-	      }
-	      this.$emit('click', {
-	        item: recentItem,
-	        $event: event
-	      });
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div :data-id="activeCall.dialogId" class="bx-im-list-recent-compact-item__wrap">
-			<div @click="onClick" class="bx-im-list-recent-compact-item__container">
-				<div class="bx-im-list-recent-compact-item__avatar_container">
-					<ChatAvatar 
-						:avatarDialogId="activeCall.dialogId"
-						:contextDialogId="activeCall.dialogId"
-						:size="AvatarSize.M" 
-						:withSpecialTypes="false" 
-					/>
-					<div class="bx-im-list-recent-compact-active-call__icon" :class="'--' + activeCall.state"></div>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
 	const EmptyState = {
 	  name: 'EmptyState',
 	  data() {
@@ -272,13 +221,27 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const CompactActiveCallList = {
+	  name: 'CompactActiveCallList',
+	  emits: ['click'],
+	  computed: {
+	    componentToRender() {
+	      return call_component_compactActiveCallList.CompactActiveCallList;
+	    }
+	  },
+	  template: `
+		<component v-if="componentToRender" :is="componentToRender"  @click="$emit('click', $event)" />
+	`
+	};
+
+	// @vue/component
 	const RecentList = {
 	  name: 'RecentList',
 	  components: {
 	    RecentItem,
-	    ActiveCall,
 	    EmptyState,
-	    CompactNavigation
+	    CompactNavigation,
+	    CompactActiveCallList
 	  },
 	  emits: ['chatClick'],
 	  data() {
@@ -326,7 +289,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  async created() {
-	    this.contextMenuManager = new im_v2_lib_menu.RecentMenu();
+	    this.contextMenuManager = new im_v2_lib_menu.RecentMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.managePreloadedList();
 	    await this.getRecentService().loadFirstPage();
 	  },
@@ -370,6 +335,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return this.service;
 	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
@@ -377,14 +345,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container">
 			<CompactNavigation />
-			<div v-if="activeCalls.length > 0" class="bx-im-list-recent-compact__calls_container">
-				<ActiveCall
-					v-for="activeCall in activeCalls"
-					:key="activeCall.dialogId"
-					:item="activeCall"
-					@click="onClick"
-				/>
-			</div>
+			<CompactActiveCallList @click="onClick" />
 			<div class="bx-im-list-recent-compact__scroll-container">
 				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent-compact__pinned_container">
 					<RecentItem
@@ -412,5 +373,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Css,BX,BX,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Call.Component));
 //# sourceMappingURL=recent-compact.bundle.js.map

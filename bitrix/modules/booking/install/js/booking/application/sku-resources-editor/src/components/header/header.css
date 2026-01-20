@@ -1,0 +1,6 @@
+.booking-sre-app__header {
+	color: var(--ui-color-base-black-fixed);
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xl);
+}

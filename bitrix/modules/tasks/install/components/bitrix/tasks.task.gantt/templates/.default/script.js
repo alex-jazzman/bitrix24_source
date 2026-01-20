@@ -257,15 +257,6 @@ function __RenewMenuItems(task)
     task.menuItems = __FilterMenuByStatus(task);
 }
 
-BX.addCustomEvent("SidePanel.Slider:onCloseByEsc", function(event) {
-	var reg = /tasks\/task\/edit/;
-	var str = event.getSlider().getUrl();
-	if (reg.test(str) && !confirm(BX.message('TASKS_CLOSE_PAGE_CONFIRM')))
-	{
-		event.denyAction();
-	}
-});
-
 BX.addCustomEvent('BX.Main.Filter:apply', function(id, data, ctx, promise, params) {
 	window.location.href = BX.util.remove_url_param(window.location.href, 'F_STATE');
 });

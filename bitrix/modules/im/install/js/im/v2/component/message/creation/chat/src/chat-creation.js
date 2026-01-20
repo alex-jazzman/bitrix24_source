@@ -107,7 +107,7 @@ export const ChatCreationMessage = {
 			if (this.isChatUserLimitExceeded)
 			{
 				return {
-					text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
+					text: this.loc('CALL_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
 					popupOptions: {
 						bindOptions: {
 							position: 'bottom',

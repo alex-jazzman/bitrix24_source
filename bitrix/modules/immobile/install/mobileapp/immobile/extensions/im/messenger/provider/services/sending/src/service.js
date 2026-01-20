@@ -4,11 +4,13 @@
 jn.define('im/messenger/provider/services/sending/service', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
+	const { clone } = require('utils/object');
 
 	const {
 		EventType,
 		SubTitleIconType,
 	} = require('im/messenger/const');
+	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -75,11 +77,14 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {Array} fileList
+		 * @param {string?} text
+		 * @param {Object?} params
+		 * @param {(string) => Promise<string>} params.prepareFile
 		 * @return {Promise}
 		 */
-		async sendFiles(dialogId, fileList)
+		async sendFiles(dialogId, fileList, text = '', params = {})
 		{
-			logger.log(`${this.constructor.name}.sendFiles:`, dialogId, fileList);
+			logger.log(`${this.constructor.name}.sendFiles:`, dialogId, fileList, text, params);
 
 			if (!dialogId)
 			{
@@ -118,12 +123,12 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 
 			if (Type.isArrayFilled(deviceFileList))
 			{
-				return this.#sendFilesFromDevice(dialogId, deviceFileList);
+				return this.#sendFilesFromDevice(dialogId, deviceFileList, text, params);
 			}
 
 			if (Type.isArrayFilled(diskFileList))
 			{
-				return this.#sendFilesFromDisk(dialogId, diskFileList);
+				return this.#sendFilesFromDisk(dialogId, diskFileList, text);
 			}
 
 			return new Error(`${this.constructor.name}.sendFiles: no files to upload`);
@@ -166,53 +171,55 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 		 * @desc Send files from device by FileUploadService
 		 * @param {DialogId} dialogId
 		 * @param {Array<DeviceFile>} deviceFileList
+		 * @param {string?} text
+		 * @param {Object?} params
+		 * @param {(string) => Promise<string>} params.prepareFile
 		 * @return {Promise}
 		 */
-		async #sendFilesFromDevice(dialogId, deviceFileList)
+		async #sendFilesFromDevice(dialogId, deviceFileList, text, params)
 		{
-			logger.log(`${this.constructor.name}.sendFilesFromDevice:`, dialogId, deviceFileList);
+			logger.log(`${this.constructor.name}.sendFilesFromDevice:`, dialogId, deviceFileList, text, params);
 
 			if (deviceFileList.length > UPLOAD_FILES_CHUNK_SIZE)
 			{
 				const chunkFilesArray = this.#getChunkArray(deviceFileList);
 
-				return this.#chunkUploadFiles(dialogId, chunkFilesArray);
+				return this.#chunkUploadFiles(dialogId, chunkFilesArray, text, params);
 			}
 
-			return this.#uploadFiles(dialogId, deviceFileList);
+			return this.#uploadFiles(dialogId, deviceFileList, text, params);
 		}
 
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {Array<Array<DeviceFile>>} chunkFilesArray
+		 * @param {string?} text
+		 * @param {Object?} params
+		 * @param {(string) => Promise<string>} params.prepareFile
 		 */
-		async #chunkUploadFiles(dialogId, chunkFilesArray) {
-			for (const chunk of chunkFilesArray)
+		async #chunkUploadFiles(dialogId, chunkFilesArray, text, params) {
+			const [firstChunk, ...otherChunks] = chunkFilesArray;
+			await this.#uploadFiles(dialogId, firstChunk, text, params);
+
+			for (const chunk of otherChunks)
 			{
 				// this rule is disabled according to the clause in the official documentation eslint:
 				// 'loops may be used to prevent your code from sending an excessive amount of requests in parallel.'
 				// eslint-disable-next-line no-await-in-loop
-				await this.#uploadFiles(dialogId, chunk);
+				await this.#uploadFiles(dialogId, chunk, '', params);
 			}
 		}
 
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {Array<DeviceFile>} deviceFileList
+		 * @param {string?} text
+		 * @param {Object?} params
+		 * @param {(string) => Promise<string>} params.prepareFile
 		 */
-		async #uploadFiles(dialogId, deviceFileList)
+		async #uploadFiles(dialogId, deviceFileList, text, params)
 		{
 			const diskFolderId = await this.filesUploadService.getDiskFolderId(dialogId);
-
-			// TODO: remove it after solving the problem with listening to voice messages
-			try
-			{
-				window.debugUploadAudio[window.debugUploadAudio.length - 1].uploadFiles = `diskFolderId: ${diskFolderId}`;
-			}
-			catch (e)
-			{
-				console.error(e);
-			}
 
 			const temporaryMessageId = Uuid.getV4();
 
@@ -224,15 +231,59 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			}));
 
 			const temporaryFileIds = prepareFiles.map((file) => file.temporaryFileId);
-
-			const preparedUploadTasks = await this.filesUploadService.prepareTasks(prepareFiles);
+			await this.filesUploadService.addFilesToStore(prepareFiles);
 			await this.#sendMessage({
 				dialogId,
 				temporaryMessageId,
 				fileIds: temporaryFileIds,
+				text,
 			});
 
+			await this.#prepareAndStartUploadTasks(temporaryMessageId, prepareFiles, params);
+		}
+
+		/**
+		 * @param {string} temporaryMessageId
+		 * @param {Array<PreparedUploadFile>} prepareFiles
+		 * @param {Object?} params
+		 * @param {(string) => Promise<string>} params.prepareFile
+		 * return {DeviceFile}
+		 */
+		async #prepareAndStartUploadTasks(temporaryMessageId, prepareFiles, params)
+		{
+			let prepareFilesToUpload = null;
+			try
+			{
+				prepareFilesToUpload = await Promise.all(
+					prepareFiles.map(async (data) => {
+						const preparedUploadFile = clone(data);
+						if (params?.prepareFile)
+						{
+							preparedUploadFile.deviceFile = await params.prepareFile(preparedUploadFile.deviceFile);
+						}
+
+						return preparedUploadFile;
+					}),
+				);
+			}
+			catch (error)
+			{
+				const temporaryFileIds = prepareFiles.map((file) => file.temporaryFileId);
+				this.#deleteMessage(temporaryMessageId, temporaryFileIds);
+				Notification.showToast(ToastType.errorConvertRoundVideo);
+
+				logger.error(error);
+
+				return;
+			}
+
+			const preparedUploadTasks = await this.filesUploadService.prepareTasks(prepareFilesToUpload);
 			await this.filesUploadService.startUploadFiles(preparedUploadTasks);
+
+			if (params?.prepareFile)
+			{
+				await this.filesUploadService.addFilesToStore(prepareFilesToUpload);
+			}
 		}
 
 		/**
@@ -324,12 +375,13 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 		/**
 		 * @desc Send files from disk
 		 * @param {DialogId} dialogId
+		 * @param {string?} text
 		 * @param {Array<Object>} diskFileList
 		 * @return {Promise}
 		 */
-		async #sendFilesFromDisk(dialogId, diskFileList)
+		async #sendFilesFromDisk(dialogId, diskFileList, text)
 		{
-			logger.log(`${this.constructor.name}.sendFilesFromDisk:`, dialogId, diskFileList);
+			logger.log(`${this.constructor.name}.sendFilesFromDisk:`, dialogId, diskFileList, text);
 			const temporaryMessageId = Uuid.getV4();
 			const filesData = Object.values(diskFileList).map((diskFile) => {
 				return this.#prepareFileFromDisk({ file: diskFile, dialogId, temporaryMessageId });
@@ -344,6 +396,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 				temporaryMessageId,
 				dialogId,
 				fileIds: filesData.map((fileData) => fileData.temporaryFileId),
+				text,
 			});
 			const filesIdsCollection = filesData.map((fileData) => {
 				return { realFileIdInt: fileData.realFileIdInt, temporaryFileId: fileData.temporaryFileId };
@@ -368,9 +421,10 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 				temporaryMessageId,
 			}));
 
-			const temporaryFileIds = prepareFiles.map((file) => file.temporaryFileId);
+			const temporaryFileIds = prepareFiles.map((file) => file.deviceFile.id);
 
 			const preparedUploadTasks = await this.filesUploadService.prepareTasks(prepareFiles);
+			this.filesUploadService.addFilesToStore(prepareFiles);
 			await this.#resendMessage({
 				dialogId,
 				temporaryMessageId,
@@ -549,6 +603,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 				dialogId,
 				withAnimation: true,
 				force: true,
+				position: AfterScrollMessagePosition.bottom,
 			};
 
 			BX.postComponentEvent(EventType.dialog.external.scrollToBottom, [scrollToBottomEventData]);

@@ -1,0 +1,1 @@
+{"version":3,"file":"component.map.js","names":["require","extension","jn","ResultsYear","BX","onViewLoaded","show","onClose","layout","close"],"sources":["component.js"],"mappings":"AAAA,MACC,MAAMA,EAAWC,GAAcC,GAAGF,QAAQC,GAC1C,MAAME,YAAEA,GAAgBH,EAAQ,+BAEhCI,GAAGC,cAAa,UACVF,EAAYG,KAAK,CACrBC,QAAS,KACRC,OAAOC,OAAO,GAEd,GAEH,EAXD","ignoreList":[]}

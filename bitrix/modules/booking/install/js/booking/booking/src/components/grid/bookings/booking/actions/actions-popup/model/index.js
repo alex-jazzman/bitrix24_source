@@ -12,4 +12,5 @@ export const ActionsPopupActionEnum: ActionsPopupAction = Object.freeze({
 	overbooking: 'overbooking',
 	remove: 'remove',
 	waitList: 'waitList',
+	skus: 'skus',
 });

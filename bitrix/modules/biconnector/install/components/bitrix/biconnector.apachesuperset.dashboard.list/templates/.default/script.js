@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,main_popup,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,ui_dialogs_messagebox,biconnector_apacheSupersetAnalytics,ui_entitySelector,ui_tour,biconnector_apacheSupersetMarketManager,biconnector_entitySelector,ui_buttons,ui_alerts,ui_forms,ui_system_dialog) {
+(function (exports,main_core,main_popup,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,biconnector_apacheSupersetAnalytics,ui_entitySelector,ui_tour,biconnector_apacheSupersetMarketManager,biconnector_entitySelector,ui_buttons,ui_alerts,ui_forms,ui_system_dialog) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
@@ -184,6 +184,12 @@
 	        text: main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD'),
 	        onclick: function onclick() {
 	          biconnector_apacheSupersetMarketManager.ApacheSupersetMarketManager.openMarket(babelHelpers.classPrivateFieldGet(_this, _properties).isMarketExists, babelHelpers.classPrivateFieldGet(_this, _properties).marketUrl, 'menu');
+	          creationMenu.close();
+	        }
+	      }, {
+	        text: main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_ORDER_DASHBOARD'),
+	        onclick: function onclick() {
+	          BX.Biconnector.ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
 	          creationMenu.close();
 	        }
 	      });
@@ -488,6 +494,13 @@
 	      babelHelpers.classPrivateFieldGet(this, _dashboardManager).openCreationSlider(selectedGroups);
 	    }
 	  }, {
+	    key: "notifyPermissionErrorOpenCreationSlider",
+	    value: function notifyPermissionErrorOpenCreationSlider() {
+	      BX.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD')
+	      });
+	    }
+	  }, {
 	    key: "showCreationGroupPopup",
 	    value: function showCreationGroupPopup() {
 	      if (_classPrivateMethodGet(this, _isActiveGroupIdFilter, _isActiveGroupIdFilter2).call(this)) {
@@ -591,6 +604,17 @@
 	  }, {
 	    key: "handleGroupTitleClick",
 	    value: function handleGroupTitleClick(groupJson) {
+	      var _filterFieldsValues$G2;
+	      var filterFieldsValues = this.getFilter().getFilterFieldsValues();
+	      var currentFilteredGroups = (_filterFieldsValues$G2 = filterFieldsValues['GROUPS.ID']) !== null && _filterFieldsValues$G2 !== void 0 ? _filterFieldsValues$G2 : [];
+	      var isAlreadyFilteredByGroup = currentFilteredGroups.length > 0;
+	      if (isAlreadyFilteredByGroup) {
+	        var filterApi = this.getFilter().getApi();
+	        filterApi.extendFilter({
+	          'GROUPS.ID': [],
+	          'GROUPS.ID_label': []
+	        });
+	      }
 	      this.handleFilterChange(_objectSpread({
 	        fieldId: 'GROUPS.ID'
 	      }, groupJson));
@@ -1008,9 +1032,9 @@
 	  }
 	}
 	function _isActiveGroupIdFilter2() {
-	  var _filterFieldsValues$G2;
+	  var _filterFieldsValues$G3;
 	  var filterFieldsValues = this.getFilter().getFilterFieldsValues();
-	  var selectedGroups = (_filterFieldsValues$G2 = filterFieldsValues['GROUPS.ID']) !== null && _filterFieldsValues$G2 !== void 0 ? _filterFieldsValues$G2 : [];
+	  var selectedGroups = (_filterFieldsValues$G3 = filterFieldsValues['GROUPS.ID']) !== null && _filterFieldsValues$G3 !== void 0 ? _filterFieldsValues$G3 : [];
 	  return selectedGroups.length > 0;
 	}
 	function _notifyErrors2(errors) {
@@ -1139,5 +1163,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardGridManager = SupersetDashboardGridManager;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.Main,BX.BIConnector,BX.Event,BX.UI.Dialogs,BX.BIConnector,BX.UI.EntitySelector,BX.UI.Tour,BX.BIConnector,BX.BIConnector.EntitySelector,BX.UI,BX.UI,BX,BX.UI.System));
+}((this.window = this.window || {}),BX,BX.Main,BX.Main,BX.BIConnector,BX.Event,BX.BIConnector,BX.UI.EntitySelector,BX.UI.Tour,BX.BIConnector,BX.BIConnector.EntitySelector,BX.UI,BX.UI,BX,BX.UI.System));
 //# sourceMappingURL=script.js.map

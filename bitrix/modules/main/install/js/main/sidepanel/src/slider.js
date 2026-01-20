@@ -1,8 +1,10 @@
-import { Type, Loc, Dom, Event, Runtime, Text, Browser, Uri, Tag, type JsonObject } from 'main.core';
+import { Type, Loc, Dom, Event, Runtime, Text, Browser, Uri, Tag, Easing, type JsonObject } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
 import type { Popup } from 'main.popup';
+
+import { renderSkeleton } from 'ui.system.skeleton';
 
 import { Dictionary } from './dictionary';
 import { Label } from './label';
@@ -92,6 +94,8 @@ export class Slider
 			loader: null,
 			content: null,
 		};
+
+		this.skeleton = options.skeleton;
 
 		this.loader = (
 			Type.isStringFilled(options.loader) || Type.isElementNode(options.loader)
@@ -331,7 +335,7 @@ export class Slider
 		}
 		else
 		{
-			this.animation = new BX.easing({
+			this.animation = new Easing({
 				duration: this.animationDuration,
 				start: this.#currentAnimationState,
 				finish: this.#startAnimationState,
@@ -759,10 +763,9 @@ export class Slider
 
 	showLoader(): void
 	{
-		const loader = this.getLoader();
 		if (!this.layout.loader)
 		{
-			this.createLoader(loader);
+			this.createLoader(this.loader, this.skeleton);
 		}
 
 		Dom.style(this.layout.loader, { opacity: 1, display: 'block' });
@@ -1351,9 +1354,9 @@ export class Slider
 					className: 'side-panel-extra-labels',
 				},
 				children: [
+					this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null,
 					this.minimizeLabel.getContainer(),
 					this.newWindowLabel ? this.newWindowLabel.getContainer() : null,
-					this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null,
 					this.printLabel ? this.printLabel.getContainer() : null,
 				],
 			});
@@ -1501,7 +1504,7 @@ export class Slider
 	/**
 	 * @private
 	 */
-	createLoader(sliderLoader: string | HTMLElement): void
+	createLoader(sliderLoader: string | HTMLElement, skeleton: ?string): void
 	{
 		Dom.remove(this.layout.loader);
 
@@ -1522,7 +1525,13 @@ export class Slider
 			'view-mail-loader',
 		];
 
-		if (Type.isElementNode(loader))
+		if (Type.isStringFilled(skeleton))
+		{
+			this.layout.loader = Tag.render`<div style="height: 100%;"></div>`;
+
+			void renderSkeleton(skeleton, this.layout.loader);
+		}
+		else if (Type.isElementNode(loader))
 		{
 			this.layout.loader = this.createHTMLLoader(loader);
 		}
@@ -1776,7 +1785,12 @@ export class Slider
 				: this.#currentAnimationState
 		);
 
-		this.animation = new BX.easing({
+		if (this.skeleton)
+		{
+			this.showLoader();
+		}
+
+		this.animation = new Easing({
 			duration: this.animationDuration,
 			start: this.#currentAnimationState,
 			finish: this.#endAnimationState,

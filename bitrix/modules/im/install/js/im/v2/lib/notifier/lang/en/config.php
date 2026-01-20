@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_NOTIFICATIONS_ITEM_MENU_UNSUBSCRIBE_CANCEL"] = "Cancel";
 $MESS["IM_NOTIFIER_AUDIO_INPUT_ERROR"] = "Speech recognition failed. Please try again later.";
 $MESS["IM_NOTIFIER_CALL_BACKGROUND_FILE_SIZE_ERROR"] = "The file you selected (\"#FILE_NAME#\") exceeds the limit of #LIMIT# MB.";
 $MESS["IM_NOTIFIER_CALL_BACKGROUND_FILE_UNSUPPORTED_ERROR"] = "The file you selected (\"#FILE_NAME#\") cannot be used as background.";
@@ -44,5 +45,7 @@ $MESS["IM_NOTIFIER_MESSAGE_SELECT_LIMIT_ERROR"] = "Maximum number of messages se
 $MESS["IM_NOTIFIER_RECENT_PIN_DEFAULT_ERROR"] = "Could not pin message.";
 $MESS["IM_NOTIFIER_RECENT_PIN_LIMIT_ERROR"] = "You can pin up to #MAX_PINS# chats, channels or collabs.";
 $MESS["IM_NOTIFIER_RECENT_UNPIN_DEFAULT_ERROR"] = "Could not unpin message.";
+$MESS["IM_NOTIFIER_SUBSCRIBE_COMPLETE"] = "You have subscribed for \"#TYPE#\" notifications.";
 $MESS["IM_NOTIFIER_TEXT_COPY_COMPLETE"] = "Text has been copied.";
+$MESS["IM_NOTIFIER_UNSUBSCRIBE_COMPLETE"] = "You have unsubscribed from \"#TYPE#\" notifications.";
 $MESS["IM_NOTIFIER_VOTE_CLOSED_ERROR"] = "You cannot change your rating for this chat.";

@@ -29,9 +29,7 @@ type SearchBarSetup = {
 	searchResultTitleOrDefaultValue: string;
 	seachText: string;
 	labelResult: string;
-	isShowSearchBar: boolean;
 	foundBlocks: Array<DiagramBlock>;
-	onOpenSearchBar: () => void;
 	onInputSearchText: (event: MouseEvent) => void;
 	onClearSearch: () => void;
 	goToNextBlock: () => void;
@@ -40,7 +38,7 @@ type SearchBarSetup = {
 
 // @vue/component
 export const SearchBar = {
-	name: 'search-bar',
+	name: 'SearchBar',
 	components: {
 		BIcon,
 		SearchResult,
@@ -92,8 +90,7 @@ export const SearchBar = {
 		const loc = useLoc();
 		const { goToBlockById } = useCanvas();
 		const searchPanel = useTemplateRef('searchPanel');
-		const isShowSearchBar = ref(false);
-		const isShowOpenBtn = ref(true);
+		const searchInputRef = useTemplateRef('searchInput');
 		const currentBlockIndex = ref(0);
 
 		const isDisabled = computed((): boolean => {
@@ -146,22 +143,6 @@ export const SearchBar = {
 			Event.unbind(document, 'mousedown', onClickOutside);
 		});
 
-		function onOpenSearchBar(): void
-		{
-			if (toValue(isDisabled))
-			{
-				return;
-			}
-
-			isShowOpenBtn.value = false;
-			isShowSearchBar.value = true;
-		}
-
-		function onLeaveTransition()
-		{
-			isShowOpenBtn.value = true;
-		}
-
 		function onGoToNextBlock(): void
 		{
 			if (toValue(isDisabled))
@@ -206,7 +187,6 @@ export const SearchBar = {
 		{
 			highlitedBlocks.clear();
 			onClearSearch();
-			isShowSearchBar.value = false;
 			currentBlockIndex.value = 0;
 		}
 
@@ -215,6 +195,7 @@ export const SearchBar = {
 			if (toValue(searchPanel) && !toValue(searchPanel).contains(event.target))
 			{
 				closeAndResetSearch();
+				toValue(searchInputRef)?.collapseSearchBar();
 			}
 		}
 
@@ -225,11 +206,7 @@ export const SearchBar = {
 			searchResultTitleOrDefaultValue,
 			seachText,
 			labelResult,
-			isShowOpenBtn,
-			isShowSearchBar,
 			foundBlocks,
-			onOpenSearchBar,
-			onLeaveTransition,
 			onSearchBlocks,
 			onClearSearch,
 			closeAndResetSearch,
@@ -239,32 +216,19 @@ export const SearchBar = {
 	},
 	template: `
 		<div
-			:class="{ '--opened': isShowSearchBar }"
 			class="ui-block-diagram-search-bar"
 			ref="searchPanel"
 		>
-			<OpenSearchBtn
-				v-if="isShowOpenBtn"
-				:data-test-id="$blockDiagramTestId('searchOpenBtn')"
-				@click="onOpenSearchBar"
+			<SearchInput
+				:value="seachText"
+				:placeholder="placeholderOrDefaultValue"
+				:disabled="isDisabled"
+				ref="searchInput"
+				@update:value="onSearchBlocks"
+				@clear="closeAndResetSearch"
 			/>
-			<transition
-				name="ui-block-diagram-search-bar-fade"
-				mode="in-out"
-				@after-leave="onLeaveTransition"
-			>
-				<SearchInput
-					v-if="isShowSearchBar"
-					:value="seachText"
-					:placeholder="placeholderOrDefaultValue"
-					:disabled="isDisabled"
-					focusable
-					@update:value="onSearchBlocks"
-					@clear="closeAndResetSearch"
-				/>
-			</transition>
 			<div
-				v-if="isShowSearchBar && foundBlocks.length > 0"
+				v-if="foundBlocks.length > 0"
 				class="ui-block-diagram-search-bar__search-result"
 			>
 				<SearchResult

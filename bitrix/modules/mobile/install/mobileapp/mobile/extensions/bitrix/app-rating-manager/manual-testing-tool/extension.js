@@ -2,13 +2,11 @@
  * @module app-rating-manager/manual-testing-tool
  */
 jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) => {
-	const { H3 } = require('ui-system/typography/heading');
-	const { AppRatingTestingToolField, FieldType } = require('app-rating-manager/manual-testing-tool/src/field');
 	const { TestUserEvent } = require('app-rating-manager/manual-testing-tool/src/event');
 	const { TestUserEventLimit } = require('app-rating-manager/manual-testing-tool/src/limit');
 	const { TestTouristEventStorageProvider } = require('app-rating-manager/manual-testing-tool/src/test-tourist-storage-provider');
-	const { Box } = require('ui-system/layout/box');
 	const { createTestIdGenerator } = require('utils/test');
+	const { BaseManualTestingTool, FieldType } = require('manual-testing-tools');
 
 	const { AppRatingManagerClass, RateEvent } = require('app-rating-manager');
 
@@ -22,7 +20,7 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 	/**
 	 * @class AppRatingManagerManualTestingTool
 	 */
-	class AppRatingManagerManualTestingTool extends LayoutComponent
+	class AppRatingManagerManualTestingTool extends BaseManualTestingTool
 	{
 		constructor(props)
 		{
@@ -32,6 +30,114 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 				context: this,
 			});
 			this.#initState();
+		}
+
+		getSettings()
+		{
+			const {
+				isRated,
+				rateLastTime,
+				rateLastValue,
+				isUserWentToStore,
+				limits,
+				counters,
+				rateBoxLastDisplayTime,
+				rateBoxDisplayCount,
+				isAnyLimitReached,
+				anyLimitReachedTime,
+			} = this.state;
+
+			return [
+				{
+					title: 'Оценка приложения',
+					testId: this.getTestId('is-rate-switcher'),
+					type: FieldType.BOOLEAN,
+					value: isRated,
+					label: 'Оценил приложение',
+					onChange: this.#isRatedOnChange,
+				},
+				{
+					testId: this.getTestId('last-rated-time'),
+					type: FieldType.DATETIME,
+					value: rateLastTime ?? null,
+					label: 'Дата последней оценки',
+					onChange: this.#rateLastTimeOnChange,
+				},
+				{
+					testId: this.getTestId('last-rated-value'),
+					type: FieldType.NUMBER,
+					value: rateLastValue ?? 0,
+					label: `Значение последней оценки (от 1 до ${maxRateValue})`,
+					onChange: this.#rateLastValueOnChange,
+				},
+				{
+					title: 'Клиент ушел в стор после оценки',
+					testId: this.getTestId('is-user-went-to-store-switcher'),
+					type: FieldType.BOOLEAN,
+					value: isUserWentToStore,
+					label: 'Ушел в стор',
+					onChange: this.#userWentToStoreBooleanOnChange,
+				},
+				{
+					title: 'Значения лимитов событий',
+					type: FieldType.GROUP,
+					fields: Object.values(TestUserEvent).map((event) => ({
+						testId: this.getTestId(`event-limit-input-${event}`),
+						value: limits[event],
+						label: event,
+						onChange: this.#eventCounterLimitOnChange,
+					})),
+				},
+				{
+					title: 'Значения счетчиков событий',
+					type: FieldType.GROUP,
+					fields: Object.values(TestUserEvent).map((event) => ({
+						testId: this.getTestId(`event-counter-input-${event}`),
+						value: counters[event] ?? 0,
+						label: event,
+						onChange: this.#eventCounterOnChange,
+					})),
+				},
+				{
+					title: 'Открытие ящика оценки',
+					type: FieldType.GROUP,
+					fields: [
+						{
+							testId: this.getTestId('event-counter-input-last-display-time'),
+							type: FieldType.DATETIME,
+							value: rateBoxLastDisplayTime ?? null,
+							label: 'Дата последнего открытия',
+							onChange: this.#rateBoxLastDisplayTimeOnChange,
+						},
+						{
+							testId: this.getTestId('event-counter-input-last-display-time'),
+							value: rateBoxDisplayCount,
+							label: 'Кол-во открытий',
+							onChange: this.#rateBoxDisplayCountOnChange,
+						},
+					],
+				},
+				{
+					title: 'Лимит какого-то счетчика достигнут',
+					type: FieldType.GROUP,
+					fields: [
+						{
+							testId: this.getTestId('input-any-limit-reached-time'),
+							type: FieldType.DATETIME,
+							value: anyLimitReachedTime ?? null,
+							label: 'Дата достижения лимита',
+							onChange: this.#anyLimitReachedTimeOnChange,
+						},
+						{
+							testId: this.getTestId('switcher-any-limit-reached'),
+							type: FieldType.BOOLEAN,
+							value: isAnyLimitReached,
+							label: 'Лимит достигнут',
+							onChange: this.#anyLimitReachedBooleanOnChange,
+						},
+					],
+				},
+			];
 		}
 
 		#registerInitialLimits = () => {
@@ -124,63 +230,6 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 			});
 		}
 
-		render()
-		{
-			return Box(
-				{
-					withScroll: true,
-					resizableByKeyboard: true,
-					safeArea: {
-						bottom: true,
-					},
-				},
-				this.#renderBoxOpenedData(),
-				this.#renderUserWentToStoreData(),
-				this.#renderAppRatedData(),
-				this.#renderAnyLimitReachedData(),
-				this.#renderEventCounters(),
-				this.#renderEventCounterLimits(),
-			);
-		}
-
-		#renderAppRatedData()
-		{
-			const { rateLastValue, rateLastTime, isRated } = this.state;
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						padding: 12,
-					},
-				},
-				H3({
-					text: 'Оценка приложения',
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('is-rate-switcher'),
-					type: FieldType.BOOLEAN,
-					value: isRated,
-					label: 'Оценил приложение',
-					onChange: this.#isRatedOnChange,
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('last-rated-time'),
-					type: FieldType.DATETIME,
-					value: rateLastTime ?? null,
-					label: 'Дата последней оценки',
-					onChange: this.#rateLastTimeOnChange,
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('last-rated-value'),
-					type: FieldType.NUMBER,
-					value: rateLastValue ?? 0,
-					label: `Значение последней оценки (от 1 до ${maxRateValue})`,
-					onChange: this.#rateLastValueOnChange,
-				}),
-			);
-		}
-
 		#rateLastValueOnChange = ({ value }) => {
 			const { rateLastTime } = this.state;
 			const newTime = this.#convertTimeStampToDate(rateLastTime);
@@ -260,30 +309,6 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 			});
 		};
 
-		#renderUserWentToStoreData()
-		{
-			const { isUserWentToStore } = this.state;
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						padding: 12,
-					},
-				},
-				H3({
-					text: 'Клиент ушел в стор после оценки',
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('is-user-went-to-store-switcher'),
-					type: FieldType.BOOLEAN,
-					value: isUserWentToStore,
-					label: 'Ушел в стор',
-					onChange: this.#userWentToStoreBooleanOnChange,
-				}),
-			);
-		}
-
 		#userWentToStoreBooleanOnChange = async ({ value }) => {
 			if (!value)
 			{
@@ -307,29 +332,6 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 			});
 		};
 
-		#renderEventCounterLimits()
-		{
-			const renderedInputs = Object.values(TestUserEvent).map((event) => AppRatingTestingToolField({
-				testId: this.getTestId(`event-limit-input-${event}`),
-				value: this.state.limits[event],
-				label: event,
-				onChange: this.#eventCounterLimitOnChange,
-			}));
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						padding: 12,
-					},
-				},
-				H3({
-					text: 'Значения лимитов событий',
-				}),
-				...renderedInputs,
-			);
-		}
-
 		#eventCounterLimitOnChange = ({ value, label }) => {
 			AppRatingManager.registerLimit(label, value);
 			this.setState({
@@ -340,29 +342,6 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 			});
 		};
 
-		#renderEventCounters()
-		{
-			const renderedInputs = Object.values(TestUserEvent).map((event) => AppRatingTestingToolField({
-				testId: this.getTestId(`event-counter-input-${event}`),
-				value: this.state.counters[event] ?? 0,
-				label: event,
-				onChange: this.#eventCounterOnChange,
-			}));
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						padding: 12,
-					},
-				},
-				H3({
-					text: 'Значения счетчиков событий',
-				}),
-				...renderedInputs,
-			);
-		}
-
 		#eventCounterOnChange = ({ value, label }) => {
 			AppRatingManager.setCounterValue(label, value);
 			this.setState({
@@ -372,36 +351,6 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 				},
 			});
 		};
-
-		#renderBoxOpenedData()
-		{
-			const { rateBoxLastDisplayTime, rateBoxDisplayCount } = this.state;
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						padding: 12,
-					},
-				},
-				H3({
-					text: 'Открытие ящика оценки',
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('event-counter-input-last-display-time'),
-					type: FieldType.DATETIME,
-					value: rateBoxLastDisplayTime ?? null,
-					label: 'Дата последнего открытия',
-					onChange: this.#rateBoxLastDisplayTimeOnChange,
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('event-counter-input-last-display-time'),
-					value: rateBoxDisplayCount,
-					label: 'Кол-во открытий',
-					onChange: this.#rateBoxDisplayCountOnChange,
-				}),
-			);
-		}
 
 		#rateBoxDisplayCountOnChange = async ({ value }) => {
 			const { rateBoxLastDisplayTime } = this.state;
@@ -446,37 +395,6 @@ jn.define('app-rating-manager/manual-testing-tool', (require, exports, module) =
 				rateBoxLastDisplayTime: value,
 			});
 		};
-
-		#renderAnyLimitReachedData()
-		{
-			const { anyLimitReachedTime, isAnyLimitReached } = this.state;
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						padding: 12,
-					},
-				},
-				H3({
-					text: 'Лимит какого-то счетчика достигнут',
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('input-any-limit-reached-time'),
-					type: FieldType.DATETIME,
-					value: anyLimitReachedTime ?? null,
-					label: 'Дата достижения лимита',
-					onChange: this.#anyLimitReachedTimeOnChange,
-				}),
-				AppRatingTestingToolField({
-					testId: this.getTestId('switcher-any-limit-reached'),
-					type: FieldType.BOOLEAN,
-					value: isAnyLimitReached,
-					label: 'Лимит достигнут',
-					onChange: this.#anyLimitReachedBooleanOnChange,
-				}),
-			);
-		}
 
 		#anyLimitReachedBooleanOnChange = async ({ value }) => {
 			if (!value)

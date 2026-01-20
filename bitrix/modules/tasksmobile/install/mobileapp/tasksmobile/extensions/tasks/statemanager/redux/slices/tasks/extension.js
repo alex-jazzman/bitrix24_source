@@ -40,6 +40,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectRelatedTasksById,
 		selectWithCreationError,
 		selectActions,
+		selectCanChangeDeadlineWithoutLimitation,
 		selectTimerState,
 		selectDatePlan,
 		selectRunningTask,
@@ -47,6 +48,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 	const {
 		create,
 		update,
+		attachFiles,
+		detachFiles,
 		updateDeadline,
 		delegate,
 		follow,
@@ -80,6 +83,12 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		create: taskResultCreate,
 		remove: taskResultRemove,
 	} = require('tasks/statemanager/redux/slices/tasks-results/thunk');
+	const {
+		tail: taskResultTailV2,
+		getAll: taskResultGetAllV2,
+		add: taskResultAddV2,
+		remove: taskResultRemoveV2,
+	} = require('tasks/statemanager/redux/slices/tasks-results-v2/thunk');
 	const {
 		createPending,
 		createFulfilled,
@@ -132,6 +141,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		readAllForRoleFulfilled,
 		readAllForProjectPending,
 		readAllForProjectFulfilled,
+		taskResultTailFulfilled,
+		taskResultGetAllFulfilled,
 		taskResultFetchedFulfilled,
 		taskResultCreatedFulfilled,
 		taskResultRemovedFulfilled,
@@ -347,6 +358,10 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(taskResultFetched.fulfilled, taskResultFetchedFulfilled)
 				.addCase(taskResultCreate.fulfilled, taskResultCreatedFulfilled)
 				.addCase(taskResultRemove.fulfilled, taskResultRemovedFulfilled)
+				.addCase(taskResultTailV2.fulfilled, taskResultTailFulfilled)
+				.addCase(taskResultGetAllV2.fulfilled, taskResultGetAllFulfilled)
+				.addCase(taskResultAddV2.fulfilled, taskResultCreatedFulfilled)
+				.addCase(taskResultRemoveV2.fulfilled, taskResultRemovedFulfilled)
 				.addCase(updateSubTasks.pending, updateSubTasksPending)
 				.addCase(updateSubTasks.fulfilled, updateSubTasksFulfilled)
 				.addCase(updateRelatedTasks.pending, updateRelatedTasksPending)
@@ -421,6 +436,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectWillExpire,
 		selectCounter,
 		selectActions,
+		selectCanChangeDeadlineWithoutLimitation,
 		selectHasChecklist,
 		selectIsSubTasksLoaded,
 		selectIsRelatedTasksLoaded,
@@ -461,5 +477,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		readAllForProject,
 		updateSubTasks,
 		updateRelatedTasks,
+		attachFiles,
+		detachFiles,
 	};
 });

@@ -93,13 +93,9 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 				result.dialogId = file.dialogId;
 			}
 
-			if (Type.isStringFilled(file.date))
+			if (!Type.isNil(file.date))
 			{
-				result.date = DateHelper.cast(file.date).toISOString();
-			}
-			else if (Type.isDate(file.date))
-			{
-				result.date = file.date.toISOString();
+				result.date = file.date;
 			}
 
 			if (Type.isString(file.type))
@@ -192,6 +188,16 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 			if (Type.isBoolean(file.isTranscribable))
 			{
 				result.isTranscribable = file.isTranscribable;
+			}
+
+			if (Type.isBoolean(file.isVoiceNote))
+			{
+				result.isVoiceNote = file.isVoiceNote;
+			}
+
+			if (Type.isBoolean(file.isVideoNote))
+			{
+				result.isVideoNote = file.isVideoNote;
 			}
 
 			return result;

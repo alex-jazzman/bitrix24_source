@@ -1,5 +1,4 @@
-import { Extension, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Extension } from 'main.core';
 import { PopupManager } from 'main.popup';
 
 import { EventType, FileType } from 'im.v2.const';
@@ -16,8 +15,9 @@ import { FileItem } from './file-item';
 import '../../css/upload-preview/upload-preview-content.css';
 
 import type { JsonObject } from 'main.core';
-import type { ImModelFile } from 'im.v2.model';
+import type { EventEmitter } from 'main.core.events';
 import type { UploaderFile } from 'ui.uploader.core';
+import type { ImModelFile } from 'im.v2.model';
 
 const MAX_FILES_COUNT = 100;
 const BUTTONS_CONTAINER_HEIGHT = 74;
@@ -282,15 +282,11 @@ export const UploadPreviewContent = {
 		},
 		insertText(text: string)
 		{
-			EventEmitter.emit(EventType.textarea.insertText, {
+			this.getEmitter().emit(EventType.textarea.insertText, {
 				text,
 				dialogId: this.dialogId,
 				replace: true,
 			});
-		},
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 		initResizeManager()
 		{
@@ -419,6 +415,14 @@ export const UploadPreviewContent = {
 		onDrop(event)
 		{
 			event.preventDefault();
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `

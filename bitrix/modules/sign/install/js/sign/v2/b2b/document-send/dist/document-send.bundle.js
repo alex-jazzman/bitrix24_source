@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,main_core_events,main_popup,sign_v2_api,sign_v2_helper,sign_v2_langSelector,sign_v2_documentSummary) {
+(function (exports,main_core,main_core_events,main_popup,sign_v2_api,sign_v2_helper,sign_v2_langSelector,sign_v2_documentSummary,bitrix24_phoneverify) {
 	'use strict';
 
 	let _ = t => t,
@@ -153,13 +153,13 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	  async sendForSign() {
 	    try {
+	      const restrictions = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadRestrictions();
 	      const {
 	        communications,
 	        entityData
 	      } = this;
 	      const entries = Object.entries(communications);
 	      let allowToComplete = true;
-	      const restrictions = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadRestrictions();
 	      for (const [entityType, item] of entries) {
 	        const {
 	          type,
@@ -174,6 +174,16 @@ this.BX.Sign = this.BX.Sign || {};
 	          continue;
 	        }
 	        babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyCommunicationChannel(memberUid, type, value);
+	      }
+	      if (restrictions.b2bPhoneVerificationRequired) {
+	        if (!main_core.Type.isObject(bitrix24_phoneverify.PhoneVerify)) {
+	          console.error('PhoneVerify is not loaded');
+	          return false;
+	        }
+	        const verified = await bitrix24_phoneverify.PhoneVerify.getInstance().startVerify();
+	        if (!verified) {
+	          return false;
+	        }
 	      }
 	      const {
 	        uid: documentUid,
@@ -423,5 +433,5 @@ this.BX.Sign = this.BX.Sign || {};
 
 	exports.DocumentSend = DocumentSend;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Event,BX.Main,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Event,BX.Main,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Bitrix24));
 //# sourceMappingURL=document-send.bundle.js.map

@@ -37,10 +37,10 @@
 .crm__document-view--sidebar {
 	width: 288px;
 	margin-bottom: 16px;
-	border-radius: var(--ui-border-radius-sm, 8px);
+	border-radius: var(--ui-space-stack-xl);
 	box-sizing: border-box;
 	flex-shrink: 0;
-	background-color: rgba(255,255,255,.7);
+	background-color: var(--ui-color-bg-content-secondary);
 }
 
 .crm__document-view--sidebar.--company-information {

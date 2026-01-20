@@ -9,7 +9,7 @@ import 'tasks.v2.component.elements.hint';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { PanelAction, PanelMeta } from './check-list-item-panel-meta';
+import { PanelAction, PanelSection, PanelMeta } from './check-list-item-panel-meta';
 import { CheckListManager } from '../../lib/check-list-manager';
 
 import type { VisibleSections, VisibleActions, Section, Item, ActiveActions } from './check-list-item-panel-meta';
@@ -23,17 +23,19 @@ export const CheckListItemPanel = {
 		BIcon,
 	},
 	directives: { hint },
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		currentItem: {
 			type: Object,
 			default: () => null,
 		},
 	},
 	emits: ['action'],
+	setup(): { task: TaskModel } {},
 	data(): Object
 	{
 		return {
@@ -42,18 +44,18 @@ export const CheckListItemPanel = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		checkLists(): CheckListModel[]
 		{
 			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
 		},
+		isStakeholdersRestricted(): boolean
+		{
+			return !Core.getParams().restrictions.stakeholder.available;
+		},
 		sections(): VisibleSections
 		{
 			return PanelMeta.defaultSections
-				.filter((section) => this.visibleSections.includes(section.name))
+				.filter((section) => this.visibleSections.includes(section.name) && this.canShowPanelSection(section.name))
 				.map((section) => ({
 					...section,
 					items: section.items
@@ -126,14 +128,13 @@ export const CheckListItemPanel = {
 				];
 			}
 
-			const limits = Core.getParams().limits;
 			const stakeholdersActions = new Set([
 				PanelAction.AssignAccomplice,
 				PanelAction.AssignAuditor,
 			]);
 
 			return actions.filter((action: string) => {
-				const isDisabledStakeholders = stakeholdersActions.has(action) && !limits.stakeholders;
+				const isDisabledStakeholders = stakeholdersActions.has(action) && this.isStakeholdersRestricted;
 
 				return !isDisabledStakeholders;
 			});
@@ -169,15 +170,16 @@ export const CheckListItemPanel = {
 					);
 				},
 				[PanelAction.AssignAccomplice]: () => {
-					return canModify === false;
+					return canModify === false || this.canChangeAccomplices === false;
 				},
 				[PanelAction.AssignAuditor]: () => {
-					return canModify === false;
+					return canModify === false || this.canAuditorsAdd === false;
 				},
 				[PanelAction.Forward]: () => {
 					return (
 						canModify === false
 						|| this.currentItem.title === ''
+						|| !this.canCheckListAdd
 					);
 				},
 				[PanelAction.Delete]: () => {
@@ -221,6 +223,33 @@ export const CheckListItemPanel = {
 
 			return this.currentItem.groupMode?.selected === true;
 		},
+		canCheckListAdd(): boolean
+		{
+			if (!this.isEdit)
+			{
+				return true;
+			}
+
+			return this.task.rights.checklistAdd;
+		},
+		canAuditorsAdd(): boolean
+		{
+			if (!this.isEdit)
+			{
+				return true;
+			}
+
+			return this.task.rights.addAuditors;
+		},
+		canChangeAccomplices(): boolean
+		{
+			if (!this.isEdit)
+			{
+				return true;
+			}
+
+			return this.task.rights.changeAccomplices;
+		},
 	},
 	created(): void
 	{
@@ -257,6 +286,10 @@ export const CheckListItemPanel = {
 		{
 			this.currentHintElement = event.currentTarget;
 			this.currentHintText = item.hint ? this.loc(item.hint) : null;
+		},
+		canShowPanelSection(sectionName: string): boolean
+		{
+			return !(sectionName === PanelSection.Attachments && !Core.getParams().features.disk);
 		},
 	},
 	template: `

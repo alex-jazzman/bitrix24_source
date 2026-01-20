@@ -27,11 +27,12 @@ export const ParserIcon = {
 	addIconToShortText(config: {
 		text: string,
 		attach: boolean | string | Array,
-		files: boolean | Array
+		files: boolean | Array,
+		isSticker: boolean,
 	}): string
 	{
 		let { text } = config;
-		const { attach, files } = config;
+		const { attach, files, isSticker } = config;
 
 		if (Type.isArrayFilled(files) || files === true)
 		{
@@ -44,6 +45,10 @@ export const ParserIcon = {
 		)
 		{
 			text = this.getTextForAttach(text, attach);
+		}
+		else if (isSticker)
+		{
+			text = this.getTextForSticker();
 		}
 
 		return text.trim();
@@ -149,6 +154,11 @@ export const ParserIcon = {
 		}
 
 		return `${text} ${attachDescription}`.trim();
+	},
+
+	getTextForSticker(): string
+	{
+		return `[${Loc.getMessage('IM_PARSER_ICON_TYPE_STICKER')}]`;
 	},
 
 	getIconTextForFileType(text: string, type: $Values<typeof FileIconType> = FileIconType.file): string

@@ -55,6 +55,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		DialogType,
 		DialogWidgetType,
 	} = require('im/messenger/const/dialog-type');
+	const { DialogViewUpdatingBlocksType} = require('im/messenger/const/dialog-view');
 	const { ActionByUserType } = require('im/messenger/const/permission');
 	const {
 		SidebarActionType,
@@ -75,7 +76,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { DraftType } = require('im/messenger/const/draft');
 	const { SearchEntityIdTypes } = require('im/messenger/const/search');
 	const { ErrorType, ErrorCode } = require('im/messenger/const/error');
-	const { BBCode } = require('im/messenger/const/bb-code');
+	const { BBCode, BBCodeEntity } = require('im/messenger/const/bb-code');
 	const { Setting } = require('im/messenger/const/setting');
 	const { SidebarFileType, SidebarTab } = require('im/messenger/const/sidebar');
 	const { Promo, PromoType } = require('im/messenger/const/promo');
@@ -101,12 +102,13 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { EntitySelectorElementType } = require('im/messenger/const/entity-selector');
 	const { MessagesAutoDeleteDelay, MessagesAutoDeleteMenuIds } = require('im/messenger/const/messages-auto-delete');
 	const { MessageMenuActionType } = require('im/messenger/const/message-menu-action-type');
-	const { AnchorType } = require('im/messenger/const/anchor-type');
+	const { AnchorType} = require('im/messenger/const/anchor-type');
 	const { FileDownloadType } = require('im/messenger/const/src/file-download-types');
 	const { PinCount } = require('im/messenger/const/pin');
 	const { AudioEvents } = require('im/messenger/const/src/audio');
 	const { RefreshMode } = require('im/messenger/const/refresher');
 	const { TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const/transcript-status');
+	const { MessengerComponentRequestMethod } = require('im/messenger/const/messenger-component-request-method');
 
 	module.exports = {
 		AiAssistantButtonType,
@@ -143,6 +145,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		DialogWidgetType,
 		DialogActionType,
 		DialogBackgroundId,
+		DialogViewUpdatingBlocksType,
 		ActionByUserType,
 		SidebarActionType,
 		SidebarHeaderContextMenuActionType,
@@ -163,6 +166,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		ErrorType,
 		ErrorCode,
 		BBCode,
+		BBCodeEntity,
 		Setting,
 		SidebarFileType,
 		SidebarTab,
@@ -198,5 +202,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RefreshMode,
 		TranscriptStatus,
 		TranscriptResponseStatus,
+		MessengerComponentRequestMethod,
 	};
 });

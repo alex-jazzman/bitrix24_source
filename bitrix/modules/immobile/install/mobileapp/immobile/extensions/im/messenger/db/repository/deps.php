@@ -12,6 +12,7 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/const',
+		'utils/url',
 	],
 	'bundle' => [
 		'./src/option',

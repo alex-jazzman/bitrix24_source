@@ -6,9 +6,8 @@ jn.define('settings-v2/structure/pages/sync', (require, exports, module) => {
 		createToggle,
 		createSection,
 		createBanner,
-		createButton,
-		createDescription,
-	} = require('settings-v2/structure/src/item-create-helper');
+		createLinkButton,
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { SettingsPageId, BannerImageName } = require('settings-v2/const');
 	const { Loc } = require('loc');
 	const { NativeSettingController } = require('settings-v2/controller/native');
@@ -87,7 +86,7 @@ jn.define('settings-v2/structure/pages/sync', (require, exports, module) => {
 				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SYNC_AUTO_SYNC'),
 				prefilter: () => !isAndroid,
 				items: [
-					createButton({
+					createLinkButton({
 						id: 'ios-sync-calendar',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SYNC_CALENDAR'),
 						subtitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_SYNC_CALENDAR_SUBTITLE'),
@@ -95,7 +94,7 @@ jn.define('settings-v2/structure/pages/sync', (require, exports, module) => {
 							iosSync(Resources.CALENDAR);
 						},
 					}),
-					createButton({
+					createLinkButton({
 						id: 'ios-sync-contacts',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SYNC_CONTACTS'),
 						subtitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_SYNC_CONTACTS_SUBTITLE'),

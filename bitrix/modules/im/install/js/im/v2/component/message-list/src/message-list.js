@@ -1,4 +1,4 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BaseEvent } from 'main.core.events';
 
 import { ChatType, EventType, MessageComponent, ActionByRole } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
@@ -11,21 +11,21 @@ import { MessageMenuManager } from 'im.v2.lib.menu';
 
 import { DialogStatus } from './components/dialog-status/dialog-status';
 import { DialogLoader } from './components/dialog-loader';
-import { AvatarMenu } from './classes/avatar-menu';
-import { ObserverManager } from './classes/observer-manager';
-
 import { DateGroup } from './components/block/date-group';
 import { AuthorGroup } from './components/block/author-group';
 import { NewMessagesBlock } from './components/block/new-messages';
 import { MarkedMessagesBlock } from './components/block/marked-messages';
 import { EmptyState } from './components/empty-state';
 import { HistoryLimitBanner } from './components/history-limit-banner';
+import { AvatarMenu } from './classes/avatar-menu';
+import { ObserverManager } from './classes/observer-manager';
 import { CollectionManager, type DateGroupItem } from './classes/collection-manager/collection-manager';
 import { MessageComponents } from './utils/message-components';
 
 import './css/message-list.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelMessage, ImModelUser } from 'im.v2.model';
 
 export { AvatarMenu } from './classes/avatar-menu';
@@ -153,15 +153,15 @@ export const MessageList = {
 	{
 		subscribeToEvents(): void
 		{
-			EventEmitter.subscribe(EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
+			this.getEmitter().subscribe(EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
 		},
 		unsubscribeFromEvents(): void
 		{
-			EventEmitter.unsubscribe(EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
+			this.getEmitter().unsubscribe(EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
 		},
 		insertTextQuote(message: ImModelMessage): void
 		{
-			EventEmitter.emit(EventType.textarea.insertText, {
+			this.getEmitter().emit(EventType.textarea.insertText, {
 				text: Quote.prepareQuoteText(message),
 				withNewLine: true,
 				replace: false,
@@ -170,7 +170,7 @@ export const MessageList = {
 		},
 		insertMention(user: ImModelUser): void
 		{
-			EventEmitter.emit(EventType.textarea.insertMention, {
+			this.getEmitter().emit(EventType.textarea.insertMention, {
 				mentionText: user.name,
 				mentionReplacement: Utils.text.getMentionBbCode(user.id, user.name),
 				dialogId: this.dialogId,
@@ -178,7 +178,7 @@ export const MessageList = {
 		},
 		openReplyPanel(messageId: number): void
 		{
-			EventEmitter.emit(EventType.textarea.replyMessage, {
+			this.getEmitter().emit(EventType.textarea.replyMessage, {
 				messageId,
 				dialogId: this.dialogId,
 			});
@@ -194,7 +194,7 @@ export const MessageList = {
 				return;
 			}
 
-			const avatarMenu = new AvatarMenu();
+			const avatarMenu = new AvatarMenu({ emitter: this.getEmitter() });
 			avatarMenu.openMenu({ user, dialog: this.dialog }, event.currentTarget);
 		},
 		onMessageContextMenuClick(eventData: ContextMenuEvent)
@@ -239,11 +239,18 @@ export const MessageList = {
 				target = bindElement;
 			}
 
-			messageMenuManager.openMenu(context, target);
+			messageMenuManager.openMenu({
+				messageContext: context,
+				applicationContext: { emitter: this.getEmitter() },
+				target,
+			});
 		},
 		initObserverManager()
 		{
-			this.observer = new ObserverManager(this.dialogId);
+			this.observer = new ObserverManager({
+				dialogId: this.dialogId,
+				context: { emitter: this.getEmitter() },
+			});
 		},
 		getMessageComponentName(message: ImModelMessage): $Values<typeof MessageComponent>
 		{
@@ -256,6 +263,10 @@ export const MessageList = {
 		getCollectionManager(): CollectionManager
 		{
 			return this.collectionManager;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

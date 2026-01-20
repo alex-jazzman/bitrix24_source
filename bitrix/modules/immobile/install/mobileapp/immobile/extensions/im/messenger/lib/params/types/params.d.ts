@@ -24,6 +24,13 @@ declare type ImFeatures = {
 	messagesAutoDeleteEnabled: boolean,
 	voteCreationAvailable: boolean,
 	aiFileTranscriptionAvailable: boolean,
+	mentionAllAvailable: boolean,
+	isCopilotMentionAvailable: boolean,
+	isCopilotReasoningAvailable: boolean,
+	videoNoteAvailable: boolean,
+	videoNoteTranscriptionAvailable: boolean,
+	stickersAvailable: boolean,
+	aiAssistantMcpSelectorAvailable: boolean,
 }
 
 declare type UserInfo = {

@@ -2,13 +2,21 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,im_v2_lib_copilot,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_lib_parser) {
+(function (exports,main_core,im_v2_lib_copilot,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_lib_parser) {
 	'use strict';
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
 	const Quote = {
-	  sendQuoteEvent(message, text, dialogId) {
-	    main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
+	  sendQuoteEvent(payload) {
+	    const {
+	      message,
+	      text,
+	      dialogId,
+	      context: {
+	        emitter
+	      }
+	    } = payload;
+	    emitter.emit(im_v2_const.EventType.textarea.insertText, {
 	      text: this.prepareQuoteText(message, text),
 	      dialogId,
 	      withNewLine: true,
@@ -36,7 +44,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  let name = '';
 	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  if (copilotManager.isCopilotBot(message.authorId)) {
-	    name = copilotManager.getNameWithRole({
+	    name = copilotManager.getName({
 	      dialogId: message.authorId,
 	      messageId: message.id
 	    });
@@ -49,5 +57,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Quote = Quote;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=quote.bundle.js.map

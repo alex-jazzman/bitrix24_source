@@ -1913,6 +1913,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'CONTEXT' => $context,
 			'MODULE_ID' => $moduleId,
 			'ANALYTICS_CONFIG' => isset($_POST['ANALYTICS_CONFIG']) && is_array($_POST['ANALYTICS_CONFIG']) ? $_POST['ANALYTICS_CONFIG'] : null,
+			'HOST_COLUMN_FOR_QUICK_EDITOR_ID' => $_POST['HOST_COLUMN_FOR_QUICK_EDITOR_ID'] ?? null,
 		)
 	);
 

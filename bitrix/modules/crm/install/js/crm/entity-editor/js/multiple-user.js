@@ -136,6 +136,15 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 
 	BX.Crm.EntityEditorMultipleUser.prototype.adjust = function()
 	{
+		if (this.getItemCount() === 0)
+		{
+			BX.Dom.addClass(this._wrapper, 'ui-entity-editor-content-block-click-empty');
+		}
+		else
+		{
+			BX.Dom.removeClass(this._wrapper, 'ui-entity-editor-content-block-click-empty');
+		}
+
 		if(this.isInViewMode())
 		{
 			return;
@@ -324,14 +333,14 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.save = function()
 	{
-		var values = [];
+		var values = [''];
 		var infos = [];
 		for(var i = 0, length = this._items.length; i < length; i++)
 		{
 			var item = this._items[i];
 
-			values.push(item.getValue());
-			infos.push(item.getData());
+			values[i] = item.getValue();
+			infos[i] = item.getData();
 		}
 
 		this._infos = infos;

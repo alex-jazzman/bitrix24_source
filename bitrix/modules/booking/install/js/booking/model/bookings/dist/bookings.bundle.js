@@ -88,7 +88,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  }
 	  getState() {
 	    return {
-	      collection: {}
+	      collection: {},
+	      catalogSkuEntityOptions: {}
 	    };
 	  }
 	  getElementState() {
@@ -199,6 +200,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      deleteMany: (store, bookingIds) => {
 	        store.commit('deleteMany', bookingIds);
+	      },
+	      /** @function resource-creation-wizard/setCatalogSkuEntityOptions */
+	      setCatalogSkuEntityOptions({
+	        commit
+	      }, options) {
+	        commit('setCatalogSkuEntityOptions', options);
 	      }
 	    };
 	  }
@@ -234,6 +241,9 @@ this.BX.Booking = this.BX.Booking || {};
 	        for (const id of bookingIds) {
 	          delete state.collection[id];
 	        }
+	      },
+	      setCatalogSkuEntityOptions(state, options) {
+	        state.catalogSkuEntityOptions = options;
 	      }
 	    };
 	  }

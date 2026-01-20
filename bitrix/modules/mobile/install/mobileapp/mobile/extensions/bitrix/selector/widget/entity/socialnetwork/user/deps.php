@@ -9,5 +9,7 @@ return [
 		'layout/ui/user/user-name',
 
 		'intranet:invite-opener-new',
+		'asset-manager',
+		'tokens',
 	]
 ];

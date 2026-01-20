@@ -1,5 +1,3 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
-
 import { Logger } from 'im.v2.lib.logger';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { EventType, LocalStorageKey, SidebarDetailBlock } from 'im.v2.const';
@@ -10,6 +8,7 @@ import './css/icons.css';
 import './css/sidebar.css';
 
 import type { JsonObject } from 'main.core';
+import type { BaseEvent, EventEmitter } from 'main.core.events';
 
 type SidebarPanelType = $Values<typeof SidebarDetailBlock>;
 
@@ -119,13 +118,13 @@ export const ChatSidebar = {
 	},
 	mounted()
 	{
-		EventEmitter.subscribe(EventType.sidebar.open, this.onSidebarOpen);
-		EventEmitter.subscribe(EventType.sidebar.close, this.onSidebarClose);
+		this.getEmitter().subscribe(EventType.sidebar.open, this.onSidebarOpen);
+		this.getEmitter().subscribe(EventType.sidebar.close, this.onSidebarClose);
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.sidebar.open, this.onSidebarOpen);
-		EventEmitter.unsubscribe(EventType.sidebar.close, this.onSidebarClose);
+		this.getEmitter().unsubscribe(EventType.sidebar.open, this.onSidebarOpen);
+		this.getEmitter().unsubscribe(EventType.sidebar.close, this.onSidebarClose);
 	},
 	methods:
 	{
@@ -225,6 +224,10 @@ export const ChatSidebar = {
 			this.secondLevelPanelDialogId = '';
 			this.secondLevelPanelStandalone = false;
 			this.$emit('changePanel', { panel: this.topLevelPanelType });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

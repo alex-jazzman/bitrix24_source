@@ -94,6 +94,11 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 				return new RecentItem(modelItem, options);
 			}
 
+			if (dialogHelper.isTaskComment)
+			{
+				return new TaskCommentItem(modelItem, options);
+			}
+
 			if (dialogHelper.isCollab)
 			{
 				return new CollabItem(modelItem, options);
@@ -127,11 +132,6 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 			if (dialogHelper.isExtranet)
 			{
 				return new ExtranetItem(modelItem, options);
-			}
-
-			if (dialogHelper.isTaskComment)
-			{
-				return new TaskCommentItem(modelItem, options);
 			}
 
 			return new ChatItem(modelItem, options);

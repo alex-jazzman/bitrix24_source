@@ -2,7 +2,7 @@ export type ParameterSelectorParams = {
 	groups: number[],
 	scopes: string[],
 	params: string[],
-	scopeParamsMap: {[scopeCode: string]: Parameter[]},
+	paramList: { [paramCode: string]: Parameter },
 };
 
 export type Parameter = {
@@ -10,6 +10,7 @@ export type Parameter = {
 	scope: string,
 	title: string,
 	description: string,
+	superTitle: string,
 };
 
 export type CheckCompatibilityResult = {

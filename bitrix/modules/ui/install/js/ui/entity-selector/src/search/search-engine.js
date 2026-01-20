@@ -7,13 +7,19 @@ import type SearchQuery from './search-query';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
+export type MatchOptions = {
+	matchAll: boolean,
+};
+
 export default class SearchEngine
 {
-	static matchItems(items: Item[], searchQuery: SearchQuery): MatchResult[]
+	static matchItems(items: Item[], searchQuery: SearchQuery, options: MatchOptions = {}): MatchResult[]
 	{
 		const matchResults = [];
 		const queryWords = searchQuery.getQueryWords();
 		let limit = searchQuery.getResultLimit();
+
+		const matchAll = options.matchAll === true;
 
 		for (let i = 0; i < items.length; i++)
 		{
@@ -32,6 +38,11 @@ export default class SearchEngine
 			if (matchResult)
 			{
 				matchResults.push(matchResult);
+				limit--;
+			}
+			else if (matchAll && item.getEntity().getDynamicSearchMatchMode() === 'all')
+			{
+				matchResults.push(new MatchResult(item, []));
 				limit--;
 			}
 		}
@@ -61,7 +72,7 @@ export default class SearchEngine
 
 		if (matches.length > 0)
 		{
-			return new MatchResult(item, queryWords, matches);
+			return new MatchResult(item, matches);
 		}
 		else
 		{

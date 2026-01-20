@@ -1,8 +1,8 @@
 <?php
 
+use Bitrix\Im\V2\Application\Context;
 use Bitrix\Intranet\Integration\Templates\Air\ChatMenu;
 use Bitrix\Intranet\Site\Sections\CollaborationSection;
-use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)

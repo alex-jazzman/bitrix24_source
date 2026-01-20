@@ -33,14 +33,33 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 				messageAddParams.fields.templateId = options.templateId;
 			}
 
+			if (Type.isObject(options.copilot))
+			{
+				messageAddParams.fields.copilot = options.copilot;
+			}
+
+			if (Type.isBoolean(options.copilot?.reasoning))
+			{
+				messageAddParams.fields.copilot.reasoning = options.copilot.reasoning ? 'Y' : 'N';
+			}
+
 			if (Type.isObject(options.forwardIds))
 			{
 				messageAddParams.fields.forwardIds = options.forwardIds;
 			}
 
-			if (Type.isObject(options.copilot))
+			if (Type.isPlainObject(options.stickerParams))
 			{
-				messageAddParams.fields.copilot = options.copilot;
+				messageAddParams.fields.stickerParams = {
+					stickerId: options.stickerParams.id ?? options.stickerParams.stickerId,
+					packId: options.stickerParams.packId,
+					packType: options.stickerParams.packType,
+				};
+			}
+
+			if (Type.isInteger(options.aiAssistant?.mcpAuthId))
+			{
+				messageAddParams.fields.aiAssistant = options.aiAssistant;
 			}
 
 			return runAction(RestMethod.imV2ChatMessageSend, {

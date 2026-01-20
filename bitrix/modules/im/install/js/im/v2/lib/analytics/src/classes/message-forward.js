@@ -5,6 +5,7 @@ import { getUserType } from 'im.v2.lib.analytics';
 
 import { AnalyticsEvent, AnalyticsSection, AnalyticsSubSection, AnalyticsTool } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
 import { isNotes } from '../helpers/is-notes';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -38,7 +39,7 @@ export class MessageForward
 			event: AnalyticsEvent.clickShare,
 			c_section: AnalyticsSection.chatWindow,
 			c_sub_section: AnalyticsSubSection.contextMenu,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 		});
 	}
@@ -58,7 +59,7 @@ export class MessageForward
 			category: getCategoryByChatType(chat.type),
 			event: AnalyticsEvent.startSearch,
 			c_section: AnalyticsSection.forward,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 		});
 	}
@@ -97,7 +98,7 @@ export class MessageForward
 			event: AnalyticsEvent.selectRecipient,
 			type,
 			c_section: AnalyticsSection.forward,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 			p3: `position_${position}`,
 		});

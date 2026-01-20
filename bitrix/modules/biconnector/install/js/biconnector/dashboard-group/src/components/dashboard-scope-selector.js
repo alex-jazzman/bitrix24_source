@@ -1,5 +1,5 @@
 import type { BitrixVueComponentProps } from 'ui.vue3';
-import { Dom, Event, UI, Text } from 'main.core';
+import { Dom, Event, UI, Text, Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog, Item } from 'ui.entity-selector';
 import { Store } from '../store';
@@ -27,6 +27,17 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 			this.dialog.destroy();
 		}
 		this.dialog = null;
+
+		if (this.hintManagers)
+		{
+			this.hintManagers.forEach((manager) => {
+				if (manager.popup)
+				{
+					manager.popup.destroy();
+				}
+			});
+			this.hintManagers = [];
+		}
 
 		const node: ?HTMLElement = this.$el.querySelector('.scope-hint');
 		if (node)
@@ -139,11 +150,41 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 					'Item:onSelect': this.handleScopeAdd,
 					'Item:onDeselect': this.handleScopeRemove,
 					onHide: this.handleDialogHide,
+					onLoad: () => {
+						this.addHintsForUndeselectedScopes();
+					},
 				},
 			});
 			this.dialog.getPopup().setOffset({ offsetLeft: -320 });
 			this.dialog.adjustPosition();
 			Dom.addClass(this.dialog.getContainer(), 'biconnector-scope-selector');
+		},
+		addHintsForUndeselectedScopes(): void
+		{
+			if (!this.dialog)
+			{
+				return;
+			}
+
+			const undeselectedItems = [];
+			for (const scope of this.scopes)
+			{
+				const groupNameList = this.$store.getters.getGroupsNameForDashboardScope(this.dashboard.id, scope.code);
+				if (groupNameList.length > 0)
+				{
+					undeselectedItems.push({
+						scopeName: scope.name,
+						groupNameList,
+					});
+				}
+			}
+
+			undeselectedItems.forEach((mapItem) => {
+				const scopeName = mapItem.scopeName;
+				const groupNameList = mapItem.groupNameList;
+
+				this.createHintForUndeselectebleScope(scopeName, groupNameList);
+			});
 		},
 		handleScopeAdd(event: BaseEvent): void
 		{
@@ -207,6 +248,75 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 				Event.bind(node, 'mouseenter', this.showMoreScopesHint);
 				Event.bind(node, 'mouseleave', this.hideMoreScopesHint);
 			}
+		},
+		createHintForUndeselectebleScope(
+			scopeName: string,
+			groupNameList: string[],
+		): void
+		{
+			const popupContent = this.dialog.getPopup().getContentContainer();
+			const tagContentNode = this.findSelectorItemByTitle(popupContent, scopeName);
+
+			this.hintManagers = this.hintManagers ?? [];
+			let hintText = '';
+			if (groupNameList.length === 1)
+			{
+				hintText = Loc.getMessage(
+					'DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE',
+					{
+						'#GROUP_NAME#': Text.encode(groupNameList[0]),
+					},
+				);
+			}
+			else
+			{
+				const contextText = Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE_MANY');
+				const groupListHtml = `<ul style="margin: 3px 0; padding-left: 20px;">${
+						groupNameList
+						.map((groupName) => `<li>${Text.encode(groupName)}</li>`)
+						.join('')
+					}</ul>`;
+
+				hintText = contextText + groupListHtml;
+			}
+
+			const hintId = `scope-hint-dash-${this.dashboard.id}-${scopeName.replaceAll(/\s/g, '-')}`;
+			const hintManager = BX.UI.Hint.createInstance({
+				id: hintId,
+				popupParameters: {
+					offsetLeft: 340,
+					offsetTop: -45,
+					autoHide: true,
+					width: 330,
+					angle: {
+						position: 'left',
+						offset: 15,
+					},
+				},
+			});
+
+			this.hintManagers.push(hintManager);
+			Event.bind(tagContentNode, 'click', () => {
+				hintManager.show(tagContentNode, hintText, false, false);
+			});
+			Event.bind(tagContentNode, 'mouseleave', () => {
+				hintManager.hide();
+			});
+		},
+		findSelectorItemByTitle(rootElement: Element, titleText: string): Element | null
+		{
+			const items = rootElement.querySelectorAll('.ui-selector-item');
+
+			for (const item of items)
+			{
+				const titleElement = item.querySelector('.ui-selector-item-title');
+				if (titleElement && titleElement.textContent.trim() === titleText)
+				{
+					return item;
+				}
+			}
+
+			return null;
 		},
 	},
 	mounted(): void

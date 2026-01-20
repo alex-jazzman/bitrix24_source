@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,im_v2_lib_chat,ui_system_menu,im_v2_lib_promo,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,main_core,ui_iconSet_api_core,im_v2_application_core,im_v2_lib_feedback) {
+(function (exports,main_core_events,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,ui_system_menu,im_v2_lib_chat,im_v2_lib_message,im_v2_lib_promo,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,im_v2_lib_feature,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,main_core,ui_iconSet_api_core,im_v2_application_core,im_v2_lib_feedback) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -92,17 +92,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 
-	const MenuSectionCode = Object.freeze({
-	  main: 'main',
-	  invite: 'invite'
-	});
+	const MenuSectionCode = {
+	  first: 'first',
+	  second: 'second',
+	  third: 'third'
+	};
 	var _leaveChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leaveChat");
 	var _leaveCollab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leaveCollab");
 	var _canHideChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canHideChat");
 	var _isInvitationActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInvitationActive");
 	var _canResendInvitation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canResendInvitation");
 	class RecentMenu extends BaseMenu {
-	  constructor() {
+	  constructor(applicationContext) {
 	    super();
 	    Object.defineProperty(this, _canResendInvitation, {
 	      value: _canResendInvitation2
@@ -123,6 +124,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.chatService = new im_v2_provider_service_chat.ChatService();
 	    this.callManager = im_v2_lib_call.CallManager.getInstance();
 	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+	    const {
+	      emitter
+	    } = applicationContext;
+	    this.emitter = emitter;
 	  }
 	  getMenuOptions() {
 	    return {
@@ -135,17 +140,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getMenuItems() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isInvitationActive)[_isInvitationActive]()) {
-	      const mainGroupItems = [this.getSendMessageItem(), this.getOpenProfileItem()];
-	      return [...this.groupItems(mainGroupItems, MenuSectionCode.main), ...this.groupItems(this.getInviteItems(), MenuSectionCode.invite)];
+	      const firstGroupItems = [this.getSendMessageItem(), this.getOpenProfileItem()];
+	      return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(this.getInviteItems(), MenuSectionCode.second)];
 	    }
 	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getOpenProfileItem(), this.getChatsWithUserItem(), this.getHideItem(), this.getLeaveItem()];
 	  }
 	  getMenuGroups() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isInvitationActive)[_isInvitationActive]()) {
 	      return [{
-	        code: MenuSectionCode.main
+	        code: MenuSectionCode.first
 	      }, {
-	        code: MenuSectionCode.invite
+	        code: MenuSectionCode.second
 	      }];
 	    }
 	    return [];
@@ -276,7 +281,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (!isAnyChatOpened) {
 	          await im_public.Messenger.openChat(this.context.dialogId);
 	        }
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	        this.emitter.emit(im_v2_const.EventType.sidebar.open, {
 	          panel: im_v2_const.SidebarDetailBlock.chatsWithUser,
 	          standalone: true,
 	          dialogId: this.context.dialogId
@@ -448,7 +453,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _getKickItemText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getKickItemText");
 	var _kickUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("kickUser");
 	class UserMenu extends BaseMenu {
-	  constructor() {
+	  constructor(applicationContext) {
 	    super();
 	    Object.defineProperty(this, _kickUser, {
 	      value: _kickUser2
@@ -458,6 +463,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    this.id = 'bx-im-user-context-menu';
 	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+	    const {
+	      emitter
+	    } = applicationContext;
+	    this.emitter = emitter;
 	  }
 	  getKickItem() {
 	    const canKick = this.permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.kick, this.context.dialog.dialogId);
@@ -480,7 +489,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_USER_MENTION'),
 	      onClick: () => {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
+	        this.emitter.emit(im_v2_const.EventType.textarea.insertMention, {
 	          mentionText: this.context.user.name,
 	          mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(this.context.user.id, this.context.user.name),
 	          dialogId: this.context.dialog.dialogId,
@@ -538,27 +547,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return new im_v2_provider_service_chat.ChatService().kickUserFromChat(this.context.dialog.dialogId, this.context.user.id);
 	}
 
-	const MenuSectionCode$1 = Object.freeze({
-	  main: 'main',
-	  select: 'select',
-	  create: 'create',
-	  market: 'market'
-	});
+	const MenuSectionCode$1 = {
+	  first: 'first',
+	  second: 'second',
+	  third: 'third'
+	};
+	const NestedMenuSectionCode = {
+	  first: 'first',
+	  second: 'second',
+	  third: 'third'
+	};
 	var _needNestedMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needNestedMenu");
 	var _isOwnMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isOwnMessage");
 	var _isDeletedMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletedMessage");
 	var _getFirstFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFirstFile");
 	var _isSingleFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSingleFile");
-	var _isForwardedMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isForwardedMessage");
 	var _isRealMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRealMessage");
 	var _onDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDelete");
 	var _isDeletionCancelled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletionCancelled");
 	var _getDownloadSingleFileItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDownloadSingleFileItem");
 	var _getDownloadSeveralFilesItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDownloadSeveralFilesItem");
 	var _arePinsExceedLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("arePinsExceedLimit");
+	var _canSendMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canSendMessage");
 	class MessageMenu extends BaseMenu {
-	  constructor() {
+	  constructor(applicationContext) {
 	    super();
+	    Object.defineProperty(this, _canSendMessage, {
+	      value: _canSendMessage2
+	    });
 	    Object.defineProperty(this, _arePinsExceedLimit, {
 	      value: _arePinsExceedLimit2
 	    });
@@ -576,9 +592,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _isRealMessage, {
 	      value: _isRealMessage2
-	    });
-	    Object.defineProperty(this, _isForwardedMessage, {
-	      value: _isForwardedMessage2
 	    });
 	    Object.defineProperty(this, _isSingleFile, {
 	      value: _isSingleFile2
@@ -599,6 +612,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.id = 'bx-im-message-context-menu';
 	    this.diskService = new im_v2_provider_service_disk.DiskService();
 	    this.marketManager = im_v2_lib_market.MarketManager.getInstance();
+	    const {
+	      emitter
+	    } = applicationContext;
+	    this.emitter = emitter;
 	  }
 	  getMenuOptions() {
 	    return {
@@ -610,23 +627,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getMenuItems() {
-	    const mainGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getPinItem(), this.getForwardItem(), ...this.getAdditionalItems(), this.getDeleteItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$1.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$1.select)];
+	    const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+	    const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
+	    return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 	  }
 	  getMenuGroups() {
 	    return [{
-	      code: MenuSectionCode$1.main
+	      code: MenuSectionCode$1.first
 	    }, {
-	      code: MenuSectionCode$1.select
+	      code: MenuSectionCode$1.second
 	    }];
 	  }
 	  getNestedMenuGroups() {
 	    return [{
-	      code: MenuSectionCode$1.main
+	      code: NestedMenuSectionCode.first
 	    }, {
-	      code: MenuSectionCode$1.create
-	    }, {
-	      code: MenuSectionCode$1.market
+	      code: NestedMenuSectionCode.second
 	    }];
 	  }
 	  getSelectItem() {
@@ -638,7 +654,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.CIRCLE_CHECK,
 	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onSelect(this.context.dialogId);
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.openBulkActionsMode, {
+	        this.emitter.emit(im_v2_const.EventType.dialog.openBulkActionsMode, {
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
@@ -651,7 +667,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_REPLY'),
 	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onReply(this.context.dialogId);
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.replyMessage, {
+	        this.emitter.emit(im_v2_const.EventType.textarea.replyMessage, {
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
@@ -669,7 +685,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.FORWARD,
 	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onForward(this.context.dialogId);
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.showForwardPopup, {
+	        this.emitter.emit(im_v2_const.EventType.dialog.showForwardPopup, {
 	          messagesIds: [this.context.id]
 	        });
 	        this.menuInstance.close();
@@ -842,7 +858,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getEditItem() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isOwnMessage)[_isOwnMessage]() || babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || babelHelpers.classPrivateFieldLooseBase(this, _isForwardedMessage)[_isForwardedMessage]()) {
+	    if (!im_v2_lib_message.MessageManager.isEditable(this.context.id)) {
 	      return null;
 	    }
 	    return {
@@ -850,11 +866,44 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.EDIT_L,
 	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onEdit(this.context.dialogId);
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.editMessage, {
+	        this.emitter.emit(im_v2_const.EventType.textarea.editMessage, {
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
 	        this.menuInstance.close();
+	      }
+	    };
+	  }
+	  getAskCopilotItem() {
+	    if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCopilotMentionAvailable)) {
+	      return null;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canSendMessage)[_canSendMessage]()) {
+	      return null;
+	    }
+	    const isChannel = im_v2_lib_channel.ChannelManager.isChannel(this.context.dialogId);
+	    if (isChannel) {
+	      return null;
+	    }
+	    const copilotBotDialogId = this.store.getters['users/bots/getCopilotBotDialogId'];
+	    const {
+	      name: mentionText
+	    } = this.store.getters['users/get'](copilotBotDialogId, true);
+	    return {
+	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT'),
+	      icon: ui_iconSet_api_core.Outline.COPILOT,
+	      design: ui_system_menu.MenuItemDesign.Copilot,
+	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onAskCopilot(this.context.dialogId);
+	        this.emitter.emit(im_v2_const.EventType.textarea.insertMention, {
+	          mentionText,
+	          mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(copilotBotDialogId, mentionText),
+	          dialogId: this.context.dialogId
+	        });
+	        this.emitter.emit(im_v2_const.EventType.textarea.replyMessage, {
+	          messageId: this.context.id,
+	          dialogId: this.context.dialogId
+	        });
 	      }
 	    };
 	  }
@@ -940,9 +989,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return items;
 	  }
 	  getNestedItems() {
-	    const mainGroupItems = [this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
-	    const createGroupItems = [this.getCreateTaskItem(), this.getCreateMeetingItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$1.main), ...this.groupItems(createGroupItems, MenuSectionCode$1.create), ...this.groupItems(this.getMarketItems(), MenuSectionCode$1.market)];
+	    const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+	    return [...this.groupItems(firstGroupItems, NestedMenuSectionCode.first), ...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.second)];
 	  }
 	}
 	function _needNestedMenu2(additionalItems) {
@@ -961,9 +1009,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _isSingleFile2() {
 	  return this.context.files.length === 1;
-	}
-	function _isForwardedMessage2() {
-	  return main_core.Type.isStringFilled(this.context.forward.id);
 	}
 	function _isRealMessage2() {
 	  return this.store.getters['messages/isRealMessage'](this.context.id);
@@ -1049,106 +1094,106 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const pins = this.store.getters['messages/pin/getPinned'](this.context.chatId);
 	  return pins.length >= this.maxPins;
 	}
+	function _canSendMessage2() {
+	  const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
+	  if (!dialog.isTextareaEnabled) {
+	    return false;
+	  }
+	  return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.send, this.context.dialogId);
+	}
 
-	const MenuSectionCode$2 = Object.freeze({
-	  main: 'main',
-	  select: 'select',
-	  create: 'create'
-	});
 	class ChannelMessageMenu extends MessageMenu {
 	  getMenuItems() {
-	    const mainGroupItems = [this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getPinItem(), this.getForwardItem(), ...this.getAdditionalItems(), this.getDeleteItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$2.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$2.select)];
+	    const firstGroupItems = [this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+	    const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
+	    return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
+	  }
+	  getNestedItems() {
+	    const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+	    return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
 	  }
 	  getNestedMenuGroups() {
 	    return [{
-	      code: MenuSectionCode$2.main
-	    }, {
-	      code: MenuSectionCode$2.create
+	      code: NestedMenuSectionCode.first
 	    }];
-	  }
-	  getNestedItems() {
-	    const mainGroupItems = [this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
-	    const createGroupItems = [this.getCreateTaskItem(), this.getCreateMeetingItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$2.main), ...this.groupItems(createGroupItems, MenuSectionCode$2.create)];
 	  }
 	}
 
-	const MenuSectionCode$3 = Object.freeze({
-	  main: 'main',
-	  select: 'select',
-	  file: 'file',
-	  open: 'open',
-	  create: 'create'
-	});
+	var _getCommentsPostMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCommentsPostMenuItems");
+	var _getDefaultMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDefaultMenuItems");
 	class CommentsMessageMenu extends MessageMenu {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _getDefaultMenuItems, {
+	      value: _getDefaultMenuItems2
+	    });
+	    Object.defineProperty(this, _getCommentsPostMenuItems, {
+	      value: _getCommentsPostMenuItems2
+	    });
+	  }
 	  getMenuItems() {
 	    const message = this.context;
 	    const contextDialogId = this.context.dialogId;
 	    if (im_v2_lib_channel.ChannelManager.isCommentsPostMessage(message, contextDialogId)) {
-	      const mainGroupItems = [this.getCopyItem(), this.getCopyFileItem()];
-	      const fileGroupItems = [this.getDownloadFileItem(), this.getSaveToDiskItem()];
-	      return [...this.groupItems(mainGroupItems, MenuSectionCode$3.main), ...this.groupItems(fileGroupItems, MenuSectionCode$3.file), ...this.groupItems([this.getOpenInChannelItem()], MenuSectionCode$3.open)];
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getCommentsPostMenuItems)[_getCommentsPostMenuItems]();
 	    }
-	    return [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), ...this.getAdditionalItems(), this.getDeleteItem()];
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getDefaultMenuItems)[_getDefaultMenuItems]();
+	  }
+	  getNestedItems() {
+	    const firstGroupItems = [this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+	    return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
 	  }
 	  getMenuGroups() {
 	    return [{
-	      code: MenuSectionCode$3.main
+	      code: MenuSectionCode$1.first
 	    }, {
-	      code: MenuSectionCode$3.file
+	      code: MenuSectionCode$1.second
 	    }, {
-	      code: MenuSectionCode$3.open
+	      code: MenuSectionCode$1.third
 	    }];
 	  }
 	  getNestedMenuGroups() {
 	    return [{
-	      code: MenuSectionCode$3.main
-	    }, {
-	      code: MenuSectionCode$3.create
+	      code: NestedMenuSectionCode.first
 	    }];
-	  }
-	  getNestedItems() {
-	    const mainGroupItems = [this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
-	    const createGroupItems = [this.getCreateTaskItem(), this.getCreateMeetingItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$3.main), ...this.groupItems(createGroupItems, MenuSectionCode$3.create)];
 	  }
 	  getOpenInChannelItem() {
 	    return {
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL'),
 	      icon: ui_iconSet_api_core.Outline.GO_TO_MESSAGE,
 	      onClick: () => {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
+	        this.emitter.emit(im_v2_const.EventType.dialog.closeComments);
 	        this.menuInstance.close();
 	      }
 	    };
 	  }
 	}
+	function _getCommentsPostMenuItems2() {
+	  const firstGroupItems = [this.getCopyItem(), this.getCopyFileItem()];
+	  const secondGroupItems = [this.getDownloadFileItem(), this.getSaveToDiskItem()];
+	  return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second), ...this.groupItems([this.getOpenInChannelItem()], MenuSectionCode$1.third)];
+	}
+	function _getDefaultMenuItems2() {
+	  const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+	  return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems([this.getDeleteItem()], MenuSectionCode$1.second)];
+	}
 
-	const MenuSectionCode$4 = Object.freeze({
-	  main: 'main',
-	  select: 'select',
-	  create: 'create',
-	  market: 'market'
-	});
 	var _openForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openForm");
+	var _getUserCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserCounter");
 	class CopilotMessageMenu extends MessageMenu {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _getUserCounter, {
+	      value: _getUserCounter2
+	    });
 	    Object.defineProperty(this, _openForm, {
 	      value: _openForm2
 	    });
 	  }
 	  getMenuItems() {
-	    const mainGroupItems = [this.getCopyItem(), this.getMarkItem(), this.getFavoriteItem(), this.getForwardItem(), this.getSendFeedbackItem(), this.getDeleteItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$4.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$4.select)];
-	  }
-	  getMenuGroups() {
-	    return [{
-	      code: MenuSectionCode$4.main
-	    }, {
-	      code: MenuSectionCode$4.select
-	    }];
+	    const firstGroupItems = [this.getCopyItem(), this.getMarkItem(), this.getFavoriteItem(), this.getForwardItem(), this.getSendFeedbackItem()];
+	    const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
+	    return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 	  }
 	  getSendFeedbackItem() {
 	    const copilotManager = new im_v2_lib_copilot.CopilotManager();
@@ -1165,33 +1210,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	    };
 	  }
-	  getUserCounter() {
-	    const chat = this.store.getters['chats/get'](this.context.dialogId);
-	    return chat.userCounter;
-	  }
 	}
 	async function _openForm2() {
 	  void new im_v2_lib_feedback.FeedbackManager().openCopilotForm({
-	    userCounter: this.getUserCounter(),
+	    userCounter: babelHelpers.classPrivateFieldLooseBase(this, _getUserCounter)[_getUserCounter](),
 	    text: this.context.text
 	  });
 	}
+	function _getUserCounter2() {
+	  const chat = this.store.getters['chats/get'](this.context.dialogId);
+	  return chat.userCounter;
+	}
 
-	const MenuSectionCode$5 = Object.freeze({
-	  main: 'main',
-	  select: 'select',
-	  create: 'create',
-	  market: 'market'
-	});
 	class AiAssistantMessageMenu extends MessageMenu {
 	  getMenuItems() {
-	    const mainGroupItems = [this.getCopyItem(), this.getDownloadFileItem(), this.getForwardItem(), ...this.getAdditionalItems()];
-	    return this.groupItems(mainGroupItems, MenuSectionCode$5.main);
+	    const firstGroupItems = [this.getCopyItem(), this.getDownloadFileItem(), this.getForwardItem(), this.getCreateTaskItem(), ...this.getAdditionalItems()];
+	    return this.groupItems(firstGroupItems, MenuSectionCode$1.first);
 	  }
 	  getNestedItems() {
-	    const mainGroupItems = [this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
-	    const createGroupItems = [this.getSendFeedbackItem(), this.getCreateTaskItem(), this.getCreateMeetingItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$5.main), ...this.groupItems(createGroupItems, MenuSectionCode$5.create), ...this.groupItems(this.getMarketItems(), MenuSectionCode$5.market)];
+	    const firstGroupItems = [this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+	    return [...this.groupItems(firstGroupItems, NestedMenuSectionCode.first), ...this.groupItems([this.getSendFeedbackItem()], NestedMenuSectionCode.second), ...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.third)];
+	  }
+	  getNestedMenuGroups() {
+	    return [{
+	      code: NestedMenuSectionCode.first
+	    }, {
+	      code: NestedMenuSectionCode.second
+	    }, {
+	      code: NestedMenuSectionCode.third
+	    }];
 	  }
 	  getSendFeedbackItem() {
 	    const isAiAssistantBot = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](this.context.authorId);
@@ -1227,7 +1274,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _isAiAssistant = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAiAssistant");
 	var _hasMenuForMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasMenuForMessageType");
 	var _getMenuForMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuForMessageType");
-	var _destroyMenuInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyMenuInstance");
 	class MessageMenuManager {
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
@@ -1236,9 +1282,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
 	  }
 	  constructor() {
-	    Object.defineProperty(this, _destroyMenuInstance, {
-	      value: _destroyMenuInstance2
-	    });
 	    Object.defineProperty(this, _getMenuForMessageType, {
 	      value: _getMenuForMessageType2
 	    });
@@ -1296,17 +1339,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerDefaultMenus)[_registerDefaultMenus]();
 	  }
-	  openMenu(context, bindElement) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _destroyMenuInstance)[_destroyMenuInstance]();
-	    const MenuClass = babelHelpers.classPrivateFieldLooseBase(this, _resolveMenuClass)[_resolveMenuClass](context);
-	    babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance] = new MenuClass();
-	    babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance].openMenu(context, bindElement);
+	  openMenu(payload) {
+	    this.destroyMenuInstance();
+	    const {
+	      messageContext,
+	      target,
+	      applicationContext
+	    } = payload;
+	    const MenuClass = babelHelpers.classPrivateFieldLooseBase(this, _resolveMenuClass)[_resolveMenuClass](messageContext);
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance] = new MenuClass(applicationContext);
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance].openMenu(messageContext, target);
 	  }
 	  registerMenuByCallback(callback, menuClass) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _customMenuByCallback)[_customMenuByCallback].set(callback, menuClass);
 	  }
 	  unregisterMenuByCallback(callback) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _customMenuByCallback)[_customMenuByCallback].delete(callback);
+	  }
+	  destroyMenuInstance() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance].destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance] = null;
+	  }
+	  shouldUseNativeContextMenu(target) {
+	    return Boolean(target.closest(`[${im_v2_const.DataAttribute.useNativeContextMenu}]`));
 	  }
 	  registerMenuByMessageType(messageType, menuClass) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _hasMenuForMessageType)[_hasMenuForMessageType](messageType)) {
@@ -1372,13 +1430,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _getMenuForMessageType2(messageType) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _menuByMessageType)[_menuByMessageType].get(messageType);
 	}
-	function _destroyMenuInstance2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance]) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance].destroy();
-	  babelHelpers.classPrivateFieldLooseBase(this, _menuInstance)[_menuInstance] = null;
-	}
 	Object.defineProperty(MessageMenuManager, _instance, {
 	  writable: true,
 	  value: null
@@ -1391,5 +1442,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageMenu = MessageMenu;
 	exports.AiAssistantMessageMenu = AiAssistantMessageMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

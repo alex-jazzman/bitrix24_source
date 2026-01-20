@@ -13,10 +13,16 @@
 	gap: 8px 4px;
 }
 
+.bx-im-reaction-list__item .ui-reaction {
+	--ui-reaction-size: 16px
+}
+
 .bx-im-reaction-list__item {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	gap: 4px;
+
 	height: 24px;
 	padding: 4px 6px;
 	border-radius: 38px;
@@ -25,11 +31,10 @@
 }
 
 .bx-im-reaction-list__item_icon {
+	display: flex;
 	width: 16px;
 	height: 16px;
-	margin-right: 4px;
 	border-radius: 50%;
-	background-size: contain;
 }
 
 .bx-im-reaction-list__item_counter {
@@ -48,32 +53,36 @@
 }
 
 .bx-im-reaction-list__user_container {
+	position: relative;
 	display: flex;
 	flex-direction: row-reverse;
 	align-items: center;
+	padding-right: 4px;
 }
 
 .bx-im-reaction-list__user_avatar {
 	width: 18px;
 	height: 18px;
-	margin-left: -4px;
+	margin-right: -4px;
 	border-radius: 50%;
 	background-size: contain;
 	user-select: none;
 }
 
-.bx-im-reaction-list__user_avatar:last-child {
-	margin-left: 0;
+.bx-im-reaction-list__user_animation-move {
+	transition: none;
 }
 
-.bx-im-reaction-list__user_animation-move,
 .bx-im-reaction-list__user_animation-enter-active {
-	transition: all 0.4s ease;
+	transition:
+		transform 0.25s ease-out,
+		opacity 0.2s ease-out;
 }
 
 .bx-im-reaction-list__user_animation-enter-from,
 .bx-im-reaction-list__user_animation-leave-to {
-	margin-left: -18px;
+	opacity: 0;
+	transform: translateX(-10px);
 }
 
 

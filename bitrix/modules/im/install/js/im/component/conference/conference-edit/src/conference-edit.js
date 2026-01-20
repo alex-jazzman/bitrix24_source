@@ -1,6 +1,6 @@
 import {Reflection, Text, Dom, ajax as Ajax} from "main.core";
 import {BitrixVue} from "ui.vue";
-import {ConferenceFieldState} from "im.const";
+import {ConferenceFieldState} from "call.const";
 import {Logger} from "im.lib.logger";
 import {Clipboard} from "im.lib.clipboard";
 

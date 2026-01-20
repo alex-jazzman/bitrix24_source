@@ -34,6 +34,7 @@ else
 		<?php endif ?>
 		<input type="hidden" name="AUTH_FORM" value="Y">
 		<input type="hidden" name="TYPE" value="SEND_PWD">
+		<?= bitrix_sessid_post(); ?>
 
 		<div class="intranet-login-enter-form intranet-logging-in__login-form">
 			<h2 class="intranet-island-title">
@@ -57,7 +58,7 @@ else
 					</div>
 
 					<?php if ($arResult['USE_CAPTCHA']): ?>
-					<h4 class="intranet-form-add-block__title intranet-form-add-block__title--margin">
+					<h4 class="intranet-form-add-block__title --margin">
 						<?=Loc::getMessage('INTRANET_FORGOT_PASS_CAPTCHA_PROMT')?>
 					</h4>
 					<div class="intranet-text-captcha_item">
@@ -91,20 +92,20 @@ else
 			<template v-else>
 				<div class="intranet-notification">
 					<div class="intranet-big-icon intranet-big-icon--email intranet-notification__icon"></div>
+					<?php if (is_array($arParams['~AUTH_RESULT']) && isset($arParams['~AUTH_RESULT']['MESSAGE'])):?>
 					<div class="intranet-notification__content">
 						<?=$arParams['~AUTH_RESULT']['MESSAGE']?>
 					</div>
+					<?php endif ?>
 				</div>
 			</template>
 		</div>
 	</form>
 
 	<Teleport to=".intranet-body__header-right">
-		<div class="intranet-text-btn intranet-text-btn--auth">
-			<a class="intranet-text-btn-link" href="<?=$arResult['AUTH_AUTH_URL']?>" rel="nofollow">
-				<?=Loc::getMessage('INTRANET_FORGOT_PASS_AUTH_LINK')?>
-			</a>
-		</div>
+		<a class="intranet-text-btn intranet-text-btn--auth" href="<?=$arResult['AUTH_AUTH_URL']?>" rel="nofollow">
+			<?=Loc::getMessage('INTRANET_FORGOT_PASS_AUTH_LINK')?>
+		</a>
 	</Teleport>
 
 	<script>

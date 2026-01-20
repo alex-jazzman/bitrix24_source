@@ -7,6 +7,7 @@
 	align-items: center;
 	gap: 8px;
 	border-bottom: 1px solid var(--ui-color-palette-gray-15);
+	border-top-right-radius: 9px;
 	padding: 10px 10px 5px;
 	margin-bottom: 12px;
 	position: sticky;
@@ -59,7 +60,6 @@
 
 .ui-popupconstructor-content-item-num {
 	color: var(--ui-color-base-70);
-	/*padding: 0 3px;*/
 }
 
 .ui-popupconstructor-content-item-date {
@@ -215,11 +215,11 @@
 }
 
 .--baas-widget .ui-label.--exceeded {
-	background-color: var(--ui-color-background-warning);
+	background-color: var(--ui-color-palette-orange-50);
 }
 
 .--baas-widget .ui-label.--exceeded .ui-label-inner {
-	color: var(--ui-color-palette-orange-70);
+	color: var(--ui-color-on-primary-alt);
 }
 
 .ui-popupcomponentsmaker-header-tariff__section-message-wrapper {

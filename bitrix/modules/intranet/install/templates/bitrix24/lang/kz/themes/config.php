@@ -116,6 +116,7 @@ $MESS["BITRIX24_THEME_SHINING_INTELLIGENCE"] = "Жарқыраған интел�
 $MESS["BITRIX24_THEME_SKYSCRAPER"] = "Биік ғимарат";
 $MESS["BITRIX24_THEME_SLOPE"] = "Тау бөктері";
 $MESS["BITRIX24_THEME_SNOW_VILLAGE"] = "Полярлық Түн";
+$MESS["BITRIX24_THEME_SPACE"] = "Ғарыш";
 $MESS["BITRIX24_THEME_STARFISH"] = "Теңіз жұлдыздары";
 $MESS["BITRIX24_THEME_STARS"] = "Жұлдыздар";
 $MESS["BITRIX24_THEME_STEEL_WALL"] = "Болат қабырға";

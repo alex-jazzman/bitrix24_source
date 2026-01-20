@@ -15,6 +15,7 @@ import {
 	AnalyticsTool,
 } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
 import { MessageForward } from './message-forward';
 import { MessagePins } from './message-pins';
 
@@ -73,14 +74,12 @@ export class MessageContextMenu
 	{
 		const message: ImModelMessage = Core.getStore().getters['messages/getById'](messageId);
 		const type = new MessageComponentManager(message).getName();
-		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
 		sendData({
 			category: AnalyticsCategory.message,
 			event: AnalyticsEvent.cancelDelete,
 			type,
 			c_section: AnalyticsSection.popup,
-			p5: `chatId_${chat.chatId}`,
 			...this.#getBaseParams(dialogId),
 		});
 	}
@@ -313,6 +312,18 @@ export class MessageContextMenu
 		this.messageForward.onClickForward(dialogId);
 	}
 
+	onAskCopilot(dialogId: string): void
+	{
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
+
+		sendData({
+			category: getCategoryByChatType(chat.type),
+			event: AnalyticsEvent.askCopilot,
+			c_section: AnalyticsSection.chatWindow,
+			...this.#getBaseParams(dialogId),
+		});
+	}
+
 	#onCopyTextCopilot({ dialogId, messageId }: {dialogId: string, messageId: string | number}): void
 	{
 		const aiModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
@@ -377,7 +388,7 @@ export class MessageContextMenu
 		return {
 			tool: AnalyticsTool.im,
 			c_sub_section: AnalyticsSubSection.contextMenu,
-			p1: `chatType_${chat.type}`,
+			p1: `chatType_${getChatType(chat)}`,
 		};
 	}
 }

@@ -7,5 +7,6 @@ return [
 		'tokens',
 		'intranet:department-structure',
 		'ui-system/layout/card',
+		'utils/validation',
 	],
 ];

@@ -12,7 +12,6 @@ jn.define('im/messenger/model/anchor/default-element', (require, exports, module
 		parentMessageId: 0,
 		subType: null,
 		type: null,
-		userId: 0,
 	});
 
 	module.exports = {

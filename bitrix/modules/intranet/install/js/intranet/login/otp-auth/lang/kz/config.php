@@ -1,0 +1,26 @@
+<?php
+$MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY"] = "Кірудің басқа жолдары";
+$MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY_TITLE"] = "Кіруді растау әдісін таңдаңыз";
+$MESS["INTRANET_AUTH_OTP_CAPTCHA_PROMT"] = "Суреттегі таңбаларды енгізіңіз";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_AUTH"] = "Битрикс24 мобильді қосымшасына кіруді растаңыз";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_LOGIN"] = "Кіруді растаңыз";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_TEXT"] = "Кіруді растау үшін Битрикс24 қосымшасын ашыңыз";
+$MESS["INTRANET_AUTH_OTP_CONTINUE_BUTTON"] = "Жалғастыру";
+$MESS["INTRANET_AUTH_OTP_HELP"] = "Көмек";
+$MESS["INTRANET_AUTH_OTP_INPUT_RECOVERY_CODE"] = "Резервтік көшірме кодтарының бірін енгізіңіз";
+$MESS["INTRANET_AUTH_OTP_LINK"] = "Кіру";
+$MESS["INTRANET_AUTH_OTP_MORE"] = "Толығырақ";
+$MESS["INTRANET_AUTH_OTP_PLACEHOLDER"] = "Бір реттік кодты енгізіңіз";
+$MESS["INTRANET_AUTH_OTP_PUSH_SENDED"] = "Біз сіздің құрылғыларыңызға сұрау жібердік";
+$MESS["INTRANET_AUTH_OTP_RECOVERY_CODES"] = "Резервтік код";
+$MESS["INTRANET_AUTH_OTP_RECOVERY_CODES_DESC"] = "Егер сіз екі факторлы аутентификацияны қосқаннан кейін оларды сақтаған болсаңыз, резервтік кодтарды пайдалануға болады.";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS"] = "Кіруді қалпына келтіру";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TEXT"] = "Кіруді қалпына келтіру үшін Битрикс24 әкімшісіне хабарласыңыз";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TITLE"] = "Кіруді растай алмаймын";
+$MESS["INTRANET_AUTH_OTP_REMEMBER_ME"] = "Осы құрылғыда есте сақтаңыз";
+$MESS["INTRANET_AUTH_OTP_RESEND_PUSH"] = "Сұранысты тағы бір рет жіберу";
+$MESS["INTRANET_AUTH_OTP_SMS"] = "СМС";
+$MESS["INTRANET_AUTH_OTP_SMS_COUNTDOWN"] = "#SEC# секундтан кейін қайта сұрауға болады";
+$MESS["INTRANET_AUTH_OTP_SMS_RESEND"] = "Кодты тағы бір рет жіберу";
+$MESS["INTRANET_AUTH_OTP_SMS_SENDED"] = "Біз #NUMBER# нөміріне растау коды бар СМС жібердік";
+$MESS["INTRANET_AUTH_OTP_TITLE"] = "Битрикс24 кіру";

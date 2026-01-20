@@ -7,6 +7,8 @@
 	const { Type } = require('type');
 	const { UserProfile } = require('user-profile');
 	const { merge } = require('utils/object');
+	const { NotificationLoadService } = require('settings-v2/services/notification-load');
+	const { MessengerDBService } = require('settings-v2/services/db/messenger');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -46,6 +48,7 @@
 				menu_invite: 'menu_invite',
 				menu_tab_presets: 'menu_tab_presets',
 				menu_disk_tabs: 'menu_disk_tabs',
+				mail_unseen: 'mail_unseen',
 			};
 
 			this.userCounterMapTabName = {
@@ -60,6 +63,7 @@
 				menu_tab_presets: 'menu_tab_presets',
 				menu_disk_tabs: 'menu_disk_tabs',
 				total_invitation: 'total_invitation',
+				mail_unseen: 'mail_unseen',
 			};
 
 			this.tabNameMapOldUserCounter = {
@@ -94,9 +98,43 @@
 
 			this.databaseMessenger = new ReactDatabase(ChatDatabaseName, CONFIG.USER_ID, CONFIG.LANGUAGE_ID, CONFIG.SITE_ID);
 
-			this.loadFromCache();
-
 			BX.addCustomEvent('onAppActive', () => this.update());
+
+			this.loadFromCache();
+		}
+
+		async loadFromServer()
+		{
+			try
+			{
+				const {
+					pushStatus,
+					smartFilter,
+					pushTypes,
+					pushConfig,
+					counterTypes,
+					counterConfig,
+				} = await NotificationLoadService.fetchAll();
+
+				await (new MessengerDBService()).setNotifyConfig({
+					pushStatus,
+					smartFilter,
+					pushTypes,
+					pushConfig,
+					counterTypes,
+					counterConfig,
+				});
+
+				const preparedConfig = Object.fromEntries(
+					counterConfig.map((item) => [item.type, item.value]),
+				);
+
+				this.onUpdateApplicationCounterConfig(preparedConfig);
+			}
+			catch (e)
+			{
+				console.error('loadFromServer counters error', e);
+			}
 		}
 
 		onSetUserCounters(counters, time)
@@ -392,7 +430,6 @@
 			}
 		}
 
-
 		getMessagesCounter()
 		{
 			let counter = this.counters.chats + this.counters.openlines;
@@ -441,6 +478,7 @@
 					console.info('SettingsNotify.loadCache: config load from cache', cacheData.counterTypes);
 
 					this.update();
+					this.loadFromServer();
 				}).catch(() => {
 					this.update();
 				});
@@ -615,7 +653,7 @@
 					data: {
 						mobile_action: 'save_device_token',
 						device_name: model,
-						uuid: uuid,
+						uuid,
 						device_token: token,
 						app_id: appId,
 						device_type: dt,
@@ -695,6 +733,21 @@
 				params = tag.split('|');
 				result = `${link}mobile/calendar/view_event.php?event_id=${params[2]}`;
 			}
+			else if (tag.startsWith('MAIL'))
+			{
+				params = tag.split('|');
+				const { inAppUrl } = require('in-app-url');
+
+				if (params.length >= 3 && params[1] === 'LIST')
+				{
+					inAppUrl.open(`/mail/list/${params[2]}`);
+				}
+
+				if (params.length >= 3 && params[1] === 'MESSAGE')
+				{
+					inAppUrl.open(`/mail/message/${params[2]}`);
+				}
+			}
 
 			if (result)
 			{
@@ -747,7 +800,7 @@
 				});
 			}
 		},
-		actions: ['post', 'tasks', 'comment', 'mention', 'share', 'share2users', 'sonet_group_event'],
+		actions: ['post', 'tasks', 'comment', 'mention', 'share', 'share2users', 'sonet_group_event', 'mail'],
 		init()
 		{
 			this.handler(); // handle first start of the app
@@ -763,11 +816,10 @@
 	 */
 
 	BX.addCustomEvent('onUserProfileOpen', (userId, options = {}) => {
-		console.log('onUserProfileOpen', userId, options);
-
 		void UserProfile.open({
 			ownerId: userId,
 			openInComponent: true,
+			analyticsSection: 'mobile_communication',
 		});
 	});
 

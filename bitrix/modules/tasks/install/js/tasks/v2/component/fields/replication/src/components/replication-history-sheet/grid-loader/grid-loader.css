@@ -1,0 +1,26 @@
+.tasks-template-history-grid-loader-spinner-container {
+	display: flex;
+	align-self: center;
+	justify-content: center;
+	width: 100%;
+}
+
+.tasks-template-history-grid-loader-spinner {
+	display: inline-block;
+	width: var(--ui-size-8xl);
+	height: var(--ui-size-8xl);
+	border: 3px solid var(--ui-color-base-5);
+	border-bottom-color: transparent;
+	border-radius: 50%;
+	box-sizing: border-box;
+	animation: template-history-grid-spinner-loader-animation 1s linear infinite;
+}
+
+@keyframes template-history-grid-spinner-loader-animation {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}

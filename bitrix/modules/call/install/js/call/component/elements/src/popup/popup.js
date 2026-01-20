@@ -51,7 +51,7 @@ export const CallPopupContainer = {
 	{
 		this.instance.adjustPosition({
 			forceBindPosition: true,
-			position: this.getPopupConfig().bindOptions.position
+			position: this.getPopupConfig().bindOptions.position,
 		});
 
 		this.$emit('popup-instance-created', this.instance);
@@ -114,7 +114,7 @@ export const CallPopupContainer = {
 				...defaultConfig,
 				...this.config,
 				className: combinedClassName,
-				offsetTop: adjustedOffsetTop
+				offsetTop: adjustedOffsetTop,
 			};
 		},
 		closePopup()
@@ -135,7 +135,7 @@ export const CallPopupContainer = {
 		{
 			this.getPopupInstance().adjustPosition({
 				forceBindPosition: true,
-				position: this.getPopupConfig().bindOptions.position
+				position: this.getPopupConfig().bindOptions.position,
 			});
 		},
 	},

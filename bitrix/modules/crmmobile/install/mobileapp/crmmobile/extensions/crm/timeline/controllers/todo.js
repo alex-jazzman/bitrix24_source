@@ -113,6 +113,7 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 
 			void UserProfile.open({
 				ownerId: userId,
+				analyticsSection: 'crm_timeline_todo_user',
 			});
 		}
 

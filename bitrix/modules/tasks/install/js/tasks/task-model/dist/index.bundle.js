@@ -238,7 +238,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var _fieldCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldCollection");
 	var _errorCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorCollection");
-	class TaskModel {
+	class TaskModelOld {
 	  constructor(options = {}) {
 	    Object.defineProperty(this, _fieldCollection, {
 	      writable: true,
@@ -293,7 +293,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	exports.ErrorCollection = ErrorCollection;
 	exports.FieldCollection = FieldCollection;
 	exports.TaskCollection = TaskCollection;
-	exports.TaskModel = TaskModel;
+	exports.TaskModel = TaskModelOld;
 
 }((this.BX.Tasks.TaskModel = this.BX.Tasks.TaskModel || {}),BX.Tasks.TaskModel,BX,BX.Event));
 //# sourceMappingURL=index.bundle.js.map

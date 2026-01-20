@@ -13,25 +13,43 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { UpdateStateManager } from 'im.v2.lib.update-state.manager';
 import { Router } from 'im.v2.lib.router';
 
+import { PreloadedEntity } from './const/const';
+
+import type { JsonObject } from 'main.core';
+
 export class InitManager
 {
-	static #started: boolean = false;
+	static #instance: InitManager;
+	static #inited: boolean = false;
 
-	static start()
+	static getInstance(): InitManager
 	{
-		if (this.#started)
+		InitManager.#instance = InitManager.#instance ?? new InitManager();
+
+		return InitManager.#instance;
+	}
+
+	static init(): void
+	{
+		InitManager.getInstance();
+	}
+
+	constructor()
+	{
+		if (InitManager.#inited)
 		{
 			return;
 		}
 
 		this.#initLogger();
 		Logger.warn('InitManager: start');
-		this.#initCurrentUser();
 		this.#initSettings();
 		this.#initTariffRestrictions();
 		this.#initAnchors();
 		this.#initCallManager();
 		this.#initAvailableAIModelsList();
+		this.#initPreloadedEntities();
+		this.#initCurrentUserAdminStatus();
 
 		CounterManager.init();
 		PermissionManager.init();
@@ -42,23 +60,12 @@ export class InitManager
 		MessageNotifierManager.init();
 		DesktopManager.init();
 		UpdateStateManager.init();
-		Router.init();
+		Router.handleGetParams();
 
-		this.#started = true;
+		InitManager.#inited = true;
 	}
 
-	static #initCurrentUser()
-	{
-		const { currentUser } = Core.getApplicationData();
-		if (!currentUser)
-		{
-			return;
-		}
-
-		void new UserManager().setUsersToModel([currentUser]);
-	}
-
-	static #initLogger()
+	#initLogger(): void
 	{
 		const { loggerConfig } = Core.getApplicationData();
 		if (!loggerConfig)
@@ -69,7 +76,7 @@ export class InitManager
 		Logger.setConfig(loggerConfig);
 	}
 
-	static #initSettings()
+	#initSettings(): void
 	{
 		const { settings } = Core.getApplicationData();
 		if (!settings)
@@ -81,7 +88,7 @@ export class InitManager
 		void Core.getStore().dispatch('application/settings/set', settings);
 	}
 
-	static #initTariffRestrictions()
+	#initTariffRestrictions(): void
 	{
 		const { tariffRestrictions } = Core.getApplicationData();
 		if (!tariffRestrictions)
@@ -93,13 +100,13 @@ export class InitManager
 		void Core.getStore().dispatch('application/tariffRestrictions/set', tariffRestrictions);
 	}
 
-	static #initCallManager()
+	#initCallManager(): void
 	{
 		const { activeCalls } = Core.getApplicationData();
 		CallManager.getInstance().updateRecentCallsList(activeCalls);
 	}
 
-	static #initAnchors()
+	#initAnchors(): void
 	{
 		const { anchors } = Core.getApplicationData();
 		if (!anchors)
@@ -110,9 +117,9 @@ export class InitManager
 		void Core.getStore().dispatch('messages/anchors/setAnchors', { anchors });
 	}
 
-	static #initAvailableAIModelsList(): void
+	#initAvailableAIModelsList(): void
 	{
-		const { copilot } = Core.getApplicationData();
+		const { copilot }: ApplicationDataType = Core.getApplicationData();
 
 		if (!copilot.availableEngines)
 		{
@@ -120,5 +127,31 @@ export class InitManager
 		}
 
 		void Core.getStore().dispatch('copilot/setAvailableAIModels', copilot.availableEngines);
+	}
+
+	#initPreloadedEntities(): void
+	{
+		const { preloadedEntities } = Core.getApplicationData();
+		if (!preloadedEntities)
+		{
+			return;
+		}
+
+		const preloadedEntitiesHandler = {
+			[PreloadedEntity.users]: (users) => (new UserManager()).setUsersToModel(users),
+		};
+
+		Object.entries(preloadedEntities).forEach(([entityType: string, items: JsonObject[]]) => {
+			if (preloadedEntitiesHandler[entityType])
+			{
+				preloadedEntitiesHandler[entityType](items);
+			}
+		});
+	}
+
+	#initCurrentUserAdminStatus(): void
+	{
+		const { isCurrentUserAdmin } = Core.getApplicationData();
+		void Core.getStore().dispatch('users/setCurrentUserAdminStatus', isCurrentUserAdmin);
 	}
 }

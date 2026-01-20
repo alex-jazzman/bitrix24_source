@@ -31,7 +31,7 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.clickCreatePoll)
 				.setSection()
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP4(
 					DialogHelper.createByDialogId(dialogId)?.isCollab
@@ -72,7 +72,7 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.publishPoll)
 				.setType(isAnonymous ? Analytics.Type.voteAnonymous : Analytics.Type.votePublic)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
 				.setP4(
@@ -152,7 +152,7 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 				.setTool(Analytics.Tool.im)
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.vote)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
 				.send()
@@ -173,7 +173,7 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.finishPoll)
 				.setType(Analytics.Type.voteFinisherUser)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
 				.setP4(
@@ -200,7 +200,7 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 				.setTool(Analytics.Tool.im)
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.cancelVote)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
 				.send()
@@ -252,7 +252,7 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 
 				analyticsEvent
 					.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
-					.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+					.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				;
 			}
 

@@ -5,6 +5,8 @@ import { ParserUtils } from '../utils/utils';
 import { getUtils, getConst } from '../utils/core-proxy';
 import { ParserIcon } from './icon';
 
+import type { ApplicationContext } from 'im.v2.const';
+
 const { EventType } = getConst();
 
 const QUOTE_SIGN = '&gt;&gt;';
@@ -107,7 +109,7 @@ export const ParserQuote = {
 		return text.replace(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis, ParserIcon.getCodeBlock() + spaceLetter);
 	},
 
-	executeClickEvent(event: PointerEvent)
+	executeClickEvent(event: PointerEvent, context: ApplicationContext)
 	{
 		if (
 			!event.target.className.startsWith('bx-im-message-quote')
@@ -127,7 +129,9 @@ export const ParserQuote = {
 		}
 
 		const [dialogId, messageId] = target.dataset.context.split('/');
-		EventEmitter.emit(EventType.dialog.goToMessageContext, {
+
+		const { emitter } = context;
+		emitter.emit(EventType.dialog.goToMessageContext, {
 			messageId: Number.parseInt(messageId, 10),
 			dialogId: dialogId.toString(),
 		});

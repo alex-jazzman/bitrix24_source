@@ -13,3 +13,4 @@ drop table if exists b_intranet_theme;
 drop table if exists b_intranet_custom_section;
 drop table if exists b_intranet_custom_section_page;
 drop table if exists b_intranet_invitation_link;
+drop table if exists b_intranet_user_annual_summary;

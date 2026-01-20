@@ -1,6 +1,7 @@
 import { Type } from 'main.core';
 import Context from './context';
 import Item from './item';
+import Booking from './items/booking/booking';
 import Call from './items/call';
 import Comment from './items/comment';
 import Delivery from './items/delivery';
@@ -12,6 +13,7 @@ import Meeting from './items/meeting';
 import RestPlacementWithLayout from './items/restplacement/withlayout';
 import RestPlacementWithSlider from './items/restplacement/withslider';
 import Sharing from './items/sharing';
+import Message from './items/sms/message';
 import Sms from './items/sms/sms';
 import Whatsapp from './items/sms/whatsapp';
 import Task from './items/task';
@@ -19,7 +21,6 @@ import ToDo from './items/todo/todo';
 import Visit from './items/visit';
 import Wait from './items/wait';
 import Zoom from './items/zoom';
-import Booking from './items/booking/booking';
 
 export default class Factory
 {
@@ -40,6 +41,9 @@ export default class Factory
 				break;
 			case 'whatsapp':
 				item = new Whatsapp();
+				break;
+			case 'message':
+				item = new Message();
 				break;
 			case 'gotochat':
 				item = new GoToChat();

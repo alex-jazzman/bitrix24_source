@@ -1,12 +1,11 @@
-<?
-/*
-##############################################
-# Bitrix: SiteManager                        #
-# Copyright (c) 2004 Bitrix                  #
-# https://www.bitrixsoft.com          #
-# mailto:admin@bitrix.ru                     #
-##############################################
-*/
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage advertising
+ * @copyright 2001-2025 Bitrix
+ */
 
 use Bitrix\Main\Loader;
 
@@ -194,12 +193,12 @@ $filter = new CAdminFilter(
 	?>
 </form>
 <?
-echo CAdminMessage::ShowMessage($strError);
+CAdminMessage::ShowMessage($strError);
 
 $diameter = intval(COption::GetOptionString("advertising", "BANNER_DIAGRAM_DIAMETER"));
 
 if (!function_exists("ImageCreate")) :
-	echo CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED") . "<br>");
+	CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED") . "<br>");
 elseif (count($arrLegend) > 0) :
 	echo BeginNote();
 	echo GetMessage("AD_SERVER_TIME") . "&nbsp;&nbsp;<i>" . GetTime(time(), "FULL") . "</i><br>";
@@ -231,7 +230,7 @@ elseif (count($arrLegend) > 0) :
 		if ($sum_show > 0 || $sum_click > 0 || $sum_ctr > 0 || $sum_visitor > 0) :
 
 			if (!function_exists("ImageCreate")) :
-				echo CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED") . "<br>");
+				CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED") . "<br>");
 			else :
 				reset($arShow);
 				$aTabs = [];
@@ -313,7 +312,7 @@ elseif (count($arrLegend) > 0) :
 		endif;
 		?><br><br><?
 	else:
-		echo CAdminMessage::ShowMessage(GetMessage("ADV_NO_DATA_DIAGRAM"));
+		CAdminMessage::ShowMessage(GetMessage("ADV_NO_DATA_DIAGRAM"));
 	endif;
 
 	// Диаграммы по группам
@@ -339,7 +338,7 @@ elseif (count($arrLegend) > 0) :
 		if ($sum_show > 0 || $sum_click > 0 || $sum_ctr > 0 || $sum_visitor > 0) :
 
 			if (!function_exists("ImageCreate")) :
-				echo CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED") . "<br>");
+				CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED") . "<br>");
 			else :
 				reset($arShow);
 				$aTabs = [];

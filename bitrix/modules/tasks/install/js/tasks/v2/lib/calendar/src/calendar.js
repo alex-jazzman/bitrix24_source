@@ -8,12 +8,17 @@ const weekends = new Set(settings.WEEKEND.map((it) => ({ SU: 0, MO: 1, TU: 2, WE
 const { H: startH, M: startM } = settings.HOURS.START;
 const { H: endH, M: endM } = settings.HOURS.END;
 
-const dayDuration = DurationFormat.getUnitDurations().d;
+const unitDurations = DurationFormat.getUnitDurations();
 const workdayDuration = ((endH * 60 + endM) - (startH * 60 + startM)) * 60000;
 const workWeekDuration = workdayDuration * (7 - weekends.size);
 
 export const calendar = new class
 {
+	get weekStart(): string
+	{
+		return settings.WEEK_START;
+	}
+
 	get workdayDuration(): void
 	{
 		return workdayDuration;
@@ -24,7 +29,12 @@ export const calendar = new class
 		return settings.HOURS.START;
 	}
 
-	get defaultTime(): void
+	get dayStartTime(): void
+	{
+		return `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
+	}
+
+	get dayEndTime(): void
 	{
 		return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 	}
@@ -46,6 +56,36 @@ export const calendar = new class
 		return DateTimeFormat.format(format, (timestamp + offset) / 1000);
 	}
 
+	formatDate(timestamp: number, { forceYear }: { forceYear: boolean } = {}): string
+	{
+		if (!timestamp)
+		{
+			return '';
+		}
+
+		const showYear = forceYear || new Date(timestamp).getFullYear() !== new Date().getFullYear();
+		const format = DateTimeFormat.getFormat(showYear ? 'LONG_DATE_FORMAT' : 'DAY_MONTH_FORMAT');
+		const offset = timezone.getOffset(timestamp);
+
+		return DateTimeFormat.format(format, (timestamp + offset) / 1000);
+	}
+
+	formatDuration(durationTs: number, matchWorkTime: boolean): string
+	{
+		const dayDuration = matchWorkTime ? this.workdayDuration : unitDurations.d;
+		const minutes = durationTs / unitDurations.i;
+		const hours = durationTs / unitDurations.H;
+		const days = durationTs / dayDuration;
+
+		const [duration, format] = {
+			[true]: [Math.floor(minutes) * unitDurations.i, 'i'],
+			[Number.isInteger(hours)]: [hours * unitDurations.H, 'H'],
+			[Number.isInteger(days)]: [days * unitDurations.d, 'd'],
+		}.true;
+
+		return new DurationFormat(duration).format({ format });
+	}
+
 	calculateDuration(startTs: number, end: number): number
 	{
 		const dayEnd = this.setHours(startTs, endH, endM);
@@ -54,7 +94,7 @@ export const calendar = new class
 			return end - startTs;
 		}
 
-		let start = this.setHours(startTs + dayDuration, startH, startM);
+		let start = this.setHours(startTs + unitDurations.d, startH, startM);
 		let duration = dayEnd - startTs;
 		while (start < end)
 		{
@@ -63,7 +103,7 @@ export const calendar = new class
 				duration += Math.min(start + workdayDuration, end) - start;
 			}
 
-			start += dayDuration;
+			start += unitDurations.d;
 		}
 
 		return duration;
@@ -85,7 +125,7 @@ export const calendar = new class
 		let start = startTs;
 
 		const daysUntilNextMonday = (1 + 7 - new Date(start - timezone.getOffset(start)).getDay()) % 7;
-		const nextMondayTs = this.setHours(start + dayDuration * daysUntilNextMonday, startH, startM);
+		const nextMondayTs = this.setHours(start + unitDurations.d * daysUntilNextMonday, startH, startM);
 		const mondayDuration = this.calculateDuration(start, nextMondayTs);
 		if (duration <= mondayDuration)
 		{
@@ -98,8 +138,8 @@ export const calendar = new class
 		const beforeSkip = new Date(start).setHours(0, 0, 0);
 		const weeks = Math.max(Math.floor(duration / workWeekDuration) - 1, 0);
 		duration -= workWeekDuration * weeks;
-		start = this.setHours(start + dayDuration * weeks * 7, startH, startM);
-		const afterSkip = new Date(start).setHours(0, 0, 0) - dayDuration;
+		start = this.setHours(start + unitDurations.d * weeks * 7, startH, startM);
+		const afterSkip = new Date(start).setHours(0, 0, 0) - unitDurations.d;
 
 		const fromYear = new Date(beforeSkip).getFullYear();
 		const toYear = new Date(afterSkip).getFullYear();
@@ -137,7 +177,7 @@ export const calendar = new class
 				}
 			}
 
-			anchor = this.setHours(anchor + dayDuration * direction, anchorHours.H, anchorHours.M);
+			anchor = this.setHours(anchor + unitDurations.d * direction, anchorHours.H, anchorHours.M);
 		}
 
 		return anchorTs;
@@ -153,7 +193,7 @@ export const calendar = new class
 		let workday = timestamp;
 		while (!this.isWorkDay(workday))
 		{
-			workday = this.setHours(workday + dayDuration, startH, startM);
+			workday = this.setHours(workday + unitDurations.d, startH, startM);
 		}
 
 		const dayStart = this.setHours(workday, startH, startM);

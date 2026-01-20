@@ -1,47 +1,20 @@
-<?
+<?php
 
 use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
+use Bitrix\Intranet\Internal\Provider\Profile\ProfileUserFieldComponentConfig;
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/company/personal.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 \CModule::IncludeModule('intranet');
-?>
-<?
-$arEditableFields = array(
-	0 => "LOGIN",
-	1 => "NAME",
-	2 => "SECOND_NAME",
-	3 => "LAST_NAME",
-	4 => "EMAIL",
-	5 => "PASSWORD",
-	6 => "PERSONAL_BIRTHDAY",
-	7 => "PERSONAL_WWW",
-	8 => "PERSONAL_GENDER",
-	9 => "PERSONAL_PHOTO",
-	11 => "PERSONAL_MOBILE",
-	13 => "PERSONAL_CITY",
-	14 => "WORK_PHONE",
-	15 => "UF_PHONE_INNER",
-	16 => "UF_SKYPE",
-	17 => "UF_TWITTER",
-	18 => "UF_FACEBOOK",
-	19 => "UF_LINKEDIN",
-	20 => "UF_XING",
-	21 => "UF_SKILLS",
-	22 => "UF_INTERESTS",
-	23 => "UF_WEB_SITES",
-	24 => "TIME_ZONE",
-	25 => "GROUP_ID",
-	26 => "WORK_POSITION",
-);
-if ($GLOBALS["USER"]->CanDoOperation("edit_all_users"))
-	$arEditableFields[] = "UF_DEPARTMENT";
+
+$fieldConfig = (new ProfileUserFieldComponentConfig(true))->get();
 
 GetGlobalID();
 $componentDateTimeFormat = CModule::IncludeModule("intranet") ? CIntranetUtils::getCurrentDateTimeFormat() : "";
 
 $params = [
+	...$fieldConfig,
 	"ITEM_DETAIL_COUNT"	=>	"32",
 	"ITEM_MAIN_COUNT"	=>	"6",
 	"DATE_TIME_FORMAT" => $componentDateTimeFormat,
@@ -79,40 +52,7 @@ $params = [
 	"SHOW_RATING" => "",
 	"RATING_TYPE" => "",
 	"GROUP_THUMBNAIL_SIZE" => 100,
-	"USER_FIELDS_MAIN" => [
-		0 => "PERSONAL_BIRTHDAY",
-		1 => "WORK_POSITION",
-		2 => "WORK_COMPANY",
-		3 => "SECOND_NAME",
-	],
-	"USER_PROPERTY_MAIN" => [
-		0 => "UF_DEPARTMENT",
-	],
-	"USER_FIELDS_CONTACT" => [
-		0 => "EMAIL",
-		1 => "PERSONAL_WWW",
-		2 => "PERSONAL_MOBILE",
-		3 => "WORK_PHONE",
-	],
-	"USER_PROPERTY_CONTACT" => [
-		0 => "UF_PHONE_INNER",
-		1 => "UF_SKYPE",
-		2 => "UF_TWITTER",
-		3 => "UF_FACEBOOK",
-		4 => "UF_LINKEDIN",
-		5 => "UF_XING",
-	],
-	"USER_FIELDS_PERSONAL" => [
-		0 => "TIME_ZONE",
-		1 => "PERSONAL_CITY",
-	],
-	"USER_PROPERTY_PERSONAL" => [
-		0 => "UF_SKILLS",
-		1 => "UF_INTERESTS",
-		2 => "UF_WEB_SITES",
-	],
 	"AJAX_LONG_TIMEOUT" => "60",
-	"EDITABLE_FIELDS" => $arEditableFields,
 	"SHOW_YEAR" => "M",
 	"USER_FIELDS_SEARCH_SIMPLE" => [
 		0 => "PERSONAL_GENDER",

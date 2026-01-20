@@ -5,27 +5,37 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_NAME_1_V2'),
-	'DESCRIPTION' => Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_DESC_1_MSGVER_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'TasksChangeResponsibleActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
+$arActivityDescription = (
+	new ActivityDescription(
+		name: Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_NAME_1_V2'),
+		description: Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_DESC_1_MSGVER_1'),
+		type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value, ActivityType::NODE_ACTION->value ],
+	)
+)
+	->setClass('TasksChangeResponsibleActivity')
+	->setJsClass(ActivityDescription::DEFAULT_ACTIVITY_JS_CLASS)
+	->setCategory([
 		'ID' => 'document',
 		'OWN_ID' => 'tasks',
 		'OWN_NAME' => Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_CATEGORY'),
-	],
-	'FILTER' => [
+	])
+	->setFilter([
 		'INCLUDE' => [
 			['tasks'],
 		],
-	],
-	'ROBOT_SETTINGS' => [
+	])
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
 		'RESPONSIBLE_PROPERTY' => 'Responsible',
 		'GROUP' => ['elementControl'],
-	],
-];
+	])
+	->setNodeActionSettings([
+		'INCLUDE' => ['taskscomplexactivity'],
+		'HANDLES_DOCUMENT' => true,
+	])
+	->toArray()
+;

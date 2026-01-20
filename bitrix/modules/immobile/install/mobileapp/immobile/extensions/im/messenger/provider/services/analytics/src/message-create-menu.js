@@ -33,7 +33,7 @@ jn.define('im/messenger/provider/services/analytics/message-create-menu', (requi
 					.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 					.setEvent(Analytics.Event.clickAttach)
 					.setSection(Analytics.Section.messageContextMenu)
-					.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+					.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 					.setP2(AnalyticsHelper.getP2ByUserType())
 					.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
 

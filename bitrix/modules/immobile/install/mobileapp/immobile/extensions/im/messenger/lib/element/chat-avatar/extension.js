@@ -17,6 +17,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogType, UserType, BotCode } = require('im/messenger/const');
 	const { defaultGroupChatAvatar } = require('im/messenger/assets/common');
+	const { CopilotAsset } = require('im/messenger/assets/copilot');
 	const { AvatarShape } = require('ui-system/blocks/avatar');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 
@@ -98,6 +99,31 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		static getImagePath()
 		{
 			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/chat-avatar/src/images/`;
+		}
+
+		static createCopilotMentionAvatar()
+		{
+			const { accentType, placeholderType } = AvatarDetailFields;
+
+			return {
+				type: AvatarShape.CIRCLE.value,
+				polygonAngle: 30, // only IOS
+				radius: 0,
+				accentType: accentType.blue,
+				backBorderWidth: 0,
+				backColor: Color.accentMainPrimaryalt.toHex(), // only IOS
+				hideOutline: true,
+				uri: CopilotAsset.mentionSvgUrl,
+				placeholder: {
+					type: placeholderType.svg,
+					backgroundColor: Color.accentSoftElementViolet.toHex(),
+					svg: {
+						tintColor: Color.baseWhiteFixed.toHex(),
+						size: 24,
+						named: Icon.COPILOT.getIconName(),
+					},
+				},
+			};
 		}
 
 		/**
@@ -254,6 +280,34 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			avatarProps.placeholder.letters.fontSize = 13;
 
 			return avatarProps;
+		}
+
+		/**
+		 * @return {AvatarDetail}
+		 */
+		static createMentionAllUsersAvatar()
+		{
+			const { accentType, placeholderType } = AvatarDetailFields;
+
+			return {
+				type: AvatarShape.CIRCLE.value,
+				polygonAngle: 30, // only IOS
+				radius: 0,
+				accentType: accentType.blue,
+				backBorderWidth: 0,
+				backColor: Color.accentMainPrimaryalt.toHex(), // only IOS
+				hideOutline: true,
+				uri: Icon.THREE_PERSONS.getPath(),
+				placeholder: {
+					type: placeholderType.svg,
+					backgroundColor: Color.accentMainPrimaryalt.toHex(),
+					svg: {
+						tintColor: Color.baseWhiteFixed.toHex(),
+						size: 24,
+						named: Icon.THREE_PERSONS.getIconName(),
+					},
+				},
+			};
 		}
 
 		/**

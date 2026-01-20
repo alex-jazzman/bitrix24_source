@@ -1185,20 +1185,50 @@
 	/**
 	 * Extend main colorpicker for landings
 	 */
-	BX.Landing.ColorPicker = function(node, params)
+	BX.Landing.ColorPicker = function(node, params, metrikaParams = {})
 	{
-		let defaultColor;
+		let defaultColor = null;
 		if (params)
 		{
 			defaultColor = params.defaultColor;
 		}
 
-		this.picker = new BX.ColorPicker({
-			bindElement: node,
-			popupOptions: { angle: false, offsetTop: 5 },
-			onColorSelected: this.onColorSelected.bind(this),
-			colors: this.setColors(),
-			selectedColor: defaultColor,
+		this.metrikaParams = metrikaParams;
+
+		this.element = node;
+
+		this.loader = new BX.Loader({
+			target: node.parentNode,
+			size: 29,
+			offset: {
+				left: '30%',
+			},
+		});
+
+		this.currentColor = null;
+		if (this.element.value)
+		{
+			this.currentColor = this.element.value;
+		}
+
+		this.colorField = new BX.Landing.UI.Field.ColorField({
+			subtype: 'color',
+		});
+		this.colorField.createPopup({
+			contentRoot: null,
+			isNeedCalcPopupOffset: false,
+			isNeedResetPopupWhenOpen: false,
+			analytics: this.getMetrikaParams(),
+		});
+		if (this.currentColor !== null)
+		{
+			this.colorField.colorPopup.setHexValue(this.currentColor);
+		}
+		this.colorField.colorPopup.subscribe('onHexColorPopupChange', (e) => {
+			this.onColorSelected(e.data);
+		});
+		this.colorField.colorPopup.subscribe('onPopupShow', (e) => {
+			this.loader.hide();
 		});
 
 		this.input = node;
@@ -1256,13 +1286,13 @@
 				return;
 			}
 
-			this.picker.open();
+			this.loader.show();
+			this.colorField.colorPopup.onPopupOpenClick(event, this.element);
 		},
 		clear()
 		{
 			this.colorPickerNode.classList.remove('ui-colorpicker-selected');
 			this.input.value = '';
-			this.picker.setSelectedColor(null);
 			BX.Event.EventEmitter.emit(this, 'BX.Landing.ColorPicker:onClearColorPicker');
 		},
 		setColors()
@@ -1292,6 +1322,14 @@
 					return row[index];
 				});
 			});
+		},
+		getMetrikaParams()
+		{
+			return {
+				category: 'settings',
+				c_sub_section: this.metrikaParams?.subSection ?? null,
+				p1: this.metrikaParams?.p1 ?? null,
+			};
 		},
 	};
 })();

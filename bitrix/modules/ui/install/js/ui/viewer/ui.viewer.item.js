@@ -1235,7 +1235,34 @@
 
 			this.playerId = `playerId_${this.generateUniqueId()}`;
 
-			if (!BX.Type.isUndefined(node.dataset.viewerResized))
+			if (BX.Type.isStringFilled(node.dataset.sources))
+			{
+				const sources = JSON.parse(node.dataset.sources);
+				if (BX.Type.isArray(sources))
+				{
+					this.sources = sources.map((source) => {
+						if (source.type === 'video/quicktime')
+						{
+							const mp4 = { ...source };
+							mp4.type = 'video/mp4';
+
+							return mp4;
+						}
+
+						return source;
+					});
+
+					if (
+						BX.Type.isStringFilled(node.dataset.viewerWidth)
+						&& BX.Type.isStringFilled(node.dataset.viewerHeight)
+					)
+					{
+						this.width = node.dataset.viewerWidth;
+						this.height = node.dataset.viewerHeight;
+					}
+				}
+			}
+			else if (!BX.Type.isUndefined(node.dataset.viewerResized))
 			{
 				this.sources = [
 					{ src: node.dataset.src, type: node.dataset.type },
@@ -1259,7 +1286,7 @@
 			const promise = new BX.Promise();
 
 			BX.Runtime.loadExtension('ui.video-player').then(() => {
-				if (this.sources.length > 0)
+				if (this.sources.length > 0 && !this.forceTransformation)
 				{
 					promise.fulfill(this);
 					return;

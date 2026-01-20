@@ -1,7 +1,7 @@
 <?php
 $MESS["TASKS_FIELDS_RESULT_ADD_WIDGET_PLACEHOLDER"] = "Use @ to mention a person, workgroup or department";
 $MESS["TASKS_FIELDS_RESULT_ADD_WIDGET_TITLE"] = "Status summary";
-$MESS["TASKS_FIELDS_RESULT_AIR_ADD_RESULT"] = "Add another status summary";
+$MESS["TASKS_FIELDS_RESULT_AIR_ADD_RESULT"] = "Add more";
 $MESS["TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE"] = "Status summaries";
 $MESS["TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE_MULTI"] = "Status summaries: #COUNT#";
 $MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_0"] = "Show #COUNT# more summary";

@@ -1,10 +1,10 @@
 import { Core } from 'booking.core';
 import { CrmEntity, Model } from 'booking.const';
 import { bookingService } from 'booking.provider.service.booking-service';
+import { mainPageService } from 'booking.provider.service.main-page-service';
 import type { BookingModel, DealData } from 'booking.model.bookings';
 
 import { DealHelper } from './deal-helper';
-import type { CreateCrmDealLoadParams } from './types';
 
 export class BookingDealHelper extends DealHelper
 {
@@ -39,34 +39,16 @@ export class BookingDealHelper extends DealHelper
 				if (deal?.value)
 				{
 					void bookingService.getById(this.#bookingId);
+					void mainPageService.fetchCounters();
 				}
 			},
 		});
 	}
 
-	createDeal(): void
+	async createDeal(): void
 	{
-		const itemIdQueryParamName = 'bookingId';
-
-		super.createCrmDeal({
-			itemIdQueryParamName,
-			itemId: this.#bookingId,
-			clients: this.#booking?.clients || [],
-			onLoad: async (data: CreateCrmDealLoadParams): Promise<void> => {
-				if (!data.isDeal || this.#bookingId !== data.itemIdFromQuery)
-				{
-					return;
-				}
-
-				await this.saveDeal(data.dealData);
-			},
-			onClose: async (): Promise<void> => {
-				if (this.#deal?.value)
-				{
-					await this.saveDeal(this.#deal);
-				}
-			},
-		});
+		await bookingService.createDeal(this.#bookingId);
+		this.openDeal();
 	}
 
 	saveDeal(dealData: DealData | null): void

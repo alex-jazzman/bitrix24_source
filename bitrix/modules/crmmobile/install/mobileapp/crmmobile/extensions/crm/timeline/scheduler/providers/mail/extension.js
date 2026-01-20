@@ -4,7 +4,7 @@
 jn.define('crm/timeline/scheduler/providers/mail', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Icon } = require('assets/icons');
-	const { MailOpener } = require('crm/mail/opener');
+	const { MailOpener } = require('mail/opener');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { Type } = require('crm/type');
 

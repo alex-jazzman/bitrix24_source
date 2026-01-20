@@ -2,19 +2,18 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,ai_picker,calendar_sliderloader,im_v2_lib_rest,im_v2_application_core,im_v2_const) {
+(function (exports,main_core,main_core_events,calendar_sliderloader,im_v2_lib_rest,im_v2_application_core,im_v2_const) {
 	'use strict';
 
-	const CALENDAR_ON_ENTRY_SAVE_EVENT = 'BX.Calendar:onEntrySave';
 	var _chatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _onCalendarEntrySaveHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCalendarEntrySaveHandler");
 	var _createMeeting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMeeting");
-	var _createAiText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createAiText");
 	var _createTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createTask");
 	var _requestPreparedParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestPreparedParams");
 	var _openTaskSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openTaskSlider");
 	var _openTaskV2Card = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openTaskV2Card");
+	var _openPrefilledTaskV2Card = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openPrefilledTaskV2Card");
 	var _openCalendarSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openCalendarSlider");
 	var _onCalendarEntrySave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCalendarEntrySave");
 	class EntityCreator {
@@ -24,6 +23,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _openCalendarSlider, {
 	      value: _openCalendarSlider2
+	    });
+	    Object.defineProperty(this, _openPrefilledTaskV2Card, {
+	      value: _openPrefilledTaskV2Card2
 	    });
 	    Object.defineProperty(this, _openTaskV2Card, {
 	      value: _openTaskV2Card2
@@ -36,9 +38,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _createTask, {
 	      value: _createTask2
-	    });
-	    Object.defineProperty(this, _createAiText, {
-	      value: _createAiText2
 	    });
 	    Object.defineProperty(this, _createMeeting, {
 	      value: _createMeeting2
@@ -58,8 +57,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] = chatId;
 	  }
-	  createAiTextForChat(startMessage) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _createAiText)[_createAiText](startMessage);
+	  openTaskCreationForm() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card]();
 	  }
 	  createTaskForChat() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _createTask)[_createTask]();
@@ -85,25 +84,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      params
 	    } = sliderParams;
+	    const CALENDAR_ON_ENTRY_SAVE_EVENT = 'BX.Calendar:onEntrySave';
 	    babelHelpers.classPrivateFieldLooseBase(this, _onCalendarEntrySaveHandler)[_onCalendarEntrySaveHandler] = babelHelpers.classPrivateFieldLooseBase(this, _onCalendarEntrySave)[_onCalendarEntrySave].bind(this, params.sliderId, messageId);
 	    main_core_events.EventEmitter.subscribeOnce(CALENDAR_ON_ENTRY_SAVE_EVENT, babelHelpers.classPrivateFieldLooseBase(this, _onCalendarEntrySaveHandler)[_onCalendarEntrySaveHandler]);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _openCalendarSlider)[_openCalendarSlider](params);
 	  });
-	}
-	function _createAiText2(startMessage) {
-	  const picker = new ai_picker.Picker({
-	    startMessage,
-	    moduleId: 'im',
-	    contextId: 'im_menu_plus',
-	    history: true,
-	    onSelect: item => {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
-	        text: item.data,
-	        replace: true
-	      });
-	    }
-	  });
-	  picker.setLangSpace(ai_picker.Picker.LangSpace.text).text();
 	}
 	function _createTask2(messageId) {
 	  const config = {
@@ -119,7 +104,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      link,
 	      params
 	    } = taskParams;
-	    return params.is_tasks_v2 ? babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card](params) : babelHelpers.classPrivateFieldLooseBase(this, _openTaskSlider)[_openTaskSlider](link, params);
+	    return params.is_tasks_v2 ? babelHelpers.classPrivateFieldLooseBase(this, _openPrefilledTaskV2Card)[_openPrefilledTaskV2Card](params) : babelHelpers.classPrivateFieldLooseBase(this, _openTaskSlider)[_openTaskSlider](link, params);
 	  });
 	}
 	function _requestPreparedParams2(requestMethod, query) {
@@ -136,15 +121,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    cacheable: false
 	  });
 	}
-	async function _openTaskV2Card2(params) {
-	  var _params$entityId, _params$subEntityId, _params$groupId, _params$description;
+	async function _openTaskV2Card2(payload = {}) {
 	  const {
 	    TaskCard
 	  } = await main_core.Runtime.loadExtension('tasks.v2.application.task-card');
+	  TaskCard.showCompactCard(payload);
+	}
+	function _openPrefilledTaskV2Card2(params) {
+	  var _params$entityId, _params$subEntityId, _params$groupId, _params$description;
 	  const entityId = (_params$entityId = params.entityId) != null ? _params$entityId : null;
 	  const subEntityId = (_params$subEntityId = params.subEntityId) != null ? _params$subEntityId : null;
 	  const auditors = params.auditors ? params.auditors.split(',').map(auditorId => parseInt(auditorId.trim(), 10)) : [];
-	  TaskCard.showCompactCard({
+	  const payload = {
 	    groupId: (_params$groupId = params.groupId) != null ? _params$groupId : null,
 	    description: (_params$description = params.description) != null ? _params$description : null,
 	    auditorsIds: auditors,
@@ -158,7 +146,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      entityId,
 	      subEntityId
 	    }
-	  });
+	  };
+	  void babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card](payload);
 	}
 	function _openCalendarSlider2(sliderParams) {
 	  new (window.top.BX || window.BX).Calendar.SliderLoader(0, sliderParams).show();
@@ -182,5 +171,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.EntityCreator = EntityCreator;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.AI,BX.Calendar,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Calendar,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=entity-creator.bundle.js.map

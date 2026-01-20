@@ -1844,6 +1844,29 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  return ProductServiceGridController;
 	}(BX.UI.EntityEditorController);
 
+	var FileController = /*#__PURE__*/function (_BX$UI$EntityEditorCo) {
+	  babelHelpers.inherits(FileController, _BX$UI$EntityEditorCo);
+	  function FileController(id, settings) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, FileController);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FileController).call(this));
+	    _this.initialize(id, settings);
+	    main_core_events.EventEmitter.subscribe('Catalog.File.Input:onRemove', _this.markAsChanged.bind(babelHelpers.assertThisInitialized(_this)));
+	    main_core_events.EventEmitter.subscribe('Catalog.File.Input:onUploadComplete', _this.markAsChanged.bind(babelHelpers.assertThisInitialized(_this)));
+	    return _this;
+	  }
+	  babelHelpers.createClass(FileController, [{
+	    key: "rollback",
+	    value: function rollback() {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(FileController.prototype), "rollback", this).call(this);
+	      if (this._isChanged) {
+	        this._isChanged = false;
+	      }
+	    }
+	  }]);
+	  return FileController;
+	}(BX.UI.EntityEditorController);
+
 	var ControllersFactory = /*#__PURE__*/function () {
 	  function ControllersFactory() {
 	    var _this = this;
@@ -1852,7 +1875,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      var _event$getCompatData = event.getCompatData(),
 	        _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
 	        eventArgs = _event$getCompatData2[1];
-	      eventArgs.methods['entityCard'] = _this.factory.bind(_this);
+	      eventArgs.methods.entityCard = _this.factory.bind(_this);
 	    });
 	  }
 	  babelHelpers.createClass(ControllersFactory, [{
@@ -1887,6 +1910,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      }
 	      if (type === 'service_grid') {
 	        return new ProductServiceGridController(controlId, settings);
+	      }
+	      if (type === 'file') {
+	        return new FileController(controlId, settings);
 	      }
 	      return null;
 	    }

@@ -1,7 +1,7 @@
 /**
- * @module statemanager/redux/state-cache/base-storage
+ * @module statemanager/redux/state-cache/src/base-storage
  */
-jn.define('statemanager/redux/state-cache/base-storage', (require, exports, module) => {
+jn.define('statemanager/redux/state-cache/src/base-storage', (require, exports, module) => {
 	/**
 	 * @class BaseStorage
 	 * @abstract

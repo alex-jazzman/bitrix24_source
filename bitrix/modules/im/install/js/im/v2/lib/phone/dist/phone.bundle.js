@@ -14,7 +14,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _onCallDestroyed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallDestroyed");
 	var _onDeviceCallStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDeviceCallStarted");
 	var _onCallConnected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallConnected");
-	var _getCurrentUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentUser");
+	var _isCurrentUserAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCurrentUserAdmin");
 	var _getUserAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserAvatar");
 	var _parseStartCallParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("parseStartCallParams");
 	var _showCallLimitSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCallLimitSlider");
@@ -38,8 +38,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _getUserAvatar, {
 	      value: _getUserAvatar2
 	    });
-	    Object.defineProperty(this, _getCurrentUser, {
-	      value: _getCurrentUser2
+	    Object.defineProperty(this, _isCurrentUserAdmin, {
+	      value: _isCurrentUserAdmin2
 	    });
 	    Object.defineProperty(this, _onCallConnected, {
 	      value: _onCallConnected2
@@ -144,7 +144,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return new voximplant_phoneCalls.PhoneCallsController({
 	    phoneEnabled: phoneSettings.phoneEnabled,
 	    userId: im_v2_application_core.Core.getUserId(),
-	    isAdmin: babelHelpers.classPrivateFieldLooseBase(this, _getCurrentUser)[_getCurrentUser]().isAdmin,
+	    isAdmin: babelHelpers.classPrivateFieldLooseBase(this, _isCurrentUserAdmin)[_isCurrentUserAdmin](),
 	    restApps: phoneSettings.restApps,
 	    canInterceptCall: phoneSettings.canInterceptCall,
 	    deviceActive: phoneSettings.deviceActive,
@@ -208,9 +208,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const target = (_DesktopApi$findWindo2 = im_v2_lib_desktopApi.DesktopApi.findWindow('callWindow')) != null ? _DesktopApi$findWindo2 : window;
 	  im_v2_lib_desktopApi.DesktopApi.activateWindow(target);
 	}
-	function _getCurrentUser2() {
-	  const userId = im_v2_application_core.Core.getUserId();
-	  return im_v2_application_core.Core.getStore().getters['users/get'](userId);
+	function _isCurrentUserAdmin2() {
+	  return im_v2_application_core.Core.getStore().getters['users/isCurrentUserAdmin'];
 	}
 	function _getUserAvatar2(userId) {
 	  const user = im_v2_application_core.Core.getStore().getters['users/get'](userId, true);

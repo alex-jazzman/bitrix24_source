@@ -1,10 +1,4 @@
 <?php
-$MESS["IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE"] = "Басқа құрылғыдағы қоңырау";
-$MESS["IM_LIST_RECENT_ACTIVE_CALL_HANGUP"] = "Ажырау";
-$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN"] = "Қосылу";
-$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN_AUDIO"] = "Бейнесіз";
-$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN_VIDEO"] = "Бейнемен";
-$MESS["IM_LIST_RECENT_ACTIVE_CALL_RETURN"] = "Қоңырауға оралу";
 $MESS["IM_LIST_RECENT_BIRTHDAY"] = "Бүгін туған күнін тойлап жатыр!";
 $MESS["IM_LIST_RECENT_BIRTHDAY_DATE"] = "бүгін";
 $MESS["IM_LIST_RECENT_CHAT_SELF"] = "бұл сіз";
@@ -30,3 +24,4 @@ $MESS["IM_LIST_RECENT_INVITATION_NOT_ACCEPTED_MSGVER_1"] = "Шақыру әлі 
 $MESS["IM_LIST_RECENT_MESSAGE_DRAFT_2"] = "Шимай жазба: #TEXT#";
 $MESS["IM_LIST_RECENT_NEW_USER_POPUP_TEXT"] = "Мен сізбен бірге командадамын!";
 $MESS["IM_LIST_RECENT_VACATION"] = "#VACATION_END_DATE# дейін демалыста";
+$MESS["IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE"] = "Оқылмаған жоқ";

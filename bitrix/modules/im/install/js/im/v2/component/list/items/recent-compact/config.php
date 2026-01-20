@@ -11,10 +11,10 @@ return [
 	'css' => 'dist/recent-compact.bundle.css',
 	'js' => 'dist/recent-compact.bundle.js',
 	'rel' => [
+		'im.v2.css.tokens',
 		'im.v2.lib.utils',
 		'im.v2.provider.service.recent',
 		'im.v2.lib.menu',
-		'im.v2.css.tokens',
 		'ui.design-tokens.air',
 		'main.core',
 		'ui.icon-set.api.vue',
@@ -22,6 +22,7 @@ return [
 		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.component.elements.avatar',
+		'call.component.compact-active-call-list',
 	],
 	'skip_core' => false,
 	'settings' => [

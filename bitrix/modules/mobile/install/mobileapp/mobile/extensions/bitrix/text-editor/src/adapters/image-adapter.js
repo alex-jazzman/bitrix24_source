@@ -55,6 +55,8 @@ jn.define('text-editor/adapters/image-adapter', (require, exports, module) => {
 			if (!this.previewSync)
 			{
 				const sourceNode = this.getSource();
+				const previewNode = sourceNode.clone({ deep: true });
+				this.previewSync = previewNode;
 
 				if (sourceNode.getName() === 'img')
 				{
@@ -70,7 +72,6 @@ jn.define('text-editor/adapters/image-adapter', (require, exports, module) => {
 							maxHeight: 180,
 						});
 
-						const previewNode = sourceNode.clone({ deep: true });
 						previewNode.setAttributes({
 							width,
 							height,

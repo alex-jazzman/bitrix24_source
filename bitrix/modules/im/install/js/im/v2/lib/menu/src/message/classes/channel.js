@@ -1,59 +1,51 @@
-import { MessageMenu } from './message-base';
+import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
 import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
-
-const MenuSectionCode = Object.freeze({
-	main: 'main',
-	select: 'select',
-	create: 'create',
-});
 
 export class ChannelMessageMenu extends MessageMenu
 {
 	getMenuItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
 			this.getCopyItem(),
 			this.getEditItem(),
 			this.getDownloadFileItem(),
-			this.getPinItem(),
 			this.getForwardItem(),
+			this.getAskCopilotItem(),
+			this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
+		];
+
+		const secondGroupItems = [
 			this.getDeleteItem(),
+			this.getSelectItem(),
 		];
 
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
-		];
-	}
-
-	getNestedMenuGroups(): MenuSectionOptions[]
-	{
-		return [
-			{ code: MenuSectionCode.main },
-			{ code: MenuSectionCode.create },
+			...this.groupItems(firstGroupItems, MenuSectionCode.first),
+			...this.groupItems(secondGroupItems, MenuSectionCode.second),
 		];
 	}
 
 	getNestedItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
+			this.getPinItem(),
 			this.getCopyLinkItem(),
 			this.getCopyFileItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
-		];
-
-		const createGroupItems = [
-			this.getCreateTaskItem(),
 			this.getCreateMeetingItem(),
 		];
 
+		return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
+	}
+
+	getNestedMenuGroups(): MenuSectionOptions[]
+	{
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems(createGroupItems, MenuSectionCode.create),
+			{ code: NestedMenuSectionCode.first },
 		];
 	}
 }

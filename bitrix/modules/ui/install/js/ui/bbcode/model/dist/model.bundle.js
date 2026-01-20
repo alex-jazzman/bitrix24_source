@@ -1135,6 +1135,21 @@ this.BX.UI = this.BX.UI || {};
 	      node.trimLinebreaksOnce();
 	    }
 	  }
+	  static stripFormatting({
+	    node,
+	    children
+	  }) {
+	    const notAllowedChildren = new Set(['#tab', '#linebreak']);
+	    const bePropagated = [];
+	    children.forEach(child => {
+	      if (notAllowedChildren.has(child.getName()) || child.getName() === '#text' && /^\s+$/.test(child.getContent())) {
+	        child.remove();
+	      } else {
+	        bePropagated.push(child);
+	      }
+	    });
+	    node.propagateChild(...bePropagated);
+	  }
 	  setVoid(value) {
 	    if (main_core.Type.isBoolean(value)) {
 	      this[voidSymbol$1] = value;
@@ -1536,21 +1551,7 @@ this.BX.UI = this.BX.UI || {};
 	      onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 	      allowedIn: ['#root', '#shadowRoot'],
 	      canBeEmpty: false,
-	      onNotAllowedChildren: ({
-	        node,
-	        children
-	      }) => {
-	        const notAllowedChildren = new Set(['#tab', '#linebreak']);
-	        const bePropagated = [];
-	        children.forEach(child => {
-	          if (notAllowedChildren.has(child.getName()) || child.getName() === '#text' && /^\s+$/.test(child.getContent())) {
-	            child.remove();
-	          } else {
-	            bePropagated.push(child);
-	          }
-	        });
-	        node.propagateChild(...bePropagated);
-	      }
+	      onNotAllowedChildren: BBCodeTagScheme.stripFormatting
 	    }), new BBCodeTagScheme({
 	      name: ['*'],
 	      group: ['#shadowRoot'],
@@ -1581,11 +1582,13 @@ this.BX.UI = this.BX.UI || {};
 	      allowedChildren: ['tr'],
 	      stringify: BBCodeTagScheme.defaultBlockStringifier,
 	      onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
+	      onNotAllowedChildren: BBCodeTagScheme.stripFormatting,
 	      allowedIn: ['#root', 'td', 'th', 'quote', 'spoiler'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({
 	      name: 'tr',
 	      allowedChildren: ['th', 'td'],
+	      onNotAllowedChildren: BBCodeTagScheme.stripFormatting,
 	      allowedIn: ['table'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({

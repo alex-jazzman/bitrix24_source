@@ -5,6 +5,7 @@ import { AvatarSize } from './const/const';
 import { Avatar } from './components/base/avatar';
 import { CollaberAvatar } from './components/collab/collaber';
 import { CopilotAvatar } from './components/copilot/copilot';
+import { AiAssistantAvatar } from './components/ai-assistant-avatar';
 import { ExtranetUserAvatar } from './components/extranet/extranet-user-avatar';
 
 import type { BitrixVueComponentProps } from 'ui.vue3';
@@ -13,7 +14,6 @@ import type { ImModelUser } from 'im.v2.model';
 // @vue/component
 export const MessageAvatar = {
 	name: 'MessageAvatar',
-	components: { Avatar, CollaberAvatar, CopilotAvatar },
 	props: {
 		messageId: {
 			type: [String, Number],
@@ -69,11 +69,20 @@ export const MessageAvatar = {
 
 			return avatarMap[this.user.type] ?? Avatar;
 		},
+		isAiAssistant(): boolean
+		{
+			return this.$store.getters['users/bots/isAiAssistant'](this.authorId);
+		},
 	},
 	methods:
 	{
 		getBotAvatar(): BitrixVueComponentProps
 		{
+			if (this.isAiAssistant)
+			{
+				return AiAssistantAvatar;
+			}
+
 			const copilotManager = new CopilotManager();
 
 			return copilotManager.isCopilotChatOrBot(this.authorId) ? CopilotAvatar : Avatar;

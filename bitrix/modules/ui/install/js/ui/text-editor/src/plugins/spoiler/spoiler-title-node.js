@@ -25,6 +25,7 @@ import {
 	type SerializedElementNode,
 	type LexicalEditor,
 } from 'ui.lexical.core';
+
 import { $createSpoilerTitleTextNode } from './spoiler-title-text-node';
 
 type SerializedSpoilerTitleNode = SerializedElementNode;
@@ -54,6 +55,7 @@ export class SpoilerTitleNode extends ElementNode
 	createDOM(config: EditorConfig, editor: LexicalEditor): HTMLElement
 	{
 		const dom = document.createElement('summary');
+		dom.tabIndex = -1;
 
 		if (Type.isStringFilled(config?.theme?.spoiler?.title))
 		{

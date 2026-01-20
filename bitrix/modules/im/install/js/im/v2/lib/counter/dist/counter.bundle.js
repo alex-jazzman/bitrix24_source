@@ -22,6 +22,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const CounterClearActionsByChatType = {
+	  [im_v2_const.ChatType.taskComments]: ['chats/clearCountersByChatType', 'recent/resetTasksUnreadStatus', 'counters/clearUnloadedTaskCounters', 'messages/anchors/removeAllAnchorsByChatType']
+	};
+	const CounterClearActionsDefault = ['chats/clearCounters', 'recent/resetUnreadStatus', 'counters/clear', 'messages/anchors/removeAllAnchors'];
+
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _emitCountersUpdateWithDebounce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitCountersUpdateWithDebounce");
@@ -30,7 +35,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _subscribeToCountersChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToCountersChange");
 	var _emitLegacyNotificationCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitLegacyNotificationCounterUpdate");
 	var _emitLegacyChatCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitLegacyChatCounterUpdate");
-	var _emitLegacyLinesCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitLegacyLinesCounterUpdate");
 	var _emitCountersUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitCountersUpdate");
 	var _onTotalCounterChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTotalCounterChange");
 	class CounterManager {
@@ -46,9 +50,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _emitCountersUpdate, {
 	      value: _emitCountersUpdate2
-	    });
-	    Object.defineProperty(this, _emitLegacyLinesCounterUpdate, {
-	      value: _emitLegacyLinesCounterUpdate2
 	    });
 	    Object.defineProperty(this, _emitLegacyChatCounterUpdate, {
 	      value: _emitLegacyChatCounterUpdate2
@@ -113,7 +114,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeToCountersChange)[_subscribeToCountersChange]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyChatCounterUpdate)[_emitLegacyChatCounterUpdate](counters.TYPE.CHAT);
 	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyNotificationCounterUpdate)[_emitLegacyNotificationCounterUpdate](counters.TYPE.NOTIFY);
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyLinesCounterUpdate)[_emitLegacyLinesCounterUpdate](counters.TYPE.LINES);
 	  babelHelpers.classPrivateFieldLooseBase(this, _onTotalCounterChange)[_onTotalCounterChange]();
 	}
 	function _prepareChatCounters2(counters, unreadCounters) {
@@ -140,8 +140,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdateWithDebounce)[_emitCountersUpdateWithDebounce]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _onTotalCounterChange)[_onTotalCounterChange]();
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].watch(linesCounterWatch, newValue => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyLinesCounterUpdate)[_emitLegacyLinesCounterUpdate](newValue);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].watch(linesCounterWatch, () => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdateWithDebounce)[_emitCountersUpdateWithDebounce]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _onTotalCounterChange)[_onTotalCounterChange]();
 	  });
@@ -160,13 +159,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    compatData: [chatCounter]
 	  });
 	  main_core_events.EventEmitter.emit(window, im_v2_const.EventType.counter.onChatCounterChange, event);
-	}
-	function _emitLegacyLinesCounterUpdate2(linesCounter) {
-	  const LINES_TYPE = 'LINES';
-	  const event = new main_core_events.BaseEvent({
-	    compatData: [linesCounter, LINES_TYPE]
-	  });
-	  main_core_events.EventEmitter.emit(window, im_v2_const.EventType.counter.onLinesCounterChange, event);
 	}
 	function _emitCountersUpdate2() {
 	  const payload = {
@@ -203,6 +195,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const taskCounterWatch = (state, getters) => getters['counters/getTotalTaskCounter'];
 
 	exports.CounterManager = CounterManager;
+	exports.CounterClearActionsByChatType = CounterClearActionsByChatType;
+	exports.CounterClearActionsDefault = CounterClearActionsDefault;
 
 }((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=counter.bundle.js.map

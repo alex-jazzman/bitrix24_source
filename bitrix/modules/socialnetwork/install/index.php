@@ -321,6 +321,14 @@ Class socialnetwork extends CModule
 			'onMemberDeleted'
 		);
 
+		$eventManager->registerEventHandler(
+			'humanresources',
+			'OnMemberUpdated',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
+			'onMemberUpdated'
+		);
+
 		CAgent::AddAgent("CSocNetMessages::SendEventAgent();", "socialnetwork", "N", 600);
 		CAgent::AddAgent(
 			"\Bitrix\Socialnetwork\Internals\EventService\CleanAgent::execute();",
@@ -708,6 +716,14 @@ Class socialnetwork extends CModule
 			'socialnetwork',
 			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
 			'onMemberDeleted'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'humanresources',
+			'OnMemberUpdated',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\Collab\Integration\Humanresources\EventHandler',
+			'onMemberUpdated'
 		);
 
 		UnRegisterModule("socialnetwork");

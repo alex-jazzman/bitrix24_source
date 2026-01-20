@@ -1,0 +1,9 @@
+.tasks-field-replication-sheet-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-top: auto;
+	padding-right: 4px;
+	padding-top: var(--ui-space-inline-xl);
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}

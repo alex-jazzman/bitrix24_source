@@ -26,6 +26,9 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		autoDeleteNotActive: 'autoDeleteNotActive',
 		messagesAutoDeleteDisabled: 'messagesAutoDeleteDisabled',
 		clearMessagesHistory: 'clearMessagesHistory',
+		errorConvertRoundVideo: 'errorConvertRoundVideo',
+		reasoningDisabled: 'reasoningDisabled',
+		copilotEngineChanged: 'copilotEngineChanged',
 	};
 
 	const ToastIconName = {
@@ -36,6 +39,10 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 	};
 
 	const ToastPhrase = {
+		get errorConvertRoundVideo()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_ERROR_CONVERT_ROUND_VIDEO');
+		},
 		get unsubscribeFromComments()
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_UNSUBSCRIBE_COMMENTS');
@@ -88,6 +95,14 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGES_CLEAR_HISTORY');
 		},
+		get reasoningDisabled()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_REASONING_DISABLED');
+		},
+		get copilotEngineChanged()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_COPILOT_MODEL_CHANGED');
+		},
 	};
 
 	const DEFAULT_MESSENGER_TOAST_OFFSET = 75;
@@ -118,6 +133,10 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		},
 		sendFilesGalleryLimitExceeded: {
 			iconName: Icon.ALERT.getIconName(),
+		},
+		copilotEngineChanged: {
+			iconName: Icon.COPILOT.getIconName(),
+			offset: 30,
 		},
 	};
 

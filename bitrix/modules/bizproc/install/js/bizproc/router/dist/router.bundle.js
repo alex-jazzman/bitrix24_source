@@ -84,6 +84,54 @@ this.BX = this.BX || {};
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](url, sliderOptions);
 	  }
+	  static openStorageEdit(options) {
+	    const sliderOptions = {
+	      width: babelHelpers.classPrivateFieldLooseBase(this, _startSliderWidth)[_startSliderWidth],
+	      cacheable: false,
+	      ...options
+	    };
+	    let url = '/bitrix/components/bitrix/bizproc.storage.edit/';
+	    if (options && options.requestMethod === 'get' && options.requestParams) {
+	      url = BX.Uri.addParam(url, options.requestParams);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](url, sliderOptions);
+	  }
+	  static openStorageFieldList(options) {
+	    const sliderOptions = {
+	      width: babelHelpers.classPrivateFieldLooseBase(this, _detectSliderWidth)[_detectSliderWidth](),
+	      cacheable: false,
+	      ...options
+	    };
+	    let url = '/bitrix/components/bitrix/bizproc.storage.field.list/';
+	    if (options && options.requestMethod === 'get' && options.requestParams) {
+	      url = BX.Uri.addParam(url, options.requestParams);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](url, sliderOptions);
+	  }
+	  static openStorageFieldEdit(options) {
+	    const sliderOptions = {
+	      width: babelHelpers.classPrivateFieldLooseBase(this, _startSliderWidth)[_startSliderWidth],
+	      cacheable: false,
+	      ...options
+	    };
+	    let url = '/bitrix/components/bitrix/bizproc.storage.field.edit/';
+	    if (options && options.requestMethod === 'get' && options.requestParams) {
+	      url = BX.Uri.addParam(url, options.requestParams);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](url, sliderOptions);
+	  }
+	  static openStorageItemList(options) {
+	    const sliderOptions = {
+	      width: babelHelpers.classPrivateFieldLooseBase(this, _startSliderWidth)[_startSliderWidth],
+	      cacheable: false,
+	      ...options
+	    };
+	    let url = '/bitrix/components/bitrix/bizproc.storage.item.list/';
+	    if (options && options.requestMethod === 'get' && options.requestParams) {
+	      url = BX.Uri.addParam(url, options.requestParams);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](url, sliderOptions);
+	  }
 	}
 	function _bind2() {
 	  top.BX.SidePanel.Instance.bindAnchors({
@@ -100,6 +148,13 @@ this.BX = this.BX || {};
 	        cacheable: false,
 	        loader: 'bizproc:workflow-info',
 	        width: babelHelpers.classPrivateFieldLooseBase(this, _detectSliderWidth)[_detectSliderWidth]()
+	      }
+	    }, {
+	      condition: ['/bitrix/components/bitrix/bizproc.storage.item.list/'],
+	      options: {
+	        width: babelHelpers.classPrivateFieldLooseBase(this, _detectSliderWidth)[_detectSliderWidth](),
+	        cacheable: false,
+	        allowChangeHistory: false
 	      }
 	    }]
 	  });

@@ -71,7 +71,7 @@ export const DateUtil = {
 		const remainingSeconds = Math.floor(seconds % 60);
 
 		const formattedHours = hours > 0 ? `${hours}:` : '';
-		const formattedMinutes = hours > 0 ? padZero(minutes) : minutes.toString();
+		const formattedMinutes = padZero(minutes);
 		const formattedSeconds = padZero(remainingSeconds);
 
 		return `${formattedHours}${formattedMinutes}:${formattedSeconds}`;

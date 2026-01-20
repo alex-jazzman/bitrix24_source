@@ -5,6 +5,7 @@ import { CallInviteMessage } from 'im.v2.component.message.call-invite';
 import { DeletedMessage } from 'im.v2.component.message.deleted';
 import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
 import { SmileMessage } from 'im.v2.component.message.smile';
+import { StickerMessage } from 'im.v2.component.message.sticker';
 import { SystemMessage } from 'im.v2.component.message.system';
 import { ChatCreationMessage } from 'im.v2.component.message.creation.chat';
 import { ChatCopilotCreationMessage } from 'im.v2.component.message.copilot.creation';
@@ -36,6 +37,7 @@ export const MessageComponents = {
 	DefaultMessage,
 	FileMessage,
 	SmileMessage,
+	StickerMessage,
 	ErrorMessage,
 	CallInviteMessage,
 	DeletedMessage,

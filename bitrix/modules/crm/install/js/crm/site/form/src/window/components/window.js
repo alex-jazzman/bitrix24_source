@@ -116,6 +116,7 @@ let windowMixin = {
 
 const Popup = {
 	mixins: [windowMixin],
+	props: ['isOnTop'],
 	template: `
 		<MountingPortal
 			append
@@ -154,13 +155,14 @@ const Popup = {
 		</MountingPortal>
 	`,
 	methods: {
-		getTransitionName() {
-			return 'b24-a-slide-' + (this.vertical || 'bottom');
+		getTransitionName(): string {
+			return `b24-a-slide-${this.vertical || 'bottom'}`;
 		},
-		classes: function () {
-			return [
-				'b24-window-popup-p-' + (this.position || 'center')
-			];
+		classes(): string[] {
+			const classes = this.isOnTop ? ['b24-window-popup-on-top'] : [];
+			classes.push(`b24-window-popup-p-${this.position || 'center'}`);
+
+			return classes;
 		},
 	},
 };

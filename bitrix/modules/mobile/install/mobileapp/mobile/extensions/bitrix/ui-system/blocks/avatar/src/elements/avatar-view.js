@@ -1,6 +1,7 @@
 /**
  * @module ui-system/blocks/avatar/src/elements/avatar-view
  */
+
 jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { isEmpty } = require('utils/object');
@@ -11,6 +12,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 	const { PureComponent } = require('layout/pure-component');
 	const { getFirstLetters } = require('layout/ui/user/empty-avatar');
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
+	const { AvatarAccentType } = require('ui-system/blocks/avatar/src/enums/accent-type');
 	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
 	const { getBackgroundColorStyles: getLettresBackgroundColor } = require('layout/ui/user/empty-avatar');
 	const { AvatarNativePlaceholderType } = require('ui-system/blocks/avatar/src/enums/native-placeholder-type');
@@ -30,6 +32,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 	 * 	@property {AvatarShape} [shape=AvatarShape.CIRCLE]
 	 * 	@property {boolean} [accent=false]
 	 * 	@property {AvatarAccentGradient} [accentGradient]
+	 * 	@property {AvatarAccentType} [accentType]
 	 * 	@property {Array} [accentGradientColors]
 	 * 	@property {boolean} [useLetterImage=true]
 	 * 	@property {boolean} [withRedux=true]
@@ -98,14 +101,17 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 				...this.getAvatarNativeProps(),
 			};
 
-			if (this.hasOnClick())
+			if (this.#hasOnClick())
 			{
-				avatarProps.onClick = this.handleOnClick;
+				avatarProps.onClick = this.#handleOnClick;
 			}
 
 			return avatarProps;
 		}
 
+		/**
+		 * @public
+		 */
 		getAvatarNativeProps()
 		{
 			return {
@@ -118,11 +124,14 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 				backBorderWidth: this.getBackBorderWidth(),
 				style: this.getContainerStyle(),
 				hideOutline: !this.isAccent(),
-				...this.getAccent(),
+				...this.#getAccent(),
 			};
 		}
 
-		getAccent()
+		/**
+		 * @returns {Object}
+		 */
+		#getAccent()
 		{
 			const accent = {};
 
@@ -131,9 +140,21 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 				return accent;
 			}
 
-			accent.accentType = this.getAccentType();
+			accent.accentColorGradient = this.#getAccentColorGradient();
+			accent.accentColor = this.#getAccentColor();
+			accent.accentType = this.#getAccentType();
 
 			return accent;
+		}
+
+		/**
+		 * @returns {Color}
+		 */
+		#getAccentColor()
+		{
+			const { accentColor } = this.props;
+
+			return accentColor?.toHex();
 		}
 
 		getPlaceholder()
@@ -305,7 +326,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return size;
 		}
 
-		handleOnClick = () => {
+		#handleOnClick = () => {
 			const { onClick } = this.props;
 
 			onClick?.({ id: this.getUserId() });
@@ -330,7 +351,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return style?.backgroundColor || Color.bgSecondary.toHex();
 		}
 
-		getAccentColorGradient()
+		#getAccentColorGradient()
 		{
 			const { accentGradientColors } = this.props;
 
@@ -352,7 +373,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		{
 			const { accentGradient } = this.props;
 
-			return AvatarAccentGradient.resolve(accentGradient, AvatarAccentGradient.GREEN);
+			return AvatarAccentGradient.resolve(accentGradient, AvatarAccentGradient.BLUE);
 		}
 
 		getEmptyAvatar()
@@ -480,12 +501,17 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			return backBorderWidth;
 		}
 
-		getAccentType()
+		/**
+		 * @returns {string}
+		 */
+		#getAccentType()
 		{
-			return this.getAvatarAccentGradient().getName().toLowerCase();
+			const { accentType } = this.props;
+
+			return AvatarAccentType.resolve(accentType, AvatarAccentType.BLUE).getValue();
 		}
 
-		hasOnClick()
+		#hasOnClick()
 		{
 			const { onClick } = this.props;
 

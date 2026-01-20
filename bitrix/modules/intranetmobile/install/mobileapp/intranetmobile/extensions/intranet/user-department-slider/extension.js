@@ -7,19 +7,25 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 	const { Indent, Component } = require('tokens');
 	const { ReduxDepartmentStructure } = require('intranet/department-structure');
 	const { Card } = require('ui-system/layout/card');
+	const { PropTypes } = require('utils/validation');
 
 	/**
 	 * @typedef {Object} UserDepartmentSliderProps
-	 * @property {number[][]} [hierarchies]
+	 * @property {string} testId
 	 * @property {number} userId
+	 * @property {number[][]} hierarchies
 	 * @property {number} sliderWidth
-	 * @property {bool} chevron
-	 * @property {function} onClick
+	 * @property {bool} [chevron = false]
+	 * @property {function} [onClick]
+	 * @property {bool} [withPressed = false]
 
 	 * @class UserDepartmentSlider
 	 */
 	class UserDepartmentSlider extends LayoutComponent
 	{
+		/**
+		 * @param {UserDepartmentSliderProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -27,9 +33,11 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 				context: this,
 			});
 			this.state = {
+				contentHeight: 0,
 				heights: [],
 			};
 
+			this.contentHeight = 0;
 			this.heights = {};
 			this.renderedStructuresCount = 0;
 		}
@@ -63,9 +71,9 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 		};
 
 		#getSliderHeightProps = () => {
-			const { heights } = this.state;
+			const { contentHeight } = this.state;
 
-			return heights.length > 0 ? { pageHeights: heights } : { contentHeight: 520 };
+			return contentHeight > 0 ? { contentHeight } : {};
 		};
 
 		onStructureLayout = (index, { height }) => {
@@ -73,18 +81,15 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 			const { hierarchies } = this.props;
 			if (heights.length === 0)
 			{
-				this.heights[index] = height + Indent.XL.toNumber();
+				this.heights[index] = height;
+				this.contentHeight = height > this.contentHeight ? height : this.contentHeight;
 				this.renderedStructuresCount++;
 
 				if (this.renderedStructuresCount === hierarchies.length)
 				{
-					const heightsArray = [];
-					for (let i = 0; i < hierarchies.length; i++)
-					{
-						heightsArray.push(this.heights[i]);
-					}
 					this.setState({
-						heights: heightsArray,
+						contentHeight: this.contentHeight + Indent.XL.toNumber(),
+						heights: this.heights,
 					});
 				}
 			}
@@ -92,19 +97,23 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 
 		#renderDepartmentStructures = () => {
 			const { hierarchies } = this.props;
+			const { heights } = this.state;
 
-			return hierarchies.map((departmentIds, index) => this.#renderDepartmentStructure(departmentIds, index));
+			return hierarchies
+				.map((hierarchy, i) => ({ hierarchy, height: heights[i] }))
+				.sort((a, b) => b.height - a.height)
+				.map((item) => item.hierarchy)
+				.map((departmentIds, index) => this.#renderDepartmentStructure(departmentIds, index));
 		};
 
 		#renderDepartmentStructure = (departmentIds, index) => {
 			const preparedDepartmentIds = this.#prepareDepartmentIds(departmentIds);
-			const { userId, sliderWidth, chevron, onClick } = this.props;
+			const { userId, sliderWidth, chevron, onClick, withPressed } = this.props;
 			const cardStyle = sliderWidth ? { width: sliderWidth } : {};
 
 			return Card(
 				{
 					style: cardStyle,
-					onClick,
 				},
 				ReduxDepartmentStructure({
 					testId: this.getTestId(`structure-${departmentIds?.[0]}`),
@@ -112,6 +121,8 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 					onLayout: this.onStructureLayout.bind(this, index),
 					userId,
 					chevron,
+					withPressed,
+					onClick,
 				}),
 			);
 		};
@@ -125,6 +136,14 @@ jn.define('intranet/user-department-slider', (require, exports, module) => {
 			return departmentIds;
 		};
 	}
+
+	UserDepartmentSlider.propTypes = {
+		userId: PropTypes.number.isRequired,
+		hierarchies: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)).isRequired,
+		sliderWidth: PropTypes.number.isRequired,
+		chevron: PropTypes.bool,
+		onClick: PropTypes.func,
+	};
 
 	module.exports = {
 		/**

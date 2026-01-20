@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,main_core_events,im_v2_lib_localStorage,im_v2_lib_promo,ui_system_menu,im_public,im_v2_application_core,im_v2_const,im_v2_lib_permission,im_v2_lib_menu,im_v2_lib_call,im_v2_lib_rest,im_v2_lib_feature,call_lib_analytics,call_const,call_component_elements,main_core,call_core,ui_vue3_directives_hint) {
+(function (exports,main_core_events,im_v2_lib_localStorage,im_v2_lib_promo,ui_vue3_directives_hint,ui_system_menu,im_public,im_v2_application_core,im_v2_const,im_v2_lib_permission,im_v2_lib_menu,im_v2_lib_rest,im_v2_lib_feature,call_lib_analytics,call_lib_callManager,call_const,call_component_elements,main_core,call_core) {
 	'use strict';
 
 	const MenuSectionCode = Object.freeze({
@@ -196,13 +196,13 @@ this.BX.Call = this.BX.Call || {};
 	  };
 	}
 	function _isCallAvailable2(dialogId) {
-	  if (im_v2_lib_call.CallManager.getInstance().hasActiveCurrentCall(dialogId)) {
+	  if (call_lib_callManager.CallManager.getInstance().hasActiveCurrentCall(dialogId)) {
 	    return true;
 	  }
-	  if (im_v2_lib_call.CallManager.getInstance().hasActiveAnotherCall()) {
+	  if (call_lib_callManager.CallManager.getInstance().hasActiveAnotherCall()) {
 	    return false;
 	  }
-	  const chatCanBeCalled = im_v2_lib_call.CallManager.getInstance().chatCanBeCalled(dialogId);
+	  const chatCanBeCalled = call_lib_callManager.CallManager.getInstance().chatCanBeCalled(dialogId);
 	  const chatIsAllowedToCall = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.call, dialogId);
 	  return chatCanBeCalled && chatIsAllowedToCall;
 	}
@@ -393,6 +393,7 @@ this.BX.Call = this.BX.Call || {};
 	      lastCallType: '',
 	      copilotMinUserLimit: call_core.CallAI.recordingMinUsers,
 	      isCopilotActive: call_core.CallAI.serviceEnabled,
+	      isMarketSubscriptionActive: call_core.CallAI.marketSubscriptionEnabled,
 	      isTariffAvailable: call_core.CallAI.tariffAvailable,
 	      showPromo: false,
 	      showPromoTimer: null,
@@ -420,10 +421,10 @@ this.BX.Call = this.BX.Call || {};
 	      return this.loc(locCode);
 	    },
 	    hasActiveCurrentCall() {
-	      return im_v2_lib_call.CallManager.getInstance().hasActiveCurrentCall(this.dialogId);
+	      return call_lib_callManager.CallManager.getInstance().hasActiveCurrentCall(this.dialogId);
 	    },
 	    hasActiveAnotherCall() {
-	      return im_v2_lib_call.CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
+	      return call_lib_callManager.CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
 	    },
 	    isActive() {
 	      if (this.hasActiveCurrentCall) {
@@ -432,13 +433,13 @@ this.BX.Call = this.BX.Call || {};
 	      if (this.hasActiveAnotherCall) {
 	        return false;
 	      }
-	      return im_v2_lib_call.CallManager.getInstance().chatCanBeCalled(this.dialogId);
+	      return call_lib_callManager.CallManager.getInstance().chatCanBeCalled(this.dialogId);
 	    },
 	    userLimit() {
-	      return im_v2_lib_call.CallManager.getInstance().getCallUserLimit();
+	      return call_lib_callManager.CallManager.getInstance().getCallUserLimit();
 	    },
 	    isChatUserLimitExceeded() {
-	      return im_v2_lib_call.CallManager.getInstance().isChatUserLimitExceeded(this.dialogId);
+	      return call_lib_callManager.CallManager.getInstance().isChatUserLimitExceeded(this.dialogId);
 	    },
 	    shouldShowMenu() {
 	      return this.isActive;
@@ -448,7 +449,7 @@ this.BX.Call = this.BX.Call || {};
 	        return null;
 	      }
 	      return {
-	        text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', {
+	        text: this.loc('CALL_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', {
 	          '#USER_LIMIT#': this.userLimit
 	        }),
 	        popupOptions: {
@@ -465,7 +466,7 @@ this.BX.Call = this.BX.Call || {};
 	      };
 	    },
 	    isCopilotCall() {
-	      return this.isCopilotActive && this.userCount >= this.copilotMinUserLimit && !this.isConference && this.isTariffAvailable;
+	      return this.isCopilotActive && this.userCount >= this.copilotMinUserLimit && !this.isConference && this.isTariffAvailable && this.isMarketSubscriptionActive;
 	    },
 	    callButtonContainerClasses() {
 	      return ['--ui-context-content-light', 'bx-call-chat-header-call-button__scope', 'bx-call-chat-header-call-button__container', ...(this.isConference ? ['--conference'] : []), ...(this.isCopilotCall && !this.hasActiveCurrentCall ? ['--copilot'] : []), ...(!this.isActive ? ['--disabled'] : []), ...(this.hasActiveCurrentCall ? ['--return'] : [])];
@@ -600,5 +601,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallButton = CallButton;
 
-}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Call.Const,BX.Call.Component.Elements,BX,BX.Call,BX.Vue3.Directives));
+}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Call.Lib,BX.Call.Const,BX.Call.Component.Elements,BX,BX.Call));
 //# sourceMappingURL=call-button.bundle.js.map

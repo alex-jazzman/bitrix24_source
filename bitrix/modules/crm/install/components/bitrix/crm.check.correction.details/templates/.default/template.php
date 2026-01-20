@@ -49,9 +49,12 @@ $editorContext = [
 	'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 	'PARAMS' => $arResult['CONTEXT_PARAMS'],
 ];
+
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-background');
 ?>
 
-<div id="<?=htmlspecialcharsbx($wrapperId)?>">
+<div id="<?=htmlspecialcharsbx($wrapperId)?>" class="crm-check-correction-wrapper">
 	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.editor',

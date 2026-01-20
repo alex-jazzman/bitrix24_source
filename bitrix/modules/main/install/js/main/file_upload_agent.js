@@ -269,27 +269,26 @@ BX.FileUploadAgent.prototype.onProgress = function(percent, force)
 
 	if (percent > 0.90 && !force)
 		percent = 0.90;
-	if (!BX.fx) {
-		this.UpdateProgressIndicator(percent);
-	} else if (! this.progressAnimation) {
-		this.progressAnimation = new BX.fx({
-			start:	this.progressPercent,
-			finish:	percent,
-			allowFloat: true,
-			type:function(params){return (BX.fx.RULES.accelerated(params)+BX.fx.RULES.decelerated(params))/2},
-			time:3,
-			step:0.01,
-			callback:BX.delegate(function(value) {this.UpdateProgressIndicator(value); }, this)
-		});
-		this.progressAnimation.start();
-	} else {
-		this.progressAnimation.stop(true);
-		this.progressAnimation.options.start = +this.progressPercent;
-		this.progressAnimation.options.finish = +percent;
-		//this.progressAnimation.options.time = percent/3;
-		this.progressAnimation.__checkOptions();
-		this.progressAnimation.start();
+
+	if (this.progressAnimation)
+	{
+		this.progressAnimation.stop(false);
 	}
+
+	this.progressAnimation = new BX.Easing({
+		start: { percent: Math.ceil(this.progressPercent * 100) },
+		finish: { percent: Math.ceil(percent * 100) },
+		duration: 3000,
+		step: (state) => {
+			this.UpdateProgressIndicator(state.percent / 100);
+		},
+		complete: () => {
+			this.UpdateProgressIndicator(1);
+			this.progressAnimation = null;
+		},
+	});
+
+	this.progressAnimation.animate();
 };
 
 BX.FileUploadAgent.prototype.onUploadFinish = function(result)
@@ -342,7 +341,7 @@ BX.FileUploadAgent.prototype.ShowAttachedFiles = function()
 			if (! val.element_id) {
 				val = {'element_id' : val};
 			}
-			
+
 			this.uploadResultArr = new Array();
 			for (var i=0;i<valArr.length;i++)
 			{
@@ -355,7 +354,7 @@ BX.FileUploadAgent.prototype.ShowAttachedFiles = function()
 				this.uploadResultArr[i] = {'element_id' : valArr[i].element_id, 'element_url' : valArr[i].element_url,
 					'element_name' : valArr[i].element_name, 'place' :this.place};
 			}
-			
+
 			//this._mkPlace('', val.element_id);
 			this.ShowUploadedFile(val);
 			this.values = [];

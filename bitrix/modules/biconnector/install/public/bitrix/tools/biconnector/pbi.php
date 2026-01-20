@@ -34,9 +34,6 @@ catch (\Bitrix\Main\ArgumentException $e)
 
 if (\Bitrix\Main\Loader::includeModule('biconnector'))
 {
-	$supersetKey = $input['superset_key'] ?? '';
-	unset($input['superset_key']);
-
 	if (isset($input['key']))
 	{
 		$accessKey = substr($input['key'], 0 ,32);
@@ -65,16 +62,12 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$service->setLanguage($languageCode);
 
 	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
-	if ($supersetKey)
+	$limitManager->setService($service);
+
+	$isV2 = isset($_GET['v2']);
+	if ($isV2)
 	{
-		$limitManager->setSupersetKey($supersetKey);
-	}
-	else if (
-		!\Bitrix\Main\Loader::includeModule('bitrix24')
-		&& $accessKey === \Bitrix\BIConnector\Superset\KeyManager::getAccessKey()
-	)
-	{
-		$limitManager->setIsSuperset();
+		$limitManager->releaseLock();
 	}
 
 	$tableName = isset($_GET['table']) ? (string)$_GET['table'] : null;
@@ -87,7 +80,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'DISABLED']);
 	}
-	elseif (!$limitManager->checkLimit())
+	elseif (!$isV2 && !$limitManager->checkLimit())
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'LIMIT_EXCEEDED']);
 	}
@@ -162,18 +155,13 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		}
 		else
 		{
-			if (isset($_GET['breakLimit']))
-			{
-				$service->enableBreakingLimitPrinting();
-			}
-
 			$resultQuery = $service->printQuery(
 				$tableName,
 				$input,
 				$_SERVER['REQUEST_METHOD'],
 				$_SERVER['REQUEST_URI'],
 				$limit,
-				$limitManager
+				$limitManager,
 			);
 
 			if (!$resultQuery->isSuccess())
@@ -183,7 +171,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 					$outputError = ['error' => $error->getMessage()];
 					if (!empty($error->getCustomData()['description']))
 					{
-						$outputError['errstr'] = $error->getCustomData()['description'];
+						$outputError['errorMessage'] = $error->getCustomData()['description'];
 					}
 
 					echo Bitrix\Main\Web\Json::encode($outputError);

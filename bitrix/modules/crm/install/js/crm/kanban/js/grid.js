@@ -56,6 +56,9 @@ BX.CRM.Kanban.Grid = function(options)
 
 	//setInterval(BX.proxy(this.loadNew, this), this.loadNewInterval * 1000);
 	this.bindEvents();
+
+	this.stageAnalyticsLabels = new BX.CRM.Kanban.Analytics.StageLabels(options.stageAnalyticsLabels);
+
 	BX.CRM.Kanban.Grid.Instance = this;
 };
 
@@ -92,6 +95,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	hintForNotVisibleItems: null,
 	handleHideHintForNotVisibleItems: null,
 	canUpdateItemAtItsPosition: false,
+	stageAnalyticsLabels: null,
 	_analyticsDictionary: BX.Crm.Integration.Analytics.Dictionary,
 	_analyticsBuilder: BX.Crm.Integration.Analytics.Builder,
 
@@ -339,6 +343,10 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.showFieldsSelectPopup('edit');
 		});
 
+		BX.Event.EventEmitter.subscribe('BX.Crm.Kanban:toggleTooltipsVisibility', () => {
+			this.onToggleTooltipsVisibility();
+		});
+
 		const toolbarComponent = (
 			BX.Reflection.getClass('BX.Crm.ToolbarComponent')
 				? BX.Reflection.getClass('BX.Crm.ToolbarComponent').Instance
@@ -582,6 +590,16 @@ BX.CRM.Kanban.Grid.prototype = {
 		};
 	},
 
+	showLockedEntitySlider()
+	{
+		BX.Runtime.loadExtension('ui.info-helper').then(({ FeaturePromotersRegistry }) => {
+			FeaturePromotersRegistry
+				.getPromoter({ code: this.getData().lockedEntitySliderCode })
+				.show()
+			;
+		});
+	},
+
 	/**
 	 * Show popup for request access.
 	 * @returns {void}
@@ -634,18 +652,24 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				if (data && !data.error)
 				{
+					this?.stageAnalyticsLabels.sendCreateSuccess();
 					this.resetActionPanel();
+
 					promise.fulfill(data);
 				}
 				else if (data)
 				{
+					this?.stageAnalyticsLabels.sendCreateFailure();
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+
 					promise.reject(data.error);
 				}
 			}.bind(this),
 			function(error)
 			{
+				this?.stageAnalyticsLabels.sendCreateFailure();
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+
 				promise.reject("Error: " + error);
 			}.bind(this)
 		);
@@ -671,17 +695,23 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				if (data && !data.error)
 				{
+					this?.stageAnalyticsLabels.sendDeleteSuccess();
 					this.resetActionPanel();
+
 					promise.fulfill();
 				}
 				else if (data)
 				{
+					this?.stageAnalyticsLabels.sendDeleteFailure();
+
 					promise.reject(data.error);
 				}
 			}.bind(this),
 			function(error)
 			{
+				this?.stageAnalyticsLabels.sendDeleteFailure();
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+
 				promise.reject("Error: " + error);
 			}.bind(this)
 		);
@@ -2037,15 +2067,18 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				if (data && data.error)
 				{
+					this?.stageAnalyticsLabels.sendRenameFailure();
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
 				}
 				else
 				{
+					this?.stageAnalyticsLabels.sendRenameSuccess();
 					this.resetActionPanel();
 				}
 			}.bind(this),
 			function(error)
 			{
+				this?.stageAnalyticsLabels.sendRenameFailure();
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
@@ -2072,15 +2105,18 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				if (data && data.error)
 				{
+					this?.stageAnalyticsLabels.sendUpdateFailure();
 					BX.Kanban.Utils.showErrorDialog(data.error, true);
 				}
 				else
 				{
+					this?.stageAnalyticsLabels.sendUpdateSuccess();
 					this.resetActionPanel();
 				}
 			}.bind(this),
 			function(error)
 			{
+				this?.stageAnalyticsLabels.sendUpdateFailure();
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
@@ -2120,6 +2156,11 @@ BX.CRM.Kanban.Grid.prototype = {
 				if (BX.Type.isArray(data.customEditFields))
 				{
 					gridData.customEditFields = data.customEditFields;
+				}
+
+				if (BX.Type.isBoolean(data.shouldShowTooltips))
+				{
+					gridData.itemsConfig.shouldShowTooltips = data.shouldShowTooltips;
 				}
 
 				if (BX.Type.isObject(data.config) && Object.keys(data.config).length > 0)
@@ -2629,7 +2670,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			const selectedFields = viewType === 'view' ? gridData.customFields : gridData.customEditFields;
 
 			this
-				.fetchFields(viewType, gridData.entityType, selectedFields)
+				.fetchFields(viewType, gridData.entityType, selectedFields, { categoryId: gridData.params?.CATEGORY_ID ?? 0 })
 				.then((data) => {
 					this.fieldsSelectors[viewType] = this.createFieldsSelector(viewType, data);
 					this.fieldsSelectors[viewType].show();
@@ -2638,7 +2679,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		});
 	},
 
-	fetchFields: function(viewType, entityType, selectedFields)
+	fetchFields: function(viewType, entityType, selectedFields, params = {})
 	{
 		return new Promise((resolve) => {
 			BX.ajax.runComponentAction(
@@ -2650,6 +2691,7 @@ BX.CRM.Kanban.Grid.prototype = {
 						entityType,
 						viewType,
 						selectedFields,
+						params,
 					}
 				})
 				.then(({ status, data }) => {
@@ -3968,7 +4010,23 @@ BX.CRM.Kanban.Grid.prototype = {
 				reject,
 			);
 		});
-	}
+	},
+
+	onToggleTooltipsVisibility: function()
+	{
+		const newVisibilitySetting = !this.shouldShowTooltips();
+		this.data.itemsConfig.shouldShowTooltips = newVisibilitySetting;
+
+		BX.userOptions.save('crm', 'should_show_tooltips_kanban', null, newVisibilitySetting ? 1 : 0);
+		this.fadeOut();
+
+		location.reload();
+	},
+
+	shouldShowTooltips: function()
+	{
+		return this?.data?.itemsConfig?.shouldShowTooltips ?? true;
+	},
 };
 
 })();

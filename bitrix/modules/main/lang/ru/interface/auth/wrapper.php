@@ -30,4 +30,5 @@ $MESS["AUTH_GET_CHECK_STRING"] = "Выслать контрольную стро
 $MESS["AUTH_GET_CHECK_STRING_SENT"] = "Контрольная строка выслана";
 $MESS["AUTH_SEND"] = "Выслать";
 $MESS["AUTH_NW_SECTION"] = "Или войдите через";
+$MESS['admin_push_otp_error'] = 'Ошибка при запросе подтверждения';
 ?>

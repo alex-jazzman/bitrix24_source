@@ -2,7 +2,7 @@ import { EventEmitter } from 'main.core.events';
 import { Event as CoreEvent } from 'main.core';
 
 import { PermissionManager } from 'im.v2.lib.permission';
-import { RecentList } from 'im.v2.component.list.items.recent';
+import { RecentList, RecentUnreadList } from 'im.v2.component.list.items.recent';
 import { ChatSearchInput, ChatSearch } from 'im.v2.component.search';
 import { Layout, EventType, ActionByUserType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
@@ -17,7 +17,7 @@ import type { JsonObject } from 'main.core';
 // @vue/component
 export const RecentListContainer = {
 	name: 'RecentListContainer',
-	components: { HeaderMenu, CreateChatMenu, ChatSearchInput, RecentList, ChatSearch },
+	components: { HeaderMenu, CreateChatMenu, ChatSearchInput, RecentList, ChatSearch, RecentUnreadList },
 	emits: ['selectEntity'],
 	data(): JsonObject
 	{
@@ -79,18 +79,23 @@ export const RecentListContainer = {
 			const clickOnRecentContainer = event.composedPath().includes(this.$refs['recent-container']);
 			if (this.searchMode && !clickOnRecentContainer)
 			{
-				EventEmitter.emit(EventType.search.close);
+				this.onCloseSearch();
 			}
 		},
 		onLoading(value: boolean)
 		{
 			this.isSearchLoading = value;
 		},
+		onToggleUnreadMode()
+		{
+			this.$store.dispatch('recent/clearUnreadCollection');
+			this.unreadOnlyMode = !this.unreadOnlyMode;
+		},
 	},
 	template: `
 		<div class="bx-im-list-container-recent__scope bx-im-list-container-recent__container" ref="recent-container">
 			<div class="bx-im-list-container-recent__header_container">
-				<HeaderMenu @showUnread="unreadOnlyMode = true" />
+				<HeaderMenu :unreadOnlyMode="unreadOnlyMode" @toggleUnreadMode="onToggleUnreadMode" />
 				<div class="bx-im-list-container-recent__search-input_container">
 					<ChatSearchInput 
 						:searchMode="searchMode" 
@@ -109,8 +114,10 @@ export const RecentListContainer = {
 						:searchMode="searchMode"
 						:query="searchQuery"
 						@loading="onLoading"
+						@closeSearch="onCloseSearch"
 					/>
 					<RecentList v-show="!searchMode && !unreadOnlyMode" @chatClick="onChatClick" />
+					<RecentUnreadList v-if="unreadOnlyMode" @chatClick="onChatClick" />
 				</div>
 			</div>
 		</div>

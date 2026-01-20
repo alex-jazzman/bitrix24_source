@@ -2,7 +2,6 @@
  * @module layout/ui/app-rating/src/strategies/feedback-form-strategy
  */
 jn.define('layout/ui/app-rating/src/strategies/feedback-form-strategy', (require, exports, module) => {
-	const { BackdropHeight } = require('layout/ui/app-rating/src/rating-constants');
 	const { BaseAppRatingStrategy } = require('layout/ui/app-rating/src/strategies/strategy');
 	const { FeedbackForm } = require('layout/ui/feedback-form-opener');
 
@@ -33,11 +32,10 @@ jn.define('layout/ui/app-rating/src/strategies/feedback-form-strategy', (require
 			(new FeedbackForm({
 				sender_page: 'mobile_rating_drawer',
 			})).openInBackdrop({
-				mediumPositionHeight: BackdropHeight,
 				hideNavigationBar: true,
 				swipeAllowed: true,
 				forceDismissOnSwipeDown: false,
-				showOnTop: false,
+				showOnTop: true,
 				adoptHeightByKeyboard: true,
 				shouldResizeContent: true,
 			});

@@ -8,7 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$new = time() < strtotime('21 October 2025');
+$new = time() < strtotime('21 January 2026');
 $videoDomain = (new ThemePickerVideo())->getDomain();
 
 return [
@@ -23,6 +23,16 @@ return [
 	],
 
 	"subThemes" => [
+		"light:space" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_SPACE"),
+			"previewImage" => "space-preview.webp",
+			"prefetchImages" => ["space.jpg", "space-blurred.webp"],
+			"resizable" => true,
+			"width" => 1920,
+			"height" => 1080,
+			"new" => $new,
+		],
+
 		"light:lightness" => [
 			"title" => Loc::getMessage("BITRIX24_THEME_LIGHTNESS"),
 			"previewImage" => "lightness-preview.jpg",
@@ -30,7 +40,6 @@ return [
 			"resizable" => true,
 			"width" => 1920,
 			"height" => 1080,
-			"new" => $new,
 		],
 
 		"light:gravity" => [

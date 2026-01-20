@@ -5,11 +5,12 @@ jn.define('settings-v2/structure/pages/developer', (require, exports, module) =>
 	const {
 		createSection,
 		createToggle,
-		createButton,
-	} = require('settings-v2/structure/src/item-create-helper');
-	const { SettingsPageId } = require('settings-v2/const');
+		createLinkButton,
+	} = require('settings-v2/structure/helpers/item-create-helper');
+	const { SettingsPageId, REDUX_LOGGER_ID } = require('settings-v2/const');
 	const { NativeDebugService } = require('settings-v2/services/native');
 	const { NativeSettingController } = require('settings-v2/controller/native');
+	const { ApplicationStorageSettingController } = require('settings-v2/controller/application-storage');
 	const { Color } = require('tokens');
 
 	const Platforms = {
@@ -44,6 +45,8 @@ jn.define('settings-v2/structure/pages/developer', (require, exports, module) =>
 		[NativeDebugSettingsIds[Platforms.ANDROID].JANATIVE_DEBUGGER]: 'JA Native Debugger',
 		[NativeDebugSettingsIds[Platforms.ANDROID].NETWORK_TAB]: 'Network Tab',
 		[NativeDebugSettingsIds[Platforms.ANDROID].LAYOUT_INSPECTOR]: 'Layout Inspector',
+
+		[REDUX_LOGGER_ID]: 'Enable Redux Logger',
 	};
 
 	const requestSettingsData = () => {
@@ -54,7 +57,7 @@ jn.define('settings-v2/structure/pages/developer', (require, exports, module) =>
 		const items = debugSettings.map(
 			(setting) => createToggle({
 				id: setting.id,
-				title: Titles[setting.id],
+				title: Titles[setting.id] ?? setting.id,
 				controller: new NativeSettingController({
 					settingId: setting.id,
 					fallbackValue: false,
@@ -63,9 +66,20 @@ jn.define('settings-v2/structure/pages/developer', (require, exports, module) =>
 		);
 
 		items.push(
-			createButton({
+			/**
+			 * @see statemanager/redux/store
+			 */
+			createToggle({
+				id: REDUX_LOGGER_ID,
+				title: Titles[REDUX_LOGGER_ID],
+				controller: new ApplicationStorageSettingController({
+					settingId: REDUX_LOGGER_ID,
+					fallbackValue: true,
+				}),
+			}),
+			createLinkButton({
 				id: 'accept-debug-setting-data',
-				title: 'Применить и перезайти',
+				title: 'Apply and re-login',
 				color: Color.accentMainPrimary,
 				onClick: () => {
 					Application.relogin();

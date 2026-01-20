@@ -151,11 +151,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class SearchContextMenu extends im_v2_lib_menu.BaseMenu {
-	  constructor() {
+	  constructor(applicationContext) {
 	    super();
 	    this.id = 'im-chat-search-context-menu';
 	    this.callManager = im_v2_lib_call.CallManager.getInstance();
 	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+	    const {
+	      emitter
+	    } = applicationContext;
+	    this.emitter = emitter;
 	  }
 	  getMenuItems() {
 	    return [this.getOpenItem(), this.getOpenProfileItem(), this.getChatsWithUserItem()];
@@ -193,7 +197,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (!isAnyChatOpened) {
 	          await im_public.Messenger.openChat(this.context.dialogId);
 	        }
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	        this.emitter.emit(im_v2_const.EventType.sidebar.open, {
 	          panel: im_v2_const.SidebarDetailBlock.chatsWithUser,
 	          standalone: true,
 	          dialogId: this.context.dialogId
@@ -448,7 +452,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenuManager = new SearchContextMenu();
+	    this.contextMenuManager = new SearchContextMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
@@ -459,6 +465,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId: this.dialogId,
 	        nativeEvent: event
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -506,7 +515,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenuManager = new SearchContextMenu();
+	    this.contextMenuManager = new SearchContextMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
@@ -526,6 +537,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId: this.userDialogId,
 	        nativeEvent: event
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -536,11 +550,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			@click.right.prevent="onRightClick"
 		>
 			<div v-if="selected" class="bx-im-carousel-user__selected-mark"></div>
-			<ChatAvatar 
-				:avatarDialogId="userDialogId" 
-				:contextDialogId="userDialogId" 
-				:size="AvatarSize.XL" 
-			/>
+			<ChatAvatar :avatarDialogId="userDialogId" :size="AvatarSize.XL" />
 			<div class="bx-im-carousel-user__title" :title="name">
 				{{ name }}
 			</div>
@@ -621,7 +631,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      required: true
 	    }
 	  },
-	  emits: ['loading'],
+	  emits: ['loading', 'closeSearch'],
 	  data() {
 	    return {
 	      isRecentLoading: false,
@@ -660,19 +670,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenuManager = new SearchContextMenu();
+	    this.contextMenuManager = new SearchContextMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.searchService = new SearchService({
 	      chats: true,
 	      users: true
 	    });
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.errors.accessDenied, this.onDelete);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
+	    this.getEmitter().subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	    void this.loadRecentSearchFromServer();
 	  },
 	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.errors.accessDenied, this.onDelete);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  methods: {
 	    async loadRecentSearchFromServer() {
@@ -727,19 +737,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId
 	      }, nativeEvent.currentTarget);
 	    },
-	    onDelete({
-	      data: eventData
-	    }) {
-	      const {
-	        dialogId
-	      } = eventData;
-	      this.recentItems = this.recentItems.filter(recentItem => {
-	        return recentItem !== dialogId;
-	      });
-	      this.searchResult = this.searchResult.filter(dialogIdFromSearch => {
-	        return dialogIdFromSearch !== dialogId;
-	      });
-	    },
 	    onScroll() {
 	      this.contextMenuManager.destroy();
 	    },
@@ -751,7 +748,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.searchService.saveItemToRecentSearch(dialogId);
 	      void im_public.Messenger.openChat(dialogId);
 	      if (!im_v2_lib_utils.Utils.key.isAltOrOption(nativeEvent)) {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.search.close);
+	        this.$emit('closeSearch');
 	      }
 	    },
 	    onKeyPressed(event) {
@@ -777,6 +774,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId: firstItem.dialogId,
 	        nativeEvent: keyboardEvent
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(key) {
 	      return this.$Bitrix.Loc.getMessage(key);
@@ -845,12 +845,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  emits: ['closeSearch', 'openSearch', 'updateSearch'],
-	  created() {
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.search.close, this.onClose);
-	  },
-	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.search.close, this.onClose);
-	  },
 	  methods: {
 	    onInputFocus() {
 	      this.$emit('openSearch');
@@ -862,9 +856,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.$emit('updateSearch', query);
 	    },
 	    onKeyPressed(event) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.search.keyPressed, {
+	      this.getEmitter().emit(im_v2_const.EventType.search.keyPressed, {
 	        keyboardEvent: event
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(key) {
 	      return this.$Bitrix.Loc.getMessage(key);
@@ -944,10 +941,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.recentSearchItems = im_v2_lib_search.getUsersFromRecentItems({
 	      withFakeUsers: true
 	    });
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
+	    this.getEmitter().subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  methods: {
 	    startSearch(query) {
@@ -1022,6 +1019,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isSelected(dialogId) {
 	      return this.selectedItems.includes(dialogId);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(key) {
 	      return this.$Bitrix.Loc.getMessage(key);
@@ -1128,10 +1128,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.recentListItems = im_v2_lib_search.getRecentListItems({
 	      withFakeUsers: true
 	    });
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
+	    this.getEmitter().subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  methods: {
 	    startSearch(query) {
@@ -1203,6 +1203,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId: firstItem.dialogId,
 	        nativeEvent: keyboardEvent
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(key) {
 	      return this.$Bitrix.Loc.getMessage(key);

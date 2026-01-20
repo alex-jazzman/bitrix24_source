@@ -56,7 +56,7 @@ $createdDate = CComponentUtil::GetDateTimeFormatted(
 >
 	<div class="tasks-widget-result__item--header">
 		<div class="tasks-widget-result__item--header-title"><?= Loc::getMessage('TASKS_RESULT_HEADER'); ?></div>
-			<?php if(ResultAccessController::can($currentUserId, ActionDictionary::ACTION_TASK_REMOVE_RESULT, $result->getId())): ?>
+			<?php if(ResultAccessController::can($currentUserId, ActionDictionary::ACTION_RESULT_REMOVE, $result->getId())): ?>
 			<div class="tasks-widget-result-remove" onclick="BX.Tasks.ResultAction.getInstance().deleteFromComment('<?= $result->getCommentId() ?>')"><?= Loc::getMessage('TASKS_RESULTS_REMOVE_RESULT') ?></div>
 			<?php endif;?>
 		</div>

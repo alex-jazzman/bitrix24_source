@@ -12,6 +12,7 @@ export type MarketExpiredCurtainOptions = {
 	type: PopupType,
 	expireDays: string;
 	curtainPage: CurtainPage;
+	isRenamedMarket: boolean;
 };
 
 export class MarketExpiredCurtain

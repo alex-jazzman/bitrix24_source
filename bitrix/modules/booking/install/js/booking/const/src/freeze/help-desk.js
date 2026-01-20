@@ -1,6 +1,7 @@
 export const HelpDesk: { [key: string]: HelpDeskCode } = Object.freeze({
 	Intersection: { code: '23712054', anchorCode: 'inte' },
 	ResourceIntegrationSettings: { code: '23661822', anchorCode: 'calen' },
+	ResourceBaseFields: { code: '23661822', anchorCode: '' },
 	ResourceType: { code: '23661822', anchorCode: 'reso' },
 	ResourceSchedule: { code: '23661822', anchorCode: 'show' },
 	ResourceWorkTime: { code: '23661822', anchorCode: 'sche' },
@@ -10,6 +11,7 @@ export const HelpDesk: { [key: string]: HelpDeskCode } = Object.freeze({
 	ResourceNotificationReminder: { code: '23661926', anchorCode: 'remi' },
 	ResourceNotificationLate: { code: '23661926', anchorCode: 'late' },
 	ResourceNotificationFeedback: { code: '23661926', anchorCode: 'feed' },
+	ResourceTariffInfo: { code: '23661926', anchorCode: '' },
 	AhaSelectResources: { code: '23661972', anchorCode: 'filt' },
 	AhaResourceWorkload: { code: '23661972', anchorCode: 'cont' },
 	AhaResourceIntersection: { code: '23712054', anchorCode: 'inte' },
@@ -21,6 +23,8 @@ export const HelpDesk: { [key: string]: HelpDeskCode } = Object.freeze({
 	BookingActionsVisit: { code: '23661964', anchorCode: 'visit' },
 	CrmFormsPopup: { code: '25366370', anchorCode: '' },
 	WaitListDescription: { code: '24846212', anchorCode: '' },
+	ResourceYandexIntegration: { code: '26922108', anchorCode: '' },
+	ResourceYandexIntegrationServices: { code: '26922108', anchorCode: 'serv' },
 });
 
 type HelpDeskCode = {

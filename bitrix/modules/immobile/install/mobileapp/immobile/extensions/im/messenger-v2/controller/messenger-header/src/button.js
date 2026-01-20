@@ -5,12 +5,14 @@
  * do not write complex logic in them and do not store state.
  */
 jn.define('im/messenger-v2/controller/messenger-header/button', (require, exports, module) => {
-	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 
+	const { Loc } = require('im/messenger/loc');
+	const { NavigationTabId } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
+	const { readAllChatsByActiveRecentTab } = require('im/messenger-v2/lib/read-all-chats');
 	const {
 		Button,
 		PopupCreateButton,
@@ -55,10 +57,18 @@ jn.define('im/messenger-v2/controller/messenger-header/button', (require, export
 
 	const readAllPopupButton = PopupButton.create({
 		id: HeaderButtonId.readAll,
-		title: Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_READ_ALL'),
+		getTitle: () => {
+			const currentRecentId = serviceLocator.get('recent-manager').getActiveRecentId();
+			if (currentRecentId === NavigationTabId.task)
+			{
+				return Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_READ_ALL_TASKS');
+			}
+
+			return Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_READ_ALL');
+		},
 		iconName: Icon.CHATS_WITH_CHECK.getIconName(),
 		callback: async () => {
-			void serviceLocator.get('read-service').readAllMessages();
+			void readAllChatsByActiveRecentTab();
 		},
 	});
 

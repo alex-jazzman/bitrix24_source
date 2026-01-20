@@ -62,7 +62,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 
-echo \Bitrix\Crm\Tour\GridGroupWhatsAppMessage::getInstance()->build();
+echo \Bitrix\Crm\Tour\Grid\GridGroupWhatsAppMessage::getInstance()->build();
 if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 	?><div id="convertCompanyAddressesWrapper"></div><?
 endif;
@@ -180,6 +180,13 @@ $toolsManager = Container::getInstance()->getIntranetToolsManager();
 $availabilityManager = AvailabilityManager::getInstance();
 $isQuoteAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote);
 $isInvoiceAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice);
+
+$userIds = array_merge(
+	array_column($arResult['COMPANY'], 'ASSIGNED_BY_ID'),
+	array_column($arResult['COMPANY'], 'MODIFY_BY'),
+	array_column($arResult['COMPANY'], 'CREATED_BY'),
+);
+$userRender = \Bitrix\Crm\Grid\Render\User\ClickableUser::createByUserIds($userIds);
 
 foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 {
@@ -585,14 +592,13 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				->render()
 			,
 			'ASSIGNED_BY' => $arCompany['~ASSIGNED_BY_ID'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					[
-						'PREFIX' => "COMPANY_{$arCompany['~ID']}_RESPONSIBLE",
-						'USER_ID' => $arCompany['~ASSIGNED_BY_ID'],
-						'USER_NAME'=> $arCompany['ASSIGNED_BY'],
-						'USER_PROFILE_URL' => $arCompany['PATH_TO_USER_PROFILE']
-					]
-				) : '',
+				? $userRender->render(
+					$arCompany['~ASSIGNED_BY_ID'],
+					'ASSIGNED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
 			'REVENUE' =>  '<nobr>'.number_format($arCompany['REVENUE'] ?? 0, 2, ',', ' ').'</nobr>',
 			'COMMENTS' => htmlspecialcharsback($arCompany['COMMENTS'] ?? ''),
 			'BANKING_DETAILS' => nl2br($arCompany['BANKING_DETAILS'] ?? ''),
@@ -604,23 +610,26 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			'INDUSTRY' => $industry,
 			'EMPLOYEES' => $employees,
 			'CREATED_BY' => isset($arCompany['~CREATED_BY']) && $arCompany['~CREATED_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml([
-					'PREFIX' => "COMPANY_{$arCompany['~ID']}_CREATOR",
-					'USER_ID' => $arCompany['~CREATED_BY'],
-					'USER_NAME'=> $arCompany['CREATED_BY_FORMATTED_NAME'],
-					'USER_PROFILE_URL' => $arCompany['PATH_TO_USER_CREATOR']
-				])
+				? $userRender->render(
+					$arCompany['~CREATED_BY'],
+					'CREATED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
 				: '',
 			'MODIFY_BY' => isset($arCompany['~MODIFY_BY']) && $arCompany['~MODIFY_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "COMPANY_{$arCompany['~ID']}_MODIFIER",
-						'USER_ID' => $arCompany['~MODIFY_BY'],
-						'USER_NAME'=> $arCompany['MODIFY_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arCompany['PATH_TO_USER_MODIFIER']
-					)
-				) : '',
-			'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Company, $arCompany['ID'], $arCompany['~OBSERVERS'] ?? []),
+				? $userRender->render(
+					$arCompany['~MODIFY_BY'],
+					'MODIFY_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
+			'OBSERVERS' => CCrmViewHelper::renderObservers(
+				$arResult['GRID_ID'],
+				$arResult['DB_FILTER'],
+				$arCompany['~OBSERVERS'] ?? [],
+			),
 		) + CCrmViewHelper::RenderListMultiFields($arCompany, "COMPANY_{$arCompany['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::CompanyName, 'ENTITY_ID' => $arCompany['ID']))) + $arResult['COMPANY_UF'][$sKey]
 	);
 
@@ -1329,7 +1338,7 @@ if (\Bitrix\Crm\Settings\Crm::isWhatsAppScenarioEnabled()):
 		BX.ready(function () {
 			BX.Event.EventEmitter.subscribeOnce('Grid::selectRow', function (event) {
 				BX.Event.EventEmitter.emit(
-					'BX.Crm.Tour.GridGroupWhatsAppMessage::selectRow',
+					'BX.Crm.Tour.Grid.GridGroupWhatsAppMessage::selectRow',
 					{
 						stepId: 'grid-group-whatsapp-message',
 						target: document.getElementById('whatsapp-message_control'),

@@ -1,0 +1,27 @@
+<?php
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_AUDIT_TYPE_ID_DESCRIPTION"] = "Аудиторлық оқиға түрінің идентификаторы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_AUDIT_TYPE_ID_TITLE"] = "Оқиға түрі";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_DESCRIPTION_DESCRIPTION"] = "Болған оқиғаның толық сипаттамасы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_DESCRIPTION_TITLE"] = "Оқиғаның сипаттамасы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_GUEST_ID_DESCRIPTION"] = "Қонақ идентификаторы (авторланбаған пайдаланушы)";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_GUEST_ID_TITLE"] = "Қонақ ID-і";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_ID_DESCRIPTION"] = "Оқиғалар журналындағы бірегей жазба идентификаторы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_ID_TITLE"] = "ID жазбалары";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_ITEM_ID_DESCRIPTION"] = "Оқиғаға байланысты элемент идентификаторы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_ITEM_ID_TITLE"] = "Элемент ID-і";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_MODULE_ID_DESCRIPTION"] = "Оқиға болған модуль";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_MODULE_ID_TITLE"] = "Модуль";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_REMOTE_ADDR_DESCRIPTION"] = "Оқиғаны тудырған пайдаланушының IP мекенжайы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_REMOTE_ADDR_TITLE"] = "IP мекенжайы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_REQUEST_URI_DESCRIPTION"] = "Сұраныс орындалған URL мекенжайы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_REQUEST_URI_TITLE"] = "Сұрау URI";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_SEVERITY_DESCRIPTION"] = "Оқиғаның маңыздылық деңгейі (INFO, WARNING, ERROR, etc.)";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_SEVERITY_TITLE"] = "Маңыздылық деңгейі";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_SITE_ID_DESCRIPTION"] = "Оқиға болған сайттың идентификаторы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_SITE_ID_TITLE"] = "Сайт идентификаторы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_TIMESTAMP_DESCRIPTION"] = "Оқиға болған күн мен уақыт";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_TIMESTAMP_TITLE"] = "Оқиға уақыты";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_USER_AGENT_DESCRIPTION"] = "Браузер және пайдаланушының операциялық жүйесі";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_USER_AGENT_TITLE"] = "User Agent";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_USER_ID_DESCRIPTION"] = "Оқиғаны тудырған пайдаланушы идентификаторы";
+$MESS["REST_V3_DTO_EVENTLOG_FIELD_USER_ID_TITLE"] = "Пайдаланушы ID-і";

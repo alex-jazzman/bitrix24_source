@@ -40,7 +40,7 @@ $MESS["BICONNECTOR_CONNECTION_NOTE"] = "
 </pre>
 <p>This is how the additional configuration file after_connect_bi.php may look like:</p>
 <pre>
-\$this->queryExecute(\"SET NAMES 'utf8'\");
+\$this->queryExecute(\"SET NAMES 'utf-8'\");
 \$this->queryExecute(\"SET sql_mode=''\");
 </pre>
 <p>Note the use of '\$this' to fine-tune the database connection.</p>

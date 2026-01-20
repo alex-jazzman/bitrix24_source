@@ -534,3 +534,9 @@
 	justify-content: center;
 	gap: 0 8px;
 }
+
+.main-ui-filter-theme-air .main-ui-filter-sidebar-item.main-ui-filter-admin-preset .main-ui-filter-icon-edit,
+.main-ui-filter-theme-air .main-ui-filter-sidebar-item.main-ui-filter-admin-preset .main-ui-delete {
+	opacity: .3;
+	pointer-events: none;
+}

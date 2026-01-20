@@ -16,7 +16,7 @@ export const BxLinkProcessor = {
 			params[key] = decodeURIComponent(value);
 		});
 
-		if (command !== DesktopBxLink.openPage && !DesktopApi.isAirDesignEnabledInDesktop())
+		if (command !== DesktopBxLink.openPage)
 		{
 			DesktopApi.activateWindow();
 		}
@@ -119,11 +119,6 @@ export const BxLinkProcessor = {
 		Object.entries(params).forEach(([key, value]) => {
 			params[key] = decodeURIComponent(value);
 		});
-
-		if (!DesktopApi.isAirDesignEnabledInDesktop())
-		{
-			DesktopApi.activateWindow();
-		}
 
 		if (command === LegacyDesktopBxLink.messenger)
 		{

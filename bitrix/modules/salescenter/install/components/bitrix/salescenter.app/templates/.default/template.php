@@ -17,6 +17,7 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Web\Json;
 
 Loader::includeModule('ui');
 
@@ -131,7 +132,7 @@ if (!empty($arResult['CURRENCIES']))
 	<script>
 		BX.ready(function()
 		{
-			var options = <?=CUtil::PhpToJSObject($arResult, false, false, true)?>;
+			var options = <?= Json::encode($arResult) ?>;
 			new BX.Salescenter.App(options);
 			BX.Salescenter.Manager.init(options);
 		});

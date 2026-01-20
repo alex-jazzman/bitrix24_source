@@ -16,5 +16,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/mode-enum', (require, exports,
 		static OUTLINE = new ChipButtonMode('OUTLINE', 'outline');
 	}
 
-	module.exports = { ChipButtonMode };
+	module.exports = {
+		ChipButtonMode: ChipButtonMode.export(),
+	};
 });

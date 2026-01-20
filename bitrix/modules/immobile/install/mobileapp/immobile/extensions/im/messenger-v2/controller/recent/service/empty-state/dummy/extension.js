@@ -25,18 +25,14 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/dummy', (requir
 			this.ui = ui;
 		}
 
-		async show()
+		subscribeEvents()
 		{
-			await this.uiReadyPromise;
-
-			this.logger.log('show');
+			this.logger.log('subscribeEvents');
 		}
 
-		async hide()
+		redraw()
 		{
-			await this.uiReadyPromise;
-
-			this.logger.log('hide');
+			this.logger.log('redraw');
 		}
 	}
 

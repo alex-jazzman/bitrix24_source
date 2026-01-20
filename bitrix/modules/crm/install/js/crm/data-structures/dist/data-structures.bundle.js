@@ -54,6 +54,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    return this.hash === another.hash;
 	  }
+	  toJSON() {
+	    return {
+	      entityTypeId: this.entityTypeId,
+	      entityId: this.entityId
+	    };
+	  }
 	}
 
 	exports.ItemIdentifier = ItemIdentifier;

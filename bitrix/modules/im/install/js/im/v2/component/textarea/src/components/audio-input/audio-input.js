@@ -1,4 +1,4 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BaseEvent } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -9,10 +9,17 @@ import { AudioManager } from './classes/audio-manager';
 import './css/audio-input.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const AudioInput = {
 	name: 'AudioInput',
+	props: {
+		dialogId: {
+			type: String,
+			required: true,
+		},
+	},
 	emits: ['inputStart', 'inputResult'],
 	data(): JsonObject
 	{
@@ -38,11 +45,11 @@ export const AudioInput = {
 	},
 	created()
 	{
-		EventEmitter.subscribe(EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+		this.getEmitter().subscribe(EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+		this.getEmitter().unsubscribe(EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
 	},
 	methods:
 	{
@@ -105,19 +112,25 @@ export const AudioInput = {
 
 			return this.audioManager;
 		},
-		loc(phraseCode: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
-		},
 		handleOnAfterSendMessage()
 		{
 			if (this.audioUsed)
 			{
-				Analytics.getInstance().copilot.onUseAudioInput();
+				Analytics.getInstance().copilot.onUseAudioInput(this.dialogId);
+				Analytics.getInstance().aiAssistant.onUseAudioInput(this.dialogId);
+
 				this.audioUsed = false;
 			}
 
 			this.audioMode = false;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `

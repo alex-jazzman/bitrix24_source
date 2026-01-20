@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_application_core,im_v2_css_classes,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_content_chat,im_v2_lib_messageNotifier,ui_iconSet_api_vue,main_core_events,im_v2_component_content_elements,im_v2_const) {
+(function (exports,im_v2_application_core,im_v2_css_classes,im_v2_lib_analytics,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_content_chat,im_v2_lib_messageNotifier,ui_iconSet_api_vue,main_core_events,im_v2_component_content_elements,im_v2_const) {
 	'use strict';
 
 	const MINIMIZE_EVENT_NAME = 'IM.AiAssistantWidget:minimize';
@@ -124,6 +124,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      await this.loadChat();
+	      im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onOpenWidget(this.dialog);
+	      im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onOpenChatAI(this.dialog, true);
 	    },
 	    async loadChat() {
 	      im_v2_lib_logger.Logger.warn(`AiAssistantChatOpener: loading chat ${this.chatId}`);
@@ -138,7 +140,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container">
+		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container --ui-context-content-light">
 			<AiAssistantWidgetChatContent :dialogId="dialogId" :withSidebar="false"/>
 		</div>
 	`
@@ -190,5 +192,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.AiAssistantWidgetApplication = AiAssistantWidgetApplication;
 
-}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const));
 //# sourceMappingURL=ai-assistant-widget.bundle.js.map

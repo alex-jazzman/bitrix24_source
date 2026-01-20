@@ -10,12 +10,12 @@ return [
 	'js' => 'dist/apache-superset-dashboard-manager.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.popup',
-		'ui.buttons',
 		'main.core.events',
 		'sidepanel',
 		'biconnector.dashboard-export-master',
 		'biconnector.dashboard-group',
+		'ui.buttons',
+		'ui.system.dialog',
 	],
 	'skip_core' => false,
 ];

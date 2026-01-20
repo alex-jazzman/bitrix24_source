@@ -50,6 +50,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			voteResultPullUnsubscribed: 'ImMobile.Messenger.VoteResult:pullUnsubscribed',
 			clearDatabase: 'ImMobile.Messenger:clearDatabase',
 			clearDatabaseResult: 'ImMobile.Messenger:clearDatabaseResult',
+			api: {
+				executeInComponentRequest: 'ImMobile.Messenger.Api:executeInComponentRequest',
+				executeInComponentResult: 'ImMobile.Messenger.Api:executeInComponentResult',
+			},
 			dev: {
 				openConsole: 'ImMobile.Messenger.Dev:openConsole',
 			},
@@ -87,7 +91,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			audioRecordingStart: 'audioRecordingStart',
 			audioRecordingFinish: 'audioRecordingFinish',
 			submitAudio: 'submitAudio',
-			audioTranscriptionTap: 'transcriptionTap',
+			transcriptionTap: 'transcriptionTap',
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
@@ -139,6 +143,13 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			channelCommentTap: 'channelCommentTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
 			bbcodeImgTap: 'bbcodeImgTap',
+			showMoreReactionsTap: 'showMoreReactionsTap',
+			videoNoteRecordingStart: 'videoNoteRecordingStart',
+			videoNoteRecordingFinish: 'videoNoteRecordingFinish',
+			videoNotePlaybackCompleted: 'videoNotePlaybackCompleted',
+			videoNoteWasHide: 'videoNoteWasHide',
+			videoNoteSubmit: 'videoNoteSubmit',
+			videoNoteTap: 'videoNoteTap',
 			external: {
 				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
@@ -170,6 +181,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				actionButtonTap: 'actionButtonTap',
 				actionButtonMenuItemTap: 'actionButtonMenuItemTap',
 				actionButtonMenuHidden: 'actionButtonMenuHidden',
+				assistantButtonTap: 'assistantButtonTap',
+				stickerButtonTap: 'stickerButtonTap',
 			},
 			statusField: {
 				tap: 'tap',

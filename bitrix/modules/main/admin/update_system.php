@@ -6,7 +6,7 @@
 // region environment initialization
 if (!defined("UPDATE_SYSTEM_VERSION"))
 {
-	define("UPDATE_SYSTEM_VERSION", "25.700.0");
+	define("UPDATE_SYSTEM_VERSION", "25.1100.0");
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -198,9 +198,9 @@ if ($DB->type === "MYSQL")
 		$minMySqlErrorVersion = "5.6.0";
 		$minMariaDbErrorVersion = "10.0.5";
 
-		$minMySqlWarningVersion = "0.0.0";
-		$minMySqlWarningVersionBest = "0.0.0";
-		$minMySqlWarningVersionDate = "";
+		$minMySqlWarningVersion = "8.0.0";
+		$minMySqlWarningVersionBest = "8.4.0";
+		$minMySqlWarningVersionDate = "2026-09-01";
 
 		$minMariaDbWarningVersion = "0.0.0";
 		$minMariaDbWarningVersionBest = "0.0.0";
@@ -285,15 +285,45 @@ if ($DB->type === "MYSQL")
 		}
 	}
 }
+elseif ($DB->type === "PGSQL")
+{
+	$curPgSqlVer = $DB->GetVersion();
+
+	$minPgSqlWarningVersion = "13.0";
+	$minPgSqlWarningVersionBest = "18.0";
+	$minPgSqlWarningVersionDate = "2026-06-01";
+	$sqlDbName = "PostgreSql";
+
+	if (version_compare($curPgSqlVer, $minPgSqlWarningVersion) < 0)
+	{
+		$messageTmp = "<br>".GetMessage("SUP_MYSQL_LWARN_V",
+			array("#VERS#" => $curPgSqlVer,
+				"#DB#" => $sqlDbName,
+				"#REQ#" => $minPgSqlWarningVersion,
+				"#BEST_VERS#" => $minPgSqlWarningVersionBest,
+				"#DATE#" => CDatabase::FormatDate($minPgSqlWarningVersionDate, "YYYY-MM-DD", FORMAT_DATE)
+			)
+		);
+
+		if ((MakeTimeStamp($minPgSqlWarningVersionDate, "YYYY-MM-DD") - time()) / (60 * 60 * 24) < 30)
+		{
+			$strongSystemMessage .= $messageTmp;
+		}
+		else
+		{
+			$systemMessage .= $messageTmp;
+		}
+	}
+}
 elseif (($DB->type === "MSSQL") || ($DB->type === "ORACLE"))
 {
     $errorMessage .= "<br>".GetMessage("SUP_NO_MS_ORACLE");
 }
 
 $minPhpErrorVersion = "8.0";
-$minPhpWarningVersion = "8.1";
-$minPhpWarningVersionBest = "8.2";
-$minPhpWarningVersionDate = "2024-03-01";
+$minPhpWarningVersion = "8.2";
+$minPhpWarningVersionBest = "8.4";
+$minPhpWarningVersionDate = "2026-02-01";
 
 if (version_compare($curPhpVer, $minPhpErrorVersion) < 0)
 {

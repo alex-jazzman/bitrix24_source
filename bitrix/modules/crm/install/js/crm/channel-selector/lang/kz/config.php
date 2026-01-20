@@ -5,6 +5,7 @@ $MESS["CRM_CHANNEL_PUBLIC_LINK_NOT_AVAILABLE_NOTIFICATION_MESSAGE"] = "Сілт�
 $MESS["CRM_CHANNEL_SELECTOR_ACTIVATE_CHANNELS"] = "Байланыс арналарын қосу";
 $MESS["CRM_CHANNEL_SELECTOR_CHOOSE_FROM_MARKET"] = "Басқа сервисті таңдау";
 $MESS["CRM_CHANNEL_SELECTOR_DEFAULT_TITLE"] = "Клиентке жіберу";
+$MESS["CRM_CHANNEL_SELECTOR_DEFAULT_TITLE_MSGVER_1"] = "Жіберу";
 $MESS["CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK"] = "#MESSAGE# #LINK#";
 $MESS["CRM_CHANNEL_SELECTOR_NO_ACTIVE_CHANNELS_TEXT"] = "Клиентпен бір рет басу арқылы<br>құжаттармен бөлісіңіз";
 $MESS["CRM_CHANNEL_SELECTOR_SEND_BUTTON"] = "Жіберу";

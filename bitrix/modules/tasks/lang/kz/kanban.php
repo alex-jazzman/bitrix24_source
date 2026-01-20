@@ -43,7 +43,6 @@ $MESS["TASKS_KANBAN_PANEL_MEMBERS"] = "Қатысушылар";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_AUDITOR"] = "Бақылаушыны қосу";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_CORESPONSE"] = "Бірлесіп орындаушыны қосу";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_CREATED"] = "Қоюшыны ауыстыру";
-$MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE"] = "Жауаптыны ауыстыру";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE_MSGVER_1"] = "Орындаушыны өзгерту";
 $MESS["TASKS_KANBAN_PANEL_MOVETASK"] = "Міндеттер бағанға көшірілді: #columnName#";
 $MESS["TASKS_KANBAN_PANEL_STAGE"] = "Саты";

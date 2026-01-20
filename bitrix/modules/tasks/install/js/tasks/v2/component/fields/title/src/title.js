@@ -1,5 +1,4 @@
 import { GrowingTextArea } from 'tasks.v2.component.elements.growing-text-area';
-import { Model } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -12,17 +11,19 @@ export const Title = {
 	components: {
 		GrowingTextArea,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
+		isTemplate: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		disabled: {
 			type: Boolean,
 			default: false,
 		},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			titleMeta,
@@ -36,23 +37,8 @@ export const Title = {
 			},
 			set(title: string): void
 			{
-				void taskService.update(
-					this.taskId,
-					{ title },
-				);
+				void taskService.update(this.taskId, { title });
 			},
-		},
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
 		},
 	},
 	methods: {
@@ -72,8 +58,8 @@ export const Title = {
 			:data-task-field-id="titleMeta.id"
 			:data-task-field-value="task.title"
 			data-field-container
-			:placeholder="loc('TASKS_V2_TITLE_PLACEHOLDER')"
-			:readonly="readonly || disabled"
+			:placeholder="titleMeta.getTitle(isTemplate)"
+			:readonly="!task.rights.edit || disabled"
 			@input="handleInput"
 		/>
 	`,

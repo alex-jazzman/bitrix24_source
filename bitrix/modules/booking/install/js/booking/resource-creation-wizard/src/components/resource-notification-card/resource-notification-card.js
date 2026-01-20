@@ -11,12 +11,16 @@ import { Confirmation } from './confirmation/confirmation';
 import { Reminder } from './reminder/reminder';
 import { Feedback } from './feedback/feedback';
 import { Late } from './late/late';
+import { TariffInfo } from './tariff-info/tariff-info';
 
 import './resource-notification-card.css';
 
 // @vue/component
 export const ResourceNotificationCard = {
 	name: 'ResourceNotificationCard',
+	components: {
+		TariffInfo,
+	},
 	computed: {
 		notificationViews(): { view: BitrixVueComponentProps, model: NotificationsModel }[]
 		{
@@ -37,6 +41,7 @@ export const ResourceNotificationCard = {
 	},
 	template: `
 		<div class="resource-notification-card">
+			<TariffInfo/>
 			<slot v-for="notification of notificationViews" :key="notification.view">
 				<component
 					:is="notification.view"

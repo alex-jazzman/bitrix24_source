@@ -5,9 +5,10 @@ import { UI } from 'ui.notification';
 import { BitrixVue, VueCreateAppResult, reactive } from 'ui.vue3';
 import { MiniCardComponent } from './components/mini-card-component';
 import { MiniCardItem } from './lib/model/mini-card-item';
+import type { MiniCardResolver } from './lib/model/mini-card-resolver';
 
 export type MiniCardOptions = {
-	miniCardResolver: Promise<?MiniCard>,
+	miniCardResolver: MiniCardResolver,
 	bindElement: HTMLElement,
 };
 
@@ -23,7 +24,7 @@ export const EVENTS = {
 export class MiniCard
 {
 	#appId: string;
-	#miniCardResolver: Promise<?MiniCard>;
+	#miniCardResolver: MiniCardResolver;
 	#bindElement: HTMLElement;
 
 	#application: VueCreateAppResult = null;
@@ -66,7 +67,7 @@ export class MiniCard
 		this.#bindElement = bindElement;
 	}
 
-	#setMiniCardResolver(miniCardResolver: Promise<?MiniCardItem>): void
+	#setMiniCardResolver(miniCardResolver: MiniCardResolver): void
 	{
 		this.#miniCardResolver = miniCardResolver;
 	}
@@ -86,21 +87,35 @@ export class MiniCard
 			angle: {
 				offset: 150,
 			},
-			bindOptions: {
-				forceBindPosition: true,
-				forceTop: true,
-			},
 			offsetLeft: (this.#bindElement.offsetWidth / 2) - 130,
 			animation: 'fading',
 			autoHide: true,
 			events: {
-				onShow: () => {
+				onBeforeShow: () => {
+					if (this.#miniCardResolver.isLoaded())
+					{
+						this.#state.miniCardItem = this.#miniCardResolver.getMiniCard();
+						this.#state.isLoaded = true;
+
+						this.#popup.bindOptions = {
+							forceBindPosition: true,
+						};
+					}
+					else
+					{
+						this.#popup.bindOptions = {
+							forceBindPosition: true,
+							forceTop: true,
+						};
+					}
+
 					if (this.#state.isLoaded)
 					{
 						return;
 					}
 
-					void this.#miniCardResolver()
+					void this.#miniCardResolver
+						.loadMiniCard()
 						.then((miniCard: ?MiniCardItem) => {
 							this.#state.miniCardItem = miniCard;
 						})

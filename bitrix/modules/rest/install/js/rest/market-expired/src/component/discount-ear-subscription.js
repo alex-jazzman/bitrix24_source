@@ -9,7 +9,7 @@ export class DiscountEarSubscription extends DiscountEar
 
 		this.discountPercentage = props?.discountPercentage ?? null;
 		this.termsUrl = props?.termsUrl ?? null;
-		this.marketLabel = props?.marketLabel ?? '';
+		this.isRenamedMarket = props?.isRenamedMarket ?? false;
 	}
 
 	getContainer(): HTMLElement
@@ -18,13 +18,20 @@ export class DiscountEarSubscription extends DiscountEar
 			<aside class="rest-market-expired-popup__discount rest-market-expired-popup__discount--subscription">
 				${this.#renderDiscountPercent()}
 				<p class="rest-market-expired-popup__discount-description">
-					${Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION${this.marketLabel}`)}
+					${this.#getDescription()}
 				</p>
 				${this.#renderTermsOfPromotion()}
 			</aside>
 		`;
 
 		return this.container;
+	}
+
+	#getDescription(): string
+	{
+		return this.isRenamedMarket
+			? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_BITRIX_GPT')
+			: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_MARKET_PLUS');
 	}
 
 	#renderDiscountPercent(): HTMLElement

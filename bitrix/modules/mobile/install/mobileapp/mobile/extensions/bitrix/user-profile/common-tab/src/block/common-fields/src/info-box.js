@@ -9,7 +9,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 	const { Area } = require('ui-system/layout/area');
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { FieldFactory } = require('user-profile/common-tab/src/block/common-fields/src/field/factory');
-	const { isFieldValueEmpty } = require('user-profile/common-tab/src/block/common-fields/src/utils');
+	const { isFieldVisible, isFieldValueEmpty } = require('user-profile/common-tab/src/block/common-fields/src/utils');
 	const { BottomSheet } = require('bottom-sheet');
 
 	/**
@@ -27,6 +27,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 		constructor(props)
 		{
 			super(props);
+			this.layout = null;
 			this.getTestId = createTestIdGenerator({
 				prefix: 'info-box',
 				context: this,
@@ -47,16 +48,22 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 			);
 		}
 
+		setLayout(layout)
+		{
+			this.layout = layout;
+		}
+
 		#renderSection(section, isFirst)
 		{
 			const { title, fields = [] } = section;
 			const renderedFields = fields
-				.filter((field) => !isFieldValueEmpty(field))
+				.filter((field) => isFieldVisible(field) && !isFieldValueEmpty(field))
 				.map((field, index) => FieldFactory.create(field.type, {
 					...field,
 					testId: field.id,
 					isEditMode: false,
 					isFirst: index === 0,
+					parentWidget: this.layout,
 				}));
 
 			if (renderedFields.length === 0)
@@ -102,11 +109,12 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 		parentWidget = PageManager,
 		sections = [],
 	}) => {
+		const infoBox = new InfoBox({
+			testId,
+			sections,
+		});
 		(new BottomSheet({
-			component: new InfoBox({
-				testId,
-				sections,
-			}),
+			component: infoBox,
 			titleParams: {
 				type: 'dialog',
 				text: Loc.getMessage('M_PROFILE_COMMON_FIELDS_INFO_BOX_TITLE'),
@@ -124,6 +132,9 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 			.enableResizeContent()
 			.enableAdoptHeightByKeyboard()
 			.open()
+			.then((widget) => {
+				infoBox.setLayout(widget);
+			})
 			.catch((e) => console.error(e));
 	};
 

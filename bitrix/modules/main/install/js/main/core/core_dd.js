@@ -162,3 +162,4 @@ BX.DD.dropFiles.prototype.supported = function()
 
 })(window)
 
+

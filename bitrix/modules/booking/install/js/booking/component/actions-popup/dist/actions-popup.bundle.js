@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,booking_component_popupMaker,main_sidepanel,ui_vue3_directives_lazyload,booking_component_notePopup,booking_component_clientPopup,main_date,booking_lib_dealHelper,booking_provider_service_bookingActionsService,booking_provider_service_bookingService,ui_entitySelector,booking_provider_service_resourceDialogService,booking_component_popup,ui_label,ui_vue3_directives_hint,ui_iconSet_api_core,booking_component_cyclePopup,booking_lib_ahaMoments,ui_vue3,ui_iconSet_main,booking_lib_helpDesk,booking_component_loader,main_core,main_popup,ui_vue3_vuex,ui_iconSet_api_vue,booking_const,booking_lib_limit,booking_component_button) {
+(function (exports,booking_component_popupMaker,main_sidepanel,ui_vue3_directives_lazyload,booking_component_notePopup,booking_component_clientPopup,main_date,booking_lib_dealHelper,booking_provider_service_bookingActionsService,booking_provider_service_resourceDialogService,ui_label,booking_provider_service_bookingService,booking_component_popup,main_core_events,ui_entitySelector,booking_lib_currencyFormat,ui_vue3_directives_hint,ui_iconSet_api_core,booking_component_cyclePopup,booking_lib_ahaMoments,ui_vue3,ui_iconSet_main,booking_lib_helpDesk,booking_component_loader,main_core,main_popup,ui_vue3_vuex,ui_iconSet_api_vue,booking_const,booking_lib_limit,booking_component_button) {
 	'use strict';
 
 	const ActionsPopup = {
@@ -1003,6 +1003,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      }
 	      const format = main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
 	      return main_date.DateTimeFormat.format(format, this.deal.data.createdTimestamp);
+	    },
+	    priceFormatted() {
+	      return booking_lib_currencyFormat.currencyFormat.format(this.deal.data.currencyId, this.deal.data.opportunity);
 	    }
 	  },
 	  mounted() {
@@ -1151,7 +1154,7 @@ this.BX.Booking = this.BX.Booking || {};
 								:data-element="dataElementPrefix + '-menu-deal-profit'"
 								:data-profit="deal.data.opportunity"
 								v-bind="dataAttributes"
-								v-html="deal.data.formattedOpportunity"
+								v-html="priceFormatted"
 							></div>
 							<div
 								class="booking-actions-popup-item-subtitle"
@@ -1352,6 +1355,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
 	      getByInterval: `${booking_const.Model.Bookings}/getByInterval`
 	    }),
+	    featureOverbookingEnabled() {
+	      return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingOverbooking;
+	    },
 	    extraResourcesIds() {
 	      return this.booking.resourcesIds.filter(resourceId => resourceId !== this.resourceId);
 	    },
@@ -1372,6 +1378,9 @@ this.BX.Booking = this.BX.Booking || {};
 	    },
 	    excludedResourceIds() {
 	      return new Set([this.resourceId]);
+	    },
+	    maxBusyBookingsCount() {
+	      return this.featureOverbookingEnabled ? 2 : 1;
 	    }
 	  },
 	  watch: {
@@ -1414,7 +1423,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        },
 	        'Item:onBeforeSelect': event => {
 	          const item = event.data.item;
-	          if ((this.resourceBookingsMap.get(item.id) || []).length > 1) {
+	          if ((this.resourceBookingsMap.get(item.id) || []).length > this.maxBusyBookingsCount - 1) {
 	            // eslint-disable-next-line no-param-reassign
 	            event.defaultPrevented = true;
 	          }
@@ -1461,7 +1470,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    },
 	    getItemBadge(resource) {
 	      const resourceBookingsCount = (this.resourceBookingsMap.get(resource.id) || []).length;
-	      if (resourceBookingsCount >= 2) {
+	      if (resourceBookingsCount >= this.maxBusyBookingsCount) {
 	        return {
 	          title: this.loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_RESOURCE_SELECTOR_BADGE_BUSY'),
 	          textColor: 'rgba(255, 255, 255, 1)',
@@ -1537,12 +1546,12 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  template: `
-		<div class="booking--extra-resources-info_element">
-			<div class="booking--extra-resources-info_element-icon —ui-context-content-light">
+		<div class="booking__actions-popup-info_element">
+			<div class="booking__actions-popup-info_element-icon —ui-context-content-light">
 				<Icon :name="Outline.PRODUCT" :size="iconSize" :color="iconColor"/>
 			</div>
 
-			<div class="booking--extra-resources-info_element-text" :title="title">
+			<div class="booking__actions-popup-info_element-text" :title="title">
 				{{ title }}
 			</div>
 
@@ -1641,8 +1650,8 @@ this.BX.Booking = this.BX.Booking || {};
 			:config
 			@close="closePopup"
 		>
-			<div class="booking--extra-resources-info_container">
-				<div class="booking--extra-resources-info_content">
+			<div class="booking__actions-popup-info_container">
+				<div class="booking__actions-popup-info_content">
 					<template v-for="resource in resources" :key="resource.id">
 						<ExtraResourcesInfoPopupItem
 							:title="resource.name"
@@ -1677,16 +1686,19 @@ this.BX.Booking = this.BX.Booking || {};
 	  emits: ['freeze', 'unfreeze'],
 	  setup() {
 	    const iconProductName = ui_iconSet_api_vue.Outline.PRODUCT;
+	    const iconBtnName = ui_iconSet_api_vue.Outline.EDIT_M;
 	    const iconEditName = ui_iconSet_api_vue.Outline.EDIT_M;
 	    const iconHelpName = ui_iconSet_api_vue.Set.HELP;
 	    return {
 	      iconProductName,
+	      iconBtnName,
 	      iconEditName,
 	      iconHelpName,
 	      AirButtonStyle: booking_component_button.AirButtonStyle,
 	      ButtonColor: booking_component_button.ButtonColor,
 	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonStyle: booking_component_button.ButtonStyle
+	      ButtonStyle: booking_component_button.ButtonStyle,
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  data() {
@@ -1719,10 +1731,17 @@ this.BX.Booking = this.BX.Booking || {};
 	    },
 	    iconProductColor() {
 	      return this.hasExtraResources ? 'rgba(0, 117, 255, 1)' : 'rgba(201, 204, 208, 1)';
+	    },
+	    featureEnabled() {
+	      return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingMulti;
 	    }
 	  },
 	  methods: {
 	    toggleResourcesSelector() {
+	      if (!this.featureEnabled) {
+	        void booking_lib_limit.limit.show(booking_const.LimitFeatureId.MultiResources);
+	        return;
+	      }
 	      this.shownResourcesSelector = true;
 	      this.$emit('freeze');
 	    },
@@ -1754,60 +1773,558 @@ this.BX.Booking = this.BX.Booking || {};
 	  },
 	  template: `
 		<div class="booking-actions-popup__item booking--actions-popup--extra-resources-info">
-			<div class="booking--actions-popup--extra-resources-info__row">
-				<div
-					:class="[
-						'booking-actions-popup-item-icon',
-						'booking--actions-popup--extra-resources-info__icon-product-bg',
-						{
-							'--active': hasExtraResources
-						}
-					]"
-				>
-					<UiIcon
-						:name="iconProductName"
-						:color="iconProductColor"
-					/>
-				</div>
-				<div class="booking--actions-popup--extra-resources-info__content">
-					<div class="booking--actions-popup--extra-resources-info__title">
-						<span>{{ loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TITLE') }}</span>
-					</div>
-					<div class="booking--actions-popup--extra-resources-info__subtitle">
-						<span
-							ref="button"
-							data-element="amount-additional-resources"
-							:class="{ '--fill': hasExtraResources }"
-							@click="toggleResourcesInfo"
-						>
-							{{ subtitle }}
-						</span>
-						<ExtraResourcesInfoPopup
-							v-if="showDialogInfo"
-							v-model:visible="showDialogInfo"
-							:bindElement="$refs.button"
-							:booking
-							:resourceId
+			<div class="booking-actions-popup__resources-info_row">
+				<div class="booking-actions-popup__resources-info_row-wrapper">
+					<div
+						:class="[
+							'booking-actions-popup-item-icon',
+							'booking-actions-popup__resources-info_icon-product-bg',
+							{
+								'--active': hasExtraResources
+							}
+						]"
+					>
+						<UiIcon
+							:name="iconProductName"
+							:color="iconProductColor"
 						/>
 					</div>
+					<div class="booking-actions-popup__resources-info_content">
+						<div class="booking-actions-popup__resources-info_title">
+							<span>{{ loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TITLE_MSGVER_1') }}</span>
+						</div>
+						<div class="booking-actions-popup__resources-info_subtitle">
+							<span
+								ref="button"
+								data-element="amount-additional-resources"
+								:class="{ '--fill': hasExtraResources }"
+								@click="toggleResourcesInfo"
+							>
+								{{ subtitle }}
+							</span>
+							<ExtraResourcesInfoPopup
+								v-if="showDialogInfo"
+								v-model:visible="showDialogInfo"
+								:bindElement="$refs.button"
+								:booking
+								:resourceId
+							/>
+						</div>
+					</div>
 				</div>
-				<div ref="edit" class="booking--actions-popup--extra-resources-info__icon-edit">
+				<div ref="edit" class="booking-actions-popup-item-buttons">
 					<UiButton
+						class="booking-actions-popup-button-with-chevron"
+						buttonClass="ui-btn-shadow"
+						:text="loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TEXT_BTN')"
 						data-element="btn-toggle-resources-selector"
-						:icon="iconEditName"
 						:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
-						:color="ButtonColor.LIGHT_BORDER"
-						:size="ButtonSize.SMALL"
+						:color="ButtonColor.LIGHT"
+						:size="ButtonSize.EXTRA_SMALL"
+						round
 						@click="toggleResourcesSelector"
-					/>
-					<ExtraResourcesDialog
-						v-if="shownResourcesSelector"
-						:booking
-						:resourceId
-						@save="saveBookingExtraResources"
-					/>
+					>
+						<UiIcon
+							:name="featureEnabled ? Outline.EDIT_M : Outline.LOCK_L"
+							:color="featureEnabled ? '' : 'var(--ui-color-base-5)'"
+						/>
+					</UiButton>
 				</div>
 			</div>
+			<ExtraResourcesDialog
+				v-if="shownResourcesSelector && featureEnabled"
+				:booking
+				:resourceId
+				@save="saveBookingExtraResources"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const SkusInfoPopupItem = {
+	  name: 'SkusInfoPopupItem',
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    price: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    currencyId: {
+	      type: String,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  data() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  computed: {
+	    formattedPrice() {
+	      return booking_lib_currencyFormat.currencyFormat.format(this.currencyId, this.price);
+	    }
+	  },
+	  template: `
+		<div class="booking__actions-popup-info_element">
+			<div class="booking__actions-popup-info_element-icon —ui-context-content-light">
+				<Icon :name="Outline.THREE_PERSONS" :size=16 :color="'var(--ui-color-accent-main-primary)'"/>
+			</div>
+
+			<div class="booking__actions-popup-info_element-text" :title="title">
+				{{ title }}
+			</div>
+
+			<div
+				v-if="price"
+				class="booking__actions-popup-info_element-price"
+				v-html="formattedPrice"
+			></div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const SkusInfoPopup = {
+	  name: 'SkusInfoPopup',
+	  components: {
+	    Popup: booking_component_popup.Popup,
+	    SkusInfoPopupItem
+	  },
+	  props: {
+	    visible: {
+	      type: Boolean,
+	      default: false
+	    },
+	    bindElement: {
+	      type: HTMLElement,
+	      required: true
+	    },
+	    skus: {
+	      type: Array,
+	      required: true
+	    }
+	  },
+	  emits: ['update:visible'],
+	  computed: {
+	    config() {
+	      return {
+	        bindElement: this.bindElement,
+	        offsetTop: 10,
+	        offsetLeft: -65,
+	        padding: 14,
+	        contentPadding: 30,
+	        height: 300,
+	        width: 340,
+	        minWidth: 340,
+	        maxWidth: 400,
+	        bindOptions: {
+	          forceBindPosition: true,
+	          position: 'bottom'
+	        }
+	      };
+	    },
+	    totalSumFormatted() {
+	      return booking_lib_currencyFormat.currencyFormat.format(this.currencyId(), this.total());
+	    }
+	  },
+	  methods: {
+	    closePopup() {
+	      this.$emit('update:visible', false);
+	    },
+	    total() {
+	      return this.skus.map(sku => sku.price).reduce((acc, price) => acc + price, 0);
+	    },
+	    currencyId() {
+	      if (this.skus.length === 0) {
+	        return '';
+	      }
+	      return this.skus[0].currencyId;
+	    }
+	  },
+	  template: `
+		<Popup
+			id="booking--booking--skus-info"
+			:config
+			@close="closePopup"
+		>
+			<div class="booking__actions-popup-info_container">
+				<div class="booking__actions-popup-info_content">
+					<template v-for="sku in skus" :key="sku.id">
+						<SkusInfoPopupItem
+							:title="sku.name"
+							:price="sku.price"
+							:currencyId="sku.currencyId"
+						/>
+					</template>
+				</div>
+				<div class="booking__actions-popup-info_footer">
+					<div class="booking__actions-popup-info_footer-label">
+						{{ loc('BOOKING_ACTIONS_POPUP_SKUS_INFO_SELECTOR_TOTAL') }}
+					</div>
+					<div
+						class="booking__actions-popup-info_footer-total"
+						v-html="totalSumFormatted"
+					></div>
+				</div>
+			</div>
+		</Popup>
+	`
+	};
+
+	let _ = t => t,
+	  _t;
+	const RAW_PRICE = 'RAW_PRICE';
+
+	// @vue/component
+	const SkusInfoSelector = {
+	  name: 'SkusInfoSelector',
+	  props: {
+	    id: {
+	      type: Number,
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  emits: ['save'],
+	  data() {
+	    return {
+	      shownFooter: false,
+	      total: 0,
+	      currencyId: null,
+	      isSelected: false
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      getResourceById: `${booking_const.Model.Resources}/getById`,
+	      getBookingById: `${booking_const.Model.Bookings}/getById`
+	    }),
+	    catalogSkuEntityOptions() {
+	      return this.$store.state[booking_const.Model.Bookings].catalogSkuEntityOptions;
+	    },
+	    bookings() {
+	      return this.getBookingById(this.id);
+	    },
+	    bookingSkus() {
+	      var _this$bookings$skus, _this$bookings;
+	      return (_this$bookings$skus = (_this$bookings = this.bookings) == null ? void 0 : _this$bookings.skus) != null ? _this$bookings$skus : [];
+	    },
+	    resourceSkus() {
+	      return this.getResourceById(this.resourceId).skus;
+	    },
+	    resourceSkusIds() {
+	      return this.resourceSkus.map(sku => sku.id);
+	    },
+	    bookingSkusIds() {
+	      return this.bookingSkus.map(sku => sku.id);
+	    },
+	    entitiesOptions() {
+	      return {
+	        ...this.catalogSkuEntityOptions,
+	        restrictedProductIds: [...new Set([...this.bookingSkusIds, ...this.resourceSkusIds])]
+	      };
+	    },
+	    totalSumFormatted() {
+	      return booking_lib_currencyFormat.currencyFormat.format(this.currencyId, this.total);
+	    }
+	  },
+	  mounted() {
+	    this.dialog = new ui_entitySelector.Dialog({
+	      id: `booking-booking-skus-selector-${this.id}`,
+	      targetNode: this.$refs.dialog,
+	      preselectedItems: this.selectedResourceSkus().map(id => [booking_const.EntitySelectorEntity.Product, id]),
+	      width: 440,
+	      height: Math.min(window.innerHeight - 380, 400),
+	      dropdownMode: true,
+	      entities: [{
+	        id: booking_const.EntitySelectorEntity.Product,
+	        dynamicLoad: true,
+	        dynamicSearch: true,
+	        options: this.entitiesOptions
+	      }],
+	      popupOptions: {
+	        id: `booking-actions-popup-skus-dialog-${this.id}-${this.resourceId}`,
+	        className: 'booking-booking-actions-popup__skus-info_skus-dialog'
+	      },
+	      enableSearch: true,
+	      cacheable: true,
+	      searchOptions: {
+	        allowCreateItem: false
+	      },
+	      footer: SkusInfoSelectorFooter,
+	      events: {
+	        'Item:onSelect': event => {
+	          const selectedItems = event.getTarget().getSelectedItems();
+	          this.isSelected = selectedItems.length > 0;
+	          this.updateTotal(selectedItems);
+	        },
+	        'Item:onDeselect': event => {
+	          const selectedItems = event.getTarget().getSelectedItems();
+	          this.isSelected = selectedItems.length > 0;
+	          this.updateTotal(selectedItems);
+	        },
+	        onLoad: event => {
+	          const selectedItems = event.getTarget().getSelectedItems();
+	          this.isSelected = selectedItems.length > 0;
+	          this.updateTotal(selectedItems);
+	        },
+	        onHide: () => {
+	          const selectedItemIds = this.dialog.getSelectedItems().map(item => item.id);
+	          this.$emit('save', selectedItemIds);
+	          this.shownFooter = false;
+	        }
+	      },
+	      recentTabOptions: {
+	        stub: true,
+	        stubOptions: {
+	          title: this.loc('BOOKING_ACTIONS_POPUP_RECENT_EMPTY_STATE_TITLE'),
+	          subtitle: this.loc('BOOKING_ACTIONS_POPUP_RECENT_EMPTY_STATE_SUBTITLE')
+	        }
+	      },
+	      searchTabOptions: {
+	        stub: true,
+	        stubOptions: {
+	          title: this.loc('BOOKING_ACTIONS_POPUP_SEARCH_EMPTY_STATE_TITLE'),
+	          subtitle: this.loc('BOOKING_ACTIONS_POPUP_SEARCH_EMPTY_STATE_SUBTITLE')
+	        }
+	      }
+	    });
+	    this.dialog.show();
+	    this.shownFooter = true;
+	  },
+	  unmounted() {
+	    var _this$dialog;
+	    (_this$dialog = this.dialog) == null ? void 0 : _this$dialog.destroy == null ? void 0 : _this$dialog.destroy();
+	  },
+	  methods: {
+	    isItemSelected(id) {
+	      return this.bookingSkusIds.includes(id);
+	    },
+	    selectedResourceSkus() {
+	      return this.bookingSkusIds;
+	    },
+	    updateTotal(items) {
+	      this.total = items.reduce((total, item) => {
+	        var _price$VALUE;
+	        const price = item.getCustomData().get(RAW_PRICE) || {
+	          VALUE: 0,
+	          CURRENCY: null
+	        };
+	        if (!main_core.Type.isObject(price)) {
+	          return total;
+	        }
+	        if (!this.currencyId && price.CURRENCY) {
+	          this.currencyId = price.CURRENCY;
+	        }
+	        return total + ((_price$VALUE = price.VALUE) != null ? _price$VALUE : 0);
+	      }, 0);
+	    }
+	  },
+	  template: `
+		<div ref="dialog"></div>
+		<Teleport
+			v-if="shownFooter && isSelected && totalSumFormatted"
+			to="#booking-booking-skus-info-selector-footer"
+			defer
+		>
+			<div class="booking-actions-popup-info--skus-info-popup--footer">
+				<div class="booking-actions-popup-info--skus-info-popup--footer__total-text">
+					{{ loc('BOOKING_ACTIONS_POPUP_SKUS_INFO_SELECTOR_TOTAL') }}
+				</div>
+				<div
+					class="booking-actions-popup-info--skus-info-popup--footer__total-price"
+					:data-profit="total"
+					v-html="totalSumFormatted"
+				>
+				</div>
+			</div>
+		</Teleport>
+	`
+	};
+	class SkusInfoSelectorFooter extends ui_entitySelector.BaseFooter {
+	  render() {
+	    return main_core.Tag.render(_t || (_t = _`
+			<div id="booking-booking-skus-info-selector-footer"></div>
+		`));
+	  }
+	}
+
+	// @vue/component
+	const SkusInfo = {
+	  name: 'SkusInfo',
+	  components: {
+	    UiButton: booking_component_button.Button,
+	    UiIcon: ui_iconSet_api_vue.BIcon,
+	    SkusInfoPopup,
+	    SkusInfoSelector
+	  },
+	  props: {
+	    id: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  emits: ['freeze', 'unfreeze'],
+	  data() {
+	    return {
+	      AirButtonStyle: booking_component_button.AirButtonStyle,
+	      ButtonColor: booking_component_button.ButtonColor,
+	      ButtonSize: booking_component_button.ButtonSize,
+	      ButtonStyle: booking_component_button.ButtonStyle,
+	      Outline: ui_iconSet_api_vue.Outline,
+	      shownSelector: false,
+	      showDialogInfo: false
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      getResourceById: `${booking_const.Model.Resources}/getById`,
+	      getBookingById: `${booking_const.Model.Bookings}/getById`
+	    }),
+	    skus() {
+	      return this.getResourceById(this.resourceId).skus;
+	    },
+	    booking() {
+	      return this.getBookingById(this.id);
+	    },
+	    bookingSkus() {
+	      return this.booking.skus;
+	    },
+	    subtitle() {
+	      if (this.hasSkus) {
+	        const count = this.bookingSkus.length;
+	        return main_core.Loc.getMessagePlural('BOOKING_ACTIONS_POPUP_SKUS_INFO_SUBTITLE', count, {
+	          '#COUNT#': count
+	        });
+	      }
+	      return this.loc('BOOKING_ACTIONS_POPUP_SKUS_INFO_SUBTITLE_EMPTY');
+	    },
+	    hasSkus() {
+	      return this.bookingSkus.length > 0;
+	    },
+	    iconProductColor() {
+	      return this.hasSkus ? 'rgba(0, 117, 255, 1)' : 'rgba(201, 204, 208, 1)';
+	    }
+	  },
+	  methods: {
+	    toggleSkusInfo() {
+	      this.showDialogInfo = this.hasSkus ? !this.showDialogInfo : this.showDialogInfo;
+	    },
+	    toggleSkusSelector() {
+	      this.shownSelector = true;
+	      this.$emit('freeze');
+	    },
+	    hideSkusSelector() {
+	      this.shownSelector = false;
+	      this.$emit('unfreeze');
+	    },
+	    saveBookingSkus(selectSkus) {
+	      this.hideSkusSelector();
+	      if (this.hasDiffsWithBookingSkus(new Set(selectSkus))) {
+	        void booking_provider_service_bookingService.bookingService.update({
+	          id: this.id,
+	          skus: [...new Set(selectSkus.map(id => ({
+	            id
+	          })))]
+	        });
+	      }
+	    },
+	    hasDiffsWithBookingSkus(updatedSkusIds) {
+	      const bookingSkusIds = new Set(this.bookingSkus.map(({
+	        id
+	      }) => id));
+	      if (bookingSkusIds.size !== updatedSkusIds.size) {
+	        return true;
+	      }
+	      for (const id of bookingSkusIds) {
+	        if (!updatedSkusIds.has(id)) {
+	          return true;
+	        }
+	      }
+	      return false;
+	    }
+	  },
+	  template: `
+		<div class="booking-actions-popup__item booking--actions-popup--skus-info">
+			<div class="booking-actions-popup__resources-info_row">
+				<div class="booking-actions-popup__resources-info_row-wrapper">
+					<div
+						:class="[
+							'booking-actions-popup-item-icon',
+							'booking-actions-popup__resources-info_icon-product-bg',
+							{
+								'--active': hasSkus
+							}
+						]"
+					>
+						<UiIcon
+							:name="Outline.THREE_PERSONS"
+							:color="iconProductColor"
+						/>
+					</div>
+					<div class="booking-actions-popup__resources-info_content">
+						<div class="booking-actions-popup__resources-info_title">
+							<span>{{ loc('BOOKING_ACTIONS_POPUP_SKUS_INFO_TITLE') }}</span>
+						</div>
+						<div class="booking-actions-popup__resources-info_subtitle">
+							<span
+								ref="button"
+								data-element="amount-services"
+								:class="{ '--fill': hasSkus }"
+								@click="toggleSkusInfo"
+							>
+								{{ subtitle }}
+							</span>
+							<SkusInfoPopup
+								v-if="showDialogInfo"
+								v-model:visible="showDialogInfo"
+								:bindElement="$refs.button"
+								:skus="bookingSkus"
+							/>
+						</div>
+					</div>
+				</div>
+				<div ref="edit" class="booking-actions-popup-item-buttons">
+					<UiButton
+						class="booking-actions-popup-button-with-chevron"
+						buttonClass="ui-btn-shadow"
+						:text="loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TEXT_BTN')"
+						data-element="btn-toggle-skus-selector"
+						:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
+						:color="ButtonColor.LIGHT"
+						:size="ButtonSize.EXTRA_SMALL"
+						round
+						@click="toggleSkusSelector"
+					>
+						<UiIcon
+							:name="Outline.EDIT_M"
+						/>
+					</UiButton>
+				</div>
+			</div>
+			<SkusInfoSelector
+				v-if="shownSelector"
+				:id="id"
+				:resourceId
+				@save="saveBookingSkus"
+			/>
 		</div>
 	`
 	};
@@ -2508,11 +3025,12 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.Deal = Deal;
 	exports.Document = Document;
 	exports.ExtraResourcesInfo = ExtraResourcesInfo;
+	exports.SkusInfo = SkusInfo;
 	exports.FullForm = FullForm;
 	exports.Info = Info;
 	exports.Message = Message;
 	exports.RemoveButton = RemoveButton;
 	exports.Visit = Visit;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.SidePanel,BX.Vue3.Directives,BX.Booking.Component,BX.Booking.Component,BX.Main,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI.EntitySelector,BX.Booking.Provider.Service,BX.Booking.Component,BX.UI,BX.Vue3.Directives,BX.UI.IconSet,BX.Booking.Component,BX.Booking.Lib,BX.Vue3,BX,BX.Booking.Lib,BX.Booking.Component,BX,BX.Main,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Component));
+}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.SidePanel,BX.Vue3.Directives,BX.Booking.Component,BX.Booking.Component,BX.Main,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Booking.Provider.Service,BX.Booking.Component,BX.Event,BX.UI.EntitySelector,BX.Booking.Lib,BX.Vue3.Directives,BX.UI.IconSet,BX.Booking.Component,BX.Booking.Lib,BX.Vue3,BX,BX.Booking.Lib,BX.Booking.Component,BX,BX.Main,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Component));
 //# sourceMappingURL=actions-popup.bundle.js.map

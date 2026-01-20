@@ -38,7 +38,7 @@ export class PurchasesFactory
 				return [[groupedPackages]];
 			};
 		}
-		else if (serviceCode === 'disk-oo-edit')
+		else if (serviceCode === 'disk_oo_edit')
 		{
 			purchase.setDefaultTileFabric((...params) => new PurchaseTileDiskOoEdit(...params));
 		}

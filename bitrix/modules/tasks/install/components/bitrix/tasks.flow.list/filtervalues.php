@@ -112,6 +112,7 @@ class FilterValues
 			{
 				Counter\Type::TYPE_EXPIRED => Counter\CounterDictionary::MAP_FLOW_TOTAL[Counter\CounterDictionary::COUNTER_FLOW_TOTAL_EXPIRED],
 				Counter\Type::TYPE_NEW_COMMENTS => Counter\CounterDictionary::MAP_FLOW_TOTAL[Counter\CounterDictionary::COUNTER_FLOW_TOTAL_COMMENTS],
+				Counter\Type::TYPE_MENTIONED => Counter\CounterDictionary::COUNTER_MENTIONED,
 				default => 'none',
 			};
 

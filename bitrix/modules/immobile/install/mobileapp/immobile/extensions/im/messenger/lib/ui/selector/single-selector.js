@@ -64,6 +64,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 		{
 			return [
 				this.createButtonSection(),
+				...this.createAdditionalButtons(),
 				this.createList(),
 			];
 		}
@@ -95,16 +96,30 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 		{
 			if (Array.isArray(this.props.buttons) && this.props.buttons.length > 0)
 			{
-				return new ButtonSection({ buttons: this.props.buttons });
+				return new ButtonSection({
+					buttons: this.props.buttons,
+				});
 			}
 
 			return null;
 		}
 
+		createAdditionalButtons()
+		{
+			if (Array.isArray(this.props.additionalButtons) && this.props.additionalButtons.length > 0)
+			{
+				return this.props.additionalButtons;
+			}
+
+			return [];
+		}
+
 		createShadow()
 		{
 			return new FullScreenShadow({
-				ref: (ref) => this.shadowRef = ref,
+				ref: (ref) => {
+					this.shadowRef = ref;
+				},
 			});
 		}
 
@@ -131,7 +146,9 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 					{
 						onChangeText: (text) => this.props.onChangeText(text),
 						onSearchShow: () => this.props.onSearchShow(),
-						ref: (ref) => this.searchInputRef = ref,
+						ref: (ref) => {
+							this.searchInputRef = ref;
+						},
 					},
 				),
 			);
@@ -153,9 +170,13 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 				return new List({
 					itemList: [],
 					onItemSelected: (itemData) => this.props.onSearchItemSelected(itemData),
-					ref: (ref) => this.searchWrapperRef = ref,
+					ref: (ref) => {
+						this.searchWrapperRef = ref;
+					},
 				});
 			}
+
+			return null;
 		}
 
 		getSearchWrapper()

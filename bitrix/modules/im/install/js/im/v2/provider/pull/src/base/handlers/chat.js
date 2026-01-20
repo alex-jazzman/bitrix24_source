@@ -10,6 +10,7 @@ import { Logger } from 'im.v2.lib.logger';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
+import { CounterClearActionsByChatType, CounterClearActionsDefault } from 'im.v2.lib.counter';
 
 import type { Store } from 'ui.vue3.vuex';
 
@@ -221,8 +222,25 @@ export class ChatPullHandler
 	handleReadAllChats()
 	{
 		Logger.warn('ChatPullHandler: handleReadAllChats');
-		this.#store.dispatch('chats/clearCounters');
-		this.#store.dispatch('recent/clearUnread');
+		CounterClearActionsDefault.forEach((actionName) => {
+			void this.#store.dispatch(actionName);
+		});
+	}
+
+	handleReadAllChatsByType(params: { type: $Values<typeof ChatType> })
+	{
+		const { type } = params;
+
+		const counterClearActions = CounterClearActionsByChatType[type];
+
+		if (!counterClearActions)
+		{
+			return;
+		}
+
+		counterClearActions.forEach((actionName) => {
+			void this.#store.dispatch(actionName, { type });
+		});
 	}
 
 	handleChatConvert(params: ChatConvertParams)

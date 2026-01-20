@@ -1,0 +1,20 @@
+#bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+#bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn__icon {
+    background-color: var(--ui-color-accent-main-primary);
+}
+
+#bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn__label {
+    font-size: var(--ui-font-size-md);
+    letter-spacing: var(--ui-letter-spacing-l);
+    color: var(--ui-color-accent-main-primary) !important;
+}

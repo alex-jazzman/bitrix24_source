@@ -85,7 +85,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		return array_values($entity->getPopupFields($viewType));
 	}
 
-	public function getPreparedFieldsAction(string $entityType, string $viewType, array $selectedFields = []): array
+	public function getPreparedFieldsAction(string $entityType, string $viewType, array $selectedFields = [], array $params = []): array
 	{
 		Loader::includeModule('crm');
 
@@ -104,6 +104,12 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 			$this->addError(ErrorCode::getAccessDeniedError());
 
 			return [];
+		}
+
+		$categoryId = $params['categoryId'] ?? null;
+		if ($categoryId > 0)
+		{
+			$entity->setCategoryId((int)$categoryId);
 		}
 
 		return $entity->getPreparedCustomFieldsConfig($viewType, $selectedFields);

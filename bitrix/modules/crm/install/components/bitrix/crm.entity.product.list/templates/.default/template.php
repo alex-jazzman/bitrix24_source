@@ -679,32 +679,57 @@ foreach ($rows as $key => $row)
 		$buttonTopPanelClasses = implode(' ', $buttonTopPanelClasses);
 		?>
 		<div class="<?=$buttonTopPanelClasses?>">
-			<div>
+			<div class="crm-entity-product-list-wrapper-top-panel-left-buttons">
 				<?php
-				$lockedClasses = 'ui-btn-icon-lock ui-btn-disabled';
-				$buttonHintAttributes = 'data-hint="' . Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED') . '" data-hint-no-icon';
+				$addButton = \Bitrix\UI\Buttons\Button::create([
+						'text' => Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT'),
+						'size' => \Bitrix\UI\Buttons\Size::MEDIUM,
+						'air' => true,
+						'style' => \Bitrix\UI\Buttons\AirButtonStyle::FILLED,
+				])
+					->addAttribute('title', Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT_TITLE'))
+					->addAttribute('data-role', 'product-list-add-button')
+					->addAttribute('tabindex', '-1');
+
+				if ($disabledAddRowButton)
+				{
+					$addButton
+						->addAttribute('data-hint', Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED'))
+						->addAttribute('data-hint-no-icon')
+						->setDisabled($disabledAddRowButton);
+				}
+
+				echo $addButton->render(false);
+
+				if (!$arResult['IS_EXTERNAL_CATALOG'])
+				{
+					$selectButton = \Bitrix\UI\Buttons\Button::create([
+						'text' => Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT'),
+						'size' => \Bitrix\UI\Buttons\Size::MEDIUM,
+						'air' => true,
+						'style' => \Bitrix\UI\Buttons\AirButtonStyle::OUTLINE,
+					])
+						->addAttribute('title', Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE'))
+						->addAttribute('data-role', 'product-list-select-button')
+						->addAttribute('tabindex', '-1');
+
+					if ($disabledSelectProductButton)
+					{
+						$selectButton
+							->addAttribute('data-hint', Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED'))
+							->addAttribute('data-hint-no-icon')
+							->setDisabled($disabledAddRowButton);
+					}
+
+					echo $selectButton->render(false);
+				}
 				?>
-				<a class="ui-btn ui-btn-primary <?=$disabledAddRowButton ? $lockedClasses : ''?>"
-						data-role="product-list-add-button"
-						title="<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT_TITLE')?>"
-						tabindex="-1"
-						<?=$disabledAddRowButton ? $buttonHintAttributes : ''?>
-				>
-					<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT')?>
-				</a>
-				<?php if (!$arResult['IS_EXTERNAL_CATALOG']): ?>
-				<a class="ui-btn ui-btn-light-border <?=$disabledSelectProductButton ? $lockedClasses : ''?>"
-				   data-role="product-list-select-button"
-				   title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
-				   tabindex="-1"
-					<?=$disabledSelectProductButton ? $buttonHintAttributes : ''?>
-				>
-					<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT')?>
-				</a>
-				<?php endif; ?>
 			</div>
-			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting"
-					data-role="product-list-settings-button"></button>
+			<div class="crm-entity-product-list-setting-button"
+				data-role="product-list-settings-button"
+			>
+				<div class="ui-icon-set --more-l" style="margin: unset"></div>
+			</div>
 		</div>
 		<?php
 	}
@@ -768,27 +793,11 @@ foreach ($rows as $key => $row)
 		<div class="<?=$buttonBottomPanelClasses?>">
 			<div>
 				<?php
-				$lockedClasses = 'ui-btn-icon-lock ui-btn-disabled';
-				$buttonHintAttributes = 'data-hint="' . Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED') . '" data-hint-no-icon';
-				?>
-				<a class="ui-btn ui-btn-primary <?=$disabledAddRowButton ? $lockedClasses : ''?>"
-				   data-role="product-list-add-button"
-				   title="<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT_TITLE')?>"
-				   tabindex="-1"
-					<?=$disabledAddRowButton ? $buttonHintAttributes : ''?>
-				>
-					<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT')?>
-				</a>
-				<?php if (!$arResult['IS_EXTERNAL_CATALOG']): ?>
-				<a class="ui-btn ui-btn-light-border <?=$disabledSelectProductButton ? $lockedClasses : ''?>"
-				   data-role="product-list-select-button"
-				   title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
-				   tabindex="-1"
-					<?=$disabledSelectProductButton ? $buttonHintAttributes : ''?>
-				>
-					<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT')?>
-				</a>
-				<?php endif; ?>
+				echo $addButton->render(false);
+				if (!$arResult['IS_EXTERNAL_CATALOG'])
+				{
+					echo $selectButton->render(false);
+				}?>
 			</div>
 			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting"
 					data-role="product-list-settings-button"></button>

@@ -1,5 +1,7 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "Сіздің статистиканы көруге құқығыңыз жеткіліксіз";
+$MESS["OL_COMPONENT_COUNT_ROW_ALL"] = "Барлығы";
+$MESS["OL_COMPONENT_COUNT_ROW_SHOW"] = "Санын көрсету";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "\"Сыртқы мессенджерлерге арналған коннекторлар\" модулі орнатылмаған";
 $MESS["OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE"] = "Ашық желі диалогтарының пайдаланушы өрістері";
 $MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Сіз мұны шынымен жасағыңыз келе ме?";

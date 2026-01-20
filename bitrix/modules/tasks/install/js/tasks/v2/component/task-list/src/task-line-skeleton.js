@@ -1,33 +1,22 @@
-import { BLine } from 'ui.system.skeleton.vue';
-
+import { BLine, BCircle } from 'ui.system.skeleton.vue';
 import './task-line.css';
 
+// @vue/component
 export const TaskLineSkeleton = {
 	components: {
 		BLine,
+		BCircle,
 	},
 	props: {
-		last: {
-			type: Boolean,
-			default: false,
+		fields: {
+			type: Set,
+			required: true,
 		},
 	},
 	template: `
-		<div class="tasks-task-line-container" :class="{ '--last': last }">
-			<div class="tasks-task-line-wrapper">
-				<div class="tasks-task-line-title-container">
-					<BLine :width="200" :height="10"/>
-				</div>
-				<div class="tasks-task-line-fields-container">
-					<div class="tasks-task-line-skeleton-avatar">
-						<BLine circle :width="25" :height="25" :radius="25"/>
-					</div>
-					<div class="tasks-task-line-deadline">
-						<BLine :width="80" :height="10"/>
-					</div>
-				</div>
-				<div class="tasks-task-line-cross"/>
-			</div>
-		</div>
+		<BLine :width="200" :height="10"/>
+		<BCircle v-if="fields.size === 2" :size="25"/>
+		<BLine :width="70" :height="10" style="margin: 0 10px"/>
+		<div style="width: 20px"/>
 	`,
 };

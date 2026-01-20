@@ -1,3 +1,4 @@
+import 'voximplant';
 import { PhoneCallsController } from './controller';
 import { PhoneCallView } from './view/view';
 import { FoldedCallView } from './view/folded-view';

@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 	const { Type } = require('type');
+	const { mergeImmutable } = require('utils/object');
 	const { validate } = require('im/messenger/model/anchor/validator');
 	const { AnchorType } = require('im/messenger/const');
 
@@ -93,7 +94,11 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 			},
 		},
 		actions: {
-			/** @function anchorModel/setState */
+			/**
+			 * @function anchorModel/setState
+			 * @param store
+			 * @param {Array<AnchorModelState>} payload
+			 */
 			setState: (store, payload) => {
 				const anchors = payload.map((anchor) => validate(anchor));
 
@@ -105,7 +110,11 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function anchorModel/add */
+			/**
+			 * @function anchorModel/add
+			 * @param store
+			 * @param {AnchorModelState} payload
+			 */
 			add: (store, payload) => {
 				const anchor = validate(payload);
 
@@ -124,7 +133,11 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function anchorModel/delete */
+			/**
+			 * @function anchorModel/delete
+			 * @param store
+			 * @param {AnchorModelState} payload
+			 */
 			delete: (store, payload) => {
 				const anchor = validate(payload);
 
@@ -136,7 +149,39 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function anchorModel/deleteByChatId */
+			/**
+			 * @function anchorModel/updateByAuthorId
+			 * @param store
+			 * @param {AnchorModelState} payload
+			 */
+			updateByAuthorId: (store, payload) => {
+				const { chatId } = payload;
+				if (!chatId)
+				{
+					return;
+				}
+
+				const anchorsInStore = store.state.collection[chatId];
+				if (!Type.isArrayFilled(anchorsInStore))
+				{
+					return;
+				}
+
+				const anchor = validate(payload);
+
+				store.commit('updateByAuthorId', {
+					actionName: 'updateByAuthorId',
+					data: {
+						anchor,
+					},
+				});
+			},
+
+			/**
+			 * @function anchorModel/deleteByChatId
+			 * @param store
+			 * @param {{ chatId: number }} payload
+			 */
 			deleteByChatId: (store, payload) => {
 				const { chatId } = payload;
 
@@ -154,7 +199,11 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function anchorModel/deleteByMessageId */
+			/**
+			 * @function anchorModel/deleteByMessageId
+			 * @param store
+			 * @param {{ messageId: number }} payload
+			 */
 			deleteByMessageId: (store, payload) => {
 				const { messageId } = payload;
 
@@ -170,7 +219,11 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function anchorModel/deleteByMessageIdList */
+			/**
+			 * @function anchorModel/deleteByMessageIdList
+			 * @param store
+			 * @param {{chatId: number, messageIdList: Array<number>}} payload
+			 */
 			deleteByMessageIdList: (store, payload) => {
 				const { chatId, messageIdList } = payload;
 
@@ -189,6 +242,61 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 
 				store.commit('deleteMany', {
 					actionName: 'deleteByMessageIdList',
+					data: {
+						anchorList: anchorsToDelete,
+					},
+				});
+			},
+
+			/** @function anchorModel/clear */
+			clear: (store) => {
+				const anchorsToDelete = [];
+
+				const anchorCollection = store.state.collection;
+				Object.values(anchorCollection).forEach((chatAnchors) => {
+					anchorsToDelete.push(...chatAnchors);
+				});
+
+				if (!Type.isArrayFilled(anchorsToDelete))
+				{
+					return;
+				}
+
+				store.commit('deleteMany', {
+					actionName: 'clear',
+					data: {
+						anchorList: anchorsToDelete,
+					},
+				});
+			},
+
+			/**
+			 * @function anchorModel/clearByDialogType
+			 * @param store
+			 * @param {{ dialogType: DialogType }} payload
+			 */
+			clearByDialogType: (store, payload) => {
+				const { dialogType } = payload;
+
+				const anchorsToDelete = [];
+
+				const anchorCollection = store.state.collection;
+				const chatIdList = Object.keys(anchorCollection).map((chatId) => Number(chatId));
+				const dialogList = store.rootGetters['dialoguesModel/getByChatIdList'](chatIdList);
+				dialogList.forEach((dialog) => {
+					if (dialog.type === dialogType)
+					{
+						anchorsToDelete.push(...anchorCollection[dialog.chatId]);
+					}
+				});
+
+				if (!Type.isArrayFilled(anchorsToDelete))
+				{
+					return;
+				}
+
+				store.commit('deleteMany', {
+					actionName: 'clearByDialogType',
 					data: {
 						anchorList: anchorsToDelete,
 					},
@@ -236,6 +344,30 @@ jn.define('im/messenger/model/anchor/model', (require, exports, module) => {
 				}
 
 				state.collection[anchor.chatId].push(anchor);
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<AnchorUpdateByAuthorIdData, AnchorUpdateByAuthorIdAction>} payload
+			 */
+			updateByAuthorId: (state, payload) => {
+				logger.log('anchorModel: updateByKey mutation', payload);
+
+				const {
+					anchor,
+				} = payload.data;
+
+				const anchorsInStore = state.collection[anchor.chatId];
+				const index = anchorsInStore.findIndex((anchorInStore) => {
+					return anchorInStore.fromUserId === anchor.fromUserId && anchorInStore.messageId === anchor.messageId;
+				});
+
+				if (index === -1)
+				{
+					return;
+				}
+
+				anchorsInStore[index] = mergeImmutable(anchorsInStore[index], anchor);
 			},
 
 			/**

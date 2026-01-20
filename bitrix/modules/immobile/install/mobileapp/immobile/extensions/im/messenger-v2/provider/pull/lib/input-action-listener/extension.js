@@ -51,6 +51,7 @@ jn.define('im/messenger-v2/provider/pull/lib/input-action-listener', (require, e
 					this.getStore().dispatch('dialoguesModel/removeInputAction', { ...actionData });
 					delete this.#inputActionWorkers[timerId];
 				},
+				context: `inputActionWorkers timerId: ${timerId}`,
 			});
 
 			this.#inputActionWorkers[timerId].startOnce();

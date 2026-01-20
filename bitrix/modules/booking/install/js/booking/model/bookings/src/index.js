@@ -8,4 +8,5 @@ export type {
 	OverbookingResourceIntersections,
 	BookingCounter,
 	MessageModel,
+	SkuModel,
 } from './types';

@@ -66,17 +66,6 @@ if (
 			case 'reset_domain_url':
 				$server->getConfigs()->resetUrl();
 				break;
-			case 'reset_migration':
-				Baas\Internal\Diag\Logger::getInstance()->info('Migration is set');
-				Baas\Repository\ConsumptionRepository::getInstance()->resetLogForMigration();
-				$client->setConsumptionsLogMigrated(false);
-
-				\Bitrix\Main\Update\Stepper::bindClass(
-					Baas\Integration\Main\LogsMigrationStepper::class,
-					'baas',
-					10,
-				);
-				break;
 			case 'save':
 			case 'saveAndRegister':
 					$baasServerUrl = $request->getPost('baas_server_url');

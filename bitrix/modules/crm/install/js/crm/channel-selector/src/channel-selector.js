@@ -4,6 +4,8 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Menu, MenuItem, MenuManager } from 'main.popup';
 import 'ui.icons.service';
+import { AirButtonStyle, Button, ButtonSize, ButtonIcon } from 'ui.buttons';
+import { Icon, Outline } from 'ui.icon-set.api.core';
 import { Menu as MenuConfigurable } from 'ui.menu-configurable';
 import 'ui.notification';
 
@@ -41,7 +43,8 @@ export type ChannelSelectorParameters = {
 	hasVisibleChannels: boolean,
 	channelIcons: Array<string>,
 	contactCenterUrl: ?string,
-	templateCode?: string,
+	messageSenderSceneId?: string,
+	analytics: Object,
 };
 
 export type ChannelData = {
@@ -51,9 +54,9 @@ export type ChannelData = {
 	isAvailable: boolean,
 	isHidden: ?boolean,
 	icon: ?string,
-	templateCode?: string,
-	templatePlaceholders?: Object<string, string>,
+	signedTemplate?: string,
 	categoryTitle?: string,
+	status?: string,
 }
 
 export type CommunicationData = {
@@ -100,11 +103,12 @@ export class List extends EventEmitter
 	#getLinkPromise: ?Promise;
 	#menu: Menu;
 	#menuConfigurable: MenuConfigurable;
+	#analytics: Object;
 
 	constructor(parameters: ChannelSelectorParameters)
 	{
 		super();
-		this.title = Type.isStringFilled(parameters.title) ? parameters.title : Loc.getMessage('CRM_CHANNEL_SELECTOR_DEFAULT_TITLE');
+		this.title = Type.isStringFilled(parameters.title) ? parameters.title : Loc.getMessage('CRM_CHANNEL_SELECTOR_DEFAULT_TITLE_MSGVER_1');
 		this.documentTitle = String(parameters.documentTitle);
 		this.body = String(parameters.body);
 		this.fullBody = String(parameters.fullBody);
@@ -119,7 +123,6 @@ export class List extends EventEmitter
 		this.smsUrl = String(parameters.smsUrl);
 		this.isCombineMessageWithLink = Type.isBoolean(parameters.isCombineMessageWithLink) ? parameters.isCombineMessageWithLink : true;
 		this.#isInsertLinkInMessage = Type.isBoolean(parameters.isInsertLinkInMessage) ? parameters.isInsertLinkInMessage : false;
-		this.templateCode = parameters.templateCode ?? null;
 		this.setChannels(parameters.channels);
 		this.communications = Type.isPlainObject(parameters.communications) ? parameters.communications : {};
 		this.hasVisibleChannels = Text.toBoolean(parameters.hasVisibleChannels);
@@ -128,6 +131,8 @@ export class List extends EventEmitter
 		this.layout = {
 			channels: {},
 		};
+		this.messageSenderSceneId = String(parameters.messageSenderSceneId);
+		this.#analytics = parameters.analytics;
 		this.setEventNamespace('BX.Crm.ChannelSelector.List');
 
 		if (items.size === 0)
@@ -160,13 +165,21 @@ export class List extends EventEmitter
 		if (this.#link || this.isLinkObtainable)
 		{
 			this.layout.link = Tag.render`<input type="text" class="crm__channel-selector--footer-link-hidden" value="${Text.encode(this.#link)}" />`
-			// class="crm__channel-selector--footer --disabled"
-			this.layout.footer = Tag.render`<div class="crm__channel-selector--footer" onclick="${this.#handleFooterClick.bind(this)}">
-				<div class="crm__channel-selector--footer-copy-link">
-					<span class="crm__channel-selector--footer-text">${Loc.getMessage('CRM_CHANNEL_FOOTER_TITLE')}</span>
-					${this.layout.link}
+			const copyLinkButton = (new Button({
+				size: ButtonSize.LARGE,
+				style: AirButtonStyle.OUTLINE,
+				useAirDesign: true,
+				icon: ButtonIcon.COPY,
+				wide: true,
+				text: Loc.getMessage('CRM_CHANNEL_FOOTER_TITLE'),
+				onclick: () => this.#handleFooterClick(),
+			})).getContainer();
+
+			this.layout.footer = Tag.render`
+				<div class="crm__channel-selector--footer">
+					${copyLinkButton}
 				</div>
-			</div>`
+			`;
 		}
 		else
 		{
@@ -176,7 +189,12 @@ export class List extends EventEmitter
 		this.layout.settings = null;
 		if (this.hasVisibleChannels)
 		{
-			this.layout.settings = Tag.render`<button class="ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting crm__channel-selector--setting-btn" onclick="${this.#handleSettingsClick.bind(this)}"></button>`;
+			const icon = (new Icon({
+				icon: Outline.SETTINGS,
+				size: 19,
+			})).render();
+
+			this.layout.settings = Tag.render`<div class="crm__channel-selector--setting-btn" onclick="${this.#handleSettingsClick.bind(this)}">${icon}</div>`;
 			this.layout.list = Tag.render`<div class="crm__channel-selector--list"></div>`;
 
 			this.channels.forEach((channel: ChannelData) => {
@@ -224,6 +242,11 @@ export class List extends EventEmitter
 		const channelHandler = (() => {
 			this.#handleChannelClick(channel);
 		});
+		const chevronIcon = (new Icon({
+			icon: Outline.CHEVRON_RIGHT_M,
+			size: 24,
+			color: 'var(--crm-channel-selector-chevron-color)',
+		})).render();
 
 		const icon = List.getChannelIcon(channel);
 
@@ -232,11 +255,11 @@ export class List extends EventEmitter
 			onclick="${channelHandler}"
 		>
 			${(icon ? Tag.render`<div class="crm__channel-selector--channel-icon ${icon}"></div>` : '')}
-			${this.renderChannelMainTitle(channel)}
-			${this.renderChannelTitle(channel)}
-			<div class="crm__channel-selector--channel-helper">
-				<span class="crm__channel-selector--channel-helper-text">${Loc.getMessage('CRM_CHANNEL_SELECTOR_SEND_BUTTON')}</span>
+			<div class="crm__channel-selector--channel-content">
+				${this.renderChannelMainTitle(channel)}
+				${this.renderChannelTitle(channel)}
 			</div>
+			<div class="crm__channel-selector--channel-helper">${chevronIcon}</div>
 		</div>`;
 	}
 
@@ -249,14 +272,21 @@ export class List extends EventEmitter
 
 	renderChannelTitle(channel: ChannelData): ?HTMLElement
 	{
-		if (!channel.categoryTitle)
+		const text = channel.categoryTitle ? channel.title : channel.status;
+
+		if (!text)
 		{
 			return null;
 		}
 
-		return Tag.render`<div class="crm__channel-selector--channel-title">
-			${Text.encode(channel.title)}
-		</div>`;
+		return Tag.render`
+			<div 
+				class="crm__channel-selector--channel-title" 
+				style="${channel.type === 'IM' && channel.isAvailable ? 'color: var(--ui-color-accent-main-primary);' : ''}"
+			>
+				${Text.encode(text)}
+			</div>
+		`;
 	}
 
 	adjustAppearance(): void
@@ -372,17 +402,40 @@ export class List extends EventEmitter
 		return this.#getLinkPromise;
 	}
 
+	#getSignedTemplate(channel): Promise<string>
+	{
+		if (channel.signedTemplate)
+		{
+			return Promise.resolve(channel.signedTemplate);
+		}
+
+		return new Promise((resolve, reject) => {
+			this.#showLoader();
+			this.emitAsync('getSignedTemplate').then((result) => {
+				const signedParams = result[0]
+
+				if (!signedParams)
+				{
+					reject();
+				}
+				else
+				{
+					resolve(signedParams);
+				}
+			}).catch(reject)
+			.finally(() => {
+				this.#hideLoader();
+			});
+		});
+	}
+
 	#handleFooterClick(): void
 	{
-		if (!this.layout.link)
-		{
-			return;
-		}
 		this.#getLink().then((link) => {
-			this.layout.link.value = link;
-			this.layout.link.focus();
-			this.layout.link.setSelectionRange(0, this.layout.link.value.length);
-			document.execCommand("copy");
+			if (BX.clipboard.isCopySupported() && this.#link)
+			{
+				BX.clipboard.copy(link);
+			}
 
 			this.#showNotice(Loc.getMessage('CRM_CHANNEL_PUBLIC_LINK_COPIED_NOTIFICATION_MESSAGE'));
 		}).catch((reason: ?string) => {
@@ -658,20 +711,22 @@ export class List extends EventEmitter
 				providerId: channel.id,
 				isProviderFixed: 'N',
 				canUseBitrix24Provider: 'Y',
+				messageSenderSceneId: this.messageSenderSceneId,
+				analytics: this.#analytics,
 			};
 
-			if (channel.templateCode)
-			{
-				requestParams.templateCode = channel.templateCode;
-				requestParams.templatePlaceholders = channel.templatePlaceholders;
-				requestParams.templatePlaceholders.DOCUMENT_URL = link;
-				requestParams.isEditable = 'N';
-			}
-
-			Router.openSlider(this.smsUrl, {
-				width: 443,
-				requestMethod: 'post',
-				requestParams,
+			this.#getSignedTemplate(channel).then((signedTemplate) => {
+				if (signedTemplate)
+				{
+					requestParams.signedTemplate = signedTemplate;
+					requestParams.isEditable = 'N';
+				}
+			}).catch().finally(() => {
+				Router.openSlider(this.smsUrl, {
+					width: 900,
+					requestMethod: 'post',
+					requestParams,
+				});
 			});
 		}).catch((reason) => {
 			this.#showGetLinkErrorNotification(channelNode, reason);

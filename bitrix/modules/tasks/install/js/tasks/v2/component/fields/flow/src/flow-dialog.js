@@ -1,44 +1,36 @@
 import { Extension, Runtime } from 'main.core';
 
-import { EmptyStub, Footer } from 'tasks.flow.entity-selector';
 import { Core } from 'tasks.v2.core';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { FlowModel } from 'tasks.v2.model.flows';
-import type { GroupModel } from 'tasks.v2.model.groups';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+
+type Params = {
+	targetNode: HTMLElement,
+	taskId: number | string,
+	onClose: Function,
+};
 
 class FlowDialog
 {
-	#taskId: number | string;
 	#dialog: EntitySelectorDialog;
-	#onUpdateOnce: Function | null = null;
+	#taskId: number | string;
+	#onClose: Function | null;
 
-	setTaskId(taskId: number | string): FlowDialog
+	show(params: Params): void
 	{
-		this.#taskId = taskId;
+		this.#taskId = params.taskId;
+		this.#onClose = params.onClose;
 
-		return this;
-	}
-
-	showTo(targetNode: HTMLElement): void
-	{
 		this.#dialog ??= this.#createDialog();
 		this.#dialog.selectItemsByIds(this.#items);
-		this.#dialog.showTo(targetNode);
-	}
-
-	onUpdateOnce(callback: Function): void
-	{
-		this.#onUpdateOnce = callback;
+		this.#dialog.showTo(params.targetNode);
 	}
 
 	#createDialog(): EntitySelectorDialog
 	{
-		const onItemChangeDebounced = Runtime.debounce(this.#onItemChange, 10, this);
-
 		const dialog = new EntitySelectorDialog({
 			context: 'tasks-card',
 			width: 380,
@@ -56,88 +48,69 @@ class FlowDialog
 			],
 			preselectedItems: this.#items,
 			events: {
-				'Item:onSelect': onItemChangeDebounced,
-				'Item:onDeselect': onItemChangeDebounced,
-				onHide: this.#clearOnUpdateOnce,
-				onDestroy: this.#clearOnUpdateOnce,
+				onLoad: this.#fillStore,
 			},
-			recentTabOptions: {
-				stub: EmptyStub,
-				stubOptions: {
-					showArrow: false,
+			popupOptions: {
+				events: {
+					onClose: async (): Promise<void> => {
+						const flow = await this.#fillStore();
+
+						if (flow)
+						{
+							const { id: flowId, templateId, groupId } = flow;
+							groupService.setHasScrumInfo(this.#taskId);
+							void taskService.update(this.#taskId, { flowId, templateId, groupId, stageId: 0 });
+						}
+
+						this.#onClose?.();
+					},
 				},
 			},
 		});
 
-		if (Core.getParams().rights?.flow?.create)
+		if (Core.getParams().rights.flow.create)
 		{
 			const isFeatureTriable = Extension.getSettings('tasks.v2.component.fields.flow').get('isFeatureTriable');
 
-			const footer = new Footer(dialog, {
-				isFeatureTriable,
+			void Runtime.loadExtension('tasks.flow.entity-selector').then(({ EmptyStub, Footer }) => {
+				dialog.setFooter(new Footer(dialog, { isFeatureTriable }).render());
+				dialog.getRecentTab().getStub().hide();
+				dialog.getRecentTab().setStub(EmptyStub, { showArrow: false });
+				dialog.getRecentTab().render();
 			});
-			dialog.setFooter(footer.render());
 		}
 
 		return dialog;
 	}
 
-	async #onItemChange(): void
-	{
+	#fillStore = async (): Promise<?FlowModel> => {
 		const item = this.#dialog.getSelectedItems()[0];
-		const groupId = item?.getCustomData().get('groupId');
-		if (item)
+		if (!item)
 		{
-			this.#insertFlow({
-				id: item.getId(),
-				name: item.getTitle(),
-			});
-
-			const group: GroupModel | undefined = Core.getStore().getters[`${Model.Groups}/getById`](groupId);
-			if (!group)
-			{
-				await groupService.getGroup(groupId);
-			}
+			return null;
 		}
 
-		this.#updateFlow(item?.getId() ?? 0, groupId ?? 0);
-	}
+		const flow = {
+			id: item.getId(),
+			name: item.getTitle(),
+			groupId: item.getCustomData().get('groupId'),
+			templateId: item.getCustomData().get('templateId'),
+		};
+
+		if (!Core.getStore().getters[`${Model.Groups}/getById`](flow.groupId))
+		{
+			await groupService.getGroup(flow.groupId);
+		}
+
+		await Core.getStore().dispatch(`${Model.Flows}/insert`, flow);
+
+		return flow;
+	};
 
 	get #items(): ItemId[]
 	{
-		return [[EntitySelectorEntity.Flow, this.#task.flowId]];
+		return [[EntitySelectorEntity.Flow, taskService.getStoreTask(this.#taskId).flowId]];
 	}
-
-	get #task(): TaskModel
-	{
-		return Core.getStore().getters[`${Model.Tasks}/getById`](this.#taskId);
-	}
-
-	#insertFlow(flow: FlowModel): void
-	{
-		void Core.getStore().dispatch(`${Model.Flows}/insert`, flow);
-	}
-
-	#updateFlow(flowId: number, groupId: number): void
-	{
-		const creatorId = Core.getStore().getters[`${Model.Interface}/currentUserId`];
-		void taskService.update(
-			this.#taskId,
-			{
-				creatorId,
-				flowId,
-				groupId,
-				stageId: 0,
-			},
-		);
-
-		this.#onUpdateOnce?.();
-		this.#clearOnUpdateOnce();
-	}
-
-	#clearOnUpdateOnce = (): void => {
-		this.#onUpdateOnce = null;
-	};
 }
 
 export const flowDialog = new FlowDialog();

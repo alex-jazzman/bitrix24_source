@@ -34,6 +34,9 @@
 				}
 		};
 
+	const { AnalyticsEvent } = require('analytics');
+	const { Analytics, DialogType, EventType } = require('call/const');
+
 	const icons = {
 		crossIcon: '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.614216 8.60998C0.399428 8.82477 0.399428 9.17301 0.614216 9.3878C0.829004 9.60259 1.17725 9.60259 1.39203 9.3878L5.00297 5.77686L8.61432 9.38822C8.82911 9.603 9.17735 9.603 9.39214 9.38822C9.60693 9.17343 9.60693 8.82519 9.39214 8.6104L5.78079 4.99904L9.3917 1.38813C9.60649 1.17334 9.60649 0.825098 9.3917 0.61031C9.17691 0.395522 8.82867 0.395522 8.61388 0.61031L5.00297 4.22123L1.39254 0.610793C1.17775 0.396004 0.829508 0.396004 0.614719 0.610793C0.399931 0.825581 0.399931 1.17382 0.614719 1.38861L4.22515 4.99905L0.614216 8.60998Z" fill="#FF5752"/></svg>',
 		checkIcon: '<svg width="15" height="12" viewBox="0 0 15 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.2295 1.11113C14.4438 1.32637 14.4431 1.67461 14.2279 1.88895L5.1898 10.8889C4.9752 11.1026 4.62822 11.1026 4.41362 10.8889L0.310346 6.80286C0.0951072 6.58852 0.0943763 6.24028 0.308713 6.02504C0.52305 5.8098 0.87129 5.80907 1.08653 6.02341L4.80172 9.72303L13.4517 1.10949C13.6669 0.895156 14.0152 0.89589 14.2295 1.11113Z" fill="#1BCE7B"/> </svg>',
@@ -107,6 +110,7 @@
 			this.positions = {};
 			this.buttonRefs = {};
 			this.isPaused = true;
+			this.viewedTabs = [];
 
 			this.state = {
 				result: {},
@@ -164,7 +168,8 @@
 
 		renderHeader()
 		{
-			const score = this.state.result.aiOutcome.overview?.efficiencyValue;
+			const aiOutcome = this.state?.result?.aiOutcome;
+			const score = aiOutcome?.evaluation?.efficiencyValue ?? aiOutcome?.overview?.efficiencyValue;
 			const date = new Date(this.state.result.call.startDate);
 
 			const entities = Object.values(this.state.users).map((user) => (
@@ -205,7 +210,7 @@
 					},
 					View(
 						{},
-						score && View(
+						View(
 							{
 								style: {
 									display: 'flex',
@@ -218,8 +223,8 @@
 								text: BX.message('CALL_COMPONENT_EFFICIENCY'),
 							}),
 							Text({
-								style: { fontSize: 15, color: getScoreColor(75), fontWeight: '400', marginRight: 5 },
-								text: `${score}%`,
+								style: { fontSize: 15, color: getScoreColor(score), fontWeight: '400', marginRight: 5 },
+								text: `${score >= 0 ? score : 0}%`,
 							}),
 							Text({
 								style: { fontSize: 15, color: Color.base1.toHex(), fontWeight: '600', marginRight: 5 },
@@ -336,17 +341,43 @@
 			bottomSheet.open();
 		}
 
+		prepareEfficiencyViews()
+		{
+			const aiOutcome = this.state?.result?.aiOutcome;
+			if (!aiOutcome) return [];
+
+			if (aiOutcome.version === 1)
+			{
+				const efficiency = aiOutcome.overview?.efficiency;
+				return Object.entries(efficiency ?? {})
+					.filter(([key, value]) => key !== 'type')
+					.map(([key, value]) => (
+						this.renderCheckRow(value, BX.message(AI_OUTCOME_VALUES[key]))
+					));
+			}
+
+			if (aiOutcome.version === 2)
+			{
+				const efficiency = aiOutcome.evaluation;
+				return Object.entries(efficiency ?? {})
+					.filter(([key, value]) => key !== 'efficiencyValue')
+					.map(([key, item]) => (
+						this.renderCheckRow(item.value, item.title)
+					));
+			}
+
+			return [];
+		}
+
 		renderCopilotScore()
 		{
-			const efficiency = this.state.result.aiOutcome.overview?.efficiency;
-			const efficiencyViews = Object.entries(efficiency ?? {})
-				.filter(([key, value]) => key !== 'type')
-				.map(([key, value]) => (
-					this.renderCheckRow(value, BX.message(AI_OUTCOME_VALUES[key]))
-				));
+			const efficiencyViews = this.prepareEfficiencyViews();
 
-			const score = this.state.result.aiOutcome.overview?.efficiencyValue;
-			const meetingType = this.state.result.aiOutcome.overview?.meetingDetails?.type;
+			const aiOutcome = this.state?.result?.aiOutcome;
+			const score = aiOutcome?.evaluation?.efficiencyValue ?? aiOutcome?.overview?.efficiencyValue;
+			const meetingType = aiOutcome.version === 1
+				? aiOutcome?.overview?.meetingDetails?.type
+				: aiOutcome?.overview?.meetingType?.title;
 
 			return View(
 				{
@@ -362,11 +393,11 @@
 					}
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS')),
-				score && View(
+				View(
 					{
 						style: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between' },
 					},
-					new EfficiencyScore({ score: score }),
+					new EfficiencyScore({ score: score >= 0 ? score : 0 }),
 					View(
 						{
 							style: {
@@ -804,6 +835,14 @@
 				.catch((error) => {
 					Alert.alert(error);
 				});
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.AnalyticsTool.im)
+				.setCategory(Analytics.AnalyticsCategory.callFollowup)
+				.setEvent(Analytics.AnalyticsEvent.openSlider)
+				.setP5(`callId_${callId}`);
+
+			analytics.send();
 		}
 
 		getUsersData()
@@ -841,16 +880,41 @@
 			const btnPos = this.tabsRef.getPosition(this.buttonRefs[this.activeTab]);
 			this.tabsRef.scrollTo({ x: btnPos.x - 10, y: btnPos.y, animated: true });
 			this.setState({});
+
+			if (!this.viewedTabs.includes(this.activeTab))
+			{
+				const callId = BX.componentParameters.get('callId');
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.AnalyticsTool.im)
+					.setCategory(Analytics.AnalyticsCategory.callFollowup)
+					.setEvent(Analytics.AnalyticsEvent.openTab)
+					.setType(Analytics.AnalyticsType[activeName])
+					.setP5(`callId_${callId}`);
+
+				this.viewedTabs.push(this.activeTab);
+
+				analytics.send();
+
+			}
 		}
 
 		render()
 		{
-			const agreements = this.state.result.aiOutcome.overview?.agreements;
-			const tasks = this.state.result.aiOutcome.overview?.tasks;
-			const meetings = this.state.result.aiOutcome.overview?.meetings;
-			const insights = this.state.result.aiOutcome.insights?.insights;
-			const tracks = this.state.result.tracks?.[0];
-			const trackUrl = tracks?.url;
+			if (!this.state.result.aiOutcome)
+			{
+				return;
+			}
+
+			const { aiOutcome, tracks } = this.state.result;
+			const { overview, insights: insightsData, version } = aiOutcome;
+
+			const agreements = overview?.agreements;
+			const tasks = overview?.tasks;
+			const meetings = overview?.meetings;
+			const insights = version === 1
+				? insightsData?.insights
+				: insightsData?.speakerAnalysis;
+			const trackUrl = tracks?.[0]?.url;
 			const hasSummary = agreements || tasks || meetings;
 
 			const tabs = ScrollView(
@@ -911,7 +975,7 @@
 						let activeTabName = null;
 						let minDistance = Infinity;
 
-						for (const [title, { name }] of this.tabs.entries())
+						for (const [title, { name, analyticsName }] of this.tabs.entries())
 						{
 							const pos = this.positions[name];
 							if (!pos) continue;
@@ -941,7 +1005,7 @@
 					this.renderAgreement(),
 					this.renderCopilotScore(),
 					hasSummary && this.renderSummary(agreements, tasks, meetings),
-					insights && this.renderAnalysis(insights),
+					insights?.length > 0 && this.renderAnalysis(insights),
 					this.renderResume(trackUrl),
 					this.renderTranscribation(trackUrl),
 				)

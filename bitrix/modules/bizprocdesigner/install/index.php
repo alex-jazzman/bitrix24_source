@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\BizProcDesigner\Internal\Integration\AiAssistant\Install\TriggerRegisterAgent;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -30,6 +31,7 @@ Class bizprocdesigner extends CModule
 	function InstallDB($install_wizard = true)
 	{
 		RegisterModule("bizprocdesigner");
+		$this->installAgents();
 
 		return true;
 	}
@@ -38,15 +40,38 @@ Class bizprocdesigner extends CModule
 	{
 		UnRegisterModule("bizprocdesigner");
 
+		\CAgent::RemoveModuleAgents('bizprocdesigner');
+
 		return true;
 	}
 
 	function InstallEvents()
 	{
+		RegisterModuleDependences("pull", "OnGetDependentModule", "bizprocdesigner", "\\Bitrix\\BizprocDesigner\\Internal\\Integration\\Pull\\BizprocDesignerPullManager", "OnGetDependentModule");
+		\Bitrix\Main\EventManager::getInstance()
+			 ->registerEventHandler(
+				 'main',
+				 'OnAfterRegisterModule',
+				 'bizprocdesigner',
+				 '\Bitrix\BizprocDesigner\Internal\Integration\Main\EventHandler',
+				 'onAfterRegisterModule',
+			 )
+		;
 	}
 
 	function UnInstallEvents()
 	{
+		UnRegisterModuleDependences("pull", "OnGetDependentModule", "bizprocdesigner", "\\Bitrix\\BizprocDesigner\\Internal\\Integration\\Pull\\BizprocDesignerPullManager", "OnGetDependentModule");
+		\Bitrix\Main\EventManager::getInstance()
+			 ->unRegisterEventHandler(
+				 'main',
+				 'OnAfterRegisterModule',
+				 'bizprocdesigner',
+				 '\Bitrix\BizprocDesigner\Internal\Integration\Main\EventHandler',
+				 'onAfterRegisterModule',
+			 )
+		;
+
 		return true;
 	}
 
@@ -55,6 +80,13 @@ Class bizprocdesigner extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizprocdesigner/install/js',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/js',
+			true,
+			true,
+		);
+
 		return true;
 	}
 
@@ -67,6 +99,10 @@ Class bizprocdesigner extends CModule
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools");
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/components/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix");
+		DeleteDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizprocdesigner/install/js',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/js',
+		);
 
 		return true;
 	}
@@ -111,6 +147,25 @@ Class bizprocdesigner extends CModule
 
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("BIZPROC_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizprocdesigner/install/unstep2.php");
 		}
+	}
+
+	private function installAgents(): void
+	{
+		\CAgent::AddAgent(
+			name: 'Bitrix\BizProcDesigner\Internal\Integration\AiAssistant\Install\TriggerRegisterAgent::execute();',
+			module: $this->MODULE_ID,
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL'),
+			existError: false,
+		);
+
+		\CAgent::AddAgent(
+			name: 'Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\Service\SemanticSearch\Indexer\DocumentFieldsAgent::run();',
+			module: $this->MODULE_ID,
+			period: 'Y',
+			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+			existError: false,
+		);
 	}
 }
 ?>

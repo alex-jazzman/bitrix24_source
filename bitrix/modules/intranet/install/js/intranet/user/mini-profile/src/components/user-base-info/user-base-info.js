@@ -159,6 +159,7 @@ export const UserBaseInfo = {
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
 						<UserStatusDescription v-if="info.status"
+							:personalGender="info.personalGender"   
 							:status="info.status"
 							data-test-id="usermp_status-description"
 						/>

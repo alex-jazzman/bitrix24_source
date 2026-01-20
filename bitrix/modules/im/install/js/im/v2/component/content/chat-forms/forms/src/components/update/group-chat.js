@@ -1,4 +1,3 @@
-import { EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
@@ -20,6 +19,7 @@ import { ChatMemberDiffManager } from '../../classes/chat-member-diff-manager';
 import { getCollapsedUsersElement, type TagSelectorElement } from '../../helpers/get-collapsed-users-element';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 type UserRoleItem = $Keys<typeof UserRole>;
@@ -246,10 +246,6 @@ export const GroupChatUpdating = {
 
 			return this.chatService;
 		},
-		loc(phraseCode: string, replacements: {[string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-		},
 		async onCollapsedUsersClick()
 		{
 			const confirmResult = await showExitUpdateChatConfirm(this.dialogId);
@@ -260,10 +256,18 @@ export const GroupChatUpdating = {
 
 			await this.onUpdateClick();
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.members,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string, replacements: {[string]: string} = {}): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `

@@ -1,13 +1,9 @@
-import { Loader as UILoader } from 'ui.loader';
+import { LoaderFactory } from './internal/loader-factory';
+import { LoaderType } from './type';
+
+import type { BookingLoaderOptions } from './type';
+
 import './loader.css';
-
-type BookingLoaderOptions = {
-	target: HTMLElement,
-	type: string,
-	size: string,
-}
-
-export type BookingLoaderOptionsProp = Partial<BookingLoaderOptions>;
 
 export const Loader = {
 	name: 'BookingLoader',
@@ -25,17 +21,18 @@ export const Loader = {
 		getDefaultOptions(): BookingLoaderOptions
 		{
 			return {
+				type: LoaderType.BULLET,
 				target: this.$refs.loader,
-				type: 'BULLET',
 				size: 'xs',
 			};
 		},
 	},
-	mounted(): void
+	async mounted(): void
 	{
-		this.loader = new UILoader(this.getOptions());
-		this.loader.render();
-		this.loader.show();
+		this.loader = await LoaderFactory.createByType(this.getOptions().type, this.getOptions());
+
+		this.loader?.render?.();
+		this.loader?.show();
 	},
 	beforeUnmount(): void
 	{

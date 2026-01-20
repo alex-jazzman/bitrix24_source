@@ -24,7 +24,8 @@ import { LinkEditor } from './link-editor';
 import { $createCustomLinkNode, CustomLinkNode } from './custom-link-node';
 
 import { sanitizeUrl } from '../../helpers/sanitize-url';
-import { validateUrl } from '../../helpers/validate-url';
+import { EMAIL_REGEX, URL_REGEX, validateUrl } from '../../helpers/validate-url';
+import { $restoreSelection } from '../../helpers/restore-selection';
 
 import {
 	COMMAND_PRIORITY_LOW,
@@ -34,7 +35,6 @@ import {
 	$isTextNode,
 	$isElementNode,
 	$getSelection,
-	$setSelection,
 	$isRangeSelection,
 	$insertNodes,
 	$isRootOrShadowRoot,
@@ -299,7 +299,7 @@ export class LinkPlugin extends BasePlugin
 						}
 					}
 
-					this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
+					this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND, { sender: 'link-dialog' });
 
 					this.#linkEditor = new LinkEditor({
 						linkUrl,
@@ -410,7 +410,14 @@ export class LinkPlugin extends BasePlugin
 			),
 			this.getEditor().registerCommand(
 				HIDE_DIALOG_COMMAND,
-				(): boolean => {
+				(payload): boolean => {
+					if (payload?.sender === 'link-dialog')
+					{
+						return false;
+					}
+
+					this.#lastSelection = null;
+
 					if (this.#linkEditor !== null)
 					{
 						this.#linkEditor.destroy();
@@ -430,31 +437,26 @@ export class LinkPlugin extends BasePlugin
 		);
 	}
 
-	#restoreSelection(): boolean
+	#restoreSelection(): void
 	{
-		const selection = $getSelection();
-		if (!$isRangeSelection(selection) && this.#lastSelection !== null)
-		{
-			$setSelection(this.#lastSelection);
-			this.#lastSelection = null;
-
-			return true;
-		}
-
-		return false;
+		$restoreSelection(this.#lastSelection);
+		this.#lastSelection = null;
 	}
 
 	#handleDialogDestroy(): void
 	{
+		if (this.#linkEditor === null)
+		{
+			return;
+		}
+
 		this.#linkEditor = null;
 		Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', this.#onEditorScroll);
 		this.getEditor().resetHighlightSelection();
 
 		this.getEditor().update(() => {
-			if (!this.#restoreSelection())
-			{
-				this.getEditor().focus();
-			}
+			this.#restoreSelection();
+			// this.getEditor().focus();
 		});
 	}
 
@@ -502,14 +504,15 @@ export class LinkPlugin extends BasePlugin
 				}
 
 				const clipboardText = event.clipboardData.getData('text');
-				if (!validateUrl(clipboardText, false))
+				if (!URL_REGEX.test(clipboardText))
 				{
 					return false;
 				}
 
+				const url = clipboardText.startsWith('http') ? clipboardText : `https://${clipboardText}`;
 				if (selection.isCollapsed())
 				{
-					const success = this.getEditor().dispatchCommand(TOGGLE_LINK_COMMAND, { url: clipboardText });
+					const success = this.getEditor().dispatchCommand(TOGGLE_LINK_COMMAND, { url });
 					if (success)
 					{
 						event.preventDefault();
@@ -519,7 +522,7 @@ export class LinkPlugin extends BasePlugin
 				}
 				else if (!selection.getNodes().some((node) => $isElementNode(node)))
 				{
-					$toggleLink(clipboardText);
+					$toggleLink(url);
 					event.preventDefault();
 
 					return true;

@@ -1,4 +1,5 @@
 import { RelationTasks } from 'tasks.v2.component.fields.relation-tasks';
+import { relatedTasksDialog } from 'tasks.v2.lib.relation-tasks-dialog';
 import { relatedTasksMeta } from './related-tasks-meta';
 
 // @vue/component
@@ -7,11 +8,8 @@ export const RelatedTasks = {
 	components: {
 		RelationTasks,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		taskId: {},
 	},
 	setup(): Object
 	{
@@ -19,7 +17,16 @@ export const RelatedTasks = {
 			relatedTasksMeta,
 		};
 	},
+	methods: {
+		handleAdd(targetNode: HTMLElement): void
+		{
+			relatedTasksDialog.show({
+				targetNode,
+				taskId: this.taskId,
+			});
+		},
+	},
 	template: `
-		<RelationTasks :taskId="taskId" :meta="relatedTasksMeta"/>
+		<RelationTasks :meta="relatedTasksMeta" @add="handleAdd"/>
 	`,
 };

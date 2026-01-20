@@ -2,6 +2,8 @@
 (function (exports,main_core,ui_dialogs_messagebox,ui_buttons,ui_accessrights_v2) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -58,16 +60,24 @@
 	      var loader = new BX.Loader({
 	        target: document.getElementById('bx-crm-perms-config-permissions')
 	      });
+	      var selectedMember = this.AccessRights.getSelectedMember();
 	      this.AccessRights.destroy();
 	      loader.show();
 	      _classPrivateMethodGet(this, _runGetDataAjaxRequest, _runGetDataAjaxRequest2).call(this, controllerData).then(function (_ref) {
 	        var accessRightsData = _ref.accessRightsData,
 	          maxVisibleUserGroups = _ref.maxVisibleUserGroups,
-	          additionalSaveParams = _ref.additionalSaveParams;
-	        _this.AccessRightsOption.userGroups = accessRightsData.userGroups;
-	        _this.AccessRightsOption.accessRights = accessRightsData.accessRights;
-	        _this.AccessRightsOption.maxVisibleUserGroups = maxVisibleUserGroups;
-	        _this.AccessRightsOption.additionalSaveParams = additionalSaveParams;
+	          additionalSaveParams = _ref.additionalSaveParams,
+	          userSortConfig = _ref.userSortConfig,
+	          userSortConfigName = _ref.userSortConfigName;
+	        _this.AccessRightsOption = _objectSpread(_objectSpread({}, _this.AccessRightsOption), {}, {
+	          userGroups: accessRightsData.userGroups,
+	          accessRights: accessRightsData.accessRights,
+	          maxVisibleUserGroups: maxVisibleUserGroups,
+	          additionalSaveParams: additionalSaveParams,
+	          userSortConfig: userSortConfig,
+	          userSortConfigName: userSortConfigName,
+	          selectedMember: selectedMember
+	        });
 	        _this.AccessRights = new ui_accessrights_v2.App(_this.AccessRightsOption);
 	        _this.AccessRights.draw();
 	        scrollTo({

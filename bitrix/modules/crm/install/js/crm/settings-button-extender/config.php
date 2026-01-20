@@ -1,5 +1,11 @@
 <?php
 
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Operation\Scenario;
+use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -11,9 +17,9 @@ $isAIHasPackages = false;
 $allAIOperationTypes = [];
 $transcribeAIOperationType = 0;
 
-if (\Bitrix\Main\Loader::includeModule('crm'))
+if (Loader::includeModule('crm'))
 {
-	$container = \Bitrix\Crm\Service\Container::getInstance();
+	$container = Container::getInstance();
 
 	$map = $container->getTypesMap();
 	foreach ($map->getFactories() as $factory)
@@ -23,13 +29,13 @@ if (\Bitrix\Main\Loader::includeModule('crm'))
 		;
 	}
 
-	$isAIEnabledInGlobalSettings = \Bitrix\Crm\Integration\AI\AIManager::isEnabledInGlobalSettings();
-	$isAIHasPackages = \Bitrix\Crm\Integration\AI\AIManager::isBaasServiceHasPackage();
+	$isAIEnabledInGlobalSettings = AIManager::isEnabledInGlobalSettings();
+	$isAIHasPackages = AIManager::isBaasServiceHasPackage();
 
-	if ($isAIHasPackages && \Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed())
+	if ($isAIHasPackages && AIManager::isAiCallAutomaticProcessingAllowed())
 	{
-		$allAIOperationTypes = \Bitrix\Crm\Integration\AI\AIManager::getAllOperationTypes();
-		$transcribeAIOperationType = \Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording::TYPE_ID;
+		$allAIOperationTypes = AIManager::getAllOperationTypes();
+		$transcribeAIOperationType = TranscribeCallRecording::TYPE_ID;
 	}
 }
 
@@ -37,14 +43,14 @@ return [
 	'css' => 'dist/settings-button-extender.bundle.css',
 	'js' => 'dist/settings-button-extender.bundle.js',
 	'rel' => [
+		'main.core.events',
+		'ui.entity-selector',
 		'crm.activity.todo-notification-skip-menu',
 		'crm.activity.todo-ping-settings-menu',
 		'crm.kanban.restriction',
 		'crm.kanban.sort',
-		'main.core.events',
-		'main.popup',
-		'ui.entity-selector',
 		'main.core',
+		'main.popup',
 	],
 	'skip_core' => false,
 	'settings' => [
@@ -53,7 +59,7 @@ return [
 		'isAIHasPackages' => $isAIHasPackages,
 		'allAIOperationTypes' => $allAIOperationTypes,
 		'transcribeAIOperationType' => $transcribeAIOperationType,
-		'aiDisabledSliderCode' => \Bitrix\Crm\Integration\AI\Operation\Scenario::FILL_FIELDS_SCENARIO_OFF_SLIDER_CODE,
-		'aiPackagesEmptySliderCode' => \Bitrix\Crm\Integration\AI\AIManager::AI_PACKAGES_EMPTY_SLIDER_CODE,
+		'aiDisabledSliderCode' => Scenario::FILL_FIELDS_SCENARIO_OFF_SLIDER_CODE,
+		'aiPackagesEmptySliderCode' => AIManager::AI_PACKAGES_EMPTY_SLIDER_CODE,
 	],
 ];

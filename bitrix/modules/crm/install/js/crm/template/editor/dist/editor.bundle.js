@@ -1,238 +1,234 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_entitySelector,main_core_events,ui_designTokens,ui_entitySelector,ui_progressbar,ui_notification,main_core,main_popup,ui_buttons) {
+(function (exports,crm_entitySelector,main_core_events,ui_designTokens,ui_entitySelector,ui_notification,ui_progressbar,crm_common,main_popup,ui_buttons,main_core) {
 	'use strict';
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _menu = /*#__PURE__*/new WeakMap();
-	var _bindElement = /*#__PURE__*/new WeakMap();
-	var _isTextItemFirst = /*#__PURE__*/new WeakMap();
-	var _onEditorItemClick = /*#__PURE__*/new WeakMap();
-	var _onTextItemClick = /*#__PURE__*/new WeakMap();
-	var _getMenuPopup = /*#__PURE__*/new WeakSet();
-	var _getItems = /*#__PURE__*/new WeakSet();
-	var _getEditorItem = /*#__PURE__*/new WeakSet();
-	var _getTextItem = /*#__PURE__*/new WeakSet();
-	var _getItemTitle = /*#__PURE__*/new WeakSet();
-	var MenuPopup = /*#__PURE__*/function () {
-	  function MenuPopup(_ref) {
-	    var bindElement = _ref.bindElement,
-	      isTextItemFirst = _ref.isTextItemFirst,
-	      onEditorItemClick = _ref.onEditorItemClick,
-	      onTextItemClick = _ref.onTextItemClick;
-	    babelHelpers.classCallCheck(this, MenuPopup);
-	    _classPrivateMethodInitSpec(this, _getItemTitle);
-	    _classPrivateMethodInitSpec(this, _getTextItem);
-	    _classPrivateMethodInitSpec(this, _getEditorItem);
-	    _classPrivateMethodInitSpec(this, _getItems);
-	    _classPrivateMethodInitSpec(this, _getMenuPopup);
-	    _classPrivateFieldInitSpec(this, _menu, {
+	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
+	var _bindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
+	var _isTextItemFirst = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTextItemFirst");
+	var _onEditorItemClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditorItemClick");
+	var _onTextItemClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTextItemClick");
+	var _getMenuPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuPopup");
+	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
+	var _getEditorItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEditorItem");
+	var _getTextItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTextItem");
+	var _getItemTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemTitle");
+	class MenuPopup {
+	  constructor({
+	    bindElement,
+	    isTextItemFirst,
+	    onEditorItemClick,
+	    onTextItemClick
+	  }) {
+	    Object.defineProperty(this, _getItemTitle, {
+	      value: _getItemTitle2
+	    });
+	    Object.defineProperty(this, _getTextItem, {
+	      value: _getTextItem2
+	    });
+	    Object.defineProperty(this, _getEditorItem, {
+	      value: _getEditorItem2
+	    });
+	    Object.defineProperty(this, _getItems, {
+	      value: _getItems2
+	    });
+	    Object.defineProperty(this, _getMenuPopup, {
+	      value: _getMenuPopup2
+	    });
+	    Object.defineProperty(this, _menu, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec(this, _bindElement, {
+	    Object.defineProperty(this, _bindElement, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec(this, _isTextItemFirst, {
+	    Object.defineProperty(this, _isTextItemFirst, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec(this, _onEditorItemClick, {
+	    Object.defineProperty(this, _onEditorItemClick, {
 	      writable: true,
-	      value: function value() {}
+	      value: () => {}
 	    });
-	    _classPrivateFieldInitSpec(this, _onTextItemClick, {
+	    Object.defineProperty(this, _onTextItemClick, {
 	      writable: true,
-	      value: function value() {}
+	      value: () => {}
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _bindElement, bindElement);
-	    babelHelpers.classPrivateFieldSet(this, _isTextItemFirst, isTextItemFirst);
-	    babelHelpers.classPrivateFieldSet(this, _onEditorItemClick, onEditorItemClick);
-	    babelHelpers.classPrivateFieldSet(this, _onTextItemClick, onTextItemClick);
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement] = bindElement;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isTextItemFirst)[_isTextItemFirst] = isTextItemFirst;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onEditorItemClick)[_onEditorItemClick] = onEditorItemClick;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onTextItemClick)[_onTextItemClick] = onTextItemClick;
 	  }
-	  babelHelpers.createClass(MenuPopup, [{
-	    key: "show",
-	    value: function show() {
-	      _classPrivateMethodGet(this, _getMenuPopup, _getMenuPopup2).call(this).show();
-	    }
-	  }]);
-	  return MenuPopup;
-	}();
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getMenuPopup)[_getMenuPopup]().show();
+	  }
+	  destroy() {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu]) == null ? void 0 : _babelHelpers$classPr.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] = null;
+	    main_core.Runtime.destroy(this);
+	  }
+	}
 	function _getMenuPopup2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _menu) === null) {
-	    babelHelpers.classPrivateFieldSet(this, _menu, main_popup.MenuManager.create({
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] === null) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] = main_popup.MenuManager.create({
 	      id: 'crm-template-editor-placeholder-selector',
-	      bindElement: babelHelpers.classPrivateFieldGet(this, _bindElement),
+	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement],
 	      autoHide: true,
 	      offsetLeft: 20,
 	      angle: true,
 	      closeByEsc: false,
 	      cacheable: false,
-	      items: _classPrivateMethodGet(this, _getItems, _getItems2).call(this)
-	    }));
+	      items: babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems]()
+	    });
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _menu);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu];
 	}
 	function _getItems2() {
-	  var editorItem = _classPrivateMethodGet(this, _getEditorItem, _getEditorItem2).call(this);
-	  var textItem = _classPrivateMethodGet(this, _getTextItem, _getTextItem2).call(this);
-	  if (babelHelpers.classPrivateFieldGet(this, _isTextItemFirst)) {
+	  const editorItem = babelHelpers.classPrivateFieldLooseBase(this, _getEditorItem)[_getEditorItem]();
+	  const textItem = babelHelpers.classPrivateFieldLooseBase(this, _getTextItem)[_getTextItem]();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isTextItemFirst)[_isTextItemFirst]) {
 	    return [textItem, editorItem];
 	  }
 	  return [editorItem, textItem];
 	}
 	function _getEditorItem2() {
-	  var _this = this;
 	  return {
-	    html: _classPrivateMethodGet(this, _getItemTitle, _getItemTitle2).call(this, 'CRM_TEMPLATE_EDITOR_SELECT_FIELD'),
-	    onclick: function onclick() {
-	      babelHelpers.classPrivateFieldGet(_this, _onEditorItemClick).call(_this, babelHelpers.classPrivateFieldGet(_this, _bindElement));
+	    html: babelHelpers.classPrivateFieldLooseBase(this, _getItemTitle)[_getItemTitle]('CRM_TEMPLATE_EDITOR_SELECT_FIELD'),
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onEditorItemClick)[_onEditorItemClick](babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement]);
 	    }
 	  };
 	}
 	function _getTextItem2() {
-	  var _this2 = this;
-	  var code = babelHelpers.classPrivateFieldGet(this, _isTextItemFirst) ? 'CRM_TEMPLATE_EDITOR_UPDATE_TEXT' : 'CRM_TEMPLATE_EDITOR_CREATE_TEXT';
+	  const code = babelHelpers.classPrivateFieldLooseBase(this, _isTextItemFirst)[_isTextItemFirst] ? 'CRM_TEMPLATE_EDITOR_UPDATE_TEXT' : 'CRM_TEMPLATE_EDITOR_CREATE_TEXT';
 	  return {
-	    html: _classPrivateMethodGet(this, _getItemTitle, _getItemTitle2).call(this, code),
-	    onclick: function onclick() {
-	      _classPrivateMethodGet(_this2, _getMenuPopup, _getMenuPopup2).call(_this2).close();
-	      babelHelpers.classPrivateFieldGet(_this2, _onTextItemClick).call(_this2, babelHelpers.classPrivateFieldGet(_this2, _bindElement));
+	    html: babelHelpers.classPrivateFieldLooseBase(this, _getItemTitle)[_getItemTitle](code),
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _getMenuPopup)[_getMenuPopup]().close();
+	      babelHelpers.classPrivateFieldLooseBase(this, _onTextItemClick)[_onTextItemClick](babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement]);
 	    }
 	  };
 	}
 	function _getItemTitle2(code) {
-	  var placeholder = '<span class="crm-template-editor-placeholder-selector-menu-item">#ITEM_TEXT#</span>';
+	  const placeholder = '<span class="crm-template-editor-placeholder-selector-menu-item">#ITEM_TEXT#</span>';
 	  return placeholder.replace('#ITEM_TEXT#', main_core.Text.encode(main_core.Loc.getMessage(code)));
 	}
 
-	var _templateObject, _templateObject2;
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var PREVIEW_POPUP_CONTENT_STATUS = {
+	let _ = t => t,
+	  _t,
+	  _t2;
+	const PREVIEW_POPUP_CONTENT_STATUS = {
 	  LOADING: 1,
 	  SUCCESS: 2,
 	  FAILED: 3
 	};
-	var _popup = /*#__PURE__*/new WeakMap();
-	var _bindElement$1 = /*#__PURE__*/new WeakMap();
-	var _previewContentContainer = /*#__PURE__*/new WeakMap();
-	var _previewLoader = /*#__PURE__*/new WeakMap();
-	var _entityTypeId = /*#__PURE__*/new WeakMap();
-	var _entityId = /*#__PURE__*/new WeakMap();
-	var _getPopup = /*#__PURE__*/new WeakSet();
-	var _getContent = /*#__PURE__*/new WeakSet();
-	var PreviewPopup = /*#__PURE__*/function () {
-	  function PreviewPopup(bindElement, entityTypeId, entityId) {
-	    babelHelpers.classCallCheck(this, PreviewPopup);
-	    _classPrivateMethodInitSpec$1(this, _getContent);
-	    _classPrivateMethodInitSpec$1(this, _getPopup);
-	    _classPrivateFieldInitSpec$1(this, _popup, {
+	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
+	var _bindElement$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
+	var _previewContentContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewContentContainer");
+	var _previewLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewLoader");
+	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _getPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
+	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
+	class PreviewPopup {
+	  constructor(bindElement, entityTypeId, entityId) {
+	    Object.defineProperty(this, _getContent, {
+	      value: _getContent2
+	    });
+	    Object.defineProperty(this, _getPopup, {
+	      value: _getPopup2
+	    });
+	    Object.defineProperty(this, _popup, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _bindElement$1, {
+	    Object.defineProperty(this, _bindElement$1, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _previewContentContainer, {
+	    Object.defineProperty(this, _previewContentContainer, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _previewLoader, {
+	    Object.defineProperty(this, _previewLoader, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _entityTypeId, {
+	    Object.defineProperty(this, _entityTypeId, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _entityId, {
+	    Object.defineProperty(this, _entityId, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _bindElement$1, bindElement);
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, entityTypeId);
-	    babelHelpers.classPrivateFieldSet(this, _entityId, entityId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement$1)[_bindElement$1] = bindElement;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = entityTypeId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = entityId;
 	  }
-	  babelHelpers.createClass(PreviewPopup, [{
-	    key: "destroy",
-	    value: function destroy() {
-	      var _classPrivateMethodGe;
-	      (_classPrivateMethodGe = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this)) === null || _classPrivateMethodGe === void 0 ? void 0 : _classPrivateMethodGe.destroy();
-	    }
-	  }, {
-	    key: "isShown",
-	    value: function isShown() {
-	      var _classPrivateMethodGe2;
-	      (_classPrivateMethodGe2 = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this)) === null || _classPrivateMethodGe2 === void 0 ? void 0 : _classPrivateMethodGe2.isShown();
-	    }
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      var _classPrivateMethodGe3;
-	      (_classPrivateMethodGe3 = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this)) === null || _classPrivateMethodGe3 === void 0 ? void 0 : _classPrivateMethodGe3.show();
-	    }
-	  }, {
-	    key: "apply",
-	    value: function apply(status) {
-	      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-	      var closeIconElement = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).getPopupContainer().querySelector('.popup-window-close-icon');
-	      switch (status) {
-	        case PREVIEW_POPUP_CONTENT_STATUS.LOADING:
-	          {
-	            main_core.Dom.addClass(closeIconElement, '--hidden');
-	            babelHelpers.classPrivateFieldGet(this, _previewContentContainer).innerText = '';
-	            if (!babelHelpers.classPrivateFieldGet(this, _previewLoader)) {
-	              babelHelpers.classPrivateFieldSet(this, _previewLoader, new ui_progressbar.ProgressBar({
-	                color: ui_progressbar.ProgressBar.Color.PRIMARY,
-	                size: 10,
-	                maxValue: 100,
-	                value: 30,
-	                infiniteLoading: true
-	              }));
-	            }
-	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).setHeight(75);
-	            babelHelpers.classPrivateFieldGet(this, _previewLoader).renderTo(babelHelpers.classPrivateFieldGet(this, _previewContentContainer));
-	            break;
-	          }
-	        case PREVIEW_POPUP_CONTENT_STATUS.SUCCESS:
-	          {
-	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).setHeight(null);
-	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).setAutoHide(true);
-	            babelHelpers.classPrivateFieldGet(this, _previewContentContainer).innerText = data;
-	            main_core.Dom.removeClass(closeIconElement, '--hidden');
-	            main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(this, _previewContentContainer), '--loaded');
-	            break;
-	          }
-	        case PREVIEW_POPUP_CONTENT_STATUS.FAILED:
-	          {
-	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).destroy();
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Text.encode(data),
-	              autoHideDelay: 5000
+	  destroy() {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]()) == null ? void 0 : _babelHelpers$classPr.destroy();
+	  }
+	  isShown() {
+	    var _babelHelpers$classPr2, _babelHelpers$classPr3;
+	    return (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]()) == null ? void 0 : _babelHelpers$classPr3.isShown()) != null ? _babelHelpers$classPr2 : false;
+	  }
+	  show() {
+	    var _babelHelpers$classPr4;
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]()) == null ? void 0 : _babelHelpers$classPr4.show();
+	  }
+	  apply(status, data = '') {
+	    const closeIconElement = babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().getPopupContainer().querySelector('.popup-window-close-icon');
+	    switch (status) {
+	      case PREVIEW_POPUP_CONTENT_STATUS.LOADING:
+	        {
+	          main_core.Dom.addClass(closeIconElement, '--hidden');
+	          babelHelpers.classPrivateFieldLooseBase(this, _previewContentContainer)[_previewContentContainer].innerText = '';
+	          if (!babelHelpers.classPrivateFieldLooseBase(this, _previewLoader)[_previewLoader]) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _previewLoader)[_previewLoader] = new ui_progressbar.ProgressBar({
+	              color: ui_progressbar.ProgressBar.Color.PRIMARY,
+	              size: 10,
+	              maxValue: 100,
+	              value: 30,
+	              infiniteLoading: true
 	            });
-	            break;
 	          }
-	        default:
-	          throw new TypeError("Unsupported preview popup content status ".concat(status));
-	      }
+	          babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().setHeight(75);
+	          babelHelpers.classPrivateFieldLooseBase(this, _previewLoader)[_previewLoader].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _previewContentContainer)[_previewContentContainer]);
+	          break;
+	        }
+	      case PREVIEW_POPUP_CONTENT_STATUS.SUCCESS:
+	        {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().setHeight(null);
+	          babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().setAutoHide(true);
+	          babelHelpers.classPrivateFieldLooseBase(this, _previewContentContainer)[_previewContentContainer].innerText = data;
+	          main_core.Dom.removeClass(closeIconElement, '--hidden');
+	          main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _previewContentContainer)[_previewContentContainer], '--loaded');
+	          break;
+	        }
+	      case PREVIEW_POPUP_CONTENT_STATUS.FAILED:
+	        {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().destroy();
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Text.encode(data),
+	            autoHideDelay: 5000
+	          });
+	          break;
+	        }
+	      default:
+	        throw new TypeError(`Unsupported preview popup content status ${status}`);
 	    }
-	  }]);
-	  return PreviewPopup;
-	}();
+	  }
+	}
 	function _getPopup2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _popup) === null) {
-	    babelHelpers.classPrivateFieldSet(this, _popup, main_popup.PopupWindowManager.create({
-	      id: "crm-template-editor-preview-popup-".concat(babelHelpers.classPrivateFieldGet(this, _entityTypeId), "-").concat(babelHelpers.classPrivateFieldGet(this, _entityId)),
-	      bindElement: babelHelpers.classPrivateFieldGet(this, _bindElement$1),
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] === null) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = main_popup.PopupWindowManager.create({
+	      id: `crm-template-editor-preview-popup-${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]}-${babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]}`,
+	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement$1)[_bindElement$1],
 	      closeIcon: {
 	        top: '10px'
 	      },
@@ -243,361 +239,576 @@ this.BX.Crm = this.BX.Crm || {};
 	        position: 'top',
 	        offset: 70
 	      },
-	      content: _classPrivateMethodGet$1(this, _getContent, _getContent2).call(this)
-	    }));
+	      content: babelHelpers.classPrivateFieldLooseBase(this, _getContent)[_getContent]()
+	    });
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _popup);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
 	}
 	function _getContent2() {
-	  babelHelpers.classPrivateFieldSet(this, _previewContentContainer, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-preview-popup-content\"></div>"]))));
-	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-template-editor-preview-popup-wrapper\">\n\t\t\t\t<div class=\"crm-template-editor-preview-popup-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_POPUP_TITLE'), babelHelpers.classPrivateFieldGet(this, _previewContentContainer));
+	  babelHelpers.classPrivateFieldLooseBase(this, _previewContentContainer)[_previewContentContainer] = main_core.Tag.render(_t || (_t = _`<div class="crm-template-editor-preview-popup-content"></div>`));
+	  return main_core.Tag.render(_t2 || (_t2 = _`
+			<div class="crm-template-editor-preview-popup-wrapper">
+				<div class="crm-template-editor-preview-popup-title">
+					${0}
+				</div>
+				${0}
+			</div>
+		`), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_POPUP_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _previewContentContainer)[_previewContentContainer]);
 	}
 
-	var _templateObject$1, _templateObject2$1;
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _popup$1 = /*#__PURE__*/new WeakMap();
-	var _input = /*#__PURE__*/new WeakMap();
-	var _bindElement$2 = /*#__PURE__*/new WeakMap();
-	var _value = /*#__PURE__*/new WeakMap();
-	var _onApply = /*#__PURE__*/new WeakMap();
-	var _getPopup$1 = /*#__PURE__*/new WeakSet();
-	var _getContent$1 = /*#__PURE__*/new WeakSet();
-	var _bindInputEvents = /*#__PURE__*/new WeakSet();
-	var _getMenuButtons = /*#__PURE__*/new WeakSet();
-	var _getApplyButton = /*#__PURE__*/new WeakSet();
-	var _adjustButtonState = /*#__PURE__*/new WeakSet();
-	var _getApplyButtonText = /*#__PURE__*/new WeakSet();
-	var _onApplyButtonClick = /*#__PURE__*/new WeakSet();
-	var _getApplyButtonInstance = /*#__PURE__*/new WeakSet();
-	var _getCancelButton = /*#__PURE__*/new WeakSet();
-	var _setCursorToEnd = /*#__PURE__*/new WeakSet();
-	var TextPopup = /*#__PURE__*/function () {
-	  function TextPopup(_ref) {
-	    var bindElement = _ref.bindElement,
-	      _value2 = _ref.value,
-	      onApply = _ref.onApply;
-	    babelHelpers.classCallCheck(this, TextPopup);
-	    _classPrivateMethodInitSpec$2(this, _setCursorToEnd);
-	    _classPrivateMethodInitSpec$2(this, _getCancelButton);
-	    _classPrivateMethodInitSpec$2(this, _getApplyButtonInstance);
-	    _classPrivateMethodInitSpec$2(this, _onApplyButtonClick);
-	    _classPrivateMethodInitSpec$2(this, _getApplyButtonText);
-	    _classPrivateMethodInitSpec$2(this, _adjustButtonState);
-	    _classPrivateMethodInitSpec$2(this, _getApplyButton);
-	    _classPrivateMethodInitSpec$2(this, _getMenuButtons);
-	    _classPrivateMethodInitSpec$2(this, _bindInputEvents);
-	    _classPrivateMethodInitSpec$2(this, _getContent$1);
-	    _classPrivateMethodInitSpec$2(this, _getPopup$1);
-	    _classPrivateFieldInitSpec$2(this, _popup$1, {
+	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _categoryId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("categoryId");
+	var _bindElement$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
+	var _isDisplayFormat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDisplayFormat");
+	var _isUsePreviewRequestRunning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUsePreviewRequestRunning");
+	var _previewCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewCache");
+	var _previewPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewPopup");
+	var _unsubscribe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unsubscribe");
+	class Previewer {
+	  constructor(params) {
+	    Object.defineProperty(this, _entityTypeId$1, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$2(this, _input, {
+	    Object.defineProperty(this, _entityId$1, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$2(this, _bindElement$2, {
+	    Object.defineProperty(this, _categoryId, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$2(this, _value, {
+	    Object.defineProperty(this, _bindElement$2, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$2(this, _onApply, {
+	    Object.defineProperty(this, _isDisplayFormat, {
 	      writable: true,
-	      value: function value() {}
+	      value: false
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _bindElement$2, bindElement);
-	    babelHelpers.classPrivateFieldSet(this, _value, _value2);
-	    babelHelpers.classPrivateFieldSet(this, _onApply, onApply);
+	    Object.defineProperty(this, _isUsePreviewRequestRunning, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _previewCache, {
+	      writable: true,
+	      value: new Map()
+	    });
+	    Object.defineProperty(this, _previewPopup, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _unsubscribe, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = main_core.Text.toInteger(params.entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
+	      throw new Error('Previewer: entityTypeId must be a valid entity type ID');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1] = main_core.Text.toInteger(params.entityId);
+	    if (params.entityId <= 0) {
+	      throw new Error('Previewer: entityId must be greater than 0');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId] = main_core.Type.isNil(params.categoryId) ? null : main_core.Text.toInteger(params.categoryId);
+	    if (!main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId]) && babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId] < 0) {
+	      throw new Error('Previewer: categoryId must be a non-negative integer');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement$2)[_bindElement$2] = main_core.Type.isDomNode(params.bindElement) ? params.bindElement : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDisplayFormat)[_isDisplayFormat] = main_core.Type.isBoolean(params.isDisplayFormat) ? params.isDisplayFormat : babelHelpers.classPrivateFieldLooseBase(this, _isDisplayFormat)[_isDisplayFormat];
+	    babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe)[_unsubscribe] = BX.Crm.EntityEvent.subscribeToItem(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1], babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1], () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _previewCache)[_previewCache].clear();
+	    });
 	  }
-	  babelHelpers.createClass(TextPopup, [{
-	    key: "destroy",
-	    value: function destroy() {
-	      var _babelHelpers$classPr;
-	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _popup$1)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.destroy();
+	  preview(template, bindElement) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr3;
+	    const bindElementToUse = main_core.Type.isDomNode(bindElement) ? bindElement : babelHelpers.classPrivateFieldLooseBase(this, _bindElement$2)[_bindElement$2];
+	    if (!main_core.Type.isDomNode(bindElementToUse)) {
+	      throw new Error('Previewer: bindElement must be a valid DOM element');
 	    }
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).show();
+	    if ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) != null && _babelHelpers$classPr.isShown()) {
+	      return;
 	    }
-	  }]);
-	  return TextPopup;
-	}();
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isUsePreviewRequestRunning)[_isUsePreviewRequestRunning]) {
+	      var _babelHelpers$classPr2;
+	      (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr2.show();
+	      return;
+	    }
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr3.destroy();
+	    const cachedPreview = babelHelpers.classPrivateFieldLooseBase(this, _previewCache)[_previewCache].get(template);
+	    if (cachedPreview) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup] = new PreviewPopup(bindElementToUse, babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1], babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup].apply(PREVIEW_POPUP_CONTENT_STATUS.SUCCESS, cachedPreview);
+	      babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup].show();
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup] = new PreviewPopup(bindElementToUse, babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1], babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup].apply(PREVIEW_POPUP_CONTENT_STATUS.LOADING);
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup].show();
+	    babelHelpers.classPrivateFieldLooseBase(this, _isUsePreviewRequestRunning)[_isUsePreviewRequestRunning] = true;
+	    main_core.ajax.runAction('crm.activity.smsplaceholder.preview', {
+	      data: {
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1],
+	        entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1],
+	        message: template,
+	        entityCategoryId: babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId],
+	        isDisplayFormat: babelHelpers.classPrivateFieldLooseBase(this, _isDisplayFormat)[_isDisplayFormat]
+	      }
+	    }).then(response => {
+	      var _babelHelpers$classPr4;
+	      (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr4.apply(PREVIEW_POPUP_CONTENT_STATUS.SUCCESS, response.data.preview);
+	      babelHelpers.classPrivateFieldLooseBase(this, _isUsePreviewRequestRunning)[_isUsePreviewRequestRunning] = false;
+	      babelHelpers.classPrivateFieldLooseBase(this, _previewCache)[_previewCache].set(template, response.data.preview);
+	    }).catch(response => {
+	      var _babelHelpers$classPr5, _response$errors$0$me;
+	      (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr5.apply(PREVIEW_POPUP_CONTENT_STATUS.FAILED, (_response$errors$0$me = response.errors[0].message) != null ? _response$errors$0$me : 'Unknown error');
+	      babelHelpers.classPrivateFieldLooseBase(this, _isUsePreviewRequestRunning)[_isUsePreviewRequestRunning] = false;
+	    });
+	  }
+	  isShown() {
+	    var _babelHelpers$classPr6, _babelHelpers$classPr7;
+	    return (_babelHelpers$classPr6 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr7.isShown()) != null ? _babelHelpers$classPr6 : false;
+	  }
+	  close() {
+	    var _babelHelpers$classPr8;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isUsePreviewRequestRunning)[_isUsePreviewRequestRunning] = false;
+	    (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr8.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup] = null;
+	  }
+	  destroy() {
+	    var _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11;
+	    (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup]) == null ? void 0 : _babelHelpers$classPr9.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewPopup)[_previewPopup] = null;
+	    (_babelHelpers$classPr10 = (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe))[_unsubscribe]) == null ? void 0 : _babelHelpers$classPr10.call(_babelHelpers$classPr11);
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewCache)[_previewCache] = null;
+	    main_core.Runtime.destroy(this);
+	  }
+	}
+
+	let _$1 = t => t,
+	  _t$1,
+	  _t2$1;
+	var _popup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
+	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
+	var _bindElement$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
+	var _value = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("value");
+	var _onApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onApply");
+	var _getPopup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
+	var _getContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
+	var _bindInputEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindInputEvents");
+	var _getMenuButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuButtons");
+	var _getApplyButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getApplyButton");
+	var _adjustButtonState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustButtonState");
+	var _getApplyButtonText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getApplyButtonText");
+	var _onApplyButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onApplyButtonClick");
+	var _getApplyButtonInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getApplyButtonInstance");
+	var _getCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCancelButton");
+	var _setCursorToEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCursorToEnd");
+	class TextPopup {
+	  constructor({
+	    bindElement,
+	    value: _value2,
+	    onApply
+	  }) {
+	    Object.defineProperty(this, _setCursorToEnd, {
+	      value: _setCursorToEnd2
+	    });
+	    Object.defineProperty(this, _getCancelButton, {
+	      value: _getCancelButton2
+	    });
+	    Object.defineProperty(this, _getApplyButtonInstance, {
+	      value: _getApplyButtonInstance2
+	    });
+	    Object.defineProperty(this, _onApplyButtonClick, {
+	      value: _onApplyButtonClick2
+	    });
+	    Object.defineProperty(this, _getApplyButtonText, {
+	      value: _getApplyButtonText2
+	    });
+	    Object.defineProperty(this, _adjustButtonState, {
+	      value: _adjustButtonState2
+	    });
+	    Object.defineProperty(this, _getApplyButton, {
+	      value: _getApplyButton2
+	    });
+	    Object.defineProperty(this, _getMenuButtons, {
+	      value: _getMenuButtons2
+	    });
+	    Object.defineProperty(this, _bindInputEvents, {
+	      value: _bindInputEvents2
+	    });
+	    Object.defineProperty(this, _getContent$1, {
+	      value: _getContent2$1
+	    });
+	    Object.defineProperty(this, _getPopup$1, {
+	      value: _getPopup2$1
+	    });
+	    Object.defineProperty(this, _popup$1, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _input, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _bindElement$3, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _value, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _onApply, {
+	      writable: true,
+	      value: () => {}
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement$3)[_bindElement$3] = bindElement;
+	    babelHelpers.classPrivateFieldLooseBase(this, _value)[_value] = _value2;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onApply)[_onApply] = onApply;
+	  }
+	  destroy() {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1]) == null ? void 0 : _babelHelpers$classPr.destroy();
+	  }
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getPopup$1)[_getPopup$1]().show();
+	  }
+	}
 	function _getPopup2$1() {
-	  var _this = this;
-	  if (babelHelpers.classPrivateFieldGet(this, _popup$1) === null) {
-	    babelHelpers.classPrivateFieldSet(this, _popup$1, main_popup.PopupWindowManager.create('crm-template-editor-text-popup', babelHelpers.classPrivateFieldGet(this, _bindElement$2), {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1] === null) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1] = main_popup.PopupWindowManager.create('crm-template-editor-text-popup', babelHelpers.classPrivateFieldLooseBase(this, _bindElement$3)[_bindElement$3], {
 	      autoHide: true,
-	      content: _classPrivateMethodGet$2(this, _getContent$1, _getContent2$1).call(this),
+	      content: babelHelpers.classPrivateFieldLooseBase(this, _getContent$1)[_getContent$1](),
 	      closeByEsc: true,
 	      closeIcon: false,
-	      buttons: _classPrivateMethodGet$2(this, _getMenuButtons, _getMenuButtons2).call(this),
+	      buttons: babelHelpers.classPrivateFieldLooseBase(this, _getMenuButtons)[_getMenuButtons](),
 	      cacheable: false
-	    }));
-	    babelHelpers.classPrivateFieldGet(this, _popup$1).subscribe('onShow', function () {
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1].subscribe('onShow', () => {
 	      // Give time for input to render before setting focus.
-	      setTimeout(function () {
-	        babelHelpers.classPrivateFieldGet(_this, _input).focus();
-	        _classPrivateMethodGet$2(_this, _setCursorToEnd, _setCursorToEnd2).call(_this);
+	      setTimeout(() => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].focus();
+	        babelHelpers.classPrivateFieldLooseBase(this, _setCursorToEnd)[_setCursorToEnd]();
 	      }, 0);
 	    });
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _popup$1);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1];
 	}
 	function _getContent2$1() {
-	  var content = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-text-popup-wrapper\"></div>"])));
-	  babelHelpers.classPrivateFieldSet(this, _input, main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input \n\t\t\t\ttype=\"text\" \n\t\t\t\tvalue=\"", "\"\n\t\t\t\tmaxlength=\"255\"\n\t\t\t\tplaceholder=\"", "\n\t\t\t\">\n\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _value)), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_SELECT_FIELD_PLACEHOLDER')));
-	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _input), content);
-	  _classPrivateMethodGet$2(this, _bindInputEvents, _bindInputEvents2).call(this);
+	  const content = main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="crm-template-editor-text-popup-wrapper"></div>`));
+	  babelHelpers.classPrivateFieldLooseBase(this, _input)[_input] = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+			<input 
+				type="text" 
+				value="${0}"
+				maxlength="255"
+				placeholder="${0}
+			">
+		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _value)[_value]), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_SELECT_FIELD_PLACEHOLDER'));
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], content);
+	  babelHelpers.classPrivateFieldLooseBase(this, _bindInputEvents)[_bindInputEvents]();
 	  return content;
 	}
 	function _bindInputEvents2() {
-	  var _this2 = this;
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _input), 'keyup', function (event) {
-	    var button = _classPrivateMethodGet$2(_this2, _getApplyButtonInstance, _getApplyButtonInstance2).call(_this2);
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'keyup', event => {
+	    const button = babelHelpers.classPrivateFieldLooseBase(this, _getApplyButtonInstance)[_getApplyButtonInstance]();
 	    if (!button) {
 	      return;
 	    }
-	    var value = event.target.value;
-	    _classPrivateMethodGet$2(_this2, _adjustButtonState, _adjustButtonState2).call(_this2, button, value);
+	    const {
+	      value
+	    } = event.target;
+	    babelHelpers.classPrivateFieldLooseBase(this, _adjustButtonState)[_adjustButtonState](button, value);
 	  });
 	}
 	function _getMenuButtons2() {
-	  return [_classPrivateMethodGet$2(this, _getApplyButton, _getApplyButton2).call(this), _classPrivateMethodGet$2(this, _getCancelButton, _getCancelButton2).call(this)];
+	  return [babelHelpers.classPrivateFieldLooseBase(this, _getApplyButton)[_getApplyButton](), babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton)[_getCancelButton]()];
 	}
 	function _getApplyButton2() {
-	  var _this3 = this;
-	  var button = new ui_buttons.Button({
+	  const button = new ui_buttons.Button({
 	    id: 'apply-button',
-	    text: _classPrivateMethodGet$2(this, _getApplyButtonText, _getApplyButtonText2).call(this),
+	    text: babelHelpers.classPrivateFieldLooseBase(this, _getApplyButtonText)[_getApplyButtonText](),
 	    className: 'ui-btn ui-btn-xs ui-btn-primary ui-btn-round',
-	    onclick: function onclick() {
-	      _classPrivateMethodGet$2(_this3, _onApplyButtonClick, _onApplyButtonClick2).call(_this3);
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onApplyButtonClick)[_onApplyButtonClick]();
 	    }
 	  });
-	  var _babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _input),
-	    value = _babelHelpers$classPr2.value;
-	  _classPrivateMethodGet$2(this, _adjustButtonState, _adjustButtonState2).call(this, button, value);
+	  const {
+	    value
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _input)[_input];
+	  babelHelpers.classPrivateFieldLooseBase(this, _adjustButtonState)[_adjustButtonState](button, value);
 	  return button;
 	}
 	function _adjustButtonState2(button, value) {
 	  button.setState(main_core.Type.isStringFilled(value) && main_core.Type.isStringFilled(value.trim()) ? ui_buttons.ButtonState.ACTIVE : ui_buttons.ButtonState.DISABLED);
 	}
 	function _getApplyButtonText2() {
-	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _value))) {
+	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _value)[_value])) {
 	    return main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_TEXT_POPUP_UPDATE');
 	  }
 	  return main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_TEXT_POPUP_ADD');
 	}
 	function _onApplyButtonClick2() {
-	  var button = _classPrivateMethodGet$2(this, _getApplyButtonInstance, _getApplyButtonInstance2).call(this);
+	  const button = babelHelpers.classPrivateFieldLooseBase(this, _getApplyButtonInstance)[_getApplyButtonInstance]();
 	  if (button.getState() !== ui_buttons.ButtonState.ACTIVE) {
 	    return;
 	  }
 	  this.destroy();
-	  var _babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _input),
-	    value = _babelHelpers$classPr3.value;
-	  babelHelpers.classPrivateFieldGet(this, _bindElement$2).textContent = main_core.Text.encode(value);
-	  babelHelpers.classPrivateFieldGet(this, _onApply).call(this, value.trim());
+	  const {
+	    value
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _input)[_input];
+	  babelHelpers.classPrivateFieldLooseBase(this, _bindElement$3)[_bindElement$3].textContent = main_core.Text.encode(value);
+	  babelHelpers.classPrivateFieldLooseBase(this, _onApply)[_onApply](value.trim());
 	}
 	function _getApplyButtonInstance2() {
-	  return babelHelpers.classPrivateFieldGet(this, _popup$1).getButton('apply-button');
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1].getButton('apply-button');
 	}
 	function _getCancelButton2() {
-	  var _this4 = this;
 	  return new ui_buttons.Button({
 	    text: main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_TEXT_POPUP_CANCEL'),
 	    className: 'ui-btn ui-btn-xs ui-btn-light ui-btn-round',
-	    onclick: function onclick() {
-	      _this4.destroy();
+	    onclick: () => {
+	      this.destroy();
 	    }
 	  });
 	}
 	function _setCursorToEnd2() {
-	  var length = babelHelpers.classPrivateFieldGet(this, _input).value.length;
-	  babelHelpers.classPrivateFieldGet(this, _input).selectionStart = length;
-	  babelHelpers.classPrivateFieldGet(this, _input).selectionEnd = length;
+	  const {
+	    length
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].value;
+	  babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].selectionStart = length;
+	  babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].selectionEnd = length;
 	}
 
-	var _templateObject$2, _templateObject2$2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var UPDATE_ACTION = 'update';
-	var DELETE_ACTION = 'delete';
-	var HEADER_POSITION = 'HEADER';
-	var PREVIEW_POSITION = 'PREVIEW';
-	var FOOTER_POSITION = 'FOOTER';
-	var _id = /*#__PURE__*/new WeakMap();
-	var _target = /*#__PURE__*/new WeakMap();
-	var _entityTypeId$1 = /*#__PURE__*/new WeakMap();
-	var _entityId$1 = /*#__PURE__*/new WeakMap();
-	var _categoryId = /*#__PURE__*/new WeakMap();
-	var _canUseFieldsDialog = /*#__PURE__*/new WeakMap();
-	var _canUseFieldValueInput = /*#__PURE__*/new WeakMap();
-	var _canUsePreview = /*#__PURE__*/new WeakMap();
-	var _isUsePreviewRequestRunning = /*#__PURE__*/new WeakMap();
-	var _lastPreview = /*#__PURE__*/new WeakMap();
-	var _lastPreviewTemplateHash = /*#__PURE__*/new WeakMap();
-	var _previewPopup = /*#__PURE__*/new WeakMap();
-	var _headerContainerEl = /*#__PURE__*/new WeakMap();
-	var _bodyContainerEl = /*#__PURE__*/new WeakMap();
-	var _footerContainerEl = /*#__PURE__*/new WeakMap();
-	var _placeHoldersDialogDefaultOptions = /*#__PURE__*/new WeakMap();
-	var _headerRaw = /*#__PURE__*/new WeakMap();
-	var _bodyRaw = /*#__PURE__*/new WeakMap();
-	var _footerRaw = /*#__PURE__*/new WeakMap();
-	var _popupMenu = /*#__PURE__*/new WeakMap();
-	var _inputPopup = /*#__PURE__*/new WeakMap();
-	var _createContainer = /*#__PURE__*/new WeakSet();
-	var _createContainerWithSelectors = /*#__PURE__*/new WeakSet();
-	var _onApplyInputPopup = /*#__PURE__*/new WeakSet();
-	var _onPreviewTemplate = /*#__PURE__*/new WeakSet();
-	var _getInputContainer = /*#__PURE__*/new WeakSet();
-	var _getPlaceholders = /*#__PURE__*/new WeakSet();
-	var _prepareDlgOptions = /*#__PURE__*/new WeakSet();
-	var _adjustFilledPlaceholders = /*#__PURE__*/new WeakSet();
-	var _deleteFromFilledPlaceholders = /*#__PURE__*/new WeakSet();
-	var _updateForFilledPlaceholders = /*#__PURE__*/new WeakSet();
-	var _getFilledPlaceholderByElement = /*#__PURE__*/new WeakSet();
-	var _getPlaceholderIdByElement = /*#__PURE__*/new WeakSet();
-	var _getFilledPlaceholderById = /*#__PURE__*/new WeakSet();
-	var _getPlainText = /*#__PURE__*/new WeakSet();
-	var _getRawTextByPosition = /*#__PURE__*/new WeakSet();
-	var _assertValidParams = /*#__PURE__*/new WeakSet();
-	var _canUsePlaceholderProvider = /*#__PURE__*/new WeakSet();
-	var Editor = /*#__PURE__*/function () {
+	function getPlainText(templateBody, placeholders, filledPlaceholders) {
+	  let result = templateBody;
+	  if (main_core.Type.isArrayFilled(filledPlaceholders)) {
+	    filledPlaceholders.forEach(filledPlaceholder => {
+	      if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_NAME)) {
+	        result = result.replace(filledPlaceholder.PLACEHOLDER_ID, `{${filledPlaceholder.FIELD_NAME}}`);
+	      } else if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_VALUE)) {
+	        const fieldValue = filledPlaceholder.FIELD_VALUE.replaceAll('{', '&#123;').replaceAll('}', '&#125;');
+	        result = result.replace(filledPlaceholder.PLACEHOLDER_ID, fieldValue);
+	      }
+	    });
+	  }
+	  if (main_core.Type.isArrayFilled(placeholders)) {
+	    placeholders.forEach(placeholder => {
+	      result = result.replace(placeholder, ' ');
+	    });
+	  }
+	  return result;
+	}
+
+	let _$2 = t => t,
+	  _t$2,
+	  _t2$2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6;
+	const UPDATE_ACTION = 'update';
+	const DELETE_ACTION = 'delete';
+	const HEADER_POSITION = 'HEADER';
+	const PREVIEW_POSITION = 'PREVIEW';
+	const FOOTER_POSITION = 'FOOTER';
+	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
+	var _target = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("target");
+	var _entityTypeId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _categoryId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("categoryId");
+	var _canUseFieldsDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUseFieldsDialog");
+	var _canUseFieldValueInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUseFieldValueInput");
+	var _isReadOnly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadOnly");
+	var _previewer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewer");
+	var _headerContainerEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("headerContainerEl");
+	var _bodyContainerEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bodyContainerEl");
+	var _footerContainerEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footerContainerEl");
+	var _placeHoldersDialogDefaultOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("placeHoldersDialogDefaultOptions");
+	var _headerRaw = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("headerRaw");
+	var _bodyRaw = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bodyRaw");
+	var _footerRaw = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footerRaw");
+	var _popupMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupMenu");
+	var _inputPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputPopup");
+	var _dialogsCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogsCache");
+	var _createContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createContainer");
+	var _createContainerWithSelectors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createContainerWithSelectors");
+	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
+	var _onApplyInputPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onApplyInputPopup");
+	var _onPreviewTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPreviewTemplate");
+	var _getInputContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInputContainer");
+	var _getPlaceholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPlaceholders");
+	var _prepareDlgOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareDlgOptions");
+	var _adjustFilledPlaceholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustFilledPlaceholders");
+	var _deleteFromFilledPlaceholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteFromFilledPlaceholders");
+	var _updateForFilledPlaceholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateForFilledPlaceholders");
+	var _getFilledPlaceholderByElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilledPlaceholderByElement");
+	var _getPlaceholderIdByElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPlaceholderIdByElement");
+	var _getFilledPlaceholderById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilledPlaceholderById");
+	var _getPlainText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPlainText");
+	var _getRawTextByPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRawTextByPosition");
+	var _assertValidParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("assertValidParams");
+	var _canUsePlaceholderProvider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUsePlaceholderProvider");
+	class Editor {
 	  // @todo replace this variables with a generic container
 
-	  function Editor(_params) {
-	    var _params$canUseFieldsD, _params$canUseFieldVa, _params$canUsePreview;
-	    babelHelpers.classCallCheck(this, Editor);
-	    _classPrivateMethodInitSpec$3(this, _canUsePlaceholderProvider);
-	    _classPrivateMethodInitSpec$3(this, _assertValidParams);
-	    _classPrivateMethodInitSpec$3(this, _getRawTextByPosition);
-	    _classPrivateMethodInitSpec$3(this, _getPlainText);
-	    _classPrivateMethodInitSpec$3(this, _getFilledPlaceholderById);
-	    _classPrivateMethodInitSpec$3(this, _getPlaceholderIdByElement);
-	    _classPrivateMethodInitSpec$3(this, _getFilledPlaceholderByElement);
-	    _classPrivateMethodInitSpec$3(this, _updateForFilledPlaceholders);
-	    _classPrivateMethodInitSpec$3(this, _deleteFromFilledPlaceholders);
-	    _classPrivateMethodInitSpec$3(this, _adjustFilledPlaceholders);
-	    _classPrivateMethodInitSpec$3(this, _prepareDlgOptions);
-	    _classPrivateMethodInitSpec$3(this, _getPlaceholders);
-	    _classPrivateMethodInitSpec$3(this, _getInputContainer);
-	    _classPrivateMethodInitSpec$3(this, _onPreviewTemplate);
-	    _classPrivateMethodInitSpec$3(this, _onApplyInputPopup);
-	    _classPrivateMethodInitSpec$3(this, _createContainerWithSelectors);
-	    _classPrivateMethodInitSpec$3(this, _createContainer);
-	    _classPrivateFieldInitSpec$3(this, _id, {
+	  constructor(_params) {
+	    var _params$canUseFieldsD, _params$canUseFieldVa, _params$isReadOnly, _params$canUsePreview;
+	    Object.defineProperty(this, _canUsePlaceholderProvider, {
+	      value: _canUsePlaceholderProvider2
+	    });
+	    Object.defineProperty(this, _assertValidParams, {
+	      value: _assertValidParams2
+	    });
+	    Object.defineProperty(this, _getRawTextByPosition, {
+	      value: _getRawTextByPosition2
+	    });
+	    Object.defineProperty(this, _getPlainText, {
+	      value: _getPlainText2
+	    });
+	    Object.defineProperty(this, _getFilledPlaceholderById, {
+	      value: _getFilledPlaceholderById2
+	    });
+	    Object.defineProperty(this, _getPlaceholderIdByElement, {
+	      value: _getPlaceholderIdByElement2
+	    });
+	    Object.defineProperty(this, _getFilledPlaceholderByElement, {
+	      value: _getFilledPlaceholderByElement2
+	    });
+	    Object.defineProperty(this, _updateForFilledPlaceholders, {
+	      value: _updateForFilledPlaceholders2
+	    });
+	    Object.defineProperty(this, _deleteFromFilledPlaceholders, {
+	      value: _deleteFromFilledPlaceholders2
+	    });
+	    Object.defineProperty(this, _adjustFilledPlaceholders, {
+	      value: _adjustFilledPlaceholders2
+	    });
+	    Object.defineProperty(this, _prepareDlgOptions, {
+	      value: _prepareDlgOptions2
+	    });
+	    Object.defineProperty(this, _getPlaceholders, {
+	      value: _getPlaceholders2
+	    });
+	    Object.defineProperty(this, _getInputContainer, {
+	      value: _getInputContainer2
+	    });
+	    Object.defineProperty(this, _onPreviewTemplate, {
+	      value: _onPreviewTemplate2
+	    });
+	    Object.defineProperty(this, _onApplyInputPopup, {
+	      value: _onApplyInputPopup2
+	    });
+	    Object.defineProperty(this, _getDialog, {
+	      value: _getDialog2
+	    });
+	    Object.defineProperty(this, _createContainerWithSelectors, {
+	      value: _createContainerWithSelectors2
+	    });
+	    Object.defineProperty(this, _createContainer, {
+	      value: _createContainer2
+	    });
+	    Object.defineProperty(this, _id, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$3(this, _target, {
+	    Object.defineProperty(this, _target, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _entityTypeId$1, {
+	    Object.defineProperty(this, _entityTypeId$2, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _entityId$1, {
+	    Object.defineProperty(this, _entityId$2, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _categoryId, {
+	    Object.defineProperty(this, _categoryId$1, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _canUseFieldsDialog, {
+	    Object.defineProperty(this, _canUseFieldsDialog, {
 	      writable: true,
 	      value: true
 	    });
-	    _classPrivateFieldInitSpec$3(this, _canUseFieldValueInput, {
+	    Object.defineProperty(this, _canUseFieldValueInput, {
 	      writable: true,
 	      value: true
 	    });
-	    _classPrivateFieldInitSpec$3(this, _canUsePreview, {
+	    Object.defineProperty(this, _isReadOnly, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$3(this, _isUsePreviewRequestRunning, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec$3(this, _lastPreview, {
+	    Object.defineProperty(this, _previewer, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _lastPreviewTemplateHash, {
+	    this.placeholders = [];
+	    this.filledPlaceholders = [];
+	    this.onSelect = () => {};
+	    Object.defineProperty(this, _headerContainerEl, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _previewPopup, {
+	    Object.defineProperty(this, _bodyContainerEl, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.defineProperty(this, "placeholders", []);
-	    babelHelpers.defineProperty(this, "filledPlaceholders", []);
-	    babelHelpers.defineProperty(this, "onSelect", function () {});
-	    _classPrivateFieldInitSpec$3(this, _headerContainerEl, {
+	    Object.defineProperty(this, _footerContainerEl, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _bodyContainerEl, {
+	    Object.defineProperty(this, _placeHoldersDialogDefaultOptions, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _footerContainerEl, {
+	    Object.defineProperty(this, _headerRaw, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _placeHoldersDialogDefaultOptions, {
+	    Object.defineProperty(this, _bodyRaw, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _headerRaw, {
+	    Object.defineProperty(this, _footerRaw, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _bodyRaw, {
+	    Object.defineProperty(this, _popupMenu, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _footerRaw, {
+	    Object.defineProperty(this, _inputPopup, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(this, _popupMenu, {
+	    Object.defineProperty(this, _dialogsCache, {
 	      writable: true,
-	      value: null
+	      value: new WeakMap()
 	    });
-	    _classPrivateFieldInitSpec$3(this, _inputPopup, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateMethodGet$3(this, _assertValidParams, _assertValidParams2).call(this, _params);
-	    babelHelpers.classPrivateFieldSet(this, _id, _params.id || "crm-template-editor-".concat(main_core.Text.getRandom()));
-	    babelHelpers.classPrivateFieldSet(this, _target, _params.target);
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId$1, _params.entityTypeId);
-	    babelHelpers.classPrivateFieldSet(this, _entityId$1, _params.entityId);
-	    babelHelpers.classPrivateFieldSet(this, _categoryId, main_core.Type.isNumber(_params.categoryId) ? _params.categoryId : null);
+	    babelHelpers.classPrivateFieldLooseBase(this, _assertValidParams)[_assertValidParams](_params);
+	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = _params.id || `crm-template-editor-${main_core.Text.getRandom()}`;
+	    babelHelpers.classPrivateFieldLooseBase(this, _target)[_target] = _params.target;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2] = _params.entityTypeId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2] = _params.entityId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _categoryId$1)[_categoryId$1] = main_core.Type.isNumber(_params.categoryId) ? _params.categoryId : null;
 	    this.onSelect = _params.onSelect;
-	    babelHelpers.classPrivateFieldSet(this, _canUseFieldsDialog, Boolean((_params$canUseFieldsD = _params.canUseFieldsDialog) !== null && _params$canUseFieldsD !== void 0 ? _params$canUseFieldsD : true));
-	    babelHelpers.classPrivateFieldSet(this, _canUseFieldValueInput, Boolean((_params$canUseFieldVa = _params.canUseFieldValueInput) !== null && _params$canUseFieldVa !== void 0 ? _params$canUseFieldVa : true));
-	    babelHelpers.classPrivateFieldSet(this, _canUsePreview, Boolean((_params$canUsePreview = _params.canUsePreview) !== null && _params$canUsePreview !== void 0 ? _params$canUsePreview : false));
+	    babelHelpers.classPrivateFieldLooseBase(this, _canUseFieldsDialog)[_canUseFieldsDialog] = Boolean((_params$canUseFieldsD = _params.canUseFieldsDialog) != null ? _params$canUseFieldsD : true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _canUseFieldValueInput)[_canUseFieldValueInput] = Boolean((_params$canUseFieldVa = _params.canUseFieldValueInput) != null ? _params$canUseFieldVa : true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly] = Boolean((_params$isReadOnly = _params.isReadOnly) != null ? _params$isReadOnly : false);
+	    const canUsePreview = Boolean((_params$canUsePreview = _params.canUsePreview) != null ? _params$canUsePreview : false);
+	    if (canUsePreview && babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2] > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _previewer)[_previewer] = new Previewer({
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2],
+	        entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2],
+	        categoryId: babelHelpers.classPrivateFieldLooseBase(this, _categoryId$1)[_categoryId$1]
+	      });
+	    }
 	    this.onPlaceholderClick = this.onPlaceholderClick.bind(this);
 	    this.onShowInputPopup = this.onShowInputPopup.bind(this);
-	    babelHelpers.classPrivateFieldSet(this, _placeHoldersDialogDefaultOptions, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _placeHoldersDialogDefaultOptions)[_placeHoldersDialogDefaultOptions] = {
 	      multiple: false,
 	      showAvatars: false,
 	      dropdownMode: true,
@@ -606,267 +817,242 @@ this.BX.Crm = this.BX.Crm || {};
 	      tagSelectorOptions: {
 	        textBoxWidth: '100%'
 	      }
-	    });
-	    if (_classPrivateMethodGet$3(this, _canUsePlaceholderProvider, _canUsePlaceholderProvider2).call(this, _params.usePlaceholderProvider)) {
+	    };
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly] && babelHelpers.classPrivateFieldLooseBase(this, _canUsePlaceholderProvider)[_canUsePlaceholderProvider](_params.usePlaceholderProvider)) {
 	      var _babelHelpers$classPr;
-	      babelHelpers.classPrivateFieldGet(this, _placeHoldersDialogDefaultOptions).entities = [{
+	      babelHelpers.classPrivateFieldLooseBase(this, _placeHoldersDialogDefaultOptions)[_placeHoldersDialogDefaultOptions].entities = [{
 	        id: 'placeholder',
 	        options: {
-	          entityTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId$1),
-	          entityId: babelHelpers.classPrivateFieldGet(this, _entityId$1),
-	          categoryId: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _categoryId)) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null
+	          entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2],
+	          entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2],
+	          categoryId: (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _categoryId$1)[_categoryId$1]) != null ? _babelHelpers$classPr : null
 	        }
 	      }];
 	    }
 	    if (main_core.Type.isPlainObject(_params.dialogOptions)) {
-	      babelHelpers.classPrivateFieldSet(this, _placeHoldersDialogDefaultOptions, _objectSpread(_objectSpread({}, babelHelpers.classPrivateFieldGet(this, _placeHoldersDialogDefaultOptions)), _params.dialogOptions));
+	      babelHelpers.classPrivateFieldLooseBase(this, _placeHoldersDialogDefaultOptions)[_placeHoldersDialogDefaultOptions] = {
+	        ...babelHelpers.classPrivateFieldLooseBase(this, _placeHoldersDialogDefaultOptions)[_placeHoldersDialogDefaultOptions],
+	        ..._params.dialogOptions
+	      };
 	    }
-	    _classPrivateMethodGet$3(this, _createContainer, _createContainer2).call(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _createContainer)[_createContainer]();
 	  }
-	  babelHelpers.createClass(Editor, [{
-	    key: "setPlaceholders",
-	    value: function setPlaceholders(placeholders) {
-	      this.placeholders = placeholders;
-	      return this;
+	  setPlaceholders(placeholders) {
+	    this.placeholders = placeholders;
+	    return this;
+	  }
+	  setFilledPlaceholders(filledPlaceholders) {
+	    this.filledPlaceholders = filledPlaceholders;
+	    return this;
+	  }
+
+	  // region Public methods
+	  setHeader(input) {
+	    if (!main_core.Type.isStringFilled(input)) {
+	      return;
 	    }
-	  }, {
-	    key: "setFilledPlaceholders",
-	    value: function setFilledPlaceholders(filledPlaceholders) {
-	      this.filledPlaceholders = filledPlaceholders;
-	      return this;
-	    } // region Public methods
-	  }, {
-	    key: "setHeader",
-	    value: function setHeader(input) {
-	      if (!main_core.Type.isStringFilled(input)) {
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _headerRaw, input);
-	      main_core.Dom.append(_classPrivateMethodGet$3(this, _createContainerWithSelectors, _createContainerWithSelectors2).call(this, input), babelHelpers.classPrivateFieldGet(this, _headerContainerEl));
+	    babelHelpers.classPrivateFieldLooseBase(this, _headerRaw)[_headerRaw] = input;
+	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _headerContainerEl)[_headerContainerEl]);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _createContainerWithSelectors)[_createContainerWithSelectors](input), babelHelpers.classPrivateFieldLooseBase(this, _headerContainerEl)[_headerContainerEl]);
+	  }
+	  setBody(input) {
+	    if (!main_core.Type.isStringFilled(input)) {
+	      return;
 	    }
-	  }, {
-	    key: "setBody",
-	    value: function setBody(input) {
-	      if (!main_core.Type.isStringFilled(input)) {
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _bodyRaw, input);
-	      main_core.Dom.append(_classPrivateMethodGet$3(this, _createContainerWithSelectors, _createContainerWithSelectors2).call(this, input), babelHelpers.classPrivateFieldGet(this, _bodyContainerEl));
+	    babelHelpers.classPrivateFieldLooseBase(this, _bodyRaw)[_bodyRaw] = input;
+	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _bodyContainerEl)[_bodyContainerEl]);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _createContainerWithSelectors)[_createContainerWithSelectors](input), babelHelpers.classPrivateFieldLooseBase(this, _bodyContainerEl)[_bodyContainerEl]);
+	  }
+	  setFooter(input) {
+	    if (!main_core.Type.isStringFilled(input)) {
+	      return;
 	    }
-	  }, {
-	    key: "setFooter",
-	    value: function setFooter(input) {
-	      if (!main_core.Type.isStringFilled(input)) {
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _footerRaw, input);
-	      main_core.Dom.append(_classPrivateMethodGet$3(this, _createContainerWithSelectors, _createContainerWithSelectors2).call(this, input), babelHelpers.classPrivateFieldGet(this, _footerContainerEl));
+	    babelHelpers.classPrivateFieldLooseBase(this, _footerRaw)[_footerRaw] = input;
+	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _footerContainerEl)[_footerContainerEl]);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _createContainerWithSelectors)[_createContainerWithSelectors](input), babelHelpers.classPrivateFieldLooseBase(this, _footerContainerEl)[_footerContainerEl]);
+	  }
+	  getData() {
+	    if (this.placeholders === null) {
+	      return null;
 	    }
-	  }, {
-	    key: "getData",
-	    value: function getData() {
-	      if (this.placeholders === null) {
-	        return null;
-	      }
-	      return {
-	        header: _classPrivateMethodGet$3(this, _getPlainText, _getPlainText2).call(this, HEADER_POSITION),
-	        body: _classPrivateMethodGet$3(this, _getPlainText, _getPlainText2).call(this, PREVIEW_POSITION),
-	        footer: _classPrivateMethodGet$3(this, _getPlainText, _getPlainText2).call(this, FOOTER_POSITION)
-	      };
-	    }
-	  }, {
-	    key: "getRawData",
-	    value: function getRawData() {
-	      return {
-	        header: babelHelpers.classPrivateFieldGet(this, _headerRaw),
-	        body: babelHelpers.classPrivateFieldGet(this, _bodyRaw),
-	        footer: babelHelpers.classPrivateFieldGet(this, _footerRaw)
-	      };
-	    } // endregion
-	  }, {
-	    key: "onPlaceholderClick",
-	    value: function onPlaceholderClick(_ref) {
-	      var _babelHelpers$classPr2,
-	        _this = this;
-	      var dialog = _ref.dialog,
-	        event = _ref.event;
-	      (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _inputPopup)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.destroy();
-	      var filledPlaceholder = _classPrivateMethodGet$3(this, _getFilledPlaceholderByElement, _getFilledPlaceholderByElement2).call(this, event.target, PREVIEW_POSITION);
-	      var isTextItemFirst = main_core.Type.isStringFilled(filledPlaceholder === null || filledPlaceholder === void 0 ? void 0 : filledPlaceholder.FIELD_VALUE);
-	      if (babelHelpers.classPrivateFieldGet(this, _canUseFieldsDialog) && babelHelpers.classPrivateFieldGet(this, _canUseFieldValueInput)) {
-	        babelHelpers.classPrivateFieldSet(this, _popupMenu, new MenuPopup({
-	          bindElement: event.target,
-	          isTextItemFirst: isTextItemFirst,
-	          onEditorItemClick: function onEditorItemClick() {
-	            _this.onShowDialogPopup(filledPlaceholder, dialog);
-	          },
-	          onTextItemClick: function onTextItemClick(element) {
-	            _this.onShowInputPopup(element);
-	          }
-	        }));
-	        babelHelpers.classPrivateFieldGet(this, _popupMenu).show();
-	      } else if (babelHelpers.classPrivateFieldGet(this, _canUseFieldsDialog)) {
-	        this.onShowDialogPopup(filledPlaceholder, dialog);
-	      } else if (babelHelpers.classPrivateFieldGet(this, _canUseFieldValueInput)) {
-	        this.onShowInputPopup(event.target);
-	      }
-	    }
-	  }, {
-	    key: "onShowDialogPopup",
-	    value: function onShowDialogPopup(filledPlaceholder, dialog) {
-	      if (main_core.Type.isStringFilled(filledPlaceholder === null || filledPlaceholder === void 0 ? void 0 : filledPlaceholder.FIELD_VALUE)) {
-	        dialog.getPreselectedItems().forEach(function (preselectedItem) {
-	          var item = dialog.getItem(preselectedItem);
-	          if (item) {
-	            item.deselect();
-	          }
-	        });
-	      }
-	      dialog.show();
-	    }
-	  }, {
-	    key: "onShowInputPopup",
-	    value: function onShowInputPopup(bindElement) {
-	      var _this2 = this;
-	      var filledPlaceholder = _classPrivateMethodGet$3(this, _getFilledPlaceholderByElement, _getFilledPlaceholderByElement2).call(this, bindElement);
-	      var value = main_core.Type.isStringFilled(filledPlaceholder === null || filledPlaceholder === void 0 ? void 0 : filledPlaceholder.FIELD_VALUE) ? filledPlaceholder.FIELD_VALUE : '';
-	      babelHelpers.classPrivateFieldSet(this, _inputPopup, new TextPopup({
-	        bindElement: bindElement,
-	        value: value,
-	        onApply: function onApply(newValue) {
-	          _classPrivateMethodGet$3(_this2, _onApplyInputPopup, _onApplyInputPopup2).call(_this2, newValue, bindElement);
+	    return {
+	      header: babelHelpers.classPrivateFieldLooseBase(this, _getPlainText)[_getPlainText](HEADER_POSITION),
+	      body: babelHelpers.classPrivateFieldLooseBase(this, _getPlainText)[_getPlainText](PREVIEW_POSITION),
+	      footer: babelHelpers.classPrivateFieldLooseBase(this, _getPlainText)[_getPlainText](FOOTER_POSITION)
+	    };
+	  }
+	  getRawData() {
+	    return {
+	      header: babelHelpers.classPrivateFieldLooseBase(this, _headerRaw)[_headerRaw],
+	      body: babelHelpers.classPrivateFieldLooseBase(this, _bodyRaw)[_bodyRaw],
+	      footer: babelHelpers.classPrivateFieldLooseBase(this, _footerRaw)[_footerRaw]
+	    };
+	  }
+	  destroy() {
+	    var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _previewer)[_previewer]) == null ? void 0 : _babelHelpers$classPr2.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _previewer)[_previewer] = null;
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _inputPopup)[_inputPopup]) == null ? void 0 : _babelHelpers$classPr3.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputPopup)[_inputPopup] = null;
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popupMenu)[_popupMenu]) == null ? void 0 : _babelHelpers$classPr4.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _popupMenu)[_popupMenu] = null;
+	    main_core.Runtime.destroy(this);
+	  }
+	  // endregion
+
+	  onPlaceholderClick({
+	    dialogOptions,
+	    event
+	  }) {
+	    var _babelHelpers$classPr5;
+	    (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _inputPopup)[_inputPopup]) == null ? void 0 : _babelHelpers$classPr5.destroy();
+	    const filledPlaceholder = babelHelpers.classPrivateFieldLooseBase(this, _getFilledPlaceholderByElement)[_getFilledPlaceholderByElement](event.target, PREVIEW_POSITION);
+	    const isTextItemFirst = main_core.Type.isStringFilled(filledPlaceholder == null ? void 0 : filledPlaceholder.FIELD_VALUE);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _canUseFieldsDialog)[_canUseFieldsDialog] && babelHelpers.classPrivateFieldLooseBase(this, _canUseFieldValueInput)[_canUseFieldValueInput]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _popupMenu)[_popupMenu] = new MenuPopup({
+	        bindElement: event.target,
+	        isTextItemFirst,
+	        onEditorItemClick: () => {
+	          this.onShowDialogPopup(filledPlaceholder, dialogOptions);
+	        },
+	        onTextItemClick: element => {
+	          this.onShowInputPopup(element);
 	        }
-	      }));
-	      babelHelpers.classPrivateFieldGet(this, _inputPopup).show();
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _popupMenu)[_popupMenu].show();
+	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _canUseFieldsDialog)[_canUseFieldsDialog]) {
+	      this.onShowDialogPopup(filledPlaceholder, dialogOptions);
+	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _canUseFieldValueInput)[_canUseFieldValueInput]) {
+	      this.onShowInputPopup(event.target);
 	    }
-	  }]);
-	  return Editor;
-	}();
+	  }
+	  onShowDialogPopup(filledPlaceholder, dialogOptions) {
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogOptions);
+	    if (main_core.Type.isStringFilled(filledPlaceholder == null ? void 0 : filledPlaceholder.FIELD_VALUE)) {
+	      dialog.getPreselectedItems().forEach(preselectedItem => {
+	        const item = dialog.getItem(preselectedItem);
+	        if (item) {
+	          item.deselect();
+	        }
+	      });
+	    }
+	    dialog.show();
+	  }
+
+	  /**
+	   * Dialog with preselected items makes backend request on construction.
+	   * Create dialog only when user clicks, and then cache it.
+	   */
+
+	  onShowInputPopup(bindElement) {
+	    const filledPlaceholder = babelHelpers.classPrivateFieldLooseBase(this, _getFilledPlaceholderByElement)[_getFilledPlaceholderByElement](bindElement);
+	    const value = main_core.Type.isStringFilled(filledPlaceholder == null ? void 0 : filledPlaceholder.FIELD_VALUE) ? filledPlaceholder.FIELD_VALUE : '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputPopup)[_inputPopup] = new TextPopup({
+	      bindElement,
+	      value,
+	      onApply: newValue => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _onApplyInputPopup)[_onApplyInputPopup](newValue, bindElement);
+	      }
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputPopup)[_inputPopup].show();
+	  }
+	}
 	function _createContainer2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _target)) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]) {
 	    return;
 	  }
-	  var containerEl = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"crm-template-editor crm-template-editor__scope\"></div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _id));
-	  babelHelpers.classPrivateFieldSet(this, _headerContainerEl, main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-header\"></div>"]))));
-	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _headerContainerEl), containerEl);
-	  babelHelpers.classPrivateFieldSet(this, _bodyContainerEl, main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-body\"></div>"]))));
-	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _bodyContainerEl), containerEl);
-	  babelHelpers.classPrivateFieldSet(this, _footerContainerEl, main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-footer\"></div>"]))));
-	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _footerContainerEl), containerEl);
-	  if (babelHelpers.classPrivateFieldGet(this, _canUsePreview)) {
-	    var previewLink = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-template-editor-preview-link\" href=\"#\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_LINK_TITLE'));
-	    main_core.Event.bind(previewLink, 'click', _classPrivateMethodGet$3(this, _onPreviewTemplate, _onPreviewTemplate2).bind(this));
+	  const containerEl = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+			<div id="${0}" class="crm-template-editor crm-template-editor__scope"></div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly]) {
+	    main_core.Dom.addClass(containerEl, '--read-only');
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _headerContainerEl)[_headerContainerEl] = main_core.Tag.render(_t2$2 || (_t2$2 = _$2`<div class="crm-template-editor-header"></div>`));
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _headerContainerEl)[_headerContainerEl], containerEl);
+	  babelHelpers.classPrivateFieldLooseBase(this, _bodyContainerEl)[_bodyContainerEl] = main_core.Tag.render(_t3 || (_t3 = _$2`<div class="crm-template-editor-body"></div>`));
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _bodyContainerEl)[_bodyContainerEl], containerEl);
+	  babelHelpers.classPrivateFieldLooseBase(this, _footerContainerEl)[_footerContainerEl] = main_core.Tag.render(_t4 || (_t4 = _$2`<div class="crm-template-editor-footer"></div>`));
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _footerContainerEl)[_footerContainerEl], containerEl);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _previewer)[_previewer]) {
+	    const previewLink = main_core.Tag.render(_t5 || (_t5 = _$2`
+				<div class="crm-template-editor-preview-link" href="#">
+					${0}
+				</div>
+			`), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_LINK_TITLE'));
+	    main_core.Event.bind(previewLink, 'click', babelHelpers.classPrivateFieldLooseBase(this, _onPreviewTemplate)[_onPreviewTemplate].bind(this));
 	    main_core.Dom.append(previewLink, containerEl);
 	  }
-	  main_core.Dom.clean(babelHelpers.classPrivateFieldGet(this, _target));
-	  main_core.Dom.append(containerEl, babelHelpers.classPrivateFieldGet(this, _target));
+	  main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
+	  main_core.Dom.append(containerEl, babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
 	}
-	function _createContainerWithSelectors2(input) {
-	  var _this3 = this;
-	  var position = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : PREVIEW_POSITION;
-	  var placeholders = _classPrivateMethodGet$3(this, _getPlaceholders, _getPlaceholders2).call(this, position);
+	function _createContainerWithSelectors2(input, position = PREVIEW_POSITION) {
+	  const placeholders = babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholders)[_getPlaceholders](position);
 	  if (placeholders === null) {
 	    return null;
 	  }
-	  var container = _classPrivateMethodGet$3(this, _getInputContainer, _getInputContainer2).call(this, input, position);
-	  placeholders.forEach(function (placeholder, key) {
-	    var element = babelHelpers.toConsumableArray(container.childNodes).find(function (node) {
-	      return node.dataset && Number(node.dataset.templatePlaceholder) === key;
-	    });
+	  const container = babelHelpers.classPrivateFieldLooseBase(this, _getInputContainer)[_getInputContainer](input, position);
+	  placeholders.forEach((placeholder, key) => {
+	    const element = [...container.childNodes].find(node => node.dataset && Number(node.dataset.templatePlaceholder) === key);
 	    if (!element) {
 	      return;
 	    }
-	    var dlgOptions = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this3, _placeHoldersDialogDefaultOptions));
-	    _classPrivateMethodGet$3(_this3, _prepareDlgOptions, _prepareDlgOptions2).call(_this3, dlgOptions, element, position);
-	    var dialog = new crm_entitySelector.Dialog(dlgOptions);
-	    main_core.Event.bind(element, 'click', function (event) {
-	      _this3.onPlaceholderClick({
-	        dialog: dialog,
-	        event: event
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly]) {
+	      return;
+	    }
+	    const dialogOptions = main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(this, _placeHoldersDialogDefaultOptions)[_placeHoldersDialogDefaultOptions]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _prepareDlgOptions)[_prepareDlgOptions](dialogOptions, element, position);
+	    main_core.Event.bind(element, 'click', event => {
+	      this.onPlaceholderClick({
+	        dialogOptions,
+	        event
 	      });
 	    });
 	  });
 	  return container;
 	}
+	function _getDialog2(dialogOptions) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _dialogsCache)[_dialogsCache].has(dialogOptions)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _dialogsCache)[_dialogsCache].get(dialogOptions);
+	  }
+	  const dialog = new crm_entitySelector.Dialog(dialogOptions);
+	  babelHelpers.classPrivateFieldLooseBase(this, _dialogsCache)[_dialogsCache].set(dialogOptions, dialog);
+	  return dialog;
+	}
 	function _onApplyInputPopup2(value, bindElement) {
-	  var placeholderId = _classPrivateMethodGet$3(this, _getPlaceholderIdByElement, _getPlaceholderIdByElement2).call(this, bindElement, PREVIEW_POSITION);
-	  var params = {
+	  const placeholderId = babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholderIdByElement)[_getPlaceholderIdByElement](bindElement, PREVIEW_POSITION);
+	  const params = {
 	    id: placeholderId,
 	    parentTitle: null,
 	    text: value,
 	    title: value,
-	    entityType: BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldGet(this, _entityTypeId$1)).toLowerCase()
+	    entityType: BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2]).toLowerCase()
 	  };
 
 	  // eslint-disable-next-line no-param-reassign
 	  bindElement.textContent = value;
 	  main_core.Dom.addClass(bindElement, '--selected');
-	  _classPrivateMethodGet$3(this, _adjustFilledPlaceholders, _adjustFilledPlaceholders2).call(this, params);
+	  babelHelpers.classPrivateFieldLooseBase(this, _adjustFilledPlaceholders)[_adjustFilledPlaceholders](params);
 	  this.onSelect(params);
 	}
 	function _onPreviewTemplate2(event) {
-	  var _babelHelpers$classPr3,
-	    _babelHelpers$classPr6,
-	    _this4 = this;
-	  if ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _previewPopup)) !== null && _babelHelpers$classPr3 !== void 0 && _babelHelpers$classPr3.isShown()) {
-	    return;
-	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _isUsePreviewRequestRunning)) {
-	    var _babelHelpers$classPr4;
-	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _previewPopup)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.show();
-	    return;
-	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _entityId$1) <= 0) {
-	    var _babelHelpers$classPr5;
-	    (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _previewPopup)) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.show();
-	    return;
-	  }
-	  (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldGet(this, _previewPopup)) === null || _babelHelpers$classPr6 === void 0 ? void 0 : _babelHelpers$classPr6.destroy();
-	  var currentTemplate = this.placeholders === null ? this.getRawData().body : this.getData().body; // TODO: implement header and footer processing
-	  var currentTemplateHash = BX.util.hashCode(currentTemplate);
-	  if (babelHelpers.classPrivateFieldGet(this, _lastPreviewTemplateHash) === currentTemplateHash) {
-	    babelHelpers.classPrivateFieldSet(this, _previewPopup, new PreviewPopup(event.target, babelHelpers.classPrivateFieldGet(this, _entityTypeId$1), babelHelpers.classPrivateFieldGet(this, _entityId$1)));
-	    babelHelpers.classPrivateFieldGet(this, _previewPopup).apply(PREVIEW_POPUP_CONTENT_STATUS.SUCCESS, babelHelpers.classPrivateFieldGet(this, _lastPreview));
-	    babelHelpers.classPrivateFieldGet(this, _previewPopup).show();
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldSet(this, _previewPopup, new PreviewPopup(event.target, babelHelpers.classPrivateFieldGet(this, _entityTypeId$1), babelHelpers.classPrivateFieldGet(this, _entityId$1)));
-	  babelHelpers.classPrivateFieldGet(this, _previewPopup).apply(PREVIEW_POPUP_CONTENT_STATUS.LOADING);
-	  babelHelpers.classPrivateFieldGet(this, _previewPopup).show();
-	  babelHelpers.classPrivateFieldSet(this, _isUsePreviewRequestRunning, true);
-	  main_core.ajax.runAction('crm.activity.smsplaceholder.preview', {
-	    data: {
-	      entityTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId$1),
-	      entityId: babelHelpers.classPrivateFieldGet(this, _entityId$1),
-	      message: currentTemplate,
-	      entityCategoryId: babelHelpers.classPrivateFieldGet(this, _categoryId)
-	    }
-	  }).then(function (response) {
-	    babelHelpers.classPrivateFieldGet(_this4, _previewPopup).apply(PREVIEW_POPUP_CONTENT_STATUS.SUCCESS, response.data.preview);
-	    babelHelpers.classPrivateFieldSet(_this4, _isUsePreviewRequestRunning, false);
-	    babelHelpers.classPrivateFieldSet(_this4, _lastPreviewTemplateHash, currentTemplateHash);
-	    babelHelpers.classPrivateFieldSet(_this4, _lastPreview, response.data.preview);
-	  })["catch"](function (response) {
-	    var _response$errors$0$me;
-	    babelHelpers.classPrivateFieldGet(_this4, _previewPopup).apply(PREVIEW_POPUP_CONTENT_STATUS.FAILED, (_response$errors$0$me = response.errors[0].message) !== null && _response$errors$0$me !== void 0 ? _response$errors$0$me : 'Unknown error');
-	    babelHelpers.classPrivateFieldSet(_this4, _isUsePreviewRequestRunning, false);
-	  });
+	  const currentTemplate = this.placeholders === null ? this.getRawData().body : this.getData().body; // TODO: implement header and footer processing
+
+	  babelHelpers.classPrivateFieldLooseBase(this, _previewer)[_previewer].preview(currentTemplate, event.target);
 	  main_core_events.EventEmitter.emit('BX.Crm.Template.Editor:shown');
 	}
 	function _getInputContainer2(input, position) {
-	  var _this5 = this;
-	  var placeholders = _classPrivateMethodGet$3(this, _getPlaceholders, _getPlaceholders2).call(this, position);
+	  const placeholders = babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholders)[_getPlaceholders](position);
 	  if (placeholders === null) {
 	    return null;
 	  }
-	  var i = 0;
-	  placeholders.forEach(function (placeholder) {
-	    var filledPlaceholder = _classPrivateMethodGet$3(_this5, _getFilledPlaceholderById, _getFilledPlaceholderById2).call(_this5, placeholder);
-	    var title = main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_EMPTY_PLACEHOLDER_LABEL');
-	    var spanClass = 'crm-template-editor-element-pill';
+	  let i = 0;
+	  placeholders.forEach(placeholder => {
+	    const filledPlaceholder = babelHelpers.classPrivateFieldLooseBase(this, _getFilledPlaceholderById)[_getFilledPlaceholderById](placeholder);
+	    let title = main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_EMPTY_PLACEHOLDER_LABEL');
+	    let spanClass = 'crm-template-editor-element-pill';
 	    if (filledPlaceholder) {
 	      if (main_core.Type.isStringFilled(filledPlaceholder.PARENT_TITLE) && main_core.Type.isStringFilled(filledPlaceholder.TITLE)) {
-	        title = "".concat(filledPlaceholder.PARENT_TITLE, ": ").concat(filledPlaceholder.TITLE);
+	        title = `${filledPlaceholder.PARENT_TITLE}: ${filledPlaceholder.TITLE}`;
 	      } else if (main_core.Type.isStringFilled(filledPlaceholder.TITLE)) {
 	        title = filledPlaceholder.TITLE;
 	      } else if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_NAME)) {
@@ -877,25 +1063,24 @@ this.BX.Crm = this.BX.Crm || {};
 	      title = main_core.Text.encode(title);
 	      spanClass += ' --selected';
 	    }
-	    var replaceValue = "<span class=\"".concat(spanClass, "\" data-template-placeholder=\"").concat(i++, "\">").concat(title, "</span>");
+	    const replaceValue = `<span class="${spanClass}" data-test-role="placeholder" data-template-placeholder="${i++}">${title}</span>`;
 
 	    // eslint-disable-next-line no-param-reassign
 	    input = input.replace(placeholder, replaceValue);
 	  });
-	  return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), input);
+	  return main_core.Tag.render(_t6 || (_t6 = _$2`<div>${0}</div>`), input);
 	}
 	function _getPlaceholders2(position) {
-	  var allPlaceholders = main_core.Type.isPlainObject(this.placeholders) ? this.placeholders : {};
-	  var placeholders = main_core.Type.isArrayFilled(allPlaceholders[position]) ? allPlaceholders[position] : [];
+	  const allPlaceholders = main_core.Type.isPlainObject(this.placeholders) ? this.placeholders : {};
+	  const placeholders = main_core.Type.isArrayFilled(allPlaceholders[position]) ? allPlaceholders[position] : [];
 	  return main_core.Type.isArrayLike(placeholders) ? placeholders : null;
 	}
 	function _prepareDlgOptions2(dlgOptions, element, position) {
-	  var _placeholders$element,
-	    _this6 = this;
-	  var placeholders = _classPrivateMethodGet$3(this, _getPlaceholders, _getPlaceholders2).call(this, position);
-	  var placeholderId = (_placeholders$element = placeholders[element.dataset.templatePlaceholder]) !== null && _placeholders$element !== void 0 ? _placeholders$element : null;
+	  var _placeholders$element;
+	  const placeholders = babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholders)[_getPlaceholders](position);
+	  const placeholderId = (_placeholders$element = placeholders[element.dataset.templatePlaceholder]) != null ? _placeholders$element : null;
 	  if (placeholderId) {
-	    var filledPlaceholder = _classPrivateMethodGet$3(this, _getFilledPlaceholderById, _getFilledPlaceholderById2).call(this, placeholderId);
+	    const filledPlaceholder = babelHelpers.classPrivateFieldLooseBase(this, _getFilledPlaceholderById)[_getFilledPlaceholderById](placeholderId);
 	    if (filledPlaceholder) {
 	      // eslint-disable-next-line no-param-reassign
 	      dlgOptions.preselectedItems = [[filledPlaceholder.FIELD_ENTITY_TYPE, filledPlaceholder.FIELD_NAME]];
@@ -904,95 +1089,96 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  // eslint-disable-next-line no-param-reassign
 	  dlgOptions.events = {
-	    onShow: function onShow() {
-	      var keyframes = [{
+	    onShow: () => {
+	      const keyframes = [{
 	        transform: 'rotate(0)'
 	      }, {
 	        transform: 'rotate(90deg)'
 	      }, {
 	        transform: 'rotate(180deg)'
 	      }];
-	      var options = {
+	      const options = {
 	        duration: 200,
 	        pseudoElement: '::after'
 	      };
 	      element.animate(keyframes, options);
 	      main_core.Dom.addClass(element, '--flipped');
 	    },
-	    onHide: function onHide() {
-	      var keyframes = [{
+	    onHide: () => {
+	      const keyframes = [{
 	        transform: 'rotate(180deg)'
 	      }, {
 	        transform: 'rotate(90deg)'
 	      }, {
 	        transform: 'rotate(0)'
 	      }];
-	      var options = {
+	      const options = {
 	        duration: 200,
 	        pseudoElement: '::after'
 	      };
 	      element.animate(keyframes, options);
 	      main_core.Dom.removeClass(element, '--flipped');
 	    },
-	    'Item:onSelect': function ItemOnSelect(event) {
+	    'Item:onSelect': event => {
 	      main_core.Dom.addClass(element, '--selected');
-	      var item = event.getData().item;
-	      var parentTitle = item.supertitle.text;
-	      var title = item.title.text;
+	      const item = event.getData().item;
+	      const parentTitle = item.supertitle.text;
+	      const title = item.title.text;
 
 	      // eslint-disable-next-line no-param-reassign
-	      element.textContent = "".concat(parentTitle, ": ").concat(title);
-	      var value = item.id;
-	      var entityType = item.entityId;
-	      var params = {
+	      element.textContent = `${parentTitle}: ${title}`;
+	      const value = item.id;
+	      const entityType = item.entityId;
+	      const params = {
 	        id: placeholderId,
-	        value: value,
-	        parentTitle: parentTitle,
-	        title: title,
-	        entityType: entityType
+	        value,
+	        parentTitle,
+	        title,
+	        entityType
 	      };
-	      _classPrivateMethodGet$3(_this6, _adjustFilledPlaceholders, _adjustFilledPlaceholders2).call(_this6, params);
-	      _this6.onSelect(params);
+	      babelHelpers.classPrivateFieldLooseBase(this, _adjustFilledPlaceholders)[_adjustFilledPlaceholders](params);
+	      this.onSelect(params);
 	    }
 	  };
 
 	  // eslint-disable-next-line no-param-reassign
 	  dlgOptions.targetNode = element;
 	}
-	function _adjustFilledPlaceholders2(_ref2) {
-	  var id = _ref2.id,
-	    value = _ref2.value,
-	    text = _ref2.text,
-	    parentTitle = _ref2.parentTitle,
-	    title = _ref2.title;
-	  var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : UPDATE_ACTION;
+	function _adjustFilledPlaceholders2({
+	  id,
+	  value,
+	  text,
+	  parentTitle,
+	  title
+	}, action = UPDATE_ACTION) {
 	  if (action === DELETE_ACTION) {
-	    _classPrivateMethodGet$3(this, _deleteFromFilledPlaceholders, _deleteFromFilledPlaceholders2).call(this, id, value);
+	    babelHelpers.classPrivateFieldLooseBase(this, _deleteFromFilledPlaceholders)[_deleteFromFilledPlaceholders](id, value);
 	    return;
 	  }
-	  _classPrivateMethodGet$3(this, _updateForFilledPlaceholders, _updateForFilledPlaceholders2).call(this, {
-	    id: id,
-	    value: value,
-	    text: text,
-	    parentTitle: parentTitle,
-	    title: title
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateForFilledPlaceholders)[_updateForFilledPlaceholders]({
+	    id,
+	    value,
+	    text,
+	    parentTitle,
+	    title
 	  });
 	}
 	function _deleteFromFilledPlaceholders2(id, value) {
-	  this.filledPlaceholders = this.filledPlaceholders.filter(function (filledPlaceholder) {
+	  this.filledPlaceholders = this.filledPlaceholders.filter(filledPlaceholder => {
 	    return filledPlaceholder.PLACEHOLDER_ID !== id || filledPlaceholder.FIELD_NAME !== value;
 	  });
 	}
-	function _updateForFilledPlaceholders2(_ref3) {
-	  var id = _ref3.id,
-	    value = _ref3.value,
-	    text = _ref3.text,
-	    parentTitle = _ref3.parentTitle,
-	    title = _ref3.title;
-	  var filledPlaceholder = _classPrivateMethodGet$3(this, _getFilledPlaceholderById, _getFilledPlaceholderById2).call(this, id);
+	function _updateForFilledPlaceholders2({
+	  id,
+	  value,
+	  text,
+	  parentTitle,
+	  title
+	}) {
+	  const filledPlaceholder = babelHelpers.classPrivateFieldLooseBase(this, _getFilledPlaceholderById)[_getFilledPlaceholderById](id);
 	  if (filledPlaceholder) {
-	    filledPlaceholder.FIELD_NAME = value !== null && value !== void 0 ? value : null;
-	    filledPlaceholder.FIELD_VALUE = text !== null && text !== void 0 ? text : null;
+	    filledPlaceholder.FIELD_NAME = value != null ? value : null;
+	    filledPlaceholder.FIELD_VALUE = text != null ? text : null;
 	    filledPlaceholder.PARENT_TITLE = parentTitle;
 	    filledPlaceholder.TITLE = title;
 	  } else {
@@ -1005,68 +1191,50 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	}
-	function _getFilledPlaceholderByElement2(element) {
-	  var position = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : PREVIEW_POSITION;
-	  var placeholderId = _classPrivateMethodGet$3(this, _getPlaceholderIdByElement, _getPlaceholderIdByElement2).call(this, element, position);
-	  return _classPrivateMethodGet$3(this, _getFilledPlaceholderById, _getFilledPlaceholderById2).call(this, placeholderId);
+	function _getFilledPlaceholderByElement2(element, position = PREVIEW_POSITION) {
+	  const placeholderId = babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholderIdByElement)[_getPlaceholderIdByElement](element, position);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getFilledPlaceholderById)[_getFilledPlaceholderById](placeholderId);
 	}
-	function _getPlaceholderIdByElement2(element) {
+	function _getPlaceholderIdByElement2(element, position = PREVIEW_POSITION) {
 	  var _placeholders$element2;
-	  var position = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : PREVIEW_POSITION;
-	  var placeholders = _classPrivateMethodGet$3(this, _getPlaceholders, _getPlaceholders2).call(this, position);
-	  return (_placeholders$element2 = placeholders[element.dataset.templatePlaceholder]) !== null && _placeholders$element2 !== void 0 ? _placeholders$element2 : null;
+	  const placeholders = babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholders)[_getPlaceholders](position);
+	  return (_placeholders$element2 = placeholders[element.dataset.templatePlaceholder]) != null ? _placeholders$element2 : null;
 	}
 	function _getFilledPlaceholderById2(placeholderId) {
-	  return this.filledPlaceholders.find(function (filledPlaceholderItem) {
-	    return filledPlaceholderItem.PLACEHOLDER_ID === placeholderId;
-	  });
+	  return this.filledPlaceholders.find(filledPlaceholderItem => filledPlaceholderItem.PLACEHOLDER_ID === placeholderId);
 	}
 	function _getPlainText2(position) {
-	  var text = _classPrivateMethodGet$3(this, _getRawTextByPosition, _getRawTextByPosition2).call(this, position);
+	  const text = babelHelpers.classPrivateFieldLooseBase(this, _getRawTextByPosition)[_getRawTextByPosition](position);
 	  if (text === null) {
 	    return null;
 	  }
-	  if (main_core.Type.isArrayFilled(this.filledPlaceholders)) {
-	    this.filledPlaceholders.forEach(function (filledPlaceholder) {
-	      if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_NAME)) {
-	        text = text.replace(filledPlaceholder.PLACEHOLDER_ID, "{".concat(filledPlaceholder.FIELD_NAME, "}"));
-	      } else if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_VALUE)) {
-	        var fieldValue = filledPlaceholder.FIELD_VALUE.replaceAll('{', '&#123;').replaceAll('}', '&#125;');
-	        text = text.replace(filledPlaceholder.PLACEHOLDER_ID, fieldValue);
-	      }
-	    });
-	  }
-	  var placeholders = this.placeholders[position];
-	  if (main_core.Type.isArrayFilled(placeholders)) {
-	    placeholders.forEach(function (placeholder) {
-	      text = text.replace(placeholder, ' ');
-	    });
-	  }
-	  return text;
+	  return getPlainText(text, this.placeholders[position], this.filledPlaceholders);
 	}
 	function _getRawTextByPosition2(position) {
 	  if (position === HEADER_POSITION) {
-	    return babelHelpers.classPrivateFieldGet(this, _headerRaw);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _headerRaw)[_headerRaw];
 	  }
 	  if (position === PREVIEW_POSITION) {
-	    return babelHelpers.classPrivateFieldGet(this, _bodyRaw);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _bodyRaw)[_bodyRaw];
 	  }
 	  if (position === FOOTER_POSITION) {
-	    return babelHelpers.classPrivateFieldGet(this, _footerRaw);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _footerRaw)[_footerRaw];
 	  }
 	  return null;
 	}
 	function _assertValidParams2(params) {
+	  var _params$isReadOnly2;
 	  if (!main_core.Type.isPlainObject(params)) {
 	    throw new TypeError('BX.Crm.Template.Editor: The "params" argument must be object');
 	  }
 	  if (!main_core.Type.isDomNode(params.target)) {
 	    throw new Error('BX.Crm.Template.Editor: The "target" argument must be DOM node');
 	  }
-	  if (_classPrivateMethodGet$3(this, _canUsePlaceholderProvider, _canUsePlaceholderProvider2).call(this, params.usePlaceholderProvider) && !BX.CrmEntityType.isDefined(params.entityTypeId)) {
+	  const isReadOnly = Boolean((_params$isReadOnly2 = params.isReadOnly) != null ? _params$isReadOnly2 : false);
+	  if (!isReadOnly && babelHelpers.classPrivateFieldLooseBase(this, _canUsePlaceholderProvider)[_canUsePlaceholderProvider](params.usePlaceholderProvider) && !BX.CrmEntityType.isDefined(params.entityTypeId)) {
 	    throw new TypeError('BX.Crm.Template.Editor: The "entityTypeId" argument is not correct');
 	  }
-	  if (!main_core.Type.isFunction(params.onSelect)) {
+	  if (!isReadOnly && !main_core.Type.isFunction(params.onSelect)) {
 	    throw new TypeError('BX.Crm.Template.Editor: The "onSelect" argument is not correct');
 	  }
 	}
@@ -1075,6 +1243,8 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	exports.Editor = Editor;
+	exports.Previewer = Previewer;
+	exports.getPlainText = getPlainText;
 
-}((this.BX.Crm.Template = this.BX.Crm.Template || {}),BX.Crm.EntitySelectorEx,BX.Event,BX,BX.UI.EntitySelector,BX.UI,BX,BX,BX.Main,BX.UI));
+}((this.BX.Crm.Template = this.BX.Crm.Template || {}),BX.Crm.EntitySelectorEx,BX.Event,BX,BX.UI.EntitySelector,BX,BX.UI,BX,BX.Main,BX.UI,BX));
 //# sourceMappingURL=editor.bundle.js.map

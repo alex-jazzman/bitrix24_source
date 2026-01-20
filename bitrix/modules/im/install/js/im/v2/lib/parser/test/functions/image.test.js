@@ -268,7 +268,7 @@ describe('ParserImage', () => {
 
 const getImageHTMLFromBbCode = (size: string, url: string): string => {
 	const messageNode = Tag.render`
-		<a class="bx-im-message-image bx-im-message-image--${size}">
+		<a class="bx-im-message-image --${size}">
 			<img
 				class="bx-im-message-image-source"
 				src="${url}"

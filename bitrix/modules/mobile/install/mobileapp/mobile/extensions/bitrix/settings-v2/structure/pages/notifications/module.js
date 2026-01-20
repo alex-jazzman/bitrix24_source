@@ -6,20 +6,26 @@ jn.define('settings-v2/structure/pages/notifications/module', (require, exports,
 		createSection,
 		createToggle,
 		createBanner,
-	} = require('settings-v2/structure/src/item-create-helper');
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { PushConfigSettingController } = require('settings-v2/controller/push-config');
 	const {
 		SettingsPageId,
-		PushConfigKeys,
+		NotificationsCacheKey,
 		BannerImageName,
+		Modules,
 	} = require('settings-v2/const');
 	const { NotificationLoadService } = require('settings-v2/services/notification-load');
 	const { Loc } = require('loc');
 	const { isEmpty } = require('utils/object');
 
-	const requestSettingsData = async ({ moduleId }) => {
-		const cachedPushTypes = Application.storage.get(PushConfigKeys.TYPES);
-		const cachedPushConfig = Application.storage.get(PushConfigKeys.CONFIG);
+	const requestSettingsData = async ({ moduleId } = {}) => {
+		if (!moduleId)
+		{
+			console.error('notification settings: moduleId is required');
+		}
+
+		const cachedPushTypes = Application.storage.get(NotificationsCacheKey.pushTypes);
+		const cachedPushConfig = Application.storage.get(NotificationsCacheKey.pushConfig);
 
 		if (cachedPushTypes && cachedPushConfig)
 		{
@@ -71,13 +77,6 @@ jn.define('settings-v2/structure/pages/notifications/module', (require, exports,
 		return items;
 	};
 
-	const Modules = {
-		BIZPROC: 'bizproc',
-		MAIL: 'mail',
-		SOCIALNETWORK: 'socialnetwork',
-		VOXIMPLANT: 'voximplant',
-	};
-
 	const ModuleToBannerImage = {
 		[Modules.BIZPROC]: BannerImageName.BIZPROC,
 		[Modules.MAIL]: BannerImageName.MAIL,
@@ -93,7 +92,12 @@ jn.define('settings-v2/structure/pages/notifications/module', (require, exports,
 	};
 
 	const prepareBanner = (moduleId) => {
-		if (!moduleId || !Object.values(Modules).includes(moduleId))
+		if (
+			!moduleId
+			|| !Object.values(Modules).includes(moduleId)
+			|| !ModuleBannerPhrases[moduleId]
+			|| !ModuleToBannerImage[moduleId]
+		)
 		{
 			return null;
 		}

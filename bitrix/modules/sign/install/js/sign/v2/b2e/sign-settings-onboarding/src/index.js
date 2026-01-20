@@ -16,16 +16,12 @@ const emptyStateHelpdeskCode = 26311976;
 export class B2EOnboardingSignSettings
 {
 	#cache: MemoryCache<any> = new MemoryCache();
-	#containerId: string;
 	#wizard: Wizard;
 	#template: Object = {};
 	#api = new Api();
-	#hasCompanies: boolean;
 
-	constructor(containerId: string = '', hasCompanies: boolean = false)
+	constructor()
 	{
-		this.#hasCompanies = hasCompanies;
-		this.#containerId = containerId;
 		const currentSlider = BX.SidePanel.Instance.getTopSlider();
 		this.#wizard = new Wizard(this.#getStepsMetadata(this), {
 			back: { className: 'ui-btn-light-border' },
@@ -48,13 +44,6 @@ export class B2EOnboardingSignSettings
 
 		const loader = new Loader({ target: container });
 		void loader.show();
-		if (!this.#hasCompanies)
-		{
-			Dom.append(this.#getCompaniesNotFoundEmptyState(), container);
-			void loader.hide();
-
-			return;
-		}
 
 		let response = null;
 		try

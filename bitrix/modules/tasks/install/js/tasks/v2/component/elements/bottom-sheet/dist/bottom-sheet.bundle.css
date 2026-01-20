@@ -5,6 +5,7 @@
 	bottom: 0;
 	left: 0 !important;
 	padding-top: 0 !important;
+	transition: .2s top, .2s right;
 }
 
 .b24-bottom-sheet.--expanded {

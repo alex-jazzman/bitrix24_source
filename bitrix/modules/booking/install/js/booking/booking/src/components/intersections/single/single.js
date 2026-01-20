@@ -2,7 +2,7 @@ import { Event } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Item, TagSelector } from 'ui.entity-selector';
 
-import { AhaMoment, EntitySelectorEntity, EntitySelectorTab, HelpDesk, Model } from 'booking.const';
+import { AhaMoment, EntitySelectorEntity, EntitySelectorTab, HelpDesk, LimitFeatureId, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
 import { limit } from 'booking.lib.limit';
 import type { ResourceModel } from 'booking.model.resources';
@@ -15,7 +15,7 @@ export const Single = {
 	{
 		this.selector = this.createSelector();
 
-		if (!this.isFeatureEnabled)
+		if (!this.isFeatureEnabled || !this.isMultiResourcesFeatureEnabled)
 		{
 			this.selector.lock();
 		}
@@ -42,6 +42,10 @@ export const Single = {
 		resourcesIds(): number[]
 		{
 			return this.resources.map(({ id }) => id);
+		},
+		isMultiResourcesFeatureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingMulti;
 		},
 	},
 	methods: {
@@ -130,6 +134,11 @@ export const Single = {
 		},
 		click(): void
 		{
+			if (!this.isMultiResourcesFeatureEnabled)
+			{
+				void limit.show(LimitFeatureId.MultiResources);
+			}
+
 			if (!this.isFeatureEnabled)
 			{
 				void limit.show();
@@ -212,7 +221,8 @@ export const Single = {
 						return;
 					}
 
-					const resourceType: ResourceTypeModel = this.$store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
+					const resourceType: ResourceTypeModel = this.$store.getters[`${Model.ResourceTypes}/getById`](
+						resource.typeId);
 
 					item.setTitle(resource.name);
 					item.setSubtitle(resourceType.name);

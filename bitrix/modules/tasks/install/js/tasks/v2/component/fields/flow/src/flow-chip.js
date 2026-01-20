@@ -1,12 +1,13 @@
-import { Outline } from 'ui.icon-set.api.core';
+import { Chip, ChipDesign } from 'ui.system.chip.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
-import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
+import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { FlowModel } from 'tasks.v2.model.flows';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { flowMeta } from './flow-meta';
 import { flowDialog } from './flow-dialog';
@@ -16,17 +17,17 @@ export const FlowChip = {
 	components: {
 		Chip,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		isAutonomous: {
 			type: Boolean,
 			default: false,
 		},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -34,10 +35,6 @@ export const FlowChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		flow(): FlowModel
 		{
 			return this.$store.getters[`${Model.Flows}/getById`](this.task.flowId);
@@ -58,7 +55,7 @@ export const FlowChip = {
 				return this.task.flowId > 0;
 			}
 
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, flowMeta.id);
+			return this.task.filledFields[flowMeta.id];
 		},
 		isFilled(): boolean
 		{
@@ -73,10 +70,13 @@ export const FlowChip = {
 
 			return this.loc('TASKS_V2_FLOW_TITLE_CHIP');
 		},
-		readonly(): boolean
+	},
+	created(): void
+	{
+		if (this.task.flowId && !this.flow)
 		{
-			return !this.task.rights.edit;
-		},
+			void flowService.getFlow(this.task.flowId);
+		}
 	},
 	methods: {
 		handleClick(): void
@@ -88,12 +88,11 @@ export const FlowChip = {
 				return;
 			}
 
-			flowDialog.setTaskId(this.taskId).showTo(this.$el);
-
-			if (!this.isAutonomous)
-			{
-				flowDialog.onUpdateOnce(this.highlightField);
-			}
+			flowDialog.show({
+				targetNode: this.$el,
+				taskId: this.taskId,
+				onClose: this.highlightField,
+			});
 		},
 		highlightField(): void
 		{
@@ -101,22 +100,18 @@ export const FlowChip = {
 		},
 		handleClear(): void
 		{
-			void taskService.update(
-				this.taskId,
-				{
-					flowId: 0,
-					groupId: 0,
-				},
-			);
+			void taskService.update(this.taskId, {
+				flowId: 0,
+				groupId: 0,
+			});
 		},
 	},
 	// TODO: remove title prop when flow popup added
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			:design
 			:icon="Outline.BOTTLENECK"
-			:text="text"
+			:text
 			:withClear="isFilled"
 			:trimmable="isFilled"
 			:data-task-id="taskId"

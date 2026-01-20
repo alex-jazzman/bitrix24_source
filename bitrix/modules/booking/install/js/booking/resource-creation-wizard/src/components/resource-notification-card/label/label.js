@@ -1,7 +1,11 @@
 import { BMenu, type MenuOptions } from 'ui.vue3.components.menu';
-import { BIcon } from 'ui.icon-set.api.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { Actions } from 'ui.icon-set.api.core';
 import 'ui.icon-set.actions';
+import 'ui.icon-set.outline';
+
+import { LimitFeatureId, Model } from 'booking.const';
+import { limit } from 'booking.lib.limit';
 
 import './label.css';
 
@@ -31,15 +35,20 @@ export const LabelDropdown = {
 	{
 		return {
 			Actions,
+			Outline,
 		};
 	},
-	data(): Object
+	data(): { isMenuShown: boolean }
 	{
 		return {
 			isMenuShown: false,
 		};
 	},
 	computed: {
+		locked(): boolean
+		{
+			return !this.$store.state[Model.Interface].enabledFeature.bookingNotificationsSettings;
+		},
 		text(): string
 		{
 			return this.items.find(({ value }) => value === this.value).name;
@@ -61,13 +70,22 @@ export const LabelDropdown = {
 	methods: {
 		handleClick(): void
 		{
+			if (this.locked)
+			{
+				void limit.show(LimitFeatureId.NotificationsSettings);
+
+				return;
+			}
+
 			this.isMenuShown = true;
 		},
 	},
 	template: `
 		<div class="booking-resource-creation-wizard-label-dropdown" ref="container" @click="handleClick">
 			<span>{{ text }}</span>
-			<BIcon :name="Actions.CHEVRON_DOWN"/>
+			<BIcon
+				:name="locked ? Outline.LOCK_M : Actions.CHEVRON_DOWN"
+			/>
 		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`,

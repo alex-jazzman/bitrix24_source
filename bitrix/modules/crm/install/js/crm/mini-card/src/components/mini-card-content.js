@@ -62,10 +62,7 @@ export const MiniCardContent: BitrixVueComponentProps = {
 				return;
 			}
 
-			this.popup.adjustPosition({
-				forceBindPosition: true,
-				forceTop: true,
-			});
+			this.popup.adjustPosition();
 
 			this.popup.bindOptions = {
 				forceBindPosition: true,

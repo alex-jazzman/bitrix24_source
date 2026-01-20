@@ -11,8 +11,12 @@ return [
 		'stafftrack:entry',
 		'tokens',
 		'utils/function',
-		'whats-new/ui-manager',
+		'whats-new/ui-manager/component-opener',
 		'user-profile',
+		'statemanager/redux/store',
+		'statemanager/redux/slices/users/selector',
+		'utils/url',
+		'layout/ui/user/empty-avatar',
 	],
 	'bundle' => [
 		'./src/calendar',

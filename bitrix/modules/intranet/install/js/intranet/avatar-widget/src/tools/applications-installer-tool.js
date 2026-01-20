@@ -4,6 +4,7 @@ import { BaseSecondaryTool } from './base-secondary-tool';
 import { Menu } from 'main.popup';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
+import { DesktopDownload } from 'intranet.desktop-download';
 
 export class ApplicationsInstallerTool extends BaseSecondaryTool
 {
@@ -39,14 +40,17 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 				`;
 			}
 
+			const desktopDownload = new DesktopDownload();
+
 			const button = (new Button({
-				tag: Button.Tag.LINK,
 				size: Button.Size.EXTRA_SMALL,
 				text: this.options.desktop.buttonName,
 				useAirDesign: true,
 				style: AirButtonStyle.FILLED,
 				noCaps: true,
-				link: this.options.desktop.installLink,
+				onclick: () => {
+					desktopDownload.handleDownloadClick(button);
+				},
 				wide: true,
 			})).render();
 
@@ -123,7 +127,7 @@ export class ApplicationsInstallerTool extends BaseSecondaryTool
 			{
 				items.push({
 					text: item.title,
-					href: this.options.desktop.installLink,
+					href: item.installLink,
 					onclick: () => {
 						Analytics.send(Analytics.EVENT_CLICK_INSTALL_DESKTOP_APP);
 						this.#getInstallMenu().close();

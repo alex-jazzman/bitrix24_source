@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { EventType, ActionByRole } from 'im.v2.const';
 import { AvatarSize, ChatAvatar } from 'im.v2.component.elements.avatar';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -9,6 +7,7 @@ import { SubscribeToggle } from './subscribe-toggle';
 
 import '../css/header.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -42,7 +41,11 @@ export const CommentsHeader = {
 	{
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.dialog.closeComments);
+			this.getEmitter().emit(EventType.dialog.closeComments);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{
@@ -60,7 +63,7 @@ export const CommentsHeader = {
 					<div class="bx-im-comment-header__title">{{ loc('IM_CONTENT_COMMENTS_HEADER_TITLE') }}</div>
 					<div class="bx-im-comment-header__subtitle">
 						<div class="bx-im-comment-header__subtitle_avatar">
-							<ChatAvatar :avatarDialogId="channelId" :contextDialogId="channelId" :size="AvatarSize.XS" />
+							<ChatAvatar :avatarDialogId="channelId" :size="AvatarSize.XS" />
 						</div>
 						<div class="bx-im-comment-header__subtitle_text">{{ channel.name }}</div>
 					</div>

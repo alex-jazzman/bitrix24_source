@@ -10,24 +10,18 @@
 	gap: 4px;
 	align-items: center;
 	position: relative;
-	top: -4px;
+	top: 4px;
 }
 
 .mailbox-grid_employee-card-container {
 	display: flex;
-}
-
-.mailbox-grid_employee-card-container > .mailbox-grid_owner-photo {
-	margin-right: 10px;
+	gap: 10px;
 }
 
 .mailbox-grid_full-name-container {
 	display: flex;
 	flex-direction: column;
-}
-
-.mailbox-grid_full-name-wrapper {
-	max-width: calc(100% - 50px);
+	justify-content: center;
 }
 
 .mailbox-grid_position-label {
@@ -43,6 +37,12 @@
 .mailbox-grid_last-sync-text {
 	white-space: nowrap;
 	text-align: center;
+}
+
+.mailbox-grid_single-line_field
+{
+	position: relative;
+	top: 8px;
 }
 
 .mailbox-grid_last-sync-container {
@@ -70,7 +70,6 @@
 	align-items: center;
 	gap: 8px;
 	position: relative;
-	top: -8px;
 }
 
 .mailbox-grid_list-members {
@@ -78,7 +77,6 @@
 	display: flex;
 	margin-left: 8px;
 	position: relative;
-	top: -5px;
 	cursor: pointer;
 }
 
@@ -113,7 +111,7 @@
 	box-shadow: inset 0 0 0 1px var(--ui-color-design-tinted-content-divider);
 }
 
-.mailbox-grid_list-members.--single-user {
+.mailbox-grid_list-members.--single-member {
 	display: flex;
 	gap: 8px;
 	align-items: center;
@@ -128,24 +126,6 @@
 	font-size: 10px;
 	line-height: 1;
 	margin-left: 1px;
-}
-
-.mailbox-grid_crm-status-label-success,
-.mailbox-grid_crm-status-label-danger {
-	width: 64px;
-	justify-content: center;
-}
-
-.mailbox-grid_crm-status-label-success {
-	color: var(--ui-color-accent-main-success-alt-2);
-	border-color: color-mix(in srgb, var(--ui-color-accent-main-success) 36%, transparent);
-	background-color: color-mix(in srgb, var(--ui-color-accent-main-success) 4%, transparent);
-}
-
-.mailbox-grid_crm-status-label-danger {
-	color: var(--ui-color-accent-main-alert);
-	border-color: color-mix(in srgb, var(--ui-color-accent-main-alert) 36%, transparent);
-	background-color: color-mix(in srgb, var(--ui-color-accent-main-alert) 4%, transparent);
 }
 
 .mailbox-grid_email-icon {
@@ -188,13 +168,16 @@
 	width: 145px;
 	height: 28px;
 	position: relative;
-	top: -4px;
 }
 
 .mailbox-grid_last-sync-error-message {
 	color: var(--ui-color-accent-main-alert);
 }
 
+.mailbox-grid_list-members-icon_element .ui-icon.ui-icon-common-company i,
+.mailbox-grid_user-list-popup-popup-avatar-new.--icon .ui-icon.ui-icon-common-company i {
+	background-color: #c6cdd3;
+}
 .mailbox-grid_user-list-popup-wrap-block {
 	display: inline-block;
 	position: relative;
@@ -215,8 +198,6 @@
 .mailbox-grid_user-list-popup-wrap-block .mailbox-grid_user-list-popup-popup {
 	background-color: #fff;
 	display: block;
-	margin: 0 0 2px 0;
-	padding: 0 17px 8px 8px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	width: auto;
@@ -253,8 +234,6 @@
 	background-color: #fff;
 	display: inline-block;
 	max-height: 121px;
-	margin: 0 0 2px 0;
-	padding: 0 6px 5px 0;
 	overflow-y: auto;
 	overflow-x: hidden;
 	width: 180px;
@@ -281,6 +260,10 @@
 	margin-bottom: 0;
 }
 
+.mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img.--icon:last-child {
+	margin-bottom: 0;
+}
+
 .mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img:link span,
 .mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img:visited span {
 	color: #525C69;
@@ -300,6 +283,18 @@
 	text-decoration: underline;
 }
 
+.mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img.--icon {
+	display: flex;
+	align-items: center;
+	color: #525C69;
+	text-decoration: none;
+	overflow: hidden;
+	zoom: 1;
+	white-space: nowrap;
+	margin-bottom: 8px;
+}
+
+
 .mailbox-grid_user-list-popup-popup-avatar-new {
 	display: inline-block;
 	vertical-align: middle;
@@ -313,6 +308,12 @@
 * html .mailbox-grid_user-list-popup-popup-avatar,
 * html .mailbox-grid_user-list-popup-popup-avatar-new {
 	width: 23px;
+}
+
+.mailbox-grid_user-list-popup-popup-avatar-new.--icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .mailbox-grid_user-list-popup-popup-img img {
@@ -350,23 +351,7 @@
 	width: 135px;
 }
 
-
-.popup-window-mailbox-user-list {
-	padding: 6px 10px 10px 10px;
+.popup-window-mailbox-entity-list {
+	padding: 10px;
 	border-radius: 18px;
-}
-
-
-.mailbox-grid_user-list-popup-popup-name.contentview-name,
-.mailbox-grid_user-list-popup-popup-name-link.contentview-name {
-	height: 18px;
-	display: block;
-	text-decoration: none;
-	cursor: auto;
-	padding: 10px 0 9px 0;
-	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #525C69;
-	border-bottom: 1px solid #D8D8D8;
-	margin: 0 8px 9px 8px;
-	max-width: 190px;
 }

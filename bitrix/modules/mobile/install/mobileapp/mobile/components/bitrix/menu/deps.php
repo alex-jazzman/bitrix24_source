@@ -6,6 +6,8 @@ return [
 		'more-menu/utils',
 		'more-menu/navigator',
 		'type',
-		'qrauth/utils',
+		'more-menu/aha-moment',
+		'utils/function',
+        'qrauth/utils',
 	],
 ];

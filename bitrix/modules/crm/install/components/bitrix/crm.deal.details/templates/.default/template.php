@@ -88,31 +88,6 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
-
-$isMlAvailable = \Bitrix\Crm\Ml\Scoring::isMlAvailable();
-$isScoringEnabled = \Bitrix\Crm\Ml\Scoring::isEnabled();
-$isScoringAvailable = \Bitrix\Crm\Ml\Scoring::isScoringAvailable();
-$isTrainingUsed = \Bitrix\Crm\Ml\Scoring::isTrainingUsed();
-if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUsed)
-{
-	echo \Bitrix\Crm\Tour\Ml\ScoringShutdownWarning::getInstance()->build();
-}
-
-if ($isScoringAvailable):
-?>
-	<script>
-		<? if($arResult['ENTITY_ID'] > 0): ?>
-			new BX.CrmScoringButton({
-				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
-				scoringEnabled: <?= ($isScoringEnabled ? 'true' : 'false')?>,
-				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING']) ?>,
-				entityType: '<?= CCrmOwnerType::DealName ?>',
-				entityId: <?= (int)$arResult['ENTITY_ID']?>,
-				isFinal: <?= $arResult['IS_STAGE_FINAL'] ? 'true' : 'false' ?>,
-			});
-		<? endif; ?>
-	</script><?
-endif;
 ?>
 <script>
 	BX.ready(() => {
@@ -140,7 +115,7 @@ $APPLICATION->IncludeComponent(
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
 		],
 		'ENABLE_PROGRESS_BAR' => true,
-		'ENABLE_PROGRESS_CHANGE' => (!$isRecurring && !$arResult['READ_ONLY']),
+		'ENABLE_PROGRESS_CHANGE' => !$arResult['READ_ONLY'],
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'EXTRAS' => [
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],

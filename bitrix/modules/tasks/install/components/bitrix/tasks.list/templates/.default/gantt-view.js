@@ -166,6 +166,10 @@ function AddToFavorite(taskId, parameters)
 			};
 		})(taskId)
 	});
+
+	top.BX?.Tasks?.V2?.Provider?.Service?.taskService?.updateStoreTask(Number(taskId), {
+		isFavorite: true,
+	});
 }
 
 function DeleteFavorite(taskId, parameters)
@@ -192,6 +196,10 @@ function DeleteFavorite(taskId, parameters)
 				};
 			}
 		})(taskId)
+	});
+
+	top.BX?.Tasks?.V2?.Provider?.Service?.taskService?.updateStoreTask(Number(taskId), {
+		isFavorite: false,
 	});
 }
 

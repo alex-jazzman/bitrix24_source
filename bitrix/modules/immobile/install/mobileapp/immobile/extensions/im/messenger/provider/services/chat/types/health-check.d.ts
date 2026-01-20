@@ -3,5 +3,6 @@ declare type HealthStatus = {
 	info: string,
 	id?: string,
 	statusInfo?: string,
+	statusInfoClear?: string, // without html
 	statusTitle?: string,
 };

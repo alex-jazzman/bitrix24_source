@@ -1,4 +1,4 @@
-import { Loc, Text } from 'main.core';
+import { Loc, Runtime, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { Store } from 'ui.vue3.vuex';
 
@@ -13,7 +13,7 @@ import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { StageModel } from 'tasks.v2.model.stages';
 
 import { BasePullHandler } from '../handler/base-pull-handler';
-import { mapPushToModel } from './mappers';
+import { mapInstantFields, mapPushToModel } from './mappers';
 import type { PushData } from './types';
 
 export class TaskPullHandler extends BasePullHandler
@@ -67,9 +67,9 @@ export class TaskPullHandler extends BasePullHandler
 	};
 
 	#handleTaskUpdated = (data: PushData): void => {
-		this.#upsertStage(data.AFTER.STAGE_INFO);
-
 		const task = mapPushToModel(data);
+
+		this.#upsertStage(data.AFTER.STAGE_INFO);
 
 		if (data.BEFORE.PARENT_ID)
 		{
@@ -80,14 +80,30 @@ export class TaskPullHandler extends BasePullHandler
 		{
 			subTasksService.addStore(task.parentId, [task.id]);
 		}
+
+		const { id, ...fields } = mapInstantFields(task);
+
+		void taskService.updateStoreTask(id, fields);
 	};
 
 	#handleTaskUpdatedDelayed = async (data: PushData): Promise<void> => {
 		const task = mapPushToModel(data);
 
+		const { TaskFullCard } = await Runtime.loadExtension('tasks.v2.application.task-full-card');
+
+		if (data.USER_ID === this.#currentUserId && TaskFullCard.isCardOpened(task.id))
+		{
+			return;
+		}
+
+		if (!taskService.hasStoreTask(task.id))
+		{
+			return;
+		}
+
 		if (this.#needToLoadTask(data))
 		{
-			void this.#loadTask(task);
+			await this.#loadTask(task);
 		}
 		else
 		{
@@ -100,23 +116,23 @@ export class TaskPullHandler extends BasePullHandler
 
 			const { id, ...fields } = task;
 
-			void this.$store.dispatch(`${Model.Tasks}/update`, { id, fields });
+			void taskService.updateStoreTask(id, fields);
 		}
+
+		EventEmitter.emit(EventName.TaskPullUpdated, { task: taskService.getStoreTask(task.id) });
 	};
 
 	#handleTaskViewed = (data): void => {};
 
 	#handleTaskDeleted = (data: PushData): void => {
-		subTasksService.deleteStore(data.BEFORE.PARENT_ID, [data.TASK_ID]);
-		EventEmitter.emit(EventName.CloseFullCard, { taskId: data.TASK_ID });
-		void this.$store.dispatch(`${Model.Tasks}/delete`, data.TASK_ID);
+		const taskId = data.TASK_ID;
+		void taskService.deleteStore(taskId);
+		EventEmitter.emit(EventName.CloseFullCard, { taskId });
+		EventEmitter.emit(EventName.TaskDeleted, { id: taskId });
 	};
 
-	#handleDefaultDeadlineChanged = (data): void => {
-		void this.$store.dispatch(`${Model.Interface}/updateDefaultDeadline`, {
-			defaultDeadlineDate: data.defaultDeadlineDate,
-			defaultDeadlineInSeconds: data.deadline,
-		});
+	#handleDefaultDeadlineChanged = ({ deadlineUserOption }): void => {
+		void this.$store.dispatch(`${Model.Interface}/updateDeadlineUserOption`, deadlineUserOption);
 	};
 
 	#upsertStage(stageDto: StageDto): void
@@ -131,12 +147,17 @@ export class TaskPullHandler extends BasePullHandler
 
 	#loadTask(task: TaskModel): void
 	{
-		void taskService.getById(task.id);
+		void taskService.get(task.id);
 	}
 
 	#needToLoadTask(data: PushData): boolean
 	{
-		const notPushableFields = new Set(['DESCRIPTION', 'UF_TASK_WEBDAV_FILES']);
+		const notPushableFields = new Set([
+			'DESCRIPTION',
+			'UF_TASK_WEBDAV_FILES',
+			'STATUS',
+			'ALLOW_TIME_TRACKING',
+		]);
 
 		return Object.keys(data.AFTER).some((field: string) => notPushableFields.has(field));
 	}
@@ -189,7 +210,7 @@ export class TaskPullHandler extends BasePullHandler
 	{
 		return [
 			task.creatorId,
-			task.responsibleId,
+			...(task.responsibleIds ?? []),
 			...(task.accomplicesIds ?? []),
 			...(task.auditorsIds ?? []),
 		].filter((id: ?number) => id);

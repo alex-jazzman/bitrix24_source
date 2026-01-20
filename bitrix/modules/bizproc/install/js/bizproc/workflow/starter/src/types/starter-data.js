@@ -7,4 +7,5 @@ export type StarterData = {
 	signedDocumentId?: string,
 	templates?: [],
 	ajaxUrl?: string,
+	triggerType: ?string,
 };

@@ -182,6 +182,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  if (!main_core.Type.isNil((_data$complexDocument4 = data.complexDocumentId) == null ? void 0 : _data$complexDocument4.documentId)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _defaultData)[_defaultData].document_id = data.complexDocumentId.documentId;
 	  }
+	  if (!main_core.Type.isNil(data.triggerType)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _defaultData)[_defaultData].trigger_type = data.triggerType;
+	  }
 	}
 	function _get_hasAjaxUrl() {
 	  return main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _ajaxUrl)[_ajaxUrl]);
@@ -288,6 +291,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _signedDocumentId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
 	var _complexDocumentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("complexDocumentType");
 	var _complexDocumentId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("complexDocumentId");
+	var _triggerType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerType");
 	var _templatesSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templatesSelector");
 	var _callActionHelper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callActionHelper");
 	var _hasCustomAjaxUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasCustomAjaxUrl");
@@ -354,6 +358,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _triggerType, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _templatesSelector, {
 	      writable: true,
 	      value: null
@@ -368,6 +376,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    });
 	    this.setEventNamespace('BX.Bizproc.Workflow.Starter');
 	    babelHelpers.classPrivateFieldLooseBase(this, _setDocumentType)[_setDocumentType](_data);
+	    babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType] = _data.triggerType || null;
 	    if (main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _complexDocumentType)[_complexDocumentType]) && main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType)[_signedDocumentType])) {
 	      throw new TypeError('document type is empty');
 	    }
@@ -381,6 +390,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      signedDocumentType: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType)[_signedDocumentType],
 	      complexDocumentId: babelHelpers.classPrivateFieldLooseBase(this, _complexDocumentId)[_complexDocumentId],
 	      signedDocumentId: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId)[_signedDocumentId],
+	      triggerType: _data.triggerType || '',
 	      customAjaxUrl: babelHelpers.classPrivateFieldLooseBase(this, _hasCustomAjaxUrl)[_hasCustomAjaxUrl] ? _data.ajaxUrl : null
 	    });
 	    managerInstance.put(this);
@@ -400,6 +410,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        signedDocumentType: config.signedDocumentType,
 	        signedDocumentId: config.signedDocumentId,
 	        templates: config.templates || null,
+	        triggerType: config.triggerType || null,
 	        ajaxUrl: config.ajaxUrl || ''
 	      });
 	    } catch (e) {
@@ -657,6 +668,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId)[_signedDocumentId]) {
 	    url = main_core.Uri.addParam(url, {
 	      signedDocumentId: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId)[_signedDocumentId]
+	    });
+	  }
+	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType])) {
+	    url = main_core.Uri.addParam(url, {
+	      triggerType: babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType]
 	    });
 	  }
 	  return url;

@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => {
 	/* global ChatMessengerCommon */
+	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -245,9 +246,10 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 				return;
 			}
 
-			recentItem.avatar = params.avatar;
-
-			await this.store.dispatch('recentModel/update', [recentItem]);
+			await this.store.dispatch('recentModel/update', [{
+				id: dialogId,
+				avatar: params.avatar,
+			}]);
 		}
 
 		/**
@@ -272,9 +274,10 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 				return;
 			}
 
-			recentItem.color = params.color;
-
-			await this.store.dispatch('recentModel/update', [recentItem]);
+			await this.store.dispatch('recentModel/update', [{
+				id: dialogId,
+				avatar: params.color,
+			}]);
 		}
 
 		/**
@@ -521,7 +524,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 				return;
 			}
 
-			currentRecentItem.message = {
+			const message = {
 				text: ChatMessengerCommon.purifyText(newLastMessage.text, newLastMessage.params),
 				date: newLastMessage.date,
 				author_id: newLastMessage.author_id,
@@ -530,7 +533,10 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 				unread: newLastMessage.unread ?? false,
 			};
 
-			await this.store.dispatch('recentModel/update', [currentRecentItem]);
+			await this.store.dispatch('recentModel/update', [{
+				id: dialogId,
+				message,
+			}]);
 			this.#saveShareDialogCache();
 		}
 
@@ -596,7 +602,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 			}
 
 			const message = clone(this.store.getters['messagesModel/getById'](params.id));
-			if (!('id' in message))
+			if (Type.isNil(message.id))
 			{
 				return;
 			}
@@ -615,13 +621,11 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 					: false
 				;
 
-				recentItem.message = {
-					...recentItem.message,
-					...message,
-				};
+				await this.store.dispatch('recentModel/update', [{
+					id: params.dialogId,
+					message,
+				}]);
 			}
-
-			await this.store.dispatch('recentModel/update', [recentItem]);
 		}
 
 		/**

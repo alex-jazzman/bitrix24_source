@@ -106,19 +106,30 @@ export default class EntityConfigurationManager extends BX.UI.EntityConfiguratio
 			typeId = BX.prop.get(params, 'typeId', BX.UI.EntityUserFieldType.string);
 		}
 
+		let tooltipConfigurator = null;
+		if (params?.enableTooltipConfigurator)
+		{
+			tooltipConfigurator = new BX.UI.EntityEditorUfConfigurators.TooltipConfigurator(
+				this.id,
+				this._editor,
+				field,
+			);
+		}
+
 		if (typeId === 'resourcebooking')
 		{
 			let options = {
+				parent,
+				typeId,
+				field,
+				tooltipConfigurator,
 				editor: this._editor,
 				schemeElement: null,
 				model: parent.getModel(),
 				mode: BX.UI.EntityEditorMode.edit,
-				parent: parent,
-				typeId: typeId,
-				field: field,
 				showAlways: true,
 				enableMandatoryControl: BX.prop.getBoolean(params, 'enableMandatoryControl', true),
-				mandatoryConfigurator: params.mandatoryConfigurator
+				mandatoryConfigurator: params.mandatoryConfigurator,
 			};
 
 			if (BX.Calendar && BX.type.isFunction(BX.Calendar.ResourcebookingUserfield))
@@ -135,13 +146,14 @@ export default class EntityConfigurationManager extends BX.UI.EntityConfiguratio
 			return BX.Crm.EntityEditorUserFieldConfigurator.create(
 				'',
 				{
+					parent,
+					typeId,
+					field,
+					tooltipConfigurator,
 					editor: this._editor,
 					schemeElement: null,
 					model: parent.getModel(),
 					mode: BX.UI.EntityEditorMode.edit,
-					parent: parent,
-					typeId: typeId,
-					field: field,
 					mandatoryConfigurator: params.mandatoryConfigurator,
 					visibilityConfigurator: params.visibilityConfigurator,
 					showAlways: true

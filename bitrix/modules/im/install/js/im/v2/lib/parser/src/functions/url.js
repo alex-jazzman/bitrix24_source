@@ -1,14 +1,16 @@
-import {Dom, Text} from 'main.core';
+import { Dom, Text } from 'main.core';
 
-import {getUtils} from '../utils/core-proxy';
+import { getUtils, getConst } from '../utils/core-proxy';
+
+const { DataAttribute } = getConst();
 
 export const ParserUrl = {
 
 	decode(text, config = {}): string
 	{
 		const {
-			urlTarget = "_blank",
-			removeLinks = false
+			urlTarget = '_blank',
+			removeLinks = false,
 		} = config;
 
 		// base pattern for urls
@@ -20,14 +22,7 @@ export const ParserUrl = {
 				return text;
 			}
 
-			return Dom.create({
-				tag: 'a',
-				attrs: {
-					href: url,
-					target: urlTarget
-				},
-				html: text
-			}).outerHTML;
+			return this.getLinkHtml(url, urlTarget, text);
 		});
 
 		// url like https://bitrix24.com/?params[1]="test"
@@ -54,14 +49,7 @@ export const ParserUrl = {
 				}
 			}
 
-			return Dom.create({
-				tag: 'a',
-				attrs: {
-					href: url,
-					target: urlTarget
-				},
-				html: text
-			}).outerHTML;
+			return this.getLinkHtml(url, urlTarget, text);
 		});
 
 		if (removeLinks)
@@ -91,4 +79,16 @@ export const ParserUrl = {
 		return text;
 	},
 
+	getLinkHtml(url: string, urlTarget: string, text: string): string
+	{
+		return Dom.create({
+			tag: 'a',
+			attrs: {
+				href: url,
+				target: urlTarget,
+				[DataAttribute.useNativeContextMenu]: true,
+			},
+			html: text,
+		}).outerHTML;
+	},
 };

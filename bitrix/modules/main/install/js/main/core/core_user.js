@@ -44,3 +44,4 @@ BX.user.getSecondsForLimitOnline = function()
 };
 
 })();
+

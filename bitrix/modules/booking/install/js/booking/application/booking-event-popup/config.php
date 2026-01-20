@@ -21,6 +21,7 @@ return [
 		'booking.lib.side-panel-instance',
 		'ui.cnt',
 		'ui.vue3.components.counter',
+		'ui.vue3.components.rich-loc',
 		'ui.vue3',
 		'ui.vue3.vuex',
 		'ui.icon-set.api.vue',

@@ -1,7 +1,8 @@
-'use strict';
-
-(function() {
+jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 	include('Calls');
+
+	const { CallLogger } = require('call/calls/logger');
+
 
 	BX.DoNothing = function() {};
 
@@ -2152,7 +2153,8 @@
 		}
 	}
 
-	window.BXClientWrapper = BXClientWrapper;
-	window.BitrixCallDev = BitrixCallDev;
-})
-();
+	module.exports = {
+		BitrixCallDev,
+		BXClientWrapper,
+	};
+});

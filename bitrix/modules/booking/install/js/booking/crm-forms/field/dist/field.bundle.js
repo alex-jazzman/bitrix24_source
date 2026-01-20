@@ -120,6 +120,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  }) {
 	    const slots = [];
 	    const now = Date.now();
+	    const isAmPmMode = new Intl.DateTimeFormat(navigator.language, {
+	      hour: 'numeric'
+	    }).resolvedOptions().hour12;
+	    const timeFormat = isAmPmMode ? 'h:i a' : 'H:i';
 	    booking_lib_slotRanges.SlotRanges.applyTimezone(slotRanges, date.getTime(), timezone).filter(slotRange => slotRange.weekDays.includes(date.getDay())).sort((a, b) => a.from - b.from).forEach(slotRange => {
 	      const slotSizeTs = slotRange.slotSize * 60 * 1000;
 	      const slotToTs = convertMinToTs(date, slotRange.to);
@@ -144,7 +148,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        slots.push({
 	          fromTs,
 	          toTs,
-	          label: main_date.DateTimeFormat.format('H:i', new Date(fromTs))
+	          label: main_date.DateTimeFormat.format(timeFormat, new Date(fromTs))
 	        });
 	        fromTs += stepTs;
 	      }
@@ -166,7 +170,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  } = await babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('booking.api_v1.CrmForm.getOccupancy', {
 	    data: {
 	      ids,
-	      dateTs: dateTs / 1000
+	      dateTs: Math.floor(dateTs / 1000)
 	    }
 	  });
 	  occupancy.forEach(({
@@ -578,6 +582,11 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  emits: ['select'],
+	  data() {
+	    return {
+	      showedMore: false
+	    };
+	  },
 	  computed: {
 	    formatDate() {
 	      return main_date.DateTimeFormat.format(this.loc('DAY_MONTH_FORMAT'), this.date);
@@ -597,6 +606,35 @@ this.BX.Booking = this.BX.Booking || {};
 	      return this.loc('BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE', {
 	        '#BR#': '<br />'
 	      });
+	    },
+	    hasResourceAvatar() {
+	      var _this$resource;
+	      return Boolean((_this$resource = this.resource) == null ? void 0 : _this$resource.avatarUrl);
+	    },
+	    resourceAvatarUrl() {
+	      return this.hasResourceAvatar ? this.resource.avatarUrl : '/bitrix/js/booking/crm-forms/field/images/resource-icon.svg';
+	    },
+	    resourceDescription() {
+	      var _this$resource2;
+	      return ((_this$resource2 = this.resource) == null ? void 0 : _this$resource2.description) || '';
+	    },
+	    shortResourceDescription() {
+	      const SHORT_SIZE = 150 - this.more.length;
+	      if (this.showedMore || this.resourceDescription < SHORT_SIZE) {
+	        return this.resourceDescription;
+	      }
+	      const words = this.resourceDescription.split(' ');
+	      let description = '';
+	      for (const word of words) {
+	        if (description.length + word.length > SHORT_SIZE) {
+	          break;
+	        }
+	        description += `${word} `;
+	      }
+	      return description.trim();
+	    },
+	    more() {
+	      return this.loc('BOOKING_CRM_FORMS_RESOURCE_DESCRIPTION_MORE');
 	    }
 	  },
 	  watch: {
@@ -634,16 +672,33 @@ this.BX.Booking = this.BX.Booking || {};
 			<slot name="title"/>
 			<div class="booking--crm-forms--time-selector-block-header">
 				<div class="booking--crm-forms--time-selector-block-resource">
-					<div class="booking--crm-forms--time-selector-block-resource-name">
-						{{ resource.name }}
+					<div class="booking--crm-forms--resource-avatar">
+						<img
+							class="booking--crm-forms--resource-avatar-image"
+							:src="resourceAvatarUrl"
+							alt="Resource avatar"
+							draggable="false"
+						/>
 					</div>
-					<div class="booking--crm-forms--time-selector-block-resource-type-name">
-						{{ resource.typeName }}
+					<div class="booking--crm-forms--resource-info">
+						<div class="booking--crm-forms--resource-name">
+							{{ resource.name }}
+						</div>
+						<div class="booking--crm-forms--resource-type-name">
+							{{ resource.typeName }}
+						</div>
 					</div>
 				</div>
-				<div class="booking--crm-forms--time-selector-block-header__button">
-					<slot name="changeDateBtn" :date="date" :resource="resource"/>
-				</div>
+			</div>
+			<div v-if="shortResourceDescription" class="booking--crm-forms--field-description-text">
+				{{ shortResourceDescription }}
+				<span
+					v-if="shortResourceDescription.length < resourceDescription.length"
+					class="booking--crm-forms--field-description-text-more"
+					@click="showedMore = true"
+				>
+					{{ more }}
+				</span>
 			</div>
 			<div ref="slotsContainer" class="booking--crm-forms--resource-slots__slot-list-wrapper">
 				<div v-show="!loading" class="booking--crm-forms--resource-slots__slot-list">
@@ -667,6 +722,9 @@ this.BX.Booking = this.BX.Booking || {};
 							</div>
 						</div>
 					</template>
+				</div>
+				<div class="booking--crm-forms--time-selector-block-header__button">
+					<slot name="changeDateBtn" :date="date" :resource="resource"/>
 				</div>
 			</div>
 		</div>

@@ -9,7 +9,7 @@ type Props = {
 	componentName: string,
 	signedParameters: string,
 	defaultValues: Object,
-	scopeParamsMap: Object,
+	paramList: Object,
 	groupIds: number[],
 	canManageGroups: boolean,
 };
@@ -48,7 +48,7 @@ class SupersetDashboardCreateManager
 				groups: new Set(),
 				scopes: new Set(),
 				params: new Set(),
-				scopeParamsMap: this.#props.scopeParamsMap,
+				paramList: this.#props.paramList,
 			});
 			Dom.append(this.#paramsSelector.getLayout(), this.#node);
 		}

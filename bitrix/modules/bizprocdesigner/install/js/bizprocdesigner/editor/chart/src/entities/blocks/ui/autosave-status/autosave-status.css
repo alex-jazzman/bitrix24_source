@@ -1,0 +1,35 @@
+.bizprocdesigner-editor-header-save-status-box
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-2xs2);
+	width: 120px;
+}
+
+.bizprocdesigner-editor-header-online .ui-icon-set,
+.bizprocdesigner-editor-header-offline .ui-icon-set
+{
+	--ui-icon-set__icon-size: 22px;
+}
+
+.bizprocdesigner-editor-header-online .ui-icon-set
+{
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.bizprocdesigner-editor-header-offline .ui-icon-set
+{
+	--ui-icon-set__icon-color: var(--ui-color-red-50);
+}
+
+.bizprocdesigner-editor-header-online,
+.bizprocdesigner-editor-header-offline
+{
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	/* todo: replace with token when available */
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-90);
+}

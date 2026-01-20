@@ -1,0 +1,48 @@
+#row_SelectedFields .node-settings-edit-caption {
+	display: none;
+}
+
+.field-row #add_field {
+	display: block !important;
+	margin-bottom: 10px;
+	font-family: var(--ui-font-family-primary), serif !important;
+	color: var(--ui-color-design-plain-a-content) !important;
+	cursor: pointer !important;
+	padding-left: 28px !important;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 5a.7.7 0 01.7.7v5.6h5.6a.7.7 0 010 1.4h-5.6v5.6a.7.7 0 01-1.4 0v-5.6H5.7a.7.7 0 010-1.4h5.6V5.7A.7.7 0 0112 5z' fill='%230075FF'/%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: 4px center !important;
+	background-size: 20px 20px !important;
+	font-weight: 500 !important;
+	font-size: 13px !important;
+	margin-left: 4px !important;
+	border-bottom: none !important;
+	text-decoration: none !important;
+}
+
+.storage-fields__item {
+	border: 1px solid #e9ecef;
+	border-radius: 8px;
+	padding: 0 9px 0 9px;
+	margin-bottom: 12px;
+}
+
+.storage-fields__item-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.storage-fields__item-name {
+	color: #212529;
+	text-decoration: none;
+	font-weight: 500;
+	flex: 1;
+	padding: 8px 0;
+}
+
+.field-row .storage-fields__delete-button {
+	display: flex !important;
+	justify-content: center;
+}

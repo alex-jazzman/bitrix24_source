@@ -12,10 +12,19 @@ export function prepareCheckLists(checklist: CheckListModel[]): CheckListModel[]
 	});
 
 	return checklist.map((item: CheckListModel) => {
-		const title = prepareTitle(item);
 		const parentNodeId = item.parentId ? parentNodeIdMap.get(item.parentId) : 0;
 
-		return { ...item, title, parentNodeId };
+		return { ...item, parentNodeId };
+	});
+}
+
+// todo remove after features.isV2Enabled === true
+export function prepareTitleCheckLists(checklist: CheckListModel[]): CheckListModel[]
+{
+	return checklist.map((item: CheckListModel) => {
+		const title = prepareTitle(item);
+
+		return { ...item, title };
 	});
 }
 

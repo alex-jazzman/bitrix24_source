@@ -1,12 +1,12 @@
-import {Event, Tag, Text, Loc} from 'main.core';
-import {Popup, PopupManager} from 'main.popup';
-import {BaseEvent} from "main.core.events";
+import { Event, Tag, Text } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 
 import Hex from '../hex/hex';
-import ColorValue from "../../color_value";
-import BaseControl from "../base_control/base_control";
-import Spectrum from "../spectrum/spectrum";
-import Recent from '../../layout/recent/recent';
+import ColorValue from '../../color_value';
+import BaseControl from '../base_control/base_control';
+import Spectrum from '../spectrum/spectrum';
+import PresetCollection from '../../layout/preset/preset_collection';
+import ColorPopup from '../color_popup/color_popup';
 
 import './css/colorpicker.css';
 
@@ -15,43 +15,77 @@ export default class Colorpicker extends BaseControl
 	popupId: string;
 	popupTargetContainer: ?HTMLElement;
 
+	static TABS = {
+		RECENT: 'recent',
+		SPECTRUM: 'spectrum',
+		PRESET: 'preset',
+	};
+
 	constructor(options)
 	{
 		super();
+		this.options = options;
 		this.setEventNamespace('BX.Landing.UI.Field.Color.Colorpicker');
-		this.popupId = 'colorpicker_popup_' + Text.getRandom();
+		this.popupId = `colorpicker_popup_${Text.getRandom()}`;
 		this.popupTargetContainer = options.contentRoot;
+		this.isHexPreviewMode = options.hexPreviewMode;
 
 		this.hexPreview = new Hex();
-		this.hexPreview.setPreviewMode(true);
-		Event.bind(this.hexPreview.getLayout(), 'click', this.onPopupOpenClick.bind(this));
+		if (options.hexPreviewMode === true)
+		{
+			this.hexPreview.setPreviewMode(true);
+		}
+
+		this.options.hexPreview = this.hexPreview;
 
 		// popup
+		this.colorPopup = new ColorPopup(this.options);
+		this.colorPopup.subscribe('onColorPopupChange', this.onColorPopupChange.bind(this));
+
 		this.hex = new Hex();
-		this.hex.subscribe('onChange', this.onHexChange.bind(this));
-		this.hex.subscribe('onButtonClick', this.onSelectClick.bind(this));
-
 		this.spectrum = new Spectrum(options);
-		this.spectrum.subscribe('onChange', this.onSpectrumChange.bind(this));
 
-		this.recent = new Recent();
-		this.recent.subscribe('onChange', this.onRecentChange.bind(this));
+		this.presetCollection = new PresetCollection(options);
+		this.presetCollection.addDefaultPresets();
+		this.presets = this.presetCollection.getAllPresets();
 
-		Event.bind(this.getCancelButton(), 'click', this.onCancelClick.bind(this));
-		Event.bind(this.getSelectButton(), 'click', this.onSelectClick.bind(this));
 		// end popup
 
-		this.previously = this.getValue();
+		this.initLoader();
+
+		Event.bind(this.hexPreview.getLayout(), 'click', (event) => {
+			if (!this.colorPopup.getPopup().isShown())
+			{
+				BX.Dom.style(this.hexPreview.getButton(), 'opacity', '.5');
+				this.loader.show();
+			}
+			this.colorPopup.onPopupOpenClick(event);
+		});
+		this.colorPopup.subscribe('onPopupShow', (e) => {
+			this.loader.hide();
+			BX.Dom.style(this.hexPreview.getButton(), 'opacity', '1');
+		});
+		this.hexPreview.subscribe('onValidInput', this.onValidInput.bind(this));
+		this.hexPreview.subscribe('onChange', this.onHexChange.bind(this));
+
+		this.tabButtons = {};
+		this.tabContents = {};
 	}
 
-	onSelectClick(event: ?BaseEvent)
+	initLoader()
 	{
-		const value = (event instanceof BaseEvent) ? event.getData().color : this.getValue();
-		if (value !== null)
+		this.loader = new BX.Loader({
+			target: this.hexPreview.getLayout(),
+		});
+		const loaderNode = this.loader.layout;
+		if (loaderNode)
 		{
-			this.recent.addItem(this.getValue().getHex());
+			BX.Dom.style(loaderNode, 'width', '28px');
+			BX.Dom.style(loaderNode, 'height', '28px');
+			BX.Dom.style(loaderNode, 'left', 'unset');
+			BX.Dom.style(loaderNode, 'right', '0');
+			BX.Dom.style(loaderNode, 'transform', 'translate(0, -50%)');
 		}
-		this.getPopup().close();
 	}
 
 	buildLayout(): HTMLDivElement
@@ -63,72 +97,9 @@ export default class Colorpicker extends BaseControl
 		`;
 	}
 
-	getPopupContent(): HTMLDivElement
-	{
-		return Tag.render`
-			<div class="landing-ui-field-color-popup-container">
-				<div class="landing-ui-field-color-popup-head">
-					${this.recent.getLayout()}
-					${this.hex.getLayout()}
-				</div>
-				${this.spectrum.getLayout()}
-				<div class="landing-ui-field-color-popup-footer">
-					${this.getSelectButton()}
-					${this.getCancelButton()}
-				</div>
-			</div>
-		`;
-	}
-
-	getSelectButton(): HTMLButtonElement
-	{
-		return this.cache.remember('selectButton', () => {
-			return Tag.render`
-				<button class="ui-btn ui-btn-xs ui-btn-primary">
-					${Loc.getMessage('LANDING_FIELD_COLOR-BUTTON_SELECT')}
-				</button>
-			`;
-		});
-	}
-
-	getCancelButton(): HTMLButtonElement
-	{
-		return this.cache.remember('cancelButton', () => {
-			return Tag.render`
-				<button class="ui-btn ui-btn-xs ui-btn-light-border">
-					${Loc.getMessage('LANDING_FIELD_COLOR-BUTTON_CANCEL')}
-				</button>
-			`;
-		});
-	}
-
 	getHexPreviewObject(): Hex
 	{
 		return this.hexPreview;
-	}
-
-	getPopup(): Popup
-	{
-		return this.cache.remember('popup', () => {
-			return PopupManager.create({
-				id: this.popupId,
-				className: 'landing-ui-field-color-spectrum-popup',
-				autoHide: true,
-				bindElement: this.hexPreview.getLayout(),
-				bindOptions: {
-					forceTop: true,
-					forceLeft: true,
-				},
-				padding: 0,
-				contentPadding: 14,
-				width: 260,
-				offsetTop: -37,
-				offsetLeft: -180,
-				content: this.getPopupContent(),
-				closeByEsc: true,
-				targetContainer: this.popupTargetContainer,
-			});
-		});
 	}
 
 	getValue(): ?ColorValue
@@ -138,41 +109,29 @@ export default class Colorpicker extends BaseControl
 		});
 	}
 
+	onColorPopupChange(event)
+	{
+		const color = event.getData();
+		if (color)
+		{
+			this.setValue(color);
+		}
+		this.onChange(new BaseEvent({ data: { color } }));
+	}
+
 	onHexChange(event: BaseEvent)
 	{
-		this.setValue(event.getData().color);
+		const color = event.getData().color;
+		this.setValue(color);
 		this.onChange(event);
 	}
 
-	onSpectrumChange(event: BaseEvent)
+	onValidInput(event: BaseEvent)
 	{
-		this.hex.unFocus();
-		this.setValue(event.getData().color);
-		this.onChange(event);
-	}
-
-	onRecentChange(event: BaseEvent)
-	{
-		const recentColor = new ColorValue(event.getData().hex);
-		this.setValue(recentColor);
-		this.onChange(new BaseEvent({data: {color: recentColor}}));
-	}
-
-	onCancelClick()
-	{
-		this.setValue(this.previously);
-		this.getPopup().close();
-		this.onChange(new BaseEvent({data: {color: this.getValue()}}));
-	}
-
-	onPopupOpenClick()
-	{
-		this.recent.buildItemsLayout();
-		this.previously = this.getValue();
-		this.getPopup().show();
-		if (this.getPopup().isShown())
+		const color = `#${event.getData().value}`;
+		if (color)
 		{
-			this.hex.focus();
+			this.emit('onValidInput', { color });
 		}
 	}
 
@@ -185,6 +144,14 @@ export default class Colorpicker extends BaseControl
 			this.spectrum.setValue(value);
 			this.hex.setValue(value);
 			this.hexPreview.setValue(value);
+			this.colorPopup.setValue(value);
+			if (value)
+			{
+				const hexValue = value.getHex();
+				this.presets.forEach((preset) => {
+					preset.setActiveHex(hexValue);
+				});
+			}
 		}
 		this.setActivity(value);
 	}

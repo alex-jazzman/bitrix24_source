@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
-		'intranet:qualification',
-		'intranet:user-mini-profile',
 		'module',
+		'intranet:onboarding',
+		'intranet:qualification',
+		'intranet:results-year/ui-manager',
+		'intranet:user-mini-profile',
 	],
 ];

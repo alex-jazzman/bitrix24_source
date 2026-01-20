@@ -6,7 +6,7 @@
 
 .booking--rcw--schedule-item {
 	display: flex;
-	gap: 16px;
+	gap: 12px;
 	background-color: var(--ui-color-palette-gray-04);
 	border: 1px solid var(--ui-color-palette-gray-04);
 	padding: 16px;

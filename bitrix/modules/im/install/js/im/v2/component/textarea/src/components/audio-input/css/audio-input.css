@@ -4,6 +4,7 @@
 	background-image: url('./images/mic.svg?v3');
 	background-size: cover;
 	cursor: pointer;
+	flex-shrink: 0;
 }
 
 .bx-im-copilot-audio-input__container:hover {

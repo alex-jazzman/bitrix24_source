@@ -56,13 +56,24 @@ if ($component->isDefaultMode())
 
 	if (!is_array($arResult['value']))
 	{
-		$arResult['value'] = explode(';', $arResult['value']);
+		if ($arResult['value'] === null)
+		{
+			$arResult['value'] = [];
+		}
+		else
+		{
+			$arResult['value'] = explode(';', $arResult['value']);
+		}
 	}
 	else
 	{
 		$values = [];
 		foreach ($arResult['value'] as $value)
 		{
+			if ($value === null)
+			{
+				continue;
+			}
 			foreach (explode(';', $value) as $val)
 			{
 				if (!empty($val))

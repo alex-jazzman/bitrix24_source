@@ -1,0 +1,10 @@
+<?php
+
+$MESS['BIZPROC_STORAGE_EDIT_TAB_DETAIL_TITLE'] = 'Новое хранилище';
+$MESS['BIZPROC_STORAGE_EDIT_TAB_FIELDS_TITLE'] = 'Настройки полей';
+$MESS['BIZPROC_STORAGE_EDIT_TAB_LIST_TITLE'] = 'Список хранилищ';
+$MESS['BIZPROC_STORAGE_EDIT_TAB_EDIT_TITLE'] = 'Редактирование';
+$MESS['BIZPROC_STORAGE_EDIT_CONFIRM_MESSAGE'] = 'Удалить это хранилище?';
+$MESS['BIZPROC_STORAGE_EDIT_DELETE_MESSAGE'] = 'Хранилище удалено';
+$MESS['BIZPROC_STORAGE_EDIT_SAVE_MESSAGE'] = 'Хранилище сохранено';
+$MESS['BIZPROC_STORAGE_EDIT_CONFIRM_MESSAGE_OK'] = 'Да, удалить';

@@ -1,0 +1,179 @@
+.editor-chart-catalog-item {
+	display: flex;
+	align-items: center;
+	min-height: 54px;
+	padding: 5px 10px 5px 8px;
+	margin: 0;
+	border-radius: 8px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)), serif;
+	transition: background-color 0.2s ease-in-out;
+	cursor: grab;
+	user-select: none;
+}
+
+.editor-chart-catalog-item:hover:active {
+	cursor: grabbing;
+}
+
+.editor-chart-catalog-item.--drag {
+	background-color: var(--ui-color-white-base);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	transform: translateX(-100%);
+	overflow: hidden;
+	cursor: grabbing;
+}
+
+.editor-chart-catalog-item__drag-item {
+	display: none;
+	background-color: transparent;
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	transform: translateX(-100%);
+	cursor: grab;
+}
+
+.editor-chart-catalog-item__drag-item.--drag {
+	display: block;
+	cursor: grabbing;
+}
+
+.editor-chart-catalog-item.--active {
+	background-color: var(--ui-color-accent-soft-orange-3);
+}
+
+.editor-chart-catalog-item:hover,
+.editor-chart-catalog-item.--active:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.editor-chart-catalog-item__icon-wrapper {
+	position: relative;
+	flex-shrink: 0;
+	width: 38px;
+	height: 38px;
+	margin-right: 13px;
+	border-radius: 8px;
+	background-color: var(--ui-color-palette-blue-25);
+}
+
+.editor-chart-catalog-item__icon-wrapper {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	width: 38px;
+	height: 38px;
+	margin-right: 10px;
+	border-radius: 8px;
+	background-color: var(--ui-color-palette-blue-25);
+}
+
+.editor-chart-catalog-item__icon-wrapper.--custom {
+	background-color: rgba(var(--ui-color-palette-blue-25), 1);
+}
+
+.editor-chart-catalog-item__icon-wrapper.--rounded {
+	border-radius: 50%;
+}
+
+.ui-node-catalog .ui-node-item-icon, .ui-node-item__dragging .editor-chart-catalog-item__icon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 20px;
+	height: 20px;
+	background-size: cover;
+	transform: translate(-50%, -50%);
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-0 {
+	background-color: var(--ui-color-design-outline-copilot-stroke);
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-1 {
+	background-color: var(--ui-color-palette-blue-25);
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-2 {
+	background-color: #FFEECC; /* token will be provided later */
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-3 {
+	background-color: #EBEEF3; /* token will be provided later */
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-4 {
+	background-color: #D8FFCB; /* token will be provided later */
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-5 {
+	background-color: #E3F5ED; /* token will be provided later */
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-6 {
+	background-color: #F2F8D8; /* token will be provided later */
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-7 {
+	background-color: var(--ui-color-design-outline-copilot-stroke);
+}
+
+.editor-chart-catalog-item__icon-wrapper.--bg-8 {
+	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
+}
+
+
+.editor-chart-catalog-item__content {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column;
+	justify-content: center;
+	width: 260px;
+	padding-right: 5px;
+
+}
+
+.ui-node-item__dragging .ui-node-item-content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	flex-grow: 1;
+	width: 130px;
+	padding-right: 10px;
+}
+
+.editor-chart-catalog-item__title,
+.ui-node-item__dragging .editor-chart-catalog-item__title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-gray-90);
+}
+
+.ui-node-item__dragging .editor-chart-catalog-item__title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	color: var(--ui-color-black-base);
+}
+
+.editor-chart-catalog-item__subtitle {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-gray-50);
+}
+
+.ui-node-item__dragging .editor-chart-catalog-item__subtitle {
+	display: none;
+}
+
+.ui-node-catalog .editor-chart-catalog-item__content:only-child {
+	justify-content: center;
+}

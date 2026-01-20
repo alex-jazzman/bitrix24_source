@@ -880,7 +880,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	      });
 	    } else {
-	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/delete', {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/hide', {
 	        id: chat.dialogId
 	      });
 	    }

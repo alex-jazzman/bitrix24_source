@@ -1,8 +1,10 @@
 export type Resource = {
 	id: number,
 	name: string,
+	description: ?string,
 	typeName: string,
 	slotRanges: SlotRange[];
+	avatarUrl: ?string,
 }
 
 export type SlotRange = {

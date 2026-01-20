@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_notifier,im_v2_lib_permission,im_v2_lib_createChat,main_core,im_v2_lib_helpdesk,socialnetwork_collab_accessRights,main_core_events,main_popup,im_v2_lib_confirm,im_v2_application_core,im_public,im_v2_lib_analytics,im_v2_provider_service_chat,im_v2_component_elements_avatar,im_v2_const,im_v2_component_content_chatForms_elements) {
+(function (exports,im_v2_lib_notifier,im_v2_lib_permission,im_v2_lib_createChat,main_core,im_v2_lib_helpdesk,main_core_events,socialnetwork_collab_accessRights,main_popup,im_v2_lib_confirm,im_v2_application_core,im_public,im_v2_lib_analytics,im_v2_provider_service_chat,im_v2_component_elements_avatar,im_v2_const,im_v2_component_content_chatForms_elements) {
 	'use strict';
 
 	// @vue/component
@@ -969,7 +969,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.exitByCreation = true;
 	        im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
 	        await im_public.Messenger.openChat(newDialogId);
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.header.openAddToChatPopup);
+	        this.getEmitter().emit(im_v2_const.EventType.header.openAddToChatPopup);
 	      } catch {
 	        this.isCreating = false;
 	      }
@@ -1006,6 +1006,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onAutoDeleteDelayChange(delay) {
 	      this.autoDeleteDelay = delay;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -1338,19 +1341,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return this.chatService;
 	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
 	    async onCollapsedUsersClick() {
 	      const confirmResult = await im_v2_lib_confirm.showExitUpdateChatConfirm(this.dialogId);
 	      if (!confirmResult) {
 	        return;
 	      }
 	      await this.onUpdateClick();
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.members,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -1588,19 +1594,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return memberEntities;
 	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
 	    async onCollapsedUsersClick() {
 	      const confirmResult = await im_v2_lib_confirm.showExitUpdateChatConfirm(this.dialogId);
 	      if (!confirmResult) {
 	        return;
 	      }
 	      await this.onUpdateClick();
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.members,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -1884,5 +1893,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.CreatableChat = CreatableChat;
 	exports.UpdateChatContent = UpdateChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Socialnetwork.Collab,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Content));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Event,BX.Socialnetwork.Collab,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Content));
 //# sourceMappingURL=registry.bundle.js.map

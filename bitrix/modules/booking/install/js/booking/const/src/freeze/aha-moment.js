@@ -10,4 +10,5 @@ export const AhaMoment = Object.freeze({
 	SelectResources: 'select_resources',
 	CyclePopup: 'cycle_popup',
 	SearchNavigation: 'search_navigation',
+	IntegrationMapsYa: 'integration_maps_ya',
 });

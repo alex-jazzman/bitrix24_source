@@ -1,6 +1,9 @@
+import { Event } from 'main.core';
+
 import Util from './util';
-import {Event} from 'main.core';
-import {Hardware} from './call_hardware';
+import { RoomType } from './engine/engine';
+import { Hardware } from './call_hardware';
+import { CallStreamManager } from './media-stream-manager';
 
 export const ClientPlatform = 'web';
 
@@ -111,6 +114,19 @@ export const RecorderStatus = {
 	DESTROYED: 5, // recording will be aborted and no results will be provided
 };
 
+export const CloudRecordStatus = {
+	NONE: 1, // record not started
+	STARTED: 2, // record started and not paused
+	STOPPED: 3, // record stopped and can not be resumed
+	PAUSED: 4, // record started and paused
+	DESTROYED: 5, // record will be aborted and no results will be provided
+};
+
+export const CloudRecordKind = {
+	AUDIO: 1,
+	VIDEO: 2,
+};
+
 const ReconnectionReason = {
 	NetworkError: 'NetworkError',
 	PingPongMissed: 'PingPongMissed',
@@ -129,6 +145,11 @@ export const JoinRequestFailedCodes = {
 	JsonParsingError: 'JsonParsingError',
 	UnexpectedResponse: 'UnexpectedResponse',
 	UnknownError: 'UnknownError',
+};
+
+export const ConnectionType = {
+	PeerToPeer: 0,
+	MediaServer: 1,
 };
 
 export class JoinResponseError extends Error
@@ -155,6 +176,11 @@ export class JoinResponseError extends Error
 	}
 }
 
+const CallApiEvent = {
+	Reconnected: 'Reconnected',
+	Connected: 'Connected',
+};
+
 export class Call {
 	sender = null;
 	recipient = null;
@@ -173,6 +199,7 @@ export class Call {
 		realTracksIds: {}, // todo: check why track ids are different in a stream and in the track itself
 		mediaServerUrl: null,
 		roomData: null,
+		roomType: RoomType.Small,
 		roomId: null,
 		isLegacy: false,
 		token: null,
@@ -195,6 +222,7 @@ export class Call {
 		cameraStream: null,
 		microphoneStream: null,
 		screenStream: null,
+		needToStopStreams: true,
 		mediaMutedBySystem: false,
 		needToEnableAudioAfterSystemMuted: false,
 		needToDisableAudioAfterPublish: false,
@@ -280,6 +308,11 @@ export class Call {
 		this.initConnectionEvent();
 	}
 
+	get iceServers()
+	{
+		return this.#privateProperties.iceServers;
+	}
+
 	get remoteParticipantsCount()
 	{
 		return Object.keys(this.#privateProperties.remoteParticipants).length;
@@ -288,6 +321,11 @@ export class Call {
 	get isMediaMutedBySystem()
 	{
 		return this.#privateProperties.mediaMutedBySystem;
+	}
+
+	set needToStopStreams(needToStopStreams)
+	{
+		this.#privateProperties.needToStopStreams = Boolean(needToStopStreams);
 	}
 
 	onChangeConnection(connection)
@@ -631,6 +669,7 @@ export class Call {
 
 				this.#privateProperties.mediaServerUrl = mediaServerInfo.mediaServerUrl;
 				this.#privateProperties.roomData = mediaServerInfo.roomData;
+				this.#privateProperties.roomType = mediaServerInfo.roomType;
 			}
 			catch (error)
 			{
@@ -777,10 +816,8 @@ export class Call {
 						};
 					}
 
-					resolve({
-						mediaServerUrl: data.result.mediaServerUrl,
-						roomData: data.result.roomData,
-					});
+					const { mediaServerUrl, roomData, roomType } = data.result;
+					resolve({ mediaServerUrl, roomData, roomType });
 				})
 				.catch((error) => {
 					if (
@@ -915,8 +952,8 @@ export class Call {
 			this.#createPeerConnection();
 
 			const connectedEvent = this.#privateProperties.isReconnecting && this.wasConnected
-				? 'Reconnected'
-				: 'Connected';
+				? CallApiEvent.Reconnected
+				: CallApiEvent.Connected;
 
 			this.#privateProperties.callState = CALL_STATE.CONNECTED;
 			this.wasConnected = true;
@@ -924,28 +961,33 @@ export class Call {
 			this.#privateProperties.isReconnecting = false;
 			this.#privateProperties.reconnectionAttempt = 0;
 
-			if(data.joinResponse.permissions && connectedEvent === 'Connected')
+			if (data.joinResponse.oneToOneType)
+			{
+				this.triggerEvents('ConnectionTypeChanged', [{
+					connectionType: data.joinResponse.oneToOneType,
+				}]);
+			}
+
+			if (data.joinResponse.permissions && connectedEvent === CallApiEvent.Connected)
 			{
 				this.#setUserPermissions(data.joinResponse.permissions);
 			}
 
-			if(data.joinResponse.roomState && connectedEvent === 'Connected')
+			if (data.joinResponse.roomState && connectedEvent === CallApiEvent.Connected)
 			{
 				Util.setRoomPermissions(data.joinResponse.roomState);
 				Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
-
 			}
 
-			this.checkQosFeatureAndExecutionCallback(() =>
-			{
-				if (connectedEvent === 'Reconnected' && this.monitoringEvents.length)
+			this.checkQosFeatureAndExecutionCallback(() => {
+				if (connectedEvent === CallApiEvent.Reconnected && this.monitoringEvents.length)
 				{
 					this.sendMonitoringEvents();
 				}
 			});
 
-			const participantsToDelete = {...this.#privateProperties.remoteParticipants};
-			Object.values(data.joinResponse.otherParticipants).forEach( p => {
+			const participantsToDelete = { ...this.#privateProperties.remoteParticipants };
+			Object.values(data.joinResponse.otherParticipants).forEach((p) => {
 				if (participantsToDelete[p.userId])
 				{
 					delete participantsToDelete[p.userId];
@@ -954,7 +996,7 @@ export class Call {
 				this.#setRemoteParticipant(p);
 			});
 
-			if (connectedEvent === 'Reconnected')
+			if (connectedEvent === CallApiEvent.Reconnected)
 			{
 				for (let userId in participantsToDelete)
 				{
@@ -977,8 +1019,8 @@ export class Call {
 				this.triggerEvents('RecorderStatusChanged', [recorderStatus]);
 			}
 
-			this.#privateProperties.pingIntervalDuration = data.joinResponse.pingInterval * 1000
-			this.#privateProperties.pingTimeoutDuration = this.#privateProperties.pingIntervalDuration * 2
+			this.#privateProperties.pingIntervalDuration = data.joinResponse.pingInterval * 1000;
+			this.#privateProperties.pingTimeoutDuration = this.#privateProperties.pingIntervalDuration * 2;
 
 			this.#startPingInterval();
 
@@ -1018,8 +1060,10 @@ export class Call {
 			const cid = data.trackCreated.cid;
 			const track = data.trackCreated.track;
 			const trackId = track.sid;
-			track.userId = participantId
-			if (participantId == this.#privateProperties.userId) {
+			track.userId = participantId;
+
+			if (participantId == this.#privateProperties.userId)
+			{
 				const timeout = this.#privateProperties.pendingPublications[cid];
 				if (timeout)
 				{
@@ -1027,22 +1071,25 @@ export class Call {
 					delete this.#privateProperties.pendingPublications[cid];
 
 					this.setLog(`Publishing a local track with kind ${track.source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
-					this.#privateProperties.localTracks[track.source] = track
+					this.#privateProperties.localTracks[track.source] = track;
 					this.triggerEvents('PublishSucceed', [track.source]);
+
 					if (track.source === MediaStreamsKinds.Microphone && this.#privateProperties.needToDisableAudioAfterPublish)
 					{
 						this.#privateProperties.needToDisableAudioAfterPublish = false;
-						this.disableAudio();
+						this.disableAudio({ calledFrom: 'data.trackCreated' });
 					}
 					else if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
 					{
 						this.#processVideoQueue();
 					}
+
 					return;
 				}
 
 				this.setLog(`Got trackCreated signal for a non-existent local track with kind ${track.source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
-			} else {
+			}
+			else {
 				this.#privateProperties.tracksDataFromSocket[trackId] = track;
 				const participant = this.#privateProperties.remoteParticipants[participantId];
 				if (participant)
@@ -1137,15 +1184,19 @@ export class Call {
 		{
 			this.triggerEvents('RecorderStatusChanged', [data.recorderStatus]);
 		}
+		else if (data?.videoRecorderStatus)
+		{
+			this.triggerEvents('CloudRecordStatusChanged', [data.videoRecorderStatus]);
+		}
 		else if (data?.trickle) {
 			this.#addIceCandidate(data.trickle);
-		} else if (data?.newMessage) {
-			const message = new Message(data.newMessage)
+		}
+		else if (data?.newMessage)
+		{
+			const message = new Message(data.newMessage);
 			this.triggerEvents('MessageReceived', [message]);
-		} else if (data['1to1Info']) {
-			const message = new Message(data['1to1Info'])
-			this.triggerEvents('MessageReceived', [message]);
-		} else if (data?.handRaised) {
+		}
+		else if (data?.handRaised) {
 			const participant = this.#privateProperties.remoteParticipants[data.handRaised.participantId];
 			if (participant)
 			{
@@ -1266,6 +1317,10 @@ export class Call {
 			else if (data?.onActionSent.updateRole)
 			{
 				this.#updateRoleHandler(data.onActionSent.updateRole);
+			}
+			else if (data?.onActionSent.switchConnectionType)
+			{
+				this.triggerEvents('ConnectionTypeChanged', [data?.onActionSent.switchConnectionType]);
 			}
 		}
 	};
@@ -1616,6 +1671,7 @@ export class Call {
 					{
 						const encodings = this.#getEncodingsFromVideoWidth(width);
 
+						this.setLog('Add sender transceiver - direction: sendonly', LOG_LEVEL.INFO);
 						const transceiver = this.sender.addTransceiver(MediaStreamTrack, {
 							direction: 'sendonly',
 							streams: [this.#privateProperties.cameraStream],
@@ -1648,6 +1704,7 @@ export class Call {
 					}
 					else
 					{
+						this.setLog('Add sender transceiver - direction: sendonly', LOG_LEVEL.INFO);
 						this.sender.addTransceiver(MediaStreamTrack, {
 							direction: 'sendonly'
 						});
@@ -2132,18 +2189,25 @@ export class Call {
 		}
 	}
 
-	disableAudio(bySystem = false) {
+	disableAudio(options) {
+		const bySystem = options?.bySystem || false;
+		const calledFrom = options?.calledFrom || '';
+
 		if (this.#privateProperties.mediaMutedBySystem)
 		{
 			return;
 		}
 
-		this.setLog('Start disabling audio', LOG_LEVEL.INFO);
+		this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}`);
 		const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		if (track)
 		{
 			this.#privateProperties.needToEnableAudioAfterSystemMuted = bySystem ? track.enabled : false;
 			track.enabled = false;
+			if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
+			{
+				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+			}
 			this.pauseTrack(MediaStreamsKinds.Microphone, true);
 		}
 		else
@@ -2152,13 +2216,18 @@ export class Call {
 		}
 	}
 
-	async enableAudio(disabled = false)
+	async enableAudio(options)
 	{
+		const disabled = options?.disabled || false;
+		const calledFrom = options?.calledFrom || '';
+
 		if (!Util.havePermissionToBroadcast('mic'))
 		{
 			return;
 		}
-		this.setLog('Start enabling audio', LOG_LEVEL.INFO);
+
+		this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}`);
+
 		this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress)
 		{
@@ -2172,7 +2241,6 @@ export class Call {
 			}
 		}
 		let track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
-		const canUseUnpauseSignal = track && this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
 		const needToGetNewTrack = track?.readyState !== 'live';
 
 		if (needToGetNewTrack)
@@ -2182,16 +2250,18 @@ export class Call {
 
 		if (!track)
 		{
-
 			this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
 			this.#releaseStream(MediaStreamsKinds.Microphone);
 			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
+
+			return;
 		}
 
-		if (canUseUnpauseSignal)
+		if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
 		{
 			this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
 			track.enabled = true;
+			this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
 			await this.publishTrack(MediaStreamsKinds.Microphone, track);
 			this.unpauseTrack(MediaStreamsKinds.Microphone);
 		}
@@ -2203,6 +2273,12 @@ export class Call {
 			{
 				this.#privateProperties.needToDisableAudioAfterPublish = true;
 			}
+
+			if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
+			{
+				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
+			}
+
 			await this.publishTrack(MediaStreamsKinds.Microphone, track);
 		}
 	}
@@ -2234,6 +2310,8 @@ export class Call {
 			{
 				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 				this.#privateProperties.mediaMutedBySystem = false;
+
+				this.setLog(`Video disabling stops track - bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}`, LOG_LEVEL.INFO);
 				track.stop();
 				this.checkQosFeatureAndExecutionCallback(() =>
 				{
@@ -2248,10 +2326,19 @@ export class Call {
 			}
 
 			this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = true;
+
+			this.setLog(`Video disabling pauses track - bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}`, LOG_LEVEL.INFO);
 			this.pauseTrack(MediaStreamsKinds.Camera, true);
+			if (this.#privateProperties.needToStopStreams)
+			{
+				CallStreamManager.stopStream(MediaStreamsKinds.Camera);
+			}
+
 			if (!bySystem)
 			{
 				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+
+				this.setLog(`Video disabling stops track - bySystem: ${bySystem}, mediaMutedBySystem: ${this.#privateProperties.mediaMutedBySystem}`, LOG_LEVEL.INFO);
 				track.stop();
 				this.checkQosFeatureAndExecutionCallback(() =>
 				{
@@ -2311,7 +2398,6 @@ export class Call {
 
 		if (track && hasTrack && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
 		{
-
 			if (this.#privateProperties.mediaMutedBySystem)
 			{
 				this.#privateProperties.mediaMutedBySystem = false;
@@ -2333,11 +2419,17 @@ export class Call {
 			}
 			else
 			{
+				this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
 				this.unpauseTrack(MediaStreamsKinds.Camera);
 			}
 		}
 		else if (track)
 		{
+			if (this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
+			{
+				this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
+			}
+
 			this.setLog('Enabling video via publish', LOG_LEVEL.INFO);
 			await this.publishTrack(MediaStreamsKinds.Camera, track);
 		}
@@ -2354,11 +2446,11 @@ export class Call {
 	{
 		const videoQueue = this.#privateProperties.videoQueue;
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
-		if (videoQueue === VIDEO_QUEUE.ENABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState !== 'live')
+		if (videoQueue === VIDEO_QUEUE.ENABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState !== 'live')
 		{
 			this.enableVideo({calledFrom: 'processVideoQueue'});
 		}
-		else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState === 'live' && !this.#privateProperties.mediaMutedBySystem)
+		else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState === 'live' && !this.#privateProperties.mediaMutedBySystem)
 		{
 			this.disableVideo({calledFrom: 'processVideoQueue'});
 		}
@@ -2395,6 +2487,7 @@ export class Call {
 	async stopScreenShare() {
 		this.setLog('Start disabling screen sharing', LOG_LEVEL.INFO);
 		this.#releaseStream(MediaStreamsKinds.Screen);
+		this.#releaseStream(MediaStreamsKinds.ScreenAudio);
 		this.removeTrack(MediaStreamsKinds.Screen);
 		this.removeTrack(MediaStreamsKinds.ScreenAudio);
 		await this.unpublishTrack(MediaStreamsKinds.Screen);
@@ -2405,12 +2498,18 @@ export class Call {
 		this.#sendSignal({ sendMessage: { message } });
 	}
 
-	send1to1Info(message) {
-		this.#sendSignal({ send1to1Info: { message } });
+	switchConnectionType(type)
+	{
+		this.#sendSignal({ switchConnectionType: { type } });
 	}
 
 	raiseHand(raised) {
 		this.#sendSignal({ raiseHand: { raised } });
+	}
+
+	updateUserData(data: Object): void
+	{
+		this.#sendSignal({ updateUserData: data });
 	}
 
 	changeSettings(options)
@@ -2427,6 +2526,7 @@ export class Call {
 				settingsObj =  { 'audioMutedEvent': { 'muted': !options.settingEnabled } };
 				break;
 			case 'cam':
+				this.setLog(`Settings changes send videoMutedEvent (act: 'change_settings') - muted: ${!options.settingEnabled}`, LOG_LEVEL.INFO);
 				settingsObj =  { 'videoMutedEvent': { 'muted': !options.settingEnabled } };
 				break;
 			case 'screenshare':
@@ -2472,6 +2572,7 @@ export class Call {
 					break;
 
 					case 'cam':
+						this.setLog('turnOffAllParticipansStream send videoMutedEvent (act: \'mute_others\') - muted: true', LOG_LEVEL.INFO);
 						this.#sendSignal(
 						{	sendAction:
 							{
@@ -2540,6 +2641,7 @@ export class Call {
 
 				break;
 			case 'cam':
+				this.setLog(`turnOffParticipantStream send videoMutedEvent (act: 'mute_others') - muted: true, participantID: ${options.userId}`, LOG_LEVEL.INFO);
 				this.#sendSignal({
 					sendAction:
 					{
@@ -2584,23 +2686,31 @@ export class Call {
 		}
 	}
 
-	async getLocalVideo() {
-		if (this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState !== 'live')
+	async getLocalVideo(): Promise<?MediaStreamTrack>
+	{
+		const readyState = this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState;
+		const readyStateInfo = readyState ? ` - readyState: ${readyState}` : '';
+		this.setLog(`Local video getting${readyStateInfo}`, LOG_LEVEL.INFO);
+		if (readyState !== 'live')
 		{
 			await this.getTrack(MediaStreamsKinds.Camera);
 		}
 
 		return this.#privateProperties.cameraStream?.getVideoTracks()[0];
 	}
-	async getLocalAudio() {
-		if (!this.#privateProperties.microphoneStream)
+
+	async getLocalAudio(): Promise<?MediaStreamTrack>
+	{
+		if (this.#privateProperties.microphoneStream?.getAudioTracks()[0].readyState !== 'live')
 		{
 			await this.getTrack(MediaStreamsKinds.Microphone);
 		}
 
 		return this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 	}
-	async getLocalScreen() {
+
+	async getLocalScreen(): Promise<?MediaStreamTrack[]>
+	{
 		if (!this.#privateProperties.screenStream)
 		{
 			await this.getTrack(MediaStreamsKinds.Screen);
@@ -2608,83 +2718,100 @@ export class Call {
 
 		return {
 			video: this.#privateProperties.screenStream?.getVideoTracks()[0],
-			audio: this.#privateProperties.screenStream?.getAudioTracks()[0]
+			audio: this.#privateProperties.screenStream?.getAudioTracks()[0],
 		};
 	}
 
-	async #getUserMedia(options, fallbackMode = false) {
-		this.triggerEvents('GetUserMediaStarted', [options]);
-
-		this.setLog(`Start getting user media with options: ${JSON.stringify(options)}`, LOG_LEVEL.INFO);
+	#getUserMediaConstraints(options, fallbackMode = false)
+	{
 		const constraints = {
 			audio: false,
 			video: false,
-		}
+		};
 
-		let stream = null
+		if (options.video)
+		{
+			constraints.video = {};
 
-		try {
-			if (options.video) {
-				constraints.video = {};
+			if (!fallbackMode)
+			{
+				constraints.video.width = { ideal: this.#privateProperties.defaultVideoResolution.width };
+				constraints.video.height = { ideal: this.#privateProperties.defaultVideoResolution.height };
 
-				if (!fallbackMode)
+				if (this.#privateProperties.videoDeviceId)
 				{
-					constraints.video.width = { ideal: this.#privateProperties.defaultVideoResolution.width };
-					constraints.video.height = { ideal: this.#privateProperties.defaultVideoResolution.height };
-				}
-
-				if (this.#privateProperties.videoDeviceId) {
-					constraints.video.deviceId = {exact: this.#privateProperties.videoDeviceId}
-				}
-			} else if (options.audio) {
-				if (this.#privateProperties.audioDeviceId) {
-					constraints.audio = {
-						deviceId: {exact: this.#privateProperties.audioDeviceId}
-					}
-				} else {
-					constraints.audio = true
+					constraints.video.deviceId = { exact: this.#privateProperties.videoDeviceId };
 				}
 			}
 
-			stream = await Hardware.getUserMedia(constraints);
+			return constraints;
+		}
+
+		if (this.#privateProperties.audioDeviceId)
+		{
+			constraints.audio = {
+				deviceId: { exact: this.#privateProperties.audioDeviceId },
+			};
+		}
+		else
+		{
+			constraints.audio = true;
+		}
+
+		return constraints;
+	}
+
+	async #getUserMedia(options, fallbackMode = false): Promise<?MediaStream>
+	{
+		this.setLog(`Start getting user media with options: ${JSON.stringify(options)}`);
+		this.triggerEvents('GetUserMediaStarted', [options]);
+		const constraints = this.#getUserMediaConstraints(options, fallbackMode);
+
+		try
+		{
+			const mediaStream = await CallStreamManager.getUserMedia(constraints);
+			const stream = mediaStream.clone();
 
 			if (options.video && stream.getVideoTracks()[0])
 			{
-				this.triggerEvents('GetUserMediaSuccess', [{video: true}]);
+				this.#addTrackMuteHandlers(stream.getVideoTracks()[0]);
+				this.triggerEvents('GetUserMediaSuccess', [{ video: true }]);
 			}
 
 			if (options.audio && stream.getAudioTracks()[0])
 			{
-				this.triggerEvents('GetUserMediaSuccess', [{audio: true}]);
+				this.triggerEvents('GetUserMediaSuccess', [{ audio: true }]);
 			}
+			const trackMuteHandlersAreAddedInfo = options.video ? ' - trackMuteHandlersAreAdded: true' : '';
+			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} succeeded${trackMuteHandlersAreAddedInfo}`);
+			this.triggerEvents('GetUserMediaEnded');
 
+			return stream;
+		}
+		catch (error)
+		{
 			if (options.video)
 			{
-				this.#addTrackMuteHandlers(stream.getVideoTracks()[0]);
-			}
-			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} succeeded`, LOG_LEVEL.INFO);
-		} catch (e) {
-			if (options.video)
-			{
-				this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed (fallbackMode: ${fallbackMode}): ${e}`, LOG_LEVEL.ERROR);
+				this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed (fallbackMode: ${fallbackMode}): ${error}`, LOG_LEVEL.ERROR);
 
 				if (!fallbackMode)
 				{
-					this.checkQosFeatureAndExecutionCallback(() =>
-					{
+					this.checkQosFeatureAndExecutionCallback(() => {
 						this.addMonitoringEvents({
 							name: MONITORING_EVENTS_NAME_LIST.LOCAL_VIDEO_STREAM_RECEIVING_FAILED,
 							withCounter: true,
 						});
 					});
-					stream = await this.#getUserMedia(options, true);
+
+					const stream = await this.#getUserMedia(options, true);
+
+					return stream;
 				}
 			}
 
 			if (options.audio)
 			{
-				this.checkQosFeatureAndExecutionCallback(() =>
-				{
+				this.checkQosFeatureAndExecutionCallback(() => {
 					this.addMonitoringEvents({
 						name: MONITORING_EVENTS_NAME_LIST.LOCAL_MICROPHONE_STREAM_RECEIVING_FAILED,
 						withCounter: true,
@@ -2692,70 +2819,55 @@ export class Call {
 				});
 			}
 
-			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed: ${e}`, LOG_LEVEL.ERROR);
-			this.checkQosFeatureAndExecutionCallback(() =>
-			{
-				this.addMonitoringEvents({ name: MONITORING_EVENTS_NAME_LIST.GET_LOCAL_TRACK_ERROR,
-					value: {
-						type: 'main'
-					}
+			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed: ${error}`, LOG_LEVEL.ERROR);
+			this.checkQosFeatureAndExecutionCallback(() => {
+				this.addMonitoringEvents({
+					name: MONITORING_EVENTS_NAME_LIST.GET_LOCAL_TRACK_ERROR,
+					value: { type: 'main' },
 				});
 			});
-		} finally {
+
 			this.triggerEvents('GetUserMediaEnded');
-			return stream
+
+			return null;
 		}
 	}
 
-	async #getDisplayMedia() {
-		this.setLog('Start getting display media', LOG_LEVEL.INFO);
-		let stream = null;
+	async #getDisplayMedia(): Promise<?MediaStream>
+	{
+		this.setLog('Start getting display media');
 
-		try {
-			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
-				stream = await Hardware.getUserMedia({
-					video: {
-						mandatory: {
-							chromeMediaSource: 'screen',
-							maxWidth: 1920,
-							maxHeight: 1080,
-							maxFrameRate: 5
-						}
-					}
-				});
-			}
-			else
-			{
-				stream = await navigator.mediaDevices.getDisplayMedia({
-					video: {
-						cursor: 'always',
-						width: {
-							ideal: 1920
-						},
-						height: {
-							ideal: 1080
-						}
-					},
-					systemAudio: 'include',
-					audio: true,
-				});
-			}
-			this.setLog('Getting display media succeeded', LOG_LEVEL.INFO);
-		} catch (e) {
-			this.setLog(`Getting display media failed: ${e}`, LOG_LEVEL.ERROR);
+		try
+		{
+			const mediaStream = await CallStreamManager.getUserScreen();
+			const stream = mediaStream.clone();
+			this.setLog('Getting display media succeeded');
+
+			return stream;
+		}
+		catch (error)
+		{
+			this.setLog(`Getting display media failed: ${error}`, LOG_LEVEL.ERROR);
 			this.checkQosFeatureAndExecutionCallback(() => {
 				this.addMonitoringEvents({
 					name: MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_RECEIVING_FAILED,
 					withCounter: true,
 				});
 			});
-		} finally {
-			return stream;
+
+			return null;
 		}
 	}
 
 	async getTrack(MediaStreamKind) {
-		if (MediaStreamKind === MediaStreamsKinds.Camera && this.#privateProperties.cameraStream?.getVideoTracks().readyState !== 'live')
+		if (MediaStreamKind === MediaStreamsKinds.Camera)
+		{
+			const readyState = this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState;
+			const readyStateInfo = readyState ? ` - readyState: ${readyState}` : '';
+			this.setLog(`Video rack getting${readyStateInfo}`, LOG_LEVEL.INFO);
+		}
+
+		if (MediaStreamKind === MediaStreamsKinds.Camera && this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState !== 'live')
 		{
 			this.#privateProperties.cameraStream = await this.#getUserMedia({video: true});
 		}
@@ -2788,6 +2900,9 @@ export class Call {
 		else if (MediaStreamKind === MediaStreamsKinds.Camera)
 		{
 			track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
+			const readyState = track?.readyState;
+			const readyStateInfo = readyState ? ` - readyState: ${readyState}` : '';
+			this.setLog(`New video track getting${readyStateInfo}`, LOG_LEVEL.INFO);
 			if (track && track.readyState !== 'live')
 			{
 				this.#privateProperties.cameraStream = null;
@@ -2804,21 +2919,54 @@ export class Call {
 			}
 		}
 
-		if (track && !track.onended)
-		{
-			const interrupted = MediaStreamKind === MediaStreamsKinds.Microphone
-				|| MediaStreamKind === MediaStreamsKinds.Camera;
-
-			track.onended = () => {
-				if (this.#privateProperties.localTracks[MediaStreamKind])
-				{
-					this.#privateProperties.localTracks[MediaStreamKind].muted = true;
-				}
-				this.triggerEvents('PublishEnded', [MediaStreamKind, interrupted]);
-			};
-		}
+		this.#addOnEndedHandler(track, MediaStreamKind);
 
 		return track;
+	}
+
+	#addOnEndedHandler(track, mediaStreamKind)
+	{
+		if (track && !track.onended)
+		{
+			track.onended = () => {
+				let interrupted = false;
+				let permissionDescriptor = null;
+
+				if (mediaStreamKind === MediaStreamsKinds.Microphone)
+				{
+					permissionDescriptor = 'microphone';
+				}
+				else if (mediaStreamKind === MediaStreamsKinds.Camera)
+				{
+					permissionDescriptor = 'camera';
+				}
+
+				if (this.#privateProperties.localTracks[mediaStreamKind])
+				{
+					this.#privateProperties.localTracks[mediaStreamKind].muted = true;
+
+					if (mediaStreamKind === MediaStreamsKinds.Camera)
+					{
+						this.setLog('Video track is ended - muted: true', LOG_LEVEL.INFO);
+					}
+				}
+
+				const permissionPromise = navigator?.permissions?.query
+					? navigator.permissions.query({ name: permissionDescriptor })
+					: Promise.resolve();
+
+				permissionPromise
+					.then((result) => {
+						interrupted = result?.state === 'granted';
+					})
+					.catch(() => {
+						// no need to do anything
+					})
+					.finally(() => {
+						this.triggerEvents('PublishEnded', [mediaStreamKind, interrupted]);
+					});
+			};
+		}
 	}
 
 	async switchActiveAudioDevice(deviceId, force) {
@@ -2988,19 +3136,26 @@ export class Call {
 		return this.#privateProperties.localTracks[MediaStreamsKinds.Camera] && this.#privateProperties.localTracks[MediaStreamsKinds.Camera]?.muted !== true ;
 	}
 
+	isScreenPublished()
+	{
+		return !(this.#privateProperties.localTracks[MediaStreamsKinds.Screen]?.muted === true);
+	}
+
 	#addTrackMuteHandlers(track)
 	{
 		track.onmute = (event) =>
 		{
+			this.setLog('Video track event "mute" was triggered', LOG_LEVEL.INFO);
 			this.#privateProperties.mediaMutedBySystem = false;
-			this.disableVideo({calledFrom: 'track.onmute', bySystem: true});
-			this.disableAudio(true);
+			this.disableVideo({ calledFrom: 'track.onmute', bySystem: true });
+			this.disableAudio({ calledFrom: 'track.onmute', bySystem: true });
 			this.#privateProperties.mediaMutedBySystem = true;
 			this.triggerEvents('MediaMutedBySystem', [true]);
 		};
 
 		track.onunmute = (event) =>
 		{
+			this.setLog('Video track event "unmute" was triggered', LOG_LEVEL.INFO);
 			if (this.#privateProperties.mediaMutedBySystem)
 			{
 				this.#privateProperties.mediaMutedBySystem = false;
@@ -3036,6 +3191,34 @@ export class Call {
 		};
 
 		return this.isConnected() ? this.#sendSignal(signal) : false;
+	}
+
+	/**
+	 * @param {number} status
+	 * @param {CloudRecordKind | null} kind
+	 */
+	setCloudRecordState(status, kind = null) {
+		if (!Object.values(CloudRecordStatus).includes(status))
+		{
+			return;
+		}
+
+		const signal = {
+			videoRecorderControl: {
+				status,
+				kind,
+			},
+		};
+
+		if (Util.isCloudRecordLogEnabled())
+		{
+			console.warn(`CloudRecord: videoRecorderControl`, signal);
+		}
+
+		if (this.isConnected())
+		{
+			this.#sendSignal(signal);
+		}
 	}
 
 	setLog(log, level) {
@@ -3443,6 +3626,8 @@ export class Call {
 	#trackMutedHandler(data) {
 		const participant = this.#privateProperties.remoteParticipants[data.track.publisher];
 		const trackId = data.track.shortId;
+		this.setLog(`Got socket message "trackMuted" - trackId: ${trackId}, muted: ${data?.muted}`, LOG_LEVEL.INFO);
+
 		if (data.track.publisher == this.#privateProperties.userId)
 		{
 			const track = Object.values(this.#privateProperties.localTracks)?.find(track => track?.sid === trackId);
@@ -3450,6 +3635,8 @@ export class Call {
 			{
 				if (track.source === MediaStreamsKinds.Camera)
 				{
+					this.setLog(`Got mute self video signal (${data.muted}) - trackId: ${trackId}`, LOG_LEVEL.INFO);
+
 					if (!data.muted && track.muted && !this.#privateProperties.mediaMutedBySystem)
 					{
 						this.triggerEvents('PublishSucceed', [track.source]);
@@ -3469,6 +3656,11 @@ export class Call {
 					this.triggerEvents('PublishPaused', [track.source, data.muted]);
 				}
 			}
+			else
+			{
+				this.setLog(`Mute self signal (${data.muted}) getting failed - trackId: ${trackId}`, LOG_LEVEL.INFO);
+			}
+
 			return;
 		}
 
@@ -3518,6 +3710,8 @@ export class Call {
 	}
 
 	#cameraMuteUnmuteHandler(options) {
+		this.setLog(`Camera muting was changed (${options?.isMuted}) - trackSid: ${options?.track?.sid}, participantUserId: ${options?.participant?.userId}, trackSource: ${options?.track?.source}`, LOG_LEVEL.INFO);
+
 		options.participant.isMutedVideo = options.isMuted;
 
 		const eventName = options.isMuted
@@ -3566,10 +3760,15 @@ export class Call {
 				}
 				else if (data.track.type === 1 && participant.videoEnabled)
 				{ // video
+					this.setLog(`Mute participant video - from: ${data?.fromUserId}, to: ${data?.toUserId}`, LOG_LEVEL.INFO);
 					participant.videoEnabled = false;
 					const track = Object.values(participant.tracks)?.find(track => track?.source === MediaStreamsKinds.Camera);
 
 					this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+				}
+				else if (data.track.type === 1 && !participant.videoEnabled)
+				{
+					this.setLog(`Cancel participant video muting - from: ${data?.fromUserId}, to: ${data?.toUserId}`, LOG_LEVEL.INFO);
 				}
 				else if (data.track.type === 2 && participant.screenSharingEnabled)
 				{ // screenshare
@@ -3612,6 +3811,7 @@ export class Call {
 			}
 			else if (data.track.type === 1)
 			{
+				this.setLog(`Try to mute all participant videos - from: ${data?.fromUserId}`, LOG_LEVEL.INFO);
 				this.triggerEvents('AllParticipantsVideoMuted', [data]);
 			}
 			else if (data.track.type === 2)
@@ -3642,9 +3842,15 @@ export class Call {
 						{ // video
 							participant.videoEnabled = false;
 
+							this.setLog(`Mute participant video - from: ${data?.fromUserId}, to: ${participant?.userId}`, LOG_LEVEL.INFO);
+
 							const track = participant.getTrack(MediaStreamsKinds.Camera);
 
 							this.#cameraMuteUnmuteHandler({track: track, isMuted: true, participant: participant});
+						}
+						else if (data.track.type === 1 && !participant.videoEnabled)
+						{
+							this.setLog(`Cancel participant video muting - from: ${data?.fromUserId}, to: ${participant?.userId}`, LOG_LEVEL.INFO);
 						}
 						else if(data.track.type === 2)
 						{ // screenshare
@@ -3786,13 +3992,15 @@ export class Call {
 				let packetLostEventAdded = false;
 				await this.sender.getStats(null).then((stats) =>
 				{
-					let statsOutput = [];
+					const statsOutput = [];
 					const codecs = {};
 					const reportsWithoutCodecs = {};
 					const remoteReports = {};
 					const reportsWithoutRemoteInfo = {};
+					let audioReport = null;
+					let hasRemoteAudioReport = false;
 					let isQualityLimitationSent = false;
-					let totalBitrateOut = [];
+					const totalBitrateOut = [];
 
 					stats.forEach((report) =>
 					{
@@ -3808,6 +4016,11 @@ export class Call {
 							const reportId = report.localId;
 							if (reportsWithoutRemoteInfo[reportId])
 							{
+								if (audioReport?.id)
+								{
+									hasRemoteAudioReport = true;
+								}
+
 								const packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], this.#privateProperties.reportsForOutgoingTracks[reportId], report);
 								const { currentPercentPacketLost } = packetsLostData;
 
@@ -3838,10 +4051,11 @@ export class Call {
 								}
 
 								reportsWithoutRemoteInfo[reportId].packetsLostData = packetsLostData;
-								reportsWithoutRemoteInfo[reportId].packetsLost = packetsLostData.totalPacketsLost;
+								reportsWithoutRemoteInfo[reportId].packetsLost = { ...packetsLostData };
 								reportsWithoutRemoteInfo[reportId].packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
 								this.#privateProperties.reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
 								delete reportsWithoutRemoteInfo[reportId];
+
 								return;
 							}
 
@@ -3851,10 +4065,12 @@ export class Call {
 						if (report.type === 'outbound-rtp')
 						{
 							report.bitrate = Util.calcBitrate(report, this.#privateProperties.reportsForOutgoingTracks[report.id], true);
+							report.prevBitrate = this.#privateProperties.reportsForOutgoingTracks[report.id]?.bitrate;
 							report.userId = this.#privateProperties.userId;
 
 							if (report.kind === 'audio')
 							{
+								audioReport = report;
 								report.source = MediaStreamsKinds.Microphone;
 							}
 							else if (report.kind === 'video' )
@@ -3925,6 +4141,11 @@ export class Call {
 							});
 						}
 					});
+
+					if (audioReport && !hasRemoteAudioReport)
+					{
+						audioReport.prevBitrate = 0;
+					}
 
 					statsAll.sender = statsOutput;
 				});
@@ -4168,27 +4389,28 @@ export class Call {
 		this.#privateProperties.peerConnectionFailed = false;
 	}
 
-	#releaseStream(kind) {
-		let streamType
+	#releaseStream(mediaStreamKind): void
+	{
+		const streamTypes = {
+			[MediaStreamsKinds.Camera]: 'cameraStream',
+			[MediaStreamsKinds.Microphone]: 'microphoneStream',
+			[MediaStreamsKinds.Screen]: 'screenStream',
+			[MediaStreamsKinds.ScreenAudio]: 'screenStream',
+		};
 
-		switch (kind) {
-			case MediaStreamsKinds.Camera:
-				streamType = 'cameraStream'
-				break
-			case MediaStreamsKinds.Microphone:
-				streamType = 'microphoneStream'
-				break
-			case MediaStreamsKinds.Screen:
-				streamType = 'screenStream'
-				break
-		}
+		const streamType = streamTypes[mediaStreamKind];
 
-		if (streamType) {
-			this.#privateProperties[streamType]?.getTracks?.()?.forEach( track => {
-				track.onended = null
-				track.stop()
-			})
-			this.#privateProperties[streamType] = null
+		if (streamType)
+		{
+			this.#privateProperties[streamType]?.getTracks?.()?.forEach((track) => {
+				track.onended = null;
+				track.stop();
+			});
+			this.#privateProperties[streamType] = null;
+			if (this.#privateProperties.needToStopStreams)
+			{
+				CallStreamManager.stopStream(mediaStreamKind);
+			}
 		}
 	}
 
@@ -4315,7 +4537,7 @@ class Participant {
 		if (this.tracks?.[MediaStreamsKinds.Camera]) {
 			this.cameraStreamQuality = quality;
 			const trackId = this.tracks[MediaStreamsKinds.Camera].id;
-			this.tracks[MediaStreamsKinds.Camera].track.currentVideoQuality =  quality;
+			this.tracks[MediaStreamsKinds.Camera].track.currentVideoQuality = quality;
 			const signal = {
 				trackSetting: {
 					trackSids: [trackId],

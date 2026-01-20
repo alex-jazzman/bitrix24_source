@@ -353,19 +353,12 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		 */
 		displayFloatingButtonAhaMoment({ description, onHide, delay = 0 })
 		{
-			setTimeout(() => {
-				if (this.floatingButtonPointerRef)
-				{
-					AhaMoment.show({
-						description,
-						testId: this.getTestId('floating-button-aha-moment'),
-						targetRef: this.floatingButtonPointerRef,
-						closeButton: false,
-						fadeInDuration: 300,
-						onHide,
-					});
-				}
-			}, delay);
+			this.stateFulListRef?.displayFloatingButtonAhaMoment({
+				description,
+				testId: this.getTestId('floating-button-aha-moment'),
+				onHide,
+				delay,
+			});
 		}
 
 		/**
@@ -520,6 +513,9 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				itemDetailOpenHandler: this.onItemPress,
 				needInitMenu: true,
 				getEmptyListComponent: this.getEmptyListComponent,
+				spotlightIds: {
+					fab: 'disk-fab',
+				},
 			});
 		}
 

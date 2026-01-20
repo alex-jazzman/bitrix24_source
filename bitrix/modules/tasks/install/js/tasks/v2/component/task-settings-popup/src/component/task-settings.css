@@ -1,0 +1,12 @@
+.tasks-task-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-settings > div {
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md);
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}

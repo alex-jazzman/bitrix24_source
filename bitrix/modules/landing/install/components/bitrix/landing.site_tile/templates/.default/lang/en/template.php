@@ -40,6 +40,7 @@ $MESS["LANDING_SITE_TILE_NOT_PUBLISHED_TITLE_STORE"] = "View online store";
 $MESS["LANDING_SITE_TILE_OPEN"] = "Open";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_BUTTON"] = "Create a site";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION"] = "If required and not active, trial mode will be activated <br> when you click the \"Create a site\" button.";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION_2"] = "<p>If required and not active, BitrixGPT + Market trial subscription<br>will be activated when you click the \"Create a site\" button.</p>";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1"] = "Describe your requirements";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2"] = "The AI will create site design, images and texts";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3"] = "Your site will be ready in a couple minutes";

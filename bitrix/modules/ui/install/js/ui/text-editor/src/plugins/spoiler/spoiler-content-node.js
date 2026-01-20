@@ -142,7 +142,7 @@ export class SpoilerContentNode extends ElementNode
 		{
 			this.append(nodeToInsert);
 		}
-		else
+		else if (firstChild !== nodeToInsert)
 		{
 			firstChild.insertBefore(nodeToInsert);
 		}

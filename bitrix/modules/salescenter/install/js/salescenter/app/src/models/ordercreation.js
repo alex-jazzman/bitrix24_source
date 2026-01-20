@@ -40,6 +40,8 @@ export class OrderCreationModel extends VuexBuilderModel
 			paymentResponsibleId: null,
 			isMobileInstalledForResponsible: false,
 			responsiblePhoneNumbers: [],
+			messageData: {},
+			hasAvailableProducts: false,
 		};
 	}
 
@@ -99,6 +101,14 @@ export class OrderCreationModel extends VuexBuilderModel
 			{
 				commit('setAvailablePaySystemsIds', payload);
 			},
+			setMessageData: ({ commit }, payload) =>
+			{
+				commit('setMessageData', payload);
+			},
+			setHasAvailableProducts: ({ commit }, payload) =>
+			{
+				commit('setHasAvailableProducts', payload);
+			},
 		}
 	}
 
@@ -112,6 +122,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			isAllowedSubmit: state =>
 			{
 				return state.isEnabledSubmit && state.isSenderSelected;
+			},
+			isSenderSelected: state =>
+			{
+				return state.isSenderSelected;
 			},
 			isCompilationMode: state =>
 			{
@@ -164,6 +178,14 @@ export class OrderCreationModel extends VuexBuilderModel
 			getAvailablePaySystemsIds: state =>
 			{
 				return state.availablePaySystemsIds;
+			},
+			getMessageData: state =>
+			{
+				return state.messageData;
+			},
+			getHasAvailableProducts: state =>
+			{
+				return state.hasAvailableProducts;
 			},
 		}
 	}
@@ -263,6 +285,14 @@ export class OrderCreationModel extends VuexBuilderModel
 			disableCompilationMode: (state) =>
 			{
 				state.isCompilationMode = false;
+			},
+			setMessageData: (state, payload) =>
+			{
+				state.messageData = { ...state.messageData, ...payload };
+			},
+			setHasAvailableProducts: (state, payload) =>
+			{
+				state.hasAvailableProducts = payload;
 			},
 		}
 	}

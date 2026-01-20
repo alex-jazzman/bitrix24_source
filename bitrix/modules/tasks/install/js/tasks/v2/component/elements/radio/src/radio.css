@@ -1,0 +1,42 @@
+input.tasks-elements-radio[type="radio"] {
+	--tasks-element-radio-transition: all 100ms ease-in-out;
+
+	appearance: none;
+	position: relative;
+	width: 20px;
+	height: 20px;
+	margin: unset;
+	cursor: pointer;
+}
+
+input.tasks-elements-radio[type="radio"]:checked::after {
+	content: '';
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	background-color: var(--ui-color-bg-content-primary);
+	border: 6px solid var(--ui-color-accent-main-primary);
+	border-radius: var(--ui-border-radius-circle);
+	transition: var(--tasks-element-radio-transition);
+	overflow: hidden;
+}
+
+input.tasks-elements-radio[type="radio"]::after {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	background-color: var(--ui-color-bg-content-primary);
+	border: 2px solid var(--ui-color-base-7);
+	border-radius: var(--ui-border-radius-circle);
+	transition: var(--tasks-element-radio-transition);
+	overflow: hidden;
+}
+
+input.tasks-elements-radio[type="radio"]:disabled {
+	cursor: default;
+}
+
+input.tasks-elements-radio[type="radio"]:disabled::after {
+	background: var(--ui-color-design-disabled-bg);
+}

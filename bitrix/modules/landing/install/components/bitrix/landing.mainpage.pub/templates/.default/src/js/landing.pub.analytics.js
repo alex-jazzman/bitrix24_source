@@ -2,12 +2,13 @@ import { Event } from 'main.core';
 import { Metrika } from 'landing.metrika';
 
 // Block and analytics constants
-const CATEGORY = 'vibe';
+const TOOL = 'vibe';
 const SECTION_ACTIVE_PAGE = 'active_page';
 const SECTION_PREVIEW_PAGE = 'preview_page';
 const P1_TEMPLATE_CODE = 'templateCode';
 const P2_WIDGET_ID = 'widgetId';
 const TRIAL_BUTTON_ID = 'trialButton';
+const FEEDBACK_BUTTON_ID = 'feedback-button';
 const EVENT_DEMO_ACTIVATED = 'demo_activated';
 const EVENT_CLICK_ON_BUTTON = 'click_on_button';
 
@@ -25,8 +26,11 @@ const DASH = '-';
 const DOT = '.';
 const B24URL_TYPE = 'b24url';
 const SLIDER_TYPE = 'slider';
+const HELPDESK_TYPE = 'helpdesk';
 const OTHER_URL_TYPE = 'otherurl';
-const REGEX_SLIDER = /BX\.Helper\.show\(["'].*?code=(\d+)["']\)/;
+const PARTNER_FORM = 'patnerform';
+const REGEX_HELPDESK = /BX\.Helper\.show\(["'].*?code=(\d+)["']\)/;
+const REGEX_SLIDER = /BX\.UI\.InfoHelper\.show\(["'](.*?)["']\)/;
 const REGEX_PSEUDO_URL = /^\/|^https?:\/\/|^#/;
 const QUOT_ENTITY = '&quot;';
 const QUOTE = '"';
@@ -54,7 +58,7 @@ export class Analytics
 	{
 		this.isPublished = options.isPublished;
 		this.templateCode = options.templateCode;
-		this.metrika = new Metrika(IS_LIGHT_METRIKA);
+		this.metrika = new Metrika(IS_LIGHT_METRIKA, TOOL);
 		this.clickableElements = [];
 		this.initEventListeners();
 	}
@@ -84,7 +88,9 @@ export class Analytics
 	 */
 	findClickableElements(block: HTMLElement): HTMLElement[]
 	{
-		const elements = [...block.querySelectorAll(`${TAG_A}, ${TAG_BUTTON}, [${DATA_PSEUDO_URL}]`)];
+		const elements = [
+			...block.querySelectorAll(`${TAG_A}, ${TAG_BUTTON}, [${DATA_PSEUDO_URL}], #${FEEDBACK_BUTTON_ID}`)
+		];
 
 		return elements.filter((el: HTMLElement) => this.isClickableElement(el));
 	}
@@ -108,7 +114,7 @@ export class Analytics
 			return false;
 		}
 
-		return tag === TAG_BUTTON || element.hasAttribute(DATA_PSEUDO_URL);
+		return tag === TAG_BUTTON || element.hasAttribute(DATA_PSEUDO_URL) || element.id === FEEDBACK_BUTTON_ID;
 	}
 
 	/**
@@ -139,11 +145,23 @@ export class Analytics
 	onClick(event: MouseEvent, code: string): void
 	{
 		const target = event.currentTarget;
+		const eventName = this.getEventName(target);
+		let trackingParam = null;
+
+		if (eventName === EVENT_CLICK_ON_BUTTON)
+		{
+			trackingParam = this.getTrackingParameter(target);
+		}
+
 		const data = {
-			event: this.getEventName(target),
+			event: eventName,
 			p2: [P2_WIDGET_ID, code],
-			p4: this.getTrackingParameter(target),
 		};
+
+		if (trackingParam !== null)
+		{
+			data.p4 = trackingParam;
+		}
 
 		this.sendAnalytics(data);
 	}
@@ -166,11 +184,22 @@ export class Analytics
 	 */
 	getTrackingParameter(target: HTMLElement): TrackingParam
 	{
+		if (target.id === FEEDBACK_BUTTON_ID)
+		{
+			return [SLIDER_TYPE, PARTNER_FORM];
+		}
+
 		const href = this.extractHrefFromPseudoUrl(target) || this.extractHrefFromElement(target);
 
 		if (!href)
 		{
 			return undefined;
+		}
+
+		const helpdeskMatch = href.match(REGEX_HELPDESK);
+		if (helpdeskMatch)
+		{
+			return [HELPDESK_TYPE, helpdeskMatch[1]];
 		}
 
 		const sliderMatch = href.match(REGEX_SLIDER);
@@ -181,7 +210,7 @@ export class Analytics
 
 		if (href.startsWith('/') || href.includes(window.location.origin))
 		{
-			return [B24URL_TYPE, href];
+			return [B24URL_TYPE, href.replaceAll(/\/\d+(?=\/)/g, '/')];
 		}
 
 		return [OTHER_URL_TYPE, href];
@@ -248,7 +277,7 @@ export class Analytics
 	getAnalyticsData(data: Record<string, any>): Record<string, any>
 	{
 		return {
-			category: CATEGORY,
+			category: TOOL,
 			c_section: this.isPublished ? SECTION_ACTIVE_PAGE : SECTION_PREVIEW_PAGE,
 			p1: [P1_TEMPLATE_CODE, this.templateCode],
 			...data,

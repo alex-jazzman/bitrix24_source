@@ -34,7 +34,7 @@ jn.define('im/messenger/provider/services/analytics/message-delete', (require, e
 				.setEvent(Analytics.Event.clickDelete)
 				.setType(messageHelper.getComponentId())
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData?.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
 
 			analyticsEvent.send();
@@ -57,7 +57,7 @@ jn.define('im/messenger/provider/services/analytics/message-delete', (require, e
 				.setType(messageHelper.getComponentId())
 				.setSection(Analytics.Section.popup)
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData?.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
 
 			analyticsEvent.send();
@@ -73,7 +73,7 @@ jn.define('im/messenger/provider/services/analytics/message-delete', (require, e
 				.setCategory(Analytics.Category.chatPopup)
 				.setEvent(Analytics.Event.view)
 				.setType('deleted_message')
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData?.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
 
 			switch (context)
@@ -105,7 +105,7 @@ jn.define('im/messenger/provider/services/analytics/message-delete', (require, e
 				.setEvent(Analytics.Event.view)
 				.setType(Analytics.Type.deletedMessage)
 				.setSection(Analytics.Section.comments)
-				.setP1(AnalyticsHelper.getP1ByChatType(parentChatData.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(parentChatData))
 			;
 
 			analyticsEvent.send();

@@ -18,8 +18,6 @@
 .mailbox-grid_user-list-popup-wrap-block .mailbox-grid_user-list-popup-popup {
 	background-color: #fff;
 	display: block;
-	margin: 0 0 2px 0;
-	padding: 0 17px 8px 8px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	width: auto;
@@ -57,8 +55,6 @@
 	background-color: #fff;
 	display: inline-block;
 	max-height: 121px;
-	margin: 0 0 2px 0;
-	padding: 0 6px 5px 0;
 	overflow-y: auto;
 	overflow-x: hidden;
 	width: 180px;
@@ -86,6 +82,10 @@
 	margin-bottom: 0;
 }
 
+.mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img.--icon:last-child {
+	margin-bottom: 0;
+}
+
 .mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img:link span,
 .mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img:visited span {
 	color: #525C69;
@@ -105,6 +105,18 @@
 	text-decoration: underline;
 }
 
+.mailbox-grid_user-list-popup-popup .mailbox-grid_user-list-popup-popup-img.--icon {
+	display: flex;
+	align-items: center;
+	color: #525C69;
+	text-decoration: none;
+	overflow: hidden;
+	zoom: 1;
+	white-space: nowrap;
+	margin-bottom: 8px;
+}
+
+
 .mailbox-grid_user-list-popup-popup-avatar-new {
 	display: inline-block;
 	vertical-align: middle;
@@ -118,6 +130,12 @@
 * html .mailbox-grid_user-list-popup-popup-avatar,
 * html .mailbox-grid_user-list-popup-popup-avatar-new {
 	width: 23px;
+}
+
+.mailbox-grid_user-list-popup-popup-avatar-new.--icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .mailbox-grid_user-list-popup-popup-img img {
@@ -155,23 +173,7 @@
 	width: 135px;
 }
 
-
-.popup-window-mailbox-user-list {
-	padding: 6px 10px 10px 10px;
+.popup-window-mailbox-entity-list {
+	padding: 10px;
 	border-radius: 18px;
-}
-
-
-.mailbox-grid_user-list-popup-popup-name.contentview-name,
-.mailbox-grid_user-list-popup-popup-name-link.contentview-name {
-	height: 18px;
-	display: block;
-	text-decoration: none;
-	cursor: auto;
-	padding: 10px 0 9px 0;
-	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #525C69;
-	border-bottom: 1px solid #D8D8D8;
-	margin: 0 8px 9px 8px;
-	max-width: 190px;
 }

@@ -899,6 +899,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			Object.entries(copilotChats).forEach(([dialogId, chat]) => {
 				const chats = recentData.copilot.chats?.find((chat) => chat.dialogId === dialogId);
 				const roles = recentData.copilot.roles;
+				const engines = recentData.copilot.engines;
 				const copilotMessages = recentData.copilot.messages?.find((message) => message.id === chat.message.id);
 
 				const copilotItem = {
@@ -907,6 +908,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 					messages: [copilotMessages],
 					aiProvider: '',
 					roles,
+					engines,
 				};
 
 				result.copilot.push(copilotItem);

@@ -26,13 +26,6 @@ export class BxLinkHandler
 	#subscribeToBxProtocolEvent()
 	{
 		DesktopApi.subscribe(EventType.desktop.onBxLink, async (command: DesktopBxLinkKey, rawParams: ?RawParams) => {
-			if (!DesktopApi.isAirDesignEnabledInDesktop())
-			{
-				BxLinkProcessor.handleCommand(command, rawParams);
-
-				return;
-			}
-
 			await DesktopApi.showBrowserWindow();
 
 			if (DesktopApi.isFeatureSupported(DesktopFeature.portalTabActivation.id))

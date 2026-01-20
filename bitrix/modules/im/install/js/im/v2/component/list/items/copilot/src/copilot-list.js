@@ -9,6 +9,7 @@ import { CopilotRecentMenu } from './classes/context-menu-manager';
 import './css/copilot-list.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem } from 'im.v2.model';
 
 // @vue/component
@@ -57,7 +58,7 @@ export const CopilotList = {
 	},
 	async created()
 	{
-		this.contextMenuManager = new CopilotRecentMenu();
+		this.contextMenuManager = new CopilotRecentMenu({ emitter: this.getEmitter() });
 
 		this.isLoading = true;
 		await this.getRecentService().loadFirstPage();
@@ -104,6 +105,10 @@ export const CopilotList = {
 			}
 
 			return this.service;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

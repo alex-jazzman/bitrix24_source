@@ -13,6 +13,7 @@ return [
 		'im.v2.application.core',
 		'im.public',
 		'im.v2.const',
+		'im.v2.provider.service.settings',
 		'main.core',
 	],
 	'skip_core' => false,

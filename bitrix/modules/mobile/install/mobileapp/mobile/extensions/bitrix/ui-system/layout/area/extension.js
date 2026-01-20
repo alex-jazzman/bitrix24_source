@@ -4,6 +4,7 @@
 jn.define('ui-system/layout/area', (require, exports, module) => {
 	const { Component, Color } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
+	const { PropTypes } = require('utils/validation');
 	const { AreaTop } = require('ui-system/layout/area/src/top');
 
 	/**

@@ -215,7 +215,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		 * @protected
 		 * @abstract
 		 * @param {SidebarViewDefaultProps} defaultProps
-		 * @return {SidebarBaseView}
+		 * @return {SidebarBaseView|CopilotSidebarView}
 		 */
 		createView(defaultProps)
 		{

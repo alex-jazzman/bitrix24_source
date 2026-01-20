@@ -49,8 +49,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 
 	var _queryCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("queryCache");
 	var _loadByIdsPromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadByIdsPromises");
+	var _loadBySkuIdsPromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadBySkuIdsPromises");
 	var _mainResourcesCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mainResourcesCache");
 	var _requestLoadByIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestLoadByIds");
+	var _requestLoadBySkuIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestLoadBySkuIds");
 	var _upsertResponseData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("upsertResponseData");
 	var _isQueryLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isQueryLoaded");
 	var _requestGetMainResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestGetMainResources");
@@ -65,6 +67,9 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    Object.defineProperty(this, _upsertResponseData, {
 	      value: _upsertResponseData2
 	    });
+	    Object.defineProperty(this, _requestLoadBySkuIds, {
+	      value: _requestLoadBySkuIds2
+	    });
 	    Object.defineProperty(this, _requestLoadByIds, {
 	      value: _requestLoadByIds2
 	    });
@@ -73,6 +78,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      value: []
 	    });
 	    Object.defineProperty(this, _loadByIdsPromises, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _loadBySkuIdsPromises, {
 	      writable: true,
 	      value: {}
 	    });
@@ -98,6 +107,25 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      await babelHelpers.classPrivateFieldLooseBase(this, _upsertResponseData)[_upsertResponseData](data, dateTs);
 	    } catch (error) {
 	      console.error('ResourceDialogLoadByIdsRequest: error', error);
+	    }
+	  }
+	  async loadBySkuIds(idsToLoad, dateTs) {
+	    try {
+	      var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	      (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _loadBySkuIdsPromises)[_loadBySkuIdsPromises])[dateTs]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[dateTs] = {};
+	      const requestedIds = Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _loadBySkuIdsPromises)[_loadBySkuIdsPromises][dateTs]).flatMap(key => key.split(',')).map(id => Number(id));
+	      const requestedIdsSet = new Set(requestedIds);
+	      const ids = idsToLoad.filter(id => !requestedIdsSet.has(id));
+	      if (!main_core.Type.isArrayFilled(ids)) {
+	        await Promise.all(Object.values(babelHelpers.classPrivateFieldLooseBase(this, _loadBySkuIdsPromises)[_loadBySkuIdsPromises][dateTs]));
+	        return;
+	      }
+	      const idsKey = ids.join(',');
+	      babelHelpers.classPrivateFieldLooseBase(this, _loadBySkuIdsPromises)[_loadBySkuIdsPromises][dateTs][idsKey] = babelHelpers.classPrivateFieldLooseBase(this, _requestLoadBySkuIds)[_requestLoadBySkuIds](ids, dateTs);
+	      const data = await babelHelpers.classPrivateFieldLooseBase(this, _loadBySkuIdsPromises)[_loadBySkuIdsPromises][dateTs][idsKey];
+	      await babelHelpers.classPrivateFieldLooseBase(this, _upsertResponseData)[_upsertResponseData](data, dateTs);
+	    } catch (error) {
+	      console.error('ResourceDialogLoadBySkuIdsRequest: error', error);
 	    }
 	  }
 	  async fillDialog(dateTs) {
@@ -139,6 +167,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      const extractor = new MainResourcesExtractor(data);
 	      const ids = extractor.getMainResourceIds();
 	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.MainResources}/setMainResources`, ids);
+	      const resources = data.map(resourceDto => booking_provider_service_resourcesService.ResourceMappers.mapDtoToModel(resourceDto));
+	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, resources);
 	    } catch (error) {
 	      console.error('ResourceDialogGetMainResources: error', error);
 	    }
@@ -149,6 +179,12 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	}
 	async function _requestLoadByIds2(ids, dateTs) {
 	  return new booking_lib_apiClient.ApiClient().post('ResourceDialog.loadByIds', {
+	    ids,
+	    dateTs
+	  });
+	}
+	async function _requestLoadBySkuIds2(ids, dateTs) {
+	  return new booking_lib_apiClient.ApiClient().post('ResourceDialog.loadBySkuIds', {
 	    ids,
 	    dateTs
 	  });

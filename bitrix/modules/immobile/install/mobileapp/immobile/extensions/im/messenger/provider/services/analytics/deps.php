@@ -12,6 +12,7 @@ return [
 		'im:messenger/provider/data',
 	],
 	'bundle' => [
+		'./src/video-note',
 		'./src/audio',
 		'./src/chat-create',
 		'./src/chat-delete',
@@ -33,5 +34,7 @@ return [
 		'./src/navigation-tab',
 		'./src/chat-pin',
 		'./src/message-type',
+		'./src/assistant-button',
+		'./src/reaction',
 	],
 ];

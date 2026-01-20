@@ -12,6 +12,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/view', (require, expo
 	{
 		constructor()
 		{
+			this.showMoreReactions = false;
+			this.reactionVersion = false;
 			this.reactionList = [];
 			this.actionList = [];
 		}
@@ -73,6 +75,26 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/view', (require, expo
 			{
 				this.actionList.pop();
 			}
+		}
+
+		/**
+		 * @param {boolean} value
+		 */
+		setMoreReactionsSetting(value)
+		{
+			this.showMoreReactions = value;
+
+			return this;
+		}
+
+		/**
+		 * @param {number} value
+		 */
+		setReactionVersion(value)
+		{
+			this.reactionVersion = value;
+
+			return this;
 		}
 	}
 

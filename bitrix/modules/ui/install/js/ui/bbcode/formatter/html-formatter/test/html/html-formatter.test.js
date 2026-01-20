@@ -168,7 +168,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('text ' + bold('bold')));
+			assert.deepEqual(html, paragraph(`text ${bold('bold')}${br()}`));
 		});
 
 		it('should format u tag', () => {
@@ -179,7 +179,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('text ' + underline('underline')));
+			assert.deepEqual(html, paragraph(`text ${underline('underline')}${br()}`));
 		});
 
 		it('should format i tag', () => {
@@ -190,7 +190,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('text ' + italic('italic')));
+			assert.deepEqual(html, paragraph(`text ${italic('italic')}${br()}`));
 		});
 
 		it('should format s tag', () => {
@@ -201,7 +201,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('text ' + strike('strikethrough')));
+			assert.deepEqual(html, paragraph(`text ${strike('strikethrough')}${br()}`));
 		});
 	});
 
@@ -214,7 +214,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('paragraph'));
+			assert.deepEqual(html, paragraph(`paragraph${br()}`));
 		});
 
 		it('should format p node to paragraph element', () => {
@@ -234,7 +234,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('paragraph'));
+			assert.deepEqual(html, paragraph(`paragraph${br()}`));
 		});
 	});
 
@@ -247,7 +247,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph('span'));
+			assert.deepEqual(html, paragraph(`span${br()}`));
 		});
 	});
 
@@ -260,7 +260,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, table(tr(th(paragraph('head1'))) + tr(td(paragraph('data1')))));
+			assert.deepEqual(html, table(tr(th(paragraph(`head1${br()}`))) + tr(td(paragraph(`data1${br()}`)))));
 		});
 
 		it('should convert table node to table element', () => {
@@ -297,7 +297,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, table(tr(th(paragraph('head1'))) + tr(td(paragraph('data1')))));
+			assert.deepEqual(html, table(tr(th(paragraph(`head1${br()}`))) + tr(td(paragraph(`data1${br()}`)))));
 		});
 	});
 
@@ -391,7 +391,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, quote(paragraph('quote')));
+			assert.deepEqual(html, quote(paragraph(`quote${br()}`)));
 		});
 
 		it('should convert quote node to blockquote element', () => {
@@ -407,7 +407,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, quote(paragraph('quote')));
+			assert.deepEqual(html, quote(paragraph(`quote${br()}`)));
 		});
 	});
 
@@ -455,7 +455,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph(autolink('https://bitrix24.com')));
+			assert.deepEqual(html, paragraph(autolink('https://bitrix24.com') + br()));
 		});
 
 		it('should convert url tag with value to anchor element', () => {
@@ -466,7 +466,7 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph(link('test', 'https://bitrix24.com')));
+			assert.deepEqual(html, paragraph(link('test', 'https://bitrix24.com') + br()));
 		});
 
 		it('should convert url with formatted text', () => {
@@ -477,11 +477,11 @@ describe('HtmlFormatter', () => {
 
 			const html = toHTML(result);
 
-			assert.deepEqual(html, paragraph(link('text ' + bold('bold'), 'https://bitrix24.com')));
+			assert.deepEqual(html, paragraph(link(`text ${bold('bold')}`, 'https://bitrix24.com') + br()));
 		});
 
 		it('should works with img in url', () => {
-		    const bbcode = '[url=https://www.bitrix.com][img]https://bitrix.com/img.png[/img][/url]';
+			const bbcode = '[url=https://www.bitrix.com][img]https://bitrix.com/img.png[/img][/url]';
 			const customFormatter = new HtmlFormatter({
 				linkSettings: {
 					shortLink: {
@@ -499,7 +499,54 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(link(img('https://bitrix.com/img.png'), 'https://www.bitrix.com'))
+				paragraph(link(img('https://bitrix.com/img.png'), 'https://www.bitrix.com') + br()),
+			);
+		});
+
+		it('should convert invalid url to text', () => {
+			const bbcode = '[url]xxx[/url]';
+			const result = formatter.format({
+				source: bbcode,
+			});
+
+			const html = toHTML(result);
+
+			assert.deepEqual(html, paragraph(`xxx${br()}`));
+		});
+
+		it('should convert invalid url to text #2', () => {
+			const bbcode = '[url=xxx]aaa[/url]';
+			const result = formatter.format({
+				source: bbcode,
+			});
+
+			const html = toHTML(result);
+
+			assert.deepEqual(html, paragraph(`aaa${br()}`));
+		});
+
+		it('should convert invalid url with formatted text', () => {
+			const bbcode = '[url=xxx]text [b]bold[/b][/url]';
+			const result = formatter.format({
+				source: bbcode,
+			});
+
+			const html = toHTML(result);
+
+			assert.deepEqual(html, paragraph(`text ${bold('bold')}${br()}`));
+		});
+
+		it('should convert url with image', () => {
+			const bbcode = '[url=xxx][img]https://bitrix.com/img.png[/img][/url]';
+			const result = formatter.format({
+				source: bbcode,
+			});
+
+			const html = toHTML(result);
+
+			assert.deepEqual(
+				html,
+				paragraph(img('https://bitrix.com/img.png') + br()),
 			);
 		});
 	});
@@ -524,7 +571,7 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(user('/test/user/path/1/', 1, 'test user')),
+				paragraph(user('/test/user/path/1/', 1, 'test user') + br()),
 			);
 		});
 
@@ -547,7 +594,7 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(project('/test/project/path/1/', 1, 'test project')),
+				paragraph(project('/test/project/path/1/', 1, 'test project') + br()),
 			);
 		});
 
@@ -570,7 +617,7 @@ describe('HtmlFormatter', () => {
 
 			assert.deepEqual(
 				html,
-				paragraph(department('/test/department/path/1/', 1, 'test department')),
+				paragraph(department('/test/department/path/1/', 1, 'test department') + br()),
 			);
 		});
 	});

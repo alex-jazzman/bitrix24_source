@@ -70,7 +70,6 @@ $MESS["CRM_CONTACT_PROVIDER"] = "Контакт";
 $MESS['CRM_PS_CONTACT_FIELD_FULL_NAME'] = "Ф.И.О.";
 $MESS['CRM_PS_CONTACT_FIELD_PHONE'] = "Телефон";
 $MESS['CRM_PS_CONTACT_FIELD_EMAIL'] = "E-mail";
-$MESS["CRM_CONTACT_FIELD_FACE_ID"] = "Привязка к лицам из модуля faceid";
 $MESS["CRM_CONTACT_FIELD_HAS_IMOL"] = "Задана открытая линия";
 $MESS["CRM_CONTACT_FIELD_LEAD_ID"] = "Лид";
 $MESS["CRM_CONTACT_FIELD_ORIGIN_ID"] = "Идентификатор элемента во внешнем источнике";

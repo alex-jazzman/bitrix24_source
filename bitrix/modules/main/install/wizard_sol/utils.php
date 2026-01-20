@@ -37,7 +37,7 @@ class WizardServices
 			}
 
 			$arTemplate["ID"] = $dirName;
-			if(intval($arTemplate["SORT"])<=0)
+			if (intval($arTemplate["SORT"] ?? 0) <= 0)
 				$arTemplate["SORT"] = 100;
 
 			if (file_exists($absolutePath."/".$dirName."/lang/".LANGUAGE_ID."/screen.gif"))

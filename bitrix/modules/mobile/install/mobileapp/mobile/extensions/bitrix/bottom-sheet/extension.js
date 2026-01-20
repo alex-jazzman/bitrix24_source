@@ -506,6 +506,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @deprecated not used
 		 * @param {string} helpUrl
 		 * @return {BottomSheet}
 		 */

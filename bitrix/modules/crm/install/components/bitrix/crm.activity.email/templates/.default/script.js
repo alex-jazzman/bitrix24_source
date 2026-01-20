@@ -504,6 +504,8 @@
 		BX.addCustomEvent(mailForm, 'MailForm:submit:ajaxSuccess', BXCrmActivityEmail.handleFormSubmitSuccess.bind(this));
 
 		this.htmlForm.__inited = true;
+
+		this.initAnalytics();
 	};
 
 	BXCrmActivityEmail.prototype.initMessageBody = function ()
@@ -1220,6 +1222,80 @@
 			BX.hide(errorContainer);
 		});
 	}
+
+	BXCrmActivityEmail.prototype.initAnalytics = function()
+	{
+		const analyticsSettings = this.options.analytics || {};
+		const source = analyticsSettings.source || 'crm';
+		const form = this.htmlForm;
+		let currentCElement = analyticsSettings?.action;
+
+		const setCElement = function(val)
+		{
+			currentCElement = val;
+		};
+
+		if (!(this.ctrl.options?.type === 'edit'))
+		{
+			currentCElement = 'fast_reply';
+
+			BX.UI.Analytics.sendData({
+				tool: 'mail',
+				category: 'mail_operations',
+				event: 'mail_view',
+				type: 'mail',
+				c_section: source,
+			});
+		}
+
+		if (!form)
+		{
+			return;
+		}
+
+		let controls = document.getElementById(this.options.controlElementId);
+
+		if (!controls && this.__wrapper)
+		{
+			controls = this.__wrapper.querySelector('.crm-task-list-mail-item-control-inner');
+		}
+
+		if (controls)
+		{
+			const replyBtn = controls.querySelector('.crm-task-list-mail-item-control-reply');
+			const replyAllBtn = controls.querySelector('.crm-task-list-mail-item-control-icon-answertoall');
+
+			if (replyBtn)
+			{
+				BX.bind(replyBtn, 'click', setCElement.bind(null, 'reply'));
+			}
+
+			if (replyAllBtn)
+			{
+				BX.bind(replyAllBtn, 'click', setCElement.bind(null, 'reply_all'));
+			}
+		}
+
+		const sendButton = form.querySelector('.main-mail-form-submit-button');
+		if (!sendButton)
+		{
+			return;
+		}
+
+		const sendAnalytics = function()
+		{
+			BX.UI.Analytics.sendData({
+				tool: 'mail',
+				category: 'mail_operations',
+				event: 'mail_send',
+				type: 'mail',
+				c_section: source,
+				c_element: currentCElement,
+			});
+		};
+
+		BX.bind(sendButton, 'click', sendAnalytics.bind());
+	};
 
 	function safeHide(elementId)
 	{

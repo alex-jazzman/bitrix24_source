@@ -1,0 +1,26 @@
+<?php
+$MESS["INTRANET_AUTH_OTP_TITLE"] = "Войти в Битрикс24";
+$MESS["INTRANET_AUTH_OTP_PLACEHOLDER"] = "Введите одноразовый код";
+$MESS["INTRANET_AUTH_OTP_CONTINUE_BUTTON"] = "Продолжить";
+$MESS["INTRANET_AUTH_OTP_LINK"] = "Войти";
+$MESS["INTRANET_AUTH_OTP_CAPTCHA_PROMT"] = "Введите символы с картинки";
+$MESS["INTRANET_AUTH_OTP_REMEMBER_ME"] = "Запомнить на этом устройстве";
+$MESS["INTRANET_AUTH_OTP_HELP"] = "Помощь";
+$MESS["INTRANET_AUTH_OTP_SMS"] = "СМС";
+$MESS["INTRANET_AUTH_OTP_RECOVERY_CODES"] = "Резервный код";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS"] = "Восстановить доступ";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TITLE"] = "Не могу подтвердить вход";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TEXT"] = "Обратитесь к администратору вашего Битрикс24, чтобы восстановить доступ";
+$MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY"] = "Другие способы входа";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_LOGIN"] = "Подтвердите вход";
+$MESS["INTRANET_AUTH_OTP_INPUT_RECOVERY_CODE"] = "Введите один из резервных кодов";
+$MESS["INTRANET_AUTH_OTP_MORE"] = "Подробнее";
+$MESS["INTRANET_AUTH_OTP_SMS_SENDED"] = "Мы отправили СМС с кодом подтверждения на номер #NUMBER#";
+$MESS["INTRANET_AUTH_OTP_SMS_RESEND"] = "Выслать код ещё раз";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_AUTH"] = "Подтвердите вход в мобильном приложении Битрикс24";
+$MESS["INTRANET_AUTH_OTP_PUSH_SENDED"] = "Мы отправили запрос на доверенное устройство";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_TEXT"] = "Откройте приложение Битрикс24, чтобы подтвердить вход";
+$MESS["INTRANET_AUTH_OTP_RESEND_PUSH"] = "Отправить запрос ещё раз";
+$MESS["INTRANET_AUTH_OTP_RECOVERY_CODES_DESC"] = "Воспользоваться резервными кодами можно, если вы их сохранили после подключения двухфакторной аутентификации.";
+$MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY_TITLE"] = "Выберите способ подтверждения входа";
+$MESS["INTRANET_AUTH_OTP_SMS_COUNTDOWN"] = "Запросить повторно можно через #SEC# секунд";

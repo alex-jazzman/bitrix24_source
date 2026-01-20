@@ -875,6 +875,13 @@
 				events: {
 					click: function()
 					{
+						BX.UI.Analytics.sendData({
+							tool: BX.Landing.Main.getAnalyticsCategoryByType(),
+							category: 'settings',
+							event: 'open',
+							c_section: 'site_editor',
+							p3: `siteID_${this.options.siteId}`,
+						});
 						this.onSettingsClick();
 					}.bind(this)
 				}
@@ -1675,10 +1682,11 @@
 					BX.show(this.buttonUnpublic);
 				});
 			BX.UI.Analytics.sendData({
-				tool: 'landing',
+				tool: 'vibe',
 				category: 'vibe',
 				event: 'publish_page',
 				c_sub_section: 'from_editor',
+				status: 'success',
 			});
 		},
 
@@ -1692,7 +1700,7 @@
 					BX.show(this.buttonPublic);
 				});
 			BX.UI.Analytics.sendData({
-				tool: 'landing',
+				tool: 'vibe',
 				category: 'vibe',
 				event: 'unpublish_page',
 				c_sub_section: 'from_editor',

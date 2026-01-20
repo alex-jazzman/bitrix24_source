@@ -1451,10 +1451,16 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  _t$1;
 	const CopilotChatWarningMessage = {
 	  name: 'CopilotWarningMessage',
+	  props: {
+	    articleCode: {
+	      type: String,
+	      required: true
+	    }
+	  },
 	  methods: {
 	    showArticle() {
 	      const Helper = main_core.Reflection.getClass('top.BX.Helper');
-	      const articleCode = '20412666';
+	      const articleCode = this.articleCode;
 	      Helper == null ? void 0 : Helper.show(`redirect=detail&code=${articleCode}`);
 	    }
 	  },
@@ -1541,6 +1547,11 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      default: () => ({
 	        value: false
 	      })
+	    },
+	    articleCode: {
+	      type: String,
+	      required: false,
+	      default: '20412666'
 	    },
 	    messages: Array,
 	    copilotChatInstance: Object,
@@ -1826,7 +1837,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 					v-if="isWarningMessageShown"
 					class="ai__copilot-chat_warning-message"
 				>
-					<CopilotChatWarningMessage />
+					<CopilotChatWarningMessage :article-code="articleCode" />
 				</div>
 			</footer>
 		</div>

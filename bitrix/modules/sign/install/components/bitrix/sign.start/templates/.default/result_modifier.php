@@ -15,6 +15,11 @@ if ($component->isFrame())
 	return;
 }
 
+if ($component->getTemplate()->GetPageName() === 'not-available')
+{
+	return;
+}
+
 $component->registerSidePanels(
 	[$arParams['PAGE_URL_DOCUMENT']],
 	['width' => 1250]

@@ -2,7 +2,9 @@
  * @module more-menu/block/header/worktime
  */
 jn.define('more-menu/block/header/worktime', (require, exports, module) => {
-	const { Indent, Color } = require('tokens');
+	const { Alert } = require('alert');
+	const { makeLibraryImagePath } = require('asset-manager');
+	const { Indent, Color, Corner } = require('tokens');
 	const { Loc } = require('loc');
 	const { inAppUrl } = require('in-app-url');
 	const { formatHHMMSS, toMs, parseHmsToSec, parseDateToSec } = require('utils/time');
@@ -15,6 +17,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 	const { createTestIdGenerator } = require('utils/test');
 	const { PropTypes } = require('utils/validation');
 	const { isEmpty } = require('utils/object');
+	const { Line } = require('utils/skeleton');
 
 	const STATUS = {
 		OPENED: 'OPENED',
@@ -52,6 +55,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 		 * @param {number} props.workTime.LAST_PAUSE.DATE_START
 		 * @param {number} props.workTime.LAST_PAUSE.DATE_FINISH
 		 * @param {string} props.workTime.STATE
+		 *
+		 * @param {bool} props.canManageWorkTimeOnMobile
 		 */
 		constructor(props)
 		{
@@ -62,6 +67,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			this.state = {
 				...mapped,
+				isLoadingPause: false,
+				isLoadingStart: false,
 			};
 
 			this.getTestId = createTestIdGenerator({
@@ -70,6 +77,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			this.debouncedSubscribeToPullEvent = debounce(this.subscribeToPullEvent, DEBOUNCE_DELAY, this);
 			this.openWorkTime = this.openWorkTime.bind(this);
+			this.closeWorkTime = this.closeWorkTime.bind(this);
 			this.getStatus = this.getStatus.bind(this);
 		}
 
@@ -99,7 +107,11 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 		componentDidUpdate(prevProps, prevState)
 		{
-			if (prevState.status !== this.state.status)
+			const statusChanged = prevState.status !== this.state.status;
+			const wasEmpty = !prevProps.workTime;
+			const nowHasData = this.props.workTime && !isEmpty(this.props.workTime);
+
+			if (statusChanged || (wasEmpty && nowHasData))
 			{
 				this.updateLiveTimer();
 			}
@@ -221,7 +233,9 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 						DATE_START: data?.dateStart,
 						DATE_FINISH: data.dateFinish,
 						TIME_LEAKS: data?.timeLeaks,
+						DURATION: data?.duration,
 					},
+					CAN_OPEN: data?.canOpen,
 					LAST_PAUSE: data?.lastPause,
 				};
 
@@ -239,45 +253,125 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			this.setState({
 				...mapped,
+				isLoadingPause: false,
+				isLoadingStart: false,
 			});
 		}
 
 		render()
 		{
-			const {
-				showBorder,
-			} = this.props;
+			if (!this.props.workTime)
+			{
+				return this.renderSkelet();
+			}
 
 			return View(
 				{
 					style: {
-						padding: Indent.XL2.toNumber(),
-						paddingBottom: 0,
+						flexDirection: 'row',
+						alignItems: 'center',
+						flexGrow: 2,
 					},
 				},
 				View(
 					{
 						style: {
 							flexDirection: 'row',
-							paddingBottom: Indent.XL2.toNumber(),
-							borderBottomWidth: showBorder && 1,
-							borderBottomColor: Color.bgSeparatorSecondary.toHex(),
+							alignItems: 'center',
+							flexShrink: 2,
 						},
 					},
+					this.renderIcon(),
 					View(
 						{
 							style: {
-								flex: 2,
-								marginRight: Indent.L.toNumber(),
 								flexShrink: 2,
+								marginRight: Indent.XS.toNumber(),
 							},
 							onClick: this.openWorkTime,
 						},
 						this.renderHeader(),
 						this.renderTimer(),
 					),
-					this.renderActions(),
 				),
+				this.renderActions(),
+			);
+		}
+
+		renderSkelet()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
+						flexGrow: 2,
+						justifyContent: 'space-between',
+					},
+				},
+				View(
+					{
+						style: {
+							width: 40,
+							height: 40,
+							alignItems: 'center',
+							justifyContent: 'center',
+						},
+					},
+					Line(32, 32, 0, 0, Corner.M.toNumber()),
+				),
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							flexGrow: 2,
+							justifyContent: 'space-between',
+						},
+					},
+					View(
+						{
+							style: {
+								flexDirection: 'column',
+								justifyContent: 'space-between',
+								marginVertical: Indent.XS2.toNumber(),
+							},
+						},
+						Line(93, 9),
+						Line(102, 9),
+					),
+					Line(100, 28, 0, 0, Corner.M.toNumber()),
+				),
+			);
+		}
+
+		renderIcon()
+		{
+			if (device.screen.width <= 360)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						width: 40,
+						height: 40,
+						marginRight: Indent.XS.toNumber(),
+					},
+					onClick: this.openWorkTime,
+				},
+				Image({
+					testId: this.getTestId('image'),
+					uri: makeLibraryImagePath('worktime.png', 'more-menu'),
+					style: {
+						width: 44,
+						height: 44,
+						position: 'absolute',
+						top: -2,
+						right: -3,
+					},
+					resizeMode: 'cover',
+				}),
 			);
 		}
 
@@ -287,8 +381,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 				{
 					testId: this.getTestId('header'),
 					style: {
+						flexShrink: 2,
 						flexDirection: 'row',
-						marginBottom: Indent.S.toNumber(),
 						alignItems: 'center',
 					},
 				},
@@ -298,6 +392,9 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					color: Color.base1,
 					numberOfLines: 1,
 					ellipsize: 'end',
+					style: {
+						flexShrink: 2,
+					},
 				}),
 				IconView({
 					testId: this.getTestId('chevron'),
@@ -334,7 +431,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			if (this.isCompleted())
 			{
-				return Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_TITLE_CLOSED');
+				return Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_TITLE_CLOSED_MSGVER_1');
 			}
 
 			return Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_TITLE_START');
@@ -362,26 +459,6 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 						flexDirection: 'row',
 					},
 				},
-				View(
-					{
-						style: {
-							width: 14,
-							height: 16,
-							justifyContent: 'center',
-							alignItems: 'center',
-							overflow: 'hidden',
-							marginTop: 1,
-							marginRight: Indent.S.toNumber(),
-						},
-					},
-					IconView({
-						testId: this.getTestId('timer-icon'),
-						size: 20,
-						icon: this.getTimerIcon(),
-						color: this.getDisplayTimeColor(),
-						resizeMode: 'cover',
-					}),
-				),
 				Text4({
 					testId: this.getTestId('timer'),
 					text: this.getDisplayTime(),
@@ -544,6 +621,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						alignItems: 'center',
+						flexGrow: 2,
+						justifyContent: 'flex-end',
 					},
 				},
 				this.isOpened() && this.renderPauseButton(),
@@ -553,18 +632,24 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 		renderPauseButton()
 		{
+			const { canManageWorkTimeOnMobile } = this.props;
+			if (!canManageWorkTimeOnMobile)
+			{
+				return null;
+			}
+
 			return Button({
 				testId: this.getTestId('pause-button'),
 				leftIcon: Icon.PAUSE,
-				size: ButtonSize.M,
-				design: ButtonDesign.OUTLINE,
+				size: ButtonSize.S,
+				design: ButtonDesign.OUTLINE_ACCENT_2,
 				onClick: () => {
 					this.pauseWorkTime();
 				},
 				style: {
 					marginRight: Indent.M.toNumber(),
 				},
-				backgroundColor: Color.bgContentPrimary,
+				loading: this.state.isLoadingPause,
 			});
 		}
 
@@ -574,12 +659,15 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			{
 				return Button({
 					testId: this.getTestId('stop-button'),
-					leftIcon: Icon.POWER,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_STOP'),
-					size: ButtonSize.M,
+					size: ButtonSize.S,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.openWorkTime();
+					},
+					loading: this.state.isLoadingStart,
+					style: {
+						flexShrink: 2,
 					},
 				});
 			}
@@ -590,10 +678,14 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					testId: this.getTestId('reopen-button'),
 					leftIcon: Icon.REFRESH,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_REOPEN'),
-					size: ButtonSize.M,
+					size: ButtonSize.S,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
+					},
+					loading: this.state.isLoadingStart,
+					style: {
+						flexShrink: 2,
 					},
 				});
 			}
@@ -604,12 +696,16 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					testId: this.getTestId('start-button'),
 					leftIcon: Icon.PLAY,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_START'),
-					size: ButtonSize.M,
+					size: ButtonSize.S,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
 					},
 					disabled: !this.state.canOpen,
+					loading: this.state.isLoadingStart,
+					style: {
+						flexShrink: 2,
+					},
 				});
 			}
 
@@ -619,21 +715,28 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					testId: this.getTestId('resume-button'),
 					leftIcon: Icon.PLAY,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_RESUME'),
-					size: ButtonSize.M,
+					size: ButtonSize.S,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
+					},
+					loading: this.state.isLoadingStart,
+					style: {
+						flexShrink: 2,
 					},
 				});
 			}
 
 			return Button({
 				testId: this.getTestId('stop-button'),
-				leftIcon: Icon.POWER,
 				text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_STOP'),
-				size: ButtonSize.M,
-				design: ButtonDesign.TINTED,
-				onClick: this.openWorkTime,
+				size: ButtonSize.S,
+				design: ButtonDesign.FILLED,
+				onClick: this.closeWorkTime,
+				loading: this.state.isLoadingStart,
+				style: {
+					flexShrink: 2,
+				},
 			});
 		}
 
@@ -651,11 +754,14 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			})
 				.then((response) => {
 					this.statusFetching = false;
-					const payload = this.transformTimeManResponseToPayload(response?.answer?.result);
+					if (response?.status === 200)
+					{
+						const payload = this.transformTimeManResponseToPayload(response?.answer?.result);
 
-					this.updateWorkTimeState({
-						...payload,
-					});
+						this.updateWorkTimeState({
+							...payload,
+						});
+					}
 				})
 				.catch((error) => {
 					this.statusFetching = false;
@@ -665,36 +771,113 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 		pauseWorkTime()
 		{
-			BX.rest.callMethod('timeman.pause', {
-				USER_ID: env.userId,
-			})
-				.then((response) => {
-					const payload = this.transformTimeManResponseToPayload(response?.answer?.result);
+			if (!this.canChangeWorkTime())
+			{
+				return;
+			}
 
-					this.updateWorkTimeState({
-						...payload,
-					});
+			this.setState({ isLoadingPause: true }, () => {
+				BX.rest.callMethod('timeman.pause', {
+					USER_ID: env.userId,
 				})
-				.catch((error) => {
-					console.error(error);
-				});
+					.then((response) => {
+						this.handleTimeManResponse(response);
+					})
+					.catch((error) => {
+						this.setState({ isLoadingPause: false });
+						console.error(error);
+					});
+			});
 		}
 
 		reopenWorkTime()
 		{
-			BX.rest.callMethod('timeman.open', {
-				USER_ID: env.userId,
-			})
-				.then((response) => {
-					const payload = this.transformTimeManResponseToPayload(response?.answer?.result);
+			if (!this.checkMobileManagementPermission())
+			{
+				return;
+			}
 
-					this.updateWorkTimeState({
-						...payload,
-					});
+			if (!this.canChangeWorkTime())
+			{
+				return;
+			}
+
+			this.setState({ isLoadingStart: true }, () => {
+				BX.rest.callMethod('timeman.open', {
+					USER_ID: env.userId,
 				})
-				.catch((error) => {
-					console.error(error);
-				});
+					.then((response) => {
+						this.handleTimeManResponse(response);
+					})
+					.catch((error) => {
+						this.setState({ isLoadingStart: false });
+						console.error(error);
+					});
+			});
+		}
+
+		closeWorkTime()
+		{
+			if (!this.checkMobileManagementPermission())
+			{
+				return;
+			}
+
+			if (!this.canChangeWorkTime())
+			{
+				return;
+			}
+
+			this.setState({ isLoadingStart: true }, () => {
+				BX.rest.callMethod('timeman.close', {
+					USER_ID: env.userId,
+				})
+					.then((response) => {
+						this.handleTimeManResponse(response);
+					})
+					.catch((error) => {
+						this.setState({ isLoadingStart: false });
+						console.error(error);
+					});
+			});
+		}
+
+		canChangeWorkTime()
+		{
+			return !(this.state.isLoadingPause || this.state.isLoadingStart);
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		checkMobileManagementPermission()
+		{
+			const { canManageWorkTimeOnMobile } = this.props;
+			if (!canManageWorkTimeOnMobile)
+			{
+				Alert.alert(
+					'',
+					Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_FORBIDDEN_DEVICE_MOBILE'),
+					() => {},
+					Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_FORBIDDEN_DEVICE_MOBILE_BUTTON_TEXT'),
+				);
+
+				return false;
+			}
+
+			return true;
+		}
+
+		handleTimeManResponse(response)
+		{
+			if (response?.status !== 200)
+			{
+				throw new Error('Invalid response status');
+			}
+
+			const payload = this.transformTimeManResponseToPayload(response?.answer?.result);
+
+			this.updateWorkTimeState(payload);
 		}
 
 		transformTimeManResponseToPayload(data)
@@ -740,6 +923,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 		showBorder: PropTypes.bool,
 		testId: PropTypes.string.isRequired,
 		workTime: PropTypes.object,
+		canManageWorkTimeOnMobile: PropTypes.bool,
 	};
 
 	module.exports = {

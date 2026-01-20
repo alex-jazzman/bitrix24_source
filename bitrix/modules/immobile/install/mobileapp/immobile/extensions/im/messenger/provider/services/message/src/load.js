@@ -134,7 +134,7 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 		async loadHistory()
 		{
 			const lastHistoryMessageId = this.store.getters['messagesModel/getFirstId'](this.chatId);
-			logger.log(`${this.className}: start load history by message id ${lastHistoryMessageId}`);
+			logger.warn(`${this.className}: start load history by message id ${lastHistoryMessageId}`);
 
 			if (!lastHistoryMessageId)
 			{

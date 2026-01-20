@@ -2,26 +2,24 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	font: 11px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font: var(--ui-font-size-sm)/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
 	color: rgba(82,92,105,1);
-	padding: 5px 11px 8px 14px;
-	min-height: 26px;
+	padding: 14px 13px 8px 20px;
 }
 
-.ui-btn.crm__channel-selector--setting-btn[class*="ui-btn-icon-"]:not(input):empty::after {
-	width: 18px;
-	height: 18px;
-	margin: -7px 0 0 -6px;
-	opacity: 0.3;
-	background-size: contain;
+.crm__channel-selector--setting-btn {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
 }
 
 .crm__channel-selector--list {
 	background: #ffffff;
-	box-shadow: 0 1px 3px 0 rgba(0,0,0,.1);
+	box-shadow: 0 5px 16px 0 #00000008, 0 2px 4px 0 #00000005;
 	box-sizing: border-box;
-	border-radius: var(--ui-border-radius-sm, 8px);
+	border-radius: var(--ui-space-stack-xl);
+	padding: 8px 0 8px;
 }
 .crm__channel-selector--list.--empty {
 	box-shadow: none;
@@ -32,55 +30,36 @@
 .crm__channel-selector--channel {
 	display: flex;
 	align-items: center;
-	padding: 9px 9px 10px;
+	padding: 13px 14px 13px;
 	background: transparent;
 	position: relative;
 	cursor: pointer;
 	transition: .2s;
+	border-radius: 8px;
+	margin: 0 6px 0 6px;
+	--crm-channel-selector-chevron-color: var(--ui-color-base-6);
+}
+.crm__channel-selector--channel:hover {
+	--crm-channel-selector-chevron-color: var(--ui-color-base-4);
 }
 
-.crm__channel-selector--channel::before {
-	content: '';
-	display: block;
-	width: calc(100% - 11px - 14px);
-	height: 1px;
-	position: absolute;
-	left: 11px;
-	bottom: -1px;
-	background: rgba(106,115,127,.08);
-	opacity: 1;
-	transition: .2s;
+.crm__channel-selector--channel-content {
+	display: flex;
+	flex-direction: column;
+	margin-left: 6px;
+	overflow: auto;
 }
 
 .crm__channel-selector--channel-helper {
 	position: relative;
 	margin-left: auto;
-	font-size: 11px;
-	margin-bottom: 2px;
-	line-height: 15px;
-	color: #525c69;
+	display: flex;
 }
 
 .crm__channel-selector--channel-helper-text {
 	display: inline-block;
 	margin-right: 8px;
 	opacity: 0;
-	transition: .2s;
-}
-
-.crm__channel-selector--channel-helper::before {
-	content: '';
-	display: block;
-	width: 16px;
-	height: 16px;
-	margin-right: 2px;
-	position: absolute;
-	right: 0;
-	top: 50%;
-	background: url("../images/crm-channel-arrow.svg") center no-repeat;
-	transform: translate(0, -50%);
-	cursor: pointer;
-	opacity: 1;
 	transition: .2s;
 }
 
@@ -151,7 +130,9 @@
 	font-weight: var(--ui-font-weight-normal, 400);
 	font-size: 11px;
 	color: var(--ui-color-base-60, #959ca4);
-	margin-left: 6px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .crm__channel-selector--channel-hidden {
@@ -164,9 +145,10 @@
 }
 
 .crm__channel-selector--footer {
+	display: flex;
+	justify-content: center;
 	padding: 10px 12px;
 	line-height: 20px;
-	cursor: pointer;
 }
 
 .crm__channel-selector--footer.--disabled {

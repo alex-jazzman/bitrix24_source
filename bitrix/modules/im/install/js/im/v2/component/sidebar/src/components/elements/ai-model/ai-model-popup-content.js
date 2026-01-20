@@ -1,12 +1,14 @@
+import { Extension } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 
 import { CopilotAiModelService } from './classes/copilot-ai-model-service';
 import { AiModelItem } from './ai-model-item';
 
-import type { ImModelCopilotAIModel, ImModelUser } from 'im.v2.model';
+import type { SettingsCollection } from 'main.core.collections';
+import type { ImModelCopilotAIModel } from 'im.v2.model';
 
-const SETTINGS_PAGE = '/settings/configs/?page=ai';
 const MARKET_PAGE = '/market/collection/ai_provider_partner_crm/';
 
 // @vue/component
@@ -25,9 +27,7 @@ export const AIModelPopupContent = {
 	{
 		isAdmin(): boolean
 		{
-			const user: ImModelUser = Core.getStore().getters['users/get'](Core.getUserId());
-
-			return user.isAdmin;
+			return Core.getStore().getters['users/isCurrentUserAdmin'];
 		},
 		selectedAIModelCode(): string
 		{
@@ -37,12 +37,18 @@ export const AIModelPopupContent = {
 		{
 			return Core.getStore().getters['copilot/getAIModels'];
 		},
+		settingsPageUrl(): string
+		{
+			const settings: SettingsCollection = Extension.getSettings('im.v2.component.sidebar');
+
+			return settings.get('portalSettingsUrl');
+		},
 	},
 	methods:
 	{
-		openSettings()
+		openAiSettings()
 		{
-			BX.SidePanel.Instance.open(`${window.location.origin}${SETTINGS_PAGE}`);
+			BX.SidePanel.Instance.open(`${window.location.origin}${this.settingsPageUrl}?page=ai`);
 		},
 		openMarket()
 		{
@@ -80,12 +86,12 @@ export const AIModelPopupContent = {
 			<template v-if="isAdmin">
 				<div class="bx-im-ai-model-popup-content__separator"></div>
 				<AiModelItem
-					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_MARKET')"
+					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_MARKET_MSGVER_1')"
 					@click="openMarket"
 				/>
 				<AiModelItem
 					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS')"
-					@click="openSettings"
+					@click="openAiSettings"
 				/>
 			</template>
 			<div class="bx-im-ai-model-popup-content__separator"></div>

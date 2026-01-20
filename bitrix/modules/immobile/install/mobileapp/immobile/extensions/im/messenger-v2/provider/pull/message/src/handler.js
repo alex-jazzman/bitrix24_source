@@ -5,7 +5,11 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
-	const { UserRole, DialogType, EventType } = require('im/messenger/const');
+	const {
+		UserRole,
+		DialogType,
+		EventType,
+	} = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { Notifier } = require('im/messenger/lib/notifier');
@@ -15,7 +19,7 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessageDataConverter } = require('im/messenger/lib/converter/data/message');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
-	const { ChatDataProvider } = require('im/messenger/provider/data');
+	const { ChatDataProvider, ReactionDataProvider } = require('im/messenger/provider/data');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
@@ -49,6 +53,7 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			await this.#updateDialog(params);
 			await this.#setUsers(params);
 			await this.#setFiles(params);
+			await this.#setRecentSticker(params);
 			this.#checkTimerInputAction(params.dialogId, params.message.senderId);
 			this.#showMessageNotify(params, extra, true);
 			await this.#processMessage(params);
@@ -66,9 +71,16 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			}
 			this.logger.info('handleMessageChat:', params, extra);
 
+			// TODO: MessengerV2 remove after openlines support
+			if (params.lines)
+			{
+				return;
+			}
+
 			await this.#updateDialog(params);
 			await this.#setUsers(params);
 			await this.#setFiles(params);
+			await this.#setRecentSticker(params);
 			this.#checkTimerInputAction(params.dialogId, params.message.senderId);
 			this.#showMessageNotify(params, extra, false);
 			await this.#setCommentInfo(params);
@@ -160,26 +172,27 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		async handleAddReaction(params, extra)
 		{
 			this.logger.info('handleAddReaction:', params);
-			if (UuidManager.getInstance().hasActionUuid(extra.action_uuid))
+			if (this.#shouldSkipReactionByUuidAndCounters(extra, params))
 			{
-				this.logger.info('handleAddReaction: we already locally processed this action');
-				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
-
 				return;
 			}
+
 			const {
 				actualReactions: { reaction: actualReactionsState, usersShort },
 				userId,
 				reaction,
 				dialogId,
 			} = params;
-			const message = this.getMessage(actualReactionsState.messageId);
-			if (!message)
-			{
-				return;
-			}
 
-			if (MessengerParams.getUserId().toString() === userId.toString())
+			actualReactionsState.ownReactions = [];
+
+			actualReactionsState.reactionUsers = this.#addUserIdToReactionsUserCollection(
+				actualReactionsState.messageId,
+				reaction,
+				userId,
+			);
+
+			if (String(MessengerParams.getUserId()) === String(userId))
 			{
 				actualReactionsState.ownReactions = [reaction];
 			}
@@ -188,6 +201,41 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			{
 				actualReactionsState.dialogId = dialogId;
 			}
+
+			this.#updateAnchor(dialogId, params)
+				.catch((err) => this.logger.error('handleAddReaction.updateAnchor.catch err:', err));
+
+			const message = this.getMessage(actualReactionsState.messageId);
+			if (!message)
+			{
+				try
+				{
+					const reactionDataProvider = new ReactionDataProvider();
+					reactionDataProvider.setToSource(
+						ReactionDataProvider.source.database,
+						actualReactionsState,
+					)
+						.catch((error) => this.logger.error('handleAddReaction ReactionDataProvider.setToSource catch:', error));
+
+				}
+				catch (error)
+				{
+					this.logger.error(
+						'handleAddReaction ReactionDataProvider.setToSource catch:',
+						error,
+					);
+				}
+
+				return;
+			}
+
+			await this.store.dispatch('messagesModel/updateReactionState', {
+				id: message.id,
+				fields: {
+					reactionsViewed: false,
+					lastReactionId: reaction,
+				},
+			});
 
 			await this.store.dispatch('usersModel/addShort', usersShort);
 			await this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
@@ -203,22 +251,62 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		async handleDeleteReaction(params, extra)
 		{
 			this.logger.info('handleDeleteReaction:', params);
-			if (UuidManager.getInstance().hasActionUuid(extra.action_uuid))
+			if (this.#shouldSkipReactionByUuidAndCounters(extra, params))
 			{
-				this.logger.info('handleDeleteReaction: we already locally processed this action');
-				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
-
 				return;
 			}
+
 			const {
 				actualReactions: { reaction: actualReactionsState, usersShort },
+				dialogId,
+				reaction,
+				userId,
 			} = params;
+
+			actualReactionsState.ownReactions = [];
 
 			const message = this.getMessage(actualReactionsState.messageId);
 			if (!message)
 			{
+				try
+				{
+					const reactionDataProvider = new ReactionDataProvider();
+					reactionDataProvider.deleteFromSource(
+						ReactionDataProvider.source.database,
+						actualReactionsState,
+					)
+						.catch((error) => this.logger.error('handleDeleteReaction ReactionDataProvider.deleteFromSource catch:', error));
+
+				}
+				catch (error)
+				{
+					this.logger.error(
+						'handleDeleteReaction ReactionDataProvider.deleteFromSource catch:',
+						error,
+					);
+				}
+
 				return;
 			}
+
+			if (Type.isStringFilled(dialogId))
+			{
+				actualReactionsState.dialogId = dialogId;
+			}
+
+			actualReactionsState.reactionUsers = this.#removeUserIdFromReactionsUserCollection(
+				actualReactionsState.messageId,
+				reaction,
+				userId,
+			);
+
+			await this.store.dispatch('messagesModel/updateReactionState', {
+				id: message.id,
+				fields: {
+					reactionsViewed: true,
+					lastReactionId: '',
+				},
+			});
 
 			await this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
 				usersShort,
@@ -248,7 +336,6 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			}
 
 			await this.#readMessage(params);
-			await this.#updateDialogCounters(params);
 		}
 
 		/**
@@ -273,38 +360,6 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			}
 
 			await this.#readMessage(params);
-			await this.#updateDialogCounters(params);
-		}
-
-		/**
-		 * @param {ReadMessageParams} params
-		 * @param {PullExtraParams} extra
-		 */
-		async handleUnreadMessage(params, extra)
-		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-
-			this.logger.info('handleUnreadMessage:', params);
-			await this.#updateDialogCounters(params);
-		}
-
-		/**
-		 * @param {ReadMessageParams} params
-		 * @param {PullExtraParams} extra
-		 */
-		async handleUnreadMessageChat(params, extra)
-		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-
-			this.logger.info('handleUnreadMessageChat:', params);
-
-			await this.#updateDialogCounters(params);
 		}
 
 		/**
@@ -529,9 +584,12 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 
 			if (params.chatMessageStatus && params.chatMessageStatus !== recentItem.message.status)
 			{
-				recentItem.message.status = params.chatMessageStatus;
-
-				await this.store.dispatch('recentModel/update', [recentItem]);
+				await this.store.dispatch('recentModel/update', [{
+					id: dialogId,
+					message: {
+						status: params.chatMessageStatus,
+					},
+				}]);
 			}
 
 			const user = clone(this.store.getters['usersModel/getById'](userId));
@@ -656,55 +714,6 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 				chatId: params.chatId,
 				messageIds: params.viewedMessages,
 			});
-		}
-
-		/**
-		 * @param {ReadMessageParams} params
-		 */
-		async #updateDialogCounters(params)
-		{
-			const dialogId = params.dialogId;
-			const commentCounters = this.store.getters['commentModel/getCommentCounter']({
-				commentChatId: params.chatId,
-				channelId: params.parentChatId,
-			});
-			if (params.type === DialogType.comment || commentCounters > 0)
-			{
-				await this.store.dispatch('commentModel/setCounters', {
-					[params.parentChatId]: {
-						[params.chatId]: params.counter,
-					},
-				});
-
-				const channelRecentItem = this.getRecent(`chat${params.parentChatId}`);
-
-				await this.store.dispatch('recentModel/update', [channelRecentItem]);
-
-				return;
-			}
-
-			const recentItem = this.getRecent(dialogId);
-			if (!recentItem)
-			{
-				return;
-			}
-
-			recentItem.counter = params.counter;
-
-			const dialog = clone(this.getDialog(dialogId));
-			if (!dialog)
-			{
-				return;
-			}
-
-			await this.store.dispatch('dialoguesModel/update', {
-				dialogId,
-				fields: {
-					lastId: params.lastId,
-				},
-			});
-
-			await this.store.dispatch('recentModel/update', [recentItem]);
 		}
 
 		/**
@@ -907,29 +916,38 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 				return;
 			}
 
+			const messageWithoutNotification = !params.notify || params.message?.params?.NOTIFY === 'N';
+			if (messageWithoutNotification)
+			{
+				return;
+			}
+
 			if (params.chat[params.chatId]?.type === DialogType.comment)
 			{
 				return;
 			}
-			const dialogId = isChatDirect ? params.message.senderId : params.message.recipientId;
+			const dialogId = params.dialogId;
 			const dialogStateModel = this.getDialog(dialogId);
 			const currentUserId = MessengerParams.getUserId();
+			const senderId = params.message.senderId;
 
 			if (extra && extra.server_time_ago <= 5
-				&& params.message.senderId !== currentUserId
+				&& senderId !== currentUserId
 				&& dialogStateModel && !dialogStateModel.muteList.includes(currentUserId)
 			)
 			{
-				const messageManager = this.getNewMessageManager(params, extra);
-				const messageText = messageManager.getPurifyMessageText();
 				const title = ChatTitle.createFromDialogId(dialogId).getTitle();
-				const userName = ChatTitle.createFromDialogId(params.message.senderId).getTitle();
 				const avatar = ChatAvatar.createFromDialogId(dialogId).getMessageAvatarProps();
+				const hideUserNamePrefix = isChatDirect
+					? Number(senderId) === Number(dialogId)
+					: false
+				;
+				const text = this.#prepareMessageNotifyText(params, extra, hideUserNamePrefix);
 
 				Notifier.notify({
 					dialogId,
 					title,
-					text: this.#prepareMessageNotifyText(messageText, userName, isChatDirect),
+					text,
 					avatar: avatar.uri,
 					recentConfig: params.recentConfig,
 				}).catch((error) => {
@@ -939,21 +957,45 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		}
 
 		/**
-		 * @param {string} messageText
-		 * @param {string} userName
+		 * @param {MessageAddParams} params
+		 * @param {PullExtraParams} extra
 		 * @param {boolean} [isChatDirect=false]
 		 * @return {string}
 		 */
-		#prepareMessageNotifyText(messageText, userName, isChatDirect = false)
+		#prepareMessageNotifyText(params, extra, isChatDirect = false)
 		{
-			const simplifiedMessageText = parser.simplify({
-				text: messageText,
-			});
+			const senderId = params.message.senderId;
+
+			const userName = ChatTitle.createFromDialogId(senderId).getTitle();
+			const simplifiedMessageText = this.#getSimplifiedText(params, extra);
 
 			return isChatDirect
 				? simplifiedMessageText
 				: (userName ? `${userName}: ` : '') + simplifiedMessageText
 			;
+		}
+
+		/**
+		 * @param {MessageAddParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		#getSimplifiedText(params, extra)
+		{
+			const { message } = params;
+			if (Type.isPlainObject(message.params?.STICKER_PARAMS))
+			{
+				return parser.simplify({
+					text: message.text,
+					sticker: true,
+				});
+			}
+
+			const messageManager = this.getNewMessageManager(params, extra);
+			const messageText = messageManager.getPurifyMessageText();
+
+			return parser.simplify({
+				text: messageText,
+			});
 		}
 
 		/**
@@ -996,6 +1038,28 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		async #setFiles(params)
 		{
 			return FileUtils.setFiles(params);
+		}
+
+		/**
+		 * @param {MessageAddParams} params
+		 * @return {Promise<any>}
+		 */
+		async #setRecentSticker(params)
+		{
+			if (params.message.senderId !== MessengerParams.getUserId())
+			{
+				return false;
+			}
+
+			if (!Type.isPlainObject(params.message.params?.STICKER_PARAMS))
+			{
+				return false;
+			}
+
+			/** @type {FullStickerData} */
+			const stickerParams = params.message.params.STICKER_PARAMS;
+
+			return this.store.dispatch('stickerPackModel/addRecentSticker', stickerParams);
 		}
 
 		/**
@@ -1206,7 +1270,10 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			{
 				return;
 			}
-			await this.store.dispatch('recentModel/update', [recentItem]);
+
+			await this.store.dispatch('recentModel/update', [{
+				id: dialog.dialogId,
+			}]);
 		}
 
 		/**
@@ -1267,6 +1334,164 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 					params,
 				},
 			});
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {AddReactionParams} params
+		 */
+		async #updateAnchor(dialogId, params)
+		{
+			const chatId = DialogHelper.isDialogId(dialogId) ? Number(dialogId.slice(4)) : dialogId;
+			const { userId, actualReactions, reaction } = params;
+			const anchors = this.store.getters['anchorModel/getByMessageId'](
+				chatId,
+				actualReactions.reaction.messageId,
+			);
+
+			if (!Type.isArrayFilled(anchors))
+			{
+				return;
+			}
+
+			let userAnchor = null;
+			for (let i = anchors.length - 1; i >= 0; i--)
+			{
+				if (anchors[i].fromUserId === userId && anchors[i].messageId === actualReactions.reaction.messageId)
+				{
+					userAnchor = anchors[i];
+					break;
+				}
+			}
+
+			if (userAnchor)
+			{
+				userAnchor.subType = reaction;
+
+				await this.store.dispatch('anchorModel/updateByAuthorId', userAnchor);
+			}
+		}
+
+		/**
+		 * @param {number} messageId
+		 * @param {ReactionType} reaction
+		 * @param {number} userId
+		 * @return {Record<ReactionType, Array<number>>}
+		 */
+		#addUserIdToReactionsUserCollection(messageId, reaction, userId)
+		{
+			const currentReaction = this.store.getters['messagesModel/reactionsModel/getByMessageId'](messageId);
+
+			let currentReactionUsersByKey = [];
+			if (currentReaction && Type.isMap(currentReaction.reactionUsers))
+			{
+				currentReactionUsersByKey = currentReaction.reactionUsers.get(reaction) || [];
+			}
+
+			const newReactionUsersByKey = currentReactionUsersByKey.includes(userId)
+				? currentReactionUsersByKey
+				: [...currentReactionUsersByKey, userId];
+
+			const newReactionUsers = currentReaction && Type.isMap(currentReaction.reactionUsers)
+				? new Map(currentReaction.reactionUsers)
+				: new Map();
+			newReactionUsers.set(reaction, newReactionUsersByKey);
+
+			return newReactionUsers;
+		}
+
+		/**
+		 * @param {number} messageId
+		 * @param {ReactionType} reaction
+		 * @param {number} userId
+		 * @return {Record<ReactionType, Array<number>>}
+		 */
+		#removeUserIdFromReactionsUserCollection(messageId, reaction, userId)
+		{
+			const currentReaction = this.store.getters['messagesModel/reactionsModel/getByMessageId'](messageId);
+			const currentReactionUsersByKey = currentReaction?.reactionUsers.get(reaction) || [];
+
+			const newReactionUsersByKey = currentReactionUsersByKey.filter(
+				(removingUserId) => Number(removingUserId) !== Number(userId),
+			);
+
+			const newReactionUsers = new Map(currentReaction.reactionUsers);
+			newReactionUsers.set(reaction, newReactionUsersByKey);
+
+			if (newReactionUsersByKey.length === 0)
+			{
+				newReactionUsers.delete(reaction);
+			}
+			else
+			{
+				newReactionUsers.set(reaction, newReactionUsersByKey);
+			}
+
+			return newReactionUsers;
+		}
+
+		/**
+		 * @param {PullExtraParams} extra
+		 * @param {AddReactionParams|DeleteReactionParams} params
+		 * @returns {boolean}
+		 */
+		#shouldSkipReactionByUuidAndCounters(extra, params)
+		{
+			if (!UuidManager.getInstance().hasActionUuid(extra.action_uuid))
+			{
+				return false;
+			}
+
+			const {
+				actualReactions: { reaction: actualReactionsState },
+				reaction,
+			} = params;
+
+			const currentReactionState = this.store.getters['messagesModel/reactionsModel/getByMessageId'](actualReactionsState.messageId);
+
+			const countersEqual = this.#areReactionCountersEqual(currentReactionState, actualReactionsState, reaction);
+
+			this.logger.log('handleReaction: comparing counters', {
+				reaction,
+				currentCounter: currentReactionState?.reactionCounters?.[reaction],
+				pullCounter: actualReactionsState?.reactionCounters?.[reaction],
+			});
+
+			UuidManager.getInstance().removeActionUuid(extra.action_uuid);
+
+			if (countersEqual)
+			{
+				this.logger.log('handleReaction: we already locally processed this action and counters are equal');
+
+				return true;
+			}
+			this.logger.log('handleReaction: counters are different, continue processing');
+
+			return false;
+		}
+
+		/**
+		 * @param {object} currentReactionState
+		 * @param {object} actualReactionsState
+		 * @param {string} reaction
+		 * @returns {boolean}
+		 */
+		#areReactionCountersEqual(currentReactionState, actualReactionsState, reaction)
+		{
+			let currentCounter = 0;
+			let pullCounter = 0;
+
+			if (Type.isNumber(currentReactionState?.reactionCounters?.[reaction]))
+			{
+				currentCounter = currentReactionState.reactionCounters[reaction];
+			}
+
+			if (Type.isNumber(actualReactionsState?.reactionCounters?.[reaction]))
+			{
+				pullCounter = actualReactionsState.reactionCounters[reaction];
+			}
+
+			return currentCounter === pullCounter;
 		}
 	}
 

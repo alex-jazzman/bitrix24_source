@@ -3,7 +3,7 @@
  */
 jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, module) => {
 	const { BaseEnum } = require('utils/enums/base');
-	const { Corner, Indent } = require('tokens');
+	const { Component, Indent } = require('tokens');
 
 	/**
 	 * @class ButtonSize
@@ -29,7 +29,7 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 				},
 				border: {
 					width: 1.4,
-					radius: Corner.M,
+					radius: Component.buttonXLCorner,
 				},
 				icon: {
 					size: 28,
@@ -62,7 +62,7 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 				},
 				border: {
 					width: 1.4,
-					radius: Corner.M,
+					radius: Component.buttonLCorner,
 				},
 				icon: {
 					size: 28,
@@ -95,7 +95,7 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 				},
 				border: {
 					width: 1.4,
-					radius: Corner.M,
+					radius: Component.buttonMCorner,
 				},
 				icon: {
 					size: 24,
@@ -129,7 +129,7 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 				},
 				border: {
 					width: 1,
-					radius: Corner.M,
+					radius: Component.buttonSCorner,
 				},
 				icon: {
 					size: 24,
@@ -162,7 +162,7 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 				},
 				border: {
 					width: 1,
-					radius: Corner.S,
+					radius: Component.buttonXSCorner,
 				},
 				icon: {
 					size: 20,
@@ -267,5 +267,7 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 		}
 	}
 
-	module.exports = { ButtonSize };
+	module.exports = {
+		ButtonSize: ButtonSize.export(),
+	};
 });

@@ -24,7 +24,6 @@ return [
 		'im.v2.lib.layout',
 		'im.v2.lib.copilot',
 		'im.v2.lib.utils',
-		'im.v2.model',
 		'im.v2.lib.channel',
 		'im.v2.lib.user',
 		'im.v2.lib.message-notifier',

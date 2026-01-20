@@ -12,7 +12,7 @@ import { MessengerSlider } from 'im.v2.lib.slider';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 
-const MESSENGER_CONTAINER_SELECTOR = '.bx-im-messenger__container';
+import type { ApplicationContext } from 'im.v2.const';
 
 export const EscEventAction = Object.freeze({
 	handled: 'handled',
@@ -21,7 +21,8 @@ export const EscEventAction = Object.freeze({
 
 export class EscManager
 {
-	#messengerContainer: HTMLElement | null;
+	#messengerContainer: HTMLElement;
+	#emitter: EventEmitter;
 	#wasKeyDownHandled: boolean = false;
 
 	static #instance: EscManager;
@@ -39,16 +40,18 @@ export class EscManager
 		return EscManager.#instance;
 	}
 
-	register()
+	register(payload: { messengerContainer: HTMLElement, context: ApplicationContext })
 	{
-		this.#messengerContainer = this.#getMessengerContainer();
+		const { messengerContainer, context: { emitter } } = payload;
+		this.#emitter = emitter;
+		this.#messengerContainer = messengerContainer;
+
 		Event.bind(document, 'keyup', this.keyUpEventHandler);
 		Event.bind(document, 'keydown', this.keyDownEventHandler);
 	}
 
 	unregister()
 	{
-		this.#messengerContainer = this.#getMessengerContainer();
 		Event.unbind(document, 'keyup', this.keyUpEventHandler);
 		Event.unbind(document, 'keydown', this.keyDownEventHandler);
 	}
@@ -106,9 +109,12 @@ export class EscManager
 
 	async #isHandledBySubscriber(): Promise<boolean>
 	{
-		const eventResult = await EventEmitter.emitAsync(EventType.key.onBeforeEscape);
+		const eventResult = await this.#emitter.emitAsync(EventType.key.onBeforeEscape);
+		const globalEventResult = await EventEmitter.emitAsync(EventType.key.onBeforeEscape);
 
-		return eventResult.includes(EscEventAction.handled);
+		const mergedEventResult = [...eventResult, ...globalEventResult];
+
+		return mergedEventResult.includes(EscEventAction.handled);
 	}
 
 	#handleActiveInput(): boolean
@@ -197,11 +203,6 @@ export class EscManager
 		this.#wasKeyDownHandled = BX.UI.Viewer.Instance.isOpen();
 	}
 
-	#getMessengerContainer(): HTMLElement
-	{
-		return document.querySelector(MESSENGER_CONTAINER_SELECTOR);
-	}
-
 	#switchToChatLayout()
 	{
 		void LayoutManager.getInstance().setLayout({
@@ -226,7 +227,7 @@ export class EscManager
 		const areCommentsOpened = Core.getStore().getters['messages/comments/areOpened'];
 		if (areCommentsOpened)
 		{
-			EventEmitter.emit(EventType.dialog.closeComments);
+			this.#emitter.emit(EventType.dialog.closeComments);
 		}
 
 		return areCommentsOpened;

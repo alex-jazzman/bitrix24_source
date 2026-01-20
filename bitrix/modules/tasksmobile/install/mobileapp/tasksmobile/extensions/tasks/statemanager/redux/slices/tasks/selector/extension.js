@@ -5,6 +5,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 	const { createDraftSafeSelector } = require('statemanager/redux/toolkit');
 	const { sliceName, tasksAdapter } = require('tasks/statemanager/redux/slices/tasks/meta');
 	const { TaskStatus, TaskCounter, TimerState } = require('tasks/enum');
+	const { Type } = require('type');
 
 	const {
 		selectAll,
@@ -27,7 +28,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 
 			return task ? {
 				...task,
-				isPinned: task.isPinned[ownerId],
+				isPinned: Type.isObject(task?.isPinned) ? task.isPinned[ownerId] : false,
 			} : task;
 		},
 	);
@@ -41,7 +42,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			Object.keys(tasks).forEach((id) => {
 				preparedTasks[id] = {
 					...tasks[id],
-					isPinned: tasks[id].isPinned[ownerId],
+					isPinned: Type.isObject(tasks[id]?.isPinned) ? tasks[id].isPinned[ownerId] : false,
 				};
 			});
 
@@ -70,13 +71,13 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 	const selectIsAccomplice = createDraftSafeSelector(
 		(task) => task.accomplices,
 		(task, userId = env.userId) => Number(userId),
-		(accomplices, userId) => accomplices.includes(userId),
+		(accomplices, userId) => (accomplices ? accomplices.includes(userId) : false),
 	);
 
 	const selectIsAuditor = createDraftSafeSelector(
 		(task) => task.auditors,
 		(task, userId = env.userId) => Number(userId),
-		(auditors, userId) => auditors.includes(userId),
+		(auditors, userId) => (auditors ? auditors.includes(userId) : false),
 	);
 
 	const selectIsMember = createDraftSafeSelector(
@@ -116,7 +117,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		(state) => selectAll(state),
 		(taskId, allTasks) => {
 			return allTasks
-				.filter((task) => task.parentId === taskId)
+				.filter((task) => task?.parentId === taskId)
 				.map((task) => ({
 					id: task.id,
 					title: task.name,
@@ -205,7 +206,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 
 	const selectMarkedAsRemoved = createDraftSafeSelector(
 		(state) => selectAll(state),
-		(allTasks) => allTasks.filter((task) => task.isRemoved === true),
+		(allTasks) => allTasks.filter((task) => task?.isRemoved === true),
 	);
 
 	const selectWithCreationError = createDraftSafeSelector(
@@ -214,7 +215,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		(allTasks, ownerId) => allTasks
 			.map((task) => ({
 				...task,
-				isPinned: task.isPinned[ownerId],
+				isPinned: Type.isObject(task?.isPinned) ? task.isPinned[ownerId] : false,
 			}))
 			.filter((task) => task.isCreationErrorExist),
 	);
@@ -361,6 +362,18 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		}),
 	);
 
+	const selectCanChangeDeadlineWithoutLimitation = createDraftSafeSelector(
+		(state, taskId) => selectByTaskIdOrGuid(state, taskId),
+		(task) => {
+			if (!task)
+			{
+				return false;
+			}
+
+			return task.canUpdate || selectIsCreator(task) || env.isAdmin;
+		},
+	);
+
 	const selectTimerState = createDraftSafeSelector(
 		(task) => task.timeEstimate > 0 && task.timeElapsed > task.timeEstimate,
 		(task) => task.isTimerRunningForCurrentUser,
@@ -418,6 +431,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		selectExtraSettings,
 
 		selectActions,
+		selectCanChangeDeadlineWithoutLimitation,
 
 		selectTimerState,
 		selectRunningTask,

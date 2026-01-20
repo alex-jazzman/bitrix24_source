@@ -1,0 +1,51 @@
+.booking-tabs__wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	height: 100%;
+}
+
+.booking-tabs__nav {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.booking-tabs__nav_tabs {
+	display: flex;
+	margin: 7px 0;
+}
+
+.booking-tabs__nav_tab {
+	position: relative;
+	padding: 6px 13px;
+	text-align: center;
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-10);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-text-secondary);
+	background: var(--ui-color-background-primary);
+	cursor: pointer;
+	transition: .2s;
+}
+
+.booking-tabs__nav_tab:first-child {
+	border-radius: var(--ui-border-radius-md) 0 0 var(--ui-border-radius-md);
+}
+
+.booking-tabs__nav_tab:last-child {
+	border-radius: 0 var(--ui-border-radius-md) var(--ui-border-radius-md) 0;
+}
+
+.booking-tabs__nav_tab:not(:first-child) {
+	margin-left: -1px;
+}
+
+.booking-tabs__nav_tab.--active {
+	color: var(--ui-color-accent-main-primary);
+	background: var(--ui-color-accent-soft-blue-3);
+	border-color: var(--ui-color-accent-soft-blue-1);
+	z-index: 1;
+}

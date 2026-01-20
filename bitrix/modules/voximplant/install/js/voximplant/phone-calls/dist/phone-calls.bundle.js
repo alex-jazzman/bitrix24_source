@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,intranet_desktopDownload,main_core_events,main_core,im_v2_lib_desktopApi,main_popup,ui_dialogs_messagebox) {
+(function (exports,voximplant,intranet_desktopDownload,main_core_events,main_core,im_v2_lib_desktopApi,main_popup,ui_dialogs_messagebox) {
 	'use strict';
 
 	var baseZIndex = 15000;
@@ -7089,7 +7089,7 @@ this.BX = this.BX || {};
 	        backgroundWorker: this.backgroundWorker,
 	        messengerFacade: this.messengerFacade,
 	        restApps: this.restApps,
-	        skipCheckChatWindow: im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()
+	        skipCheckChatWindow: im_v2_lib_desktopApi.DesktopApi.isDesktop()
 	      });
 	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.show();
@@ -8339,7 +8339,7 @@ this.BX = this.BX || {};
 	    backgroundWorker: this.backgroundWorker,
 	    messengerFacade: this.messengerFacade,
 	    restApps: this.restApps,
-	    skipCheckChatWindow: im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()
+	    skipCheckChatWindow: im_v2_lib_desktopApi.DesktopApi.isDesktop()
 	  });
 	  _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	  this.callView.show();
@@ -8668,5 +8668,5 @@ this.BX = this.BX || {};
 	exports.PhoneCallView = PhoneCallView;
 	exports.BackgroundWorker = BackgroundWorker;
 
-}((this.BX.Voximplant = this.BX.Voximplant || {}),BX.Intranet,BX.Event,BX,BX.Messenger.v2.Lib,BX.Main,BX.UI.Dialogs));
+}((this.BX.Voximplant = this.BX.Voximplant || {}),BX,BX.Intranet,BX.Event,BX,BX.Messenger.v2.Lib,BX.Main,BX.UI.Dialogs));
 //# sourceMappingURL=phone-calls.bundle.js.map

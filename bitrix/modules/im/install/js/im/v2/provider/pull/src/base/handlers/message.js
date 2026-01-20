@@ -1,4 +1,5 @@
 import { EventEmitter } from 'main.core.events';
+
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
@@ -27,6 +28,7 @@ import type {
 	DeleteReactionParams,
 	MessageDeleteCompletePreparedParams,
 	PrepareDeleteMessageParams,
+	RawReaction,
 } from '../../types/message';
 import type { PullExtraParams, RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
 
@@ -166,22 +168,31 @@ export class MessagePullHandler
 			userId,
 			reaction,
 		} = params;
+
 		if (Core.getUserId() === userId)
 		{
 			actualReactionsState.ownReactions = [reaction];
 		}
 
 		const userManager = new UserManager();
-		userManager.addUsersToModel(usersShort);
+		void userManager.addUsersToModel(usersShort);
 
-		this.#store.dispatch('messages/reactions/set', [actualReactionsState]);
+		void this.#store.dispatch('messages/reactions/set', [actualReactionsState]);
 	}
 
 	handleDeleteReaction(params: DeleteReactionParams)
 	{
 		Logger.warn('MessagePullHandler: handleDeleteReaction', params);
-		const { actualReactions: { reaction: actualReactionsState } } = params;
-		this.#store.dispatch('messages/reactions/set', [actualReactionsState]);
+		const { actualReactions: { reaction: rawReaction }, reaction: reactionType, userId } = params;
+
+		const newReactionItem: RawReaction = { ...rawReaction };
+
+		if (Core.getUserId() === userId)
+		{
+			newReactionItem.ownReactionsToRemove = [reactionType];
+		}
+
+		void this.#store.dispatch('messages/reactions/set', [newReactionItem]);
 	}
 
 	handleMessageParamsUpdate(params)

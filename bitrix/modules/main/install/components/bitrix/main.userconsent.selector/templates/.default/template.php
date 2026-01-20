@@ -110,7 +110,7 @@ if ($arParams['AGREEMENTS'])
 	<?php endif; ?>
 	<div data-bx-user-consent-selector-blocks-container="">
 		<?php if ($arParams['AGREEMENTS']): ?>
-			<?php for ($index = 0; $index < count($arParams['AGREEMENTS']); $index++): ?>
+			<?php for ($index = 0, $cnt = count($arParams['AGREEMENTS']); $index < $cnt; $index++): ?>
 				<div class="main-user-consent-selector-block" data-bx-user-consent-selector-block="">
 					<div class="main-user-consent-selector-block-name">
 						<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE')?>:

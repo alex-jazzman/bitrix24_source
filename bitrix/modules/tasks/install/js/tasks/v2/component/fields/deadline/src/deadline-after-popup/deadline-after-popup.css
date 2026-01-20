@@ -1,0 +1,10 @@
+.tasks-field-deadline-after-header {
+	display: flex;
+}
+
+.tasks-field-deadline-after-chips {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 15px 0;
+}

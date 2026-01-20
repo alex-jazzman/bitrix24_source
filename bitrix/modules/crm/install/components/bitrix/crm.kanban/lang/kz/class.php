@@ -1,5 +1,7 @@
 <?php
 $MESS["CRM_ACCESS_NOTIFY_MESSAGE"] = "Сізден CRM канбанында жұмыс істеу үшін <a href=\"#URL#\">сатыларды баптауыңызды</a> немесе баптауларды басқару құқығын маған тапсыруыңызды сұраймын.";
+$MESS["CRM_KANBAN_AUTOMATED_SOLUTION_STUB_DESCRIPTION"] = "Жұмысты бастау үшін бірінші карточканы жасаңыз";
+$MESS["CRM_KANBAN_AUTOMATED_SOLUTION_STUB_TITLE"] = "Мұнда сіздің жұмыс процесіңіз болады";
 $MESS["CRM_KANBAN_BOOLEAN_0"] = "Жоқ";
 $MESS["CRM_KANBAN_BOOLEAN_1"] = "Иә";
 $MESS["CRM_KANBAN_CHAR_N"] = "Жоқ";

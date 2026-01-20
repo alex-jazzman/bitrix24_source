@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/dialog/lib/pin/list-item', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
-	const { Type } = require('type');
 	const { Color } = require('tokens');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
@@ -130,24 +129,25 @@ jn.define('im/messenger/controller/dialog/lib/pin/list-item', (require, exports,
 		 */
 		#prepareMessageText(modelMessage)
 		{
-			const store = serviceLocator.get('core').getStore();
-
-			let messageFiles = [];
-			if (Type.isArrayFilled(modelMessage.files))
-			{
-				messageFiles = modelMessage.files
-					.map((fileId) => store.getters['filesModel/getById'](fileId))
-				;
-			}
-
-			return parser.simplify({
-				text: modelMessage.text,
-				attach: modelMessage?.params?.ATTACH ?? false,
-				files: messageFiles,
-				showFilePrefix: false,
-			});
+			return parser.simplifyMessage(modelMessage);
 		}
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	module.exports = {
 		PinListItem,

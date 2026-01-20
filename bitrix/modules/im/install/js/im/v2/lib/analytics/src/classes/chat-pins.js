@@ -1,8 +1,9 @@
 import { Core } from 'im.v2.application.core';
 import { sendData } from 'ui.analytics';
 
-import { AnalyticsEvent, AnalyticsTool, PSEUDO_CHAT_TYPE_FOR_NOTES } from '../const';
+import { AnalyticsEvent, AnalyticsTool } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
 import { isNotes } from '../helpers/is-notes';
 
 import type { ImModelChat } from 'im.v2.model';
@@ -22,7 +23,7 @@ export class ChatPins
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chat.type),
 			event: AnalyticsEvent.pinChat,
-			p1: `chatType_${PSEUDO_CHAT_TYPE_FOR_NOTES}`,
+			p1: getChatType(chat),
 		};
 
 		sendData(params);

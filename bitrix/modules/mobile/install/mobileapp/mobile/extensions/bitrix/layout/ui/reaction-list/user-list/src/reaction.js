@@ -63,6 +63,7 @@ jn.define('layout/ui/reaction-list/user-list/src/reaction', (require, exports, m
 		render()
 		{
 			const icon = ReactionIcon.getIconByReactionId(this.#reactionId);
+			const type = Application.getPlatform() === 'ios' ? 'png' : 'svg'; // ios bug with render gradient in svg
 
 			return View(
 				{
@@ -134,6 +135,7 @@ jn.define('layout/ui/reaction-list/user-list/src/reaction', (require, exports, m
 							testId: `${this.#testId}-icon-${this.#reactionId}`,
 							size: 22,
 							icon,
+							type,
 							offset: 0,
 							style: {
 								marginRight: Component.paddingLr.toNumber(),

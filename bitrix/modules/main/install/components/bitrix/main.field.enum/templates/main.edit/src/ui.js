@@ -1,6 +1,5 @@
-import {Event, Type, Text} from "main.core";
-import {BaseEvent} from "main.core.events";
-import {EventEmitter} from 'main.core.events'
+import { Text, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 
 export class Ui
 {
@@ -49,6 +48,8 @@ export class Ui
 				this.onChange({params: this.params, node: this.container.firstChild})
 			}.bind(this))
 		);
+
+		this.onChange({params: this.params, node: this.container.firstChild});
 	}
 
 	onChange(eventNode)

@@ -1,6 +1,7 @@
 <?php
 $MESS["BIZPROC_API_ENUM_ERRORS_ACCESS_DENIED"] = "Қол жеткізу құқығы жеткіліксіз";
 $MESS["BIZPROC_API_ENUM_ERRORS_ACTIVITY_NOT_FOUND"] = "Әрекет табылмады (#ACTIVITY#)";
+$MESS["BIZPROC_API_ENUM_ERRORS_AI_AGENT_DELETE_ERROR"] = "Жою мүмкін болмады";
 $MESS["BIZPROC_API_ENUM_ERRORS_BP_NOT_FOUND"] = "Бизнес-процесс табылмады";
 $MESS["BIZPROC_API_ENUM_ERRORS_BP_NO_ACCESS"] = "Процесті тоқтату үшін жеткілікті құқықтар жоқ";
 $MESS["BIZPROC_API_ENUM_ERRORS_CONSTANTS_NOT_TUNED"] = "Бизнес-процестің константалары бапталмаған";
@@ -20,6 +21,7 @@ $MESS["BIZPROC_API_ENUM_ERRORS_INVALID_PARAM_TYPE"] = "#PARAM#' аргумент
 $MESS["BIZPROC_API_ENUM_ERRORS_INVALID_TYPE"] = "Параметр түрі анықталмаған";
 $MESS["BIZPROC_API_ENUM_ERRORS_INVALID_USER_ID"] = "Пайдаланушы идентификаторы көрсетілмеген";
 $MESS["BIZPROC_API_ENUM_ERRORS_MODULE_NOT_INSTALLED"] = " «Бизнес-процесстер» модулі орнатылмаған";
+$MESS["BIZPROC_API_ENUM_ERRORS_NO_AVAILABLE_AI_AGENTS_TO_DELETE"] = "Таңдалған агенттерді жою мүмкін емес";
 $MESS["BIZPROC_API_ENUM_ERRORS_NO_ENTITY"] = "Бизнес-процесс басталатын нысан көрсетілмеген";
 $MESS["BIZPROC_API_ENUM_ERRORS_OVER_LIMITED"] = "Автоматтандыру лимиттерінен асып кетті";
 $MESS["BIZPROC_API_ENUM_ERRORS_PARAM_REQUIRED"] = "#NAME# міндетті өрісі толтырылмаған";

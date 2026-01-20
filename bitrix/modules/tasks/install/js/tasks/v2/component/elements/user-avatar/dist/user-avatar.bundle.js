@@ -42,10 +42,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    size: {
 	      type: String,
 	      default: UserAvatarSize.S
+	    },
+	    borderColor: {
+	      type: String,
+	      default: undefined
+	    }
+	  },
+	  computed: {
+	    normalizedSrc() {
+	      return this.src === null ? '' : this.src;
 	    }
 	  },
 	  watch: {
-	    src() {
+	    normalizedSrc() {
 	      this.render();
 	    }
 	  },
@@ -55,21 +64,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  methods: {
 	    render() {
 	      var _this$avatar, _this$avatar$getConta;
+	      const isExternal = this.type === 'collaber' || this.type === 'extranet';
 	      (_this$avatar = this.avatar) == null ? void 0 : (_this$avatar$getConta = _this$avatar.getContainer()) == null ? void 0 : _this$avatar$getConta.remove();
-	      const AvatarClass = this.type === 'collaber' ? ui_avatar.AvatarRoundGuest : ui_avatar.AvatarBase;
+	      const AvatarClass = isExternal ? ui_avatar.AvatarRoundGuest : ui_avatar.AvatarBase;
 	      this.avatar = new AvatarClass({
 	        size: UserAvatarSizeMap[this.size],
-	        picPath: this.src,
-	        baseColor: '#858D95'
+	        picPath: encodeURI(this.normalizedSrc),
+	        baseColor: isExternal ? null : '#858D95',
+	        borderColor: this.borderColor
 	      });
 	      this.avatar.renderTo(this.$refs.container);
 	    }
 	  },
 	  template: `
-		<div
-			ref="container"
-			class="b24-user-avatar"
-		></div>
+		<div class="b24-user-avatar" ref="container"/>
 	`
 	};
 

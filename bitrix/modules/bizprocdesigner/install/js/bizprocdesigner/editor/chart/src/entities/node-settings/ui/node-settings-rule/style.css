@@ -1,0 +1,86 @@
+.node-settings-rule {
+	display: flex;
+	align-items: center;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	border-radius: var(--ui-border-radius-sm);
+	padding: 8px 8px 6px;
+	font-size: 14px;
+	line-height: 19px;
+	cursor: pointer;
+	margin-top: 8px;
+}
+
+.node-settings-rule:hover {
+	border-color: var(--ui-color-blue-57);
+}
+
+.node-settings-rule__edit-icon {
+	display: none;
+}
+
+.node-settings-rule:hover .node-settings-rule__edit-icon {
+	display: block;
+}
+
+.node-settings-rule__dnd-icon {
+	cursor: grab;
+}
+
+.node-settings-rule__dnd-icon:active {
+	cursor: grabbing;
+}
+
+.node-settings-rule__actions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+}
+
+.node-settings-rule__title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: #0154C8;
+	margin: 0 15px 0 10px;
+}
+
+.node-settings-rule__construction {
+	font-size: 14px;
+	line-height: 19px;
+	display: flex;
+	gap: 6px;
+}
+
+.node-settings-rule__construction.--empty {
+	color: var(--ui-color-palette-gray-50);
+	display: block;
+}
+
+.node-settings-rule__expression-part {
+	color: var(--ui-color-palette-gray-90);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.node-settings-rule__construction.--condition .node-settings-rule__construction_type {
+	color: var(--ui-color-blue-55);
+}
+
+.node-settings-rule__construction.--action .node-settings-rule__construction_type {
+	color: var(--ui-color-green-50);
+}
+
+.node-settings-rule__construction.--output .node-settings-rule__construction_type {
+	color: var(--ui-color-palette-gray-50);
+}
+
+.node-settings-rule__card:not(:last-child) {
+	margin-bottom: 7px;
+}
+
+.node-settings-rule__construction.--condition ~ .node-settings-rule__construction {
+	padding-left: 19px;
+}
+
+.node-settings-rule__card-container {
+	min-width: 0;
+}

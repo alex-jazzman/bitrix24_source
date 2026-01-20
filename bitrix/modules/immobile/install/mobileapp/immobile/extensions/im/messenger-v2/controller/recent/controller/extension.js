@@ -61,7 +61,6 @@ jn.define('im/messenger-v2/controller/recent/controller', (require, exports, mod
 				try
 				{
 					await this.#loadFirstPageFromServer(RefreshMode.startUp);
-					this.locator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
 				}
 				catch (error)
 				{
@@ -162,6 +161,11 @@ jn.define('im/messenger-v2/controller/recent/controller', (require, exports, mod
 				{
 					try
 					{
+						if (mode === RefreshMode.startUp)
+						{
+							this.#afterFirstServerPageLoad();
+						}
+
 						await this.locator.get('server-load').handleInitResult(mode, refreshResult);
 					}
 					catch (error)
@@ -190,12 +194,31 @@ jn.define('im/messenger-v2/controller/recent/controller', (require, exports, mod
 					},
 				});
 
+				if (mode === RefreshMode.startUp)
+				{
+					this.#afterFirstServerPageLoad();
+				}
+
 				await this.locator.get('server-load').handleInitResult(mode, result);
 			}
 			catch (error)
 			{
 				this.logger.error('loadFirstPageFromServer error', error);
 			}
+		}
+
+		#afterFirstServerPageLoad()
+		{
+			this.locator.get('render').executeAfterRender(() => {
+				const emptyState = this.locator.get('empty-state');
+				const floatingButton = this.locator.get('floating-button');
+
+				emptyState.subscribeEvents();
+				floatingButton.subscribeEvents();
+
+				emptyState.redraw();
+				floatingButton.redraw();
+			});
 		}
 	}
 

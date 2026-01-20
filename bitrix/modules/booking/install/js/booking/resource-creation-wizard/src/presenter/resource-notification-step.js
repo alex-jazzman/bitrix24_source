@@ -37,6 +37,11 @@ export class ResourceNotificationStep extends Step
 			: Loc.getMessage('BRCW_BUTTON_UPDATE_RESOURCE');
 	}
 
+	get #resourceAvatarFile(): File | null
+	{
+		return this.store.getters[`${Model.ResourceCreationWizard}/getResourceAvatarFile`];
+	}
+
 	async next(): Promise<void>
 	{
 		this.store.commit(`${Model.ResourceCreationWizard}/setSaving`, true);
@@ -143,7 +148,12 @@ export class ResourceNotificationStep extends Step
 	async #upsertResource(resource: ResourceModel): Promise<boolean>
 	{
 		const isUpdate = Boolean(resource.id);
-		const result = await (isUpdate ? resourceService.update(resource) : resourceService.add(resource));
+		const resourceToProcess = this.#prepareResourceToProcess(resource);
+
+		const result = await (isUpdate
+			? resourceService.update(resourceToProcess)
+			: resourceService.add(resourceToProcess)
+		);
 
 		let text = Loc.getMessage(isUpdate ? 'BRCW_UPDATE_SUCCESS_MESSAGE' : 'BRCW_CREATE_SUCCESS_MESSAGE');
 		if (Type.isArrayFilled(result.errors))
@@ -154,6 +164,24 @@ export class ResourceNotificationStep extends Step
 		Notifier.notify(this.#prepareNotificationOptions(text));
 
 		return !Type.isArrayFilled(result.errors);
+	}
+
+	#prepareResourceToProcess(resource: ResourceModel): ResourceModel
+	{
+		const uploadedAvatar = this.#resourceAvatarFile;
+		if (!uploadedAvatar)
+		{
+			return { ...resource };
+		}
+
+		return {
+			...resource,
+			avatar: {
+				id: null,
+				url: null,
+				file: uploadedAvatar,
+			},
+		};
 	}
 
 	#prepareNotificationOptions(text: string): NotificationOptions

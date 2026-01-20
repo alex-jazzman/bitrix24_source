@@ -106,9 +106,25 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 		{
 			const menuItems = [{
 				tabId: 'popupMenuAdd',
-				text: '<?= GetMessageJS('TASKS_BTN_ADD_TASK_BY_TASK') ?>',
+				text: '<?= GetMessageJS('TASKS_BTN_ADD_TASK_BY_TASK_MSGVER_1') ?>',
 				href: '<?= $createButtonUri->getUri() ?>',
 				onclick : function() {
+					let settings = BX.Extension.getSettings('tasks.v2.lib.analytics');
+					BX.UI.Analytics.sendData({
+						event: 'click_create',
+						tool: 'tasks',
+						category: 'task_operations',
+						c_section: 'tasks',
+						c_sub_section: '',
+						c_element: 'create_button',
+						type: 'task',
+						p1: settings.get('userType', ''),
+						p2: settings.get('isDemo', '') ? 'isDemo_Y' : 'isDemo_N',
+						p3: null,
+						p4: null,
+						p5: null,
+						status: 'success',
+					});
 					this.close();
 				},
 			}];

@@ -6,8 +6,6 @@ import type { AnalyticsOptions } from './types';
  */
 export class Metrika
 {
-	static TOOL_NAME = 'landing';
-
 	tool: string;
 	formSelector: string;
 	widgetBlockItemSelector: string;
@@ -20,7 +18,7 @@ export class Metrika
 
 	constructor(light: boolean, tool: ?string = null)
 	{
-		this.tool = tool || Metrika.TOOL_NAME;
+		this.tool = tool || null;
 
 		this.sendedLabel = [];
 
@@ -220,10 +218,11 @@ export class Metrika
 			.loadExtension('ui.analytics')
 			.then(exports => {
 				const preparedData = {
-					tool: this.tool,
+					tool: this.tool ?? BX.Landing.Main.getAnalyticsCategoryByType(),
 				};
 
 				[
+					'tool',
 					'category',
 					'event',
 					'type',

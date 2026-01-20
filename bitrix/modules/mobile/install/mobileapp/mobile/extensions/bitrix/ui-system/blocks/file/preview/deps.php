@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
-		'ui-system/blocks/icon',
+		'assets/icons',
 		'assets/icons/src/disk',
-		'tokens',
-		'utils/url',
-		'utils/color',
 		'layout/ui/safe-image',
+		'tokens',
+		'ui-system/blocks/icon',
+		'utils/color',
+		'utils/url',
 	],
 ];

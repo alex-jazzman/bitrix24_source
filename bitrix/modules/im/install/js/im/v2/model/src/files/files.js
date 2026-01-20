@@ -1,10 +1,12 @@
-import { Type, type JsonObject } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
-import { Logger } from 'im.v2.lib.logger';
-import { Core } from 'im.v2.application.core';
-import { FileStatus } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
 
+import { FileStatus } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
+import { formatFieldsWithConfig } from 'im.v2.model';
+
+import { fileFieldsConfig } from './format/field-config';
+
+import type { JsonObject } from 'main.core';
 import type { ImModelFile, ImModelTranscription } from 'im.v2.model';
 
 type FilesState = {
@@ -54,6 +56,7 @@ export class FilesModel extends BuilderModel
 			urlShow: '',
 			urlDownload: '',
 			viewerAttrs: null,
+			isVideoNote: false,
 		};
 	}
 
@@ -129,14 +132,14 @@ export class FilesModel extends BuilderModel
 		return {
 			/** @function files/add */
 			add: (store, payload: Object) => {
-				const preparedFile = { ...this.getElementState(), ...this.validate(payload) };
+				const preparedFile = { ...this.getElementState(), ...this.formatFields(payload) };
 
 				store.commit('add', { files: [preparedFile] });
 			},
 			/** @function files/set */
 			set: (store, ...payload: Array<JsonObject>) => {
 				const files: Array<ImModelFile> = payload.flat().map((file) => {
-					return { ...this.getElementState(), ...this.validate(file) };
+					return { ...this.getElementState(), ...this.formatFields(file) };
 				});
 
 				store.commit('add', { files });
@@ -152,7 +155,7 @@ export class FilesModel extends BuilderModel
 
 				store.commit('update', {
 					id,
-					fields: this.validate(fields),
+					fields: this.formatFields(fields),
 				});
 
 				return true;
@@ -167,7 +170,7 @@ export class FilesModel extends BuilderModel
 
 				store.commit('updateWithId', {
 					id,
-					fields: this.validate(fields),
+					fields: this.formatFields(fields),
 				});
 			},
 			/** @function files/delete */
@@ -186,12 +189,13 @@ export class FilesModel extends BuilderModel
 			},
 			/** @function files/setTranscription */
 			setTranscription: (store, payload: ImModelTranscription) => {
-				const { fileId, status, transcriptText } = payload;
+				const { fileId, status, transcriptText, errorCode } = payload;
 
 				store.commit('setTranscription', {
 					fileId,
 					status,
 					transcriptText,
+					errorCode,
 				});
 			},
 		};
@@ -227,175 +231,17 @@ export class FilesModel extends BuilderModel
 				state.temporaryFilesMap.set(payload.serverFileId, payload.temporaryFileId);
 			},
 			setTranscription: (state: FilesState, payload: ImModelTranscription) => {
-				state.transcriptions[payload.fileId] = { status: payload.status, transcriptText: payload.transcriptText };
+				state.transcriptions[payload.fileId] = {
+					status: payload.status,
+					transcriptText: payload.transcriptText,
+					errorCode: payload.errorCode,
+				};
 			},
 		};
 	}
 
-	// eslint-disable-next-line max-lines-per-function,sonarjs/cognitive-complexity
-	validate(file: Object, options = {}): ImModelFile
+	formatFields(rawFields: JsonObject): JsonObject
 	{
-		const result = {};
-
-		if (Type.isNumber(file.id) || Type.isStringFilled(file.id))
-		{
-			result.id = file.id;
-		}
-
-		if (Type.isNumber(file.chatId) || Type.isString(file.chatId))
-		{
-			result.chatId = Number.parseInt(file.chatId, 10);
-		}
-
-		if (!Type.isUndefined(file.date))
-		{
-			result.date = Utils.date.cast(file.date);
-		}
-
-		if (Type.isString(file.type))
-		{
-			result.type = file.type;
-		}
-
-		if (Type.isString(file.extension))
-		{
-			result.extension = file.extension.toString();
-
-			if (result.type === 'image')
-			{
-				result.icon = 'img';
-			}
-			else if (result.type === 'video')
-			{
-				result.icon = 'mov';
-			}
-			else
-			{
-				result.icon = Utils.file.getIconTypeByExtension(result.extension);
-			}
-		}
-
-		if (Type.isString(file.name) || Type.isNumber(file.name))
-		{
-			result.name = file.name.toString();
-		}
-
-		if (Type.isNumber(file.size) || Type.isString(file.size))
-		{
-			result.size = Number.parseInt(file.size, 10);
-		}
-
-		if (Type.isBoolean(file.image))
-		{
-			result.image = false;
-		}
-		else if (Type.isPlainObject(file.image))
-		{
-			result.image = {
-				width: 0,
-				height: 0,
-			};
-
-			if (Type.isString(file.image.width) || Type.isNumber(file.image.width))
-			{
-				result.image.width = Number.parseInt(file.image.width, 10);
-			}
-
-			if (Type.isString(file.image.height) || Type.isNumber(file.image.height))
-			{
-				result.image.height = Number.parseInt(file.image.height, 10);
-			}
-
-			if (result.image.width <= 0 || result.image.height <= 0)
-			{
-				result.image = false;
-			}
-		}
-
-		if (Type.isString(file.status) && !Type.isUndefined(FileStatus[file.status]))
-		{
-			result.status = file.status;
-		}
-
-		if (Type.isNumber(file.progress) || Type.isString(file.progress))
-		{
-			result.progress = Number.parseInt(file.progress, 10);
-		}
-
-		if (Type.isNumber(file.authorId) || Type.isString(file.authorId))
-		{
-			result.authorId = Number.parseInt(file.authorId, 10);
-		}
-
-		if (Type.isString(file.authorName) || Type.isNumber(file.authorName))
-		{
-			result.authorName = file.authorName.toString();
-		}
-
-		if (Type.isBoolean(file.isTranscribable))
-		{
-			result.isTranscribable = file.isTranscribable;
-		}
-
-		if (Type.isString(file.urlPreview))
-		{
-			if (
-				!file.urlPreview
-				|| file.urlPreview.startsWith('http')
-				|| file.urlPreview.startsWith('bx')
-				|| file.urlPreview.startsWith('file')
-				|| file.urlPreview.startsWith('blob')
-			)
-			{
-				result.urlPreview = file.urlPreview;
-			}
-			else
-			{
-				result.urlPreview = Core.getHost() + file.urlPreview;
-			}
-		}
-
-		if (Type.isString(file.urlDownload))
-		{
-			if (
-				!file.urlDownload
-				|| file.urlDownload.startsWith('http')
-				|| file.urlDownload.startsWith('bx')
-				|| file.urlDownload.startsWith('file')
-				|| file.urlDownload.startsWith('blob')
-			)
-			{
-				result.urlDownload = file.urlDownload;
-			}
-			else
-			{
-				result.urlDownload = Core.getHost() + file.urlDownload;
-			}
-		}
-
-		if (Type.isString(file.urlShow))
-		{
-			if (
-				!file.urlShow
-				|| file.urlShow.startsWith('http')
-				|| file.urlShow.startsWith('bx')
-				|| file.urlShow.startsWith('file')
-				|| file.urlShow.startsWith('blob')
-			)
-			{
-				result.urlShow = file.urlShow;
-			}
-			else
-			{
-				result.urlShow = Core.getHost() + file.urlShow;
-			}
-		}
-
-		if (Type.isPlainObject(file.viewerAttrs))
-		{
-			result.viewerAttrs = file.viewerAttrs;
-		}
-
-		return result;
+		return formatFieldsWithConfig(rawFields, fileFieldsConfig);
 	}
 }

@@ -230,6 +230,7 @@ use Bitrix\Main\Loader;
 			workflowResult: <?= \Bitrix\Main\Web\Json::encode($workflow['result']) ?>,
 			fastClose: <?= $arResult['fastClose'] ? 'true' : 'false' ?>,
 			saveVariables: <?= ($task && $task['saveVariables']) ? 'true' : 'false' ?>,
+			commentRequired: '<?= CUtil::JSEscape($task['commentRequired'] ?? 'N') ?>',
 			canUseHumanResources: <?= \Bitrix\Main\ModuleManager::isModuleInstalled('humanresources') ? 'true' : 'false' ?>,
 		});
 		BX.Bizproc.Component.WorkflowInfo.Instance.init();

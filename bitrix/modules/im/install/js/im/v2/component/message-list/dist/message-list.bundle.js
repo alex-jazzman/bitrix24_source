@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_utils,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_messageComponent,ui_lottie,im_v2_lib_inputAction,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,ui_vue3_components_richLoc,im_v2_lib_menu,main_polyfill_intersectionobserver,im_v2_component_elements_avatar,im_v2_lib_copilot,im_v2_lib_permission,im_v2_lib_notifier,main_core,main_core_events,im_v2_lib_analytics,im_v2_lib_feature,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_error,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_creation_chat,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_creation_conference,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_creation_ownChat,im_v2_component_message_zoomInvite,im_v2_component_message_creation_generalChat,im_v2_component_message_creation_generalChannel,im_v2_component_message_creation_channel,imopenlines_v2_component_message_startDialog,imopenlines_v2_component_message_hidden,imopenlines_v2_component_message_feedbackForm,im_v2_component_message_call,im_v2_component_message_vote,im_v2_component_message_creation_taskChat,im_v2_component_message_collab_convert,im_v2_component_message_aiAssistant_answer) {
+(function (exports,main_core_events,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_messageComponent,ui_lottie,im_v2_lib_inputAction,im_v2_component_elements_userListPopup,im_v2_lib_utils,im_v2_provider_service_user,ui_vue3_components_richLoc,im_v2_component_elements_avatar,im_v2_lib_copilot,im_v2_lib_permission,im_v2_lib_notifier,main_core,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_menu,main_polyfill_intersectionobserver,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_error,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_sticker,im_v2_component_message_system,im_v2_component_message_creation_chat,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_creation_conference,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_creation_ownChat,im_v2_component_message_zoomInvite,im_v2_component_message_creation_generalChat,im_v2_component_message_creation_generalChannel,im_v2_component_message_creation_channel,imopenlines_v2_component_message_startDialog,imopenlines_v2_component_message_hidden,imopenlines_v2_component_message_feedbackForm,im_v2_component_message_call,im_v2_component_message_vote,im_v2_component_message_creation_taskChat,im_v2_component_message_collab_convert,im_v2_component_message_aiAssistant_answer) {
 	'use strict';
 
 	var fr = 60;
@@ -7087,19 +7087,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	class UserService {
-	  async loadReadUsers(messageId) {
-	    im_v2_lib_logger.Logger.warn('Dialog-status: UserService: loadReadUsers', messageId);
-	    const response = await im_v2_application_core.Core.getRestClient().callMethod(im_v2_const.RestMethod.imV2ChatMessageTailViewers, {
-	      id: messageId
-	    }).catch(result => {
-	      console.error('Dialog-status: UserService: loadReadUsers error', result.error());
-	      throw result.error();
-	    });
-	    const users = response.data().users;
-	    const userManager = new im_v2_lib_user.UserManager();
-	    await userManager.setUsersToModel(Object.values(users));
-	    return users.map(user => user.id);
+	class UserService extends im_v2_provider_service_user.BaseUserService {
+	  getRestMethodName() {
+	    return im_v2_const.RestMethod.imV2ChatMessageTailViewers;
+	  }
+	  getLastId(result) {
+	    const {
+	      views
+	    } = result;
+	    if (!views || views.length === 0) {
+	      return 0;
+	    }
+	    const sortedViews = [...views].sort((a, b) => b.id - a.id);
+	    return sortedViews[sortedViews.length - 1].id;
 	  }
 	}
 
@@ -7139,7 +7139,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    async loadUsers() {
 	      this.loadingAdditionalUsers = true;
 	      try {
-	        const userIds = await this.getUserService().loadReadUsers(this.dialog.lastMessageId);
+	        const userIds = await this.getUserService().loadFirstPage(this.dialog.lastMessageId);
 	        this.additionalUsers = this.prepareAdditionalUsers(userIds);
 	        this.loadingAdditionalUsers = false;
 	      } catch {
@@ -7149,6 +7149,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onPopupClose() {
 	      this.showPopup = false;
 	      this.$emit('close');
+	    },
+	    async onScroll(event) {
+	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.getUserService().hasMoreItemsToLoad()) {
+	        return;
+	      }
+	      const userIds = await this.getUserService().loadNextPage(this.dialog.lastMessageId);
+	      if (!userIds) {
+	        return;
+	      }
+	      this.additionalUsers = [...this.additionalUsers, ...this.prepareAdditionalUsers(userIds)];
 	    },
 	    prepareAdditionalUsers(userIds) {
 	      const firstViewerId = this.dialog.lastMessageViews.firstViewer.userId;
@@ -7174,6 +7184,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			:withAngle="false"
 			:forceTop="true"
 			@close="onPopupClose"
+			@scroll="onScroll"
 		/>
 	`
 	};
@@ -7415,124 +7426,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	class AvatarMenu extends im_v2_lib_menu.UserMenu {
-	  constructor() {
-	    super();
-	    this.id = 'bx-im-avatar-context-menu';
-	  }
-	  getMenuOptions() {
-	    return {
-	      ...super.getMenuOptions(),
-	      className: this.getMenuClassName(),
-	      angle: true,
-	      offsetLeft: 21
-	    };
-	  }
-	  getMenuItems() {
-	    const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
-	    if (isCurrentUser) {
-	      return [this.getProfileItem()];
-	    }
-	    return [this.getMentionItem(), this.getSendItem(), this.getProfileItem(), this.getKickItem()];
-	  }
-	}
-
-	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
-	var _observer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observer");
-	var _initObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initObserver");
-	var _isMessageBottomVisible = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMessageBottomVisible");
-	var _sendVisibleEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendVisibleEvent");
-	var _sendNotVisibleEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendNotVisibleEvent");
-	var _getThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getThreshold");
-	var _getMessageIdFromElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageIdFromElement");
-	class ObserverManager {
-	  constructor(dialogId) {
-	    Object.defineProperty(this, _getMessageIdFromElement, {
-	      value: _getMessageIdFromElement2
-	    });
-	    Object.defineProperty(this, _getThreshold, {
-	      value: _getThreshold2
-	    });
-	    Object.defineProperty(this, _sendNotVisibleEvent, {
-	      value: _sendNotVisibleEvent2
-	    });
-	    Object.defineProperty(this, _sendVisibleEvent, {
-	      value: _sendVisibleEvent2
-	    });
-	    Object.defineProperty(this, _isMessageBottomVisible, {
-	      value: _isMessageBottomVisible2
-	    });
-	    Object.defineProperty(this, _initObserver, {
-	      value: _initObserver2
-	    });
-	    Object.defineProperty(this, _dialogId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _observer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId] = dialogId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _initObserver)[_initObserver]();
-	  }
-	  observeMessage(messageElement) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].observe(messageElement);
-	  }
-	  unobserveMessage(messageElement) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].unobserve(messageElement);
-	  }
-	}
-	function _initObserver2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer] = new IntersectionObserver(entries => {
-	    entries.forEach(entry => {
-	      const messageId = babelHelpers.classPrivateFieldLooseBase(this, _getMessageIdFromElement)[_getMessageIdFromElement](entry.target);
-	      if (!messageId || !entry.rootBounds) {
-	        return;
-	      }
-	      const messageIsFullyVisible = entry.isIntersecting && entry.intersectionRatio >= 0.99;
-	      if (messageIsFullyVisible || babelHelpers.classPrivateFieldLooseBase(this, _isMessageBottomVisible)[_isMessageBottomVisible](entry)) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _sendVisibleEvent)[_sendVisibleEvent](messageId);
-	      } else {
-	        babelHelpers.classPrivateFieldLooseBase(this, _sendNotVisibleEvent)[_sendNotVisibleEvent](messageId);
-	      }
-	    });
-	  }, {
-	    threshold: babelHelpers.classPrivateFieldLooseBase(this, _getThreshold)[_getThreshold]()
-	  });
-	}
-	function _isMessageBottomVisible2(entry) {
-	  const wholeMessage = entry.boundingClientRect;
-	  const visibleMessagePart = entry.intersectionRect;
-	  if (visibleMessagePart.height === 0) {
-	    return false;
-	  }
-
-	  // +1 to offset browser floating point calculations
-	  return wholeMessage.bottom <= visibleMessagePart.bottom + 1;
-	}
-	function _sendVisibleEvent2(messageId) {
-	  main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onMessageIsVisible, {
-	    messageId,
-	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]
-	  });
-	}
-	function _sendNotVisibleEvent2(messageId) {
-	  main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onMessageIsNotVisible, {
-	    messageId,
-	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]
-	  });
-	}
-	function _getThreshold2() {
-	  const arrayWithZeros = Array.from({
-	    length: 101
-	  }).fill(0);
-	  return arrayWithZeros.map((zero, index) => index * 0.01);
-	}
-	function _getMessageIdFromElement2(messageElement) {
-	  return Number(messageElement.dataset.id);
-	}
-
 	// @vue/component
 	const DateGroupTitle = {
 	  props: {
@@ -7588,7 +7481,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const forwardMessageComponents = new Set([im_v2_const.MessageComponent.default, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.FeedbackFormMessage, im_v2_const.MessageComponent.ImOpenLinesMessage, im_v2_const.MessageComponent.ImOpenLinesForm]);
+	const forwardMessageComponents = new Set([im_v2_const.MessageComponent.default, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.FeedbackFormMessage, im_v2_const.MessageComponent.ImOpenLinesMessage, im_v2_const.MessageComponent.ImOpenLinesForm, im_v2_const.MessageComponent.sticker]);
 
 	// @vue/component
 	const MessageSelectButton = {
@@ -7827,18 +7720,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      required: true
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    defaultMessages: () => defaultMessages
 	  },
 	  methods: {
 	    onMessageClick(text) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
 	        text,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -7927,6 +7820,136 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		</div>
 	`
 	};
+
+	class AvatarMenu extends im_v2_lib_menu.UserMenu {
+	  constructor(applicationContext) {
+	    super(applicationContext);
+	    this.id = 'bx-im-avatar-context-menu';
+	  }
+	  getMenuOptions() {
+	    return {
+	      ...super.getMenuOptions(),
+	      className: this.getMenuClassName(),
+	      angle: true,
+	      offsetLeft: 21
+	    };
+	  }
+	  getMenuItems() {
+	    const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
+	    if (isCurrentUser) {
+	      return [this.getProfileItem()];
+	    }
+	    return [this.getMentionItem(), this.getSendItem(), this.getProfileItem(), this.getKickItem()];
+	  }
+	}
+
+	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
+	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
+	var _observer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observer");
+	var _initObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initObserver");
+	var _isMessageBottomVisible = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMessageBottomVisible");
+	var _sendVisibleEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendVisibleEvent");
+	var _sendNotVisibleEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendNotVisibleEvent");
+	var _getThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getThreshold");
+	var _getMessageIdFromElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageIdFromElement");
+	class ObserverManager {
+	  constructor(payload) {
+	    Object.defineProperty(this, _getMessageIdFromElement, {
+	      value: _getMessageIdFromElement2
+	    });
+	    Object.defineProperty(this, _getThreshold, {
+	      value: _getThreshold2
+	    });
+	    Object.defineProperty(this, _sendNotVisibleEvent, {
+	      value: _sendNotVisibleEvent2
+	    });
+	    Object.defineProperty(this, _sendVisibleEvent, {
+	      value: _sendVisibleEvent2
+	    });
+	    Object.defineProperty(this, _isMessageBottomVisible, {
+	      value: _isMessageBottomVisible2
+	    });
+	    Object.defineProperty(this, _initObserver, {
+	      value: _initObserver2
+	    });
+	    Object.defineProperty(this, _dialogId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _emitter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _observer, {
+	      writable: true,
+	      value: void 0
+	    });
+	    const {
+	      dialogId,
+	      context: {
+	        emitter
+	      }
+	    } = payload;
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId] = dialogId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _initObserver)[_initObserver]();
+	  }
+	  observeMessage(messageElement) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].observe(messageElement);
+	  }
+	  unobserveMessage(messageElement) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].unobserve(messageElement);
+	  }
+	}
+	function _initObserver2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer] = new IntersectionObserver(entries => {
+	    entries.forEach(entry => {
+	      const messageId = babelHelpers.classPrivateFieldLooseBase(this, _getMessageIdFromElement)[_getMessageIdFromElement](entry.target);
+	      if (!messageId || !entry.rootBounds) {
+	        return;
+	      }
+	      const messageIsFullyVisible = entry.isIntersecting && entry.intersectionRatio >= 0.99;
+	      if (messageIsFullyVisible || babelHelpers.classPrivateFieldLooseBase(this, _isMessageBottomVisible)[_isMessageBottomVisible](entry)) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendVisibleEvent)[_sendVisibleEvent](messageId);
+	      } else {
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendNotVisibleEvent)[_sendNotVisibleEvent](messageId);
+	      }
+	    });
+	  }, {
+	    threshold: babelHelpers.classPrivateFieldLooseBase(this, _getThreshold)[_getThreshold]()
+	  });
+	}
+	function _isMessageBottomVisible2(entry) {
+	  const wholeMessage = entry.boundingClientRect;
+	  const visibleMessagePart = entry.intersectionRect;
+	  if (visibleMessagePart.height === 0) {
+	    return false;
+	  }
+
+	  // +1 to offset browser floating point calculations
+	  return wholeMessage.bottom <= visibleMessagePart.bottom + 1;
+	}
+	function _sendVisibleEvent2(messageId) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.dialog.onMessageIsVisible, {
+	    messageId,
+	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]
+	  });
+	}
+	function _sendNotVisibleEvent2(messageId) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.dialog.onMessageIsNotVisible, {
+	    messageId,
+	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]
+	  });
+	}
+	function _getThreshold2() {
+	  const arrayWithZeros = Array.from({
+	    length: 101
+	  }).fill(0);
+	  return arrayWithZeros.map((zero, index) => index * 0.01);
+	}
+	function _getMessageIdFromElement2(messageElement) {
+	  return Number(messageElement.dataset.id);
+	}
 
 	var _getAvatarConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAvatarConfig");
 	var _getMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageType");
@@ -8214,6 +8237,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  DefaultMessage: im_v2_component_message_default.DefaultMessage,
 	  FileMessage: im_v2_component_message_file.FileMessage,
 	  SmileMessage: im_v2_component_message_smile.SmileMessage,
+	  StickerMessage: im_v2_component_message_sticker.StickerMessage,
 	  ErrorMessage: im_v2_component_message_error.ErrorMessage,
 	  CallInviteMessage: im_v2_component_message_callInvite.CallInviteMessage,
 	  DeletedMessage: im_v2_component_message_deleted.DeletedMessage,
@@ -8335,13 +8359,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    subscribeToEvents() {
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
 	    },
 	    unsubscribeFromEvents() {
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onClickMessageContextMenu, this.onMessageContextMenuClick);
 	    },
 	    insertTextQuote(message) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
 	        text: im_v2_lib_quote.Quote.prepareQuoteText(message),
 	        withNewLine: true,
 	        replace: false,
@@ -8349,14 +8373,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    },
 	    insertMention(user) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertMention, {
 	        mentionText: user.name,
 	        mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(user.id, user.name),
 	        dialogId: this.dialogId
 	      });
 	    },
 	    openReplyPanel(messageId) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.replyMessage, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.replyMessage, {
 	        messageId,
 	        dialogId: this.dialogId
 	      });
@@ -8371,7 +8395,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        this.insertMention(user);
 	        return;
 	      }
-	      const avatarMenu = new AvatarMenu();
+	      const avatarMenu = new AvatarMenu({
+	        emitter: this.getEmitter()
+	      });
 	      avatarMenu.openMenu({
 	        user,
 	        dialog: this.dialog
@@ -8411,10 +8437,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (bindElement) {
 	        target = bindElement;
 	      }
-	      messageMenuManager.openMenu(context, target);
+	      messageMenuManager.openMenu({
+	        messageContext: context,
+	        applicationContext: {
+	          emitter: this.getEmitter()
+	        },
+	        target
+	      });
 	    },
 	    initObserverManager() {
-	      this.observer = new ObserverManager(this.dialogId);
+	      this.observer = new ObserverManager({
+	        dialogId: this.dialogId,
+	        context: {
+	          emitter: this.getEmitter()
+	        }
+	      });
 	    },
 	    getMessageComponentName(message) {
 	      return new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
@@ -8424,6 +8461,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getCollectionManager() {
 	      return this.collectionManager;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -8475,5 +8515,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageComponents = MessageComponents;
 	exports.CollectionManager = CollectionManager;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Lib??{},BX?.UI??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Vue3?.Components??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.IM?.V2?.Component?.Message?.Collab??{},BX?.Messenger?.v2?.Component?.Message??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Lib??{},BX?.UI??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.UI?.Vue3?.Components??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.IM?.V2?.Component?.Message?.Collab??{},BX?.Messenger?.v2?.Component?.Message??{}));
 //# sourceMappingURL=message-list.bundle.js.map

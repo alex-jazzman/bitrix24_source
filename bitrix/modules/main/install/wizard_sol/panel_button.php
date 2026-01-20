@@ -33,7 +33,7 @@ class CWizardSolPanel
 						$siteCnt++;
 
 					$arSitesID[] = mb_strtolower($arSite["ID"]);
-					$arSitesPath[] = mb_strtolower($arSite["PATH"]);
+					$arSitesPath[] = mb_strtolower($arSite["PATH"] ?? '');
 				}
 
 				$newSiteID = "";

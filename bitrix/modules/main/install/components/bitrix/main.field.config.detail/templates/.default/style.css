@@ -149,6 +149,16 @@
 	appearance: none;
 }
 
+.main-user-field-edit-input textarea {
+	height: auto;
+	min-height: 40px;
+	padding-top: 12px;
+	padding-bottom: 12px;
+	resize: vertical;
+	white-space: normal;
+	flex: auto;
+}
+
 .main-user-field-edit-settings td input:hover,
 .main-user-field-edit-settings td input:focus,
 .main-user-field-edit-settings td .main-ui-control.main-ui-select:hover,

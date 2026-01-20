@@ -2268,6 +2268,44 @@ body.kz .intranet-island-with-sidebar__sidebar {
 	;
 }
 
+.intranet-bg--autumn-eu {
+	background-color: #006CAD;
+	background-image:
+		linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
+		url("/bitrix/templates/login/images/bg/autumn/eu/horizontal-1024.webp"),
+		url("/bitrix/templates/login/images/bg/autumn/eu/horizontal-1024-preview.webp")
+;
+	background-position:
+		left bottom,
+		left top,
+		left top
+;
+	background-size:
+		100% 108px,
+		cover,
+		cover
+;
+}
+
+.intranet-bg--autumn-cis {
+	background-color: #006CAD;
+	background-image:
+		linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
+		url("/bitrix/templates/login/images/bg/autumn/cis/horizontal-1024.webp"),
+		url("/bitrix/templates/login/images/bg/autumn/cis/horizontal-1024-preview.webp")
+;
+	background-position:
+		left bottom,
+		left top,
+		left top
+;
+	background-size:
+		100% 108px,
+		cover,
+		cover
+;
+}
+
 @media (orientation: portrait)
 {
 	.intranet-bg--winter {
@@ -2289,7 +2327,22 @@ body.kz .intranet-island-with-sidebar__sidebar {
 			linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
 			url("/bitrix/templates/login/images/bg/summer/vert-1024.webp"),
 			url("/bitrix/templates/login/images/bg/summer/vert-1024-preview.webp")
-	;
+		;
+	}
+
+	.intranet-bg--autumn-eu {
+		background-image:
+			linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
+			url("/bitrix/templates/login/images/bg/autumn/eu/vert-1024.webp"),
+			url("/bitrix/templates/login/images/bg/autumn/eu/vert-1024-preview.webp")
+		;
+	}
+	.intranet-bg--autumn-cis {
+		background-image:
+			linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
+			url("/bitrix/templates/login/images/bg/autumn/cis/vert-1024.webp"),
+			url("/bitrix/templates/login/images/bg/autumn/cis/vert-1024-preview.webp")
+		;
 	}
 }
 
@@ -2314,7 +2367,21 @@ body.kz .intranet-island-with-sidebar__sidebar {
 			linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
 			url("/bitrix/templates/login/images/bg/summer/horizontal-1920.webp"),
 			url("/bitrix/templates/login/images/bg/summer/horizontal-1920-preview.webp")
-	;
+		;
+	}
+	.intranet-bg--autumn-eu {
+		background-image:
+			linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
+			url("/bitrix/templates/login/images/bg/autumn/eu/horizontal-1920.webp"),
+			url("/bitrix/templates/login/images/bg/autumn/eu/horizontal-1920-preview.webp")
+		;
+	}
+	.intranet-bg--autumn-cis {
+		background-image:
+			linear-gradient(180deg, rgba(0, 0, 0, 0) 19.64%, rgba(5, 5, 5, 0.45) 100%),
+			url("/bitrix/templates/login/images/bg/autumn/cis/horizontal-1920.webp"),
+			url("/bitrix/templates/login/images/bg/autumn/cis/horizontal-1920-preview.webp")
+		;
 	}
 }
 
@@ -2609,8 +2676,25 @@ body.kz .intranet-island-with-sidebar__sidebar {
 	margin-top: 0;
 }
 
-.intranet-form-add-block__title--margin {
-	margin-top: 43px;
+.intranet-form-add-block__title.--margin {
+	margin-top: 35px;
+}
+
+.intranet-back-button {
+	position: relative;
+}
+
+.intranet-back-button__icon {
+	content: '';
+	position: absolute;
+	left: -25px;
+	top: -25px;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.7'%3E%3Cpath d='M11.0869 7.59076C11.4058 7.27183 11.9233 7.27183 12.2422 7.59076C12.5609 7.90962 12.5609 8.42615 12.2422 8.74506L7.80371 13.1835H22.165C22.616 13.1835 22.9813 13.549 22.9814 13.9999C22.9814 14.451 22.6161 14.8173 22.165 14.8173H7.80273L12.2422 19.2568C12.5611 19.5757 12.5611 20.0931 12.2422 20.412C11.9232 20.7308 11.4058 20.7309 11.0869 20.412L5.25391 14.579C5.09515 14.4202 5.01626 14.212 5.01562 14.0038V14.0009C5.01562 13.7651 5.11549 13.5514 5.27539 13.4023L11.0869 7.59076Z' fill='%23828B95'/%3E%3C/g%3E%3C/svg%3E%0A");
 }
 
 /* form */
@@ -2769,18 +2853,18 @@ input.intranet-text-input__field::-internal-input-suggested {
 
 .intranet-text-captcha_item {
 	margin-bottom: 10px;
+	text-align: center;
 }
 
 .intranet-login-error-block {
 	max-width: 100%;
 	display: flex;
-	border: 1px solid #c21b17;
 	border-radius: 8px;
 	padding: 10px 30px 11px 16px;
 	margin-bottom: 15px;
-	background-color: #fef1f0;
+	background-color: var(--ui-color-accent-soft-red-1);
 	box-sizing: border-box;
-	color: #c21b17;
+	color: var(--ui-color-base-1);
 }
 
 /* password requirements */

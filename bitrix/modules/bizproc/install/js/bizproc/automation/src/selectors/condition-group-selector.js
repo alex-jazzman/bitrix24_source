@@ -11,6 +11,7 @@ type ConditionGroupSelectorOptions = {
 	rootGroupTitle: string,
 	onOpenFieldMenu: ?(BaseEvent) => void,
 	onOpenMenu: ?(BaseEvent) => void,
+	customSelectorFn: ?Function;
 	showValuesSelector: boolean,
 	caption: ?{
 		head: string,
@@ -36,6 +37,7 @@ export class ConditionGroupSelector extends EventEmitter
 	#options: ConditionGroupSelectorOptions = {};
 	#toggleButtonNode: HTMLDivElement;
 	#draggableNode: HTMLDivElement;
+	#customSelectorFn: ?Function = null;
 
 	constructor(conditionGroup: ConditionGroup, options: ConditionGroupSelectorOptions)
 	{
@@ -62,6 +64,7 @@ export class ConditionGroupSelector extends EventEmitter
 			this.#rootGroupTitle = options.rootGroupTitle;
 			this.#onOpenFieldMenu = options.onOpenFieldMenu;
 			this.#onOpenMenu = options.onOpenMenu;
+			this.#customSelectorFn = options.customSelector;
 			this.#showValuesSelector = options.showValuesSelector ?? true;
 
 			this.#options = options;
@@ -79,6 +82,7 @@ export class ConditionGroupSelector extends EventEmitter
 				onOpenFieldMenu: this.#onOpenFieldMenu,
 				onOpenMenu: this.#onOpenMenu,
 				showValuesSelector: this.#showValuesSelector,
+				customSelectorFn: this.#customSelectorFn,
 			});
 			conditionSelector.subscribe('onRemoveConditionClick', this.#onRemoveConditionClick.bind(this));
 
@@ -190,6 +194,7 @@ export class ConditionGroupSelector extends EventEmitter
 			onOpenFieldMenu: this.#onOpenFieldMenu,
 			onOpenMenu: this.#onOpenMenu,
 			showValuesSelector: this.#showValuesSelector,
+			customSelectorFn: this.#customSelectorFn,
 		});
 		conditionSelector.subscribe('onRemoveConditionClick', this.#onRemoveConditionClick.bind(this));
 		this.#itemSelectors.push(conditionSelector);

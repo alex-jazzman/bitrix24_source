@@ -314,3 +314,4 @@ function _RunTimer()
 	current_moment = null;
 }
 })(window)
+

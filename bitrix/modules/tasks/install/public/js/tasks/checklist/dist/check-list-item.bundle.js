@@ -439,14 +439,16 @@ this.BX = this.BX || {};
 	      this.members.clear();
 	      Object.keys(members).forEach(function (id) {
 	        var _members$id = members[id],
+	          ID = _members$id.ID,
 	          NAME = _members$id.NAME,
 	          TYPE = _members$id.TYPE,
-	          IS_COLLABER = _members$id.IS_COLLABER;
-	        _this2.members.set(id, {
-	          id: id,
+	          isCollaber = _members$id.IS_COLLABER;
+	        var userId = Number(ID);
+	        _this2.members.set(userId, {
+	          id: userId,
 	          nameFormatted: main_core.Text.encode(NAME),
 	          type: types[TYPE],
-	          isCollaber: IS_COLLABER
+	          isCollaber: isCollaber
 	        });
 	      });
 	    }

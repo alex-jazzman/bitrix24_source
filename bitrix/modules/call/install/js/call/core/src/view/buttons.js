@@ -2,7 +2,7 @@ import { Dom, Text, Type } from 'main.core';
 
 import Util from '../util';
 import { createSVG } from './svg';
-import { View } from './view';
+import { CallCommonRecordState } from '../call_common_record';
 
 
 
@@ -109,7 +109,16 @@ export class SimpleButton
 		let textNode;
 		if (this.text !== '')
 		{
-			textNode = Dom.create("div", {props: {className: "bx-messenger-videocall-panel-text"}, text: this.text});
+			textNode = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-text' },
+				text: this.text,
+				children: [
+					Dom.create('div', {
+						props: { className: 'bx-messenger-videocall-panel-text-content' },
+						text: this.text,
+					}),
+				],
+			});
 		}
 		else
 		{
@@ -120,45 +129,47 @@ export class SimpleButton
 			tooltipClass, tooltipStyle,
 		} = this.tooltip;
 
-		this.elements.root = Dom.create("div", {
-			props: { className: `bx-messenger-videocall-panel-item ${tooltipClass}` + (this.blocked ? ' blocked' : '') },
+		this.elements.root = Dom.create('div', {
+			props: {
+				className: `bx-messenger-videocall-panel-item ${tooltipClass}${
+					this.blocked ? ' blocked' : ''}${
+					this.isComingSoon ? ' coming-soon' : ''}`,
+			},
 			attrs: {
 				style: tooltipStyle,
 			},
 			children: [
-				Dom.create("div", {
-					props: {className: this.backgroundClass},
+				Dom.create('div', {
+					props: { className: this.backgroundClass },
 					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-videocall-panel-icon bx-messenger-videocall-panel-icon-" + this.class},
-							children: [
-								this.elements.counter = Dom.create("span", {
-									props: {className: "bx-messenger-videocall-panel-item-counter"},
-									text: 0,
-									dataset: {
-										counter: 0,
-										counterType: 'digits',
-									}
-								}),
-								this.elements.comingSoon = Dom.create("span", {
-									props: {className: "bx-messenger-videocall-panel-item-coming-soon"},
-									text: BX.message('CALL_FEATURES_COMING_SOON'),
-									dataset: {
-										visible: this.isComingSoon ? 'Y' : 'N',
-									}
-								}),
-							]
+						Dom.create('div', {
+							props: {
+								className: `bx-messenger-videocall-panel-icon bx-messenger-videocall-panel-icon-${
+									this.class}`,
+							},
 						}),
-					]
+						this.elements.counter = Dom.create('span', {
+							props: { className: 'bx-messenger-videocall-panel-item-counter' },
+							text: 0,
+							dataset: {
+								counter: 0,
+								counterType: 'digits',
+							},
+						}),
+						this.elements.comingSoon = Dom.create('span', {
+							props: { className: 'bx-messenger-videocall-panel-item-coming-soon' },
+							text: BX.message('CALL_FEATURES_COMING_SOON_MSGVER_1'),
+							dataset: {
+								visible: this.isComingSoon ? 'Y' : 'N',
+							},
+						}),
+					],
 				}),
 				textNode,
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-panel-item-bottom-spacer"}
-				})
 			],
 			events: {
 				click: this.callbacks.onClick,
-			}
+			},
 		});
 
 		if (this.isActive)
@@ -219,10 +230,22 @@ export class SimpleButton
 	{
 		this.counter = parseInt(counter, 10);
 
-		let counterLabel = this.counter;
-		if (counterLabel > 999)
+		if (Number.isNaN(this.counter))
 		{
-			counterLabel = 999;
+			this.counter = 0;
+			this.elements.counter.dataset.counter = 0;
+			this.elements.counter.dataset.counterType = 'digits';
+			this.elements.counter.innerText = 0;
+
+			return;
+		}
+
+		let counterLabel = this.counter;
+		const counterData = counterLabel;
+
+		if (counterLabel > 99)
+		{
+			counterLabel = '99+';
 		}
 
 		let counterType = 'digits';
@@ -235,7 +258,7 @@ export class SimpleButton
 			counterType = 'hundreds';
 		}
 
-		this.elements.counter.dataset.counter = counterLabel;
+		this.elements.counter.dataset.counter = counterData;
 		this.elements.counter.dataset.counterType = counterType;
 		this.elements.counter.innerText = counterLabel;
 	};
@@ -247,6 +270,15 @@ export class SimpleButton
 		this.isComingSoon
 			? this.elements.comingSoon.dataset.visible = 'Y'
 			: this.elements.comingSoon.dataset.visible = 'N';
+
+		if (this.isComingSoon)
+		{
+			this.elements.root?.classList.add('coming-soon');
+		}
+		else
+		{
+			this.elements.root?.classList.remove('coming-soon');
+		}
 	}
 }
 
@@ -299,60 +331,63 @@ export class DeviceButton
 			tooltipClass, tooltipStyle,
 		} = this.tooltip;
 
+		this.elements.arrow = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-panel-item-with-arrow-right' },
+			children: [
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-panel-item-with-arrow-right-icon' },
+				}),
+			],
+			events: {
+				click: function(e)
+				{
+					this.elements.arrow?.classList.add('rotate');
+					this.callbacks.onArrowClick.apply(this, arguments);
+					e.stopPropagation();
+				}.bind(this),
+			},
+		});
 
-		this.elements.root = Dom.create("div", {
+		this.elements.root = Dom.create('div', {
 			props: {
-				id: "bx-messenger-videocall-panel-item-with-arrow-" + this.class,
-				className: `bx-messenger-videocall-panel-item-with-arrow ${tooltipClass}` + (this.blocked ? " blocked" : "")
+				id: `bx-messenger-videocall-panel-item-with-arrow-${
+					this.class}`,
+				className: `bx-messenger-videocall-panel-item-with-arrow ${tooltipClass}${
+					this.blocked ? ' blocked' : ''}`,
 			},
 			attrs: {
 				style: tooltipStyle,
 			},
 			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-panel-item-with-arrow-left"},
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-panel-item-with-arrow-left' },
 					children: [
-						this.elements.iconContainer = Dom.create("div", {
-							props: {className: this.getIconContainerClass()},
+						this.elements.iconContainer = Dom.create('div', {
+							props: { className: this.getIconContainerClass() },
 							children: [
-								this.elements.icon = Dom.create("div", {
-									props: {className: this.getIconClass()},
+								this.elements.icon = Dom.create('div', {
+									props: { className: this.getIconClass() },
 								}),
-							]
+							],
 						}),
-					]
+						...(this.arrowHidden ? [] : [this.elements.arrow]),
+					],
 				}),
-
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-panel-text"},
-					text: this.text
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-panel-text' },
+					text: this.text,
+					children: [
+						Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-panel-text-content' },
+							text: this.text,
+						}),
+					],
 				}),
 			],
 			events: {
 				click: this.callbacks.onClick,
-			}
+			},
 		});
-
-		this.elements.arrow = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-panel-item-with-arrow-right"},
-			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-panel-item-with-arrow-right-icon"},
-				})
-			],
-			events: {
-				click: function (e)
-				{
-					this.callbacks.onArrowClick.apply(this, arguments);
-					e.stopPropagation();
-				}.bind(this)
-			}
-		});
-
-		if (!this.arrowHidden)
-		{
-			this.elements.root.appendChild(this.elements.arrow);
-		}
 
 		if (this.showLevel)
 		{
@@ -379,7 +414,6 @@ export class DeviceButton
 									this.elements.gradientStop1 = createSVG("stop", {
 										attrNS: {
 											offset: "0",
-											"stop-color": "#2FC6F6",
 											id: "gradientStop1"
 										}
 									}),
@@ -398,37 +432,9 @@ export class DeviceButton
 						attrNS: {
 							"fill-rule": "evenodd",
 							"clip-rule": "evenodd",
-							d: "M20.4012 13.5741C20.9948 13.5614 21.4862 14.0351 21.4988 14.6321C21.5567 17.3753 19.5475 20.5964 15.6554 21.1285L15.6546 22.5504L16.1204 22.5507C16.6554 22.5507 17.0891 22.9869 17.0891 23.525C17.0891 24.0631 16.6554 24.4993 16.1204 24.4993H12.879C12.344 24.4993 11.9103 24.0631 11.9103 23.525C11.9103 22.9869 12.344 22.5507 12.879 22.5507L13.3433 22.5504L13.3432 21.1275C9.45683 20.5997 7.47015 17.4555 7.50034 14.6434C7.50675 14.0463 7.99323 13.5674 8.58692 13.5738C9.14103 13.5799 9.59269 14.0065 9.64523 14.5489L9.65028 14.6667C9.64425 15.2277 9.95576 16.3048 10.5307 17.1425C11.3561 18.3452 12.625 19.0421 14.5111 19.0421C16.3868 19.0421 17.6512 18.3317 18.4781 17.1059C19.0061 16.3232 19.3137 15.3287 19.3465 14.7932L19.3492 14.678C19.3366 14.081 19.8076 13.5867 20.4012 13.5741ZM14.4996 4.66602C16.2557 4.66602 17.6793 6.0193 17.6793 7.68867V14.0608C17.6793 15.7301 16.2557 17.0834 14.4996 17.0834C12.7435 17.0834 11.32 15.7301 11.32 14.0608L11.32 7.68867C11.32 6.0193 12.7435 4.66602 14.4996 4.66602Z",
+							d: 'M7.01843 12.8394C7.46936 12.8492 7.82709 13.2234 7.81726 13.6743C7.76065 16.2837 9.9066 19.8267 13.9882 19.8267C18.0865 19.8265 20.3038 16.2334 20.1805 13.6987C20.1586 13.2483 20.5056 12.8654 20.9559 12.8433C21.4064 12.8213 21.7894 13.1682 21.8114 13.6187C21.9638 16.7444 19.4696 20.9702 14.8124 21.4204V23.1763H16.7714C17.2222 23.1765 17.5878 23.5427 17.5878 23.9937C17.5875 24.4443 17.2221 24.8099 16.7714 24.8101H11.2206C10.7699 24.8098 10.4044 24.4443 10.4042 23.9937C10.4042 23.5428 10.7698 23.1765 11.2206 23.1763H13.1796V21.4224C8.50848 20.9829 6.11622 16.768 6.18445 13.6382C6.1943 13.1874 6.56769 12.8297 7.01843 12.8394ZM13.9921 3.30518C16.1622 3.30518 17.9218 5.06469 17.9218 7.23486V13.5396C17.9218 15.7097 16.1622 17.4692 13.9921 17.4692C11.8221 17.469 10.0634 15.7096 10.0634 13.5396V7.23486C10.0634 5.06481 11.8221 3.30537 13.9921 3.30518ZM13.9921 4.93896C12.7241 4.93916 11.6962 5.96687 11.6962 7.23486V13.5396C11.6962 14.8075 12.7241 15.8353 13.9921 15.8354C15.2602 15.8354 16.2889 14.8077 16.2889 13.5396V7.23486C16.2889 5.96676 15.2602 4.93896 13.9921 4.93896Z',
 							fill: "url(#volumeGradient)"
 						}
-					})
-				]
-			}));
-		}
-		else if (this.showLevel)
-		{
-			this.elements.icon.appendChild(createSVG("svg", {
-				attrNS: {
-					class: "bx-messenger-videocall-panel-item-level-meter-container",
-					width: 3, height: 20
-				},
-				children: [
-					createSVG("g", {
-						attrNS: {
-							fill: "#30B1DC"
-						},
-						children: [
-							createSVG("rect", {
-								attrNS: {
-									x: 0, y: 0, width: 3, height: 20, rx: 1.5, opacity: .1,
-								}
-							}),
-							this.elements.levelMeter = createSVG("rect", {
-								attrNS: {
-									x: 0, y: 20, width: 3, height: 20, rx: 1.5,
-								}
-							}),
-						]
 					})
 				]
 			}));
@@ -572,7 +578,13 @@ export class DeviceButton
 			return;
 		}
 		this.arrowHidden = false;
-		this.elements.root.appendChild(this.elements.arrow);
+
+		this.elements.iconContainer.className = this.getIconContainerClass();
+
+		if (!this.elements.root.querySelector('.bx-messenger-videocall-panel-item-with-arrow-right-icon'))
+		{
+			this.elements.root.children[0].appendChild(this.elements.arrow);
+		}
 	};
 
 	hideArrow()
@@ -581,8 +593,14 @@ export class DeviceButton
 		{
 			return;
 		}
-		this.arrowHidden = false;
-		this.elements.root.removeChild(this.elements.arrow);
+		this.arrowHidden = true;
+
+		this.elements.iconContainer.className = this.getIconContainerClass();
+
+		if (this.elements.root.querySelector('.bx-messenger-videocall-panel-item-with-arrow-right-icon'))
+		{
+			this.elements.root.children[0].removeChild(this.elements.arrow);
+		}
 	};
 
 	setLevel(level)
@@ -944,7 +962,7 @@ export class ParticipantsButtonMobile
 
 	setCount(count)
 	{
-		if (this.count == count)
+		if (this.count == count || !this.elements.text)
 		{
 			return;
 		}
@@ -958,7 +976,7 @@ export class RecordStatusButton
 	constructor(config)
 	{
 		this.userId = config.userId;
-		this.recordState = config.recordState;
+		this.commonRecordState = config.commonRecordState;
 
 		this.updateViewInterval = null;
 
@@ -969,12 +987,7 @@ export class RecordStatusButton
 			timeText: null,
 			stateText: null,
 		};
-
-		this.callbacks = {
-			onPauseClick: BX.prop.getFunction(config, "onPauseClick", BX.DoNothing),
-			onStopClick: BX.prop.getFunction(config, "onStopClick", BX.DoNothing),
-		}
-	};
+	}
 
 	render()
 	{
@@ -983,93 +996,87 @@ export class RecordStatusButton
 			return this.elements.root;
 		}
 
-		const {
-			tooltipStyle,
-		} = this.tooltip;
+		const { tooltipStyle } = this.tooltip;
 
-		this.elements.root = Dom.create("div", {
-			props: { className: `bx-messenger-videocall-top-recordstatus record-status-` + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer') },
+		this.elements.root = Dom.create('div', {
+			props: {
+				className: `bx-messenger-videocall-top-recordstatus record-status-${this.commonRecordState.state}`,
+			},
 			attrs: {
 				style: tooltipStyle,
 			},
 			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-recordstatus-status"},
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-top-recordstatus-status' },
 					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-videocall-top-button-icon record-status"}
+						Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-top-button-icon record-status' },
 						}),
-					]
+					],
 				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-recordstatus-time"},
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-top-recordstatus-time' },
 					children: [
-						this.elements.timeText = Dom.create("span", {
-							props: {className: "bx-messenger-videocall-top-recordstatus-time-text"},
-							text: Util.getRecordTimeText(this.recordState)
-						}),
-					]
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-recordstatus-separator"}
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-recordstatus-buttons"},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-videocall-top-recordstatus-button"},
-							children: [
-								Dom.create("div", {
-									props: {className: "bx-messenger-videocall-top-button-icon record-pause"},
-								}),
-							],
-							events: {
-								click: this.callbacks.onPauseClick
-							}
-						}),
-					]
+						(this.elements.timeText = Dom.create('span', {
+							props: { className: 'bx-messenger-videocall-top-recordstatus-time-text' },
+							text: Util.getRecordTimeText(this.commonRecordState),
+						})),
+					],
 				}),
 			],
 		});
 
 		return this.elements.root;
-	};
+	}
 
-	update(recordState)
+	update(commonRecordState)
 	{
-		if (this.recordState.state !== recordState.state)
+		const prevState = this.commonRecordState?.state;
+
+		if (prevState !== commonRecordState.state)
 		{
 			clearInterval(this.updateViewInterval);
-			if (recordState.state === View.RecordState.Started)
+			this.updateViewInterval = null;
+
+			if (commonRecordState.state === CallCommonRecordState.Started)
 			{
-				this.updateViewInterval = setInterval(this.updateView.bind(this), 1000);
+				this.updateViewInterval = setInterval(() => this.updateView(), 1000);
 			}
 		}
 
-		this.recordState = recordState;
+		this.commonRecordState = commonRecordState;
 		this.updateView();
 	}
 
 	updateView()
 	{
-		var timeText = Util.getRecordTimeText(this.recordState);
+		const timeText = Util.getRecordTimeText(this.commonRecordState);
+
 		if (this.elements.timeText.innerText !== timeText)
 		{
-			this.elements.timeText.innerText = Util.getRecordTimeText(this.recordState);
+			this.elements.timeText.innerText = timeText;
 		}
 
-		if (!this.elements.root.classList.contains("record-status-" + this.recordState.state))
+		const currentClass = `record-status-${this.commonRecordState.state}`;
+		if (!this.elements.root.classList.contains(currentClass))
 		{
-			const {
-				tooltipClass,
-				hasTooltip, tooltipTextVarName, getTooltipText,
-			} = this.tooltip;
-
+			const { tooltipClass, hasTooltip, tooltipTextVarName, getTooltipText } = this.tooltip;
 			const tooltipText = getTooltipText();
-			hasTooltip && tooltipText && this.elements.root.style.setProperty(tooltipTextVarName, `'${tooltipText}'`);
-			this.elements.root.className = `${tooltipText && tooltipClass} bx-messenger-videocall-top-recordstatus record-status-` + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer');
+
+			if (hasTooltip && tooltipText)
+			{
+				this.elements.root.style.setProperty(tooltipTextVarName, `'${tooltipText}'`);
+			}
+
+			const classes = [
+				tooltipText ? tooltipClass : '',
+				'bx-messenger-videocall-top-recordstatus',
+				currentClass,
+			].filter(Boolean);
+
+			this.elements.root.className = classes.join(' ');
 		}
-	};
+	}
 
 	stopViewUpdate()
 	{

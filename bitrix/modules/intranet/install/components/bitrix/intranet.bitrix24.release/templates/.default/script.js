@@ -161,7 +161,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var _deactivated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deactivated");
 	var _id$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
+	var _autoLaunch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("autoLaunch");
 	var _runAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("runAction");
+	var _deactivate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deactivate");
 	var _handleSliderClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderClose");
 	var _handleEarClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEarClick");
 	var _handleFrameMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFrameMessage");
@@ -176,6 +178,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    Object.defineProperty(this, _handleSliderClose, {
 	      value: _handleSliderClose2
 	    });
+	    Object.defineProperty(this, _deactivate, {
+	      value: _deactivate2
+	    });
 	    Object.defineProperty(this, _runAction, {
 	      value: _runAction2
 	    });
@@ -186,6 +191,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    Object.defineProperty(this, _id$1, {
 	      writable: true,
 	      value: ''
+	    });
+	    Object.defineProperty(this, _autoLaunch, {
+	      writable: true,
+	      value: false
 	    });
 	    const options = main_core.Type.isPlainObject(releaseOptions) ? releaseOptions : {};
 	    if (!main_core.Type.isStringFilled(options.url)) {
@@ -229,6 +238,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      } else {
 	        this.getSlider().show();
 	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _autoLaunch)[_autoLaunch] = true;
 	      void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('show', {
 	        context: 'auto'
 	      });
@@ -257,6 +267,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  });
 	}
+	function _deactivate2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] === false) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = true;
+	    void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('deactivate').catch(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = false;
+	    });
+	  }
+	}
 	function _handleSliderClose2() {
 	  if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
 	    this.getEar().show(true);
@@ -267,7 +285,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      AutoLauncher.unregister(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]);
 	    }, 1000);
 	  }
-	  void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('close');
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _autoLaunch)[_autoLaunch]) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('close');
+	  } else {
+	    babelHelpers.classPrivateFieldLooseBase(this, _deactivate)[_deactivate]();
+	  }
 	}
 	function _handleEarClick2() {
 	  this.getEar().hide();
@@ -284,10 +306,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return;
 	  }
 	  if (message.command === 'endOfScroll' && babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] === false) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('deactivate').catch(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = false;
-	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _deactivate)[_deactivate]();
 	  }
 	  if (message.command === 'openHelper' && BX.Helper) {
 	    BX.Helper.show(message.options);

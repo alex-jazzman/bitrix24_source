@@ -5,7 +5,9 @@ import { QueueManager } from 'pull.queuemanager';
 import type { ActionItem } from 'pull.queuemanager';
 
 import { Module } from 'tasks.v2.const';
+import { TagsPullHandler } from './tags-pull-handler/tags-pull-handler';
 import { TaskPullHandler } from './task-pull-handler/task-pull-handler';
+import { ResultsPullHandler } from './results-pull-handler/results-pull-handler';
 import type { BasePullHandler } from './handler/base-pull-handler';
 
 type Params = {
@@ -25,6 +27,8 @@ export class PullManager
 
 		this.#handlers = new Set([
 			new TaskPullHandler(),
+			new TagsPullHandler(),
+			new ResultsPullHandler(),
 		]);
 	}
 

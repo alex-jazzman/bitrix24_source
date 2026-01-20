@@ -1111,19 +1111,22 @@ this.BX.UI = this.BX.UI || {};
       }
       return isDelete(key) || key.toLowerCase() === 'd' && ctrlKey;
     }
-    if (ctrlKey || altKey || metaKey) {
+    if (ctrlKey || altKey || metaKey || shiftKey) {
       return false;
     }
     return isDelete(key);
   }
-  function isUndo(key, shiftKey, metaKey, ctrlKey) {
-    return key.toLowerCase() === 'z' && !shiftKey && controlOrMeta(metaKey, ctrlKey);
+  function isExactShortcutMatch(key, keyCode, expectedKey, expectedCode) {
+    return key.toLowerCase() === expectedKey.toLowerCase() || keyCode === expectedCode;
   }
-  function isRedo(key, shiftKey, metaKey, ctrlKey) {
+  function isUndo(key, shiftKey, metaKey, ctrlKey, keyCode) {
+    return isExactShortcutMatch(key, keyCode, 'z', 90) && !shiftKey && controlOrMeta(metaKey, ctrlKey);
+  }
+  function isRedo(key, shiftKey, metaKey, ctrlKey, keyCode) {
     if (IS_APPLE) {
-      return key.toLowerCase() === 'z' && metaKey && shiftKey;
+      return isExactShortcutMatch(key, keyCode, 'z', 90) && metaKey && shiftKey;
     }
-    return key.toLowerCase() === 'y' && ctrlKey || key.toLowerCase() === 'z' && ctrlKey && shiftKey;
+    return isExactShortcutMatch(key, keyCode, 'y', 89) && ctrlKey || isExactShortcutMatch(key, keyCode, 'z', 90) && ctrlKey && shiftKey;
   }
   function isCopy(key, shiftKey, metaKey, ctrlKey) {
     if (shiftKey) {
@@ -3092,7 +3095,8 @@ this.BX.UI = this.BX.UI || {};
       shiftKey,
       ctrlKey,
       metaKey,
-      altKey
+      altKey,
+      keyCode
     } = event;
     if (dispatchCommand(editor, KEY_DOWN_COMMAND, event)) {
       return;
@@ -3163,10 +3167,10 @@ this.BX.UI = this.BX.UI || {};
       dispatchCommand(editor, FORMAT_TEXT_COMMAND, 'italic');
     } else if (isTab(key, altKey, ctrlKey, metaKey)) {
       dispatchCommand(editor, KEY_TAB_COMMAND, event);
-    } else if (isUndo(key, shiftKey, metaKey, ctrlKey)) {
+    } else if (isUndo(key, shiftKey, metaKey, ctrlKey, keyCode)) {
       event.preventDefault();
       dispatchCommand(editor, UNDO_COMMAND, undefined);
-    } else if (isRedo(key, shiftKey, metaKey, ctrlKey)) {
+    } else if (isRedo(key, shiftKey, metaKey, ctrlKey, keyCode)) {
       event.preventDefault();
       dispatchCommand(editor, REDO_COMMAND, undefined);
     } else {

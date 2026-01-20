@@ -297,7 +297,7 @@ $tabContainerId = "{$guid}_tabs";
 				"ITEMS" => $menuTabs,
 				"DISABLE_SETTINGS" => true,
 				"EDIT_MODE" => $mode,
-				"THEME" => 'flat',
+				"THEME" => 'air',
 			]
 		);
 

@@ -10,6 +10,8 @@ $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE'] = 'Созда
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE'] = 'настроить';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE'] = 'У вас нет ни одной открытой линии, у которой вы можете настроить каналы коммуникаций. Пожалуйста, создайте новую открытую линию.';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE_AND_NOT_ADD_OPEN_LINE'] = 'У вас нет ни одной открытой линии, у которой вы можете настроить каналы коммуникаций, и у вас нет прав на создание новой открытой линии.<br>Обратитесь к администратору портала.';
+$MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_GRANTS'] = 'Недостаточно прав для подключения канала.<br />Обратитесь к администратору вашего Битрикс24';
+$MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_GRANTS_BUTTON'] = 'Написать администратору';
 $MESS['IIMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION'] = 'Произошла ошибка. Действие отменено.';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE'] = 'Закрыть';
 

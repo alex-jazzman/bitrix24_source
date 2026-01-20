@@ -1,11 +1,13 @@
 .landing-ui-field-color-hex {
+	display: flex;
 	position: relative;
 	box-shadow: 0 0 4px rgba(128, 128, 128, .1);
 	border: 1px solid rgba(0, 0, 0, .05);
+	height: 28px;
 }
 
 .landing-ui-field-color-colorset .landing-ui-field-color-hex {
-	margin-left: 3px;
+	margin-left: 0;
 }
 
 .landing-ui-field-color-hex-input,
@@ -14,29 +16,46 @@
 }
 
 .landing-ui-field-color-hex-input {
-	height: 22px;
-	max-width: 77px;
+	height: 100%;
+	max-width: 100px;
 	border-radius: 2px;
 	border: none;
 	outline: none;
-	padding: 2px 15px 2px 5px;
+	padding: 0;
 	box-sizing: border-box;
+	font-size: 15px;
+}
+
+.landing-ui-field-color-hex.--base .landing-ui-field-color-hex-input {
+	max-width: 75px;
+}
+
+.landing-ui-field-color-hex.--preview .landing-ui-field-color-hex-input {
+	font-size: 14px;
+}
+
+.landing-ui-field-color-hex.--preview .landing-ui-field-color-hex-input {
+	max-width: 88px;
 }
 
 .landing-ui-field-color-hex-preview {
 	position: relative;
-	padding: 3px 19px 3px 6px;
+	padding: 0;
+	border: 1px solid #edeef0;
 	border-radius: 2px;
 	font-size: 11px;
-	color: #525c69;
+	background: #525c69;
 	cursor: pointer;
 	transition: .3s;
+	width: 18px;
+	height: 18px;
+	margin: auto 6px auto 8px;
 }
 
 .landing-ui-field-color-hex-preview-btn {
 	position: absolute;
 	top: 50%;
-	right: 9px;
+	right: 8px;
 	display: block;
 	transform: translate(0, -50%);
 	cursor: pointer;
@@ -63,4 +82,8 @@
 	border-radius: 50%;
 	background-image: url("data:image/svg+xml,%3Csvg width='15' height='15' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Crect fill='%23FFF' width='14.819' height='14.819' rx='7.409'/%3E%3Cpath fill='%232FC6F6' d='M6.593 8.333l4.19-4.141 1.39 1.44-5.559 5.56-.021-.023-.022.023-3.398-3.415 1.39-1.44z'/%3E%3C/g%3E%3C/svg%3E");
 	box-shadow: 0 2px 4px 0 rgba(0,0,0,.11);
+}
+
+.landing-ui-field-color-hex.--base .main-ui-loader {
+	margin-right: 6px;
 }

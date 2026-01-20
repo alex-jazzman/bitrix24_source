@@ -6,7 +6,6 @@ import { CheckboxOption } from '../elements/checkbox';
 import { RadioOption, type RadioOptionItem } from '../elements/radio';
 import { SimpleNotificationList } from './components/simple-notification-list';
 import { ExpertNotificationList } from './components/expert-mode/expert-notification-list';
-import { NotificationService } from './classes/notification-service';
 
 type NotificationMode = $Keys<typeof NotificationSettingsMode>;
 
@@ -82,7 +81,7 @@ export const NotificationSection = {
 				}
 			}
 
-			void NotificationService.switchScheme(newValue);
+			void this.getSettingsService().switchScheme(newValue);
 		},
 		async changeLocalNotificationMode(newValue: NotificationMode): void
 		{

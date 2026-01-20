@@ -721,6 +721,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _signedDocumentId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
 	var _signedDocumentType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
 	var _templateId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
+	var _triggerType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerType");
 	var _body$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("body");
 	var _form$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
 	var _originalFormData$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("originalFormData");
@@ -761,6 +762,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _triggerType, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _body$1, {
 	      writable: true,
 	      value: void 0
@@ -788,6 +793,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _templateId$1)[_templateId$1] = main_core.Text.toInteger(config.templateId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$1)[_signedDocumentType$1] = config.signedDocumentType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$1)[_signedDocumentId$1] = config.signedDocumentId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType] = config.triggerType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime] = Math.round(Date.now() / 1000);
 	  }
 	  renderBody() {
@@ -810,12 +816,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    return isEqualsFormData(new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1]), babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$1)[_originalFormData$1]);
 	  }
 	  onBeforeNextStep() {
+	    var _babelHelpers$classPr;
 	    this.cleanErrors();
 	    const data = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1]);
 	    data.set('templateId', babelHelpers.classPrivateFieldLooseBase(this, _templateId$1)[_templateId$1]);
 	    data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$1)[_signedDocumentType$1]);
 	    data.set('signedDocumentId', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$1)[_signedDocumentId$1]);
 	    data.set('startDuration', Math.round(Date.now() / 1000) - babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime]);
+	    data.set('triggerType', (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType]) != null ? _babelHelpers$classPr : '');
 	    return new Promise((resolve, reject) => {
 	      startWorkflowAction(data).then(() => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _isSent)[_isSent] = true;
@@ -1185,6 +1193,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _templateId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
 	var _signedDocumentType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
 	var _signedDocumentId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
+	var _triggerType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerType");
 	var _startTime$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTime");
 	var _resolveButtonsEnableState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resolveButtonsEnableState");
 	var _renderContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
@@ -1308,6 +1317,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _triggerType$1, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _startTime$1, {
 	      writable: true,
 	      value: void 0
@@ -1350,6 +1363,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$2)[_signedDocumentType$2] = _config.signedDocumentType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$2)[_signedDocumentId$2] = _config.signedDocumentId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _templateId$2)[_templateId$2] = main_core.Text.toInteger(_config.id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _triggerType$1)[_triggerType$1] = _config.triggerType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnSliderClose)[_subscribeOnSliderClose]();
 	  }
 	  render() {
@@ -1435,7 +1449,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      templateId: babelHelpers.classPrivateFieldLooseBase(this, _templateId$2)[_templateId$2],
 	      signedDocumentType: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$2)[_signedDocumentType$2],
 	      signedDocumentId: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$2)[_signedDocumentId$2],
-	      startDuration: Math.round(Date.now() / 1000) - babelHelpers.classPrivateFieldLooseBase(this, _startTime$1)[_startTime$1]
+	      startDuration: Math.round(Date.now() / 1000) - babelHelpers.classPrivateFieldLooseBase(this, _startTime$1)[_startTime$1],
+	      triggerType: babelHelpers.classPrivateFieldLooseBase(this, _triggerType$1)[_triggerType$1]
 	    };
 	    startWorkflowAction(data).then(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _canExit)[_canExit] = true;
@@ -1515,7 +1530,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      constants: config.constants,
 	      documentType: config.documentType,
 	      signedDocumentType: config.signedDocumentType,
-	      signedDocumentId: config.signedDocumentId
+	      signedDocumentId: config.signedDocumentId,
+	      triggerType: config.triggerType
 	    }),
 	    buttons: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _back)[_back].bind(this)), config.hasParameters ? Buttons.createNextButton(babelHelpers.classPrivateFieldLooseBase(this, _next)[_next].bind(this)) : Buttons.createStartButton(babelHelpers.classPrivateFieldLooseBase(this, _fastStart)[_fastStart].bind(this))]
 	  };
@@ -1533,7 +1549,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      parameters: config.parameters,
 	      documentType: config.documentType,
 	      signedDocumentId: config.signedDocumentId,
-	      signedDocumentType: config.signedDocumentType
+	      signedDocumentType: config.signedDocumentType,
+	      triggerType: config.triggerType
 	    }),
 	    buttons: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _back)[_back].bind(this)), Buttons.createStartButton(babelHelpers.classPrivateFieldLooseBase(this, _next)[_next].bind(this)) // slow start
 	    ]

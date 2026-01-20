@@ -5,21 +5,6 @@ import { ChatService } from './types';
 
 const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 	[
-		'ru-whatsapp',
-		{
-			id: 'ru-whatsapp',
-			connectorId: 'notifications',
-			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
-			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
-			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
-			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
-			region: 'ru',
-			commonClass: '--whatsapp',
-			iconClass: Social.WHATSAPP,
-			checkServiceId: 'virtual_whatsapp',
-		},
-	],
-	[
 		'whatsapp',
 		{
 			id: 'whatsapp',
@@ -48,19 +33,37 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 		},
 	],
 	[
-		'vkgroup',
+		'ru-whatsapp',
 		{
-			id: 'vkgroup',
-			connectorId: '',
-			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_VK'),
-			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_VK'),
-			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
-			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_VK'),
+			id: 'ru-whatsapp',
+			connectorId: 'notifications',
+			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
+			disabledLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
+			disabledHint: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_WHATSAPP_DISABLED_HINT'),
+			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
 			region: 'ru',
-			commonClass: '--vk',
-			iconClass: Social.VK,
+			commonClass: '--whatsapp',
+			iconClass: Social.WHATSAPP,
+			checkServiceId: 'virtual_whatsapp',
+			hideOnBox: true,
 		},
 	],
+	// [
+	// 	'vkgroup',
+	// 	{
+	// 		id: 'vkgroup',
+	// 		connectorId: '',
+	// 		connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_VK'),
+	// 		inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_VK'),
+	// 		soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
+	// 		title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_VK'),
+	// 		region: 'ru',
+	// 		commonClass: '--vk',
+	// 		iconClass: Social.VK,
+	// 	},
+	// ],
 	[
 		'facebook',
 		{

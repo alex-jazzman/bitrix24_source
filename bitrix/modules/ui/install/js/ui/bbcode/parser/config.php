@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/parser.bundle.js',
 	'rel' => [
 		'ui.bbcode.ast-processor',
-		'main.core',
 		'ui.bbcode.encoder',
 		'ui.linkify',
 		'ui.bbcode.model',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

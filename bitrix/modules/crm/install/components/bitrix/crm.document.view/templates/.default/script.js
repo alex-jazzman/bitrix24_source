@@ -435,6 +435,22 @@
 			}
 		}.bind(this));
 
+		BX.Event.EventEmitter.subscribe('BX.Crm.ChannelSelector.List:getSignedTemplate', function() {
+			return new Promise(function(resolve, reject) {
+				BX.ajax.runAction('crm.documentgenerator.document.getSignedTemplate', {
+					data: {
+						id: Number(this.documentId)
+					}
+				}).then(BX.proxy(function(response)
+				{
+					resolve(response.data.signedTemplate);
+				}, this), BX.proxy(function(response)
+				{
+					reject(response.errors.pop().message);
+				}, this));
+			}.bind(this))
+		}.bind(this));
+
 		this.initBaasButtons();
 	};
 

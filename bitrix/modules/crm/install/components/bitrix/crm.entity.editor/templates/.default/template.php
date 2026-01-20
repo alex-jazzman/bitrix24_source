@@ -405,6 +405,7 @@ if (!empty($htmlEditorConfigs))
 			);
 
 			BX.UI.EntitySchemeElement.userFieldFileUrlTemplate = "<?=CUtil::JSEscape($arResult['USER_FIELD_FILE_URL_TEMPLATE'])?>";
+			BX.UI.EntitySchemeElement.userFieldFileIsAllowSwitchView = "<?= CUtil::JSEscape(Crm\Service\Display\Field\UserField::FILE_IS_ALLOW_SWITCH_VIEW) ?>";
 
 			var model = BX.Crm.EntityEditorModelFactory.create(
 				<?=$arResult['ENTITY_TYPE_ID']?>,
@@ -434,8 +435,8 @@ if (!empty($htmlEditorConfigs))
 				titleEdit: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT')?>",
 				titleEditUnsavedChanges: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT_UNSAVED_CHANGES')?>",
 				checkScope: "<?=GetMessageJS('CRM_ENTITY_ED_CHECK_SCOPE')?>",
-				copyPageUrl: "<?= \CUtil::JSEscape($arResult['MESSAGES']['COPY_PAGE_URL']) ?>",
-				pageUrlCopied: "<?= \CUtil::JSEscape($arResult['MESSAGES']['PAGE_URL_COPIED']) ?>",
+				copyPageUrl: "<?= \CUtil::JSEscape($arResult['MESSAGES']['COPY_PAGE_URL'] ?? '') ?>",
+				pageUrlCopied: "<?= \CUtil::JSEscape($arResult['MESSAGES']['PAGE_URL_COPIED'] ?? '') ?>",
 			};
 
 			BX.Crm.EntityEditorScopeConfig.messages =
@@ -712,16 +713,11 @@ if (!empty($htmlEditorConfigs))
 				deleteConfirm: "<?=GetMessageJS("CRM_ENTITY_ED_REQUISITE_DELETE_DLG_CONTENT")?>"
 			};
 
-			BX.Crm.EntityEditorRecurring.messages =
+			BX.Crm.EntityEditorRecurringV2.messages =
 			{
 				notRepeat: "<?=GetMessageJS('CRM_ENTITY_ED_RECURRING_NOT_REPEAT')?>",
 				modeTitle: "<?=GetMessageJS('CRM_ENTITY_ED_RECURRING_MODE_TITLE')?>",
 				hide: "<?=GetMessageJS('CRM_ENTITY_ED_HIDE')?>"
-			};
-
-			BX.Crm.EntityEditorRecurringSingleField.messages =
-			{
-				until: "<?=GetMessageJS('CRM_ENTITY_ED_RECURRING_UNTIL')?>"
 			};
 
 			BX.Crm.EntityEditorPayment.messages =
@@ -957,6 +953,8 @@ if (!empty($htmlEditorConfigs))
 						pullModuleId: "<?= CUtil::JSEscape($arResult['PULL_MODULE_ID'] ?? '') ?>",
 						analyticsConfig: <?= CUtil::PhpToJSObject($arResult['ANALYTICS_CONFIG'] ?? []) ?>,
 						personalViewAllowed: <?= $arResult['PERSONAL_VIEW_ALLOWED'] ? 'true' : 'false'?>,
+						mainCanHandleUfTooltips: <?= JSON::encode($arResult['MAIN_CAN_HANDLE_UF_TOOLTIPS']) ?>,
+						hostColumnForQuickEditorId: <?= JSON::encode($arResult['HOST_COLUMN_FOR_QUICK_EDITOR_ID']) ?>,
 					}
 				)
 			);

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/services/analytics/navigation-tab', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, NavigationTab: NavigationTabNames } = require('im/messenger/const');
+	const { Analytics, NavigationTabId } = require('im/messenger/const');
 
 	/**
 	 * @class NavigationTab
@@ -14,24 +14,26 @@ jn.define('im/messenger/provider/services/analytics/navigation-tab', (require, e
 		{
 			try
 			{
-				if (currentTab === NavigationTabNames.imCopilotMessenger)
+				if (currentTab === NavigationTabId.copilot)
 				{
 					const analytics = new AnalyticsEvent()
 						.setTool(Analytics.Tool.ai)
 						.setCategory(Analytics.Category.chatOperations)
 						.setEvent(Analytics.Event.openTab)
-						.setSection(Analytics.Section.copilotTab);
+						.setSection(Analytics.Section.copilotTab)
+					;
 
 					analytics.send();
 				}
 
-				if (currentTab !== NavigationTabNames.imMessenger)
+				if (currentTab !== NavigationTabId.chats)
 				{
 					const analytics = new AnalyticsEvent()
 						.setTool(analyticsOptions.tool ?? Analytics.Tool.im)
 						.setCategory(analyticsOptions.category ?? Analytics.Category.messenger)
 						.setEvent(analyticsOptions.event ?? Analytics.Event.openTab)
-						.setType(analyticsOptions.type ?? Analytics.Type[currentTab]);
+						.setType(analyticsOptions.type ?? Analytics.Type.Tab[currentTab])
+					;
 
 					analytics.send();
 				}

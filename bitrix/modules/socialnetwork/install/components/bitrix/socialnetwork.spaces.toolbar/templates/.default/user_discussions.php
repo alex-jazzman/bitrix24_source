@@ -77,7 +77,7 @@ Asset::getInstance()->addJS('/bitrix/components/bitrix/socialnetwork.log.filter/
 		oLFFilter.initFilter({
 			version: 2,
 			filterId: '<?= htmlspecialcharsbx($arResult['FILTER_ID']) ?>',
-			minSearchStringLength: <?=CAllSQLWhere::FT_MIN_TOKEN_SIZE ?>
+			minSearchStringLength: <?=CSQLWhere::FT_MIN_TOKEN_SIZE ?>
 		});
 
 		BX.message(<?= Json::encode($messages) ?>);

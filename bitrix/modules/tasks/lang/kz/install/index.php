@@ -8,6 +8,7 @@ $MESS["TASKS_INSTALL_COPY_PUBLIC"] = "Жария бөлімінің скрипт
 $MESS["TASKS_INSTALL_PUBLIC_SETUP"] = "Орнату";
 $MESS["TASKS_INSTALL_TITLE"] = "Міндеттерді басқару модулін орнату";
 $MESS["TASKS_MODULE_DESC"] = "Міндеттерді басқару модулі";
+$MESS["TASKS_MODULE_INSTALL_ERROR_DEPENDENCIES"] = "Модульді орнату мүмкін емес.\r\nДұрыс жұмыс істеу үшін келесі модульдер қажет: #MODULES#";
 $MESS["TASKS_MODULE_NAME"] = "Міндеттер";
 $MESS["TASKS_UNINSTALL_COMPLETE"] = "Жою аяқталды.";
 $MESS["TASKS_UNINSTALL_DEL"] = "Жою";

@@ -2,7 +2,11 @@
 
 require_once __DIR__.'/autoload.php';
 
-/*patchlimitationmutatormark1*/
+if (file_exists(__DIR__ . '/dev/env/include.php'))
+{
+	require_once __DIR__ . '/dev/env/include.php';
+}
+
 CJSCore::RegisterExt('bp_selector', array(
 	'js' => '/bitrix/js/bizproc/bp_selector.js',
 	'css' => '/bitrix/js/bizproc/css/bp_selector.css',

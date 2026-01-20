@@ -1,8 +1,9 @@
+import { Event } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.actions';
 
-import { Model, Option } from 'booking.const';
+import { EventName, LimitFeatureId, Model, Option } from 'booking.const';
 import { BookingAnalytics } from 'booking.lib.analytics';
 import { Button, ButtonColor, ButtonSize } from 'booking.component.button';
 import { waitListService } from 'booking.provider.service.wait-list-service';
@@ -48,6 +49,10 @@ export const WaitList = {
 			embedItems: `${Model.Interface}/embedItems`,
 			getResourceById: `${Model.Resources}/getById`,
 		}),
+		featureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingWaitlist;
+		},
 		isEmpty(): boolean
 		{
 			return this.waitListItems.length === 0;
@@ -94,6 +99,17 @@ export const WaitList = {
 			}
 
 			const bookingId = this.draggedBookingId;
+
+			if (!this.featureEnabled)
+			{
+				Event.EventEmitter.emit(EventName.StartLockedBookingAnimation, {
+					bookingId,
+					featureId: LimitFeatureId.Waitlist,
+				});
+
+				return;
+			}
+
 			await this.$store.dispatch(`${Model.Interface}/addDeletingBooking`, bookingId);
 
 			if (isRealId(bookingId))

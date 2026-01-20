@@ -31,7 +31,6 @@ export class Analytics
 	copilot: Copilot = new Copilot();
 
 	#screenShareStarted: boolean = false;
-	#recordStarted: boolean = false;
 
 	static getInstance(): Analytics
 	{
@@ -319,11 +318,6 @@ export class Analytics
 
 	onRecordBtnClick(params)
 	{
-		if (this.#recordStarted)
-		{
-			return;
-		}
-
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,
@@ -337,33 +331,58 @@ export class Analytics
 
 	onRecordStart(params)
 	{
-		if (this.#recordStarted)
-		{
-			return;
-		}
-
-		this.#recordStarted = true;
-
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.recordStart,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
-			status: AnalyticsStatus.success,
+			status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
+			p1: `recordType_${params.recordType}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onRecordPaused(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.recordPaused,
+			type: params.callType,
+			c_section: AnalyticsSection.callWindow,
+			status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onRecordResumed(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.recordResumed,
+			type: params.callType,
+			c_section: AnalyticsSection.callWindow,
+			status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onRecordDelete(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.recordDelete,
+			type: params.callType,
+			status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
 			p5: `callId_${params.callId}`,
 		});
 	}
 
 	onRecordStop(params)
 	{
-		if (!this.#recordStarted)
-		{
-			return;
-		}
-
-		this.#recordStarted = false;
-
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,
@@ -373,6 +392,17 @@ export class Analytics
 			c_sub_section: params.subSection,
 			c_element: params.element,
 			p1: `recordLength_${params?.recordTime}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onCloudRecordPopupShow(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callRecord,
+			event: AnalyticsEvent.viewPopup,
+			type: params.popupType,
 			p5: `callId_${params.callId}`,
 		});
 	}

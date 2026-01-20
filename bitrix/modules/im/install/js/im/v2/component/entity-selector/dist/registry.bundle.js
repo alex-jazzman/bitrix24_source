@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,intranet_invitationInput,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_infoHelper,im_v2_lib_permission,im_v2_lib_feature,im_v2_component_elements_button,im_v2_lib_rest,im_v2_lib_utils,intranet_languages,main_core,ui_vue3_directives_hint,main_popup,im_v2_component_elements_popup,main_core_events,im_v2_lib_soundNotification,im_v2_provider_service_sending,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search,im_v2_lib_notifier) {
+(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,intranet_invitationInput,main_core_events,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_infoHelper,im_v2_lib_permission,im_v2_lib_feature,im_v2_component_elements_button,im_v2_lib_rest,im_v2_lib_utils,intranet_languages,main_core,ui_vue3_directives_hint,main_popup,im_v2_component_elements_popup,im_v2_lib_soundNotification,im_v2_provider_service_sending,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search,im_v2_lib_notifier) {
 	'use strict';
 
 	const SEARCH_ENTITY_ID = 'user';
@@ -105,7 +105,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	            const {
 	              event: keyboardEvent
 	            } = event.getData();
-	            main_core_events.EventEmitter.emit(im_v2_const.EventType.search.keyPressed, {
+	            this.getEmitter().emit(im_v2_const.EventType.search.keyPressed, {
 	              keyboardEvent
 	            });
 	          },
@@ -184,6 +184,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        members,
 	        showHistory: this.showHistory
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(key) {
 	      return this.$Bitrix.Loc.getMessage(key);
@@ -1088,7 +1091,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        dialogId: forwardDialogId
 	      } = event;
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeBulkActionsMode, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.closeBulkActionsMode, {
 	        dialogId: this.dialogId
 	      });
 	      const isNotesForward = this.isNotes(forwardDialogId);
@@ -1097,12 +1100,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        void this.forwardToNotes(forwardDialogId);
 	      } else {
 	        await im_public.Messenger.openChat(forwardDialogId);
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertForward, {
+	        this.getEmitter().emit(im_v2_const.EventType.textarea.insertForward, {
 	          messagesIds: this.messagesIds,
 	          dialogId: forwardDialogId
 	        });
 	      }
 	      this.$emit('close');
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -1193,5 +1199,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToCollab = AddToCollab;
 	exports.ForwardPopup = ForwardPopup;
 
-}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX.Intranet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Intranet,BX,BX.Vue3.Directives,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX.Intranet,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Intranet,BX,BX.Vue3.Directives,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

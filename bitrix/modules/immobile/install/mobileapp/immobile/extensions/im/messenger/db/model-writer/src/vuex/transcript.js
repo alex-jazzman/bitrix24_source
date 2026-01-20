@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/transcript', (require, exports, module) => {
 	const { Type } = require('type');
+	const { TranscriptStatus } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('repository--file');
@@ -99,7 +100,7 @@ jn.define('im/messenger/db/model-writer/vuex/transcript', (require, exports, mod
 			const transcriptList = data.transcriptList.filter((transcript) => {
 				const dialogHelper = DialogHelper.createByChatId(transcript.chatId);
 
-				return dialogHelper?.isLocalStorageSupported;
+				return dialogHelper?.isLocalStorageSupported && transcript.status === TranscriptStatus.expanded;
 			});
 
 			if (!Type.isArrayFilled(transcriptList))

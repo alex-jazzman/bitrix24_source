@@ -31,6 +31,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 				<?php endif ?>
 				<input type="hidden" name="AUTH_FORM" value="Y">
 				<input type="hidden" name="TYPE" value="CHANGE_PWD">
+				<?= bitrix_sessid_post(); ?>
 				<input type="hidden" name="USER_LOGIN" maxlength="50" value="<?=$arResult['LAST_LOGIN']?>"/>
 
 				<div class="intranet-login-enter-form__login-wrapper">
@@ -45,7 +46,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 								</div>
 							</div>
 						</div>
-						<h4 class="intranet-form-add-block__title intranet-form-add-block__title--margin">
+						<h4 class="intranet-form-add-block__title --margin">
 							<?=Loc::getMessage('INTRANET_CHANGE_PASS_CREATE_TITLE')?>
 						</h4>
 
@@ -136,17 +137,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 			<div class="intranet-notification">
 				<div class="intranet-big-icon intranet-big-icon--email intranet-notification__icon"></div>
 				<div class="intranet-notification__content">
-					<?=$arParams['~AUTH_RESULT']['MESSAGE']?>
+					<?= $arParams['~AUTH_RESULT']['MESSAGE'] ?? '' ?>
 				</div>
 			</div>
 		</template>
 	</div>
 	<Teleport to=".intranet-body__header-right">
-		<div class="intranet-text-btn intranet-text-btn--auth">
-			<a class="intranet-text-btn-link" href="<?=$arResult['AUTH_AUTH_URL']?>" rel="nofollow">
-				<?=Loc::getMessage('INTRANET_CHANGE_PASS_AUTH_LINK')?>
-			</a>
-		</div>
+		<a class="intranet-text-btn intranet-text-btn--auth" href="<?=$arResult['AUTH_AUTH_URL']?>" rel="nofollow">
+			<?=Loc::getMessage('INTRANET_CHANGE_PASS_AUTH_LINK')?>
+		</a>
 	</Teleport>
 </div>
 

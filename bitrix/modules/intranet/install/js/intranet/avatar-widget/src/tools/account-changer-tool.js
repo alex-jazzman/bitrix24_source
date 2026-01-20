@@ -2,7 +2,6 @@ import { BaseSecondaryTool } from './base-secondary-tool';
 import { DesktopAccountList } from 'intranet.desktop-account-list';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
-import string from "../../../../../../../salescenter/install/js/salescenter/deliveryselector/src/properties/string";
 
 export class AccountChangerTool extends BaseSecondaryTool
 {

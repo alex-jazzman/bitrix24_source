@@ -3992,17 +3992,17 @@ var Vue = exports.Vue;
         },
         select: function select(item) {
           var _this = this;
-          this.closeDropDown();
           var select = function select() {
             if (_this.item) {
               _this.item.selected = false;
             }
             item.selected = true;
+            _this.closeDropDown();
           };
           if (this.item && this.item.selected) {
             select();
           } else {
-            setTimeout(select, 300);
+            setTimeout(select, 0);
           }
         },
         unselect: function unselect() {
@@ -7372,13 +7372,16 @@ var Vue = exports.Vue;
     };
     var Popup = {
       mixins: [windowMixin],
+      props: ['isOnTop'],
       template: "\n\t\t<MountingPortal\n\t\t\tappend\n\t\t\t:disabled=\"!mountId\"\n\t\t\t:mountTo=\"getMountTo(mountId)\"\n\t\t>\n\t\t\t<div class=\"b24-window\">\n\t\t\t\t<b24-overlay :show=\"show\" @click=\"onOverlayClick()\"></b24-overlay>\n\t\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t\t@click.self.prevent=\"onOverlayClick()\"\n\t\t\t\t\t\tv-show=\"show\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t</MountingPortal>\n\t",
       methods: {
         getTransitionName: function getTransitionName() {
-          return 'b24-a-slide-' + (this.vertical || 'bottom');
+          return "b24-a-slide-".concat(this.vertical || 'bottom');
         },
         classes: function classes() {
-          return ['b24-window-popup-p-' + (this.position || 'center')];
+          var classes = this.isOnTop ? ['b24-window-popup-on-top'] : [];
+          classes.push("b24-window-popup-p-".concat(this.position || 'center'));
+          return classes;
         }
       }
     };
@@ -7458,7 +7461,7 @@ var Vue = exports.Vue;
           maxWidth: 600
         };
       },
-      template: "\n\t\t<div>\n\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\tv-for=\"field in fields\"\n\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t></component>\n\n\t\t\t<b24-popup\n\t\t\t\t:mountId=\"formId\"\n\t\t\t\t:show=\"visible\" \n\t\t\t\t:title=\"title\" \n\t\t\t\t:maxWidth=\"maxWidth\" \n\t\t\t\t:zIndex=\"199999\"\n\t\t\t\t:scrollDown=\"true\"\n\t\t\t\t:scrollDownText=\"messages.get('consentReadAll')\"\n\t\t\t\t@hide=\"reject\"\n\t\t\t>\n\t\t\t\t<div style=\"padding: 0 12px 12px;\">\n\t\t\t\t\t<div v-html=\"html\"></div>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\" style=\"padding: 12px 0 0;\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"apply\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentAccept') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"reject\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentReject') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</b24-popup>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\tv-for=\"field in fields\"\n\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t></component>\n\n\t\t\t<b24-popup\n\t\t\t\t:mountId=\"formId\"\n\t\t\t\t:show=\"visible\" \n\t\t\t\t:title=\"title\" \n\t\t\t\t:maxWidth=\"maxWidth\" \n\t\t\t\t:zIndex=\"199999\"\n\t\t\t\t:isOnTop=\"true\"\n\t\t\t\t:scrollDown=\"true\"\n\t\t\t\t:scrollDownText=\"messages.get('consentReadAll')\"\n\t\t\t\t@hide=\"reject\"\n\t\t\t>\n\t\t\t\t<div style=\"padding: 0 12px 12px;\">\n\t\t\t\t\t<div v-html=\"html\"></div>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\" style=\"padding: 12px 0 0;\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"apply\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentAccept') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"reject\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentReject') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</b24-popup>\n\t\t</div>\n\t",
       mounted: function mounted() {
         this.$root.$on('consent:request', this.showPopup);
       },

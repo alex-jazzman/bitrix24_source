@@ -128,9 +128,16 @@ jn.define('im/messenger/provider/services/message/service', (require, exports, m
 			return this.reactionService.remove(reactionId, messageId);
 		}
 
-		setReaction(reactionId, messageId)
+		/**
+		* @param {string} reactionId
+		* @param {number} messageId
+		* @param {object} options
+		* @param {boolean} options.shouldAnimated
+		* @param {boolean} options.isUpdateUi
+		*/
+		setReaction(reactionId, messageId, options)
 		{
-			return this.reactionService.set(reactionId, messageId);
+			return this.reactionService.set(reactionId, messageId, options);
 		}
 
 		deleteRichLink(messageId, attachId)

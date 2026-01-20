@@ -2,6 +2,8 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\V2\Internal\Integration\Ui\Article\ArticleDictionary;
+use Bitrix\Tasks\V2\Internal\Service\SystemHistoryLog\ErrorCodeDictionary;
 
 Loc::loadMessages(__FILE__);
 
@@ -45,11 +47,11 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 						<?if(count($item['ERROR'])):?>
 							<ul class="task-log-errors">
 							<?foreach($item['ERROR'] as $error):?>
-								<?php if ($error->getCode() === 'ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED'): ?>
+								<?php if ($error->getCode() === ErrorCodeDictionary::ACCESS_DENIED): ?>
 									<li>
 										<?php
 											$msg = htmlspecialcharsbx($error->getMessage());
-											$msg = str_replace('#LINK#', "<a href='". \Bitrix\UI\Util::getArticleUrlByCode('11705476') ."'>".Loc::getMessage('TASKS_RIGHTS_MORE_LINK')."</a>", $msg);
+											$msg = str_replace('#LINK#', "<a href='". \Bitrix\UI\Util::getArticleUrlByCode(ArticleDictionary::TASK_ACCESS_RIGHTS_ARTICLE_CODE) ."'>".Loc::getMessage('TASKS_RIGHTS_MORE_LINK')."</a>", $msg);
 										?>
 										<?= $msg; ?>
 									</li>

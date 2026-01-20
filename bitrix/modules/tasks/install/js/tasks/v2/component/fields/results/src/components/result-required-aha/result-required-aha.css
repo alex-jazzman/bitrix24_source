@@ -1,0 +1,37 @@
+.tasks-field-results-hint-container {
+	display: flex;
+	flex-direction: row;
+	padding: 13px 13px 13px 0;
+}
+
+.tasks-field-results-hint-icon {
+	width: 137px;
+	height: 113px;
+	background: url('./result-aha-icon.png') no-repeat center center;
+	background-size: contain;
+	margin: 0 auto;
+}
+
+.tasks-field-results-hint-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	color: var(--ui-color-base-white-fixed);
+	padding-left: var(--ui-space-inset-sm);
+}
+
+.tasks-field-results-hint-info-text {
+	color: var(--ui-color-base-white-fixed);
+}
+
+.tasks-field-results-hint-info-link {
+	display: inline;
+	color: var(--ui-color-base-6);
+	cursor: pointer;
+	width: max-content;
+	border-bottom: 1px dashed #BAD7FF;
+}
+
+.tasks-field-results-hint-button {
+	display: block;
+}

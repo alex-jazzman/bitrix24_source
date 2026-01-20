@@ -278,58 +278,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	/**
 	 * Bitrix Messenger
-	 * Conference constants
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2020 Bitrix
-	 */
-
-	var ConferenceFieldState = Object.freeze({
-	  view: 'view',
-	  edit: 'edit',
-	  create: 'create'
-	});
-	var ConferenceStateType = Object.freeze({
-	  preparation: 'preparation',
-	  call: 'call'
-	});
-	var ConferenceErrorCode = Object.freeze({
-	  userLimitReached: 'userLimitReached',
-	  detectIntranetUser: 'detectIntranetUser',
-	  bitrix24only: 'bitrix24only',
-	  kickedFromCall: 'kickedFromCall',
-	  unsupportedBrowser: 'unsupportedBrowser',
-	  missingMicrophone: 'missingMicrophone',
-	  unsafeConnection: 'unsafeConnection',
-	  wrongAlias: 'wrongAlias',
-	  notStarted: 'notStarted',
-	  finished: 'finished',
-	  userLeftCall: 'userLeftCall',
-	  noSignalFromCamera: 'noSignalFromCamera'
-	});
-	var ConferenceRightPanelMode = Object.freeze({
-	  hidden: 'hidden',
-	  chat: 'chat',
-	  users: 'users',
-	  split: 'split'
-	});
-
-	//BX.Call.UserState sync
-	var ConferenceUserState = Object.freeze({
-	  Idle: 'Idle',
-	  Busy: 'Busy',
-	  Calling: 'Calling',
-	  Unavailable: 'Unavailable',
-	  Declined: 'Declined',
-	  Ready: 'Ready',
-	  Connecting: 'Connecting',
-	  Connected: 'Connected',
-	  Failed: 'Failed'
-	});
-
-	/**
-	 * Bitrix Messenger
 	 * Recent list constants
 	 *
 	 * @package bitrix
@@ -379,11 +327,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	exports.FileStatus = FileStatus;
 	exports.FileType = FileType;
 	exports.MessageType = MessageType;
-	exports.ConferenceFieldState = ConferenceFieldState;
-	exports.ConferenceStateType = ConferenceStateType;
-	exports.ConferenceErrorCode = ConferenceErrorCode;
-	exports.ConferenceRightPanelMode = ConferenceRightPanelMode;
-	exports.ConferenceUserState = ConferenceUserState;
 	exports.ChatTypes = ChatTypes;
 	exports.TemplateTypes = TemplateTypes;
 	exports.RecentSection = RecentSection;

@@ -1,15 +1,23 @@
-import { Type } from 'main.core';
-import { Model } from 'tasks.v2.const';
-import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { CheckListModel } from 'tasks.v2.model.check-list';
+import { Dom, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+
 import { mapGetters } from 'ui.vue3.vuex';
 
+import { EventName, Model } from 'tasks.v2.const';
+import { highlighter } from 'tasks.v2.lib.highlighter';
+import type { TaskModel } from 'tasks.v2.model.tasks';
+import type { CheckListModel } from 'tasks.v2.model.check-list';
+
+import { Context } from '../../lib/check-list-const';
+import { CheckListItemDragManager } from '../../lib/check-list-item-drag-manager';
+import { CheckListListDragManager } from '../../lib/check-list-list-drag-manager';
 import { CheckListManager } from '../../lib/check-list-manager';
-import { Highlighter } from '../../lib/highlighter/highlighter';
 
 import { CheckListParentItem } from './component/check-list-parent-item';
 import { CheckListChildItem } from './component/check-list-child-item';
 import { CheckListAddItem } from './component/check-list-add-item';
+import { CheckListDropList } from './component/check-list-drop-list';
+import { CheckListDropItem } from './component/check-list-drop-item';
 import { CheckListGroupCompletedList } from './component/check-list-group-completed-list';
 
 import './check-list-widget.css';
@@ -21,11 +29,17 @@ export const CheckListWidget = {
 		CheckListParentItem,
 		CheckListChildItem,
 		CheckListAddItem,
+		CheckListDropList,
+		CheckListDropItem,
 		CheckListGroupCompletedList,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
+		context: {
+			type: String,
 			required: true,
 		},
 		checkListId: {
@@ -54,23 +68,19 @@ export const CheckListWidget = {
 		'toggleGroupModeSelected',
 		'openCheckList',
 	],
+	setup(): { task: TaskModel } {},
 	data(): Object
 	{
-		return {};
+		return {
+			scrollContainer: null,
+		};
 	},
 	computed: {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
 			disableCheckListAnimations: `${Model.Interface}/disableCheckListAnimations`,
+			draggedCheckListId: `${Model.Interface}/draggedCheckListId`,
 		}),
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		isEdit(): boolean
-		{
-			return Type.isNumber(this.taskId) && this.taskId > 0;
-		},
 		checkLists(): CheckListModel[]
 		{
 			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
@@ -79,15 +89,6 @@ export const CheckListWidget = {
 			return this.checkLists
 				.filter((checkList: CheckListModel) => {
 					if (checkList.parentId !== 0 || checkList.hidden)
-					{
-						return false;
-					}
-
-					if (
-						this.isEdit
-						&& !this.isPreview
-						&& !this.canEditCheckList(checkList)
-					)
 					{
 						return false;
 					}
@@ -117,12 +118,11 @@ export const CheckListWidget = {
 		},
 		canAddItem(): boolean
 		{
-			if (!this.isEdit)
-			{
-				return true;
-			}
-
-			return this.task.rights.checklistAdd === true;
+			return this.task.rights.checklistAdd;
+		},
+		parentItemDragged(): boolean
+		{
+			return this.checkListManager.isParentItem(this.draggedCheckListId);
 		},
 	},
 	created(): void
@@ -132,45 +132,135 @@ export const CheckListWidget = {
 				checkLists: () => this.checkLists,
 			},
 		});
+
+		if (!this.isPreview)
+		{
+			this.listDragManager = new CheckListListDragManager({
+				store: this.$store,
+				checkListManager: this.checkListManager,
+			});
+			this.listDragManager.subscribe('update', (baseEvent: BaseEvent) => {
+				const draggedItemId = baseEvent.getData();
+				this.$emit('update', draggedItemId);
+			});
+			this.listDragManager.subscribe('end', (baseEvent: BaseEvent) => {
+				const draggedItemId = baseEvent.getData();
+				setTimeout(() => {
+					this.scrollToTarget(draggedItemId, 0, false);
+					this.handleDropException();
+				}, 100);
+			});
+
+			this.itemDragManager = new CheckListItemDragManager({
+				store: this.$store,
+				checkListManager: this.checkListManager,
+				canAddItem: this.canAddItem,
+				stubItemId: 'add-item',
+				currentUserId: this.currentUserId,
+			});
+			this.itemDragManager.subscribe('update', (baseEvent: BaseEvent) => {
+				const draggedItemId = baseEvent.getData();
+				this.$emit('update', draggedItemId);
+			});
+			this.itemDragManager.subscribe('end', () => {
+				setTimeout(() => {
+					this.handleDropException();
+				}, 100);
+			});
+		}
 	},
 	mounted(): void
 	{
-		if (this.checkListManager.getItem(this.checkListId))
+		this.scrollContainer = this.$el.parentElement;
+
+		this.subscribeToEvents();
+
+		if (!this.isPreview)
 		{
-			this.scrollContainer = this.$root.$el?.querySelector(['[data-list]']);
-
-			const childWithEmptyTitle = this.checkListManager.getChildWithEmptyTitle(this.checkListId);
-
-			const isFocusToCheckList = !childWithEmptyTitle;
-
-			const targetItemId = isFocusToCheckList ? this.checkListId : childWithEmptyTitle.id;
-			const scrollOffset = isFocusToCheckList ? 0 : 140;
-
-			const targetItem = this.scrollContainer.querySelector([`[data-id="${targetItemId}"]`]);
-
-			setTimeout(() => {
-				if (isFocusToCheckList)
-				{
-					const highlightElement = this.scrollContainer.querySelector(
-						[`[data-parent-container="${this.checkListId}"]`],
-					);
-
-					if (highlightElement)
-					{
-						void (new Highlighter()).highlight(highlightElement);
-					}
-				}
-
-				if (targetItem)
-				{
-					this.scrollContainer.scrollTop = targetItem.offsetTop - scrollOffset;
-				}
-			}, 0);
+			this.initDragManager();
 		}
+
+		this.focusTo(this.checkListId);
 
 		this.$emit('show');
 	},
+	beforeUnmount(): void
+	{
+		this.itemDragManager?.destroy();
+		this.unsubscribeFromEvents();
+	},
 	methods: {
+		subscribeToEvents(): void
+		{
+			EventEmitter.subscribe(EventName.ShowCheckList, this.handleShowCheckListEvent);
+			EventEmitter.subscribe(EventName.ShowCheckListItems, this.handleShowCheckListItemsEvent);
+		},
+		unsubscribeFromEvents(): void
+		{
+			EventEmitter.unsubscribe(EventName.ShowCheckList, this.handleShowCheckListEvent);
+			EventEmitter.unsubscribe(EventName.ShowCheckListItems, this.handleShowCheckListItemsEvent);
+		},
+		focusTo(checkListId: string | number): void
+		{
+			const focusedItem = this.checkListManager.getItem(checkListId);
+			if (!focusedItem)
+			{
+				return;
+			}
+
+			const { targetId, offset, shouldHighlight } = this.calculateFocusTarget(focusedItem);
+
+			this.scrollToTarget(targetId, offset, shouldHighlight);
+		},
+		calculateFocusTarget(focusedItem: CheckListModel): {
+			targetId: string | number,
+			offset: number,
+			shouldHighlight: boolean,
+		}
+		{
+			const isRootItem = focusedItem.parentId === 0;
+			if (!isRootItem)
+			{
+				return {
+					targetId: focusedItem.id,
+					offset: 140,
+					shouldHighlight: false,
+				};
+			}
+
+			const childWithEmptyTitle = this.checkListManager.getChildWithEmptyTitle(focusedItem.id);
+
+			return {
+				targetId: childWithEmptyTitle?.id ?? focusedItem.id,
+				offset: childWithEmptyTitle ? 140 : 0,
+				shouldHighlight: true,
+			};
+		},
+		scrollToTarget(targetId: string | number, offset: number, shouldHighlight: boolean): void
+		{
+			setTimeout(() => {
+				const targetNode = this.scrollContainer.querySelector(`[data-id="${targetId}"]`);
+				if (!targetNode)
+				{
+					return;
+				}
+
+				if (shouldHighlight)
+				{
+					this.highlightParentContainer(targetId);
+				}
+
+				this.scrollContainer.scrollTop = targetNode.offsetTop - offset;
+			}, 0);
+		},
+		highlightParentContainer(targetId: string | number): void
+		{
+			const highlightElement = this.scrollContainer.querySelector(`[data-parent-container="${targetId}"]`);
+			if (highlightElement)
+			{
+				void highlighter.highlight(highlightElement);
+			}
+		},
 		getItemOffset(item: CheckListModel): string
 		{
 			if (item.parentId === 0)
@@ -184,7 +274,13 @@ export const CheckListWidget = {
 				return '0';
 			}
 
-			return `${(level - 1) * 12}px`;
+			return `${(level - 1) * 28}px`;
+		},
+		handleDropException(): void
+		{
+			const container = this.$el.closest('[data-list]');
+			const allItems = container.querySelectorAll('.check-list-widget-item.--dragged_item');
+			allItems.forEach((item: HTMLElement) => item.remove());
 		},
 		getChildren(parent: CheckListModel): CheckListModel[]
 		{
@@ -194,6 +290,11 @@ export const CheckListWidget = {
 		},
 		isCollapsed(item: CheckListModel, positionIndex: number): boolean
 		{
+			if (this.checkListManager.isParentItem(this.draggedCheckListId))
+			{
+				return true;
+			}
+
 			return this.checkListManager.isItemCollapsed(item, this.isPreview, positionIndex);
 		},
 		getFirstCompletedCheckList(): ?CheckListModel
@@ -206,23 +307,67 @@ export const CheckListWidget = {
 
 			return completedCheckLists[0];
 		},
+		handleShowCheckListEvent(event: BaseEvent): void
+		{
+			const { checkListId } = event.getData();
+			if (!checkListId)
+			{
+				return;
+			}
+
+			this.$emit('openCheckList', checkListId);
+
+			this.focusTo(checkListId);
+		},
+		async handleShowCheckListItemsEvent(event: BaseEvent): Promise<void>
+		{
+			const { checkListItemIds } = event.getData();
+
+			if (!Type.isArrayFilled(checkListItemIds))
+			{
+				return;
+			}
+
+			const firstItemId = checkListItemIds[0];
+
+			this.focusTo(firstItemId);
+
+			this.$emit('openCheckList', firstItemId);
+
+			await this.$nextTick();
+
+			checkListItemIds.forEach((itemId: number) => {
+				EventEmitter.emit(EventName.HighlightCheckListItem + itemId);
+			});
+		},
 		showFirstCompletedCheckList(): void
 		{
 			const firstCompletedCheckList = this.getFirstCompletedCheckList();
 
 			this.$emit('openCheckList', firstCompletedCheckList.id);
 		},
-		canEditCheckList(item: CheckListModel): boolean
+		initDragManager(): void
 		{
-			if (!item.creator)
+			let offsetX = 0;
+			if (
+				this.context !== Context.Popup
+				&& Type.isElementNode(this.$root.$el)
+			)
 			{
-				return true;
+				const parentRect = Dom.getPosition(this.$el);
+				const parentRelativeRect = Dom.getRelativePosition(
+					this.$el,
+					this.$root.$el,
+				);
+
+				offsetX = parentRelativeRect.left - parentRect.left;
 			}
 
-			return (
-				this.task.rights.checklistEdit === true
-				|| item.creator.id === this.currentUserId
-			);
+			this.listDragManager.init(this.scrollContainer, offsetX);
+
+			const listDropzone = this.canAddItem ? this.$refs.parentComponents?.map((parent) => parent.$el) : [];
+
+			this.itemDragManager.init(this.scrollContainer, offsetX, listDropzone);
 		},
 	},
 	template: `
@@ -230,69 +375,91 @@ export const CheckListWidget = {
 			<TransitionGroup
 				:css="!disableCheckListAnimations"
 				name="check-list"
-				mode="out-in"
 				tag="ul"
 				class="check-list-widget --parent"
-				:class="{'--preview': isPreview}"
+				:class="{
+					'--preview': isPreview,
+					'--dragged': parentItemDragged,
+				}"
 			>
 				<li
 					v-for="(parentItem, parentItemIndex) in parentCheckLists"
-					:key="parentItem.id"
-					class="check-list-widget-item --parent"
+					:key="'parent-' + parentItem.id + parentItemIndex"
+					class="check-list-widget-item --parent check-list-draggable-list"
 					:class="{
 						'--preview': isPreview,
 						'--collapsed': isCollapsed(parentItem, parentItemIndex),
 						'--hidden': parentItem.hidden,
+						'--dragged_item': parentItem.id === draggedCheckListId,
 					}"
+					:data-id="parentItem.id"
 					:data-parent-container="parentItem.id"
 				>
-					<CheckListParentItem
-						:id="parentItem.id"
-						:taskId="taskId"
-						:isPreview="isPreview"
-						:positionIndex="parentItemIndex"
-						@update="(id) => $emit('update', id)"
-						@removeItem="(id) => $emit('removeItem', id)"
-						@focus="(id) => $emit('focus', id)"
-						@blur="(id) => $emit('blur', id)"
-						@emptyBlur="(id) => $emit('emptyBlur', id)"
-						@startGroupMode="(id) => $emit('startGroupMode', id)"
-						@openCheckList="(id) => $emit('openCheckList', id)"
-					/>
+					<template v-if="parentItem.id === draggedCheckListId">
+						<CheckListDropList/>
+					</template>
+					<template v-else>
+						<CheckListParentItem
+							ref="parentComponents"
+							:id="parentItem.id"
+							:isPreview
+							:positionIndex="parentItemIndex"
+							@update="(id) => $emit('update', id)"
+							@removeItem="(id) => $emit('removeItem', id)"
+							@focus="(id) => $emit('focus', id)"
+							@blur="(id) => $emit('blur', id)"
+							@emptyBlur="(id) => $emit('emptyBlur', id)"
+							@startGroupMode="(id) => $emit('startGroupMode', id)"
+							@openCheckList="(id) => $emit('openCheckList', id)"
+						/>
+					</template>
 					<TransitionGroup
+						v-if="parentItem.id !== draggedCheckListId"
 						:css="!disableCheckListAnimations"
 						name="check-list"
-						mode="out-in"
 						tag="ul"
 						class="check-list-widget"
 					>
 						<li
 							v-if="!isCollapsed(parentItem, parentItemIndex)"
-							v-for="childItem in getChildren(parentItem)"
-							:key="childItem.id"
-							class="check-list-widget-item"
+							v-for="(childItem, childIndex) in getChildren(parentItem)"
+							:key="'child-' + parentItem.id + childItem.id + childIndex"
+							:data-id="childItem.id"
+							class="check-list-widget-item check-list-draggable-item"
+							:class="{
+								'--dragged_item': childItem.id === draggedCheckListId,
+							}"
 						>
-							<CheckListChildItem
-								:id="childItem.id"
-								:taskId="taskId"
-								:itemOffset="getItemOffset(childItem)"
-								:isPreview="isPreview"
-								@update="(id) => $emit('update', id)"
-								@addItem="(data) => $emit('addItem', data)"
-								@removeItem="(id) => $emit('removeItem', id)"
-								@focus="(id) => $emit('focus', id)"
-								@blur="(id) => $emit('blur', id)"
-								@emptyBlur="(id) => $emit('emptyBlur', id)"
-								@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
-							/>
+							<template v-if="childItem.id === draggedCheckListId">
+								<CheckListDropItem :dropOffset="getItemOffset(childItem)"/>
+							</template>
+							<template v-else>
+								<CheckListChildItem
+									:id="childItem.id"
+									:itemOffset="getItemOffset(childItem)"
+									:isPreview
+									:checkListId
+									@update="(id) => $emit('update', id)"
+									@addItem="(data) => $emit('addItem', data)"
+									@removeItem="(id) => $emit('removeItem', id)"
+									@focus="(id) => $emit('focus', id)"
+									@blur="(id) => $emit('blur', id)"
+									@emptyBlur="(id) => $emit('emptyBlur', id)"
+									@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
+									@openCheckList="(id) => $emit('openCheckList', id)"
+								/>
+							</template>
 						</li>
 						<li
-							v-if="!isCollapsed(parentItem, parentItemIndex) && canAddItem"
-							key="add-item"
-							class="check-list-widget-item"
+							v-if="!isCollapsed(parentItem, parentItemIndex)"
+							:key="'add-' + parentItem.id + parentItemIndex"
+							data-id="add-item"
+							:data-parent-id="parentItem.id"
+							class="check-list-widget-item check-list-draggable-item"
 						>
 							<CheckListAddItem
-								:isPreview="isPreview"
+								v-if="canAddItem"
+								:isPreview
 								@addItem="$emit('addItemFromBtn', parentItem.id)"
 							/>
 						</li>
@@ -303,10 +470,7 @@ export const CheckListWidget = {
 					key="completed-list"
 					class="check-list-widget-item --completed-list"
 				>
-					<CheckListGroupCompletedList
-						:totalCompletedParents="totalCompletedParents"
-						@click="showFirstCompletedCheckList"
-					/>
+					<CheckListGroupCompletedList :totalCompletedParents @click="showFirstCompletedCheckList"/>
 				</li>
 			</TransitionGroup>
 		</div>

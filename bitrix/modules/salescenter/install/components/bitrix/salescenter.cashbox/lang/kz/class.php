@@ -10,6 +10,7 @@ $MESS["SC_CASHBOX_FIELDS_OFD"] = "Фискалдық деректер опера
 $MESS["SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT"] = "Егер сіз ЮKassa арқылы чек жіберетін болсаңыз, бірінші ФДО таңдаңыз. Басқа жағдайларда, сіздің кассаңыздың баптауларына сәйкес ФДО таңдаңыз.";
 $MESS["SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT_MORE"] = "Толығырақ";
 $MESS["SC_CASHBOX_FIELDS_USE_OFFLINE"] = "Оффлайн пайдаланылады";
+$MESS["SC_CASHBOX_FIELDS_VAT_22_WARNING"] = "2026 жылғы 1 қаңтардан бастап ҚҚС мөлшерлемесі 20%-дан 22%-ға дейін артады. 22% ҚҚС өрісінде #CODE# кодын көрсетіңіз";
 $MESS["SC_CASHBOX_FILE_LABEL"] = "Файлды жүктеу";
 $MESS["SC_CASHBOX_KKM_ATOL"] = "АТОЛ";
 $MESS["SC_CASHBOX_KKM_EVOTOR"] = "Эвотор";

@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Tasks\Flow\Kanban\Async\Receiver\AddStages;
+use Bitrix\Tasks\V2\Internal\Service\MigrateRecentTasks\MigrateRecentTasksReceiver;
+use Bitrix\Tasks\V2\Internal\Service\ReadAllMessages\ReadAllMessagesReceiver;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddDavSync;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddLastActivity;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddScenario;
@@ -8,7 +11,6 @@ use Bitrix\Tasks\V2\Internal\Service\Task\Action\Delete\Async\Receiver\RecountSo
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateDavSync;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateSearchIndex;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateTopic;
-use Bitrix\Tasks\Flow\Kanban\Async\Receiver\AddStages;
 
 return  [
 	'value' => [
@@ -40,6 +42,12 @@ return  [
 			],
 			'add_flow_stages' => [
 				'handler' => AddStages::class,
+			],
+			'migrate_recent_tasks' => [
+				'handler' => MigrateRecentTasksReceiver::class,
+			],
+			'read_all_messages' => [
+				'handler' => ReadAllMessagesReceiver::class,
 			],
 		],
 	],

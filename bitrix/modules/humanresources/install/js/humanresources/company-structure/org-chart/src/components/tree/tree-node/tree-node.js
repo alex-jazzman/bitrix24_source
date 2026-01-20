@@ -162,11 +162,25 @@ export const TreeNode = {
 		},
 		subdivisionsText(): string
 		{
+			const wrapCountInHtml = (nodeType: string, pluralString: string, count: number): string => {
+				return pluralString.replace(
+					count.toString(),
+					`<span data-test-id="humanresources-tree__node-subdivisions-count --${nodeType}">${count}</span>`,
+				);
+			};
+
+			const nodeTypeTeam = 'team';
+			const nodeTypeDept = 'dept';
+
 			if (this.isTeamEntity)
 			{
-				return this.nodeData.children?.length
-					? this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', this.nodeData.children.length)
-					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_NO_SUBDEPARTMENTS');
+				if (!this.nodeData.children?.length)
+				{
+					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_NO_SUBDEPARTMENTS');
+				}
+				const pluralString = this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', this.nodeData.children.length);
+
+				return wrapCountInHtml(nodeTypeTeam, pluralString, this.nodeData.children.length);
 			}
 
 			if (!(this.nodeData.children?.length))
@@ -184,20 +198,30 @@ export const TreeNode = {
 
 			if ((childTeamsCount > 0) && (childDepartmentsCount > 0))
 			{
+				const deptPlural = this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount);
+				const teamPlural = this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
+
+				const deptHtml = wrapCountInHtml(nodeTypeDept, deptPlural, childDepartmentsCount);
+				const teamHtml = wrapCountInHtml(nodeTypeTeam, teamPlural, childTeamsCount);
+
 				return this.loc('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT_WITH_CONJUNCTION', {
-					'#DEPT_COUNT#': this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount),
-					'#TEAM_COUNT#': this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount),
+					'#DEPT_COUNT#': deptHtml,
+					'#TEAM_COUNT#': teamHtml,
 				});
 			}
 
 			if (childDepartmentsCount > 0)
 			{
-				return this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount);
+				const pluralString = this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount);
+
+				return wrapCountInHtml(nodeTypeDept, pluralString, childDepartmentsCount);
 			}
 
 			if (childTeamsCount > 0)
 			{
-				return this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
+				const pluralString = this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
+
+				return wrapCountInHtml(nodeTypeTeam, pluralString, childTeamsCount);
 			}
 
 			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_NO_SUBDEPARTMENTS');
@@ -537,7 +561,7 @@ export const TreeNode = {
 						:class="subdivisionsClass"
 						@click.stop="onDepartmentClick('subdivisions')"
 					>
-						<span>{{ subdivisionsText }}</span>
+						<span v-html="subdivisionsText"></span>
 					</div>
 				</template>
 				<svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" class="humanresources-tree__node_lock">

@@ -2,16 +2,26 @@
  * @module im/messenger/lib/integration/tasksmobile/comments/header/buttons
  */
 jn.define('im/messenger/lib/integration/tasksmobile/comments/header/buttons', (require, exports, module) => {
+	const { Type } = require('type');
+	const { inAppUrl } = require('in-app-url');
 	const { isOnline } = require('device/connection');
 	const { DialogHeaderButtons } = require('im/messenger/api/dialog-integration/header/buttons');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const {
 		CallAudioButton,
-		CallVideoButton,
 	} = require('im/messenger/controller/dialog/lib/header/buttons/buttons/button-configuration');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
-	// const { Analytics } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { Icon } = require('assets/icons');
+
+	/** @type DialogHeaderButton */
+	const OpenTaskButton = {
+		id: 'open_task',
+		testId: 'dialog-header-button-open-task',
+		type: Icon.CIRCLE_CHECK.getIconName(),
+		color: null,
+	};
 
 	/**
 	 * @class CommentsHeaderButtons
@@ -44,13 +54,20 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/header/buttons', (r
 		 */
 		getButtons()
 		{
-			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (!dialogData || !ChatPermission.canCall(dialogData))
+			const buttons = [];
+
+			const dialog = this.getDialog();
+			if (ChatPermission.canCall(dialog))
 			{
-				return [];
+				buttons.push(CallAudioButton);
 			}
 
-			return [CallVideoButton, CallAudioButton];
+			if (Feature.isDialogHeaderButtonIconSupported)
+			{
+				buttons.push(OpenTaskButton);
+			}
+
+			return buttons;
 		}
 
 		/**
@@ -69,22 +86,22 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/header/buttons', (r
 
 			switch (buttonId)
 			{
-				case CallVideoButton.id:
-					// CallManager.getInstance().sendAnalyticsEvent(
-					// 	this.dialogId,
-					// 	Analytics.Element.videocall,
-					// 	Analytics.Section.chatWindow,
-					// );
-					CallManager.getInstance().createVideoCall(this.dialogId);
+				case CallAudioButton.id:
+					CallManager.getInstance().createAudioCall(this.dialogId);
 					break;
 
-				case CallAudioButton.id:
-					// CallManager.getInstance().sendAnalyticsEvent(
-					// 	this.dialogId,
-					// 	Analytics.Element.audiocall,
-					// 	Analytics.Section.chatWindow,
-					// );
-					CallManager.getInstance().createAudioCall(this.dialogId);
+				case OpenTaskButton.id:
+					// eslint-disable-next-line no-case-declarations
+					const dialog = this.getDialog();
+					if (!Type.isStringFilled(dialog.entityLink.url))
+					{
+						return;
+					}
+
+					// eslint-disable-next-line no-case-declarations
+					const url = `${currentDomain}${dialog.entityLink.url}`;
+					inAppUrl.open(url);
+
 					break;
 
 				default:

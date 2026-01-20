@@ -1,2 +1,2 @@
 <?php
-$MESS["REST_INVALID_REQUEST_FIELD_TYPE_EXCEPTION"] = "Field \"#FIELD#\" requires type \"#TYPE#\" to perform this request.";
+$MESS["REST_V3_EXCEPTIONS_VALIDATION_INVALIDREQUESTFIELDTYPEEXCEPTION"] = "This request requires data type \"#TYPE#\" in field \"#FIELD#\".";

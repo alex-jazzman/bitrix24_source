@@ -5,7 +5,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { Type } = require('type');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
-	const { Tourist } = require('tourist');
 
 	const { Sharing, SharingContext } = require('calendar/sharing');
 	const { EventManager } = require('calendar/data-managers/event-manager');
@@ -21,7 +20,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { EventEditForm } = require('calendar/event-edit-form');
 	const { Layout } = require('calendar/event-list-view/layout');
 	const { State } = require('calendar/event-list-view/state');
-	const { NewMenu, SyncError } = require('calendar/aha-moments-manager');
 	const {
 		CalendarType,
 		EventMeetingStatus,
@@ -218,24 +216,22 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			});
 		}
 
-		handleAhaMoments()
+		async handleAhaMoments()
 		{
-			if (!env.isCollaber && Tourist.firstTime(AhaMomentEvent.NEW_MENU))
-			{
-				setTimeout(() => {
-					NewMenu.show();
+			const { Onboarding, CaseName } = await requireLazy('calendar:onboarding', false);
 
-					void Tourist.remember(AhaMomentEvent.NEW_MENU);
-				}, 500);
-			}
-			else if (!env.isCollaber && this.moreMenu.hasCountersValue() && Tourist.firstTime(AhaMomentEvent.SYNC_ERROR))
-			{
-				setTimeout(() => {
-					SyncError.show(this.onHideSyncErrorAha);
-
-					void Tourist.remember(AhaMomentEvent.SYNC_ERROR);
-				}, 500);
-			}
+			await Onboarding.tryToShowCasesBatch([
+				{
+					id: CaseName.ON_CALENDAR_NEW_MENU,
+				},
+				{
+					id: CaseName.ON_CALENDAR_SYNC_ERROR,
+					context: {
+						moreMenuCounters: this.moreMenu.hasCountersValue(),
+						onHideAhaMoment: this.onHideSyncErrorAha,
+					},
+				},
+			]);
 		}
 
 		onHideSyncErrorAha = () => {
@@ -420,6 +416,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			return new Layout({
 				layout: this.layout,
 				floatingActionButtonRef: this.floatingActionButtonRef,
+				syncInfo: this.props.syncInfo,
 			});
 		}
 

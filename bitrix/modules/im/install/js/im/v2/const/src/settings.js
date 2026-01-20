@@ -30,6 +30,7 @@ export const Settings = Object.freeze({
 	user: {
 		status: 'status',
 	},
+	notifications: 'notifications',
 });
 
 export const SettingsSection = Object.freeze({

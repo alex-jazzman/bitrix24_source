@@ -1,7 +1,6 @@
-import { ChatType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 
-import { CommentsPanel } from './components/comments-panel';
+import { CommentsPanel } from '../comments-panel/comments-panel';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
@@ -10,8 +9,7 @@ import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 export const MessageFooter = {
 	name: 'MessageFooter',
 	components: { CommentsPanel },
-	props:
-	{
+	props: {
 		item: {
 			type: Object,
 			required: true,
@@ -25,8 +23,7 @@ export const MessageFooter = {
 	{
 		return {};
 	},
-	computed:
-	{
+	computed: {
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId);

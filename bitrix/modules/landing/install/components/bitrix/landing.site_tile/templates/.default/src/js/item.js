@@ -269,6 +269,14 @@ export default class Item
 	{
 		if (!this.popupConfig)
 		{
+			const items = this.disableMenuItems(this.mergeMenuItems(this.menuItems));
+			items.forEach((item) => {
+				if (item.access === 'settings' && Type.isString(item.onclick))
+				{
+					item.onclick = item.onclick.replace('#ID#', this.id);
+				}
+			});
+
 			this.popupConfig = new Menu({
 				className: 'landing-sites__status-popup',
 				bindElement: this.getContainerSiteMore(),
@@ -279,7 +287,7 @@ export default class Item
 				angle: {
 					offset: 97,
 				},
-				items: this.disableMenuItems(this.mergeMenuItems(this.menuItems)),
+				items,
 				events: {
 					onPopupClose: () => {
 						this.getContainerSiteMore().classList.remove('--hover');

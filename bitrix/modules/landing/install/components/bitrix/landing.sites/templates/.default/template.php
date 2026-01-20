@@ -93,13 +93,15 @@ if ($arParams['TYPE'] == \Bitrix\Landing\Site\Type::SCOPE_CODE_GROUP)
 
 $metrika = new Metrika\Metrika(
 	Metrika\Categories::getBySiteType($arParams['TYPE']),
-	Metrika\Events::openStartPage
+	Metrika\Events::openStartPage,
+	Metrika\Tools::getBySiteType($arParams['TYPE']),
 );
 $metrika->send();
 
 $metrikaMarket = new Metrika\Metrika(
 	Metrika\Categories::getBySiteType($arParams['TYPE']),
 	Metrika\Events::openMarket,
+	Metrika\Tools::getBySiteType($arParams['TYPE']),
 );
 $metrikaMarket->setSection(Metrika\Sections::site);
 
@@ -240,6 +242,17 @@ $featureCode = $request->getQuery('feature_promoter');
 <?
 if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm && (($arParams['OLD_TILE'] ?? 'N') !== 'Y'))
 {
+	echo '<script>function openSettings(tool, id){
+		BX.UI.Analytics.sendData({
+			tool,
+			category:"settings",
+			event: "open",
+			c_section: "site_list",
+			p3: `siteID_${id}`,
+		});
+	}</script>';
+
+	$tool = Metrika\Tools::getBySiteType($arParams['TYPE'])->value;
 	if ($arParams['TYPE'] === 'STORE')
 	{
 		$ordersLink = 'crm/deal/?redirect_to';
@@ -259,7 +272,8 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				'text' => $component->getMessageType('LANDING_TPL_ACTION_SETTINGS'),
 				'href' => $arParams['~PAGE_URL_SITE_SETTINGS'],
 				'access' => 'settings',
-				'sidepanel' => true
+				'sidepanel' => true,
+				'onclick' => 'openSettings("' . htmlspecialcharsbx($tool) . '", #ID#);'
 			],
 			[
 				'delimiter' => true
@@ -340,7 +354,8 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				'text' => $component->getMessageType('LANDING_TPL_ACTION_EDIT'),
 				'href' => $arParams['~PAGE_URL_SITE_SETTINGS'],
 				'access' => 'settings',
-				'sidepanel' => true
+				'sidepanel' => true,
+				'onclick' => 'openSettings("' . htmlspecialcharsbx($tool) . '", #ID#);'
 			],
 			$arResult['EXPORT_DISABLED'] === 'Y'
 			? [
@@ -498,6 +513,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 						<div class="landing-title-btn"
 							 onclick="showTileMenu(this,{
 									ID: '<?= $item['ID']?>',
+								 	siteType: '<?= Metrika\Tools::getBySiteType($arParams['TYPE'])->value?>',
 									domainId: '<?= $item['DOMAIN_ID']?>',
 									domainProvider: '<?= $item['DOMAIN_PROVIDER']?>',
 									domainName: '<?= htmlspecialcharsbx(CUtil::jsEscape($item['DOMAIN_NAME'])) ?>',
@@ -580,6 +596,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 							<div class="landing-title-btn"
 								 onclick="showTileMenu(this,{
 									 ID: '<?= $item['ID']?>',
+									 siteType: '<?= Metrika\Tools::getBySiteType($arParams['TYPE'])->value?>',
 									 domainId: 0,
 									 domainName: '',
 									 domainB24Name: '',
@@ -848,6 +865,13 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					disabled: params.isDeleted || params.isSettingsDisabled,
 					onclick: function()
 					{
+						BX.UI.Analytics.sendData({
+							tool: params.siteType,
+							category: 'settings',
+							event: 'open',
+							c_section: 'site_list',
+							p3: `siteID_${params.ID}`,
+						});
 						this.popupWindow.close();
 					}
 				},

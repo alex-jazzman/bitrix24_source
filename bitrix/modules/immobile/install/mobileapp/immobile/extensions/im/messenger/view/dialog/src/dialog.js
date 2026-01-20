@@ -439,7 +439,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				indexList,
 				messageList,
 			};
-		}
+		};
 
 		/**
 		 * @return {{messageList: Array<Message>, indexList: Array<number>} || null}
@@ -636,13 +636,14 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		/**
 		 * @param {number} id
 		 * @param {Message} message
-		 * @param {string | null} section
+		 * @param {UpdateMessageByIdUpdatingBlocksParam} updatingBlocks
 		 */
-		async updateMessageById(id, message, section = null)
+		async updateMessageById(id, message, updatingBlocks = null)
 		{
-			if (section)
+			logger.log(`${this.constructor.name}.updateMessageById:`, id, message, updatingBlocks);
+			if (updatingBlocks)
 			{
-				await this.ui.updateMessageById(id, this.#prepareMessageToDialogWidgetItem(message), [section]);
+				await this.ui.updateMessageById(id, this.#prepareMessageToDialogWidgetItem(message), [updatingBlocks]);
 			}
 			else
 			{
@@ -676,7 +677,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		async updateMessagesByIds(messages)
 		{
-			await this.ui.updateMessagesByIds(messages);
+			await this.ui.updateMessagesByIds(this.#prepareMessagesByIdsToDialogWidgetItem(messages));
 		}
 
 		/**
@@ -704,7 +705,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {number} id
+		 * @param {number|string} id
 		 * @return {boolean}
 		 */
 		isMessageWithIdOnScreen(id)
@@ -926,26 +927,33 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		/**
 		 * @param {object} message
-		 * @param {string} type
-		 * @param {boolean} [openKeyboard=true]
-		 * @param {string?} [title=null] (56+ API)
-		 * @param {string?} [text=null] (56+ API)
+		 * @param {QuoteParams} params
 		 */
-		setInputQuote(message, type, openKeyboard = true, title = null, text = null)
+		setInputQuote(message, params)
 		{
+			if (!Type.isPlainObject(params))
+			{
+				return;
+			}
+
+			const { type, openKeyboard = true, title = null, text = null, icon = null } = params;
+			const quoteParams = {
+				openKeyboard,
+				icon,
+			};
+
+			if (title && text)
+			{
+				quoteParams.text = text;
+				quoteParams.title = title;
+			}
+
 			if (InputQuoteType[type])
 			{
-				if (title && text)
-				{
-					this.textField.setQuote(message, type, openKeyboard, title, text);
-				}
+				quoteParams.type = type;
+			}
 
-				this.textField.setQuote(message, type, openKeyboard);
-			}
-			else
-			{
-				this.textField.setQuote(message);
-			}
+			this.textField.setQuote(message, quoteParams);
 		}
 
 		enableAlwaysSendButtonMode(enable)
@@ -991,49 +999,41 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {boolean} isActive
+		 * @param {AssistantButton[]} buttons
+		 * @param {?boolean} animated
+		 * @return {Promise<any>}
 		 */
-		showActionButton(isActive = false)
+		showAssistantButtons(buttons, animated = false)
 		{
-			if (!Feature.isActionButtonAvailable)
-			{
-				return;
-			}
-
-			const color = isActive ? Theme.colors.base1 : Theme.colors.base3;
-
-			const actionButton = {
-				id: 'message-auto-delete',
-				icon: {
-					name: Icon.TIMER_DOT.getIconName(),
-					tintColor: color,
-				},
-			};
-
-			this.textField.showActionButton(actionButton);
+			return this.textField.showAssistantButtons(buttons, animated);
 		}
 
 		/**
-		 * @param {[Array<object>, Array<object>]} params
+		 * @param {?boolean} animated
+		 * @return {Promise<any>}
 		 */
-		showActionButtonPopupMenu(params)
+		hideAssistantButtons(animated = false)
 		{
-			if (!Feature.isActionButtonAvailable)
-			{
-				return;
-			}
-
-			this.textField.showActionButtonPopupMenu(params);
+			return this.textField.hideAssistantButtons(animated);
 		}
 
-		hideActionButton()
+		/**
+		 * @param {AssistantButton['id']} id
+		 * @param {AssistantButton} button
+		 * @return {Promise<any>}
+		 */
+		updateAssistantButton(id, button)
 		{
-			if (!Feature.isActionButtonAvailable)
-			{
-				return;
-			}
+			return this.textField.updateAssistantButton(id, button);
+		}
 
-			this.textField.hideActionButton();
+		/**
+		 * @param {AssistantButton['id']} id
+		 * @return {Promise<any>}
+		 */
+		removeAssistantButton(id)
+		{
+			return this.textField.removeAssistantButton(id);
 		}
 
 		/**
@@ -1162,24 +1162,22 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				return this.setMessagesOptions;
 			}
 
-			let scrollPosition = AfterScrollMessagePosition.top;
 			if (this.unreadSeparatorAdded)
 			{
 				return {
 					targetMessageId: UnreadSeparatorMessage.getDefaultId(),
 					withMessageHighlight: false,
-					targetMessagePosition: scrollPosition,
+					targetMessagePosition: AfterScrollMessagePosition.top,
 				};
 			}
 
-			scrollPosition = AfterScrollMessagePosition.bottom;
-
+			let scrollPosition = this.setMessagesOptions.targetMessagePosition ?? AfterScrollMessagePosition.bottom;
 			if (this.messageList.length === 0)
 			{
 				return {
 					targetMessageId: null,
 					withMessageHighlight: null,
-					targetMessagePosition: null,
+					targetMessagePosition: scrollPosition,
 				};
 			}
 
@@ -1858,6 +1856,32 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		#prepareMessageToDialogWidgetItem(messageData)
 		{
 			return messageData.toDialogWidgetItem();
+		}
+
+		/**
+		 * @param {Record<string, Message>} messagesByIds
+		 * @return {Record<string, DialogWidgetItem>}
+		 */
+		#prepareMessagesByIdsToDialogWidgetItem(messagesByIds)
+		{
+			const transformedMessagesByIds = {};
+			Object.entries(messagesByIds).forEach(([id, message]) => {
+				transformedMessagesByIds[id] = this.#prepareMessageToDialogWidgetItem(message);
+			});
+
+			return transformedMessagesByIds;
+		}
+
+		/**
+		 * @param {string} messageId
+		 * @param {string} reactionId
+		 * @return {any}
+		 */
+		animateReaction(messageId, reactionId)
+		{
+			logger.log(`${this.constructor.name}.animateReaction for messageId:`, messageId, reactionId);
+
+			return this.ui.animateReaction(messageId, reactionId);
 		}
 	}
 

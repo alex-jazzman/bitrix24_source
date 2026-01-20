@@ -212,6 +212,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 					items: <?= CUtil::PhpToJSObject($data['items'], false, false, true)?>,
 					dropZones: <?= CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,
 					emptyStubItems: <?= CUtil::PhpToJSObject($arResult['STUB'] ?? null)?>,
+					stageAnalyticsLabels: <?= JSON::encode($arResult['STAGE_ANALYTICS']) ?>,
 					data:
 						{
 							itemsConfig: <?= Json::encode($data['config'] ?? []) ?>,
@@ -240,16 +241,17 @@ if (defined('AIR_SITE_TEMPLATE'))
 							showActivity: <?= $showActivity ?>,
 							currency: "<?= $arParams['CURRENCY']?>",
 							lastId: <?= (int)$data['last_id']?>,
-							rights:
-								{
-									canAddColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-									canEditColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-									canRemoveColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-									canSortColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-									canImport: <?= isset($arResult['ACCESS_IMPORT']) && $arResult['ACCESS_IMPORT'] ? 'true' : 'false'?>,
-									canSortItem: true,
-									canUseVisit: <?= Visit::isAvailable() ? 'true' : 'false' ?>
-								},
+							isLockedEntity: <?= $arResult['IS_LOCKED_ENTITY'] ? 'true' : 'false' ?>,
+							lockedEntitySliderCode: 'limit_v2_crm_automated_solution_marketplace',
+							rights: {
+								canAddColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false' ?>,
+								canEditColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
+								canRemoveColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
+								canSortColumn: <?= !$arResult['IS_LOCKED_ENTITY'] && $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
+								canImport: <?= !$arResult['IS_LOCKED_ENTITY'] && isset($arResult['ACCESS_IMPORT']) && $arResult['ACCESS_IMPORT'] ? 'true' : 'false'?>,
+								canSortItem: <?= $arResult['IS_LOCKED_ENTITY'] ? 'true' : 'false' ?>,
+								canUseVisit: <?= !$arResult['IS_LOCKED_ENTITY'] && Visit::isAvailable() ? 'true' : 'false' ?>,
+							},
 							visitParams: <?= CUtil::PhpToJSObject(Visit::getPopupParameters(), false, false, true)?>,
 							admins: <?= CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
 							userId: <?= $arParams['USER_ID'] ?>,

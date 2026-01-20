@@ -554,21 +554,6 @@ if ($isAdmin || $userPermissionsService->entityType()->canReadItems($invoiceEnti
 	$stdItems[\CCrmOwnerType::ResolveName($invoiceEntityTypeId)] = $invoiceItem;
 }
 
-if (
-	Loader::includeModule('biconnector')
-	&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
-)
-{
-	/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorCrm::getMenuItemData */
-	$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
-		\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_CRM
-	);
-	if ($menuItem)
-	{
-		$stdItems['BIC_DASHBOARDS'] = $menuItem;
-	}
-}
-
 if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
 {
 	$stdItems['ANALYTICS'] = [
@@ -756,12 +741,29 @@ if ($isAdmin || $userPermissionsService->isCrmAdmin())
 	];
 }
 
+if (Loader::includeModule('documentgenerator')
+	&& \Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifySettings()
+	&& method_exists(\Bitrix\DocumentGenerator\Driver::class, 'getPermissionsUri'))
+{
+	$documentPermsUrl = \Bitrix\DocumentGenerator\Driver::getPermissionsUri()?->getUri();
+
+	if ($documentPermsUrl)
+	{
+		$stdItems['DOCUMENT_PERMISSIONS'] = [
+			'ID' => 'DOCUMENT_PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_DOCUMENT_PERMISSIONS'),
+			'URL' => $documentPermsUrl,
+			'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($documentPermsUrl) . '"); return false;'
+		];
+	}
+}
+
 if (Loader::includeModule('catalog'))
 {
 	$catalogRights = null;
 	if (Catalog\Config\Feature::isAccessControllerCheckingEnabled())
 	{
-		$catalogRightsUrl = '/shop/settings/permissions/';
+		$catalogRightsUrl = SITE_DIR . 'shop/settings/permissions/';
 		$catalogRights = [
 			'ID' => 'CATALOG_PERMISSIONS',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS_MSGVER_1'),
@@ -1037,7 +1039,7 @@ if (Loader::includeModule('salescenter'))
 		$stdItems['SALES_CENTER'] = [
 			'ID' => 'SALES_CENTER',
 			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER'),
-			'URL' => '/saleshub/',
+			'URL' => SITE_DIR .'saleshub/',
 			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('SALES_CENTER'), // 'menu-sale-center',
 		];
 	}
@@ -1075,7 +1077,7 @@ if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
 	$stdItems['TERMINAL'] = [
 		'ID' => 'TERMINAL',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TERMINAL'),
-		'URL' => '/crm/terminal/',
+		'URL' => SITE_DIR .'crm/terminal/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('TERMINAL'), // 'menu_terminal',
 	];
 }
@@ -1086,15 +1088,14 @@ if (
 	&& AIManager::isAvailable()
 )
 {
-	$deadline = new \Datetime('2025-04-01 00:00:00'); //todo remove after deadline date
 	$isCrmCopilotEnabled = Bitrix24Manager::isFeatureEnabled(AIManager::AI_COPILOT_FEATURE_NAME);
 	$callAssessmentMenuItem = [
 		'ID' => 'CALL_ASSESSMENT',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CALL_ASSESSMENT'),
-		'URL' => '/crm/copilot-call-assessment/',
+		'URL' => SITE_DIR . 'crm/copilot-call-assessment/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CALL_ASSESSMENT'),
-		'IS_NEW' => ($deadline > (new \Datetime())),  //todo remove after deadline date
 	];
+	
 	if (!$isCrmCopilotEnabled)
 	{
 		unset($callAssessmentMenuItem['URL']);
@@ -1120,7 +1121,7 @@ if (
 	$stdItems['REPEAT_SALE_SEGMENT'] = [
 		'ID' => 'REPEAT_SALE_SEGMENT',
 		'NAME' => Loc::getMessage('CRM_COMMON_REPEAT_SALE'),
-		'URL' => '/crm/repeat-sale-segment/',
+		'URL' => SITE_DIR . 'crm/repeat-sale-segment/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('REPEAT_SALE_SEGMENT'),
 		'IS_NEW' => true, // @todo set end datetime
 	];
@@ -1138,7 +1139,7 @@ if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::i
 	$stdItems['TELEPHONY'] = [
 		'ID' => 'TELEPHONY',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TELEPHONY'),
-		'URL' => '/telephony/',
+		'URL' => SITE_DIR . 'telephony/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('TELEPHONY'), // 'menu_telephony',
 	];
 }
@@ -1155,7 +1156,7 @@ if (ModuleManager::isModuleInstalled('rest'))
 	$stdItems['DEVOPS'] = [
 		'ID' => 'DEVOPS',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DEVOPS'),
-		'URL' => '/devops/',
+		'URL' => SITE_DIR . 'devops/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('DEVOPS'), // 'menu_devops',
 	];
 }
@@ -1165,7 +1166,7 @@ if (\Bitrix\Crm\Tracking\Manager::isAccessible())
 	$stdItems['CRM_TRACKING'] = [
 		'ID' => 'CRM_TRACKING',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CRM_TRACKING'),
-		'URL' => '/crm/tracking/',
+		'URL' => SITE_DIR . 'crm/tracking/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CRM_TRACKING'), // 'menu_crm_tracking',
 	];
 }
@@ -1179,14 +1180,14 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 		$stdItems['ANALYTICS_SALES_FUNNEL'] = [
 			'ID' => 'ANALYTICS_SALES_FUNNEL',
 			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_SALES_FUNNEL'),
-			'URL' => '/report/analytics/?analyticBoardKey=crm_sales_funnel',
+			'URL' => SITE_DIR . 'report/analytics/?analyticBoardKey=crm_sales_funnel',
 		];
 	}
 
 	$stdItems['ANALYTICS_MANAGERS'] = [
 		'ID' => 'ANALYTICS_MANAGERS',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_MANAGERS'),
-		'URL' => '/report/analytics/?analyticBoardKey=crm_managers_rating',
+		'URL' => SITE_DIR . 'report/analytics/?analyticBoardKey=crm_managers_rating',
 	];
 
 	if (ModuleManager::isModuleInstalled('voximplant'))
@@ -1194,7 +1195,7 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 		$stdItems['ANALYTICS_CALLS'] = [
 			'ID' => 'ANALYTICS_CALLS',
 			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_CALLS'),
-			'URL' => '/report/telephony/?analyticBoardKey=telephony_calls_dynamics',
+			'URL' => SITE_DIR . 'report/telephony/?analyticBoardKey=telephony_calls_dynamics',
 		];
 	}
 
@@ -1227,7 +1228,7 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 
 				if (!empty($items))
 				{
-					$stdItems['ANALYTICS_BI']['URL'] = '/report/analytics/?analyticBoardKey=' . $items[0]['id'];
+					$stdItems['ANALYTICS_BI']['URL'] = SITE_DIR . 'report/analytics/?analyticBoardKey=' . $items[0]['id'];
 				}
 				else
 				{
@@ -1243,7 +1244,7 @@ if (Loader::includeModule('intranet') && CIntranetUtils::IsExternalMailAvailable
 	$stdItems['MAIL'] = [
 		'ID' => 'MAIL',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_MAIL'),
-		'URL' => '/mail/',
+		'URL' => SITE_DIR . 'mail/',
 	];
 }
 
@@ -1268,7 +1269,7 @@ if ($show1cSection)
 	$stdItems['ONEC'] = [
 		'ID' => 'ONEC',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ONEC_MSGVER_1'),
-		'URL' => '/onec/',
+		'URL' => SITE_DIR . 'onec/',
 	];
 }
 
@@ -1382,7 +1383,7 @@ if (Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\ShowLinkToFeaturesInMenu::cl
 	$stdItems['FEATURES_LIST'] = [
 		'ID' => 'FEATURES_LIST',
 		'NAME' => \Bitrix\Crm\Feature\ShowLinkToFeaturesInMenu::getMenuTitle(),
-		'URL' => '/crm/configs/?expert',
+		'URL' => SITE_DIR . 'crm/configs/?expert',
 	];
 }
 

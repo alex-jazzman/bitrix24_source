@@ -17,6 +17,7 @@ jn.define('im/messenger/model/queue/model', (require, exports, module) => {
 			collection: [],
 		}),
 		getters: {
+			/** @function queueModel/getQueue */
 			getQueue: (state) => {
 				return state.collection;
 			},

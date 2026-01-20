@@ -66,7 +66,7 @@ function extractReceiversFromMultifieldData(item: ItemIdentifier, entityData: Ob
 							value: stringOrUndefined(singleMultifield.VALUE),
 							valueFormatted: stringOrUndefined(singleMultifield.VALUE_FORMATTED),
 							complexId: stringOrUndefined(singleMultifield.COMPLEX_ID),
-							complexName: stringOrUndefined(singleMultifield.COMPLEX_NAME),
+							valueTypeCaption: stringOrUndefined(singleMultifield.COMPLEX_NAME),
 						},
 						{
 							title: addressSourceTitle,

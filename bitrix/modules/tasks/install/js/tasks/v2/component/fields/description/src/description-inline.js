@@ -1,13 +1,12 @@
 import { Event } from 'main.core';
-import type { TextEditorOptions } from 'ui.text-editor';
 import { TextEditor, TextEditorComponent } from 'ui.text-editor';
+import type { TextEditorOptions } from 'ui.text-editor';
 
-import { TaskModel } from 'tasks.v2.model.tasks';
-import { Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { type FileService, fileService } from 'tasks.v2.provider.service.file-service';
-
-import { DefaultEditorOptions } from './default-editor-options';
+import { fileService } from 'tasks.v2.provider.service.file-service';
+import { DefaultEditorOptions } from 'tasks.v2.component.entity-text';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import './description.css';
 
@@ -17,36 +16,46 @@ export const DescriptionInline = {
 	components: {
 		TextEditorComponent,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			editor: null,
 			DefaultEditorOptions,
 		};
 	},
-	data(props): { filesService: FileService }
+	data(): Object
 	{
 		return {
 			isFocused: false,
 			isScrolledToTop: true,
 			isScrolledToBottom: true,
-			fileService: fileService.get(props.taskId),
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		taskDescription(): string
 		{
 			return this.task.description;
+		},
+		copilotParams(): Object
+		{
+			if (Core.getParams().features.isCopilotEnabled)
+			{
+				return {
+					copilotOptions: {
+						moduleId: 'tasks',
+						category: 'tasks',
+						contextId: `tasks_${this.taskId}`,
+						menuForceTop: false,
+					},
+					triggerBySpace: true,
+				};
+			}
+
+			return {};
 		},
 	},
 	created(): void
@@ -62,6 +71,7 @@ export const DescriptionInline = {
 				onBlur: this.handleEditorBlur,
 				onChange: this.handleEditorChange,
 			},
+			copilot: this.copilotParams,
 		};
 
 		this.editor = new TextEditor({ ...DefaultEditorOptions, ...additionalEditorOptions });
@@ -70,13 +80,13 @@ export const DescriptionInline = {
 	{
 		Event.bind(this.editor.getScrollerContainer(), 'scroll', this.handleScroll);
 
-		this.fileService.getAdapter().getUploader().assignPaste(this.$refs.description);
+		fileService.get(this.taskId).getAdapter().getUploader().assignPaste(this.$refs.description);
 	},
 	beforeUnmount(): void
 	{
 		Event.unbind(this.editor.getScrollerContainer(), 'scroll', this.handleScroll);
 
-		this.fileService.getAdapter().getUploader().unassignPaste(this.$refs.description);
+		fileService.get(this.taskId).getAdapter().getUploader().unassignPaste(this.$refs.description);
 	},
 	methods: {
 		hasScroll(): boolean
@@ -92,10 +102,7 @@ export const DescriptionInline = {
 			this.isFocused = false;
 
 			const description = this.editor.getText();
-			void taskService.update(
-				this.taskId,
-				{ description },
-			);
+			void taskService.update(this.taskId, { description });
 		},
 		handleEditorChange(): void
 		{

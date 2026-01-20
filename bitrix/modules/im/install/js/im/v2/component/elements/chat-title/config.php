@@ -14,7 +14,6 @@ return [
 		'ui.vue3',
 		'im.v2.lib.text-highlighter',
 		'im.v2.lib.copilot',
-		'main.core.events',
 		'im.v2.const',
 		'im.v2.lib.esc-manager',
 		'im.v2.lib.permission',

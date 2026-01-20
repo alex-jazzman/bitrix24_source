@@ -46,7 +46,11 @@ $jsConfig = [
 			$pathTemplate24 . '/assets/js/helpers/inline-video.js',
 		],
 		'lang' => $pathLang . '/js/video_alert.php',
-		'rel' => ['mediaplayer', 'loader']
+		'rel' => [
+			'landing.utils',
+			'mediaplayer',
+			'loader',
+		]
 	],
 
 	'polyfill' => [

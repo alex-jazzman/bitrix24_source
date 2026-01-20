@@ -1,0 +1,12 @@
+.bx-im-list-recent-compact__calls_container {
+	position: relative;
+	flex-shrink: 0;
+
+	margin: 4px 10px 6px 10px;
+	padding: 0;
+
+	background: var(--im-list-recent-compact__background-color_calls-section);
+	border: 1px solid transparent;
+	border-radius: 8px;
+	overflow: hidden;
+}

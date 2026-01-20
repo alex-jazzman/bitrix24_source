@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,planner,ui_fontawesome4,im_integration_viewer,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_lib_counter,im_v2_lib_escManager,im_v2_lib_logger,im_v2_lib_init,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout,im_v2_const,im_v2_component_content_chat,im_v2_component_content_chatForms_forms,im_v2_component_content_market,im_v2_component_content_notification,im_v2_component_content_openlines,im_v2_component_content_openlinesV2,im_v2_component_content_settings,im_v2_component_list_container_channel,im_v2_component_list_container_collab,im_v2_component_list_container_copilot,im_v2_component_list_container_openline,im_v2_component_list_container_recent,im_v2_component_list_container_task) {
+(function (exports,planner,ui_fontawesome4,im_integration_viewer,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_lib_bulkActions,im_v2_lib_counter,im_v2_lib_escManager,im_v2_lib_logger,im_v2_lib_init,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout,im_v2_component_content_chat,im_v2_component_content_chatForms_forms,im_v2_component_content_market,im_v2_component_content_notification,im_v2_component_content_openlines,im_v2_component_content_openlinesV2,im_v2_component_content_settings,im_v2_component_list_container_channel,im_v2_component_list_container_collab,im_v2_component_list_container_copilot,im_v2_component_list_container_openline,im_v2_component_list_container_recent,im_v2_component_list_container_task,im_v2_component_desktop_modeSelectionBanner,im_v2_const,im_v2_lib_analytics,im_v2_lib_desktopApi,im_v2_lib_promo) {
 	'use strict';
 
 	const LayoutComponentMap = {
@@ -58,10 +58,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
+	const DesktopOverlay = {
+	  name: 'DesktopOverlay',
+	  components: {
+	    DesktopModeSelectionBanner: im_v2_component_desktop_modeSelectionBanner.DesktopModeSelectionBanner
+	  },
+	  data() {
+	    return {
+	      isBannerVisible: false
+	    };
+	  },
+	  computed: {
+	    shouldShowBanner() {
+	      const promoManager = im_v2_lib_promo.PromoManager.getInstance();
+	      const needToShow = promoManager.needToShow(im_v2_const.PromoId.desktopModeSelection);
+	      return needToShow && im_v2_lib_desktopApi.DesktopApi.isChatWindow();
+	    }
+	  },
+	  created() {
+	    this.isBannerVisible = this.shouldShowBanner;
+	    if (this.isBannerVisible) {
+	      im_v2_lib_analytics.Analytics.getInstance().desktopMode.onBannerShow();
+	    }
+	  },
+	  methods: {
+	    onCloseBanner() {
+	      this.isBannerVisible = false;
+	    }
+	  },
+	  template: `
+		<DesktopModeSelectionBanner v-if="isBannerVisible" @close="onCloseBanner" />
+	`
+	};
+
+	// @vue/component
 	const Messenger = {
 	  name: 'MessengerRoot',
 	  components: {
-	    OpenlinesContent: im_v2_component_content_openlines.OpenlinesContent
+	    OpenlinesContent: im_v2_component_content_openlines.OpenlinesContent,
+	    DesktopOverlay
 	  },
 	  data() {
 	    return {
@@ -110,15 +145,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    im_v2_lib_init.InitManager.start();
+	    im_v2_lib_init.InitManager.init();
 	    // emit again because external code expects to receive it after the messenger is opened (not via quick-access).
 	    im_v2_lib_counter.CounterManager.getInstance().emitCounters();
-	    im_v2_lib_layout.LayoutManager.init();
+	    im_v2_lib_layout.LayoutManager.getInstance().bindEvents({
+	      emitter: this.getEmitter()
+	    });
+	    im_v2_lib_bulkActions.BulkActionsManager.getInstance().bindEvents({
+	      emitter: this.getEmitter()
+	    });
 	    im_v2_lib_logger.Logger.warn('MessengerRoot created');
 	    void this.getLayoutManager().prepareInitialLayout();
 	  },
 	  mounted() {
-	    im_v2_lib_escManager.EscManager.getInstance().register();
+	    im_v2_lib_escManager.EscManager.getInstance().register({
+	      messengerContainer: this.$refs.container,
+	      context: {
+	        emitter: this.getEmitter()
+	      }
+	    });
 	  },
 	  beforeUnmount() {
 	    this.getLayoutManager().destroy();
@@ -136,11 +181,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getLayoutManager() {
 	      return im_v2_lib_layout.LayoutManager.getInstance();
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
-	  // Do not remove tabindex, we need it to handle ESC.
 	  template: `
-		<div class="bx-im-messenger__scope bx-im-messenger__container" :class="containerClasses">
+		<div class="bx-im-messenger__scope bx-im-messenger__container --ui-context-content-light" :class="containerClasses" ref="container">
 			<div class="bx-im-messenger__layout_container">
 				<div class="bx-im-messenger__layout_content">
 					<div v-if="hasListComponent" class="bx-im-messenger__list_container">
@@ -157,10 +204,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</div>
 			</div>
 		</div>
+		<DesktopOverlay />
 	`
 	};
 
 	exports.Messenger = Messenger;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.Integration.Viewer,BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.Integration.Viewer,BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Desktop,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=messenger.bundle.js.map

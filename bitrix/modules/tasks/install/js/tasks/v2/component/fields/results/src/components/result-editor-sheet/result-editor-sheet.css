@@ -1,0 +1,99 @@
+.tasks-result-editor-wrapper {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tasks-result-editor-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--ui-space-inset-md2) var(--ui-space-inset-xl) var(--ui-space-inset-md);
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-result-editor-title {
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-result-editor-header .ui-icon-set {
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.tasks-result-editor-header .ui-icon-set:hover {
+	opacity: 1;
+}
+
+.tasks-result-editor-field-actions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-stack-sm);
+}
+
+.tasks-result-editor-field-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-result-editor-container {
+	flex-grow: 1;
+	overflow-y: scroll;
+	--scroll-width: 5px;
+}
+
+@supports (scrollbar-gutter: stable) {
+	.tasks-result-editor-container {
+		scrollbar-gutter: stable;
+	}
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tasks-result-editor-container {
+		scrollbar-color: rgba(0, 0, 0, 0.21) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.tasks-result-editor-container::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: 5px;
+}
+
+.tasks-result-editor-container::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tasks-result-editor-container::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.21);
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	cursor: pointer;
+	-webkit-transition: .2s;
+	transition: .2s;
+}
+
+.tasks-result-editor-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--ui-space-inset-xl);
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-result-editor-action-list {
+	display: flex;
+	gap: 16px;
+}
+
+.tasks-result-editor-footer-buttons {
+	/* from .tasks-card-description-footer-buttons */
+	display: flex;
+	flex-direction: row;
+	gap: 22px;
+	margin-left: auto;
+}

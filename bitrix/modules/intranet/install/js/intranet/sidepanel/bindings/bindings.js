@@ -146,12 +146,10 @@
 					const queryParams = getQueryParams(link.url);
 					const taskId = parseInt(link.matches.groups.taskId, 10);
 					const groupId = parseInt(link.matches.groups.groupId, 10) || undefined;
-					const hasTemplate = Number(queryParams.TEMPLATE) > 0 || Number(queryParams.FLOW_ID) > 0;
-					const isCommentLink = Boolean(queryParams.MID);
 
 					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
 					const isV2Form = tasksSettings.isV2Form || tasksSettings.allowedGroups.includes(groupId);
-					if (queryParams.OLD_FORM === 'Y' || hasTemplate || isCommentLink || !isV2Form)
+					if ((queryParams.OLD_FORM === 'Y' && tasksSettings.isOldFormEnabled) || !isV2Form)
 					{
 						return {
 							label: {
@@ -177,6 +175,7 @@
 					const url = link.matches.groups.url;
 					const analytics = {
 						context: queryParams.ta_sec,
+						additionalContext: queryParams.ta_sub,
 						element: queryParams.ta_el,
 					};
 
@@ -186,21 +185,23 @@
 						width: 1510,
 						customLeftBoundary: 0,
 						cacheable: false,
-						contentCallback: (slider) => {
-							void BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then((exports) => {
-								card = new exports.TaskFullCard({ taskId, groupId, url, link, analytics });
-								card.mount(slider);
-							});
+						skeleton: '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full.html?v=1',
+						contentCallback: async (slider) => {
+							const exports = await BX.Runtime.loadExtension('tasks.v2.application.task-full-card');
 
-							return taskSkeleton();
+							card = new exports.TaskFullCard({ taskId, groupId, url, link, analytics });
+
+							return card.mount(slider);
 						},
 						events: {
-							onCloseComplete: () => card?.unmount(),
+							onClose: (event) => card?.onClose?.(event),
+							onCloseComplete: () => card?.onCloseComplete(),
 						},
 						allowChangeHistory: true,
 						printable: true,
 						copyLinkLabel: true,
-						newWindowUrl: url,
+						newWindowLabel: true,
+						title: taskId > 0 ? null : BX.message('INTRANET_BINDINGS_TASK'),
 					};
 				},
 				handler: async function(event, link) {
@@ -216,6 +217,7 @@
 						TaskCard.showCompactCard({
 							analytics: {
 								context: queryParams.ta_sec,
+								additionalContext: queryParams.ta_sub,
 								element: queryParams.ta_el,
 							},
 						});
@@ -235,18 +237,70 @@
 			},
 			{
 				condition: [
-					'/company/personal/user/(\\d+)/tasks/templates/template/view/(\\d+)/',
+					'(?<url>/company/personal/user/(\\d+)/tasks/templates/template/view/(?<templateId>\\d+)/)',
+					'(?<url>/company/personal/user/(\\d+)/tasks/templates/template/edit/(?<templateId>\\d+)/)',
 				],
-				loader: 'intranet:task-detail',
 				stopParameters: [
 					'PAGEN_(\\d+)',
 				],
-				options: {
-					label: {
-						text: BX.message("INTRANET_BINDINGS_TASK"),
-						bgColor: "#2FC6F6"
+				options: (link) => {
+					const queryParams = getQueryParams(link.url);
+					const templateId = parseInt(link.matches.groups.templateId, 10);
+
+					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
+					if ((queryParams.OLD_FORM === 'Y' && tasksSettings.isOldFormEnabled) || !tasksSettings.isV2Form)
+					{
+						return {
+							loader: 'intranet:task-detail',
+							label: {
+								text: BX.message('INTRANET_BINDINGS_TASK_TEMPLATE'),
+								bgColor: "#2FC6F6",
+							},
+						};
 					}
-				}
+
+					const url = link.matches.groups.url;
+					const analytics = {
+						context: queryParams.ta_sec,
+						additionalContext: queryParams.ta_sub,
+						element: queryParams.ta_el,
+					};
+
+					let card = null;
+
+					return {
+						width: 800,
+						cacheable: false,
+						skeleton: '/bitrix/js/tasks/v2/application/task-card/src/skeleton-template.html?v=1',
+						contentCallback: async (slider) => {
+							const exports = await BX.Runtime.loadExtension('tasks.v2.application.task-full-card');
+
+							card = new exports.TaskFullCard({ taskId: `template${templateId}`, url, link, analytics });
+
+							return card.mount(slider);
+						},
+						events: {
+							onClose: (event) => card?.onClose(event),
+							onCloseComplete: () => card?.onCloseComplete(),
+						},
+						allowChangeHistory: true,
+						copyLinkLabel: true,
+						newWindowLabel: true,
+						title: templateId > 0 ? null : BX.message('INTRANET_BINDINGS_TASK_TEMPLATE'),
+					};
+				},
+				handler: async function(event, link) {
+					event.preventDefault();
+
+					if (link.anchor?.dataset.sliderMaximize)
+					{
+						BX.SidePanel.Instance.maximize(link.url, this.options);
+					}
+					else
+					{
+						BX.SidePanel.Instance.open(link.url, this.options);
+					}
+				},
 			},
 			{
 				condition: [
@@ -279,39 +333,11 @@
 			},
 			{
 				condition: [
-					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
-				],
-				loader: 'intranet:task-add',
-				options: {
-					label: {
-						text: BX.message('INTRANET_BINDINGS_TASK'),
-						bgColor: '#2FC6F6',
-					},
-				},
-			},
-			{
-				condition: [
-					'/company/personal/user/(\\d+)/tasks/task/edit/(\\d+)/',
-					'/company/personal/user/(\\d+)/tasks/templates/template/edit/(\\d+)/',
-					'/workgroups/group/(\\d+)/tasks/task/edit/(\\d+)/',
-					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/(\\d+)/'
-				],
-				loader: 'intranet:task-add',
-				options: {
-					label: {
-						text: BX.message("INTRANET_BINDINGS_TASK"),
-						bgColor: "#2FC6F6"
-					}
-				}
-			},
-			{
-				condition: [
 					'/company/personal/user/\\d+/tasks/\\?F_STATE=sVag',
 					'/workgroups/group/\\d+/tasks/\\?F_STATE=sVag',
 					'/extranet/contacts/personal/user/\\d+/tasks/\\?F_STATE=sVag'
 				],
 				handler: function(event) {
-					debugger;
 					const Messenger = BX.Reflection.getClass('BX.Messenger.Public')
 					if (!Messenger)
 					{
@@ -434,6 +460,14 @@
 			},
 			{
 				condition: [
+					new RegExp("/mcp/"),
+				],
+				options: {
+					cacheable: false,
+				}
+			},
+			{
+				condition: [
 					new RegExp("/market/detail/")
 				],
 				options: {
@@ -532,23 +566,6 @@
 			},
 			{
 				condition: [
-					/\?IM_COLLAB\b$/i,
-				],
-				handler: function(event, link)
-				{
-					const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
-					if (!window.BXIM || isAirTemplate)
-					{
-						return;
-					}
-
-					BX.Messenger.Public.openCollab();
-
-					event.preventDefault();
-				}
-			},
-			{
-				condition: [
 					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_CHANNEL|IM_COLLAB|IM_TASK)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
 				],
 				handler: function(event, link)
@@ -577,10 +594,7 @@
 					}
 					else if (type === 'IM_CHANNEL')
 					{
-						BX.Messenger.Public?.openNavigationItem({
-							id: 'channel',
-							entityId: dialogId,
-						});
+						BX.Messenger.Public?.openChannel(dialogId);
 					}
 					else if (type === 'IM_COLLAB')
 					{
@@ -617,16 +631,33 @@
 					new RegExp(location.origin+'/online\/$'),
 					/^\/online\/$/,
 					/^\/extranet\/online\/$/,
+					/\/online\/\?(IM_COLLAB|IM_COPILOT|IM_CHANNEL)(?=&|$)/i
 				],
 				handler: function(event, link)
 				{
-					const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
-					if (!window.BXIM || isAirTemplate)
+					const Messenger = BX.Reflection.getClass('BX.Messenger.Public')
+					if (!Messenger)
 					{
 						return;
 					}
 
-					BXIM.openMessenger();
+					const type = link.matches[1];
+					if (type === 'IM_COPILOT')
+					{
+						Messenger.openNavigationItem({ id: 'copilot', asLink: true });
+					}
+					else if (type === 'IM_CHANNEL')
+					{
+						Messenger.openNavigationItem({ id: 'channel', asLink: true });
+					}
+					else if (type === 'IM_COLLAB')
+					{
+						Messenger.openNavigationItem({ id: 'collab', asLink: true });
+					}
+					else
+					{
+						Messenger.openNavigationItem({ id: 'chat', asLink: true });
+					}
 
 					event.preventDefault();
 				}
@@ -1397,7 +1428,7 @@
 							return BX.Runtime.loadExtension('sign.v2.b2e.sign-link').then((exports) => {
 								return (new exports.SignLink({ memberId: link.matches[1], slider }))
 									.render()
-								;
+									;
 							});
 						},
 					});
@@ -1554,54 +1585,180 @@
 					allowChangeHistory: false,
 				},
 			},
+			{
+				condition: [
+					new RegExp('/performan/profile/(\\d+)/'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const userId = link.matches[1];
+
+					BX.Runtime.loadExtension('performan.application.user-profile')
+						.then(function() {
+							(new BX.Performan.Application.UserProfile({ userId })).show();
+						});
+				},
+			},
+			{
+				condition: [
+					new RegExp('/performan/perf-review/(\\d+)/'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const userId = link.matches[1];
+
+					BX.Runtime.loadExtension('performan.application.user-profile')
+						.then(function() {
+							(new BX.Performan.Application.UserProfile({ userId })).show();
+						});
+				},
+			},
+			{
+				condition: [
+					new RegExp('/performan/campaign/(\\d+)/delegate/(\\d+)/'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const campaignId = link.matches[1];
+					const managerId = link.matches[2];
+
+					BX.Runtime.loadExtension('performan.application.perf-review.campaign-deputy')
+						.then(function() {
+							(new BX.Performan.Application.PerfReview.CampaignDeputy({campaignId, managerId})).show();
+						});
+				},
+			},
+			{
+				condition: [
+					new RegExp('^/performan/campaign/\\d+/', 'i'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const match = link.url.match(/\/performan\/campaign\/(\d+)(?:\/section\/(\w+))?\/?$/);
+					const campaignId = match[1];
+					const section = match[2];
+
+					if (campaignId) {
+						BX.Runtime.loadExtension('performan.application.perf-review.campaign')
+							.then(function() {
+								(new BX.Performan.Application.PerfReview.Campaign({
+									campaignId: parseInt(campaignId),
+									section: section
+								})).show();
+							});
+					}
+				},
+			},
+			{
+				condition: [
+					new RegExp('^/performan/campaign/relation/(\\d+)/edit/?$', 'i'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const match = link.url.match(/\/performan\/campaign\/relation\/(\d+)\/edit\/?$/);
+					const relationId = match && match[1] ? parseInt(match[1], 10) : null;
+					if (!relationId)
+					{
+						return;
+					}
+
+					BX.Runtime.loadExtension('performan.application.answer-card')
+						.then(function() {
+							BX.Performan.Application.AnswerCard.showInstance({
+								relationId: relationId,
+								mode: 'fill',
+							});
+						});
+				},
+			},
+			{
+				condition: [
+					new RegExp('^/performan/perf-review/relation/(\\d+)/?$', 'i'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const match = link.url.match(/\/performan\/perf-review\/relation\/(\d+)\/?$/);
+					const relationId = match && match[1] ? parseInt(match[1], 10) : null;
+					if (!relationId)
+					{
+						return;
+					}
+
+					BX.Runtime.loadExtension('performan.application.answer-card')
+						.then(function() {
+							BX.Performan.Application.AnswerCard.showInstance({
+								relationId: relationId,
+								mode: 'view',
+							});
+						});
+				},
+			},
+			{
+				condition: [
+					new RegExp('/performan/perf-review/relation/share/[^/]+/?$', 'i'),
+				],
+				loader: 'default-loader',
+				handler(event, link)
+				{
+					event.preventDefault();
+
+					const url = link.url || '';
+					const segments = url.split('?')[0].split('/');
+					const shareToken = segments.pop() || segments.pop();
+					if (!shareToken)
+					{
+						return;
+					}
+
+					BX.ajax.runAction('performan.CampaignStageRelationShare.get', {
+						data: {
+							token: shareToken,
+						},
+					}).then(function(response) {
+						if (response.errors && response.errors.length > 0)
+						{
+							console.error('Failed to get share relation:', response.errors);
+							return;
+						}
+
+						const relationId = response.data?.relationId;
+						if (!relationId)
+						{
+							console.error('Relation ID not found in share response');
+							return;
+						}
+
+						BX.Runtime.loadExtension('performan.application.answer-card')
+							.then(function() {
+								BX.Performan.Application.AnswerCard.showInstance({
+									relationId: relationId,
+									mode: 'view',
+									hash: shareToken,
+								});
+							});
+					}).catch(function(error) {
+						console.error('Failed to get share relation:', error);
+					});
+				},
+			},
 		]
 	});
-
-	const line = BX.UI.System.Line;
-	const circle = BX.UI.System.Circle;
-
-	const taskSkeleton = () => BX.Tag.render`
-		<div class="task-skeleton --full">
-			<div class="--main">
-				<div style="padding: 28px 24px">
-					<div class="--full-title --row">
-						${line(350, 18)}
-						${circle()}
-					</div>
-					<div class="--full-description">${line(260, 18)}</div>
-					${line(null, 84)}
-					<div style="margin: 12px 0">${line(null, 84)}</div>
-					${line(null, 84)}
-					<div class="--full-chips --row">
-						${line(88, 32)}
-						${line(88, 32)}
-						${line(88, 32)}
-					</div>
-				</div>
-				<div class="--row --footer">
-					${line(85, 38)}
-					<div class="--more">${line(38, 38)}</div>
-					${line(131, 22)}
-				</div>
-			</div>
-			<div class="--chat">
-				<div class="--chat-title --row">
-					${circle(40)}
-					<div class="--chat-info">
-						${line(110, 12)}
-						${line(75, 10)}
-					</div>
-					${circle()}
-					<div style="margin-left: 8px">${circle()}</div>
-				</div>
-				<div class="--chat-bg">
-					<div class="--textarea --row">
-						${line(null, 47)}
-						${circle(44)}
-					</div>
-				</div>
-			</div>
-		</div>
-	`;
-
 })();

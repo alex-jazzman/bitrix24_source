@@ -1,20 +1,26 @@
+import { Utils } from 'booking.utils';
 import { ResourceEntityType } from 'booking.const';
-import type { IntegrationCalendarType, ResourceModel } from 'booking.model.resources';
-import type { ResourceDto } from './types';
+import type { IntegrationCalendarType, ResourceModel, ResourceModelWithFile } from 'booking.model.resources';
+import type { ResourceDto, ResourceDtoWithFile } from './types';
 
-export function mapDtoToModel(resourceDto: ResourceDto): ResourceModel
+export function mapDtoToModel(resourceDto: ResourceDto | ResourceDtoWithFile): ResourceModel
 {
 	return {
 		id: resourceDto.id,
 		typeId: resourceDto.type.id,
 		name: resourceDto.name,
 		description: resourceDto.description,
+		avatar: resourceDto?.avatar ? {
+			id: resourceDto.avatar.id,
+			url: resourceDto.avatar.url,
+		} : null,
 		slotRanges: resourceDto.slotRanges.map((slotRange) => ({
 			...slotRange,
 			weekDays: Object.values(slotRange.weekDays),
 		})),
 		counter: resourceDto.counter,
 		isMain: resourceDto.isMain,
+		isPrimary: resourceDto.isPrimary,
 		isDeleted: resourceDto.isDeleted,
 		createdBy: resourceDto.createdBy,
 		createdAt: resourceDto.createdAt,
@@ -51,10 +57,14 @@ export function mapDtoToModel(resourceDto: ResourceDto): ResourceModel
 
 		// integrationCalendar
 		entities: resourceDto.entities || [],
+
+		// skus
+		skus: resourceDto.skus,
+		skusYandex: resourceDto.skusYandex,
 	};
 }
 
-export function mapModelToDto(resource: ResourceModel): ResourceDto
+export async function mapModelToDto(resource: ResourceModelWithFile): ResourceDtoWithFile
 {
 	return {
 		id: resource.id,
@@ -63,6 +73,11 @@ export function mapModelToDto(resource: ResourceModel): ResourceDto
 		},
 		name: resource.name,
 		description: resource.description,
+		avatar: resource?.avatar ? {
+			id: resource.avatar.id,
+			url: resource.avatar.url,
+			encodedFile: resource.avatar.file ? await Utils.file.getBase64(resource.avatar.file) : null,
+		} : null,
 		slotRanges: resource.slotRanges,
 		counter: null,
 		isMain: resource.isMain,
@@ -101,6 +116,10 @@ export function mapModelToDto(resource: ResourceModel): ResourceDto
 
 		// integrationCalendar
 		entities: entitiesToDto(resource.entities),
+
+		// skus
+		skus: resource.skus,
+		skusYandex: resource.skusYandex,
 	};
 }
 

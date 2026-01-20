@@ -15,7 +15,7 @@ use Bitrix\Main\UI\Extension;
 Loader::includeModule('booking');
 global $APPLICATION;
 $APPLICATION->SetTitle($arResult['title']);
-Extension::load(['booking.confirm-page-public', 'ui.design-tokens']);
+Extension::load(['booking.application.confirm-page-public', 'ui.design-tokens']);
 ?>
 
 <div>
@@ -29,7 +29,8 @@ Extension::load(['booking.confirm-page-public', 'ui.design-tokens']);
 		const booking = <?= \Bitrix\Main\Web\Json::encode($arResult['booking']) ?>;
 		const company = '<?= CUtil::JSEscape($arResult['company']); ?>';
 		const context = 'manager.view.details';
-		new BX.Booking.ConfirmPagePublic({
+
+		new BX.Booking.Application.ConfirmPagePublic({
 			container,
 			booking,
 			hash,

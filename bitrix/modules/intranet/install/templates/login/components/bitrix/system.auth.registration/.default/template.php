@@ -44,6 +44,7 @@ $isConfirmRegistrationBlockVisible = (
 			<?php endif ?>
 			<input type="hidden" name="AUTH_FORM" value="Y" />
 			<input type="hidden" name="TYPE" value="REGISTRATION" />
+			<?= bitrix_sessid_post(); ?>
 			<input type="hidden" name="Register" value="Y" />
 
 			<div v-show="isBackButtonVisible" class="intranet-back-button">
@@ -145,7 +146,7 @@ $isConfirmRegistrationBlockVisible = (
 							</div>
 						</div>
 
-						<h4 class="intranet-form-add-block__title intranet-form-add-block__title--margin">
+						<h4 class="intranet-form-add-block__title --margin">
 							<?=Loc::getMessage('INTRANET_AUTH_PASSWORD_TITLE')?>
 						</h4>
 						<div class="intranet-text-input intranet-login-enter-form__login">
@@ -190,7 +191,7 @@ $isConfirmRegistrationBlockVisible = (
 						</div>
 
 						<?php if($arResult['USER_PROPERTIES']['SHOW'] === 'Y'): ?>
-							<h4 class="intranet-form-add-block__title intranet-form-add-block__title--margin">
+							<h4 class="intranet-form-add-block__title --margin">
 								<?=trim($arParams['USER_PROPERTY_NAME']) ?: Loc::getMessage('INTRANET_USER_PROPERTIES_TITLE')?>
 							</h4>
 							<?php foreach ($arResult['USER_PROPERTIES']['DATA'] as $FIELD_NAME => $arUserField): ?>
@@ -250,9 +251,9 @@ $isConfirmRegistrationBlockVisible = (
 	</template>
 
 	<Teleport to=".intranet-body__header-right">
-		<div class="intranet-text-btn intranet-text-btn--auth">
-			<a class="intranet-text-btn-link" href="<?=$arResult['AUTH_AUTH_URL']?>" rel="nofollow"><?=Loc::getMessage('INTRANET_AUTH_LINK')?></a>
-		</div>
+		<a class="intranet-text-btn intranet-text-btn--auth" href="<?=$arResult['AUTH_AUTH_URL']?>" rel="nofollow">
+			<?=Loc::getMessage('INTRANET_AUTH_LINK')?>
+		</a>
 	</Teleport>
 </div>
 

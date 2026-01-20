@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,main_core,main_sidepanel,booking_provider_service_bookingService,booking_core,booking_const,booking_provider_service_waitListService) {
+(function (exports,main_core,main_sidepanel,booking_provider_service_bookingService,booking_provider_service_mainPageService,booking_core,booking_const,booking_provider_service_waitListService) {
 	'use strict';
 
 	const SidePanel = main_sidepanel.SidePanel || BX.SidePanel;
@@ -94,30 +94,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      onClose: async deal => {
 	        if (deal != null && deal.value) {
 	          void booking_provider_service_bookingService.bookingService.getById(babelHelpers.classPrivateFieldLooseBase(this, _bookingId)[_bookingId]);
+	          void booking_provider_service_mainPageService.mainPageService.fetchCounters();
 	        }
 	      }
 	    });
 	  }
-	  createDeal() {
-	    var _babelHelpers$classPr;
-	    const itemIdQueryParamName = 'bookingId';
-	    super.createCrmDeal({
-	      itemIdQueryParamName,
-	      itemId: babelHelpers.classPrivateFieldLooseBase(this, _bookingId)[_bookingId],
-	      clients: ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _booking)[_booking]) == null ? void 0 : _babelHelpers$classPr.clients) || [],
-	      onLoad: async data => {
-	        if (!data.isDeal || babelHelpers.classPrivateFieldLooseBase(this, _bookingId)[_bookingId] !== data.itemIdFromQuery) {
-	          return;
-	        }
-	        await this.saveDeal(data.dealData);
-	      },
-	      onClose: async () => {
-	        var _babelHelpers$classPr2;
-	        if ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _deal)[_deal]) != null && _babelHelpers$classPr2.value) {
-	          await this.saveDeal(babelHelpers.classPrivateFieldLooseBase(this, _deal)[_deal]);
-	        }
-	      }
-	    });
+	  async createDeal() {
+	    await booking_provider_service_bookingService.bookingService.createDeal(babelHelpers.classPrivateFieldLooseBase(this, _bookingId)[_bookingId]);
+	    this.openDeal();
 	  }
 	  saveDeal(dealData) {
 	    const externalData = babelHelpers.classPrivateFieldLooseBase(this, _booking)[_booking].externalData.filter(data => data.entityTypeId !== booking_const.CrmEntity.Deal);
@@ -131,8 +115,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  }
 	}
 	function _get_deal() {
-	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	  return ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _booking)[_booking]) == null ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.externalData) == null ? void 0 : _babelHelpers$classPr4.find(data => data.entityTypeId === booking_const.CrmEntity.Deal)) || null;
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  return ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _booking)[_booking]) == null ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.externalData) == null ? void 0 : _babelHelpers$classPr2.find(data => data.entityTypeId === booking_const.CrmEntity.Deal)) || null;
 	}
 	function _get_booking() {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Bookings}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _bookingId)[_bookingId]);
@@ -212,5 +196,5 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.BookingDealHelper = BookingDealHelper;
 	exports.WaitListDealHelper = WaitListDealHelper;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.SidePanel,BX.Booking.Provider.Service,BX.Booking,BX.Booking.Const,BX.Booking.Provider.Service));
+}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.SidePanel,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking,BX.Booking.Const,BX.Booking.Provider.Service));
 //# sourceMappingURL=deal-helper.bundle.js.map

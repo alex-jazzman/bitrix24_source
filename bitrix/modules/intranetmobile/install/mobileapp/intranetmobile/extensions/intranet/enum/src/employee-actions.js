@@ -1,7 +1,7 @@
 /**
- * @module intranet/enum/employee-actions
+ * @module intranet/enum/src/employee-actions
  */
-jn.define('intranet/enum/employee-actions', (require, exports, module) => {
+jn.define('intranet/enum/src/employee-actions', (require, exports, module) => {
 	const { BaseEnum } = require('utils/enums/base');
 
 	/**

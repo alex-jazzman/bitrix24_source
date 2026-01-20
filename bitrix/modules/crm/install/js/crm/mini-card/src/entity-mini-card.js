@@ -1,5 +1,5 @@
-import { Type, ajax as Ajax } from 'main.core';
-import { MiniCardItem } from './lib/model/mini-card-item';
+import { Type } from 'main.core';
+import { MiniCardResolver } from './lib/model/mini-card-resolver';
 import { MiniCard } from './mini-card';
 
 const EntityTypeEnum = BX.CrmEntityType.enumeration;
@@ -27,7 +27,10 @@ export class EntityMiniCard
 
 		this.#miniCard = new MiniCard({
 			bindElement: this.#bindElement,
-			miniCardResolver: this.fetchEntityMiniCard.bind(this),
+			miniCardResolver: new MiniCardResolver({
+				entityTypeId: this.#entityTypeId,
+				entityId: this.#entityId,
+			}),
 		});
 	}
 
@@ -82,23 +85,5 @@ export class EntityMiniCard
 		}
 
 		this.#bindElement = element;
-	}
-
-	async fetchEntityMiniCard(): Promise<?MiniCardItem>
-	{
-		const config = {
-			data: {
-				entityTypeId: this.#entityTypeId,
-				entityId: this.#entityId,
-			},
-		};
-
-		const response = await Ajax.runAction('crm.item.minicard.get', config);
-		if (response?.data)
-		{
-			return new MiniCardItem(response.data);
-		}
-
-		return null;
 	}
 }

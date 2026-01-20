@@ -1,5 +1,5 @@
-'use strict';
-(function() {
+jn.define('call/calls/call-token-manager', (require, exports, module) => {
+
 	class TokenManager
 	{
 		#tokenList;
@@ -111,5 +111,7 @@
 		}
 	}
 
-	window.TokenManager = TokenManager;
-})();
+	module.exports = {
+		TokenManager,
+	};
+});

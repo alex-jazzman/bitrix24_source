@@ -47,6 +47,20 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 
 			this.setCheckedDates(State.selectedDate);
 			this.setMonthTitle(State.selectedDate);
+			if (props.events?.length >= 3)
+			{
+				void requireLazy('calendar:onboarding', false)
+					.then(({ Onboarding, CaseName }) => {
+						if (Onboarding)
+						{
+							void Onboarding.tryToShow(CaseName.ON_MORE_THAN_THREE_CALENDAR_EVENTS, {
+								syncInfo: this.props.syncInfo,
+								events: props.events.length,
+							});
+						}
+					})
+				;
+			}
 		}
 
 		render()

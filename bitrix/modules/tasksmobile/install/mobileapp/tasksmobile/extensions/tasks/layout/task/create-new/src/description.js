@@ -1,11 +1,12 @@
 /**
- * @module tasks/layout/task/create-new/description
+ * @module tasks/layout/task/create-new/src/description
  */
-jn.define('tasks/layout/task/create-new/description', (require, exports, module) => {
+jn.define('tasks/layout/task/create-new/src/description', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Loc } = require('loc');
 	const { TaskField } = require('tasks/enum');
 	const { TextEditor } = require('text-editor');
+	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
 
 	class Description extends LayoutComponent
@@ -14,48 +15,47 @@ jn.define('tasks/layout/task/create-new/description', (require, exports, module)
 		{
 			super(props);
 
-			this.state = {
-				description: props.description,
-				files: props.files,
-			};
-
-			this.onLayout = this.onLayout.bind(this);
-			this.onChange = this.onChange.bind(this);
+			this.initialState(props);
 		}
 
 		componentWillReceiveProps(props)
 		{
+			this.initialState(props);
+		}
+
+		initialState(props)
+		{
 			this.state = {
 				description: props.description,
-				files: props.files,
 			};
 		}
 
 		render()
 		{
+			const { description } = this.state;
+			const { style, parentWidget, fileField } = this.props;
+
 			return View(
 				{
+					style,
 					testId: `${TaskField.DESCRIPTION}_FIELD`,
-					style: this.props.style,
 					onLayout: this.onLayout,
 					onClick: () => {
 						void TextEditor.edit({
+							fileField,
+							parentWidget,
 							title: Loc.getMessage('TASKSMOBILE_TASK_CREATE_FIELD_DESCRIPTION_EDITOR_TITLE'),
-							value: this.state.description,
-							parentWidget: this.props.parentWidget,
-							allowFiles: false,
+							value: description,
+							allowFiles: true,
 							closeOnSave: true,
-							onSave: ({ bbcode }) => this.onChange(bbcode),
+							onSave: this.onChange,
 						});
 					},
 				},
 				BBCodeText({
 					testId: `${TaskField.DESCRIPTION}_CONTENT`,
-					style: {
-						fontSize: 14,
-						fontWeight: '400',
-						color: Color.base2.toHex(),
-					},
+					size: 4,
+					color: Color.base2,
 					ellipsize: 'end',
 					numberOfLines: 4,
 					value: this.getTextToShow(),
@@ -63,22 +63,17 @@ jn.define('tasks/layout/task/create-new/description', (require, exports, module)
 			);
 		}
 
-		onLayout(params)
-		{
-			if (this.props.onLayout)
-			{
-				this.props.onLayout(params);
-			}
-		}
+		onLayout = (params) => {
+			const { onLayout } = this.props;
+			onLayout?.(params);
+		};
 
-		onChange(description)
-		{
-			if (this.props.onChange)
-			{
-				this.props.onChange(description);
-			}
+		onChange = ({ bbcode: description, files }) => {
+			const { onChange } = this.props;
+
+			onChange?.({ description, files });
 			this.setState({ description });
-		}
+		};
 
 		getTextToShow()
 		{
@@ -88,7 +83,7 @@ jn.define('tasks/layout/task/create-new/description', (require, exports, module)
 			{
 				const text = Loc.getMessage('TASKSMOBILE_TASK_CREATE_FIELD_DESCRIPTION_PLACEHOLDER');
 
-				return `[color=${Color.base5}]${text}[/color]`;
+				return `[color=${Color.base5.toHex()}]${text}[/color]`;
 			}
 
 			const plaintTextFormatter = new PlainTextFormatter();

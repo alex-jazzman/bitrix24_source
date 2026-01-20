@@ -9,7 +9,6 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = function(inAppUrl) {
-
 		try
 		{
 			const diskmobileInAppUrlRoutes = require('disk/in-app-url/routes');
@@ -61,6 +60,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 		inAppUrl.register('/company/personal/user/:userId/(\\?\\w+)?$', ({ userId }, { context = {} }) => {
 			void UserProfile.open({
 				ownerId: userId,
+				analyticsSection: context.analyticsSection ?? '',
 			});
 		}).name('open:user');
 

@@ -1,5 +1,4 @@
 import { Text } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
@@ -9,6 +8,7 @@ import { highlightText } from 'im.v2.lib.text-highlighter';
 
 import './css/search-item.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelMessage } from 'im.v2.model';
 
 // @vue/component
@@ -56,7 +56,7 @@ export const SearchItem = {
 	{
 		onItemClick()
 		{
-			EventEmitter.emit(EventType.dialog.goToMessageContext, {
+			this.getEmitter().emit(EventType.dialog.goToMessageContext, {
 				messageId: this.messageId,
 				dialogId: this.dialogId,
 			});
@@ -67,6 +67,10 @@ export const SearchItem = {
 			{
 				event.stopPropagation();
 			}
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `
@@ -80,7 +84,6 @@ export const SearchItem = {
 						<ChatAvatar
 							:size="AvatarSize.XS"
 							:avatarDialogId="authorDialogId"
-							:contextDialogId="dialogId"
 							class="bx-im-message-search-item__author-avatar"
 						/>
 						<ChatTitle 

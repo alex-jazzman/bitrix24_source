@@ -24,6 +24,7 @@ if (Main\Loader::includeModule('baas'))
 		$settings['services'][$service->getCode()] = [
 			'isAvailable' => $service->isAvailable(),
 			'isActive' => $service->isActive(),
+			'advertisingStrategy' => $service->getAdvertisingStrategy(),
 		];
 	}
 }

@@ -1,11 +1,11 @@
-import {Dom, Text, Type} from 'main.core';
-import {Popup} from 'main.popup';
-import {DesktopApi} from 'im.v2.lib.desktop-api';
+import { Dom, Text, Type } from 'main.core';
+import { Popup } from 'main.popup';
+import { DesktopApi } from 'im.v2.lib.desktop-api';
 import Util from '../util';
 import { Utils } from 'im.v2.lib.utils';
 
 const Events = {
-	onButtonClick: "ConferenceNotification::onButtonClick"
+	onButtonClick: 'ConferenceNotification::onButtonClick',
 };
 
 /**
@@ -26,11 +26,11 @@ export class ConferenceNotifications
 		this.popup = null;
 		this.window = null;
 
-		this.callerAvatar = Type.isStringFilled(config.callerAvatar) ? config.callerAvatar : "";
+		this.callerAvatar = Type.isStringFilled(config.callerAvatar) ? config.callerAvatar : '';
 		this.zIndex = config.zIndex;
 		if (Util.isAvatarBlank(this.callerAvatar))
 		{
-			this.callerAvatar = "";
+			this.callerAvatar = '';
 		}
 
 		this.callerName = config.callerName;
@@ -39,7 +39,7 @@ export class ConferenceNotifications
 		this.callbacks = {
 			onClose: Type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
 			onDestroy: Type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing,
-			onButtonClick: Type.isFunction(config.onButtonClick) ? config.onButtonClick : BX.DoNothing
+			onButtonClick: Type.isFunction(config.onButtonClick) ? config.onButtonClick : BX.DoNothing,
 		};
 
 		this._onContentButtonClickHandler = this._onContentButtonClick.bind(this);
@@ -47,21 +47,21 @@ export class ConferenceNotifications
 		{
 			DesktopApi.subscribe(Events.onButtonClick, this._onContentButtonClickHandler);
 		}
-	};
+	}
 
 	show()
 	{
 		if (DesktopApi.isChatWindow())
 		{
-			var params = {
+			const params = {
 				callerAvatar: this.callerAvatar,
 				callerName: this.callerName,
-				callerColor: this.callerColor
+				callerColor: this.callerColor,
 			};
 
 			if (this.window)
 			{
-				this.window.BXDesktopWindow.ExecuteCommand("show");
+				this.window.BXDesktopWindow.ExecuteCommand('show');
 			}
 			else
 			{
@@ -81,16 +81,15 @@ export class ConferenceNotifications
 				callerColor: this.callerColor,
 				onClose: this.callbacks.onClose,
 				onDestroy: this.callbacks.onDestroy,
-				onButtonClick: this.callbacks.onButtonClick
+				onButtonClick: this.callbacks.onButtonClick,
 			});
 			this.createPopup(this.content.render());
 			this.popup.show();
-			window.addEventListener('resize', () =>
-			{
+			window.addEventListener('resize', () => {
 				this.onResize();
 			});
 		}
-	};
+	}
 
 	onResize()
 	{
@@ -103,36 +102,35 @@ export class ConferenceNotifications
 	createPopup(content)
 	{
 		this.popup = new Popup({
-			id: "bx-messenger-call-notify",
+			id: 'bx-messenger-call-notify',
 			targetContainer: document.body,
-			content: content,
+			content,
 			closeIcon: false,
 			noAllPaddings: true,
 			zIndex: this.zIndex,
 			offsetLeft: 0,
 			offsetTop: 0,
 			closeByEsc: false,
-			draggable: {restrict: false},
+			draggable: { restrict: false },
 			borderRadius: '25px',
 			disableScroll: true,
 			maxHeight: document.body.clientHeight,
-			overlay: {backgroundColor: 'black', opacity: 30},
+			overlay: { backgroundColor: 'black', opacity: 30 },
 			events: {
-				onPopupClose: function ()
+				onPopupClose: function()
 				{
-					window.removeEventListener('resize', () =>
-					{
+					window.removeEventListener('resize', () => {
 						this.onResize();
 					});
 					this.callbacks.onClose();
 				}.bind(this),
-				onPopupDestroy: function ()
+				onPopupDestroy: function()
 				{
 					this.popup = null;
-				}.bind(this)
-			}
+				}.bind(this),
+			},
 		});
-	};
+	}
 
 	close()
 	{
@@ -140,12 +138,13 @@ export class ConferenceNotifications
 		{
 			this.popup.close();
 		}
+
 		if (this.window)
 		{
-			this.window.BXDesktopWindow.ExecuteCommand("hide");
+			this.window.BXDesktopWindow.ExecuteCommand('hide');
 		}
 		this.callbacks.onClose();
-	};
+	}
 
 	destroy()
 	{
@@ -154,9 +153,10 @@ export class ConferenceNotifications
 			this.popup.destroy();
 			this.popup = null;
 		}
+
 		if (this.window)
 		{
-			this.window.BXDesktopWindow.ExecuteCommand("close");
+			this.window.BXDesktopWindow.ExecuteCommand('close');
 			this.window = null;
 		}
 
@@ -183,27 +183,26 @@ export class NotificationConferenceContent
 
 		this.elements = {
 			root: null,
-			avatar: null
+			avatar: null,
 		};
 
 		this.callbacks = {
 			onClose: Type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
 			onDestroy: Type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing,
-			onButtonClick: Type.isFunction(config.onButtonClick) ? config.onButtonClick : BX.DoNothing
+			onButtonClick: Type.isFunction(config.onButtonClick) ? config.onButtonClick : BX.DoNothing,
 		};
-	};
+	}
 
 	render()
 	{
-		var avatarImageStyles;
+		let avatarImageStyles;
 		let avatarImageText = '';
 		if (this.callerAvatar)
 		{
 			avatarImageStyles = {
-				backgroundImage: "url('" + this.callerAvatar + "')",
-				backgroundColor: '#fff',
+				backgroundImage: `url('${this.callerAvatar}')`,
 				backgroundSize: 'cover',
-			}
+			};
 		}
 		else
 		{
@@ -213,128 +212,135 @@ export class NotificationConferenceContent
 				backgroundSize: '80px',
 				backgroundRepeat: 'no-repeat',
 				backgroundPosition: 'center center',
-			}
+			};
 			avatarImageText = Utils.text.getFirstLetters(this.callerName).toUpperCase();
 		}
 
-		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-call-window" + (DesktopApi.isDesktop() ? ' desktop' : '')},
+		this.elements.root = Dom.create('div', {
+			props: { className: `bx-messenger-call-window${DesktopApi.isDesktop() ? ' desktop' : ''}` },
 			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-body"},
+				Dom.create('div', {
+					props: { className: 'bx-messenger-call-window-body' },
 					children: [
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-top"},
+						Dom.create('div', {
+							props: { className: 'bx-messenger-call-window-top center' },
 							children: [
-								Dom.create("div", {
-									props: {className: "bx-messenger-call-window-photo bx-messenger-videocall-incoming-call-avatar-pulse"},
+								Dom.create('div', {
+									props: { className: 'bx-messenger-call-window-title' },
 									children: [
-										Dom.create("div", {
-											props: {className: "bx-messenger-call-window-photo-left"},
+										Dom.create('div', {
+											props: { className: 'bx-messenger-call-overlay-title-caller-prefix' },
 											children: [
-												this.elements.avatar = Dom.create("div", {
-													props: {className: "bx-messenger-call-window-photo-block"},
+												Dom.create('div', {
+													props: { className: 'bx-messenger-call-overlay-title-caller-prefix-icon' },
+												}),
+												Dom.create('div', {
+													props: { className: 'bx-messenger-call-overlay-title-caller-prefix-text' },
+													text: BX.message('IM_M_VIDEO_CALL_FROM_MSGVER_1'),
+												}),
+											],
+										}),
+										Dom.create('div', {
+											text: Text.encode(this.callerName),
+											props: { className: 'bx-messenger-call-overlay-title-caller' },
+										}),
+									],
+								}),
+								Dom.create('div', {
+									props: { className: 'bx-messenger-call-window-photo bx-messenger-videocall-incoming-call-avatar-pulse' },
+									children: [
+										Dom.create('div', {
+											props: { className: 'bx-messenger-videocall-incoming-call-pulse-element' },
+										}),
+										Dom.create('div', {
+											props: { className: 'bx-messenger-videocall-incoming-call-pulse-element' },
+										}),
+										Dom.create('div', {
+											props: {
+												className: 'bx-messenger-call-window-photo-left',
+											},
+											children: [
+												this.elements.avatar = Dom.create('div', {
+													props: { className: 'bx-messenger-call-window-photo-block' },
 													style: avatarImageStyles,
 													text: avatarImageText,
 												}),
-											]
+											],
 										}),
-										Dom.create("div", {
-											props: {className: "bx-messenger-videocall-incoming-call-pulse-element", style: "animation-delay: -2s;"}
-										}),
-										Dom.create("div", {
-											props: {className: "bx-messenger-videocall-incoming-call-pulse-element", style: "animation-delay: -1.5s;"}
-										}),
-										Dom.create("div", {
-											props: {className: "bx-messenger-videocall-incoming-call-pulse-element", style: "animation-delay: -1s;"}
-										}),
-										Dom.create("div", {
-											props: {className: "bx-messenger-videocall-incoming-call-pulse-element", style: "animation-delay: -0.5s;"}
-										}),
-									]
+									],
 								}),
-								Dom.create("div", {
-									props: {className: "bx-messenger-call-window-title"},
-									children: [
-										Dom.create("div", {
-											props: {className: "bx-messenger-call-window-title-block"},
-											children: [
-												Dom.create("div", {
-													props: {className: "bx-messenger-call-overlay-title-caller-prefix"},
-													text: BX.message("IM_M_VIDEO_CALL_FROM")
-												}),
-												Dom.create("div", {
-													text: Text.encode(this.callerName),
-													props: {className: "bx-messenger-call-overlay-title-caller"}
-												})
-											]
-										}),
-									]
-								}),
-							]
+							],
 						}),
-						Dom.create("div", {
-							props: {className: "bx-messenger-call-window-bottom"},
+						Dom.create('div', {
+							props: { className: 'bx-messenger-call-window-bottom' },
 							children: [
-								Dom.create("div", {
-									props: {className: "bx-messenger-call-window-buttons"},
+								Dom.create('div', {
+									props: { className: 'bx-messenger-call-window-buttons' },
 									children: [
-										this.elements.buttonsBlock = Dom.create("div", {
-											props: {className: "bx-messenger-call-window-buttons-block"},
-											children: []
+										this.elements.buttonsBlock = Dom.create('div', {
+											props: { className: 'bx-messenger-call-window-buttons-block' },
+											children: [],
 										}),
-									]
+									],
 								}),
-							]
-						})
-					]
-				})
-			]
+							],
+						}),
+					],
+				}),
+			],
 		});
 
-		this.elements.buttonsBlock.append(...[
-			Dom.create("div", {
-				props: {className: "bx-messenger-call-window-button bx-messenger-call-window-button-danger"},
+		this.elements.buttonsBlock.append(
+			Dom.create('div', {
+				props: { className: 'bx-messenger-call-window-button-container' },
 				children: [
-					Dom.create("div", {
-						props: {
-							className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down",
-							title: BX.message("IM_M_CALL_BTN_SKIP_CONFERENCE"),
-						},
+					Dom.create('div', {
+						props: { className: 'bx-messenger-call-window-button bx-messenger-call-window-button-danger' },
+						children: [
+							Dom.create('div', {
+								props: {
+									className: 'bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-down',
+								},
+							}),
+						],
 					}),
 				],
-				events: {click: this._onSkipConferenceButtonClick.bind(this)}
+				events: { click: this._onSkipConferenceButtonClick.bind(this) },
 			}),
-			Dom.create("div", {
-				props: {className: "bx-messenger-call-window-button" + (this.withBlur ? ' with-blur' : '')},
+			Dom.create('div', {
+				props: { className: 'bx-messenger-call-window-button-container' },
 				children: [
-					Dom.create("div", {
-						props: {
-							className: "bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up",
-							title: BX.message("IM_M_CALL_BTN_ANSWER_CONFERENCE"),
-						},
+					Dom.create('div', {
+						props: { className: `bx-messenger-call-window-button${this.withBlur ? ' with-blur' : ''}` },
+						children: [
+							Dom.create('div', {
+								props: {
+									className: 'bx-messenger-call-window-button-icon bx-messenger-call-window-button-icon-phone-up',
+								},
+							}),
+						],
 					}),
 				],
-				events: {click: this._onAnswerConferenceButtonClick.bind(this)}
+				events: { click: this._onAnswerConferenceButtonClick.bind(this) },
 			}),
-		]);
+		);
 
 		return this.elements.root;
-	};
+	}
 
 	showInDesktop()
 	{
-		const width = 460;
-		const height = 580;
+		const width = 352;
+		const height = 495;
 		this.render();
 		document.body.appendChild(this.elements.root);
 		DesktopApi.setWindowPosition({
 			x: STP_CENTER,
 			y: STP_VCENTER,
 			width,
-			height
+			height,
 		});
-	};
+	}
 
 	_onAnswerConferenceButtonClick(e)
 	{
@@ -351,7 +357,7 @@ export class NotificationConferenceContent
 				button: 'answerConference',
 			});
 		}
-	};
+	}
 
 	_onSkipConferenceButtonClick(e)
 	{
@@ -365,9 +371,8 @@ export class NotificationConferenceContent
 		else
 		{
 			this.callbacks.onButtonClick({
-				button: 'skipConference'
+				button: 'skipConference',
 			});
 		}
-	};
-
+	}
 }

@@ -6,7 +6,6 @@
 
 .tasks-field-files-title {
 	display: flex;
-	flex-direction: row;
 }
 
 .tasks-field-files-main {
@@ -18,6 +17,7 @@
 
 .tasks-field-files-main .ui-icon-set {
 	margin-right: 6px;
+	--ui-icon-set__icon-size: 24px;
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
@@ -55,6 +55,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	padding-top: var(--ui-space-stack-md2);
 	padding-bottom: var(--ui-space-inline-md);
 	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 }
@@ -86,7 +87,6 @@
 
 .tasks-field-files-footer {
 	display: flex;
-	flex-direction: row;
 	align-items: center;
 	margin-top: auto;
 	padding-top: var(--ui-space-inline-xl);

@@ -86,11 +86,11 @@ export class MarketManager
 		BX.rest.AppLayout.openApplication(placement.loadConfiguration.ID, context, placement.loadConfiguration);
 	}
 
-	static openMarketplace()
+	static openChatMarket(): void
 	{
-		const marketplaceImPlacementCode = 'IM_CHAT';
+		const placementCode = 'IM_CHAT';
 
-		BX.SidePanel.Instance.open(`/market/?placement=${marketplaceImPlacementCode}`);
+		BX.SidePanel.Instance.open(`/market/?placement=${placementCode}`);
 	}
 
 	#init(marketApps: MarketApps)

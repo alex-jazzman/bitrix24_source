@@ -1,9 +1,10 @@
-<?
+<?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 /**
@@ -22,41 +23,54 @@ define('DEBUG_FLAG', str_replace('\\','/',$_SERVER['DOCUMENT_ROOT'] . '/bitrix/s
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/general/site_checker.php');
 
 // NO AUTH TESTS
-if (isset($_REQUEST['unique_id']) && $_REQUEST['unique_id'])
+if (!empty($_REQUEST['unique_id']) && is_string($_REQUEST['unique_id']))
 {
-	if (!file_exists(DEBUG_FLAG) && $_REQUEST['unique_id'] != checker_get_unique_id())
+	if (!file_exists(DEBUG_FLAG) && !hash_equals(checker_get_unique_id(), $_REQUEST['unique_id']))
+	{
 		die('Permission denied: UNIQUE ID ERROR');
+	}
 
 	$testType = $_GET['test_type'] ?? '';
 	switch ($testType)
 	{
 		case 'socket_test':
 			echo "SUCCESS";
-		break;
+			break;
+
 		case 'webdav_test':
 			if ($_SERVER['REQUEST_METHOD'] == $_GET['method'])
+			{
 				echo "SUCCESS";
+			}
 			else
+			{
 				echo 'Incorrect $_SERVER[REQUEST_METHOD]: '.$_SERVER['REQUEST_METHOD'].', expected: '.preg_replace('#[^A-Z]#', '', $_GET['method']);
-		break;
+			}
+			break;
+
 		case 'compression':
 			echo str_repeat('SUCCESS', 8*1024);
-		break;
+			break;
+
 		case 'perf':
 			define("NOT_CHECK_PERMISSIONS", true);
 			define("LDAP_NO_PORT_REDIRECTION", true);
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
 			foreach(GetModuleEvents("main", "OnEpilog", true) as $arEvent)
+			{
 				ExecuteModuleEventEx($arEvent);
+			}
 
 			$APPLICATION->EndBufferContentMan();
 
 			echo round(microtime(true) - START_EXEC_TIME, 4);
-		break;
+			break;
+
 		case 'fast_download':
 			header('X-Accel-Redirect: /bitrix/tmp/success.txt');
-		break;
+			break;
+
 		case 'dbconn_test':
 			ob_start();
 			define('NOT_CHECK_PERMISSIONS', true);
@@ -68,42 +82,43 @@ if (isset($_REQUEST['unique_id']) && $_REQUEST['unique_id'])
 				ob_end_clean();
 			}
 			ob_end_clean();
-			if (function_exists('mb_internal_encoding'))
-				mb_internal_encoding('ISO-8859-1');
-			echo $buff === '' ? 'SUCCESS' : 'Length: '.mb_strlen($buff).' ('.$buff . ')';
-		break;
+
+			echo $buff === '' ? 'SUCCESS' : 'Length: '.strlen($buff).' ('.$buff . ')';
+			break;
+
 		case 'pcre_recursion_test':
 			$a = str_repeat('a',4096);
 			if (preg_match('/(a)+/',$a)) // Segmentation fault (core dumped)
+			{
 				echo 'SUCCESS';
+			}
 			else
+			{
 				echo 'CLEAN';
-		break;
-		case 'method_exists':
-			$arRes= Array
-			(
-				"CLASS" => "",
-				"CALC_METHOD" => ""
-			);
-			method_exists($arRes['CLASS'], $arRes['CALC_METHOD']);
-			echo 'SUCCESS';
-		break;
-		case 'upload_test':
-			if (function_exists('mb_internal_encoding'))
-				mb_internal_encoding('ISO-8859-1');
+			}
+			break;
 
+		case 'upload_test':
 			$dir = $_SERVER['DOCUMENT_ROOT'].'/bitrix/tmp';
 			if (!file_exists($dir))
+			{
 				mkdir($dir);
+			}
 
 			$binaryData = '';
-			for($i=40;$i<240;$i++)
+			for ($i=40; $i<240; $i++)
+			{
 				$binaryData .= chr($i);
+			}
 			if (isset($_REQUEST['big']) && $_REQUEST['big'])
+			{
 				$binaryData = str_repeat($binaryData, 21000);
+			}
 
 			if (isset($_REQUEST['raw']) && $_REQUEST['raw'])
+			{
 				$binaryData_received = file_get_contents('php://input');
+			}
 			elseif (move_uploaded_file($tmp_name = $_FILES['test_file']['tmp_name'], $image = $dir.'/site_checker.bin'))
 			{
 				$binaryData_received = file_get_contents($image);
@@ -118,77 +133,94 @@ if (isset($_REQUEST['unique_id']) && $_REQUEST['unique_id'])
 			}
 
 			if ($binaryData === $binaryData_received)
+			{
 				echo "SUCCESS";
+			}
 			else
-				echo 'strlen($binaryData)='.mb_strlen($binaryData).', strlen($binaryData_received)='.mb_strlen($binaryData_received);
-		break;
+			{
+				echo 'strlen($binaryData)='.strlen($binaryData).', strlen($binaryData_received)='.strlen($binaryData_received);
+			}
+			break;
+
 		case 'post_test':
 			$ok = true;
-			for ($i=0;$i<201;$i++)
-				$ok = $ok && ($_POST['i'.$i] == md5($i));
+			for ($i=0; $i<201; $i++)
+			{
+				$ok = $ok && ($_POST['i'.$i] === md5($i));
+			}
 
 			echo $ok ? 'SUCCESS' : 'FAIL';
 			break;
+
 		case 'memory_test':
 			@ini_set("memory_limit", "512M");
 			$max = intval($_GET['max']);
 			if ($max)
 			{
 				for($i=1;$i<=$max;$i++)
+				{
 					$a[] = str_repeat(chr($i),1024*1024); // 1 Mb
+				}
 
 				echo "SUCCESS";
 			}
-		break;
+			break;
+
 		case 'auth_test':
 			$remote_user = ($_SERVER["REMOTE_USER"] ?? '') ?: ($_SERVER["REDIRECT_REMOTE_USER"] ?? '');
 			$strTmp = base64_decode(mb_substr($remote_user, 6));
 			if ($strTmp)
+			{
 				list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', $strTmp);
+			}
 			if ($_SERVER['PHP_AUTH_USER']=='test_user' && $_SERVER['PHP_AUTH_PW']=='test_password')
+			{
 				echo('SUCCESS');
-		break;
+			}
+			break;
+
 		case 'session_test':
 			session_start();
 			echo $_SESSION['CHECKER_CHECK_SESSION'] ?? '';
 			$_SESSION['CHECKER_CHECK_SESSION'] = 'SUCCESS';
-		break;
+			break;
+
 		case 'redirect_test':
 			foreach(array('SERVER_PORT','HTTPS','FCGI_ROLE','SERVER_PROTOCOL','SERVER_PORT','HTTP_HOST') as $key)
-				$GLOBALS['_SERVER'][$key] = $GLOBALS['_REQUEST'][$key];
-			function IsHTTPS()
 			{
-				return ($_SERVER["SERVER_PORT"]==443 || mb_strtolower($_SERVER["HTTPS"]) == "on");
+				$GLOBALS['_SERVER'][$key] = $GLOBALS['_REQUEST'][$key];
 			}
 
-			function SetStatus($status)
+			if (isset($_REQUEST['done']))
+			{
+				echo 'SUCCESS';
+			}
+			else
 			{
 				$bCgi = (mb_stristr(php_sapi_name(), "cgi") !== false);
 				$bFastCgi = ($bCgi && (array_key_exists('FCGI_ROLE', $_SERVER) || array_key_exists('FCGI_ROLE', $_ENV)));
 				if($bCgi && !$bFastCgi)
-					header("Status: ".$status);
+				{
+					header("Status: 302 Found");
+				}
 				else
-					header($_SERVER["SERVER_PROTOCOL"]." ".$status);
-			}
+				{
+					header($_SERVER["SERVER_PROTOCOL"] . " 302 Found");
+				}
 
-			if (isset($_REQUEST['done']))
-				echo 'SUCCESS';
-			else
-			{
-				SetStatus("302 Found");
-				$protocol = (IsHTTPS() ? "https" : "http");
+				$protocol = (($_SERVER["SERVER_PORT"]==443 || mb_strtolower($_SERVER["HTTPS"]) == "on") ? "https" : "http");
 				$host = $_SERVER['HTTP_HOST'];
 				if($_SERVER['SERVER_PORT'] <> 80 && $_SERVER['SERVER_PORT'] <> 443 && $_SERVER['SERVER_PORT'] > 0 && !str_contains($_SERVER['HTTP_HOST'], ":"))
+				{
 					$host .= ":".$_SERVER['SERVER_PORT'];
+				}
 				$url = "?redirect_test=Y&done=Y&unique_id=".checker_get_unique_id();
 				header("Request-URI: ".$protocol."://".$host.$url);
 				header("Content-Location: ".$protocol."://".$host.$url);
 				header("Location: ".$protocol."://".$host.$url);
 				exit;
 			}
-		break;
-		default:
-		break;
+			break;
 	}
 
 	if (isset($_GET['fix_mode']) && ($fix_mode = intval($_GET['fix_mode'])))
@@ -199,10 +231,15 @@ if (isset($_REQUEST['unique_id']) && $_REQUEST['unique_id'])
 			header('Content-type: text/plain; charset='.LANG_CHARSET);
 		}
 		define('LANGUAGE_ID', preg_match('#[a-z]{2}#',$_REQUEST['lang'] ?? '',$regs) ? $regs[0] : 'en');
-		if (file_exists($file = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/'.LANGUAGE_ID.'/admin/site_checker.php'))
+		$file = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/'.LANGUAGE_ID.'/admin/site_checker.php';
+		if (file_exists($file))
+		{
 			include_once($file);
+		}
 		else
+		{
 			include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/en/admin/site_checker.php');
+		}
 
 		InitPureDB();
 

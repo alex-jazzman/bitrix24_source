@@ -447,6 +447,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    handleUserClick(item) {
 	      BX.SidePanel.Instance.open(item.url, {
+	        width: 1100,
 	        cacheable: false
 	      });
 	    },

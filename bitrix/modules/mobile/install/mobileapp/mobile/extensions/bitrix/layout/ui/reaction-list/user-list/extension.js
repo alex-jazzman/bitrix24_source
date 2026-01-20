@@ -116,6 +116,7 @@ jn.define('layout/ui/reaction-list/user-list', (require, exports, module) => {
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.parentWidget,
+				analyticsSection: 'reaction_list_users_list',
 			});
 		}
 

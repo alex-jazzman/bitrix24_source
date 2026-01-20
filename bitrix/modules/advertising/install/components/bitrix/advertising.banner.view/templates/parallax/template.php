@@ -10,8 +10,8 @@
 $this->setFrameMode(true);
 $rnd = $component->randString();
 
-$arParams['PROPS']['HEADING_FONT_SIZE'] = intval($arParams['PROPS']['HEADING_FONT_SIZE']);
-$arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE'] = intval($arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE']);
+$arParams['PROPS']['HEADING_FONT_SIZE'] = intval($arParams['PROPS']['HEADING_FONT_SIZE'] ?? 0);
+$arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE'] = intval($arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE'] ?? 0);
 $arParams['PROPS']['HEADING_BG_OPACITY'] = isset($arParams['PROPS']['HEADING_BG_OPACITY']) ? intval($arParams['PROPS']['HEADING_BG_OPACITY']) : 100;
 
 $arParams['PROPS']['OVERLAY_COLOR'] = hexdec(mb_substr(($arParams['PROPS']['OVERLAY_COLOR'] ?? ''), 0, 2)).','
@@ -19,48 +19,48 @@ $arParams['PROPS']['OVERLAY_COLOR'] = hexdec(mb_substr(($arParams['PROPS']['OVER
 	.hexdec(mb_substr(($arParams['PROPS']['OVERLAY_COLOR'] ?? ''), 4, 2)).','
 	.abs(100 - intval($arParams['PROPS']['OVERLAY_OPACITY'] ?? 0))/100;
 
-$arParams['PROPS']['HEADING_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'], 0, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'], 2, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'], 4, 2)).','
-	.abs(100 - $arParams['PROPS']['HEADING_BG_OPACITY'])/100;
+$arParams['PROPS']['HEADING_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'] ?? '', 0, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'] ?? '', 2, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'] ?? '', 4, 2)).','
+	.abs(100 - ($arParams['PROPS']['HEADING_BG_OPACITY'] ?? 0))/100;
 
-$arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'], 0, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'], 2, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'], 4, 2)).','
-	.abs(100 - intval($arParams['PROPS']['ANNOUNCEMENT_BG_OPACITY']))/100;
+$arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] ?? '', 0, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] ?? '', 2, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] ?? '', 4, 2)).','
+	.abs(100 - intval($arParams['PROPS']['ANNOUNCEMENT_BG_OPACITY'] ?? 0))/100;
 
-$arParams['PROPS']['BUTTON_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['BUTTON_BG_COLOR'], 0, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['BUTTON_BG_COLOR'], 2, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['BUTTON_BG_COLOR'], 4, 2));
+$arParams['PROPS']['BUTTON_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['BUTTON_BG_COLOR'] ?? '', 0, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['BUTTON_BG_COLOR'] ?? '', 2, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['BUTTON_BG_COLOR'] ?? '', 4, 2));
 
-$arParams['PROPS']['PRESET'] = intval($arParams['PROPS']['PRESET']);
-$arParams['HEIGHT'] = intval($arParams['HEIGHT']);
+$arParams['PROPS']['PRESET'] = intval($arParams['PROPS']['PRESET'] ?? 0);
+$arParams['HEIGHT'] = intval($arParams['HEIGHT'] ?? 0);
 
-if (is_array($arParams['PROPS']['HEADING']))
+if (isset($arParams['PROPS']['HEADING']) && is_array($arParams['PROPS']['HEADING']))
 {
-	$headingText = $arParams['PROPS']['HEADING']['CODE'];
+	$headingText = $arParams['PROPS']['HEADING']['CODE'] ?? '';
 }
 else
 {
-	$headingText = $arParams['PROPS']['HEADING'];
-	$announcementText = $arParams['PROPS']['ANNOUNCEMENT'];
+	$headingText = $arParams['PROPS']['HEADING'] ?? '';
+	$announcementText = $arParams['PROPS']['ANNOUNCEMENT'] ?? '';
 }
 
-if ($arParams['CASUAL_PROPERTIES']['TYPE'] == 'template')
+if (isset($arParams['CASUAL_PROPERTIES']['TYPE']) && $arParams['CASUAL_PROPERTIES']['TYPE'] == 'template')
 {
-	$imgSrc = $arParams['FILES']['IMG']['SRC'];
-	$showUrl = $arParams['PROPS']['LINK_URL'] != '' && !isset($arParams['PREVIEW']);
-	$url = $arParams['PROPS']['LINK_URL'];
-	$alt = $arParams['PROPS']['LINK_TITLE'];
-	$urlTarget = $arParams['PROPS']['LINK_TARGET'];
+	$imgSrc = $arParams['FILES']['IMG']['SRC'] ?? '';
+	$showUrl = !empty($arParams['PROPS']['LINK_URL']) && !isset($arParams['PREVIEW']);
+	$url = $arParams['PROPS']['LINK_URL'] ?? '';
+	$alt = $arParams['PROPS']['LINK_TITLE'] ?? '';
+	$urlTarget = $arParams['PROPS']['LINK_TARGET'] ?? '';
 }
 else
 {
-	$imgSrc = $arParams['FILES']['CASUAL_IMG']['SRC'];
-	$showUrl = $arParams['CASUAL_PROPERTIES']['URL'] != '' && !isset($arParams['PREVIEW']);
-	$url = $arParams['CASUAL_PROPERTIES']['URL'];
-	$alt = $arParams['CASUAL_PROPERTIES']['ALT'];
-	$urlTarget = $arParams['CASUAL_PROPERTIES']['URL_TARGET'];
+	$imgSrc = $arParams['FILES']['CASUAL_IMG']['SRC'] ?? '';
+	$showUrl = !empty($arParams['CASUAL_PROPERTIES']['URL']) && !isset($arParams['PREVIEW']);
+	$url = $arParams['CASUAL_PROPERTIES']['URL'] ?? '';
+	$alt = $arParams['CASUAL_PROPERTIES']['ALT'] ?? '';
+	$urlTarget = $arParams['CASUAL_PROPERTIES']['URL_TARGET'] ?? '';
 }
 ?>
 
@@ -69,8 +69,8 @@ else
 	<a href="<?=$url?>" title="<?=$alt?>" target="<?=$urlTarget?>" style="display:block;<? if ($arParams['PROPS']['PRESET']!=4): ?>height:100%;<? endif ?>">
 <? endif ?>
 	<div class="bx-slider-preset-<?=$arParams['PROPS']['PRESET']?>">
-		<? if ($arParams['EXT_MODE'] == 'N'): ?>
-			<? if ($arParams['PROPS']['OVERLAY'] == 'Y'): ?>
+		<? if (isset($arParams['EXT_MODE']) && $arParams['EXT_MODE'] == 'N'): ?>
+			<? if (isset($arParams['PROPS']['OVERLAY']) && $arParams['PROPS']['OVERLAY'] == 'Y'): ?>
 				<div class="bx-advertisingbanner-pattern" style="background:rgba(<?=$arParams['PROPS']['OVERLAY_COLOR']?>)"></div>
 			<? endif ?>
 			<? if ($arParams['PROPS']['HEADING_SHOW'] == 'Y' || $arParams['PROPS']['ANNOUNCEMENT_SHOW'] == 'Y' || $arParams['PROPS']['BUTTON'] == 'Y'): ?>
@@ -92,7 +92,7 @@ else
 					<? endif ?>
 				</div>
 			<? endif ?>
-		<? elseif ($arParams['EXT_MODE'] == 'Y'): ?>
+		<? elseif (isset($arParams['EXT_MODE']) && $arParams['EXT_MODE'] == 'Y'): ?>
 			<?=$headingText?>
 		<? endif ?>
 		<script>

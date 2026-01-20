@@ -1,0 +1,4 @@
+<?php
+$MESS['IMBOT_CREATE_BOT_ACTIVITY_DESCRIPTION_NAME'] = 'Настройки чат-бота';
+$MESS['IMBOT_CREATE_BOT_ACTIVITY_DESCRIPTION_DESCRIPTION'] = 'Позволяет настроить чат-бот';
+$MESS['IMBOT_CREATE_BOT_ACTIVITY_DESCRIPTION_RESULT_NAME'] = 'Идентификатор чат-бота';

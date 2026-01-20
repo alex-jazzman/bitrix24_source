@@ -1,4 +1,5 @@
 import { apiClient } from 'tasks.v2.lib.api-client';
+import { Endpoint } from 'tasks.v2.const';
 
 import './open-comments.css';
 
@@ -23,7 +24,7 @@ async function getLegacyCommentsByTaskId(id: number): Promise<string>
 {
 	try
 	{
-		const data = await apiClient.post('LegacyComment.get', { task: { id } });
+		const data = await apiClient.post(Endpoint.LegacyCommentGet, { task: { id } });
 
 		return (data.html) ?? '';
 	}

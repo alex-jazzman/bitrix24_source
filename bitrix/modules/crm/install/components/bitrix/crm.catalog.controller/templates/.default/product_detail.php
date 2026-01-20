@@ -1,9 +1,16 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-	die();
 
-/** @var \CBitrixComponentTemplate $this  */
-/** @var \CrmCatalogControllerComponent $component */
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/**
+ * @var \CBitrixComponentTemplate $this
+ * @var \CrmCatalogControllerComponent $component
+ * @global \Cmain $APPLICATION
+ * @var array $arResult
+ */
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
@@ -21,4 +28,3 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
-?>

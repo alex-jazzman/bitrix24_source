@@ -13,7 +13,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
  */
 
 use Bitrix\Main\Security;
-use Bitrix\Main\Controller;
+use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Controller\QrCodeAuth;
 use Bitrix\Pull;
 
 $arParams["NOT_SHOW_LINKS"] = ($arParams["NOT_SHOW_LINKS"] == "Y" ? "Y" : "N");
@@ -87,14 +88,12 @@ $arResult["LAST_LOGIN"] = htmlspecialcharsbx($arResult["~LAST_LOGIN"]);
 $arResult["STORE_PASSWORD"] = COption::GetOptionString("main", "store_password", "Y") == "Y" ? "Y" : "N";
 $arResult["NEW_USER_REGISTRATION"] = (COption::GetOptionString("main", "new_user_registration", "N") == "Y" ? "Y" : "N");
 $arResult["ALLOW_SOCSERV_AUTHORIZATION"] = (COption::GetOptionString("main", "allow_socserv_authorization", "Y") != "N" ? "Y" : "N");
-$arResult["ALLOW_QRCODE_AUTH"] = (COption::GetOptionString("main", "allow_qrcode_auth", "N") == "Y" && \Bitrix\Main\Loader::includeModule('pull'));
 
+$controller = new QrCodeAuth();
+$arResult["ALLOW_QRCODE_AUTH"] = $controller->isAllowed();
 if ($arResult['ALLOW_QRCODE_AUTH'])
 {
-	$arResult['QRCODE_CHANNEL_TAG'] = Security\Random::getString(32, true);
-	$arResult['QRCODE_CHANNEL'] = Pull\Model\Channel::createWithTag($arResult['QRCODE_CHANNEL_TAG']);
-	$arResult['QRCODE_CONFIG'] = Pull\Config::get(['CHANNEL' => $arResult['QRCODE_CHANNEL'], 'JSON' => true]);
-	$arResult['QRCODE_UNIQUE_ID'] = Controller\QrCodeAuth::getUniqueId();
+	$arResult['QRCODE'] = QrCodeAuth::getPullConfig();
 }
 
 $arResult["AUTH_SERVICES"] = false;

@@ -21,6 +21,7 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\RepeatSaleDataProvider\Segments;
+use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
@@ -691,11 +692,12 @@ if (!$bInternal || $isExtendedInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 
-	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
-	if (empty($effectiveFilterFieldIDs))
-	{
-		$effectiveFilterFieldIDs = $entityFilter->getDefaultFieldIDs();
-	}
+	$effectiveFilterFieldIDs = array_unique(
+		array_merge(
+			$filterOptions->getUsedFields(),
+			$entityFilter->getDefaultFieldIDs(),
+		),
+	);
 
 	//region HACK: Preload fields for filter of user activities, stage ID & webforms
 	if (!in_array('ASSIGNED_BY_ID', $effectiveFilterFieldIDs, true))
@@ -1538,6 +1540,10 @@ else
 
 $arFilter['=IS_RECURRING'] = ($arParams['IS_RECURRING'] === 'Y') ? "Y" : 'N';
 
+$arFilter = Crm\Filter\FieldsTransform\UserBasedField::breakDepartmentsToUsers(
+	$arFilter,
+	$entityFilter?->getFields() ?? [],
+);
 Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
 
 //region Activity Counter Filter
@@ -1563,6 +1569,7 @@ $arImmutableFilters = array(
 	'STAGE_SEMANTIC_ID',
 	'CREATED_BY_ID', 'CREATED_BY_ID_value',
 	'MODIFY_BY_ID', 'MODIFY_BY_ID_value',
+	'MOVED_BY_ID', 'MOVED_BY_ID_value',
 	'PRODUCT_ROW_PRODUCT_ID', 'PRODUCT_ROW_PRODUCT_ID_value',
 	'WEBFORM_ID', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
 	'SEARCH_CONTENT',
@@ -1751,6 +1758,8 @@ if ($isInExportMode && $isStExport && $isStExportAllFields)
 // Fill in default values if empty
 if (empty($arSelect))
 {
+	GridHeaders::removeExcessUfFromGridParams($arResult['HEADERS']);
+
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
 		if (isset($arHeader['default']) && $arHeader['default'])
@@ -2983,6 +2992,7 @@ $displayOptions =
 	(new Crm\Service\Display\Options())
 		->setMultipleFieldsDelimiter($isInExportMode ? ', ' : '<br />')
 		->setGridId($arResult['GRID_ID'])
+		->setFilterFields($arResult['DB_FILTER'] ?? [])
 		->setFileUrlTemplate('/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#')
 ;
 $restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();

@@ -1,0 +1,95 @@
+.tasks-field-results-result-list {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.tasks-field-results-result-item.element-highlight {
+	--highlight-offset-y: 4px;
+	--highlight-offset-x: 4px;
+	--border-radius: var(--ui-border-radius-2xl);
+}
+
+.tasks-field-results-result-item.element-highlight .tasks-field-results-result,
+.tasks-field-results-result-item.element-highlight .tasks-field-results-title {
+	background: transparent;
+}
+
+.tasks-field-results-result-list-content {
+	position: relative;
+	overflow: auto;
+	scrollbar-width: none;
+	height: 100%;
+	box-sizing: border-box;
+	padding-bottom: 100px;
+	border-radius: var(--ui-border-radius-2xl);
+}
+
+.tasks-field-results-result-list-close-icon {
+	position: absolute;
+	cursor: pointer;
+	z-index: 300;
+	right: var(--ui-space-inline-xl2);
+	top: var(--ui-space-stack-md2);
+}
+
+.tasks-field-results-result-list-close-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-results-result-list-footer {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	margin-top: auto;
+	margin-left: auto;
+}
+
+.tasks-field-results-result-add-button {
+	position: absolute;
+	right: 16px;
+	bottom: 8px;
+	padding: var(--ui-space-inset-md);
+	background-color: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-lg);
+	align-items: center;
+}
+
+.tasks-field-results-result-list-empty {
+	height: 100%;
+	min-height: 260px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	gap: var(--ui-space-stack-xl2);
+	padding: var(--ui-space-inset-xl);
+	box-sizing: border-box;
+}
+
+.tasks-field-results-result-list-empty-image {
+	width: 320px;
+	height: 160px;
+	background: url('./result-list-empty.png') no-repeat center center;
+	background-size: contain;
+	opacity: 0.9;
+}
+
+.tasks-field-results-result-list-empty-title {
+	color: var(--ui-color-base-2);
+}
+
+.tasks-field-results-result-list-header {
+	padding: var(--ui-space-stack-md2) var(--ui-space-inset-xl2) var(--ui-space-stack-md);
+}
+
+.tasks-field-results-result-list-title {
+	color: var(--ui-color-base-1);
+}
+
+.tasks-field-results-result-list-empty-button {
+	margin-top: var(--ui-space-stack-sm);
+}

@@ -1,13 +1,9 @@
-import { Block } from 'salescenter.component.stage-block';
+import { Block, StatusTypes as Status } from 'salescenter.component.stage-block';
 import Product from '../../product';
 import { StageMixin } from './stage-mixin';
 
 export default {
 	props: {
-		status: {
-			type: String,
-			required: true,
-		},
 		counter: {
 			type: Number,
 			required: true,
@@ -48,6 +44,10 @@ export default {
 		},
 	computed:
 		{
+			status(): string
+			{
+				return this.$store.getters['orderCreation/getHasAvailableProducts'] ? Status.complete : Status.current;
+			},
 			configForBlock()
 			{
 				return {

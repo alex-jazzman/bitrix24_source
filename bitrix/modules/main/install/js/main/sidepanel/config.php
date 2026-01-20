@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/side-panel.bundle.css',
 	'js' => 'dist/side-panel.bundle.js',
 	'rel' => [
-		'fx',
 		'main.pageobject',
 		'clipboard',
 		'ui.fonts.opensans',
@@ -17,6 +16,7 @@ return [
 		'ui.icon-set.actions',
 		'ui.icon-set.main',
 		'ui.icon-set.outline',
+		'ui.system.skeleton',
 	],
 	'skip_core' => false,
 ];

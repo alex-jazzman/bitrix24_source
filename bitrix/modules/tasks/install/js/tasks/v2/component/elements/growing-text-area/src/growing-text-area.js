@@ -114,12 +114,17 @@ export const GrowingTextArea = {
 		},
 		focusToEnd(): void
 		{
+			const textarea = this.$refs.textarea;
+			if (!textarea)
+			{
+				return;
+			}
+
 			if (this.readonly)
 			{
 				return;
 			}
 
-			const textarea = this.$refs.textarea;
 			textarea.focus({ preventScroll: true });
 			textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 			this.scrollToBeginning();
@@ -254,20 +259,20 @@ export const GrowingTextArea = {
 				class="b24-growing-text-area-edit"
 				rows="1"
 				:value="modelValue"
-				:placeholder="placeholder"
+				:placeholder
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
 				}"
-				:readonly="readonly"
+				:readonly
 				ref="textarea"
 				@input="handleInput"
 				@keydown="handleKeyDown"
 				@focus="handleFocus"
 				@blur="handleBlur"
-			></textarea>
+			/>
 		</div>
 	`,
 };

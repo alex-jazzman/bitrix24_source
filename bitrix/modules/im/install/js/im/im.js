@@ -10147,11 +10147,11 @@ BX.MessengerChat.prototype.openPopupMenu = function(bind, type, setAngle, params
 			}
 
 			menuItems.push({
-				text: BX.message('IM_MARKET_BOTS'),
+				text: BX.message('IM_MARKET_BOTS_MSGVER_1'),
 				href: '/marketplace/category/chat_bots/',
 				target: '_blank',
 				attrs : {
-					title: BX.message('IM_MARKET_BOTS'),
+					title: BX.message('IM_MARKET_BOTS_MSGVER_1'),
 					"data-context": 'all',
 					"data-code": 'market-bots',
 					"data-id": 0

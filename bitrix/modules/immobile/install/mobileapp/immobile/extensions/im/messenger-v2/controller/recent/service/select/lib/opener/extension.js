@@ -46,7 +46,7 @@ jn.define('im/messenger-v2/controller/recent/service/select/lib/opener', (requir
 				result.error(),
 			);
 
-			this.setRecentModelWithCounters({
+			setRecentModelWithCounters({
 				id: dialogId,
 				unread: unreadBeforeChange,
 			});

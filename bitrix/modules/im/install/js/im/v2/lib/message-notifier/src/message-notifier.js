@@ -3,13 +3,13 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Store } from 'ui.vue3.vuex';
 import { Notifier, NotificationOptions } from 'ui.notification-manager';
 
+import { Messenger } from 'im.public';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { Core } from 'im.v2.application.core';
 import { Parser } from 'im.v2.lib.parser';
 import { DesktopManager, DesktopBroadcastManager } from 'im.v2.lib.desktop';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { Messenger } from 'im.public';
-import { NotificationTypesCodes, ChatType, DesktopBroadcastAction, SoundType, EventType } from 'im.v2.const';
+import { NotificationTypesCodes, SoundType, EventType, ChatType, DesktopBroadcastAction } from 'im.v2.const';
 import { NotificationService } from 'im.v2.provider.service.notification';
 
 import { NotificationId, NotificationIdPrefix } from './classes/notification-id';
@@ -218,10 +218,8 @@ export class MessageNotifierManager
 	#subscribeToNotifierEvents()
 	{
 		Notifier.subscribe('click', async (event: BaseEvent<NotifierClickParams>) => {
-			if (!DesktopApi.isAirDesignEnabledInDesktop())
+			if (!DesktopApi.isDesktop())
 			{
-				DesktopApi.activateWindow();
-
 				this.onNotifierClick(event.getData());
 
 				return;

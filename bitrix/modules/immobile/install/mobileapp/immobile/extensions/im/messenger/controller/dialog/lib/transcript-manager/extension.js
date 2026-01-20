@@ -5,12 +5,22 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 	const { Type } = require('type');
 
 	const { throttle } = require('utils/function');
-	const { TranscriptStatus, TranscriptResponseStatus, EventType } = require('im/messenger/const');
+	const { Loc } = require('im/messenger/loc');
+	const {
+		TranscriptStatus,
+		TranscriptResponseStatus,
+		EventType,
+		Analytics,
+	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { parser } = require('im/messenger/lib/parser');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const logger = getLogger('dialog--transcript-manager');
+
+	const TRANSCRIPT_LIMIT_IS_EXCEEDED_BAAS_LINK = '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus';
 
 	/**
 	 * @class {TranscriptManager}
@@ -50,6 +60,11 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		#isLocalStorageSupported = false;
 
 		/**
+		 * @type {AnalyticsService}
+		 */
+		#analyticsService = null;
+
+		/**
 		 * @param {ChatId} chatId
 		 * @param {DialogId} dialogId
 		 * @param {DialogLocator} dialogLocator
@@ -73,8 +88,9 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 			this.#audioMessagePlayer = audioMessagePlayer;
 			this.#validateQuote = validateQuote;
 			this.#isLocalStorageSupported = isLocalStorageSupported;
+			this.#analyticsService = AnalyticsService.getInstance();
 
-			this.#audioTranscriptionTapHandler = throttle(this.#audioTranscriptionTapHandler, 300);
+			this.#transcriptionTapHandler = throttle(this.#transcriptionTapHandler, 300);
 
 			this.#subscribeEvents();
 		}
@@ -95,7 +111,8 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 
 		unsubscribeEvents()
 		{
-			this.#dialogLocator.get('view').off(EventType.dialog.audioTranscriptionTap, this.#audioTranscriptionTapHandler);
+			this.#dialogLocator.get('view')
+				.off(EventType.dialog.transcriptionTap, this.#transcriptionTapHandler);
 		}
 
 		/**
@@ -112,6 +129,15 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		 * @returns {boolean}
 		 */
 		hasTranscriptStorage(fileId)
+		{
+			return this.#store.getters['filesModel/transcriptModel/hasTranscript'](fileId);
+		}
+
+		/**
+		 * @param {FileId} fileId
+		 * @returns {boolean}
+		 */
+		hasTranscriptTextStorage(fileId)
 		{
 			return this.#store.getters['filesModel/transcriptModel/hasTranscriptText'](fileId);
 		}
@@ -130,6 +156,14 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		async toggleTextStorage(fileId)
 		{
 			await this.#store.dispatch('filesModel/transcriptModel/toggleText', { fileId });
+		}
+
+		/**
+		 * @param {FileId} fileId
+		 */
+		async setReadyStatusStorage(fileId)
+		{
+			await this.#store.dispatch('filesModel/transcriptModel/setReadyStatus', { fileId });
 		}
 
 		/**
@@ -158,17 +192,16 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		 * @param {MessageId} messageId
 		 * @param {FileId} fileId
 		 */
-		#audioTranscriptionTapHandler = async (messageId, fileId) => {
+		#transcriptionTapHandler = async (messageId, fileId) => {
+			this.#audioMessagePlayer.stopPlayingMessage?.();
 			await this.#loadTranscriptModelFromDatabase(fileId);
 
-			if (this.hasTranscriptStorage(fileId))
+			if (this.hasTranscriptTextStorage(fileId))
 			{
-				void this.toggleTextStorage(fileId);
+				await this.toggleTextStorage(fileId);
 
 				return;
 			}
-
-			this.#audioMessagePlayer.stopPlayingMessage?.();
 
 			await this.#transcribe({ messageId, fileId });
 		};
@@ -201,12 +234,14 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 			// TODO: scrolling to the message is temporarily disabled
 			// const lastTranscript = transcriptList[transcriptList.length - 1];
 			// await this.#scrollToTranscriptMessage(lastTranscript);
+
+			this.#sendAnalyticsViewTranscriptionForTranscriptList(transcriptList);
 		};
 
 		#subscribeEvents()
 		{
 			this.#dialogLocator.get('view')
-				.on(EventType.dialog.audioTranscriptionTap, this.#audioTranscriptionTapHandler);
+				.on(EventType.dialog.transcriptionTap, this.#transcriptionTapHandler);
 		}
 
 		/**
@@ -216,20 +251,23 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		async #transcribe({ messageId, fileId })
 		{
 			const transcriptModel = this.#createBaseTranscriptModel({ chatId: this.#chatId, messageId, fileId });
-
 			await this.setToStorage(transcriptModel);
 
 			try
 			{
 				const data = await this.#diskService.transcribe({
-					chatId: this.#chatId,
+					messageId,
 					fileId,
 				});
-				const { transcriptText, status } = data;
 
-				if (status === TranscriptResponseStatus.error)
+				const { transcriptText, status } = data;
+				const isShowError = status === TranscriptResponseStatus.error
+					|| (status === TranscriptResponseStatus.success && Type.isNull(transcriptText));
+
+				if (isShowError)
 				{
 					transcriptModel.status = TranscriptStatus.error;
+					transcriptModel.text = this.#getErrorMessage();
 					void this.setToStorage(transcriptModel);
 
 					return;
@@ -242,11 +280,12 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 					void this.setToStorage(transcriptModel);
 				}
 			}
-			catch (error)
+			catch (errors)
 			{
-				logger.error(`${this.constructor.name}.#audioTranscriptionTapHandler.transcribe`, error);
+				logger.error(`${this.constructor.name}.#transcriptionTapHandler.transcribe`, errors);
 
 				transcriptModel.status = TranscriptStatus.error;
+				transcriptModel.text = this.#getErrorMessage(errors[0]?.code);
 				void this.setToStorage(transcriptModel);
 			}
 		}
@@ -309,6 +348,62 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 			}
 
 			await view.scrollToMessageById(transcriptModel.messageId, true, () => {}, 'top');
+		}
+
+		/**
+		 * @param {TranscriptModelState[]} transcriptList
+		 */
+		#sendAnalyticsViewTranscriptionForTranscriptList(transcriptList)
+		{
+			if (!Type.isArrayFilled(transcriptList))
+			{
+				return;
+			}
+
+			transcriptList.forEach((transcriptModel) => {
+				if (transcriptModel.status === TranscriptStatus.expanded)
+				{
+					this.#analyticsService.sendViewTranscriptionInChat({
+						dialogId: this.#dialogId,
+						status: Analytics.Status.success,
+					});
+				}
+
+				if (transcriptModel.status === TranscriptStatus.error)
+				{
+					this.#analyticsService.sendViewTranscriptionInChat({
+						dialogId: this.#dialogId,
+						status: Analytics.Status.error,
+					});
+				}
+			});
+		}
+
+		/**
+		 * @param {string?} errorCode
+		 * @return {string}
+		 */
+		#getErrorMessage(errorCode)
+		{
+			if (errorCode === 'LIMIT_IS_EXCEEDED_BAAS')
+			{
+				let text = Loc.getMessage(
+					'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_BAAS_LIMIT_ERROR',
+					{
+						'#LINK#': `[URL=${TRANSCRIPT_LIMIT_IS_EXCEEDED_BAAS_LINK}]`,
+						'#/LINK#': '[/URL]',
+					},
+				);
+
+				if (!Feature.isTranscribationBbcodeEventsSupported)
+				{
+					text = parser.simplify({ text });
+				}
+
+				return text;
+			}
+
+			return Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR');
 		}
 	}
 

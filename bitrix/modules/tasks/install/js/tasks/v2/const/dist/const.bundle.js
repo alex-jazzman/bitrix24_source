@@ -100,18 +100,37 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Full: 'task'
 	});
 
+	const ChatActionParam = Object.freeze({
+	  ChatAction: 'chatAction',
+	  EntityId: 'entityId',
+	  ChildrenIds: 'childrenIds'
+	});
+
+	const ChatAction = Object.freeze({
+	  ChangeDeadline: 'changeDeadline',
+	  CompleteTask: 'completeTask',
+	  OpenResult: 'openResult',
+	  ShowCheckList: 'showCheckList',
+	  ShowCheckListItems: 'showCheckListItems'
+	});
+
 	const DurationUnit = Object.freeze({
 	  Minutes: 'minutes',
 	  Hours: 'hours',
-	  Days: 'days'
+	  Days: 'days',
+	  Weeks: 'weeks',
+	  Months: 'months'
 	});
 
 	const EntitySelectorEntity = Object.freeze({
 	  Epic: 'epic-selector',
 	  Flow: 'flow',
 	  Project: 'project',
+	  Group: 'group',
 	  Tag: 'task-tag',
+	  TemplateTag: 'template-tag',
 	  User: 'user',
+	  Department: 'department',
 	  StructureNode: 'structure-node',
 	  Deal: 'deal',
 	  Contact: 'contact',
@@ -119,23 +138,58 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Lead: 'lead',
 	  SmartInvoice: 'smart_invoice',
 	  DynamicMultiple: 'dynamic_multiple',
-	  Task: 'task'
+	  ReminderRecipient: 'reminder-recipient',
+	  Task: 'task-with-id',
+	  Template: 'task-template-with-id',
+	  MetaUser: 'meta-user',
+	  AllUser: 'all-users'
 	});
 
 	const EventName = Object.freeze({
 	  CloseCard: 'tasks:card:close',
 	  CloseFullCard: 'tasks:full-card:close',
+	  FullCardHasChanges: 'tasks:full-card:hasChanges',
+	  TryCloseFullCard: 'tasks:full-card:tryClose',
 	  OpenFullCard: 'tasks:card:openFullCard',
 	  OpenCompactCard: 'tasks:card:openCompactCard',
-	  TaskAdd: 'tasks:card:taskAdd',
-	  TaskUpdate: 'tasks:card:taskUpdate',
+	  CardClosed: 'tasks:card:closed',
+	  FullCardInit: 'tasks:full-card:init',
+	  FullCardClosed: 'tasks:full-card:closed',
+	  TaskAdded: 'tasks:card:taskAdded',
+	  TaskBeforeUpdate: 'tasks:card:taskBeforeUpdate',
+	  TaskAfterUpdate: 'tasks:card:taskAfterUpdate',
+	  TaskPullUpdated: 'tasks:card:taskPullUpdated',
+	  TaskDeleted: 'tasks:card:taskDeleted',
+	  TemplateAdded: 'tasks:templateAdded',
+	  TemplateBeforeUpdate: 'tasks:templateBeforeUpdate',
+	  TemplateDeleted: 'tasks:templateDeleted',
+	  TagDeleted: 'tasks:card:tagDeleted',
+	  UserMenuExternalItems: 'tasks:card:userMenuExternalItems',
 	  OpenSliderCard: 'tasks:card:openSliderCard',
+	  OpenViewSliderCard: 'tasks:card:openViewSliderCard',
 	  OpenGrid: 'tasks:card:openGrid',
 	  ShowOverlay: 'tasks:card:showOverlay',
 	  HideOverlay: 'tasks:card:hideOverlay',
 	  AdjustPosition: 'tasks:card:adjustPosition',
+	  AiAddCheckList: 'tasks:card:check-list:aiAdd',
 	  CloseCheckList: 'tasks:card:check-list:close',
-	  NotifyGrid: 'tasksTaskEvent'
+	  OpenDeadlinePicker: 'tasks:deadline:openPicker',
+	  OpenResultFromChat: 'task:card:open-result-from-chat',
+	  AddResultFromChat: 'task:card:add-result-from-chat',
+	  DeleteResultFromChat: 'task:card:delete-result-from-chat',
+	  RequiredResultsMissing: 'task:card:required-results-missing',
+	  ResultAdded: 'task:card:result-added',
+	  ResultUpdated: 'task:card:result-updated',
+	  ResultFromMessageAdded: 'task:card:result-from-message-added',
+	  TimeTrackingChange: 'task:card:timeTackingChange',
+	  NotifyGrid: 'tasksTaskEvent',
+	  DescriptionConflictDetected: 'tasks:description:conflictDetected',
+	  HighlightCheckListItem: 'tasks:card:check-list-item:highlight',
+	  ShowCheckList: 'tasks:card:check-list:show',
+	  ShowCheckListItems: 'tasks:card:check-list-items:show',
+	  OpenHistory: 'tasks:full-card:openHistory',
+	  OpenTemplateHistory: 'tasks:template:openHistory',
+	  UpdateReplicateParams: 'tasks:template:update-replicate-params'
 	});
 
 	const GroupType = Object.freeze({
@@ -146,19 +200,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	});
 
 	const Limit = Object.freeze({
-	  RelationList: 3
+	  RelationList: 10,
+	  Results: 3
 	});
 
 	const Model = Object.freeze({
-	  CheckList: 'checklist',
+	  CheckList: 'check-list',
 	  CrmItems: 'crm-items',
 	  Epics: 'epics',
 	  Flows: 'flows',
+	  GanttLinks: 'gantt-links',
 	  Groups: 'groups',
 	  Interface: 'interface',
+	  Placements: 'placements',
+	  Results: 'results',
 	  Stages: 'stages',
 	  Tasks: 'tasks',
-	  Users: 'users'
+	  Users: 'users',
+	  Reminders: 'reminders',
+	  ElapsedTimes: 'elapsed-times'
 	});
 
 	const Module = Object.freeze({
@@ -167,7 +227,91 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	const Option = Object.freeze({
 	  // AhaMoments
-	  AhaAuditorsInCompactFormPopup: 'aha_auditors_compact_form'
+	  AhaResponsibleMany: 'aha_responsible_many',
+	  AhaTaskSettingsMessagePopup: 'aha_task_settings_message',
+	  AhaAuditorsInCompactFormPopup: 'aha_auditors_compact_form',
+	  AhaRequiredResultCreatorPopup: 'aha_required_result_creator',
+	  AhaRequiredResultResponsiblePopup: 'aha_required_result_responsible',
+	  AhaResultFromMessagePopup: 'aha_result_from_message',
+	  AhaStartTimeTracking: 'aha_start_time_tracking',
+	  AhaTaskChatPopup: 'aha_task_chat',
+	  AhaTaskImportantMessagesPopup: 'aha_task_important_messages'
+	});
+
+	const PlacementType = Object.freeze({
+	  taskViewTab: 'TASK_VIEW_TAB',
+	  taskViewSidebar: 'TASK_VIEW_SIDEBAR',
+	  taskViewTopPanel: 'TASK_VIEW_TOP_PANEL',
+	  taskUserListToolbar: 'TASK_USER_LIST_TOOLBAR',
+	  taskGroupListToolbar: 'TASK_GROUP_LIST_TOOLBAR',
+	  taskListContextMenu: 'TASK_LIST_CONTEXT_MENU',
+	  taskRobotDesignerToolbar: 'TASK_ROBOT_DESIGNER_TOOLBAR',
+	  taskViewSlider: 'TASK_VIEW_SLIDER',
+	  taskViewDrawer: 'TASK_VIEW_DRAWER'
+	});
+
+	const RemindTo = Object.freeze({
+	  Myself: 'myself',
+	  Creator: 'creator',
+	  Responsible: 'responsible',
+	  Accomplice: 'accomplice'
+	});
+	const RemindBy = Object.freeze({
+	  Deadline: 'deadline',
+	  Date: 'date'
+	});
+	const RemindVia = Object.freeze({
+	  Notification: 'notification',
+	  Email: 'email'
+	});
+
+	const ReplicationPeriod = Object.freeze({
+	  Daily: 'daily',
+	  Weekly: 'weekly',
+	  Monthly: 'monthly',
+	  Yearly: 'yearly'
+	});
+	const ReplicationDayType = Object.freeze({
+	  DayOfMonth: 1,
+	  DayOfWeek: 2
+	});
+	const ReplicationWeekDayNum = Object.freeze({
+	  First: 0,
+	  Second: 1,
+	  Third: 2,
+	  Fourth: 3,
+	  Last: 4
+	});
+	const ReplicationRepeatTill = Object.freeze({
+	  Endless: 'endless',
+	  Times: 'times',
+	  Date: 'date'
+	});
+	const ReplicationMonthlyType = Object.freeze({
+	  Absolute: 1,
+	  Relative: 2
+	});
+	const ReplicationYearlyType = Object.freeze({
+	  Absolute: 1,
+	  Relative: 2
+	});
+	const ReplicationWeekDayIndex = Object.freeze({
+	  Monday: 0,
+	  Tuesday: 1,
+	  Wednesday: 2,
+	  Thursday: 3,
+	  Friday: 4,
+	  Saturday: 5,
+	  Sunday: 6
+	});
+	const ReplicationYearlyWeekDayIndex = Object.freeze({
+	  Monday: 1,
+	  Tuesday: 2,
+	  Wednesday: 3,
+	  Thursday: 4,
+	  Friday: 5,
+	  Saturday: 6,
+	  Sunday: 7
 	});
 
 	const TaskStatus = Object.freeze({
@@ -185,22 +329,144 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Creator: 'creatorId',
 	  Crm: 'crmItemIds',
 	  DatePlan: 'datePlan',
+	  TimeTracking: 'allowsTimeTracking',
 	  Deadline: 'deadlineTs',
+	  Email: 'email',
 	  Files: 'fileIds',
 	  Flow: 'flowId',
+	  Gantt: 'gantt',
 	  Group: 'groupId',
 	  Parent: 'parentId',
+	  Placements: 'placements',
 	  RelatedTasks: 'relatedTasks',
-	  Responsible: 'responsibleId',
+	  Reminders: 'reminders',
+	  Responsible: 'responsibleIds',
+	  Replication: 'replication',
+	  Results: 'results',
 	  Status: 'status',
 	  SubTasks: 'subTasks',
 	  Tags: 'tags',
-	  Title: 'title'
+	  Title: 'title',
+	  UserFields: 'userFields'
+	});
+
+	const TemplateType = Object.freeze({
+	  NewUsers: 'new_users',
+	  Usual: 'usual'
+	});
+
+	const ResultStatus = Object.freeze({
+	  Open: 'open',
+	  Closed: 'closed'
+	});
+
+	const PermissionType = Object.freeze({
+	  Read: 41,
+	  Full: 42
+	});
+
+	const Endpoint = Object.freeze({
+	  TaskGet: 'Task.get',
+	  TaskAdd: 'Task.add',
+	  TaskCopy: 'Copy.Task.copy',
+	  TaskUpdate: 'Task.update',
+	  TaskDelete: 'Task.delete',
+	  TaskAccessGet: 'Task.Access.get',
+	  TaskDescriptionUpdate: 'Task.Description.update',
+	  TaskDescriptionForceUpdate: 'Task.Description.forceUpdate',
+	  TaskFavoriteAdd: 'Task.Favorite.add',
+	  TaskFavoriteDelete: 'Task.Favorite.delete',
+	  TaskAttentionMute: 'Task.Attention.mute',
+	  TaskAttentionUnmute: 'Task.Attention.unmute',
+	  TaskResultRequire: 'Task.Result.require',
+	  TaskResultGet: 'Task.Result.get',
+	  TaskResultTail: 'Task.Result.tail',
+	  TaskResultGetAll: 'Task.Result.getAll',
+	  TaskResultAdd: 'Task.Result.add',
+	  TaskResultUpdate: 'Task.Result.update',
+	  TaskResultDelete: 'Task.Result.delete',
+	  TaskResultMessageAdd: 'Task.Result.Message.add',
+	  TaskReminderList: 'Task.Reminder.list',
+	  TaskReminderSet: 'Task.Reminder.set',
+	  TaskReminderAdd: 'Task.Reminder.add',
+	  TaskReminderUpdate: 'Task.Reminder.update',
+	  TaskReminderDelete: 'Task.Reminder.delete',
+	  TaskStateSet: 'Task.State.set',
+	  TaskDeadlineUpdate: 'Task.Deadline.update',
+	  TaskPlanUpdate: 'Task.Plan.update',
+	  TaskStakeholderResponsibleDelegate: 'Task.Stakeholder.Responsible.delegate',
+	  TaskCrmItemSet: 'Task.CRM.Item.set',
+	  LegacyCommentGet: 'LegacyComment.get',
+	  LegacyUserFieldGetTask: 'LegacyUserField.getTask',
+	  LegacyUserFieldGetTemplate: 'LegacyUserField.getTemplate',
+	  TaskStatusStart: 'Task.Status.start',
+	  TaskStatusDisapprove: 'Task.Status.disapprove',
+	  TaskStatusDefer: 'Task.Status.defer',
+	  TaskStatusApprove: 'Task.Status.approve',
+	  TaskStatusPause: 'Task.Status.pause',
+	  TaskStatusComplete: 'Task.Status.complete',
+	  TaskStatusRenew: 'Task.Status.renew',
+	  TaskDeadlineGetDeadlineChangeCount: 'Task.Deadline.getDeadlineChangeCount',
+	  TaskDeadlineCleanChangeLog: 'Task.Deadline.cleanChangeLog',
+	  TaskTimeTrackingAdd: 'Task.Tracking.ElapsedTime.add',
+	  TaskTimeTrackingUpdate: 'Task.Tracking.ElapsedTime.update',
+	  TaskTimeTrackingDelete: 'Task.Tracking.ElapsedTime.delete',
+	  TaskTimeTrackingList: 'Task.Tracking.ElapsedTime.list',
+	  TaskTimeTrackingListParticipants: 'Task.Tracking.ElapsedTime.listParticipants',
+	  TaskMultiTaskAdd: 'Task.Relation.Multi.Task.add',
+	  TaskCrmItemList: 'Task.CRM.Item.list',
+	  TaskRelationChildListByIds: 'Task.Relation.Child.listByIds',
+	  GroupUrlGet: 'Group.Url.get',
+	  GroupStageList: 'Group.Stage.list',
+	  GroupGet: 'Group.get',
+	  ScrumUpdateTask: 'Scrum.updateTask',
+	  ScrumGetTaskInfo: 'Scrum.getTaskInfo',
+	  CheckListGet: 'CheckList.get',
+	  CheckListSave: 'CheckList.save',
+	  CheckListCollapse: 'CheckList.collapse',
+	  CheckListExpand: 'CheckList.expand',
+	  CheckListComplete: 'CheckList.complete',
+	  CheckListRenew: 'CheckList.renew',
+	  FlowGet: 'Flow.get',
+	  FileList: 'File.list',
+	  TaskCheckListFileList: 'Task.CheckList.File.list',
+	  TaskResultFileList: 'Task.Result.File.list',
+	  FileListObjects: 'File.listObjects',
+	  FileAttach: 'File.attach',
+	  FileDetach: 'File.detach',
+	  UserList: 'User.list',
+	  OptionSet: 'Option.set',
+	  OptionSetBool: 'Option.setBool',
+	  TemplateHistoryGetGrid: 'Template.History.getGrid',
+	  TaskMarkSet: 'Task.Mark.set',
+	  TemplateAdd: 'Template.add',
+	  TemplateCopy: 'Template.copy',
+	  TemplateGet: 'Template.get',
+	  TemplateUpdate: 'Template.update',
+	  TemplateDelete: 'Template.delete',
+	  TaskFromTemplateGet: 'Template.Task.get',
+	  TaskFromTemplateAdd: 'Template.Task.add',
+	  TemplateHistoryGetCount: 'Template.History.getCount'
+	});
+
+	const UserFieldType = Object.freeze({
+	  String: 'string',
+	  Double: 'double',
+	  Boolean: 'boolean',
+	  Datetime: 'datetime'
+	});
+
+	const Mark = Object.freeze({
+	  Positive: 'positive',
+	  Negative: 'negative',
+	  None: 'none'
 	});
 
 	exports.AhaMoment = AhaMoment;
 	exports.Analytics = Analytics;
 	exports.CardType = CardType;
+	exports.ChatActionParam = ChatActionParam;
+	exports.ChatAction = ChatAction;
 	exports.DurationUnit = DurationUnit;
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EventName = EventName;
@@ -209,8 +475,26 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	exports.Model = Model;
 	exports.Module = Module;
 	exports.Option = Option;
+	exports.PlacementType = PlacementType;
+	exports.RemindTo = RemindTo;
+	exports.RemindBy = RemindBy;
+	exports.RemindVia = RemindVia;
+	exports.ReplicationPeriod = ReplicationPeriod;
+	exports.ReplicationDayType = ReplicationDayType;
+	exports.ReplicationWeekDayNum = ReplicationWeekDayNum;
+	exports.ReplicationRepeatTill = ReplicationRepeatTill;
+	exports.ReplicationMonthlyType = ReplicationMonthlyType;
+	exports.ReplicationYearlyType = ReplicationYearlyType;
+	exports.ReplicationWeekDayIndex = ReplicationWeekDayIndex;
+	exports.ReplicationYearlyWeekDayIndex = ReplicationYearlyWeekDayIndex;
 	exports.TaskStatus = TaskStatus;
 	exports.TaskField = TaskField;
+	exports.TemplateType = TemplateType;
+	exports.ResultStatus = ResultStatus;
+	exports.PermissionType = PermissionType;
+	exports.Endpoint = Endpoint;
+	exports.UserFieldType = UserFieldType;
+	exports.Mark = Mark;
 
 }((this.BX.Tasks.V2.Const = this.BX.Tasks.V2.Const || {})));
 //# sourceMappingURL=const.bundle.js.map

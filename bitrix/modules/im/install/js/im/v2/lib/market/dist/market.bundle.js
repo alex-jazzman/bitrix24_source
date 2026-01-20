@@ -185,9 +185,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    await main_core.Runtime.loadExtension('applayout');
 	    BX.rest.AppLayout.openApplication(placement.loadConfiguration.ID, context, placement.loadConfiguration);
 	  }
-	  static openMarketplace() {
-	    const marketplaceImPlacementCode = 'IM_CHAT';
-	    BX.SidePanel.Instance.open(`/market/?placement=${marketplaceImPlacementCode}`);
+	  static openChatMarket() {
+	    const placementCode = 'IM_CHAT';
+	    BX.SidePanel.Instance.open(`/market/?placement=${placementCode}`);
 	  }
 	}
 	function _init2(marketApps) {

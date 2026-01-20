@@ -42,6 +42,12 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/date-field'
 		getViewModeDefaultFormat = (moment) => {
 			const { format } = this.props;
 
+			if (Type.isNil(format) || format === '')
+			{
+				// eslint-disable-next-line no-undef
+				return dateFormatter.get(moment.timestamp, 'd.m.Y');
+			}
+
 			// eslint-disable-next-line no-undef
 			return dateFormatter.get(moment.timestamp, format);
 		};

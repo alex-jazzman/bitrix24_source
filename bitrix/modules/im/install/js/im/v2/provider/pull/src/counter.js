@@ -100,12 +100,6 @@ export class CounterPullHandler
 		this.#handleCounters(params);
 	}
 
-	handleReadAllChats()
-	{
-		Logger.warn('CounterPullHandler: handleReadAllChats');
-		void Core.getStore().dispatch('counters/clear');
-	}
-
 	#handleCounters(params: CounterParams)
 	{
 		const {

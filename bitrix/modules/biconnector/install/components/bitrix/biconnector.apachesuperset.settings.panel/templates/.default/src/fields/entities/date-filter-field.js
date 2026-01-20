@@ -11,7 +11,6 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		this.dateSelectorBlock = null;
 		this.toInput = null;
 		this.startInput = null;
-		this.includeLastDateCheckbox = null;
 	}
 
 	static create(id, settings)
@@ -61,7 +60,6 @@ export class DateFilterField extends BX.UI.EntityEditorList
 			this.dateSelectorBlock = null;
 			this.startInput = null;
 			this.endInput = null;
-			this.includeLastDateCheckbox = null;
 		}
 
 		if (isRangeSelected)
@@ -90,16 +88,6 @@ export class DateFilterField extends BX.UI.EntityEditorList
 				this.onChange();
 			});
 
-			this.includeLastDateCheckbox = Tag.render`<input class="ui-ctl-element" type="checkbox" name="${this.getIncludeLastDateName()}">`;
-			const includeLastDateValue = this.getModel().getField(this.getIncludeLastDateName());
-			if (includeLastDateValue)
-			{
-				this.includeLastDateCheckbox.checked = true;
-			}
-			Event.bind(this.includeLastDateCheckbox, 'change', () => {
-				this.onChange();
-			});
-
 			this.dateSelectorBlock =
 				Tag.render`
 					<div class="ui-ctl-dropdown-range-group">
@@ -112,7 +100,7 @@ export class DateFilterField extends BX.UI.EntityEditorList
 								${this.startInput}
 							</div>
 						</div>
-						<div class="ui-ctl-container">
+						<div class="ui-ctl-container biconnector-superset-settings-panel-range__line-container">
 							<div class="ui-ctl-dropdown-range-line">
 								<span class="ui-ctl-dropdown-range-line-item"></span>
 							</div>
@@ -124,12 +112,6 @@ export class DateFilterField extends BX.UI.EntityEditorList
 							<div class="ui-ctl ui-ctl-before-icon ui-ctl-datetime">
 								<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
 								${this.endInput}
-							</div>
-							<div class="ui-ctl-bottom">
-								<label class="ui-ctl ui-ctl-checkbox">
-									${this.includeLastDateCheckbox}
-									<div class="ui-ctl-label-text">${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_INCLUDE_LAST_DATE')}</div>
-								</label>
 							</div>
 						</div>
 					</div>
@@ -180,17 +162,11 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		return this._schemeElement.getData().dateEndFieldName ?? 'DATE_FILTER_END';
 	}
 
-	getIncludeLastDateName(): string
-	{
-		return this._schemeElement.getData().includeLastDateName ?? 'INCLUDE_LAST_FILTER_DATE';
-	}
-
 	save()
 	{
 		super.save();
 		this._model.setField(this.getDateStartFieldName(), null);
 		this._model.setField(this.getDateEndFieldName(), null);
-		this._model.setField(this.getIncludeLastDateName(), null);
 
 		if (Type.isDomNode(this.endInput))
 		{
@@ -200,12 +176,6 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		if (Type.isDomNode(this.startInput))
 		{
 			this._model.setField(this.getDateStartFieldName(), this.startInput.value);
-		}
-
-		if (Type.isDomNode(this.includeLastDateCheckbox))
-		{
-			this.includeLastDateCheckbox.value = this.includeLastDateCheckbox.checked ? 'Y' : 'N';
-			this._model.setField(this.getIncludeLastDateName(), this.includeLastDateCheckbox.checked ? 'Y' : 'N');
 		}
 	}
 

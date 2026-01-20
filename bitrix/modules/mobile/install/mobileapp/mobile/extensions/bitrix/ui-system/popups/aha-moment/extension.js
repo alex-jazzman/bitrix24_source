@@ -21,6 +21,8 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 	{
 		static isShown = false;
 
+		#autoCloseTimer = null;
+
 		/**
 		 * @public
 		 * @param {object} props
@@ -40,6 +42,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		 * @param {object} [props.image]
 		 * @param {number} [props.image.size=78]
 		 * @param {delay} [props.delay = 0]
+		 * @param {number} [props.autoCloseDelay = 0]
 		 */
 		static show(props)
 		{
@@ -87,6 +90,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				targetRef,
 				closeButton = true,
 				buttonText,
+				targetParams: targetParamsProps = {},
 			} = props;
 
 			let { disableHideByOutsideClick } = props;
@@ -101,6 +105,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				useHighlight: false,
 				type: 'rectangle',
 				disableHideByOutsideClick,
+				...targetParamsProps,
 			});
 
 			return { spotlight, targetParams };
@@ -133,13 +138,47 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			return component;
 		}
 
+		constructor(props)
+		{
+			super(props);
+			this.#setupAutoClose();
+		}
+
+		componentWillUnmount()
+		{
+			this.#clearAutoCloseTimer();
+		}
+
+		#setupAutoClose()
+		{
+			const { autoCloseDelay = 0 } = this.props;
+			this.#clearAutoCloseTimer();
+
+			if (autoCloseDelay > 0)
+			{
+				this.#autoCloseTimer = setTimeout(() => {
+					this.closeSpotlight();
+				}, autoCloseDelay);
+			}
+		}
+
+		#clearAutoCloseTimer()
+		{
+			if (this.#autoCloseTimer)
+			{
+				clearTimeout(this.#autoCloseTimer);
+				this.#autoCloseTimer = null;
+			}
+		}
+
 		sendAnalytics(params)
 		{
 			const { analyticsLabel } = this.props;
 
 			if (!analyticsLabel)
 			{
-				console.warn('\'c_section\', \'c_sub_section\' and \'p1\' for analyticsLabel in AhaMoment is not provided');
+				console.warn(
+					'\'c_section\', \'c_sub_section\' and \'p1\' for analyticsLabel in AhaMoment is not provided');
 
 				return;
 			}
@@ -164,6 +203,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		onHide()
 		{
 			AhaMoment.isShown = false;
+			this.#clearAutoCloseTimer();
 
 			this.props.onHide?.();
 		}
@@ -187,7 +227,6 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			if (spotlightRef)
 			{
 				spotlightRef.hide();
-				this.onHide();
 			}
 		}
 
@@ -238,8 +277,8 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		{
 			return Hint({
 				...this.props,
-				handleOnClose: this.handleOnClose,
-				handleOnClick: this.handleOnClick,
+				onClose: this.handleOnClose,
+				onClick: this.handleOnClick,
 			});
 		}
 	}
@@ -254,6 +293,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		onHide: null,
 		image: null,
 		delay: 0,
+		autoCloseDelay: 0,
 		spotlightParams: {},
 	};
 
@@ -269,6 +309,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		onClose: PropTypes.func,
 		onHide: PropTypes.func,
 		delay: PropTypes.number,
+		autoCloseDelay: PropTypes.number,
 		spotlightParams: PropTypes.object,
 	};
 

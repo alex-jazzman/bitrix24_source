@@ -62,7 +62,11 @@ export class Signers
 						try
 						{
 							const api = this.#api;
-							await api.signersList.deleteSignersList(listId);
+							const response = await api.signersList.deleteSignersList(listId, false);
+							if (response.errors?.length > 0)
+							{
+								throw new Error(response.errors[0].message);
+							}
 
 							window.top.BX.UI.Notification.Center.notify({
 								content: Loc.getMessage('SIGN_SIGNERS_GRID_DELETE_HINT_SUCCESS'),
@@ -94,7 +98,11 @@ export class Signers
 	{
 		try
 		{
-			await this.#api.signersList.copySignersList(listId);
+			const response = await this.#api.signersList.copySignersList(listId, false);
+			if (response.errors?.length > 0)
+			{
+				throw new Error(response.errors[0].message);
+			}
 			await this.reloadLists();
 			window.top.BX.UI.Notification.Center.notify({
 				content: Loc.getMessage('SIGN_SIGNERS_GRID_COPY_HINT_SUCCESS'),
@@ -151,7 +159,11 @@ export class Signers
 
 						try
 						{
-							await this.#api.signersList.deleteSignersFromList(listId, userIds);
+							const response = await this.#api.signersList.deleteSignersFromList(listId, userIds, false);
+							if (response.errors?.length > 0)
+							{
+								throw new Error(response.errors[0].message);
+							}
 							window.top.BX.UI.Notification.Center.notify({
 								content: successMsg,
 							});
@@ -181,7 +193,11 @@ export class Signers
 		{
 			const createListPopup = new CreateListPopup();
 			const title = await createListPopup.show();
-			await this.#api.signersList.createList(title);
+			const response = await this.#api.signersList.createList(title, false);
+			if (response.errors?.length > 0)
+			{
+				throw new Error(response.errors[0].message);
+			}
 			window.top.BX.UI.Notification.Center.notify({
 				content: Loc.getMessage('SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS'),
 			});
@@ -202,14 +218,20 @@ export class Signers
 		{
 			const createListPopup = new CreateListPopup();
 			const newTitle = await createListPopup.show(title);
-			await this.#api.signersList.renameList(listId, newTitle);
+			const response = await this.#api.signersList.renameList(listId, newTitle, false);
+			if (response.errors?.length > 0)
+			{
+				throw new Error(response.errors[0].message);
+			}
 			window.top.BX.UI.Notification.Center.notify({
+				//@todo SIGN_SIGNERS_GRID_LIST_RENAME_SUCCESS
 				content: Loc.getMessage('SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS'),
 			});
 		}
 		catch
 		{
 			window.top.BX.UI.Notification.Center.notify({
+				//@todo SIGN_SIGNERS_GRID_LIST_RENAME_FAIL
 				content: Loc.getMessage('SIGN_SIGNERS_GRID_LIST_CREATE_FAIL'),
 			});
 		}
@@ -220,7 +242,11 @@ export class Signers
 	async addSigners(listId: number, entities: Array, excludeRejected: boolean = true): void
 	{
 		const members = entities.map((entity) => ({ ...entity, party: 2 }));
-		await this.#api.signersList.addSignersToList(listId, members, excludeRejected);
+		const response = await this.#api.signersList.addSignersToList(listId, members, excludeRejected, false);
+		if (response.errors?.length > 0)
+		{
+			throw new Error(response.errors[0].message);
+		}
 		BX.SidePanel.Instance.close();
 		await this.reloadSigners();
 	}

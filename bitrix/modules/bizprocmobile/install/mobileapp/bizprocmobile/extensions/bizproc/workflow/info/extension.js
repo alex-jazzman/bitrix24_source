@@ -4,7 +4,7 @@
 jn.define('bizproc/workflow/info', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Loc } = require('loc');
-	const { NotifyManager } = require('notify-manager');
+	const { Notify } = require('notify');
 
 	const { PureComponent } = require('layout/pure-component');
 
@@ -97,7 +97,12 @@ jn.define('bizproc/workflow/info', (require, exports, module) => {
 				.catch((response) => {
 					if (Array.isArray(response.errors))
 					{
-						NotifyManager.showErrors(response.errors);
+						Notify.alert(
+							response.errors.map((error) => error.message).join('\n'),
+							Loc.getMessage('M_BP_WORKFLOW_INFO_WIDGET_TITLE'),
+							'OK',
+							this.close.bind(this),
+						);
 
 						return;
 					}
@@ -132,6 +137,14 @@ jn.define('bizproc/workflow/info', (require, exports, module) => {
 				layout: this.props.layout,
 				workflowId: this.state.workflowId,
 			});
+		}
+
+		close()
+		{
+			if (this.props.layout)
+			{
+				this.props.layout.close();
+			}
 		}
 	}
 

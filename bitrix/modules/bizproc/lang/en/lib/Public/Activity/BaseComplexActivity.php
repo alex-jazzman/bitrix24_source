@@ -1,0 +1,4 @@
+<?php
+$MESS["BIZPROC_PUBLIC_ACTIVITY_BCA_EMPTY_RULES"] = "Rule block not set.";
+$MESS["BIZPROC_PUBLIC_ACTIVITY_BCA_INVALID_CHILD"] = "Invalid action.";
+$MESS["BIZPROC_PUBLIC_ACTIVITY_BCA_NOT_FILLED"] = "Complete all rules.";

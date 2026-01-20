@@ -2,12 +2,18 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_popup,tasks_v2_core,tasks_v2_const) {
+(function (exports,tasks_v2_core,tasks_v2_const,tasks_v2_lib_hint) {
 	'use strict';
 
+	var _popupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupId");
 	var _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId");
-	class RelationError {
-	  constructor() {
+	class RelationError extends tasks_v2_lib_hint.Hint {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _popupId, {
+	      writable: true,
+	      value: 'tasks-relation-error'
+	    });
 	    Object.defineProperty(this, _taskId, {
 	      writable: true,
 	      value: void 0
@@ -27,22 +33,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    });
 	    const scrollContainer = document.querySelector(`[data-task-card-scroll="${babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]}"]`);
 	    const addButton = scrollContainer.querySelector(`[data-task-relation-add="${fieldId}"]`);
-	    const popup = new main_popup.Popup({
-	      id: 'tasks-relation-error',
-	      className: 'tasks-hint',
-	      background: 'var(--ui-color-bg-content-inapp)',
+	    const options = {
+	      id: babelHelpers.classPrivateFieldLooseBase(this, _popupId)[_popupId],
 	      bindElement: addButton,
 	      content: errorText,
-	      angle: true,
-	      autoHide: true,
-	      autoHideHandler: () => true,
-	      cacheable: false,
-	      animation: 'fading',
+	      maxWidth: 470,
 	      offsetLeft: addButton.offsetWidth / 2,
 	      targetContainer: scrollContainer
-	    });
-	    popup.show();
-	    setTimeout(() => popup.close(), 3000);
+	    };
+	    await super.showHint(options);
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
@@ -52,5 +51,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.relationError = relationError;
 
-}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.Main,BX.Tasks.V2,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib));
 //# sourceMappingURL=relation-error.bundle.js.map

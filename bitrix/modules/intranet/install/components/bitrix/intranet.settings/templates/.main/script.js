@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,ui_cnt,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
+(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,intranet_notifyBanner_pushOtp,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
 	'use strict';
 
 	var _eventList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("eventList");
@@ -120,6 +120,15 @@ this.BX = this.BX || {};
 	      p2: state ? AnalyticSettingsTurnState.ON : AnalyticSettingsTurnState.OFF
 	    };
 	    this.addEvent('security_' + event, options);
+	  }
+	  addEventEnablePushOtp() {
+	    const options = {
+	      event: 'click_setting_portal',
+	      tool: babelHelpers.classPrivateFieldLooseBase(this, _tool)[_tool],
+	      category: 'security',
+	      c_element: 'banner_on'
+	    };
+	    ui_analytics.sendData(options);
 	  }
 	  addEventConfigPortal(event) {
 	    const options = {
@@ -3443,6 +3452,7 @@ this.BX = this.BX || {};
 	var _buildMailsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildMailsSection");
 	var _buildCRMMapsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildCRMMapsSection");
 	var _buildCardsProductPropertiesSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildCardsProductPropertiesSection");
+	var _buildBIConnectorSettingsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildBIConnectorSettingsSection");
 	var _buildAdditionalSettingsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAdditionalSettingsSection");
 	var _geoDataSwitch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("geoDataSwitch");
 	class ConfigurationPage extends ui_formElements_field.BaseSettingsPage {
@@ -3453,6 +3463,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _buildAdditionalSettingsSection, {
 	      value: _buildAdditionalSettingsSection2
+	    });
+	    Object.defineProperty(this, _buildBIConnectorSettingsSection, {
+	      value: _buildBIConnectorSettingsSection2
 	    });
 	    Object.defineProperty(this, _buildCardsProductPropertiesSection, {
 	      value: _buildCardsProductPropertiesSection2
@@ -3507,6 +3520,8 @@ this.BX = this.BX || {};
 	    }
 	    let cardsProductPropertiesSection = babelHelpers.classPrivateFieldLooseBase(this, _buildCardsProductPropertiesSection)[_buildCardsProductPropertiesSection]();
 	    cardsProductPropertiesSection == null ? void 0 : cardsProductPropertiesSection.renderTo(contentNode);
+	    const biconnectorSettingsSection = babelHelpers.classPrivateFieldLooseBase(this, _buildBIConnectorSettingsSection)[_buildBIConnectorSettingsSection]();
+	    biconnectorSettingsSection == null ? void 0 : biconnectorSettingsSection.renderTo(contentNode);
 	    let additionalSettingsSection = babelHelpers.classPrivateFieldLooseBase(this, _buildAdditionalSettingsSection)[_buildAdditionalSettingsSection]();
 	    additionalSettingsSection == null ? void 0 : additionalSettingsSection.renderTo(contentNode);
 	    if (this.hasValue('deletePortalOptions') && this.hasValue('sectionDeletePortal')) {
@@ -3790,6 +3805,40 @@ this.BX = this.BX || {};
 	        googleKeyProductPropertiesRow.show();
 	      }
 	    });
+	  }
+	  return settingsSection;
+	}
+	function _buildBIConnectorSettingsSection2() {
+	  if (!this.hasValue('sectionBIConnector')) {
+	    return;
+	  }
+	  const biconnectorSettingsSection = new ui_section.Section(this.getValue('sectionBIConnector'));
+	  const settingsSection = new ui_formElements_field.SettingsSection({
+	    section: biconnectorSettingsSection,
+	    parent: this
+	  });
+	  if (this.hasValue('biconnectorDashboardLanguage')) {
+	    const alert = new BX.UI.Alert({
+	      text: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT'),
+	      inline: true,
+	      size: BX.UI.Alert.Size.SMALL,
+	      color: BX.UI.Alert.Color.PRIMARY,
+	      animated: true
+	    });
+	    const alertRow = new ui_section.Row({
+	      content: alert.getContainer(),
+	      className: '--block'
+	    });
+	    const biconnectorLanguage = new ui_formElements_view.Selector(this.getValue('biconnectorDashboardLanguage'));
+	    const biconnectorLanguageRow = new ui_section.Row({
+	      separator: 'bottom',
+	      className: '--block'
+	    });
+	    new ui_formElements_field.SettingsRow({
+	      row: alertRow,
+	      parent: settingsSection
+	    });
+	    ConfigurationPage.addToSectionHelper(biconnectorLanguage, settingsSection, biconnectorLanguageRow);
 	  }
 	  return settingsSection;
 	}
@@ -4246,7 +4295,10 @@ this.BX = this.BX || {};
 	var _getOTPPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOTPPopup");
 	var _getOTPPeriodSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOTPPeriodSelector");
 	var _getOTPDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOTPDescription");
-	var _getOTPDescriptionText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOTPDescriptionText");
+	var _getPushOTPDescriptionText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPushOTPDescriptionText");
+	var _isPushOtpProvider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPushOtpProvider");
+	var _isHighPromoteModePushOtp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHighPromoteModePushOtp");
+	var _getOldOTPDescriptionText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOldOTPDescriptionText");
 	var _buildAccessIPSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAccessIPSection");
 	var _getEmptyUserSelectorRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyUserSelectorRow");
 	var _getEmptyAccessIpRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyAccessIpRow");
@@ -4294,8 +4346,17 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _buildAccessIPSection, {
 	      value: _buildAccessIPSection2
 	    });
-	    Object.defineProperty(this, _getOTPDescriptionText, {
-	      value: _getOTPDescriptionText2
+	    Object.defineProperty(this, _getOldOTPDescriptionText, {
+	      value: _getOldOTPDescriptionText2
+	    });
+	    Object.defineProperty(this, _isHighPromoteModePushOtp, {
+	      value: _isHighPromoteModePushOtp2
+	    });
+	    Object.defineProperty(this, _isPushOtpProvider, {
+	      value: _isPushOtpProvider2
+	    });
+	    Object.defineProperty(this, _getPushOTPDescriptionText, {
+	      value: _getPushOTPDescriptionText2
 	    });
 	    Object.defineProperty(this, _getOTPDescription, {
 	      value: _getOTPDescription2
@@ -4325,7 +4386,7 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_SECURITY');
-	    this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY');
+	    this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY_MSGVER_2');
 	  }
 	  getType() {
 	    return 'security';
@@ -4368,7 +4429,7 @@ this.BX = this.BX || {};
 	    row: descriptionRow,
 	    parent: section
 	  });
-	  if (this.hasValue('SECURITY_OTP') && this.hasValue('SEND_OTP_PUSH')) {
+	  if (this.hasValue('SECURITY_OTP')) {
 	    const securityOtpCheckerRow = new ui_section.Row({
 	      content: babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().render(),
 	      separator: babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked() ? '' : 'bottom',
@@ -4386,28 +4447,56 @@ this.BX = this.BX || {};
 	      row: securityOtpPeriodSelectorRow,
 	      parent: section
 	    });
-	    const switcherWrapper = main_core.Tag.render(_t$m || (_t$m = _$m`
-				<div class="settings-switcher-wrapper">
-					<div class="settings-security-message-switcher"/>
-				</div>
-			`));
-	    new ui_formElements_view.SingleChecker({
-	      switcher: new ui_switcher.Switcher({
-	        node: switcherWrapper.querySelector('.settings-security-message-switcher'),
-	        inputName: 'SEND_OTP_PUSH',
-	        checked: this.getValue('SEND_OTP_PUSH'),
-	        size: ui_switcher.SwitcherSize.small
-	      })
-	    });
-	    const securityOtpMessageChatCheckerRow = new ui_section.Row({
-	      content: switcherWrapper,
-	      isHidden: !babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked()
-	    });
-	    switcherWrapper.append(main_core.Tag.render(_t2$b || (_t2$b = _$m`<span class="settings-switcher-title">${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT')));
-	    new ui_formElements_field.SettingsRow({
-	      row: securityOtpMessageChatCheckerRow,
-	      parent: section
-	    });
+	    let securityOtpMessageChatCheckerRow = null;
+	    if (this.hasValue('SEND_OTP_PUSH')) {
+	      const switcherWrapper = main_core.Tag.render(_t$m || (_t$m = _$m`
+					<div class="settings-switcher-wrapper">
+						<div class="settings-security-message-switcher"/>
+					</div>
+				`));
+	      new ui_formElements_view.SingleChecker({
+	        switcher: new ui_switcher.Switcher({
+	          node: switcherWrapper.querySelector('.settings-security-message-switcher'),
+	          inputName: 'SEND_OTP_PUSH',
+	          checked: this.getValue('SEND_OTP_PUSH'),
+	          size: ui_switcher.SwitcherSize.small
+	        })
+	      });
+	      securityOtpMessageChatCheckerRow = new ui_section.Row({
+	        content: switcherWrapper,
+	        isHidden: babelHelpers.classPrivateFieldLooseBase(this, _isPushOtpProvider)[_isPushOtpProvider]() || !babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked()
+	      });
+	      switcherWrapper.append(main_core.Tag.render(_t2$b || (_t2$b = _$m`<span class="settings-switcher-title">${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT')));
+	      new ui_formElements_field.SettingsRow({
+	        row: securityOtpMessageChatCheckerRow,
+	        parent: section
+	      });
+	    }
+	    if (this.hasValue('SECURITY_OTP_NEED_PUSH_OTP_BANNER') && this.getValue('SECURITY_OTP_NEED_PUSH_OTP_BANNER')) {
+	      const newOtpBanner = new intranet_notifyBanner_pushOtp.PushOtp({
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TITLE'),
+	        text: main_core.Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TEXT'),
+	        clickEnableBtn: () => {
+	          var _this$getAnalytic;
+	          (_this$getAnalytic = this.getAnalytic()) == null ? void 0 : _this$getAnalytic.addEventEnablePushOtp();
+	          main_core.ajax.runAction('intranet.v2.Otp.activePushOtp').then(() => {
+	            this.reload();
+	            babelHelpers.classPrivateFieldLooseBase(this, _otpChecker)[_otpChecker] = null;
+	          }, response => {
+	            if (response.status === 'error') {
+	              ui_formElements_field.ErrorCollection.showSystemError(response.errors[0].message);
+	            }
+	          });
+	        }
+	      }).render();
+	      const securityOtpBannerNewOtpRow = new ui_section.Row({
+	        content: newOtpBanner
+	      });
+	      new ui_formElements_field.SettingsRow({
+	        row: securityOtpBannerNewOtpRow,
+	        parent: section
+	      });
+	    }
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().switcher, 'toggled', () => {
 	      if (this.getValue('SECURITY_IS_USER_OTP_ACTIVE') !== true && babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked()) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _getOTPPopup)[_getOTPPopup]().show();
@@ -4416,17 +4505,19 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED')) {
-	        var _this$getAnalytic;
-	        (_this$getAnalytic = this.getAnalytic()) == null ? void 0 : _this$getAnalytic.addEventToggle2fa(babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked());
+	        var _this$getAnalytic2;
+	        (_this$getAnalytic2 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic2.addEventToggle2fa(babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked());
 	      }
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _getOTPChecker)[_getOTPChecker]().isChecked()) {
+	        var _securityOtpMessageCh;
 	        main_core.Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 	        securityOtpPeriodSelectorRow.show();
-	        securityOtpMessageChatCheckerRow.show();
+	        (_securityOtpMessageCh = securityOtpMessageChatCheckerRow) == null ? void 0 : _securityOtpMessageCh.show();
 	      } else {
+	        var _securityOtpMessageCh2;
 	        main_core.Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 	        securityOtpPeriodSelectorRow.hide();
-	        securityOtpMessageChatCheckerRow.hide();
+	        (_securityOtpMessageCh2 = securityOtpMessageChatCheckerRow) == null ? void 0 : _securityOtpMessageCh2.hide();
 	      }
 	    });
 	  }
@@ -4498,7 +4589,7 @@ this.BX = this.BX || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _otpSelector)[_otpSelector];
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _otpSelector)[_otpSelector] = new ui_formElements_view.Selector({
-	    label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD'),
+	    label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD_MSGVER_1'),
 	    name: 'SECURITY_OTP_DAYS',
 	    items: this.getValue('SECURITY_OTP_DAYS').ITEMS,
 	    current: this.getValue('SECURITY_OTP_DAYS').CURRENT
@@ -4507,23 +4598,63 @@ this.BX = this.BX || {};
 	}
 	function _getOTPDescription2() {
 	  return new BX.UI.Alert({
-	    text: babelHelpers.classPrivateFieldLooseBase(this, _getOTPDescriptionText)[_getOTPDescriptionText](),
+	    text: babelHelpers.classPrivateFieldLooseBase(this, _isPushOtpProvider)[_isPushOtpProvider]() ? babelHelpers.classPrivateFieldLooseBase(this, _getPushOTPDescriptionText)[_getPushOTPDescriptionText]() : babelHelpers.classPrivateFieldLooseBase(this, _getOldOTPDescriptionText)[_getOldOTPDescriptionText](),
 	    inline: true,
 	    size: BX.UI.Alert.Size.SMALL,
 	    color: BX.UI.Alert.Color.PRIMARY,
 	    animated: true
 	  });
 	}
-	function _getOTPDescriptionText2() {
+	function _getPushOTPDescriptionText2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isHighPromoteModePushOtp)[_isHighPromoteModePushOtp]()) {
+	    return `
+				${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_HIGH_MODE', {
+      '[HELP_LINK]': '<a class="ui-section__link" target="_blank" href="/settings/support.php">',
+      '[/HELP_LINK]': '</a>',
+      '[BR]': '</br></br>'
+    })}
+				</br></br>
+				<span class="settings-section-description-focus-text --security-info">
+					<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
+						${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+					</a>
+				</span>
+			`;
+	  }
 	  return `
-		${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_FIRST')}
-		</br></br>
-		<span class="settings-section-description-focus-text --security-info">
-			${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_SECOND')}
-			<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
-				${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
-			</a>
-		</span>`;
+			${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP', {
+    '[BR]': '</br></br>'
+  })}
+			</br></br>
+			<span class="settings-section-description-focus-text --security-info">
+				${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_WARNING', {
+    '[SPAN]': '<span>',
+    '[/SPAN]': '</span>'
+  })}
+				</br></br>
+				<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
+					${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+				</a>
+			</span>
+		`;
+	}
+	function _isPushOtpProvider2() {
+	  return this.hasValue('SECURITY_PUSH_OTP_PROVIDER_DEFAULT') && this.getValue('SECURITY_PUSH_OTP_PROVIDER_DEFAULT');
+	}
+	function _isHighPromoteModePushOtp2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isPushOtpProvider)[_isPushOtpProvider]() && this.hasValue('SECURITY_PUSH_OTP_PROVIDE_HIGH') && this.getValue('SECURITY_PUSH_OTP_PROVIDE_HIGH');
+	}
+	function _getOldOTPDescriptionText2() {
+	  return `
+			${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_FIRST')}
+			</br></br>
+			<span class="settings-section-description-focus-text --security-info">
+				${main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_SECOND')}
+				<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
+					${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+				</a>
+			</span>
+		`;
 	}
 	function _buildAccessIPSection2() {
 	  if (!this.hasValue('sectionAccessIp')) {
@@ -4717,12 +4848,12 @@ this.BX = this.BX || {};
 	    });
 	    if (!this.getValue('DEVICE_HISTORY_SETTINGS').isEnable) {
 	      main_core.Event.bind(cleanupDaysField.getInputNode(), 'click', () => {
-	        var _this$getAnalytic2;
-	        (_this$getAnalytic2 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic2.addEventOpenHint(this.getValue('DEVICE_HISTORY_SETTINGS').name);
+	        var _this$getAnalytic3;
+	        (_this$getAnalytic3 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic3.addEventOpenHint(this.getValue('DEVICE_HISTORY_SETTINGS').name);
 	      });
 	      main_core.Event.bind(messageNode.querySelector('a'), 'click', () => {
-	        var _this$getAnalytic3;
-	        return (_this$getAnalytic3 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic3.addEventOpenTariffSelector(this.getValue('DEVICE_HISTORY_SETTINGS').name);
+	        var _this$getAnalytic4;
+	        return (_this$getAnalytic4 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic4.addEventOpenTariffSelector(this.getValue('DEVICE_HISTORY_SETTINGS').name);
 	      });
 	    }
 	    SecurityPage.addToSectionHelper(cleanupDaysField, settingsSection);
@@ -5424,7 +5555,7 @@ this.BX = this.BX || {};
 	          });
 	          babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare].close();
 	          BX.UI.Analytics.sendData({
-	            tool: 'landing',
+	            tool: 'vibe',
 	            category: 'vibe',
 	            event: 'publish_page',
 	            c_sub_section: 'from_settings',
@@ -5475,7 +5606,7 @@ this.BX = this.BX || {};
 	          });
 	          babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw].close();
 	          BX.UI.Analytics.sendData({
-	            tool: 'landing',
+	            tool: 'vibe',
 	            category: 'vibe',
 	            event: 'unpublish_page',
 	            c_sub_section: 'from_settings'
@@ -5596,7 +5727,7 @@ this.BX = this.BX || {};
 	        BX.UI.InfoHelper.show("limit_office_vibe");
 	      }
 	      BX.UI.Analytics.sendData({
-	        tool: 'landing',
+	        tool: 'vibe',
 	        category: 'vibe',
 	        event: 'open_market',
 	        status: babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? 'success' : 'error_limit'
@@ -5619,12 +5750,6 @@ this.BX = this.BX || {};
 	      } else {
 	        BX.UI.InfoHelper.show("limit_office_vibe");
 	      }
-	      BX.UI.Analytics.sendData({
-	        tool: 'landing',
-	        category: 'vibe',
-	        event: 'open_editor',
-	        status: babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? 'success' : 'error_limit'
-	      });
 	    });
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _getButtonPartners)[_getButtonPartners]()) {
@@ -5651,7 +5776,7 @@ this.BX = this.BX || {};
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit]) {
 	      BX.UI.InfoHelper.show("limit_office_vibe");
 	      BX.UI.Analytics.sendData({
-	        tool: 'landing',
+	        tool: 'vibe',
 	        category: 'vibe',
 	        event: 'publish_page',
 	        c_sub_section: 'from_settings',
@@ -6689,5 +6814,5 @@ this.BX = this.BX || {};
 	exports.ServerDataSource = ServerDataSource;
 	exports.Permission = Permission;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.UI,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.Intranet.NotifyBanner,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
 //# sourceMappingURL=script.js.map

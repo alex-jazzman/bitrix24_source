@@ -309,6 +309,10 @@ this.BX.Desktop.Field = this.BX.Desktop.Field || {};
 	          node: this.container.firstChild
 	        });
 	      }.bind(this)));
+	      this.onChange({
+	        params: this.params,
+	        node: this.container.firstChild
+	      });
 	    }
 	  }, {
 	    key: "onChange",

@@ -14,7 +14,6 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ModelUtils } = require('im/messenger/lib/utils');
-	const { MessengerMutationHandlersWaiter } = require('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter');
 	const { recentDefaultElement } = require('im/messenger/model/recent/default-element');
 	const { searchModel } = require('im/messenger/model/recent/search/model');
 
@@ -301,9 +300,9 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getUserList: (state, getters, rootState, rootGetters) => () => {
-				return Object.keys(state.collection).filter((dialogId) => {
-					return !dialogId.startsWith('chat') && rootGetters['usersModel/getById'](dialogId);
-				}).sort(sortByLastActivityDateOnly);
+				return Object.values(state.collection).filter((item) => {
+					return !item.id.startsWith('chat') && rootGetters['usersModel/getById'](item.id);
+				}).sort((userItemA, userItemB) => sortByLastActivityDateOnly(userItemA, userItemB));
 			},
 
 			/**
@@ -643,15 +642,11 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 					});
 				}
 
-				const mutationWaiter = new MessengerMutationHandlersWaiter(RECENT_MODEL_NAME, actionName);
 				const { newItems, existingItems } = splitItemsByExistence(store, result);
 				if (newItems.length > 0)
 				{
-					mutationWaiter.addMutation('add');
-
 					store.commit('add', {
 						actionName,
-						actionUid: mutationWaiter.actionUid,
 						data: {
 							recentItemList: newItems,
 						},
@@ -660,18 +655,13 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 
 				if (existingItems.length > 0)
 				{
-					mutationWaiter.addMutation('update');
-
 					store.commit('update', {
 						actionName,
-						actionUid: mutationWaiter.actionUid,
 						data: {
 							recentItemList: existingItems,
 						},
 					});
 				}
-
-				await mutationWaiter.waitComplete();
 			},
 
 			/** @function recentModel/delete */
@@ -1127,9 +1117,9 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 	};
 
 	/**
-	 * @returns {(a: RecentModelState, b: RecentModelState) => number}
+	 * @returns {number}
 	 */
-	const sortByLastActivityDateOnly = () => (a, b) => {
+	const sortByLastActivityDateOnly = (a, b) => {
 		if (a.lastActivityDate && b.lastActivityDate)
 		{
 			const timestampA = new Date(a.lastActivityDate).getTime();

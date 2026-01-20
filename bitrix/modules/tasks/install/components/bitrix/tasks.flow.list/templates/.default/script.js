@@ -1874,7 +1874,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	const CopilotAdviceErrorTypes = Object.freeze({
 	  NotEnoughTasks: 'notEnoughTasks',
 	  UnexpectedError: 'unexpectedError',
-	  AdviceFetching: 'adviceFetching'
+	  AdviceFetching: 'adviceFetching',
+	  RateLimit: 'rateLimit'
 	});
 	class CopilotAdviceErrorPopup {
 	  static show(bindElement, errorType = null) {
@@ -1933,6 +1934,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        {
 	          titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE';
 	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION';
+	          break;
+	        }
+	      case CopilotAdviceErrorTypes.RateLimit:
+	        {
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_TITLE';
+	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_DESCRIPTION';
 	          break;
 	        }
 	      case CopilotAdviceErrorTypes.NotEnoughTasks:

@@ -34,6 +34,7 @@ export class WorkflowInfo
 	#messageBox: MessageBox;
 	#canClose: boolean = false;
 	#workflowResult: ?{} = null;
+	commentRequired: string = 'N';
 	#canUseHumanResources: boolean;
 
 	constructor(options: {
@@ -51,6 +52,7 @@ export class WorkflowInfo
 		workflowResult: ?{},
 		fastClose: boolean,
 		saveVariables: boolean,
+		commentRequired: string,
 		canUseHumanResources: boolean,
 	})
 	{
@@ -67,6 +69,7 @@ export class WorkflowInfo
 		this.canDelegateTask = options.canDelegateTask;
 		this.fastClose = options.fastClose;
 		this.saveVariables = options.saveVariables;
+		this.commentRequired = options.commentRequired;
 		this.#canUseHumanResources = Text.toBoolean(options.canUseHumanResources);
 
 		this.handleMarkAsRead = Runtime.debounce(this.#sendMarkAsRead, 100, this);
@@ -242,11 +245,8 @@ export class WorkflowInfo
 	#handleTaskButtonClick(taskButton: TaskButton, uiButton: Button): void
 	{
 		const formData = new FormData(this.taskForm);
-		const errors =
-			this.#isNeedValidate(taskButton.NAME)
-				? ValidateHelper.checkRequiredFieldsFilled(formData, this.#getRequiredFields())
-				: []
-		;
+		const errors = ValidateHelper.checkRequiredFieldsFilled(formData, this.#getRequiredFields(taskButton.NAME));
+
 		if (Type.isArrayFilled(errors))
 		{
 			this.#showErrors(errors);
@@ -283,17 +283,39 @@ export class WorkflowInfo
 
 	#isNeedValidate(buttonName: string): boolean
 	{
-		return !(buttonName === 'cancel' && !this.saveVariables);
+		return !(this.#isCanceled(buttonName) && !this.saveVariables);
 	}
 
-	#getRequiredFields(): Array<TaskField>
+	#isCanceled(buttonName: string): boolean
+	{
+		return buttonName === 'cancel' || buttonName === 'nonapprove';
+	}
+
+	#getRequiredFields(buttonName: string): Array<TaskField>
 	{
 		if (Type.isNil(this.taskFields))
 		{
 			return [];
 		}
+		const fields =
+			this.#isNeedValidate(buttonName)
+				? this.taskFields.filter((field) => field.Required)
+				: []
+		;
 
-		return this.taskFields.filter((field) => field.Required);
+		if (
+			(this.commentRequired === 'YA' && !this.#isCanceled(buttonName))
+			|| (this.commentRequired === 'YR' && this.#isCanceled(buttonName))
+		)
+		{
+			const comment = this.taskFields.find((field) => field.Id === 'task_comment');
+			if (comment)
+			{
+				fields.push(comment);
+			}
+		}
+
+		return fields;
 	}
 
 	#getNextTaskOrClose(formData: FormData): void
@@ -480,6 +502,7 @@ export class WorkflowInfo
 			this.taskId = data.additionalParams.ID;
 			this.fastClose = data.additionalParams.IS_LAST_TASK_FOR_USER;
 			this.saveVariables = data.additionalParams.saveVariables;
+			this.commentRequired = data.additionalParams.commentRequired;
 			this.taskFields = data.additionalParams.FIELDS;
 			const subject = this.workflowContent.querySelector('.bp-workflow-info__subject');
 			if (subject)

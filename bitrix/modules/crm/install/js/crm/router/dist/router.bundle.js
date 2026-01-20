@@ -3,15 +3,24 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_popup) {
 	'use strict';
 
+	// eslint-disable-next-line max-classes-per-file
 	let instance = null;
 	class ListViewTypes {}
 	ListViewTypes.KANBAN = 'KANBAN';
 	ListViewTypes.LIST = 'LIST';
+	var _getItemDetailUrlTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemDetailUrlTemplate");
+	var _getItemDetailUrlTemplateMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemDetailUrlTemplateMap");
 	/**
 	 * @memberOf BX.Crm
 	 */
 	class Router {
 	  constructor() {
+	    Object.defineProperty(this, _getItemDetailUrlTemplateMap, {
+	      value: _getItemDetailUrlTemplateMap2
+	    });
+	    Object.defineProperty(this, _getItemDetailUrlTemplate, {
+	      value: _getItemDetailUrlTemplate2
+	    });
 	    this.defaultRootUrlTemplates = {};
 	    this.customRootUrlTemplates = {};
 	    this.currentViews = {};
@@ -274,6 +283,53 @@ this.BX = this.BX || {};
 	    normalizedId = normalizedId > 0 ? normalizedId : 0;
 	    return new main_core.Uri(`/crm/deal/kanban/category/${normalizedId}/`);
 	  }
+	  getItemDetailUrl(entityTypeId, entityId, categoryId = null) {
+	    const normalizedEntityTypeId = main_core.Text.toInteger(entityTypeId);
+	    const normalizedEntityId = main_core.Text.toInteger(entityId);
+	    const normalizedCategoryId = main_core.Type.isNil(categoryId) ? null : main_core.Text.toInteger(categoryId);
+	    if (!BX.CrmEntityType.isDefined(normalizedEntityTypeId) || normalizedEntityId < 0) {
+	      return null;
+	    }
+	    let template = babelHelpers.classPrivateFieldLooseBase(this, _getItemDetailUrlTemplate)[_getItemDetailUrlTemplate](normalizedEntityTypeId);
+	    if (template === null && BX.CrmEntityType.isDynamicTypeByTypeId(normalizedEntityTypeId)) {
+	      template = this.getTemplate('bitrix:crm.item.details');
+	    }
+	    if (!template) {
+	      return null;
+	    }
+	    const uri = new main_core.Uri(template.replace('#entityId#', normalizedEntityId));
+	    if (!main_core.Type.isNil(normalizedCategoryId)) {
+	      uri.setQueryParam('category_id', normalizedCategoryId);
+	    }
+	    return uri;
+	  }
+	  openMessageSenderConnectionsSlider(analytics = {}) {
+	    const url = new main_core.Uri('/crm/messagesender/connections/').setQueryParams({
+	      analytics
+	    }).toString();
+	    return Router.openSlider(url, {
+	      width: 920,
+	      cacheable: false
+	    });
+	  }
+	}
+	function _getItemDetailUrlTemplate2(entityTypeId) {
+	  var _babelHelpers$classPr;
+	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getItemDetailUrlTemplateMap)[_getItemDetailUrlTemplateMap]()[entityTypeId]) != null ? _babelHelpers$classPr : null;
+	}
+	function _getItemDetailUrlTemplateMap2() {
+	  /**
+	   * Because BX.Crm.Router is not initialized in every component, we can lose URL templates
+	   * todo: get URL templates from the backend
+	   */
+	  return {
+	    [BX.CrmEntityType.enumeration.lead]: '/crm/lead/details/#entityId#/',
+	    [BX.CrmEntityType.enumeration.deal]: '/crm/deal/details/#entityId#/',
+	    [BX.CrmEntityType.enumeration.contact]: '/crm/contact/details/#entityId#/',
+	    [BX.CrmEntityType.enumeration.company]: '/crm/company/details/#entityId#/',
+	    [BX.CrmEntityType.enumeration.quote]: `/crm/type/${BX.CrmEntityType.enumeration.quote}/details/#entityId#/`,
+	    [BX.CrmEntityType.enumeration.smartinvoice]: `/crm/type/${BX.CrmEntityType.enumeration.smartinvoice}/details/#entityId#/`
+	  };
 	}
 
 	exports.Router = Router;

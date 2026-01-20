@@ -13,8 +13,8 @@ return [
 		'booking.core',
 		'booking.provider.service.resources-service',
 		'main.core',
-		'ui.dialogs.messagebox',
 		'main.popup',
+		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 ];

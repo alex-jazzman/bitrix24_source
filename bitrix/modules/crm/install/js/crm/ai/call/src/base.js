@@ -1,10 +1,18 @@
 import { Slider } from 'crm.ai.slider';
 import { Attention, AttentionPresets, Textbox } from 'crm.ai.textbox';
 import { AudioPlayer } from 'crm.audio-player';
-import { Loc, Tag, Text, Type } from 'main.core';
+import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { UI } from 'ui.notification';
 
-export type aiCallData = {
+import 'ui.design-tokens';
+import './style.css';
+
+export const ActivityProvider: Object<string, string> = Object.freeze({
+	call: 'VOXIMPLANT_CALL',
+	openLine: 'IMOPENLINES_SESSION',
+});
+
+export type aiData = {
 	activityId: number,
 	activityCreated?: number,
 	ownerTypeId: number,
@@ -15,6 +23,7 @@ export type aiCallData = {
 	userPhotoUrl ?: string,
 	jobId ?: number,
 	assessmentSettingsId ?: number,
+	activityProvider ?: string,
 };
 
 export class Base
@@ -23,20 +32,20 @@ export class Base
 	ownerTypeId: number;
 	ownerId: number;
 	languageTitle: ?string = null;
-
-	audioPlayerNode: HTMLElement;
+	activityProvider: ?string = null;
 
 	id: string;
 	sliderTitle: string;
 	sliderWidth: number;
 	textboxTitle: string;
-	aiJobResultAndCallRecordAction: string;
+	aiDataAction: string;
 
 	wrapperSlider: Slider;
-	audioPlayerApp: AudioPlayer;
+	audioPlayerApp: ?AudioPlayer = null;
 	textbox: Textbox;
+	topElementNode: ?HTMLElement = null;
 
-	constructor(data: aiCallData)
+	constructor(data: aiData)
 	{
 		this.initDefaultOptions();
 
@@ -44,20 +53,16 @@ export class Base
 		this.ownerTypeId = data.ownerTypeId;
 		this.ownerId = data.ownerId;
 		this.languageTitle = data.languageTitle ?? null;
-
-		this.audioPlayerNode = Tag.render`<div id="crm-textbox-audio-player"></div>`;
-
-		this.audioPlayerApp = new AudioPlayer({
-			rootNode: this.audioPlayerNode,
-		});
+		this.activityProvider = data.activityProvider ?? null;
+		this.jobId = data.jobId ?? null;
 
 		this.textbox = new Textbox({
 			title: this.textboxTitle,
-			previousTextContent: this.audioPlayerNode,
+			previousTextContent: this.getTopElementNode(),
 			attentions: this.getTextboxAttentions(),
 		});
 
-		this.sliderId = `${this.id}-${this.activityId}`;
+		this.sliderId = `${this.id}-${this.activityId}-${this.jobId ?? '0'}`;
 		this.wrapperSlider = new Slider({
 			url: this.sliderId,
 			sliderTitle: this.sliderTitle,
@@ -94,10 +99,10 @@ export class Base
 	{
 		return {
 			onLoad: () => {
-				this.audioPlayerApp.attachTemplate();
+				this.audioPlayerApp?.attachTemplate();
 			},
 			onClose: () => {
-				this.audioPlayerApp.detachTemplate();
+				this.audioPlayerApp?.detachTemplate();
 			},
 		};
 	}
@@ -105,10 +110,16 @@ export class Base
 	open()
 	{
 		const content = new Promise((resolve, reject) => {
-			this.getAiJobResultAndCallRecord()
+			this.getAiData()
 				.then((response) => {
-					const audioProps = this.prepareAudioProps(response);
-					this.audioPlayerApp.setAudioProps(audioProps);
+					if (this.activityProvider === ActivityProvider.call)
+					{
+						this.audioPlayerApp?.setAudioProps(this.prepareAudioProps(response));
+					}
+					else if (this.activityProvider === ActivityProvider.openLine)
+					{
+						Dom.append(this.getOpenLineElementNode(response.data.openline), this.topElementNode);
+					}
 
 					const aiJobResult = this.prepareAiJobResult(response);
 					this.textbox.setText(aiJobResult);
@@ -127,17 +138,18 @@ export class Base
 		this.wrapperSlider.open();
 	}
 
-	getAiJobResultAndCallRecord(): Promise
+	getAiData(): Promise
 	{
 		const actionData = {
 			data: {
 				activityId: this.activityId,
 				ownerTypeId: this.ownerTypeId,
 				ownerId: this.ownerId,
+				jobId: this.jobId,
 			},
 		};
 
-		return BX.ajax.runAction(this.aiJobResultAndCallRecordAction, actionData);
+		return BX.ajax.runAction(this.aiDataAction, actionData);
 	}
 
 	showError(response)
@@ -210,6 +222,50 @@ export class Base
 			preset: AttentionPresets.COPILOT,
 			content,
 		});
+	}
+
+	getTopElementNode(): ?HTMLElement
+	{
+		if (this.activityProvider === ActivityProvider.call)
+		{
+			this.topElementNode = Tag.render`<div id="crm-textbox-audio-player"></div>`;
+
+			// by default, we attach audio player to the top element node
+			this.audioPlayerApp = new AudioPlayer({
+				rootNode: this.topElementNode,
+			});
+		}
+		else if (this.activityProvider === ActivityProvider.openLine)
+		{
+			this.topElementNode = Tag.render`<div id="crm-textbox-top-container"></div>`;
+		}
+
+		return this.topElementNode;
+	}
+
+	getOpenLineElementNode(openlineData: { dialogId: string, name: string}): HTMLElement
+	{
+		const openMessengerSliderFn = (dialogId) => {
+			return () => {
+				if (Type.isStringFilled(dialogId))
+				{
+					top.BXIM.openMessenger(dialogId);
+				}
+				else
+				{
+					throw new Error('Dialog ID is empty');
+				}
+			};
+		};
+		const element = Tag.render`
+			<div onclick="${openMessengerSliderFn(openlineData.dialogId)}">
+				${openlineData.name}
+			</div>
+		`;
+
+		Dom.addClass(element, 'openline-element-container');
+
+		return element;
 	}
 
 	getNotAccuratePhraseCode(): string

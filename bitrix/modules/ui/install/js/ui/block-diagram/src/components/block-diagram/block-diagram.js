@@ -42,6 +42,7 @@ const BLOCK_DIAGRAM_CLASS_NAMES = {
 	nwSeResize: '--cursor-nwse-resize',
 	neSwResize: '--cursor-nesw-resize',
 	grabbing: '--grabbing',
+	disabled: '--disabled',
 };
 
 // @vue/component
@@ -178,6 +179,7 @@ export const BlockDiagram = {
 		const blockDiagramClassNames = computed(() => ({
 			[BLOCK_DIAGRAM_CLASS_NAMES.base]: true,
 			[BLOCK_DIAGRAM_CLASS_NAMES.grabbing]: isGrabbing.value,
+			[BLOCK_DIAGRAM_CLASS_NAMES.disabled]: props.disabled,
 			[BLOCK_DIAGRAM_CLASS_NAMES.ewResize]: toValue(cursorType) === CURSOR_TYPES.EW_RESIZE,
 			[BLOCK_DIAGRAM_CLASS_NAMES.nsResize]: toValue(cursorType) === CURSOR_TYPES.NS_RESIZE,
 			[BLOCK_DIAGRAM_CLASS_NAMES.nwSeResize]: toValue(cursorType) === CURSOR_TYPES.NWSE_RESIZE,

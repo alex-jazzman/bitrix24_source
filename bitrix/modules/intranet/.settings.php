@@ -53,6 +53,13 @@ return [
 					);
 				},
 			],
+			'intranet.service.settings.otp' => [
+				'constructor' => function () {
+					return new \Bitrix\Intranet\Public\Service\OtpSettingsService(
+						new \Bitrix\Intranet\Internal\Integration\Security\OtpSettings(),
+					);
+				},
+			],
 			'intranet.repository.iblock.department' => [
 				'className' => \Bitrix\Intranet\Repository\IblockDepartmentRepository::class,
 			],

@@ -5,7 +5,7 @@ jn.define('statemanager/redux/state-cache', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { Logger, LogType } = require('utils/logger');
-	const { MemoryStorage } = require('statemanager/redux/state-cache/memory-storage');
+	const { MemoryStorage } = require('statemanager/redux/state-cache/src/memory-storage');
 
 	const logger = new Logger([
 		// LogType.INFO,

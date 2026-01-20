@@ -13,6 +13,7 @@ use Bitrix\Tasks\Integration;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons;
+use Bitrix\Tasks\V2\Internal\Integration\Ui\Article\ArticleDictionary;
 
 $APPLICATION->SetTitle(GetMessage('TASKS_CONFIG_PERMISSIONS'));
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -75,7 +76,7 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 }
 
 Toolbar::addAfterTitleHtml(
-	'<div class="tasks-permission-header-container"><a href="' . \Bitrix\UI\Util::getArticleUrlByCode("11705476") . '" class="tasks-permission-header-link ">' .
+	'<div class="tasks-permission-header-container"><a href="' . \Bitrix\UI\Util::getArticleUrlByCode(ArticleDictionary::TASK_ACCESS_RIGHTS_ARTICLE_CODE) . '" class="tasks-permission-header-link ">' .
 	Loc::getMessage('TASKS_CONFIG_PERMISSIONS_HELP_LINK') .
 	'</a></div>'
 );

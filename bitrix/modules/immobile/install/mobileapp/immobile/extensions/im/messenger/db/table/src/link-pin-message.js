@@ -42,6 +42,7 @@ jn.define('im/messenger/db/table/link-pin-message', (require, exports, module) =
 				{ name: 'attach', type: FieldType.json },
 				{ name: 'forward', type: FieldType.json },
 				{ name: 'richLinkId', type: FieldType.integer },
+				{ name: 'stickerParams', type: FieldType.object },
 			];
 		}
 	}

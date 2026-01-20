@@ -1,0 +1,4 @@
+<?php
+$MESS["MAIL_BANNER_CONFIG_CONNECT_ACCESS_DENIED_BUTTON"] = "Жабу";
+$MESS["MAIL_BANNER_CONFIG_CONNECT_ACCESS_DENIED_SUB_TITLE"] = "Битрикс24 әкімшісіне хабарласыңыз";
+$MESS["MAIL_BANNER_CONFIG_CONNECT_ACCESS_DENIED_TITLE"] = "Поштаны қосу үшін құқықтар жеткіліксіз";

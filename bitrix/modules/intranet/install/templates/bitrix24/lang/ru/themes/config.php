@@ -155,4 +155,4 @@ $MESS["BITRIX24_THEME_DAWN_HARMONY"] = "Рассветная гармония";
 $MESS["BITRIX24_THEME_NORTHERN_LIGHTS"] = "Северное сияние";
 $MESS["BITRIX24_THEME_GRAVITY"] = "Гравитация";
 $MESS["BITRIX24_THEME_LIGHTNESS"] = "Невесомость";
-?>
+$MESS["BITRIX24_THEME_SPACE"] = "Космос";

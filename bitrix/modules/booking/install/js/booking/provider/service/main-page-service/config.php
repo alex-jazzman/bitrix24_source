@@ -8,7 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/main-page-service.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
+		'main.core.cache',
 		'booking.core',
 		'booking.lib.resources-date-cache',
 		'booking.lib.api-client',
@@ -19,5 +20,5 @@ return [
 		'booking.provider.service.resources-type-service',
 		'booking.provider.service.wait-list-service',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

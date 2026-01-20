@@ -1,0 +1,26 @@
+<?php
+$MESS["SEARCH_CNT"] = "Танымалдығы бойынша";
+$MESS["SEARCH_COLOR_NEW"] = "Кеш тегі түсі (мысалы: \"C0C0C0\")";
+$MESS["SEARCH_COLOR_OLD"] = "Ерте тегтің түсі (мысалы: \"FEFEFE\")";
+$MESS["SEARCH_COLOR_TYPE"] = "Түстің бірқалыпты өзгеруі";
+$MESS["SEARCH_FONT_MAX"] = "Қаріптің максималды өлшемі (px)";
+$MESS["SEARCH_FONT_MIN"] = "Ең кіші қаріп өлшемі (px)";
+$MESS["SEARCH_NAME"] = "Аты бойынша";
+$MESS["SEARCH_PAGE_ELEMENTS"] = "Тегтер саны";
+$MESS["SEARCH_PERIOD"] = "Тегтерді таңдау кезеңі (күндер)";
+$MESS["SEARCH_PERIOD_NEW_TAGS"] = "Тегті жаңа деп санау кезеңі (күндер)";
+$MESS["SEARCH_SHOW_CHAIN"] = "Навигациялық тізбекті көрсету";
+$MESS["SEARCH_SORT"] = "Тегтерді сұрыптау";
+$MESS["SEARCH_TAGS_INHERIT"] = "Іздеу аймағын тарылту";
+$MESS["SEARCH_URL_SEARCH"] = "Іздеу парақшасына жол (сайттың түбінен)";
+$MESS["SEARCH_WIDTH"] = "Тегтер бұлтының ені (мысалы: \"100%\" немесе \"100px\", \"100pt\", \"100in\")";
+$MESS["TP_BSP_PATH_TO_USER_PROFILE"] = "Пайдаланушы профилінің жол қалыбы";
+$MESS["TP_BSP_RATING_TYPE"] = "Рейтинг батырмаларының түрі";
+$MESS["TP_BSP_RATING_TYPE_CONFIG"] = "әдепкі бойынша";
+$MESS["TP_BSP_RATING_TYPE_LIKE_GRAPHIC"] = "Маған ұнайды (графикалық)";
+$MESS["TP_BSP_RATING_TYPE_LIKE_TEXT"] = "Маған ұнайды (мәтінді)";
+$MESS["TP_BSP_RATING_TYPE_STANDART_GRAPHIC"] = "Ұнайды / Ұнамайды (графикалық)";
+$MESS["TP_BSP_RATING_TYPE_STANDART_TEXT"] = "Ұнайды / Ұнамайды (мәтінді)";
+$MESS["TP_BSP_SHOW_RATING"] = "Рейтингті қосу";
+$MESS["TP_BSP_SHOW_RATING_CONFIG"] = "әдепкі бойынша";
+$MESS["TP_BSP_USE_SUGGEST"] = "Іздеу сөйлемдерімен кеңестерді көрсету";

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_router,main_core,main_core_events,main_loader,main_popup,ui_icons_service,ui_menuConfigurable) {
+(function (exports,crm_router,main_core,main_core_events,main_loader,main_popup,ui_icons_service,ui_buttons,ui_iconSet_api_core,ui_menuConfigurable) {
 	'use strict';
 
 	let _ = t => t,
@@ -37,9 +37,11 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getLinkPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLinkPromise");
 	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
 	var _menuConfigurable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuConfigurable");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _getChannelById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChannelById");
 	var _isChannelAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChannelAvailable");
 	var _getLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLink");
+	var _getSignedTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSignedTemplate");
 	var _handleFooterClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFooterClick");
 	var _handleSettingsClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSettingsClick");
 	var _openMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openMenu");
@@ -60,7 +62,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoader");
 	class List extends main_core_events.EventEmitter {
 	  constructor(parameters) {
-	    var _parameters$templateC;
 	    super();
 	    Object.defineProperty(this, _getLoader, {
 	      value: _getLoader2
@@ -116,6 +117,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _handleFooterClick, {
 	      value: _handleFooterClick2
 	    });
+	    Object.defineProperty(this, _getSignedTemplate, {
+	      value: _getSignedTemplate2
+	    });
 	    Object.defineProperty(this, _getLink, {
 	      value: _getLink2
 	    });
@@ -150,7 +154,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    this.title = main_core.Type.isStringFilled(parameters.title) ? parameters.title : main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_DEFAULT_TITLE');
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: void 0
+	    });
+	    this.title = main_core.Type.isStringFilled(parameters.title) ? parameters.title : main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_DEFAULT_TITLE_MSGVER_1');
 	    this.documentTitle = String(parameters.documentTitle);
 	    this.body = String(parameters.body);
 	    this.fullBody = String(parameters.fullBody);
@@ -165,7 +173,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.smsUrl = String(parameters.smsUrl);
 	    this.isCombineMessageWithLink = main_core.Type.isBoolean(parameters.isCombineMessageWithLink) ? parameters.isCombineMessageWithLink : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isInsertLinkInMessage)[_isInsertLinkInMessage] = main_core.Type.isBoolean(parameters.isInsertLinkInMessage) ? parameters.isInsertLinkInMessage : false;
-	    this.templateCode = (_parameters$templateC = parameters.templateCode) != null ? _parameters$templateC : null;
 	    this.setChannels(parameters.channels);
 	    this.communications = main_core.Type.isPlainObject(parameters.communications) ? parameters.communications : {};
 	    this.hasVisibleChannels = main_core.Text.toBoolean(parameters.hasVisibleChannels);
@@ -174,6 +181,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.layout = {
 	      channels: {}
 	    };
+	    this.messageSenderSceneId = String(parameters.messageSenderSceneId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = parameters.analytics;
 	    this.setEventNamespace('BX.Crm.ChannelSelector.List');
 	    if (items.size === 0) {
 	      items.set('default', this);
@@ -196,19 +205,30 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.layout.title = main_core.Tag.render(_t || (_t = _`<div class="crm__channel-selector--title">${0}</div>`), main_core.Text.encode(this.title));
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _link)[_link] || this.isLinkObtainable) {
 	      this.layout.link = main_core.Tag.render(_t2 || (_t2 = _`<input type="text" class="crm__channel-selector--footer-link-hidden" value="${0}" />`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _link)[_link]));
-	      // class="crm__channel-selector--footer --disabled"
-	      this.layout.footer = main_core.Tag.render(_t3 || (_t3 = _`<div class="crm__channel-selector--footer" onclick="${0}">
-				<div class="crm__channel-selector--footer-copy-link">
-					<span class="crm__channel-selector--footer-text">${0}</span>
+	      const copyLinkButton = new ui_buttons.Button({
+	        size: ui_buttons.ButtonSize.LARGE,
+	        style: ui_buttons.AirButtonStyle.OUTLINE,
+	        useAirDesign: true,
+	        icon: ui_buttons.ButtonIcon.COPY,
+	        wide: true,
+	        text: main_core.Loc.getMessage('CRM_CHANNEL_FOOTER_TITLE'),
+	        onclick: () => babelHelpers.classPrivateFieldLooseBase(this, _handleFooterClick)[_handleFooterClick]()
+	      }).getContainer();
+	      this.layout.footer = main_core.Tag.render(_t3 || (_t3 = _`
+				<div class="crm__channel-selector--footer">
 					${0}
 				</div>
-			</div>`), babelHelpers.classPrivateFieldLooseBase(this, _handleFooterClick)[_handleFooterClick].bind(this), main_core.Loc.getMessage('CRM_CHANNEL_FOOTER_TITLE'), this.layout.link);
+			`), copyLinkButton);
 	    } else {
 	      this.layout.footer = null;
 	    }
 	    this.layout.settings = null;
 	    if (this.hasVisibleChannels) {
-	      this.layout.settings = main_core.Tag.render(_t4 || (_t4 = _`<button class="ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting crm__channel-selector--setting-btn" onclick="${0}"></button>`), babelHelpers.classPrivateFieldLooseBase(this, _handleSettingsClick)[_handleSettingsClick].bind(this));
+	      const icon = new ui_iconSet_api_core.Icon({
+	        icon: ui_iconSet_api_core.Outline.SETTINGS,
+	        size: 19
+	      }).render();
+	      this.layout.settings = main_core.Tag.render(_t4 || (_t4 = _`<div class="crm__channel-selector--setting-btn" onclick="${0}">${0}</div>`), babelHelpers.classPrivateFieldLooseBase(this, _handleSettingsClick)[_handleSettingsClick].bind(this), icon);
 	      this.layout.list = main_core.Tag.render(_t5 || (_t5 = _`<div class="crm__channel-selector--list"></div>`));
 	      this.channels.forEach(channel => {
 	        const channelNode = this.renderChannel(channel);
@@ -245,18 +265,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    const channelHandler = () => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _handleChannelClick)[_handleChannelClick](channel);
 	    };
+	    const chevronIcon = new ui_iconSet_api_core.Icon({
+	      icon: ui_iconSet_api_core.Outline.CHEVRON_RIGHT_M,
+	      size: 24,
+	      color: 'var(--crm-channel-selector-chevron-color)'
+	    }).render();
 	    const icon = List.getChannelIcon(channel);
 	    return main_core.Tag.render(_t9 || (_t9 = _`<div 
 			class="crm__channel-selector--channel"
 			onclick="${0}"
 		>
 			${0}
-			${0}
-			${0}
-			<div class="crm__channel-selector--channel-helper">
-				<span class="crm__channel-selector--channel-helper-text">${0}</span>
+			<div class="crm__channel-selector--channel-content">
+				${0}
+				${0}
 			</div>
-		</div>`), channelHandler, icon ? main_core.Tag.render(_t10 || (_t10 = _`<div class="crm__channel-selector--channel-icon ${0}"></div>`), icon) : '', this.renderChannelMainTitle(channel), this.renderChannelTitle(channel), main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_SEND_BUTTON'));
+			<div class="crm__channel-selector--channel-helper">${0}</div>
+		</div>`), channelHandler, icon ? main_core.Tag.render(_t10 || (_t10 = _`<div class="crm__channel-selector--channel-icon ${0}"></div>`), icon) : '', this.renderChannelMainTitle(channel), this.renderChannelTitle(channel), chevronIcon);
 	  }
 	  renderChannelMainTitle(channel) {
 	    var _channel$categoryTitl;
@@ -265,12 +290,18 @@ this.BX.Crm = this.BX.Crm || {};
 		</div>`), main_core.Text.encode((_channel$categoryTitl = channel.categoryTitle) != null ? _channel$categoryTitl : channel.title));
 	  }
 	  renderChannelTitle(channel) {
-	    if (!channel.categoryTitle) {
+	    const text = channel.categoryTitle ? channel.title : channel.status;
+	    if (!text) {
 	      return null;
 	    }
-	    return main_core.Tag.render(_t12 || (_t12 = _`<div class="crm__channel-selector--channel-title">
-			${0}
-		</div>`), main_core.Text.encode(channel.title));
+	    return main_core.Tag.render(_t12 || (_t12 = _`
+			<div 
+				class="crm__channel-selector--channel-title" 
+				style="${0}"
+			>
+				${0}
+			</div>
+		`), channel.type === 'IM' && channel.isAvailable ? 'color: var(--ui-color-accent-main-primary);' : '', main_core.Text.encode(text));
 	  }
 	  adjustAppearance() {
 	    if (this.hasVisibleChannels) {
@@ -347,18 +378,21 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: babelHelpers.classPrivateFieldLooseBase(this, _getSmsText)[_getSmsText](channel, link),
 	        providerId: channel.id,
 	        isProviderFixed: 'N',
-	        canUseBitrix24Provider: 'Y'
+	        canUseBitrix24Provider: 'Y',
+	        messageSenderSceneId: this.messageSenderSceneId,
+	        analytics: babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics]
 	      };
-	      if (channel.templateCode) {
-	        requestParams.templateCode = channel.templateCode;
-	        requestParams.templatePlaceholders = channel.templatePlaceholders;
-	        requestParams.templatePlaceholders.DOCUMENT_URL = link;
-	        requestParams.isEditable = 'N';
-	      }
-	      crm_router.Router.openSlider(this.smsUrl, {
-	        width: 443,
-	        requestMethod: 'post',
-	        requestParams
+	      babelHelpers.classPrivateFieldLooseBase(this, _getSignedTemplate)[_getSignedTemplate](channel).then(signedTemplate => {
+	        if (signedTemplate) {
+	          requestParams.signedTemplate = signedTemplate;
+	          requestParams.isEditable = 'N';
+	        }
+	      }).catch().finally(() => {
+	        crm_router.Router.openSlider(this.smsUrl, {
+	          width: 900,
+	          requestMethod: 'post',
+	          requestParams
+	        });
 	      });
 	    }).catch(reason => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showGetLinkErrorNotification)[_showGetLinkErrorNotification](channelNode, reason);
@@ -456,15 +490,29 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _getLinkPromise)[_getLinkPromise];
 	}
-	function _handleFooterClick2() {
-	  if (!this.layout.link) {
-	    return;
+	function _getSignedTemplate2(channel) {
+	  if (channel.signedTemplate) {
+	    return Promise.resolve(channel.signedTemplate);
 	  }
+	  return new Promise((resolve, reject) => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]();
+	    this.emitAsync('getSignedTemplate').then(result => {
+	      const signedParams = result[0];
+	      if (!signedParams) {
+	        reject();
+	      } else {
+	        resolve(signedParams);
+	      }
+	    }).catch(reject).finally(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _hideLoader)[_hideLoader]();
+	    });
+	  });
+	}
+	function _handleFooterClick2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _getLink)[_getLink]().then(link => {
-	    this.layout.link.value = link;
-	    this.layout.link.focus();
-	    this.layout.link.setSelectionRange(0, this.layout.link.value.length);
-	    document.execCommand("copy");
+	    if (BX.clipboard.isCopySupported() && babelHelpers.classPrivateFieldLooseBase(this, _link)[_link]) {
+	      BX.clipboard.copy(link);
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _showNotice)[_showNotice](main_core.Loc.getMessage('CRM_CHANNEL_PUBLIC_LINK_COPIED_NOTIFICATION_MESSAGE'));
 	  }).catch(reason => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _showGetLinkErrorNotification)[_showGetLinkErrorNotification](this.layout.footer, reason);
@@ -669,5 +717,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.List = List;
 
-}((this.BX.Crm.ChannelSelector = this.BX.Crm.ChannelSelector || {}),BX.Crm,BX,BX.Event,BX,BX.Main,BX,BX.UI.MenuConfigurable));
+}((this.BX.Crm.ChannelSelector = this.BX.Crm.ChannelSelector || {}),BX.Crm,BX,BX.Event,BX,BX.Main,BX,BX.UI,BX.UI.IconSet,BX.UI.MenuConfigurable));
 //# sourceMappingURL=channel-selector.bundle.js.map

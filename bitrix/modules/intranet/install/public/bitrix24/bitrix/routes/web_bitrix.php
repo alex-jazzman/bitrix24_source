@@ -174,6 +174,16 @@ return function (RoutingConfigurator $routes) {
 		->any('/automation/type/{any}', new PublicPageController('/automation/type/index.php'))
 		->where('any', '.*');
 
+	// bizproc
+	$routes
+		->prefix('bizproc')
+		->where('any', '.*')
+		->group(function (RoutingConfigurator $routes)
+		{
+			$routes->get('ai/agents/', new PublicPageController('/bizproc/ai/agents/index.php'));
+		}
+	);
+
 	// marketplace
 	$routes
 		->prefix('marketplace')
@@ -383,4 +393,7 @@ return function (RoutingConfigurator $routes) {
 			$routes->get('ResourceTypes/{id}', [Scim\Controller\ResourceTypesController::class, 'get'])->name('AzureProvisioning.ResourceType');
 		}
 	);
+
+	$routes->any('/pub/annuals/{shortCode}/', new PublicPageController('/pub/annual_summary.php'))->name('AnnualSummaryShort');
+	$routes->any('/pub/annual_summary/{signedId}/{signedType}/', new PublicPageController('/pub/annual_summary.php'))->name('AnnualSummary');
 };

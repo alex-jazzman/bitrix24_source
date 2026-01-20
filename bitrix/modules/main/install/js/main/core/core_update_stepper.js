@@ -274,3 +274,4 @@ BX.UpdateStepperRegister = function(id, data) {
 	new UpdateStepper(id, data);
 };
 })();
+

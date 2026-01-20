@@ -1,0 +1,8 @@
+<?php
+$MESS["M_INTRANET_RESULTS_YEAR_BASE_SLIDER_BUTTON_TEXT"] = "Share";
+$MESS["M_INTRANET_RESULTS_YEAR_FEATURE_SLIDER_LINK_COPIED_NOTIFICATION"] = "Link has been copied.";
+$MESS["M_INTRANET_RESULTS_YEAR_START_SLIDER_BUTTON_TEXT"] = "View";
+$MESS["M_INTRANET_RESULTS_YEAR_START_SLIDER_DESCRIPTION"] = "It appears you've achieved a lot this year.";
+$MESS["M_INTRANET_RESULTS_YEAR_START_SLIDER_FOOTNOTE"] = "Your achievements are visible to you only.";
+$MESS["M_INTRANET_RESULTS_YEAR_START_SLIDER_SUB_DESCRIPTION"] = "Now it's time to face the truth and take a look at your results.";
+$MESS["M_INTRANET_RESULTS_YEAR_START_SLIDER_TITLE"] = "Your annual results";

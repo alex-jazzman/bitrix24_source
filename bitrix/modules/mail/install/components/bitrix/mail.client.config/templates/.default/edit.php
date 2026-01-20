@@ -56,20 +56,15 @@ if (!empty($mailbox))
 }
 
 // @TODO: split by types
-$accessList = array();
-$accessLast = array();
-$accessSelected = array();
+
+$accessSelectedCodes = [];
+$accessSelected = [];
 foreach ($arParams['ACCESS_LIST'] as $type => $list)
 {
 	foreach ($list as $id => $item)
 	{
-		if ('users' == $type)
-		{
-			$accessList[$id] = $item;
-		}
-
-		$accessLast[$id] = $id;
-		$accessSelected[$id] = $type;
+		$accessSelectedCodes[] = $id;
+		$accessSelected[] = [$type, $item['entityId']];
 	}
 }
 
@@ -95,6 +90,9 @@ if ($arParams['CRM_AVAILABLE'])
 }
 
 $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
+
+$shareAccessSelectorContainerId = 'mail-share-access-selector-container';
+$shareAccessValueContainerId = 'mail-share-access-value-container';
 
 ?>
 
@@ -637,39 +635,30 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 				</div>
 				<div class="mail-connect-notice-block">
 					<div class="mail-connect-notice-text">
-						<?=Loc::getMessage('MAIL_CLIENT_CONFIG_ACCESS_HINT_MSGVER_1') ?>
-						<!--span class="mail-connect-notice-more"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_ACCESS_MORE') ?></span-->
+						<?php
+							if ($arParams['HAS_NO_ACCESS_TO_SHARE_MAILBOX'])
+							{
+								echo Loc::getMessage('MAIL_CLIENT_CONFIG_DENIED_SHARE_ACCESS_HINT');
+							}
+							else
+							{
+								echo Loc::getMessage('MAIL_CLIENT_CONFIG_ACCESS_HINT_MSGVER_1');
+							}
+						?>
 					</div>
 				</div>
-				<?
-				$APPLICATION->IncludeComponent('bitrix:main.user.selector', '', [
-					"ID" => "mail_client_config_access",
-					"API_VERSION" => 3,
-					"LOCK" => $arResult['FORBIDDEN_TO_SHARE_MAILBOX'],
-					"LIST" => array_keys($accessSelected),
-					"UNDELETABLE" => [ sprintf('U%u', empty($mailbox) ? $USER->getId() : $mailbox['USER_ID']) ],
-					"INPUT_NAME" => "fields[access_dest][]",
-					"USE_SYMBOLIC_ID" => true,
-					"BUTTON_SELECT_CAPTION" => Loc::getMessage("MAIL_CLIENT_CONFIG_ACCESS_ADD"),
-					"SELECTOR_OPTIONS" => [
-						"departmentSelectDisable" => "N",
-						'context' => 'MAIL_CLIENT_CONFIG_ACCESS',
-						'multiple' => 'Y',
-						'contextCode' => 'U',
-						'enableAll' => 'N',
-						'userSearchArea' => 'I'
-					],
-					"CALLBACK_BEFORE" => [
-						'openDialog' => 'BX.MailClientConfig.Edit.beforeOpenDialog',
-						'context' => 'BX.MailClientConfig.Edit'
-					]
-				]);
-				?>
+				<div id="<?= $shareAccessSelectorContainerId ?>"></div>
+				<input
+					type="hidden"
+					 id="<?= $shareAccessValueContainerId ?>"
+					name="fields[share_access]"
+					value="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($accessSelectedCodes))?>"
+				>
 			</div>
 		</div>
 
 		<?php if (
-			(\Bitrix\Main\Config\Option::get('mail', 'enable_mailbox_list_grid_page', 'N') === 'Y')
+			(\Bitrix\Main\Config\Option::get('mail', 'enable_mailbox_owner_change', 'N') === 'Y')
 		&& !empty($mailbox)
 		&& $USER->isAdmin()): ?>
 		<div class="ui-slider-section">
@@ -803,6 +792,12 @@ $arJsParams = [
 	'ownerId' => !empty($mailbox['USER_ID']) ? (int)$mailbox['USER_ID'] : null,
 	'owner' => $ownerData,
 	'ownerSelectText' => Loc::getMessage("MAIL_CLIENT_CONFIG_OWNER_CHANGE"),
+	'shareAccessSelectorId' => $shareAccessSelectorContainerId,
+	'shareAccessSelectorPreselectedIds' => $accessSelected,
+	'shareAccessValueContainerId' => $shareAccessValueContainerId,
+	'isShareAccessLocked' => $arParams["HAS_NO_ACCESS_TO_SHARE_MAILBOX"] ?? false,
+	'serviceName' => $settings['name'],
+	'isNewMailbox' => empty($mailbox),
 ];
 ?>
 <script>
@@ -1561,6 +1556,8 @@ $arJsParams = [
 					{
 						if ('success' != json.status)
 						{
+							 BX.MailClientConfig.Edit.sendAnalyticsData('error');
+
 							button.disabled = false;
 							BX.removeClass(button, 'ui-btn-wait');
 
@@ -1604,6 +1601,8 @@ $arJsParams = [
 						}
 						else
 						{
+							BX.MailClientConfig.Edit.sendAnalyticsData('success');
+
 							<? if (!empty($mailbox)): ?>
 
 							if (json.data && json.data.id > 0)
@@ -1659,6 +1658,8 @@ $arJsParams = [
 					},
 					onfailure: function(json)
 					{
+						BX.MailClientConfig.Edit.sendAnalyticsData('error');
+
 						button.disabled = false;
 						BX.removeClass(button, 'ui-btn-wait');
 						showError('<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_AJAX_ERROR')) ?>');

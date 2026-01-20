@@ -9,8 +9,7 @@ import type { ImModelMessage } from 'im.v2.model';
 // @vue/component
 export const MessageStatus = {
 	name: 'MessageStatus',
-	props:
-	{
+	props: {
 		item: {
 			type: Object,
 			required: true,
@@ -20,8 +19,7 @@ export const MessageStatus = {
 			default: false,
 		},
 	},
-	computed:
-	{
+	computed: {
 		message(): ImModelMessage
 		{
 			return this.item;
@@ -54,15 +52,14 @@ export const MessageStatus = {
 			return StatusType.sent;
 		},
 	},
-	methods:
-	{
+	methods: {
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
-		<div class="bx-im-message-status__container bx-im-message-status__scope" :class="{'--overlay': isOverlay}">
+		<div class="bx-im-message-status__container" :class="{'--overlay': isOverlay}">
 			<div v-if="message.isEdited && !message.isDeleted" class="bx-im-message-status__edit-mark">
 				{{ loc('IM_MESSENGER_MESSAGE_EDITED') }}
 			</div>

@@ -1,0 +1,42 @@
+.bizproc-setuptemplateactivity-title-field {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 5px;
+	padding: 0 6px;
+}
+
+.bizproc-setuptemplateactivity-title-field:hover > .bizproc-setuptemplateactivity-title-field__drag-icon {
+	display: block;
+}
+
+.bizproc-setuptemplateactivity-title-field__label.ui-ctl-title {
+	font-size: var(--ui-font-size-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-setuptemplateactivity-title-field__wrap {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 5px;
+}
+
+.bizproc-setuptemplateactivity-title-field .ui-ctl-container {
+	flex-grow: 1;
+}
+
+.bizproc-setuptemplateactivity-title-field__controls {
+	padding-top: 21px;
+}
+
+.bizproc-setuptemplateactivity-title-field__delete-icon {
+	cursor: pointer;
+}
+
+.bizproc-setuptemplateactivity-title-field__delete-icon:hover {
+	background-color: var(--ui-color-accent-main-primary-alt);
+}

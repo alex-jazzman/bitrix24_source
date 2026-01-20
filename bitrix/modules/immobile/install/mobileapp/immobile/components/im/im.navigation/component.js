@@ -35,9 +35,6 @@
 	}
 	serviceLocator.add('core', core);
 
-	const emitter = new JNEventEmitter();
-	serviceLocator.add('emitter', emitter);
-
 	const { NotifyManager } = require('notify-manager');
 
 	const {
@@ -256,17 +253,27 @@
 
 			if (Application.getApiVersion() >= 61)
 			{
-				PageManager.getNavigator().makeTabActive()
+				Promise.resolve(PageManager.getNavigator().isActiveTab())
+					.then((isTabActive) => {
+						return isTabActive
+							? null
+							: PageManager.getNavigator().makeTabActive()
+						;
+					})
 					.then(() => {
 						tabs.setActiveItem(NavigationTabByComponent[componentCode]);
-
 						BX.postComponentEvent(EventType.navigation.changeTabResult, [{
 							componentCode,
 						}]);
 					})
 					.catch((error) => {
 						console.error(error);
-					});
+						BX.postComponentEvent(EventType.navigation.changeTabResult, [{
+							componentCode,
+							errorText: error?.error,
+						}]);
+					})
+				;
 			}
 			else
 			{

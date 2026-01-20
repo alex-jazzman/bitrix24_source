@@ -1,4 +1,3 @@
-import { Call as CallScoringResultDialog } from 'crm.ai.call';
 import { Router } from 'crm.router';
 import { Type } from 'main.core';
 import ConfigurableItem from '../../configurable-item';
@@ -74,6 +73,6 @@ export class CallScoringResult extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'AI:Call:CallScoringResult');
+		return (item.getType() === 'AI:CallScoringResult');
 	}
 }

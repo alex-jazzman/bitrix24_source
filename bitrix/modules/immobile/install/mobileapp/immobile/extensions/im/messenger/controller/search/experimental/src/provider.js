@@ -2,9 +2,11 @@
  * @module im/messenger/controller/search/experimental/provider
  */
 jn.define('im/messenger/controller/search/experimental/provider', (require, exports, module) => {
+	const { Type } = require('type');
 	const { RecentConfig } = require('im/messenger/controller/search/experimental/config');
 	const { RecentLocalSearchService } = require('im/messenger/controller/search/experimental/service/local-search-service');
 	const { RecentServerSearchService } = require('im/messenger/controller/search/experimental/service/server-search-service');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
 	const { DialogType } = require('im/messenger/const');
@@ -27,6 +29,8 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 		 */
 		constructor(params)
 		{
+			this.logger = getLoggerWithContext('recent-search', this);
+
 			/**
 			 * @private
 			 * @type {MessengerCoreStore}
@@ -87,12 +91,36 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 
 			this.initConfig();
 			this.initServices();
+
+			window.messengerDebug.localSearchDebugInfo = {};
 		}
 
 		/**
 		 * @param {string} text
 		 */
 		async doSearch(text)
+		{
+			try
+			{
+				await this.doSearchInternal(text);
+			}
+			catch (error)
+			{
+				// TODO: remove after solving local search error
+				const errorText = `doSearch(${text}) error 🚨: ${error.name}: ${error.message}`;
+				this.logger.error(errorText);
+
+				window.messengerDebug.localSearchDebugInfo.doSearchErrorText = errorText;
+				window.messengerDebug.localSearchDebugInfo.doSearchError = error;
+			}
+		}
+
+		/**
+		 * @protected
+		 * @param text
+		 * @return {Promise<void>}
+		 */
+		async doSearchInternal(text)
 		{
 			if (text.length === 0)
 			{
@@ -103,7 +131,21 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 
 			const wordsFromText = getWordsFromText(text);
 
-			const localSearchResult = await this.localService.search(wordsFromText);
+			let localSearchResult = [];
+			try
+			{
+				localSearchResult = await this.localService.search(wordsFromText);
+			}
+			catch (error)
+			{
+				// TODO: remove after solving local search error
+				const errorText = `localService.search(${text}) error 🚨: ${error.name}: ${error.message}`;
+				this.logger.error(errorText);
+
+				window.messengerDebug.localSearchDebugInfo.localSearchErrorText = errorText;
+				window.messengerDebug.localSearchDebugInfo.localSearchError = error;
+			}
+
 			const localSearchingIds = this.sortByDate(localSearchResult);
 			const needSearchFromServer = text.length >= this.minSearchSize;
 
@@ -224,6 +266,11 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 		 */
 		sortByDate(dialogIds)
 		{
+			if (!Type.isArrayFilled(dialogIds))
+			{
+				return [];
+			}
+
 			dialogIds.sort((firstId, secondId) => {
 				const firstItem = this.store.getters['recentModel/getById'](firstId)
 					?? this.store.getters['recentModel/searchModel/getById'](firstId)

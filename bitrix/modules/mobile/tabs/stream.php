@@ -57,7 +57,7 @@ class Stream implements Tabable
 		$data = $this->getDataInternal();
 		$result = [
 			'id' => $this->getId(),
-			'sort' => 500,
+			'sort' => 120,
 			'section_code' => 'teamwork',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,

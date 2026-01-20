@@ -1,5 +1,6 @@
 <?php
 $MESS["INTR_MAIL_DOMAINREADY_NOTICE"] = "Пошта доменін қосу аяқталды [b]#DOMAIN#[/b]. <a href=\"#SERVER#/company/personal/mail/manage/\">Пошта жәшігін басқару</a>.";
+$MESS["INTR_MAIL_DOMAINREADY_NOTICE_TITLE"] = "Пошта";
 $MESS["INTR_MAIL_DOMAIN_LEARNMOREB24_LINK"] = "https://www.bitrix24.ru/blogs/howto/bitrix24-mail.php?utm_source=regru&utm_medium=email&utm_campaign=regru_email_howto";
 $MESS["INTR_MAIL_DOMAIN_LEARNMORE_LINK"] = "https://dev.1c-bitrix.ru/community/blogs/bitrix24/mail-newphp.php?utm_source=regru&utm_medium=email&utm_campaign=regru_email_howto";
 $MESS["INTR_MAIL_DOMAIN_SUPPORTB24_LINK_MSGVER_1"] = "https://www.bitrix24.ru/support/helpdesk/?utm_source=regru&utm_medium=email&utm_campaign=regru_email_support";

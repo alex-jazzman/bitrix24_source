@@ -10,5 +10,5 @@ $MESS["INTRANET_AUTH_REMEMBER_ME"] = "Запомнить меня";
 $MESS["INTRANET_AUTH_REGISTER"] = "Зарегистрироваться";
 $MESS["INTRANET_AUTH_FORGOT_PASSWORD"] = "Не помню пароль";
 $MESS["INTRANET_AUTH_BUTTON"] = "Продолжить";
-$MESS["INTRANET_AUTH_CAPTCHA_PROMT"] = "Введите буквы с картинки";
+$MESS["INTRANET_AUTH_CAPTCHA_PROMT"] = "Введите символы с картинки";
 ?>

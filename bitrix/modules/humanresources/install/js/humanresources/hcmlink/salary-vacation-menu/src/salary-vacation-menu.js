@@ -157,14 +157,7 @@ export class SalaryVacationMenu
 	#getDisabledHintHtml(): string
 	{
 		return Loc.getMessage('HUMANRESOURCES_HCMLINK_SALARY_VACATION_MENU_DISABLED_HINT', {
-			'[LINK]': `
-				<a target='_self'
-					onclick='(() => {
-						BX.Helper.show(\`redirect=detail&code=23343028\`);
-					})()'
-					style='cursor:pointer;'
-				>
-			`,
+			'[LINK]': '<a target="_self" onclick="(() => { top.BX.Helper.show(\'redirect=detail&code=23343028\'); })()" style="cursor:pointer;">',
 			'[/LINK]': '</a>',
 		});
 	}

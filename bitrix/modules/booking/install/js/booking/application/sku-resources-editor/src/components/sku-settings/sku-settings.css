@@ -1,0 +1,19 @@
+.booking-sre-app__sku-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px 24px;
+	border-radius: 18px;
+	background: var(--ui-color-palette-white-base);
+}
+
+.booking-sre-app__sku-settings_description {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-sre-app__sku-settings-content {
+	position: relative;
+}

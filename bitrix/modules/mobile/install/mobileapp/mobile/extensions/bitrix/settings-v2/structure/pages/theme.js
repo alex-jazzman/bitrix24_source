@@ -2,7 +2,13 @@
  * @module settings-v2/structure/pages/theme
  */
 jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
-	const { createThemeSwitch, createSection, createBanner, createStyleSwitch, createDescription } = require('settings-v2/structure/src/item-create-helper');
+	const {
+		createThemeSwitch,
+		createSection,
+		createBanner,
+		createStyleSwitch,
+		createDescription,
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { NativeSettingController } = require('settings-v2/controller/native');
 	const { SettingsPageId, BannerImageName, NativeSettingsId } = require('settings-v2/const');
 	const { appConfig } = require('native/config');
@@ -15,6 +21,9 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 		return new NativeSettingController({
 			settingId: NativeSettingsId.APP_THEME,
 			fallbackValue: 'system',
+			onChangeAlertTitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_ON_CHANGE_ALERT_TITLE'),
+			onChangeAlertDescription: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_ON_CHANGE_ALERT_DESCRIPTION'),
+			onChangeAlertOkButton: Loc.getMessage('SETTINGS_V2_STRUCTURE_THEME_ON_CHANGE_ALERT_OK_BUTTON'),
 		});
 	};
 
@@ -61,10 +70,6 @@ jn.define('settings-v2/structure/pages/theme', (require, exports, module) => {
 						id: 'theme',
 						controller: createThemeController(),
 						divider: false,
-					}),
-					createDescription({
-						id: 'loc-description',
-						text: Loc.getMessage('SETTINGS_V2_STRUCTURE_RELOAD_DESCRIPTION'),
 					}),
 				],
 			}),

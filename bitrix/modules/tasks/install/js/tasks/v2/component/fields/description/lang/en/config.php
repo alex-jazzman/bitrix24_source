@@ -1,11 +1,17 @@
 <?php
 $MESS["TASKS_V2_CHANGE_DESCRIPTION"] = "Description";
 $MESS["TASKS_V2_DESCRIPTION_ACTION_ATTACH_TITLE"] = "Attach";
+$MESS["TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_CREATING"] = "Creating checklist...";
+$MESS["TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_TITLE"] = "Checklist";
 $MESS["TASKS_V2_DESCRIPTION_ACTION_COPILOT_TITLE"] = "CoPilot";
 $MESS["TASKS_V2_DESCRIPTION_ACTION_MENTION_TITLE"] = "Mention";
 $MESS["TASKS_V2_DESCRIPTION_BUTTON_COLLAPSE"] = "Collapse";
 $MESS["TASKS_V2_DESCRIPTION_BUTTON_EXPAND"] = "Expand";
 $MESS["TASKS_V2_DESCRIPTION_BUTTON_SAVE"] = "Save";
+$MESS["TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_BUTTON_OK"] = "Save my version";
+$MESS["TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_DESC_F"] = "#NAME# changed the description while you were editing it. Their changes will be lost if you save your version. Are you sure you want to save your version?";
+$MESS["TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_DESC_M"] = "#NAME# changed the description while you were editing it. Their changes will be lost if you save your version. Are you sure you want to save your version?";
+$MESS["TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_TITLE"] = "Description changed";
 $MESS["TASKS_V2_DESCRIPTION_EDITOR_PLACEHOLDER"] = "Type @ to mention someone, or space to start Copilot";
 $MESS["TASKS_V2_DESCRIPTION_FILES_COUNT"] = "Files: #COUNT#";
 $MESS["TASKS_V2_DESCRIPTION_INLINE_EDITOR_PLACEHOLDER"] = "Description";

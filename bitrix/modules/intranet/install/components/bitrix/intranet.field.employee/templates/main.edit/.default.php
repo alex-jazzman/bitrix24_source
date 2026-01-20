@@ -17,20 +17,6 @@ if($arResult['userField']['EDIT_IN_LIST'] === 'Y')
 		data-has-input="no"
 	>
 		<div
-			id="field_<?= $selectorName ?>"
-			class="main-ui-control-entity main-ui-control userfieldemployee-control"
-			data-multiple="<?= ($arResult['userField']['MULTIPLE'] === 'Y' ? 'true' : 'false') ?>"
-		>
-			<a
-				href="#"
-				class="feed-add-destination-link"
-				id="add_user_<?= $selectorName ?>"
-				onclick="BX.Intranet.UserFieldEmployee.instance('<?= $arResult['selectorNameJs'] ?>').open(this.parentNode); return false;"
-			>
-				<?= Loc::getMessage('INTR_PROP_EMP_SU') ?>
-			</a>
-		</div>
-		<div
 			id="value_<?= $selectorName ?>"
 			style="display: none;"
 		>
@@ -42,59 +28,15 @@ if($arResult['userField']['EDIT_IN_LIST'] === 'Y')
 		</div>
 	</div>
 
-	<?php
-	$APPLICATION->IncludeComponent(
-		'bitrix:main.ui.selector',
-		'.default',
-		[
-			'API_VERSION' => 3,
-			'ID' => $selectorName,
-			'BIND_ID' => 'field_' . $selectorName,
-			'TAG_ID' => 'add_user_' . $selectorName,
-			'ITEMS_SELECTED' => $arResult['componentValue'],
-			'CALLBACK' => [
-				'select' => $arResult['jsObject'] . '.callback.select',
-				'unSelect' => $arResult['jsObject'] . '.callback.unSelect',
-			],
-			'OPTIONS' => [
-				'useContainer' => 'Y',
-				'multiple' => ($arResult['isMultiple'] ? 'Y' : 'N'),
-				'extranetContext' => false,
-				'eventInit' => 'BX.UFEMP:' . $selectorName . ':init',
-				'eventOpen' => 'BX.UFEMP:' . $selectorName . ':open',
-				'context' => EmployeeUfComponent::SELECTOR_CONTEXT,
-				'contextCode' => 'U',
-				'useSearch' => 'Y',
-				'userNameTemplate' => \CSite::GetNameFormat(),
-				'useClientDatabase' => 'Y',
-				'allowEmailInvitation' => 'N',
-				'enableAll' => 'N',
-				'enableDepartments' => 'Y',
-				'enableSonetgroups' => 'N',
-				'departmentSelectDisable' => 'Y',
-				'allowAddUser' => 'N',
-				'allowAddCrmContact' => 'N',
-				'allowAddSocNetGroup' => 'N',
-				'allowSearchEmailUsers' => 'N',
-				'allowSearchCrmEmailUsers' => 'N',
-				'allowSearchNetworkUsers' => 'N'
-			]
-		],
-		false,
-		['HIDE_ICONS' => 'Y']
-	);
-	?>
-
 	<script>
 		BX.ready(function ()
 		{
-			new BX.Default.Field.Employee(
-				<?=CUtil::PhpToJSObject([
-					'selectorName' => $selectorName,
-					'isMultiple' => $arResult['isMultiple'],
-					'fieldNameJs' => $arResult['fieldNameJs'],
-				])?>
-			);
+			new BX.Intranet.UserField.EmployeeEditor({
+				selectorName: '<?= $selectorName ?>',
+				isMultiple: <?= $arResult['isMultiple'] ? 'true' : 'false' ?>,
+				fieldNameJs: '<?= $arResult['fieldNameJs'] ?>',
+				selectedItems: <?= \Bitrix\Main\Web\Json::encode($arResult['itemIds']) ?>,
+			});
 		});
 	</script>
 

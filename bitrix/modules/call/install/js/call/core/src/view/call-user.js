@@ -195,7 +195,7 @@ export class CallUser
 			return;
 		}
 		this._audioTrack = audioTrack;
-		
+
 		if (!this._audioTrack)
 		{
 			Util.sendLog({
@@ -203,7 +203,7 @@ export class CallUser
 				userModelId: this.userModel?.id,
 			});
 		}
-		
+
 		this._audioStream = this._audioTrack ? new MediaStream([this._audioTrack]) : null;
 		this.playAudio()
 	}
@@ -545,6 +545,9 @@ export class CallUser
 							props: {className: 'bx-messenger-videocall-user-status-text'},
 							text: this.getStateMessage(this.userModel.state)
 						}),
+						Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-user-bottom-gradient' },
+						}),
 						this.elements.userBottomContainer = Dom.create('div', {
 							props: {className: 'bx-messenger-videocall-user-bottom'},
 							children: [
@@ -575,7 +578,7 @@ export class CallUser
 											props: {
 												className: 'bx-messenger-videocall-user-change-name-input'
 											}, attrs: {
-												type: 'text', value: this.userModel.name
+												type: 'text', value: this.userModel.name, placeholder: BX.message('IM_CALL_GUEST_INPUT_NAME')
 											}, events: {
 												keydown: this.onNameInputKeyDown.bind(this),
 												focus: this.callBacks.onUserRenameInputFocus,
@@ -903,11 +906,17 @@ export class CallUser
 			Dom.create('div', {
 				props: {className: 'bx-messenger-videocall-user-device-state-container'},
 				children: [
-					this.elements.cameraState = Dom.create('div', {
-						props: {className: 'bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera' + (!this.isVisibleCameraStateIcon() ? ' hidden' : '')},
-					}),
 					this.elements.micState = Dom.create('div', {
-						props: {className: 'bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic' + (!this.isVisibleMicStateIcon() ? ' hidden' : '')},
+						props: {
+							className: `bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic${
+							this.isVisibleMicStateIcon() ? '' : ' hidden'}`,
+						},
+					}),
+					this.elements.cameraState = Dom.create('div', {
+						props: {
+							className: `bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera${
+							this.isVisibleCameraStateIcon() ? '' : ' hidden'}`,
+						},
 					}),
 				],
 			}),
@@ -1187,6 +1196,12 @@ export class CallUser
 		let rect = Dom.getRelativePosition(this.elements.buttonMenu, this.parentContainer)
 		this.menu = new Menu({
 			id: 'call-view-user-menu-' + this.userModel.id,
+			className: 'bx-call-user-context-menu',
+			background: '#00428F',
+			contentBackground: '#00428F',
+			darkMode: true,
+			contentBorderRadius: '6px',
+			borderRadius: '6px',
 			bindElement: {
 				left: rect.left,
 				top: rect.top,
@@ -1276,6 +1291,10 @@ export class CallUser
 		this.remoteParticipantMenu = new Menu({
 			id: 'call-view-user-menu-' + this.userModel.id,
 			className: 'bx-call-remote-user-menu-container',
+			background: '#00428F',
+			contentBackground: '#00428F',
+			contentBorderRadius: '6px',
+			borderRadius: '6px',
 			bindElement: {
 				left: rect.left,
 				top: rect.top,
@@ -1606,14 +1625,14 @@ export class CallUser
 	playAudio()
 	{
 		if (!this.audioStream)
-		{			
+		{
 			this.elements.audio.srcObject = null;
-			
+
 			Util.sendLog({
 				description: 'no audioStream to play',
 				userModelId: this.userModel?.id,
 			});
-			
+
 			return;
 		}
 
@@ -1911,10 +1930,17 @@ export class CallUser
 		delete this.elements.root.dataset.hidden;
 	};
 
+	hasAudio()
+	{
+		const isConnected = this.userModel.state === UserState.Connected;
+		const hasAudioTrack = Boolean(this._audioTrack) || Boolean(this._screenAudioTrack);
+		return isConnected && hasAudioTrack;
+	}
+
 	hasVideo()
 	{
 		return this.userModel.state == UserState.Connected && (!!this._videoTrack || !!this._videoRenderer);
-	};
+	}
 
 	hasCameraVideo()
 	{

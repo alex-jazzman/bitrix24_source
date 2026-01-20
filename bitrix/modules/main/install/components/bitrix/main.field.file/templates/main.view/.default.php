@@ -5,28 +5,35 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Text\UtfSafeString;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\FileInputUtility;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Main\UserField\File\UploaderContextGenerator;
 use Bitrix\Main\UserField\Types\FileType;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 
 /**
  * @var array $arResult
  */
 
-Extension::load([
-	'main.uf.file.uploader.selectable-view-widget',
-	'ui.viewer',
-]);
+Extension::load('main.uf.file.uploader.selectable-view-widget');
 
-$defaultView = $arResult['userField']['SETTINGS']['DEFAULT_VIEW'] ?? null;
-$defaultView = FileType::isAvailableDefaultView($defaultView) ? $defaultView : null;
+$isAllowSwitchView = ($arResult['additionalParameters']['IS_ALLOW_SWITCH_VIEW'] ?? null) === 'Y';
+$viewIdFromAdditionalParams = FileType::getCorrectViewOrNull($arResult['additionalParameters']['VIEW_ID'] ?? null);
+
+$viewIdFromFieldSettings = FileType::getCorrectViewOrNull($arResult['userField']['SETTINGS']['DEFAULT_VIEW'] ?? null);
+
+$viewSettings = [
+	'isAllowSwitchView' => $isAllowSwitchView,
+	'viewId' => $isAllowSwitchView ? $viewIdFromFieldSettings : $viewIdFromAdditionalParams,
+];
 
 $fileInputUtility = FileInputUtility::instance();
-$uploaderContextGenerator = (new UploaderContextGenerator($fileInputUtility, $arResult['userField']));
+$uploaderContextGenerator = (new UploaderContextGenerator($arResult['userField']));
 
 $controlId = $uploaderContextGenerator->getControlId();
 
@@ -39,6 +46,12 @@ $urlTemplate = CComponentEngine::makePathFromTemplate(
 	. '&fileId=#FILE_ID#'
 );
 
+$valueIds = array_column($arResult['value'], 'ID');
+Collection::normalizeArrayValuesByInt($valueIds);
+$valueIds = implode('_', $valueIds);
+
+$containerId = "file_container__{$controlId}__{$valueIds}";
+
 $fileItems = [];
 foreach($arResult['value'] as $file)
 {
@@ -50,6 +63,39 @@ foreach($arResult['value'] as $file)
 	$fileId = (int)$file['ID'];
 	$fileName = $file['ORIGINAL_NAME'];
 
+	$addScopeTokenUrlParam = static function (string $url, int $fileId) use ($arResult)
+	{
+		$scope =
+			($arResult['userField']['ENTITY_ID'] ?? 'uf_file')
+			. '_'
+			. ($arResult['userField']['ENTITY_VALUE_ID'] ?? '0')
+		;
+
+		$service = ServiceLocator::getInstance()->get('disk.scopeTokenService');
+		if (!isset($service))
+		{
+			return $url;
+		}
+
+		if (!$service->grantAccessToScope($scope))
+		{
+			return $url;
+		}
+
+		$scopeToken = $service->getEncryptedScopeForObject($fileId, $scope);
+		if (empty($scopeToken))
+		{
+			return $url;
+		}
+
+		$uri = new Uri($url);
+		$uri->addParams([
+			'_esd' => $scopeToken,
+		]);
+
+		return $uri->getUri();
+	};
+
 	$fileUrlForViewer = $file['SRC'] ?? null;
 	if (!empty($arResult['additionalParameters']['URL_TEMPLATE']))
 	{
@@ -58,10 +104,11 @@ foreach($arResult['value'] as $file)
 			['file_id' => $fileId]
 		);
 	}
+	$fileUrlForViewer = $addScopeTokenUrlParam($fileUrlForViewer, $fileId);
 
 	$viewerAttributes = ItemAttributes::tryBuildByFileId($fileId, $fileUrlForViewer);
 	$viewerAttributes->setTitle($fileName);
-	$viewerAttributes->setGroupBy(md5($controlId));
+	$viewerAttributes->setGroupBy($containerId);
 
 	$fileExtensionPosition = UtfSafeString::getLastPosition($fileName, '.');
 	$fileExtension = $fileExtensionPosition === false ? '' : mb_substr($fileName, $fileExtensionPosition + 1);
@@ -69,8 +116,9 @@ foreach($arResult['value'] as $file)
 	$fileContext = $uploaderContextGenerator->getContextForFileInViewMode($fileId);
 	$fileUrl = CComponentEngine::makePathFromTemplate($urlTemplate, [
 		'FILE_ID' => $fileId,
-		'CONTEXT' => urlencode(json_encode($fileContext)),
+		'CONTEXT' => urlencode(Json::encode($fileContext['controllerOptions'])),
 	]);
+	$fileUrl = $addScopeTokenUrlParam($fileUrl, $fileId);
 
 	$fileItems[] = [
 		'name' => $fileName,
@@ -84,11 +132,8 @@ foreach($arResult['value'] as $file)
 
 $widgetOptions = [
 	'fileItems' => $fileItems,
-	'viewId' => $defaultView,
+	'viewSettings' => $viewSettings,
 ];
-
-$containerId = $controlId . '_' . $this->randString();
-
 ?>
 <span class="fields file field-wrap --ui-context-content-light">
 	<div id="<?= htmlspecialcharsbx($containerId) ?>"></div>
@@ -96,7 +141,12 @@ $containerId = $controlId . '_' . $this->randString();
 
 <script>
 	BX.ready(() => {
-		const widget = new BX.Main.UF.File.Uploader.SelectableViewWidget(<?= Json::encode($widgetOptions) ?>);
-		widget.mount(document.querySelector('#<?= CUtil::JSEscape($containerId) ?>'));
+		BX.Runtime
+			.loadExtension('main.uf.file.uploader.selectable-view-widget')
+			.then(({ SelectableViewWidget }) => {
+				const widget = new SelectableViewWidget(<?= Json::encode($widgetOptions) ?>);
+				widget.mount(document.getElementById('<?= CUtil::JSEscape($containerId) ?>'));
+			})
+		;
 	});
 </script>

@@ -621,6 +621,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getFeedbackData",
 	    value: function getFeedbackData() {
+	      _classPrivateMethodGet(this, _addSystemParameters, _addSystemParameters2).call(this);
 	      var data = {
 	        parameters: babelHelpers.classPrivateFieldGet(this, _parameters)
 	      };

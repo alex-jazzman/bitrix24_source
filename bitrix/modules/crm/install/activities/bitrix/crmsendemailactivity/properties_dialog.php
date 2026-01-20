@@ -1,4 +1,12 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Bizproc\Public\Entity\Document\Workflow;
+
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
 global $APPLICATION;
@@ -29,6 +37,15 @@ $attachmentType = $map['AttachmentType'];
 $attachment = $map['Attachment'];
 
 $from = isset($map['MessageFrom']) ? $map['MessageFrom'] : null;
+
+if (CBPHelper::isEqualDocument($dialog->getDocumentType(), Workflow::getComplexType()))
+{
+	$dialog->setDocumentType([
+		'crm',
+		'CCrmDocumentDeal',
+		'DEAL',
+	]);
+}
 
 if ($from): ?>
 	<div style="display:none;">

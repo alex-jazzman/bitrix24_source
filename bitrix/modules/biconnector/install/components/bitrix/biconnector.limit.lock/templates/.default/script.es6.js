@@ -1,8 +1,8 @@
 import { Tag, Reflection } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Popup } from 'main.popup';
-import { Button } from 'ui.buttons';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
+import { Dialog } from 'ui.system.dialog';
 
 type LimitPopupParams = {
 	title: number,
@@ -11,6 +11,7 @@ type LimitPopupParams = {
 	laterButtonText: string,
 	licenseUrl: string,
 	fullLock: 'Y' | 'N',
+	isLicenceLimit: 'Y' | 'N',
 };
 
 class LimitLockPopup
@@ -20,8 +21,8 @@ class LimitLockPopup
 	#licenseButtonText: string = '';
 	#laterButtonText: string = '';
 	#licenseUrl: string = '';
-	#popupClassName: string = 'biconnector-limit-lock';
 	#fullLock: boolean = false;
+	#isLicenceLimit: boolean = false;
 
 	constructor(params: LimitPopupParams)
 	{
@@ -37,52 +38,55 @@ class LimitLockPopup
 		this.#laterButtonText = params.laterButtonText || '';
 		this.#licenseUrl = params.licenseUrl;
 		this.#fullLock = params.fullLock === 'Y';
+		this.#isLicenceLimit = params.isLicenceLimit === 'Y';
 	}
 
 	#show()
 	{
 		BannerDispatcher.high.toQueue((onDone) => {
-			const popupButtons = [];
+			const centerButtons = [];
 
-			if (this.#licenseButtonText)
+			if (this.#isLicenceLimit)
 			{
-				popupButtons.push(new Button({
-					text: this.#licenseButtonText,
-					color: Button.Color.SUCCESS,
-					onclick: () => {
-						top.location.href = this.#licenseUrl;
-					},
-				}));
+				centerButtons.push(
+					new Button({
+						text: this.#licenseButtonText,
+						size: ButtonSize.LARGE,
+						style: AirButtonStyle.FILLED,
+						useAirDesign: true,
+						onclick: () => {
+							top.location.href = this.#licenseUrl;
+						},
+					}),
+					new Button({
+						text: this.#laterButtonText,
+						size: ButtonSize.LARGE,
+						style: AirButtonStyle.PLAIN,
+						useAirDesign: true,
+						onclick: () => {
+							popup.close();
+						},
+					}),
+				);
 			}
 
-			popupButtons.push(new Button({
-				text: this.#laterButtonText,
-				color: Button.Color.LINK,
-				onclick: () => {
-					popup.close();
-				},
-			}));
-
 			const popupContent = Tag.render`
-			<div class="biconnector-limit-popup-wrap">
-				<div class="biconnector-limit-popup">
-					<div class="biconnector-limit-pic">
-						<div class="biconnector-limit-pic-round"></div>
+				<div class="biconnector-limit-popup-wrap">
+					<div class="biconnector-limit-popup-wrap__limit__lock__logo"></div>
+					<div class="ui-headline --sm --align-center">
+						${this.#title}
 					</div>
-					<div class="biconnector-limit-text">${this.#content}</div>
+					<div class="ui-text --md --align-center">${this.#content}</div>
 				</div>
-			</div>
-		`;
+			`;
 
-			const popup = new Popup({
-				titleBar: this.#title,
+			const popup = new Dialog({
+				title: ' ',
 				content: popupContent,
-				overlay: true,
-				className: this.#popupClassName,
-				closeIcon: true,
-				lightShadow: true,
-				offsetLeft: 100,
-				buttons: popupButtons,
+				centerButtons,
+				hasOverlay: true,
+				width: 400,
+				hasCloseButton: true,
 			});
 
 			if (this.#fullLock)

@@ -10,11 +10,18 @@ import type { UserStatusType } from '../../../../type';
 
 import './style.css';
 
+const PERSONAL_GENDER_FEMALE_MARKER = 'F';
+
 // @vue/component
 export const UserStatusDescription = {
 	name: 'UserStatusDescription',
 	mixins: [LocMixin],
 	props: {
+		personalGender: {
+			type: [String, null],
+			default: null,
+			required: false,
+		},
 		status: {
 			/** @type UserStatusType */
 			type: Object,
@@ -70,8 +77,12 @@ export const UserStatusDescription = {
 
 			const dayMonthFormat = DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
 			const shortTimeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+			const phraseCode = this.personalGender === PERSONAL_GENDER_FEMALE_MARKER
+				? 'INTRANET_USER_MINI_PROFILE_USER_STATUS_OFFLINE_LAST_SEEN_TEMPLATE_F'
+				: 'INTRANET_USER_MINI_PROFILE_USER_STATUS_OFFLINE_LAST_SEEN_TEMPLATE'
+			;
 
-			return this.loc('INTRANET_USER_MINI_PROFILE_USER_STATUS_OFFLINE_LAST_SEEN_TEMPLATE', {
+			return this.loc(phraseCode, {
 				'#DATE#': DateTimeFormat.format(dayMonthFormat, status.lastSeenTs),
 				'#TIME#': DateTimeFormat.format(shortTimeFormat, status.lastSeenTs),
 			});

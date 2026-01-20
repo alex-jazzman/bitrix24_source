@@ -10,6 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.banner-dispatcher',
+	'ui.buttons',
+	'ui.system.dialog',
 ]);
 
 ?>
@@ -21,8 +23,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			licenseButtonText: '<?= CUtil::JSEscape($arResult['LICENSE_BUTTON_TEXT']) ?>',
 			laterButtonText: '<?= CUtil::JSEscape($arResult['LATER_BUTTON_TEXT']) ?>',
 			licenseUrl: '<?= CUtil::JSEscape($arResult['LICENSE_URL']) ?>',
-			popupClassName: 'biconnector-limit-lock',
 			fullLock: '<?= CUtil::JSEscape($arResult['FULL_LOCK']) ?>',
+			isLicenceLimit: '<?= CUtil::JSEscape($arResult['IS_LICENCE_LIMIT']) ?>',
 		});
 	})
 </script>

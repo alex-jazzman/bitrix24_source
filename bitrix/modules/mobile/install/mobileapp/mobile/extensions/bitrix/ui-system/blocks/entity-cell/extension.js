@@ -317,6 +317,8 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 					return this.renderGroupIndicator();
 				case EntityCellMode.ENTITY_MENU:
 					return this.renderIcon(Icon.MORE, Color.base4, 28);
+				case EntityCellMode.LOCKED:
+					return this.renderIcon(Icon.LOCK, Color.base4, 24);
 				default:
 					return null;
 			}
@@ -324,7 +326,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 
 		renderCheckBox()
 		{
-			const { indeterminate, checked, disabled } = this.props;
+			const { indeterminate, checked, disabled, onClick } = this.props;
 
 			return new Checkbox({
 				testId: this.getTestId('checkbox'),
@@ -332,6 +334,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 				size: 24,
 				indeterminate,
 				disabled,
+				onClick,
 			});
 		}
 

@@ -1,4 +1,3 @@
-import type { JsonObject } from 'main.core';
 import { Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 
@@ -16,8 +15,10 @@ import { ReactionsModel } from './nested-modules/reactions';
 import { CommentsModel } from './nested-modules/comments/comments';
 import { SelectModel } from './nested-modules/select';
 import { AnchorsModel } from './nested-modules/anchors/anchors';
+import { StickersModel } from './nested-modules/stickers/stickers';
 
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import type { JsonObject } from 'main.core';
 import type { ImModelMessage, ImModelFile } from 'im.v2.model';
 import type { AttachConfig } from 'im.v2.const';
 import type { RawMessage } from '../type/message';
@@ -51,6 +52,7 @@ export class MessagesModel extends BuilderModel
 			comments: CommentsModel,
 			select: SelectModel,
 			anchors: AnchorsModel,
+			stickers: StickersModel,
 		};
 	}
 
@@ -153,6 +155,16 @@ export class MessagesModel extends BuilderModel
 				}
 
 				return Type.isStringFilled(message.forward.id);
+			},
+			/** @function messages/isVideoNote */
+			isVideoNote: (state: MessagesState, getters: GetterTree) => (id: number | string) => {
+				const message = state.collection[id];
+				if (!message)
+				{
+					return false;
+				}
+
+				return getters.getMessageFiles(id).some((file: ImModelFile) => file.isVideoNote);
 			},
 			/** @function messages/isExists */
 			isExists: (state: MessagesState) => (id: number | string) => {
@@ -275,6 +287,7 @@ export class MessagesModel extends BuilderModel
 
 				return state.collection[desiredMessageId];
 			},
+			/** @function messages/findPreviousMessageId */
 			findPreviousMessageId: (state, getters) => (payload: { messageId: MessageId, chatId: number }): MessageId => {
 				const chatCollection: Array<ImModelMessage> = getters.getByChatId(payload.chatId);
 				const currentMessageIndex: number = chatCollection.findIndex((message: ImModelMessage) => {
@@ -288,6 +301,7 @@ export class MessagesModel extends BuilderModel
 
 				return -1;
 			},
+			/** @function messages/findLastChatMessageId */
 			findLastChatMessageId: (state, getters) => (chatId: number): MessageId | null => {
 				const lastMessage: ?ImModelMessage = getters.getByChatId(chatId).pop();
 				if (lastMessage)
@@ -297,12 +311,15 @@ export class MessagesModel extends BuilderModel
 
 				return null;
 			},
+			/** @function messages/hasLoadingMessageByPreviousSiblingId */
 			hasLoadingMessageByPreviousSiblingId: (state: MessagesState) => (messageId: MessageId): boolean => {
 				return Boolean(state.loadingMessages[messageId]);
 			},
+			/** @function messages/getLoadingMessageByPreviousSiblingId */
 			getLoadingMessageByPreviousSiblingId: (state: MessagesState) => (messageId: MessageId): ?ImModelMessage => {
 				return state.loadingMessages[messageId] ?? null;
 			},
+			/** @function messages/getLoadingMessageByMessageId */
 			getLoadingMessageByMessageId: (state: MessagesState) => (messageId: MessageId): ?ImModelMessage => {
 				const message: ImModelMessage = Object
 					.values(state.loadingMessages)
@@ -317,9 +334,11 @@ export class MessagesModel extends BuilderModel
 
 				return null;
 			},
+			/** @function messages/hasLoadingMessageByMessageId */
 			hasLoadingMessageByMessageId: (state: MessagesState, getters) => (messageId: MessageId): boolean => {
 				return getters.getLoadingMessageByMessageId(messageId) !== null;
 			},
+			/** @function messages/isRealMessage */
 			isRealMessage: () => (messageId: MessageId): boolean => {
 				return !Utils.text.isTempMessage(messageId);
 			},
@@ -338,6 +357,8 @@ export class MessagesModel extends BuilderModel
 				{
 					messages = [messages];
 				}
+
+				store.dispatch('stickers/setStickersFromMessages', messages);
 
 				messages = messages.map((message: RawMessage) => {
 					return { ...this.getElementState(), ...this.#formatFields(message) };
@@ -358,6 +379,8 @@ export class MessagesModel extends BuilderModel
 				{
 					preparedMessages = [payload];
 				}
+
+				store.dispatch('stickers/setStickersFromMessages', preparedMessages);
 
 				preparedMessages = preparedMessages.map((message: RawMessage) => {
 					const currentMessage: ImModelMessage = store.state.collection[message.id];
@@ -391,6 +414,8 @@ export class MessagesModel extends BuilderModel
 					messages: [message],
 				});
 
+				store.dispatch('stickers/setStickersFromMessages', [payload]);
+
 				return message.id;
 			},
 			/** @function messages/updateWithId */
@@ -405,6 +430,7 @@ export class MessagesModel extends BuilderModel
 					id,
 					fields: this.#formatFields(fields),
 				});
+				void store.dispatch('stickers/updateStickerToMessageMap', { oldId: id, newId: fields.id });
 			},
 			/** @function messages/update */
 			update: (store, payload: {id: string | number, fields: Object}) => {

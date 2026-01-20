@@ -82,6 +82,7 @@ const RequestPermissions = {
 			{
 				await this.getApplication().initHardware();
 				const devices = await tryGetUserMedia({ video: 'exact' });
+				this.getApplication().callView.showButtons(['camera', 'microphone']);
 				this.getApplication().callView.unblockButtons(devices);
 			}
 			catch (error)
@@ -121,7 +122,7 @@ const RequestPermissions = {
 		<div class="bx-im-component-call-permissions-container">
 			<template v-if="!skipRequest">
 				<div class="bx-im-component-call-permissions-text">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_TEXT'] }}</div>
-				<button @click="requestPermissions" class="ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-permissions-button">
+				<button @click="requestPermissions" class="bx-im-component-call-permissions-button">
 					{{ localize['BX_IM_COMPONENT_CALL_ENABLE_DEVICES_BUTTON'] }}
 				</button>
 				<slot></slot>

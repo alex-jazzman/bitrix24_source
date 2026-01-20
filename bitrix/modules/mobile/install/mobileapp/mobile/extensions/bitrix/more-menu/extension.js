@@ -9,12 +9,17 @@ jn.define('more-menu', (require, exports, module) => {
 
 	const { MoreMenuHeader } = require('more-menu/block/header');
 	const { ToolsList } = require('more-menu/block/tools-list');
-	const { SettingsList } = require('more-menu/block/settings-list');
+	const { SettingsList, SETTINGS_SECTIONS } = require('more-menu/block/settings-list');
 	const { MoreMenuCompany } = require('more-menu/block/company');
 
+	const { showAhaMoment } = require('more-menu/aha-moment');
 	const { SearchList } = require('more-menu/search-list');
 	const { MenuNavigator } = require('more-menu/navigator');
 	const { MoreMenuPanel } = require('more-menu/ui/panel');
+	const {
+		getMenuCounters,
+		updateMenuBadgeCounter,
+	} = require('more-menu/utils');
 
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
@@ -27,7 +32,8 @@ jn.define('more-menu', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 
 	const { createTestIdGenerator } = require('utils/test');
-	const { isEmpty } = require('utils/object');
+	const { isEmpty, isEqual } = require('utils/object');
+	const { debounce } = require('utils/function');
 
 	const MENU_LIST_ACTION_NAME = 'mobile.Menu.getMenu';
 	const SECONDS_IN_DAY = 86400;
@@ -52,11 +58,16 @@ jn.define('more-menu', (require, exports, module) => {
 			this.state = {
 				menuList: [],
 				loading: true,
+				counters: {},
 			};
 
 			this.getTestId = createTestIdGenerator({
 				prefix: MORE_MENU_TEST_ID,
 			});
+
+			this.handleUserCountersUpdate = this.handleUserCountersUpdate.bind(this);
+			this.handleWhatsNewCounterUpdate = this.handleWhatsNewCounterUpdate.bind(this);
+			this.processUsersDebaunced = debounce(this.processUsers.bind(this), 300);
 		}
 
 		/**
@@ -138,12 +149,104 @@ jn.define('more-menu', (require, exports, module) => {
 			this.loadMenuList(false, true)
 				.then(() => {
 					SearchList.setListeners({
-						getMenuList: () => this.state.menuList,
+						getMenuList: () => [...this.state.menuList, ...SETTINGS_SECTIONS],
 						layout: this.layout,
 						testId: this.getTestId('search-list'),
+						rightButtons: [this.buildMoreButton()],
 					});
+
+					if (this.state.ahaMoment)
+					{
+						this.tryToOpenAhaMoment();
+					}
 				})
 				.catch((error) => console.error(error));
+
+			BX.addCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
+			BX.addCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
+			BX.addCustomEvent('BackgroundUIManager::openComponentInAnotherContext', this.showAhaMoment);
+		}
+
+		componentWillUnmount()
+		{
+			BX.removeCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
+			BX.removeCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
+		}
+
+		showAhaMoment = (componentName) => {
+			if (componentName === MORE_MENU_TEST_ID && PageManager.getNavigator().isVisible())
+			{
+				showAhaMoment(this.state.ahaMoment, this.menuNavigator);
+			}
+		};
+
+		tryToOpenAhaMoment = () => {
+			BX.postComponentEvent(
+				'BackgroundUIManagerEvents::tryToOpenComponentFromAnotherContext',
+				[
+					{
+						componentName: MORE_MENU_TEST_ID,
+						priority: 500,
+					},
+				],
+			);
+		};
+
+		handleUserCountersUpdate(newCounters)
+		{
+			const { counters = {} } = this.state;
+
+			if (newCounters[env.siteId])
+			{
+				const mergedCounters = { ...counters, ...newCounters[env.siteId] };
+
+				if (!isEqual(counters, mergedCounters))
+				{
+					this.setState({ counters: mergedCounters }, () => {
+						this.updateMoreBadge();
+					});
+				}
+			}
+		}
+
+		handleWhatsNewCounterUpdate(whatsNewCounter)
+		{
+			this.updateMoreBadge(whatsNewCounter);
+		}
+
+		updateMoreBadge(whatsNewCounter = null)
+		{
+			const { menuList, counters } = this.state;
+
+			updateMenuBadgeCounter(menuList, counters, whatsNewCounter);
+		}
+
+		buildMoreButton()
+		{
+			return {
+				id: 'menu_more',
+				type: 'more',
+				callback: () => {
+					const items = [
+						{
+							id: 'switch_account',
+							iconName: 'log_out',
+							title: Loc.getMessage('MENU_BITRIX24_SECTION_CHANGE_PORTAL'),
+							sectionCode: '0',
+						},
+					];
+
+					this.popup = dialogs.createPopupMenu();
+					this.popup.setData(items, [{ id: '0' }]);
+					this.popup.on('itemSelected', (item) => {
+						if (item?.id === 'switch_account')
+						{
+							Application.exit();
+						}
+					});
+					this.popup.show();
+				},
+			};
 		}
 
 		get layout()
@@ -158,10 +261,9 @@ jn.define('more-menu', (require, exports, module) => {
 				menuList,
 				currentShift,
 				workTime,
-
-				canEditProfile,
-				canUseTimeMan,
-				canUseCheckIn,
+				user,
+				currentTheme,
+				restrictions,
 			} = this.state;
 
 			if (loading && menuList.length === 0)
@@ -186,7 +288,8 @@ jn.define('more-menu', (require, exports, module) => {
 						backgroundColor: Color.bgContentSecondary.toHex(),
 					},
 				},
-				this.renderSubstrate(),
+				this.renderSubstrateTop(),
+				this.renderSubstrateBottom(),
 				RefreshView(
 					{
 						refreshing: loading,
@@ -198,21 +301,24 @@ jn.define('more-menu', (require, exports, module) => {
 					View(
 						{
 							style: {
-								backgroundColor: Color.bgContentSecondary.toHex(),
+								backgroundColor: Color.bgContentPrimaryInvert.toHex(),
 								paddingBottom: Indent.XL3.toNumber(),
 							},
 						},
 						new MoreMenuHeader({
 							testId: this.getTestId('header'),
-							canEditProfile,
-							canUseTimeMan,
-							canUseCheckIn,
+							canEditProfile: restrictions?.canEditProfile,
+							canUseTimeMan: restrictions?.canUseTimeMan,
+							canUseCheckIn: restrictions?.canUseCheckIn,
+							canManageWorkTimeOnMobile: restrictions?.canManageWorkTimeOnMobile,
 							currentShift,
 							workTime,
+							userId: user?.id,
+							currentTheme,
 						}),
 						this.renderCompanyPanel(),
 						this.renderToolsPanel(),
-						this.renderSettingsPanel(),
+						this.renderSettingsPanel(restrictions?.canUseSecuritySettings),
 					),
 				),
 			);
@@ -222,43 +328,31 @@ jn.define('more-menu', (require, exports, module) => {
 		{
 			const {
 				company,
-				license,
 				supportBotId,
 
-				canUseSupport,
-				canInvite,
-				canUseTelephony,
-				shouldShowWhatsNew,
+				restrictions,
 				helpdeskUrl,
+				counters,
 			} = this.state;
 
-			return MoreMenuPanel(
-				{
-					testId: this.getTestId('company-panel'),
-					children: [
-						new MoreMenuCompany({
-							testId: this.getTestId('company'),
-							company,
-							license,
-							supportBotId,
-							layout: this.layout,
-							canUseSupport,
-							canInvite,
-							canUseTelephony,
-							shouldShowWhatsNew,
-							helpdeskUrl,
-						}),
-					],
-					style: {
-						paddingHorizontal: 0,
-					},
-				},
-			);
+			return new MoreMenuCompany({
+				testId: this.getTestId('company'),
+				company,
+				supportBotId,
+				layout: this.layout,
+				canUseSupport: restrictions?.canUseSupport,
+				canInvite: restrictions?.canInvite,
+				canUseTelephony: restrictions?.canUseTelephony,
+				shouldShowWhatsNew: restrictions?.shouldShowWhatsNew,
+				helpdeskUrl,
+				counters,
+				onWhatsNewCounterChange: this.handleWhatsNewCounterUpdate,
+			});
 		}
 
 		renderToolsPanel()
 		{
-			const { menuList } = this.state;
+			const { menuList, counters } = this.state;
 
 			if (!this.shouldShowToolsPanel(menuList))
 			{
@@ -273,7 +367,7 @@ jn.define('more-menu', (require, exports, module) => {
 						new ToolsList({
 							testId: this.getTestId('tools-list'),
 							menuList,
-							counters: this.props.counters,
+							counters,
 						}),
 					],
 				},
@@ -285,8 +379,10 @@ jn.define('more-menu', (require, exports, module) => {
 			return menuList.some((section) => section?.items.length > 0);
 		}
 
-		renderSettingsPanel()
+		renderSettingsPanel(canUseSecuritySettings)
 		{
+			const { counters } = this.state;
+
 			return MoreMenuPanel(
 				{
 					testId: this.getTestId('settings-panel'),
@@ -294,13 +390,15 @@ jn.define('more-menu', (require, exports, module) => {
 					children: [
 						new SettingsList({
 							testId: this.getTestId('settings-list'),
+							canUseSecuritySettings,
+							counters,
 						}),
 					],
 				},
 			);
 		}
 
-		renderSubstrate()
+		renderSubstrateTop()
 		{
 			return View(
 				{
@@ -310,6 +408,21 @@ jn.define('more-menu', (require, exports, module) => {
 						height: '50%',
 						top: 0,
 						backgroundColor: Color.bgContentPrimary.toHex(),
+					},
+				},
+			);
+		}
+
+		renderSubstrateBottom()
+		{
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						width: '100%',
+						height: '50%',
+						bottom: 0,
+						backgroundColor: Color.bgContentPrimaryInvert.toHex(),
 					},
 				},
 			);
@@ -338,15 +451,16 @@ jn.define('more-menu', (require, exports, module) => {
 							.setCacheId(`mobile-more-menu${env.userId}`)
 							.setCacheTtl(SECONDS_IN_DAY)
 							.setCacheHandler((cachedData) => {
-								if (cachedData?.status === 'success')
-								{
-									const { preparedMenuList, state } = MoreMenu.mapResponseData(cachedData.data || {});
-									this.menuNavigator.updateMenuList(preparedMenuList);
+								const { preparedMenuList, state } = MoreMenu.mapResponseData(cachedData.data || {});
+								this.menuNavigator.update(preparedMenuList, state.restrictions);
+								const {
+									currentShift,
+									workTime,
+									...cachedState
+								} = state;
 
-									this.setState(state, () => {
-										this.processUsers(cachedData?.data);
-									});
-								}
+								this.processUsersDebaunced(cachedData?.data);
+								this.setState({ ...cachedState, counters: {} });
 							})
 							.setHandler((response) => {
 								if (response?.status !== 'success')
@@ -366,10 +480,16 @@ jn.define('more-menu', (require, exports, module) => {
 								}
 
 								const { preparedMenuList, state } = MoreMenu.mapResponseData(response.data || {});
-								this.menuNavigator.updateMenuList(preparedMenuList);
+								this.menuNavigator.update(preparedMenuList, state.restrictions);
 
-								this.setState(state, () => {
-									this.processUsers(response?.data);
+								const canInvite = state.restrictions?.canInvite;
+
+								const counters = getMenuCounters(canInvite);
+
+								this.processUsersDebaunced(response?.data);
+
+								this.setState({ ...state, counters }, () => {
+									this.updateMoreBadge();
 									resolve();
 								});
 							});
@@ -402,44 +522,6 @@ jn.define('more-menu', (require, exports, module) => {
 			}
 		}
 
-		/**
-		 * @public
-		 * @param {function} onCache
-		 * @param {function} onResponse
-		 * @param {function} onError
-		 */
-		static subscribeMenuData(onCache, onResponse, onError)
-		{
-			const request = new RunActionExecutor(
-				MENU_LIST_ACTION_NAME,
-				{
-					forceRefresh: 0,
-					userId: env.userId,
-					siteId: env.siteId,
-				},
-			)
-				.setCacheId(`mobile-more-menu${env.userId}`)
-				.setCacheTtl(SECONDS_IN_DAY)
-				.setCacheHandler((cachedData) => {
-					onCache?.(cachedData.data || []);
-				})
-				.setHandler((response) => {
-					if (response?.status !== 'success')
-					{
-						onError?.(response);
-
-						return;
-					}
-
-					onResponse?.(response.data || []);
-				})
-				.setSkipRequestIfCacheExists();
-
-			request.call(true);
-
-			return request;
-		}
-
 		static mapResponseData(data)
 		{
 			const defaultList = MoreMenu.getDefaultMenuList();
@@ -454,17 +536,11 @@ jn.define('more-menu', (require, exports, module) => {
 				currentShift: data.currentShift || null,
 				workTime: data.workTime || null,
 				company: data.company || null,
-				license: data.license || null,
 				helpdeskUrl: data.helpdeskUrl || null,
 				supportBotId: data.supportBotId || 0,
-
-				canEditProfile: data.canEditProfile || false,
-				canUseTimeMan: data.canUseTimeMan || false,
-				canUseCheckIn: data.canUseCheckIn || false,
-				canUseSupport: data.canUseSupport || false,
-				canInvite: data.canInvite || false,
-				canUseTelephony: data.canUseTelephony || false,
-				shouldShowWhatsNew: data.shouldShowWhatsNew || false,
+				restrictions: data.restrictions || {},
+				ahaMoment: data.ahaMoment || null,
+				currentTheme: data.currentTheme || null,
 			};
 
 			return {

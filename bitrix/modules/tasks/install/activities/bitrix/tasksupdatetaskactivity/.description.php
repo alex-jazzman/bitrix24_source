@@ -5,32 +5,42 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('TASKS_UTA_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('TASKS_UTA_DESC_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'TasksUpdateTaskActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
+$arActivityDescription = (
+	new ActivityDescription(
+		name: Loc::getMessage('TASKS_UTA_NAME_1'),
+		description: Loc::getMessage('TASKS_UTA_DESC_1'),
+		type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value, ActivityType::NODE_ACTION->value ],
+	)
+)
+	->setClass('TasksUpdateTaskActivity')
+	->setJsClass(ActivityDescription::DEFAULT_ACTIVITY_JS_CLASS)
+	->setCategory([
 		'ID' => 'document',
 		'OWN_ID' => 'tasks',
 		'OWN_NAME' => Loc::getMessage('TASKS_UTA_CATEGORY'),
-	],
-	'RETURN' => [
+	])
+	->setReturn([
 		'ErrorMessage' => [
-			'NAME' => GetMessage('TASKS_UTA_ERROR_MESSAGE'),
+			'NAME' => Loc::getMessage('TASKS_UTA_ERROR_MESSAGE'),
 			'TYPE' => 'string',
 		],
-	],
-	'FILTER' => [
+	])
+	->setFilter([
 		'INCLUDE' => [
 			['tasks'],
 		],
-	],
-	'ROBOT_SETTINGS' => [
+	])
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
 		'GROUP' => ['taskManagement'],
-	],
-];
+	])
+	->setNodeActionSettings([
+		'INCLUDE' => ['taskscomplexactivity'],
+		'HANDLES_DOCUMENT' => true,
+	])
+	->toArray()
+;

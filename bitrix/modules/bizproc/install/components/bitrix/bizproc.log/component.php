@@ -155,6 +155,11 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 			$arFilter[$op.$newKey] = $value;
 		}
 
+		if (!$arResult["AdminMode"] && ($arParams['SET_ADMIN_MODE'] ?? '') === 'Y')
+		{
+			$arResult["AdminMode"] = (new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser))->isAdmin();
+		}
+
 		$arResult["HEADERS"] = array(
 			array("id"=>"date", "name"=>GetMessage("BPWC_WLCT_F_DATE"), "sort" => "ID", "default"=>true),
 			array("id"=>"name", "name"=>GetMessage("BPWC_WLCT_F_NAME"), "default"=>true),

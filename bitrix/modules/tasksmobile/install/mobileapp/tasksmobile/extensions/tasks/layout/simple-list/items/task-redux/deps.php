@@ -24,6 +24,7 @@ return [
 		'tasks:layout/deadline-pill',
 		'tasks:statemanager/redux/slices/tasks',
 		'tasks:layout/fields/time-tracking/timer',
+		'tasks:onboarding',
 	],
 	'bundle' => [
 		'./src/task-content',

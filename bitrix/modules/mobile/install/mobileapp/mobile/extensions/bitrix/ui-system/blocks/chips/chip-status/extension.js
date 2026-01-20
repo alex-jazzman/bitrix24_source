@@ -15,7 +15,7 @@ jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 	 * @params {string} [props.text]
 	 * @params {object} [props.design]
 	 * @params {object} [props.mode]
-	 * @params {string} [props.ellipsize]
+	 * @params {Ellipsize} [props.ellipsize]
 	 * @params {boolean} [props.compact]
 	 * @return ChipStatus
 	 */
@@ -80,7 +80,10 @@ jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 		compact: PropTypes.bool,
 		design: PropTypes.object,
 		mode: PropTypes.object,
-		ellipsize: PropTypes.string,
+		ellipsize: PropTypes.shape({
+			name: PropTypes.string,
+			value: PropTypes.string,
+		}),
 	};
 
 	module.exports = { ChipStatus, ChipStatusDesign, ChipStatusMode, Ellipsize };

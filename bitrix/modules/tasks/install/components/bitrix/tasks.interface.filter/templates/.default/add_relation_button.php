@@ -10,10 +10,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arResult */
+
+if (($arResult['relationType'] ?? 'subTasks') === 'gantt')
+{
+	\Bitrix\Main\UI\Extension::load('tasks.v2.application.gantt-popup');
+}
+
 $button = (new Buttons\Button())
 	->setText(Loc::getMessage('TASKS_BTN_ADD_RELATION'))
 	->setIcon(Buttons\Icon::ADD_M)
 	->setStyle(Buttons\AirButtonStyle::FILLED)
+	->setDisabled(!($arResult['canEditRelation'] ?? false))
 	->addAttribute('id', 'tasks-buttonRelationAdd')
 ;
 $button->setAirDesign();

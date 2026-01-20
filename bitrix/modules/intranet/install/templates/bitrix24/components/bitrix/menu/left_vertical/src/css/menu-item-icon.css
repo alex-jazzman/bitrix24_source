@@ -187,6 +187,11 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/service.svg");
 }
 
+.menu-ai-agents .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/bizproc-ai-agents.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/bizproc-ai-agents.svg");
+}
+
 .menu-automation .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/automation.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/automation.svg");
@@ -196,6 +201,11 @@
 .menu-devops-sect .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/devops.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/devops.svg");
+}
+
+.menu-mcp-integrations .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/mcp-letters.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/mcp-letters.svg");
 }
 
 .menu-documents .menu-item-icon {

@@ -697,7 +697,7 @@ class CAdminMenu
 		$this->bInit = true;
 
 		$aOptMenu = CUserOptions::GetOption("admin_menu", "pos", array());
-		$this->AddOpenedSections($aOptMenu["sections"]);
+		$this->AddOpenedSections($aOptMenu["sections"] ?? '');
 
 		$aModuleMenu = array();
 		if(is_array($modules))

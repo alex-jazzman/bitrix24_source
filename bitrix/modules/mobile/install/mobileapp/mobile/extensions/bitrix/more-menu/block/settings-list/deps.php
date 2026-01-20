@@ -5,6 +5,6 @@ return [
 		'more-menu/ui/list',
 		'loc',
 		'more-menu/utils',
-		'tourist',
+		'layout/pure-component',
 	],
 ];

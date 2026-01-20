@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_core_events,ui_vue3_directives_hint,ui_system_typography_vue,ui_iconSet_api_vue,ui_iconSet_actions,tasks_v2_component_taskList,tasks_v2_component_elements_hint,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_lib_fieldHighlighter) {
+(function (exports,ui_vue3_directives_hint,ui_system_typography_vue,ui_iconSet_api_vue,ui_iconSet_actions,tasks_v2_core,tasks_v2_const,tasks_v2_component_taskList,tasks_v2_component_elements_hint,tasks_v2_lib_idUtils,ui_system_chip_vue,tasks_v2_lib_showLimit,tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	// @vue/component
@@ -17,51 +17,68 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {},
+	    isTemplate: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    /** @type RelationMeta */
+	    /** @type RelationFieldMeta */
 	    meta: {
 	      type: Object,
 	      required: true
+	    },
+	    fields: {
+	      type: Set,
+	      default: undefined
+	    },
+	    isLocked: {
+	      type: Boolean,
+	      default: false
+	    },
+	    featureId: {
+	      type: String,
+	      default: ''
 	    }
 	  },
+	  emits: ['add'],
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
+	  data() {
+	    return {
+	      idsLoaded: false
+	    };
+	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    isEdit() {
-	      return Number.isInteger(this.taskId) && this.taskId > 0;
-	    },
 	    ids() {
-	      return [...this.task[this.meta.idsField]].sort((a, b) => b - a);
+	      return this.meta.service.getSortedIds(this.task[this.meta.idsField]);
+	    },
+	    loadingIds() {
+	      return this.ids.filter(id => !this.meta.service.hasStoreTask(id));
 	    },
 	    text() {
 	      if (this.ids.length > 0) {
-	        return this.loc(this.meta.countLoc, {
+	        return this.loc(this.meta.getCountLoc(this.isTemplate), {
 	          '#COUNT#': this.ids.length
 	        });
 	      }
-	      return this.meta.title;
+	      return this.meta.getTitle(this.isTemplate);
 	    },
-	    context() {
-	      return this.meta.id;
+	    canOpenMore() {
+	      return this.isEdit && (this.readonly || this.task[this.meta.containsField]);
 	    },
 	    readonly() {
-	      return !this.task.rights.edit;
+	      return !this.task.rights[this.meta.right];
 	    },
 	    tooltip() {
 	      return () => tasks_v2_component_elements_hint.tooltip({
-	        text: this.meta.hint,
+	        text: this.meta.getHint(this.isTemplate),
 	        popupOptions: {
-	          offsetLeft: this.$refs.add.$el.offsetWidth / 2
+	          offsetLeft: this.$refs.add.offsetWidth / 2
 	        }
 	      });
 	    }
@@ -76,27 +93,52 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    }
 	  },
-	  created() {
-	    if (!this.meta.service.areIdsLoaded(this.taskId) || this.meta.service.hasUnloadedIds(this.taskId)) {
-	      void this.meta.service.list(this.taskId, true);
+	  async created() {
+	    this.idsLoaded = this.meta.service.areIdsLoaded(this.taskId);
+	    if (!this.idsLoaded || this.meta.service.hasUnloadedIds(this.taskId)) {
+	      await this.meta.service.list(this.taskId, true);
 	    }
+	    this.idsLoaded = true;
 	  },
 	  methods: {
-	    handleTitleClick() {
-	      if (this.isEdit && (this.readonly || this.task[this.meta.containsField])) {
-	        this.openGrid();
+	    openMore() {
+	      if (!this.canOpenMore) {
 	        return;
 	      }
-	      this.showDialog();
-	    },
-	    openGrid() {
-	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.OpenGrid, {
-	        taskId: this.taskId,
-	        type: this.meta.id
+	      if (this.isLocked) {
+	        this.showLimit();
+	        return;
+	      }
+	      const userId = tasks_v2_core.Core.getParams().currentUser.id;
+	      const isTemplate = tasks_v2_lib_idUtils.idUtils.isTemplate(this.taskId);
+	      const tasksGridType = {
+	        [this.meta.id === tasks_v2_const.TaskField.SubTasks]: 'subTasks',
+	        [this.meta.id === tasks_v2_const.TaskField.RelatedTasks]: 'relatedTasks',
+	        [this.meta.id === tasks_v2_const.TaskField.RelatedTasks && isTemplate]: 'relatedTemplateTasks',
+	        [this.meta.id === tasks_v2_const.TaskField.Gantt]: 'gantt'
+	      }.true;
+	      const templateGridType = {
+	        [this.meta.id === tasks_v2_const.TaskField.SubTasks && isTemplate]: 'subTemplates'
+	      }.true;
+	      const gridPath = {
+	        [Boolean(tasksGridType)]: `/company/personal/user/${userId}/tasks/`,
+	        [Boolean(templateGridType)]: `/company/personal/user/${userId}/tasks/templates/`
+	      }.true;
+	      const relationType = tasksGridType != null ? tasksGridType : templateGridType;
+	      const relationToId = tasks_v2_lib_idUtils.idUtils.unbox(this.taskId);
+	      const urlParams = new URLSearchParams({
+	        relationToId,
+	        relationType
+	      });
+	      BX.SidePanel.Instance.open(`${gridPath}?${urlParams}`, {
+	        newWindowLabel: false,
+	        copyLinkLabel: false
 	      });
 	    },
-	    showDialog() {
-	      this.meta.dialog.setTaskId(this.taskId).showTo(this.$refs.add.$el);
+	    showLimit() {
+	      void tasks_v2_lib_showLimit.showLimit({
+	        featureId: this.featureId
+	      });
 	    },
 	    async handleRemove(id) {
 	      await this.meta.service.delete(this.taskId, [id]);
@@ -111,33 +153,45 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<div class="tasks-field-relation-tasks-title">
 				<div
 					class="tasks-field-relation-tasks-main"
+					:class="{ '--readonly': !canOpenMore }"
 					data-task-relation-open
-					@click="handleTitleClick"
+					@click="openMore"
 				>
 					<BIcon :name="meta.icon"/>
-					<TextMd :accent="true">{{ text }}</TextMd>
+					<TextMd accent>{{ text }}</TextMd>
 				</div>
-				<div
-					v-if="!readonly"
-					v-hint="tooltip"
-					class="tasks-field-relation-tasks-add-container"
+				<div 
+					v-if="!readonly && idsLoaded && !isLocked" 
+					v-hint="tooltip" 
+					class="tasks-field-relation-tasks-icon --add" 
+					ref="add"
 				>
 					<BIcon
-						class="tasks-field-relation-tasks-icon"
 						:name="Outline.PLUS_L"
-						:hoverable="true"
+						hoverable
 						:data-task-relation-add="meta.id"
-						ref="add"
-						@click="showDialog"
+						@click="$emit('add', $refs.add)"
+					/>
+				</div>
+				<div 
+					v-else-if="isLocked"
+					class="tasks-field-relation-tasks-icon --lock"
+				>
+					<BIcon
+						:name="Outline.LOCK_L"
+						hoverable
+						:data-task-relation-locked="meta.id"
+						@click="showLimit"
 					/>
 				</div>
 			</div>
 			<TaskList
 				v-if="task[meta.containsField]"
-				:taskIds="ids"
-				:context="context"
-				:readonly="readonly"
-				@openMore="openGrid"
+				:ids
+				:loadingIds
+				:fields
+				:canOpenMore
+				@openMore="openMore"
 				@removeTask="handleRemove"
 			/>
 		</div>
@@ -147,14 +201,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	// @vue/component
 	const RelationTasksChip = {
 	  components: {
-	    Chip: tasks_v2_component_elements_chip.Chip
+	    Chip: ui_system_chip_vue.Chip
+	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isTemplate: {}
 	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    /** @type RelationMeta */
+	    /** @type RelationFieldMeta */
 	    meta: {
 	      type: Object,
 	      required: true
@@ -162,26 +217,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    disabled: {
 	      type: Boolean,
 	      default: false
+	    },
+	    isLocked: {
+	      type: Boolean,
+	      default: false
+	    },
+	    featureId: {
+	      type: String,
+	      default: ''
 	    }
 	  },
+	  emits: ['add'],
+	  setup() {},
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    count() {
 	      return this.task[this.meta.idsField].length;
 	    },
 	    design() {
 	      if (this.disabled) {
-	        return tasks_v2_component_elements_chip.ChipDesign.ShadowDisabled;
+	        return ui_system_chip_vue.ChipDesign.ShadowDisabled;
 	      }
-	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent;
+	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, this.meta.id);
-	    },
-	    readonly() {
-	      return !this.task.rights.edit;
+	      return this.task.filledFields[this.meta.id];
 	    }
 	  },
 	  methods: {
@@ -193,7 +252,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.highlightField();
 	        return;
 	      }
-	      this.meta.dialog.setTaskId(this.taskId).onUpdateOnce(this.highlightField).showTo(this.$el);
+	      if (this.isLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: this.featureId
+	        });
+	        return;
+	      }
+	      this.$emit('add', this.$el);
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(this.meta.id);
@@ -201,13 +266,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
-			:text="meta.chipTitle"
+			:design
+			:text="meta.getChipTitle(isTemplate)"
 			:icon="meta.icon"
+			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="meta.id"
-			ref="chip"
 			@click="handleClick"
 		/>
 	`
@@ -216,5 +280,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.RelationTasks = RelationTasks;
 	exports.RelationTasksChip = RelationTasksChip;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Event,BX.Vue3.Directives,BX.UI.System.Typography.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Directives,BX.UI.System.Typography.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
 //# sourceMappingURL=relation-tasks.bundle.js.map

@@ -99,6 +99,10 @@
 	opacity: 1;
 }
 
+.main-grid-cell-content .task-timer {
+	margin-left: 8px;
+}
+
 .tasks-grid-user {
 	display: block;
 	overflow: hidden;

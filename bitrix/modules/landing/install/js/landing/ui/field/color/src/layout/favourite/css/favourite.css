@@ -1,0 +1,127 @@
+.landing-ui-field-color-favourite-head {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 7px;
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
+.landing-ui-field-color-favourite-colors {
+	padding-top: 3px;
+	padding-left: 6px;
+	padding-right: 6px;
+	height: 55px;
+	scrollbar-arrow-color: #ccc;
+	scrollbar-track-color: transparent;
+	scrollbar-base-color: #ccc;
+	scrollbar-shadow-color: #fff;
+	scrollbar-highlight-color: #fff;
+	/*Firefox fix */
+	scrollbar-width: thin;
+	scrollbar-color: #ccc transparent;
+	overflow-y: auto;
+}
+
+.landing-ui-field-color-favourite-colors::-webkit-scrollbar {
+	cursor: pointer;
+	width: 6px;
+}
+
+.landing-ui-field-color-favourite-colors::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.landing-ui-field-color-favourite-colors::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	border-radius: 5px;
+	cursor: pointer;
+	opacity: .4;
+	transition: .2s;
+}
+
+.landing-ui-field-color-favourite-colors:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+.landing-ui-field-color-favourite-colors.edit-mode .landing-ui-field-color-favourite-item-container.active:before {
+	display: none;
+}
+
+.landing-ui-field-color-favourite-items-container {
+	--tile-size: 24px;
+	--gap: 7px;
+
+	display: grid;
+	grid-template-columns: repeat(8, minmax(0, var(--tile-size)));
+	gap: var(--gap);
+	width: 100%;
+}
+
+.landing-ui-field-color-favourite-item,
+.landing-ui-field-color-favourite-item-add {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--ui-color-base-10);
+	border-radius: var(--ui-border-radius-xs);
+	box-sizing: border-box;
+}
+
+.landing-ui-field-color-favourite-item-add {
+	background: url(../images/landing-plus.svg) center no-repeat;
+	cursor: pointer;
+}
+
+.landing-ui-field-color-favourite-item-container {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	width: 100%;
+}
+
+.landing-ui-field-color-favourite-item-container.active:before {
+	content: '';
+	position: absolute;
+	right: -4px;
+	top: -4px;
+	width: 14px;
+	height: 14px;
+	border-radius: var(--ui-border-radius-circle);
+	background-image: url(../images/landing-badge-success.svg);
+}
+
+.landing-ui-field-color-favourite-item-remove-button {
+	position: absolute;
+	right: -2px;
+	top: -1px;
+	width: 14px;
+	height: 14px;
+	border-radius: var(--ui-border-radius-circle);
+	background-image: url(../images/landing-badge-cancel.svg);
+	cursor: pointer;
+}
+
+.landing-ui-field-color-favourite-head-title {
+	line-height: 20px;
+	font-size: 13px;
+	color: var(--ui-color-base-90);
+}
+
+.landing-ui-field-color-favourite-head-button-change,
+.landing-ui-field-color-favourite-head-button-save {
+	display: inline-flex;
+	border-bottom: 1px solid rgba(168, 173, 180, .28);
+	font-size: 13px;
+	color: var(--ui-color-base-50);
+	transition: border-bottom .3s;
+	cursor: pointer;
+}
+
+.landing-ui-field-color-favourite-head-button-change:hover,
+.landing-ui-field-color-favourite-head-button-save:hover {
+	border-bottom: 1px solid transparent;
+}

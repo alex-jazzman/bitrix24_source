@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_core,ui_uploader_core,ui_iconSet_api_vue,ui_iconSet_main,tasks_v2_const,tasks_v2_provider_service_fileService) {
+(function (exports,main_core,ui_uploader_core,ui_iconSet_api_vue,ui_iconSet_main,tasks_v2_provider_service_fileService) {
 	'use strict';
 
 	// @vue/component
@@ -11,8 +11,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
 	  props: {
-	    taskId: {
+	    entityId: {
 	      type: [Number, String],
+	      required: true
+	    },
+	    entityType: {
+	      type: String,
+	      default: tasks_v2_provider_service_fileService.EntityTypes.Task
+	    },
+	    container: {
+	      type: Object,
 	      required: true
 	    },
 	    bottom: {
@@ -23,7 +31,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  setup(props) {
 	    return {
 	      Main: ui_iconSet_api_vue.Main,
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId)
+	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.entityId, props.entityType)
 	    };
 	  },
 	  data() {
@@ -33,12 +41,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    readonly() {
-	      return !this.task.rights.edit;
-	    },
 	    dropAreaStyles() {
 	      return {
 	        bottom: `${this.bottom}px`
@@ -46,20 +48,21 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    iconSize() {
 	      return 69;
-	    },
-	    container() {
-	      var _this$$parent;
-	      return (_this$$parent = this.$parent) == null ? void 0 : _this$$parent.$el;
 	    }
 	  },
-	  mounted() {
-	    if (!main_core.Type.isElementNode(this.container) || this.readonly) {
-	      return;
+	  watch: {
+	    container: {
+	      immediate: true,
+	      handler(newValue) {
+	        if (!main_core.Type.isElementNode(newValue)) {
+	          return;
+	        }
+	        this.bindEvents();
+	      }
 	    }
-	    this.bindEvents();
 	  },
 	  beforeUnmount() {
-	    if (!main_core.Type.isElementNode(this.container) || this.readonly) {
+	    if (!main_core.Type.isElementNode(this.container)) {
 	      return;
 	    }
 	    this.unbindEvents();
@@ -114,5 +117,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.DropZone = DropZone;
 
-}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.UI.Uploader,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.UI.Uploader,BX.UI.IconSet,BX,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=drop-zone.bundle.js.map

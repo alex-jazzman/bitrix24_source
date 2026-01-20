@@ -14,7 +14,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
 Main\Localization\Loc::loadMessages(__FILE__);
 
 $userId = \Bitrix\Intranet\CurrentUser::get()->getId();

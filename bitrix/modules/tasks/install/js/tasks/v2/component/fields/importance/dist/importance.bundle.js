@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_provider_service_taskService) {
+(function (exports,ui_vue3_directives_hint,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_component_elements_hint) {
 	'use strict';
 
 	// @vue/component
@@ -11,11 +11,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  inject: {
+	    task: {},
+	    taskId: {}
 	  },
 	  setup() {
 	    return {
@@ -23,11 +24,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    readonly() {
 	      return !this.task.rights.edit;
+	    },
+	    tooltip() {
+	      const phraseCode = this.task.isImportant ? 'TASKS_V2_IMPORTANCE_ACTIVE_HINT' : 'TASKS_V2_IMPORTANCE_INACTIVE_HINT';
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        html: this.loc(phraseCode, {
+	          '[br/]': '<br/>'
+	        }),
+	        popupOptions: {
+	          offsetLeft: this.$el.offsetWidth / 2
+	        },
+	        timeout: 500
+	      });
+	    },
+	    isResponsible() {
+	      const userId = tasks_v2_core.Core.getParams().currentUser.id;
+	      return this.task.responsibleIds.includes(userId) || this.task.accomplicesIds.includes(userId);
 	    }
 	  },
 	  methods: {
@@ -43,6 +57,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
+			v-if="!readonly || (isResponsible && task.isImportant)"
+			v-hint="tooltip"
 			class="tasks-field-importance"
 			:class="{ '--active': task.isImportant, '--readonly': readonly }"
 			:data-task-id="taskId"
@@ -50,12 +66,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-value="task.isImportant"
 			@click="handleClick"
 		>
-			<BIcon :name="task.isImportant ? Outline.FIRE_SOLID : Outline.FIRE" :hoverable="false"/>
+			<BIcon :name="task.isImportant ? Outline.FIRE_SOLID : Outline.FIRE"/>
 		</div>
 	`
 	};
 
 	exports.Importance = Importance;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Directives,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=importance.bundle.js.map

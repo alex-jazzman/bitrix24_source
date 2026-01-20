@@ -1,0 +1,40 @@
+<?php
+
+$MESS['BOOKING_SRE_APP_SAVE_BUTTON'] = 'Сохранить';
+$MESS['BOOKING_SRE_APP_CANCEL_BUTTON'] = 'Отмена';
+$MESS['BOOKING_SRE_TAB_SKUS_LABEL'] = 'Услуги';
+$MESS['BOOKING_SRE_TAB_RESOURCES_LABEL'] = 'Ресурсы';
+
+$MESS['BOOKING_SRE_GROUP_ACTION_BAR_TITLE'] = 'Выбрано: #COUNT#';
+$MESS['BOOKING_SRE_GROUP_ACTION_BAR_ADD_RESOURCES'] = 'Добавить ресурс';
+$MESS['BOOKING_SRE_GROUP_ACTION_BAR_ADD_SKUS'] = 'Добавить услугу';
+
+$MESS['BOOKING_SERVICES_SETTINGS_EMPTY_STATE_TITLE'] = 'Начните с первой услуги';
+$MESS['BOOKING_SERVICES_SETTINGS_EMPTY_STATE_DESCRIPTION'] = 'Создайте услугу, чтобы клиенты могли записываться';
+$MESS['BOOKING_SERVICES_SETTINGS_EMPTY_STATE_ADD_BUTTON'] = 'Добавить услуги';
+$MESS['BOOKING_RESOURCES_SETTINGS_EMPTY_STATE_TITLE'] = 'Начните с первого ресурса';
+$MESS['BOOKING_RESOURCES_SETTINGS_EMPTY_STATE_DESCRIPTION'] = 'Добавьте ресурс, чтобы клиенты могли записываться';
+$MESS['BOOKING_RESOURCES_SETTINGS_EMPTY_STATE_ADD_BUTTON'] = 'Добавить ресурс';
+
+$MESS['BOOKING_SERVICES_SETTINGS_EMPTY_STATE_SEARCH_TITLE'] = 'Ничего не найдено';
+$MESS['BOOKING_SERVICES_SETTINGS_EMPTY_STATE_SEARCH_DESCRIPTION'] = 'Создайте услугу «#SEARCH_TEXT#», чтобы клиенты могли записываться ';
+
+$MESS['BOOKING_SRE_SKU_RESOURCES_LABEL'] = 'Ресурсы, которые оказывают услуги';
+$MESS['BOOKING_SRE_RESOURCE_SKUS_LABEL'] = 'Услуги, которые оказывает ресурс';
+$MESS['BOOKING_SRE_RESOURCES_FOR_SKU_NOT_SELECTED'] = 'Добавьте хотя бы одного исполнителя или удалите услугу';
+$MESS['BOOKING_SRE_SKUS_FOR_RESOURCE_NOT_SELECTED'] = 'Добавьте хотя бы одну услугу или удалите ресурс';
+
+$MESS['BOOKING_SRE_ADD_RESOURCE_BUTTON'] = 'Добавить ресурс';
+$MESS['BOOKING_SRE_ADD_SKU_BUTTON'] = 'Добавить услуги';
+
+$MESS['BOOKING_SERVICES_SETTINGS_POPUP_SEARCH_SKU_INPUT_PLACEHOLDER'] = 'Поиск по услугам';
+$MESS['BOOKING_SERVICES_SETTINGS_POPUP_SEARCH_RESOURCE_INPUT_PLACEHOLDER'] = 'Поиск по ресурсам';
+
+$MESS['BOOKING_SRE_ALL_RESOURCES_LABEL'] = 'Все ресурсы';
+$MESS['BOOKING_SRE_ALL_SERVICES_LABEL'] = 'Все услуги';
+
+$MESS['BOOKING_RESOURCES_SETTINGS_EMPTY_STATE_SEARCH_TITLE'] = 'Ничего не найдено';
+$MESS['BOOKING_RESOURCES_SETTINGS_EMPTY_STATE_SEARCH_DESCRIPTION'] = 'Добавьте ресурс «#SEARCH_TEXT#», чтобы назначать его на услуги';
+
+$MESS['BOOKING_SRE_RESOURCES_GROUP_COLLAPSE'] = 'Свернуть';
+$MESS['BOOKING_SRE_RESOURCES_GROUP_EXPAND'] = 'Развернуть';

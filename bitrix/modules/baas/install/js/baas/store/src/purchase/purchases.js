@@ -96,18 +96,16 @@ export class Purchases extends EventEmitter
 
 	groupPackages(purchases: ?ResponsePurchaseDataType[]): Object
 	{
-		const singlePackages = {};
+		const singlePackages = [];
 		const groupedPackages = {};
 
 		[...purchases]
 			.forEach((purchase) => {
-				const onePackageInAPurchase = purchase.length <= 1;
-
 				[...purchase]
 					.forEach((purchasedPackage) => {
 						let id = DateTimeFormat.parse(purchasedPackage.expirationDate, false, this.FORMAT_DATE).getTime();
 
-						if (onePackageInAPurchase)
+						if (purchase.length <= 1)
 						{
 							if (!singlePackages[id])
 							{
@@ -122,18 +120,47 @@ export class Purchases extends EventEmitter
 							{
 								groupedPackages[id] = {};
 							}
-							groupedPackages[id][
-								DateTimeFormat.parse(purchasedPackage.startDate, false, this.FORMAT_DATE).getTime()
-							] = purchasedPackage;
+							const time = DateTimeFormat.parse(purchasedPackage.startDate, false, this.FORMAT_DATE).getTime();
+							groupedPackages[id][time] = purchasedPackage;
 						}
 					})
 				;
 			})
 		;
 
+		const packageComparator = (a, b) => {
+			const getSortingRank = (pkg) => {
+				const hasService = pkg.services && pkg.services[0];
+
+				switch (true)
+				{
+					case hasService && pkg.services[0].current > 0 && pkg.actual === 'Y':
+						return 0;
+					case pkg.actual === 'N':
+						return 1;
+					case hasService && pkg.services[0].current === 0:
+						return 2;
+					default:
+						return 3;
+				}
+			};
+			const rankA = getSortingRank(a);
+			const rankB = getSortingRank(b);
+			if (rankA !== rankB)
+			{
+				return rankA - rankB;
+			}
+			const dateA = DateTimeFormat.parse(a.expirationDate, false, this.FORMAT_DATE).getTime();
+			const dateB = DateTimeFormat.parse(b.expirationDate, false, this.FORMAT_DATE).getTime();
+
+			return dateA - dateB;
+		};
+
+		singlePackages.sort(packageComparator);
+
 		const finalPackages = singlePackages;
 
-		// region find the earliest date in propped packages
+		const groupedPackageTopElements = [];
 		Object
 			.keys(groupedPackages)
 			.forEach((key) => {
@@ -143,21 +170,28 @@ export class Purchases extends EventEmitter
 						return a < b ? -1 : 1;
 					})
 				;
-				let earliestDate = sortedKeys[0];
+				const earliestDate = sortedKeys[0];
+				const topElement = { ...groupedPackages[key][earliestDate] };
+				topElement.groupKey = key;
+				topElement.earliestDate = earliestDate;
+
+				groupedPackageTopElements.push(topElement);
+			});
+
+		groupedPackageTopElements
+			.sort(packageComparator)
+			.forEach((topElement) => {
+				let earliestDate = topElement.earliestDate;
 				while (finalPackages[earliestDate])
 				{
 					earliestDate += 1;
 				}
-				finalPackages[earliestDate] = groupedPackages[key];
+				finalPackages[earliestDate] = groupedPackages[topElement.groupKey];
 			})
 		;
-		// endregion
 
 		const sortedKeys = Object
 			.keys(finalPackages)
-			.sort((a, b) => {
-				return a < b ? -1 : 1;
-			})
 		;
 
 		return [...sortedKeys]

@@ -5,23 +5,20 @@ import { Core } from 'im.v2.application.core';
 import type { Store, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 import type { ImModelReactions } from 'im.v2.model';
 
-export const Reaction = Object.freeze({
-	like: 'like',
-	kiss: 'kiss',
-	laugh: 'laugh',
-	wonder: 'wonder',
-	cry: 'cry',
-	angry: 'angry',
-	facepalm: 'facepalm',
-});
+type ReactionPayload = {
+	messageId: number,
+	userId: number,
+	reaction: string
+};
 
-type ReactionType = $Values<typeof Reaction>;
+type SetReactionPayload = ReactionPayload & { withReplace?: boolean };
 
 type RawReactions = {
 	messageId: number,
 	reactionCounters: ReactionCounters,
 	reactionUsers: ReactionUsers,
-	ownReactions: ReactionType[]
+	ownReactions: string[],
+	ownReactionsToRemove?: string[],
 };
 type ReactionCounters = {[reactionType: string]: number};
 type ReactionUsers = {[reactionType: string]: number[]};
@@ -56,6 +53,7 @@ export class ReactionsModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
+			/** @function messages/reactions/getByMessageId */
 			getByMessageId: (state: ReactionsState) => (messageId: number): ?ImModelReactions => {
 				return state.collection[messageId];
 			},
@@ -65,98 +63,85 @@ export class ReactionsModel extends BuilderModel
 	getActions(): ActionTree
 	{
 		return {
+			/** @function messages/reactions/set */
 			set: (store: Store, payload: RawReactionsList) => {
 				store.commit('set', this.prepareSetPayload(payload));
 			},
-			setReaction: (
-				store: Store,
-				payload: {messageId: number, userId: number, reaction: ReactionType},
-			) => {
-				if (!Reaction[payload.reaction])
-				{
-					return;
-				}
-
-				if (!store.state.collection[payload.messageId])
-				{
-					store.commit('initCollection', payload.messageId);
-				}
-
+			/** @function messages/reactions/setReaction */
+			setReaction: (store: Store, payload: ReactionPayload & { withReplace: boolean }) => {
 				store.commit('setReaction', payload);
 			},
-			removeReaction: (
-				store: Store,
-				payload: {messageId: number, userId: number, reaction: ReactionType},
-			) => {
-				if (!store.state.collection[payload.messageId] || !Reaction[payload.reaction])
+			/** @function messages/reactions/removeReaction */
+			removeReaction: (store: Store, payload: ReactionPayload) => {
+				if (!store.state.collection[payload.messageId])
 				{
 					return;
 				}
+
 				store.commit('removeReaction', payload);
 			},
+			/** @function messages/reactions/clearCollection */
 			clearCollection: (store: Store) => {
 				store.commit('clearCollection');
 			},
 		};
 	}
 
+	/* eslint-disable no-param-reassign */
 	getMutations(): MutationTree
 	{
 		return {
 			set: (state: ReactionsState, payload: RawReactionsList) => {
 				payload.forEach((item) => {
-					const newItem = {
+					const currentItem = state.collection[item.messageId];
+					const currentOwnReactions = currentItem ? currentItem.ownReactions : [];
+
+					const newOwnReactions = item.ownReactions ?? [];
+					const preparedOwnReactions = new Set([...newOwnReactions, ...currentOwnReactions]);
+
+					if (item.ownReactionsToRemove)
+					{
+						item.ownReactionsToRemove.forEach((reactionToRemove) => {
+							preparedOwnReactions.delete(reactionToRemove);
+						});
+					}
+
+					state.collection[item.messageId] = {
 						reactionCounters: item.reactionCounters,
 						reactionUsers: item.reactionUsers,
+						ownReactions: preparedOwnReactions,
 					};
-
-					const currentItem = state.collection[item.messageId];
-					const newOwnReaction = Boolean(item.ownReactions);
-					if (newOwnReaction)
-					{
-						newItem.ownReactions = item.ownReactions;
-					}
-					else
-					{
-						newItem.ownReactions = currentItem ? currentItem.ownReactions : new Set();
-					}
-
-					// eslint-disable-next-line no-param-reassign
-					state.collection[item.messageId] = newItem;
 				});
 			},
-			setReaction: (
-				state: ReactionsState,
-				payload: {messageId: number, userId: number, reaction: ReactionType},
-			) => {
+			setReaction: (state: ReactionsState, payload: SetReactionPayload) => {
 				const { messageId, userId, reaction } = payload;
+				if (!state.collection[messageId])
+				{
+					state.collection[messageId] = this.getElementState();
+				}
+
 				const reactions = state.collection[messageId];
+
 				if (Core.getUserId() === userId)
 				{
-					this.removeAllCurrentUserReactions(state, messageId);
-					reactions.ownReactions.add(reaction);
+					this.handleOwnReactions(reactions, payload);
 				}
 
 				if (!reactions.reactionCounters[reaction])
 				{
 					reactions.reactionCounters[reaction] = 0;
 				}
-				const currentCounter = reactions.reactionCounters[reaction];
-				if (currentCounter + 1 <= USERS_TO_SHOW)
+
+				const currentReactionCounter = reactions.reactionCounters[reaction];
+				const newReactionCounter = currentReactionCounter + 1;
+				if (newReactionCounter <= USERS_TO_SHOW)
 				{
-					if (!reactions.reactionUsers[reaction])
-					{
-						reactions.reactionUsers[reaction] = new Set();
-					}
-					reactions.reactionUsers[reaction].add(userId);
+					this.addUserToReaction(reactions, payload);
 				}
 
-				reactions.reactionCounters[reaction]++;
+				reactions.reactionCounters[reaction] = newReactionCounter;
 			},
-			removeReaction: (
-				state: ReactionsState,
-				payload: {messageId: number, userId: number, reaction: ReactionType},
-			) => {
+			removeReaction: (state: ReactionsState, payload: ReactionPayload) => {
 				const { messageId, userId, reaction } = payload;
 				const reactions = state.collection[messageId];
 
@@ -172,23 +157,37 @@ export class ReactionsModel extends BuilderModel
 					delete reactions.reactionCounters[reaction];
 				}
 			},
-			initCollection: (state: ReactionsState, messageId: number) => {
-				if (!state.collection[messageId])
-				{
-					// eslint-disable-next-line no-param-reassign
-					state.collection[messageId] = this.getElementState();
-				}
-			},
 			clearCollection: (state: ReactionsState) => {
-				// eslint-disable-next-line no-param-reassign
 				state.collection = {};
 			},
 		};
 	}
 
-	removeAllCurrentUserReactions(state: ReactionsState, messageId: Number)
+	handleOwnReactions(reactions: ImModelReactions, payload: SetReactionPayload)
 	{
-		const reactions = state.collection[messageId];
+		const { reaction, withReplace = true } = payload;
+		if (withReplace)
+		{
+			this.removeAllCurrentUserReactions(reactions);
+		}
+
+		reactions.ownReactions.add(reaction);
+	}
+
+	addUserToReaction(reactions: ImModelReactions, payload: SetReactionPayload)
+	{
+		const { userId, reaction } = payload;
+
+		if (!reactions.reactionUsers[reaction])
+		{
+			reactions.reactionUsers[reaction] = new Set();
+		}
+
+		reactions.reactionUsers[reaction].add(userId);
+	}
+
+	removeAllCurrentUserReactions(reactions: ImModelReactions)
+	{
 		reactions.ownReactions.forEach((reaction) => {
 			reactions.reactionUsers[reaction]?.delete(Core.getUserId());
 			reactions.reactionCounters[reaction]--;
@@ -201,11 +200,7 @@ export class ReactionsModel extends BuilderModel
 		reactions.ownReactions = new Set();
 	}
 
-	prepareSetPayload(payload: RawReactionsList): {
-		messageId: number,
-		reactionCounters: ReactionCounters,
-		reactionUsers: ReactionUsers
-	}
+	prepareSetPayload(payload: RawReactionsList): RawReactionsList
 	{
 		return payload.map((item) => {
 			const reactionUsers = {};
@@ -213,23 +208,10 @@ export class ReactionsModel extends BuilderModel
 				reactionUsers[reaction] = new Set(users);
 			});
 
-			const reactionCounters = {};
-			Object.entries(item.reactionCounters).forEach(([reaction, counter]) => {
-				reactionCounters[reaction] = counter;
-			});
-
-			const result = {
-				messageId: item.messageId,
-				reactionCounters,
+			return {
+				...item,
 				reactionUsers,
 			};
-
-			if (item.ownReactions?.length > 0)
-			{
-				result.ownReactions = new Set(item.ownReactions);
-			}
-
-			return result;
 		});
 	}
 }

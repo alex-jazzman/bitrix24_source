@@ -1,6 +1,6 @@
 import { Type, Extension, Loc } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
-import { Builder, Store } from 'ui.vue3.vuex';
+import { Builder } from 'ui.vue3.vuex';
 
 import 'pull.client';
 import 'rest.client';
@@ -19,163 +19,55 @@ import {
 	MarketModel,
 	CountersModel,
 	CopilotModel,
+	AiAssistantModel,
 } from 'im.v2.model';
 import {
 	BasePullHandler,
 	RecentPullHandler,
+	RecentUnreadPullHandler,
 	NotificationPullHandler,
 	NotifierPullHandler,
 	OnlinePullHandler,
 	CounterPullHandler,
 	AnchorPullHandler,
+	SidebarPullHandler,
 } from 'im.v2.provider.pull';
-import { Logger } from 'im.v2.lib.logger';
 import { OpenLinesLaunchResources } from 'imopenlines.v2.lib.launch-resources';
 
+import type { Store } from 'ui.vue3.vuex';
 import type { RestClient } from 'rest.client';
 import type { PullClient } from 'pull.client';
+import type { ApplicationData } from './types/types';
 
 class CoreApplication
 {
-	host: string;
-	userId: number;
-	siteId: string;
-	siteDir: string;
-	languageId: string;
-	applicationData: {[key]: any} = {};
+	#initPromise: ?Promise<CoreApplication> = null;
+	#store: ?Store = null;
+	#restClient: ?RestClient = null;
+	#pullClient: ?PullClient = null;
+	#host: string;
+	#userId: number;
+	#siteId: string;
+	#languageId: string;
+	#offline: boolean = false;
+	#applicationData: ApplicationData = {};
 
-	/* region 01. Initialize and store data */
 	constructor()
 	{
-		this.inited = false;
-		this.initPromise = new Promise((resolve) => {
-			this.initPromiseResolver = resolve;
-		});
-
-		this.offline = false;
-
-		this.vuexAdditionalModel = [];
-
-		this.store = null;
-		this.storeBuilder = null;
-
-		this.prepareVariables();
-		this.initRestClient();
+		this.#prepareVariables();
+		this.#initRestClient();
 	}
 
-	start()
+	ready(): Promise<CoreApplication>
 	{
-		this.initStorage()
-			.then(() => this.initPull())
-			.then(() => this.initComplete())
-			.catch((error) => {
-				Logger.error('Core: error starting core application', error);
-			})
-		;
-	}
-
-	prepareVariables()
-	{
-		this.localize = BX ? { ...BX.message } : {};
-
-		this.host = location.origin;
-		this.userId = Number.parseInt(Loc.getMessage('USER_ID'), 10) ?? 0;
-		this.siteId = Loc.getMessage('SITE_ID') ?? 's1';
-		this.siteDir = Loc.getMessage('SITE_DIR') ?? 's1';
-		this.languageId = Loc.getMessage('LANGUAGE_ID') ?? 'en';
-	}
-
-	initRestClient()
-	{
-		this.restInstance = BX.RestClient;
-		this.restClient = BX.rest;
-	}
-
-	initStorage(): Promise
-	{
-		const builder = Builder.init()
-			.addModel(ApplicationModel.create())
-			.addModel(MessagesModel.create())
-			.addModel(ChatsModel.create())
-			.addModel(FilesModel.create())
-			.addModel(UsersModel.create())
-			.addModel(RecentModel.create())
-			.addModel(CountersModel.create())
-			.addModel(NotificationsModel.create())
-			.addModel(SidebarModel.create())
-			.addModel(MarketModel.create())
-			.addModel(CopilotModel.create())
-		;
-
-		if (OpenLinesLaunchResources)
+		if (!this.#initPromise)
 		{
-			OpenLinesLaunchResources.models.forEach((model) => {
-				builder.addModel(model.create());
-			});
+			this.#initPromise = this.#init();
 		}
 
-		return builder.build().then((result) => {
-			this.store = result.store;
-			this.storeBuilder = result.builder;
-
-			return true;
-		});
+		return this.#initPromise;
 	}
 
-	initPull(): Promise
-	{
-		this.pullInstance = BX.PullClient;
-		this.pullClient = BX.PULL;
-		if (!this.pullClient)
-		{
-			return Promise.reject(new Error('Core: error setting pull client'));
-		}
-
-		this.pullClient.subscribe(new BasePullHandler());
-		this.pullClient.subscribe(new RecentPullHandler());
-		this.pullClient.subscribe(new NotificationPullHandler());
-		this.pullClient.subscribe(new NotifierPullHandler());
-		this.pullClient.subscribe(new OnlinePullHandler());
-		this.pullClient.subscribe(new CounterPullHandler());
-		this.pullClient.subscribe(new AnchorPullHandler());
-
-		if (OpenLinesLaunchResources)
-		{
-			OpenLinesLaunchResources.pullHandlers.forEach((Handler) => {
-				this.pullClient.subscribe(new Handler());
-			});
-		}
-
-		this.pullClient.subscribe({
-			type: this.pullInstance.SubscriptionType.Status,
-			callback: this.onPullStatusChange.bind(this),
-		});
-
-		return Promise.resolve();
-	}
-
-	initComplete()
-	{
-		this.inited = true;
-		this.initPromiseResolver(this);
-	}
-	/* endregion 01. Initialize and store data */
-
-	/* region 02. Push & Pull */
-	onPullStatusChange(data)
-	{
-		if (data.status === this.pullInstance.PullStatus.Online)
-		{
-			this.offline = false;
-		}
-		else if (data.status === this.pullInstance.PullStatus.Offline)
-		{
-			this.offline = true;
-		}
-	}
-	/* endregion 02. Push & Pull */
-
-	/* region 04. Template engine */
 	createVue(application, config = {}): Promise
 	{
 		const initConfig = {};
@@ -235,60 +127,58 @@ class CoreApplication
 
 			// eslint-disable-next-line no-param-reassign
 			application.bitrixVue = bitrixVue;
-			bitrixVue.use(this.store).mount(initConfig.el);
+			bitrixVue.use(this.#store).mount(initConfig.el);
 		});
 	}
-	/* endregion 04. Template engine */
 
-	/* region 05. Core methods */
 	getHost(): string
 	{
-		return this.host;
+		return this.#host;
 	}
 
 	getUserId(): number
 	{
-		return this.userId;
+		return this.#userId;
 	}
 
 	getSiteId(): string
 	{
-		return this.siteId;
+		return this.#siteId;
 	}
 
 	getLanguageId(): string
 	{
-		return this.languageId;
+		return this.#languageId;
 	}
 
 	getStore(): Store
 	{
-		return this.store;
+		return this.#store;
 	}
 
 	getRestClient(): RestClient
 	{
-		return this.restClient;
+		return this.#restClient;
 	}
 
 	getPullClient(): PullClient
 	{
-		return this.pullClient;
+		return this.#pullClient;
 	}
 
 	setApplicationData(data: {string: any})
 	{
-		this.applicationData = { ...this.applicationData, ...data };
+		this.#applicationData = { ...this.#applicationData, ...data };
 	}
 
-	getApplicationData(): {[key]: any}
+	getApplicationData(): ApplicationData
 	{
-		return this.applicationData;
+		return this.#applicationData;
 	}
 
 	isOnline(): boolean
 	{
-		return !this.offline;
+		return !this.#offline;
 	}
 
 	isCloud(): boolean
@@ -298,20 +188,109 @@ class CoreApplication
 		return settings.get('isCloud');
 	}
 
-	ready(): Promise
+	async #init(): Promise<CoreApplication>
 	{
-		if (this.inited)
+		try
 		{
-			return Promise.resolve(this);
+			await this.#initStorage();
+			await this.#initPull();
+
+			return this;
 		}
-
-		Core.start();
-
-		return this.initPromise;
+		catch (error)
+		{
+			console.error('Core: error starting core application', error);
+			throw error;
+		}
 	}
 
-	/* endregion 05. Methods */
+	#prepareVariables()
+	{
+		this.#host = location.origin;
+		this.#userId = Number.parseInt(Loc.getMessage('USER_ID'), 10) ?? 0;
+		this.#siteId = Loc.getMessage('SITE_ID') ?? 's1';
+		this.#languageId = Loc.getMessage('LANGUAGE_ID') ?? 'en';
+	}
+
+	#initRestClient()
+	{
+		this.#restClient = BX.rest;
+	}
+
+	async #initStorage(): Promise
+	{
+		const builder = Builder.init()
+			.addModel(ApplicationModel.create())
+			.addModel(MessagesModel.create())
+			.addModel(ChatsModel.create())
+			.addModel(FilesModel.create())
+			.addModel(UsersModel.create())
+			.addModel(RecentModel.create())
+			.addModel(CountersModel.create())
+			.addModel(NotificationsModel.create())
+			.addModel(SidebarModel.create())
+			.addModel(MarketModel.create())
+			.addModel(CopilotModel.create())
+			.addModel(AiAssistantModel.create())
+		;
+
+		if (OpenLinesLaunchResources)
+		{
+			OpenLinesLaunchResources.models.forEach((model) => {
+				builder.addModel(model.create());
+			});
+		}
+
+		const buildResult: { store: Store } = await builder.build();
+		this.#store = buildResult.store;
+	}
+
+	#initPull(): Promise
+	{
+		this.#pullClient = BX.PULL;
+		if (!this.#pullClient)
+		{
+			return Promise.reject(new Error('Core: error setting pull client'));
+		}
+
+		this.#pullClient.subscribe(new BasePullHandler());
+		this.#pullClient.subscribe(new RecentPullHandler());
+		this.#pullClient.subscribe(new RecentUnreadPullHandler());
+		this.#pullClient.subscribe(new NotificationPullHandler());
+		this.#pullClient.subscribe(new NotifierPullHandler());
+		this.#pullClient.subscribe(new OnlinePullHandler());
+		this.#pullClient.subscribe(new CounterPullHandler());
+		this.#pullClient.subscribe(new AnchorPullHandler());
+		this.#pullClient.subscribe(new SidebarPullHandler());
+
+		if (OpenLinesLaunchResources)
+		{
+			OpenLinesLaunchResources.pullHandlers.forEach((Handler) => {
+				this.#pullClient.subscribe(new Handler());
+			});
+		}
+
+		this.#pullClient.subscribe({
+			type: BX.PullClient.SubscriptionType.Status,
+			callback: this.#onPullStatusChange.bind(this),
+		});
+
+		return Promise.resolve();
+	}
+
+	#onPullStatusChange(data)
+	{
+		if (data.status === BX.PullClient.PullStatus.Online)
+		{
+			this.#offline = false;
+		}
+		else if (data.status === BX.PullClient.PullStatus.Offline)
+		{
+			this.#offline = true;
+		}
+	}
 }
 
 const Core = new CoreApplication();
+
 export { Core, CoreApplication };

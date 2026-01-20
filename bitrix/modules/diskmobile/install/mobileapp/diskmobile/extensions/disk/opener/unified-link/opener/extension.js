@@ -5,7 +5,10 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 	const { showInternalAlert } = require('error');
 	const { isEmpty } = require('utils/object');
 	const { FileType } = require('disk/enum');
+	const { withCurrentDomain } = require('utils/url');
 	const { getUnifiedLinkData } = require('disk/opener/unified-link/rest');
+
+	const supportedFileTypes = new Set([FileType.FLIPCHART, FileType.DOCUMENT]);
 
 	/**
 	 * @class UnifiedOpener
@@ -39,7 +42,7 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 				return Promise.reject(new Error('uniqueCode is required'));
 			}
 
-			const linkData = await this.#getUnifiedLinkData();
+			const linkData = await this.#getUnifiedLinkData().catch(console.error);
 
 			if (isEmpty(linkData) || linkData.status !== 'success')
 			{
@@ -53,19 +56,36 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 
 		async factoryOpeners(fileData)
 		{
-			if (FileType.FLIPCHART === fileData.typeFile)
+			if (!this.#isSupportedFileType(fileData.typeFile))
 			{
-				const { boardOpener } = await requireLazy('disk:opener/board');
-				const { queryParams, ...restProps } = this.#props;
+				console.warn('UnifiedOpener: Unsupported file type - ', fileData.typeFile);
 
-				return boardOpener({
-					...restProps,
-					...queryParams,
-					fileData,
-				});
+				return null;
 			}
 
-			return Promise.reject(new Error('Unsupported file type for unified opener'));
+			const link = fileData.links?.download;
+			if (!link)
+			{
+				return null;
+			}
+
+			const name = fileData.name;
+			const fileLink = withCurrentDomain(link);
+
+			switch (fileData.typeFile)
+			{
+				case FileType.FLIPCHART:
+					return this.#openBoard(fileData);
+				case FileType.PDF:
+				case FileType.DOCUMENT:
+					return viewer.openDocument(fileLink, name);
+				case FileType.IMAGE:
+					return viewer.openImage(fileLink, name);
+				case FileType.VIDEO:
+					return viewer.openVideo(fileLink);
+				default:
+					return Application.openUrl(fileLink);
+			}
 		}
 
 		#getUnifiedLinkData = () => {
@@ -79,6 +99,23 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 			const { queryParams } = this.#props;
 
 			return queryParams;
+		}
+
+		async #openBoard(fileData)
+		{
+			const { boardOpener } = await requireLazy('disk:opener/board');
+			const { queryParams, ...restProps } = this.#props;
+
+			return boardOpener({
+				...restProps,
+				...queryParams,
+				fileData,
+			});
+		}
+
+		#isSupportedFileType(fileType)
+		{
+			return supportedFileTypes.has(fileType);
 		}
 	}
 

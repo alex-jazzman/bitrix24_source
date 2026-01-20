@@ -6,8 +6,9 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 
-	const { ReactionType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 	const { reactionDefaultElement } = require('im/messenger/model/messages/reactions/default-element');
 
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -112,20 +113,27 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 			 * @param {ReactionsModelSetReactionPayload} payload
 			 */
 			setReaction: (store, payload) => {
-				if (!ReactionType[payload.reaction])
+				const availableReactionCollection = ReactionAssetsManager.getInstance().getAvailableReactions();
+				if (!availableReactionCollection.has(payload.reaction))
 				{
-					return;
-				}
-				const message = store.rootGetters['messagesModel/getById'](payload.messageId);
-				if (!message)
-				{
+					logger.warn('reactionsModel.setReaction: reactionId is not available', payload.reaction);
+
 					return;
 				}
 
+				const message = store.rootGetters['messagesModel/getById'](payload.messageId);
+				if (!message)
+				{
+					logger.warn('reactionsModel.setReaction: message is not found', payload.messageId);
+
+					return;
+				}
+
+				const actionName = payload.actionName ?? 'setReaction';
 				if (!store.state.collection[payload.messageId])
 				{
 					store.commit('add', {
-						actionName: 'setReaction',
+						actionName,
 						data: {
 							reaction: prepareAddPayload(payload),
 						},
@@ -135,11 +143,23 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 				}
 
 				store.commit('updateWithId', {
-					actionName: 'setReaction',
+					actionName,
 					data: {
 						reaction: prepareUpdatePayload(payload, store.state.collection[payload.messageId]),
 					},
 				});
+			},
+
+			/**
+			 * @function messagesModel/reactionsModel/setReactionSilent
+			 * @param store
+			 * @param {ReactionsModelSetReactionSilentPayload} payload
+			 */
+			setReactionSilent: (store, payload) => {
+				return store.dispatch(
+					'setReaction',
+					{ ...payload, actionName: 'setReactionSilent' },
+				);
 			},
 			/**
 			 * @function messagesModel/reactionsModel/removeReaction
@@ -147,8 +167,7 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 			 * @param {ReactionsModelRemoveReactionPayload} payload
 			 */
 			removeReaction: (store, payload) => {
-				const { messageId, userId, reaction } = payload;
-
+				const { messageId, userId, reaction, actionName = 'removeReaction' } = payload;
 				const message = store.rootGetters['messagesModel/getById'](messageId);
 				if (!message)
 				{
@@ -176,11 +195,23 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 				}
 
 				store.commit('updateWithId', {
-					actionName: 'removeReaction',
+					actionName,
 					data: {
 						reaction: result,
 					},
 				});
+			},
+
+			/**
+			 * @function messagesModel/reactionsModel/removeReactionSilent
+			 * @param store
+			 * @param {ReactionsModelRemoveReactionSilentPayload} payload
+			 */
+			removeReactionSilent: (store, payload) => {
+				return store.dispatch(
+					'removeReaction',
+					{ ...payload, actionName: 'removeReactionSilent' },
+				);
 			},
 
 			/**
@@ -241,20 +272,16 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 					const newItem = {
 						reactionCounters: item.reactionCounters,
 						reactionUsers: item.reactionUsers,
+						ownReactions: item.ownReactions,
 						messageId: item.messageId,
 						dialogId: item.dialogId,
 					};
 
 					/** @type {ReactionsModelState} */
 					const currentItem = state.collection[item.messageId];
-					const newOwnReaction = Boolean(item.ownReactions);
-					if (newOwnReaction)
+					if (currentItem)
 					{
-						newItem.ownReactions = item.ownReactions;
-					}
-					else
-					{
-						newItem.ownReactions = currentItem ? currentItem.ownReactions : new Set();
+						newItem.ownReactions = new Set([...currentItem.ownReactions, ...newItem.ownReactions]);
 					}
 
 					state.collection[item.messageId] = newItem;
@@ -321,6 +348,11 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 			};
 
 			if (Type.isArray(reactionPayload.ownReactions) && reactionPayload.ownReactions.length > 0)
+			{
+				result.ownReactions = new Set(reactionPayload.ownReactions);
+			}
+
+			if (Type.isSet(reactionPayload.ownReactions) && [...reactionPayload.ownReactions].length > 0)
 			{
 				result.ownReactions = new Set(reactionPayload.ownReactions);
 			}
@@ -413,6 +445,11 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 	 */
 	function removeAllCurrentUserReactions(reactions)
 	{
+		if (Feature.isMultipleReactionsEnabled)
+		{
+			return;
+		}
+
 		reactions.ownReactions.forEach((reaction) => {
 			if (!reactions.reactionUsers.has(reaction))
 			{

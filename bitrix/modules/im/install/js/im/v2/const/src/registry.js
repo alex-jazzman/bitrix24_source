@@ -42,6 +42,8 @@ export { ErrorCode } from './error';
 export { NavigationMenuItem } from './navigation';
 export { AnchorType } from './anchor';
 export { TranscriptionStatus } from './transcription';
+export { SpecialMentionDialogId } from './mention';
+export { DataAttribute } from './data-attributе';
 
 export type {
 	OnLayoutChangeEvent,
@@ -71,3 +73,4 @@ export type { RawSettings, RawNotificationSettingsBlock, NotificationSettingsBlo
 
 export type { SidebarMainPanelBlockType } from './sidebar';
 export type { LayoutType } from './layout';
+export type { ApplicationContext } from './application';

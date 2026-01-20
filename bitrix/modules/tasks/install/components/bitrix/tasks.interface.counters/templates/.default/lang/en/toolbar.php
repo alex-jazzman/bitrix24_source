@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_COUNTERS_CHAT_BUTTON"] = "Task chats";
 $MESS["TASKS_COUNTER_EXPIRED"] = "Overdue";
 $MESS["TASKS_COUNTER_MORE"] = "More";
 $MESS["TASKS_COUNTER_MY"] = "My items:";

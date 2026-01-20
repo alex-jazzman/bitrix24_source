@@ -323,6 +323,13 @@ export class Form
 
 		result = Tag.render`${result}`;
 
+		if (section.warning)
+		{
+			result.appendChild(
+				Tag.render`<div class="ui-alert ui-alert-warning">${Text.encode(section.warning)}</div>`,
+			);
+		}
+
 		section.elements.forEach((element) =>
 		{
 			if(Type.isObject(element) && element.name)

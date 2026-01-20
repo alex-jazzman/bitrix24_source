@@ -119,7 +119,6 @@ export const ChatCopilotAddedUsersMessage = {
 			<UserListPopup
 				:showPopup="showMoreUsers"
 				:userIds="addedUsers.restUsers"
-				:contextDialogId="dialogId"
 				:bindElement="$refs.addedUsersLink || {}"
 				:withAngle="false"
 				:forceTop="true"

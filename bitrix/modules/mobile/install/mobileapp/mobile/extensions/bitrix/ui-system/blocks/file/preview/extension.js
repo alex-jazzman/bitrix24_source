@@ -3,7 +3,7 @@
  */
 jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 	const { IconView } = require('ui-system/blocks/icon');
-	const { DiskIcon, FileType } = require('assets/icons/src/disk');
+	const { DiskIcon, FileType } = require('assets/icons');
 	const { Color, Component } = require('tokens');
 	const { withCurrentDomain } = require('utils/url');
 	const { ShimmedSafeImage } = require('layout/ui/safe-image');

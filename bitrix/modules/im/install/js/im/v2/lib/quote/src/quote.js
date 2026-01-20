@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Core } from 'im.v2.application.core';
@@ -8,13 +7,23 @@ import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 import { Parser } from 'im.v2.lib.parser';
 
 import type { ImModelMessage, ImModelUser, ImModelChat } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
+
+type SendQuoteEventPayload = {
+	message: ImModelMessage,
+	text: string,
+	dialogId: string,
+	context: ApplicationContext,
+};
 
 const QUOTE_DELIMITER = '-'.repeat(54);
 
 export const Quote = {
-	sendQuoteEvent(message: ImModelMessage, text: string, dialogId: string)
+	sendQuoteEvent(payload: SendQuoteEventPayload)
 	{
-		EventEmitter.emit(EventType.textarea.insertText, {
+		const { message, text, dialogId, context: { emitter } } = payload;
+
+		emitter.emit(EventType.textarea.insertText, {
 			text: this.prepareQuoteText(message, text),
 			dialogId,
 			withNewLine: true,
@@ -59,7 +68,7 @@ const getName = (message: ImModelMessage): string => {
 	const copilotManager = new CopilotManager();
 	if (copilotManager.isCopilotBot(message.authorId))
 	{
-		name = copilotManager.getNameWithRole({
+		name = copilotManager.getName({
 			dialogId: message.authorId,
 			messageId: message.id,
 		});

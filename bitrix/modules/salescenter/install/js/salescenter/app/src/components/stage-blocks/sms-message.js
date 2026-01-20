@@ -2,9 +2,14 @@ import { Loc, ajax as Ajax } from 'main.core';
 import { Block } from 'salescenter.component.stage-block';
 import { StageMixin } from './stage-mixin';
 import { Error, SenderList, UserAvatar, MessageEdit, MessageView, MessageEditor, MessageControl } from 'salescenter.component.stage-block.sms-message';
-import { Manager } from "salescenter.manager";
-import { SenderConfig } from "salescenter.lib";
-import {UI} from "ui.notification";
+import { Manager } from 'salescenter.manager';
+import { SenderConfig } from 'salescenter.lib';
+import { UI } from 'ui.notification';
+import { StatusTypes as Status } from 'salescenter.component.stage-block';
+import { Editor } from 'crm.messagesender.editor';
+import { Router } from 'crm.router';
+import { Dictionary } from 'crm.integration.analytics';
+import { MessageMixin } from './message-mixin';
 
 const TYPE_PHONE = 'phone';
 const TYPE_SENDER = 'sender';
@@ -13,70 +18,70 @@ const SmsMessage = {
 	props: {
 		initSenders: {
 			type: Array,
-			required: true
+			required: true,
 		},
 		initCurrentSenderCode: {
 			type: String,
-			required: false
+			required: false,
+		},
+		messageSenderData: {
+			type: Object,
+			required: false,
 		},
 		initPushedToUseBitrix24Notifications: {
 			type: String,
-			required: false
-		},
-		status: {
-			type: String,
-			required: true
+			required: false,
 		},
 		counter: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		manager: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		selectedSmsSender: {
 			type: String,
-			required: false
+			required: false,
 		},
 		phone: {
 			type: String,
-			required: true
+			required: true,
 		},
 		contactEditorUrl: {
 			type: String,
-			required: true
+			required: true,
 		},
 		ownerTypeId: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		ownerId: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		titleTemplate: {
 			type: String,
-			required: true
+			required: true,
 		},
 		showHint: {
 			type: Boolean,
-			required: true
+			required: true,
 		},
 		editorTemplate: {
 			type: String,
-			required: true
+			required: true,
 		},
 		editorUrl: {
 			type: String,
-			required: true
+			required: true,
 		},
 		selectedMode: {
 			type: String,
 			required: true,
-		}
+		},
 	},
-	mixins: [StageMixin],
+	mixins: [StageMixin, MessageMixin],
 	components: {
 		'stage-block-item':	Block,
 		'sms-error-block': Error,
@@ -95,9 +100,23 @@ const SmsMessage = {
 			senders: [],
 			pushedToUseBitrix24Notifications: null,
 			smsSenderListComponentKey: 0,
-		}
+			messageSenderEditor: null,
+			showMessageSenderEditor: true,
+			templateError: false,
+			clientError: false,
+		};
 	},
 	computed: {
+		messageSenderError()
+		{
+			return {
+				text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY'),
+			};
+		},
+		status()
+		{
+			return this.$store.getters['orderCreation/isSenderSelected'] ? Status.complete : Status.current;
+		},
 		configForBlock()
 		{
 			return {
@@ -124,6 +143,11 @@ const SmsMessage = {
 		},
 		errors()
 		{
+			if (this.messageSenderAvailable)
+			{
+				return [];
+			}
+
 			let result = [];
 
 			let bitrix24ConnectUrlError;
@@ -211,12 +235,127 @@ const SmsMessage = {
 			}
 
 			return result;
-		}
+		},
+	},
+	watch: {
+		messageData(newMessageData): void
+		{
+			if (!this.messageSenderEditor)
+			{
+				return;
+			}
+
+			this.showMessageSenderEditor = Boolean(
+				newMessageData.fromId && newMessageData.senderId && newMessageData.senderCode,
+			);
+
+			if (newMessageData.senderCode === 'bitrix24')
+			{
+				this.setTemplateError(false);
+			}
+			else
+			{
+				this.setTemplateError(!newMessageData.body || !newMessageData.body.includes('#LINK#'));
+			}
+
+			this.clientError = Boolean(
+				!newMessageData.entityId
+				|| !newMessageData.entityTypeId
+				|| !newMessageData.phoneId,
+			);
+
+			this.$store.commit(
+				'orderCreation/setIsSenderSelected',
+				this.showMessageSenderEditor
+				&& !this.templateError
+				&& !this.clientError,
+			);
+		},
 	},
 	created() {
 		this.initialize(this.initCurrentSenderCode, this.initSenders, this.initPushedToUseBitrix24Notifications);
 	},
+	mounted() {
+		if (this.messageSenderAvailable)
+		{
+			this.$store.commit('orderCreation/setIsSenderSelected', false);
+			this.initMessageSenderEditor();
+		}
+	},
 	methods: {
+		initMessageSenderEditor()
+		{
+			this.messageSenderEditor = new Editor(this.messageSenderData);
+			this.messageSenderEditor.render().then(() => this.initMessageData()).catch(() => {});
+			this.messageSenderEditor.subscribe('onToChange', this.onToChangeHandler.bind(this));
+			this.messageSenderEditor.subscribe('onMessageBodyChange', this.onMessageBodyChangeHandler.bind(this));
+			this.messageSenderEditor.subscribe('onFromChange', this.onFromChangeHandler.bind(this));
+			this.messageSenderEditor.subscribe('onChannelChange', this.onChannelChangeHandler.bind(this));
+		},
+		openMessageSenderConnectionsSlider()
+		{
+			Router.Instance.openMessageSenderConnectionsSlider(
+				{ c_section: Dictionary.SECTION_SALESCENTER_SLIDER },
+			).then(() => {
+				if (this.messageSenderEditor)
+				{
+					this.messageSenderEditor.reload().then(() => {
+						this.initMessageData();
+					});
+				}
+			});
+		},
+		onFromChangeHandler(event)
+		{
+			this.$store.dispatch(
+				'orderCreation/setMessageData',
+				{
+					fromId: event.getData().from?.id,
+					fromType: event.getData().from?.type,
+				},
+			);
+		},
+		onChannelChangeHandler(event)
+		{
+			const channel = event.getData().channel;
+			const backend = channel?.backend;
+			this.$store.dispatch(
+				'orderCreation/setMessageData',
+				{
+					senderId: backend?.id,
+					senderCode: backend?.senderCode,
+					channelId: channel?.id,
+				},
+			);
+		},
+		onToChangeHandler(event)
+		{
+			const to = event.getData().to;
+			this.$store.dispatch(
+				'orderCreation/setMessageData',
+				{
+					entityId: to?.addressSource?.entityId,
+					entityTypeId: to?.addressSource?.entityTypeId,
+					phoneId: to?.address?.id,
+				},
+			);
+		},
+		initMessageData()
+		{
+			const state = this.messageSenderEditor.getState();
+			const messageData = {
+				body: state.message?.body,
+				fromId: state.from?.id,
+				fromType: state.from?.type,
+				senderId: state.channel?.backend?.id,
+				senderCode: state.channel?.backend?.senderCode,
+				channelId: state.channel?.id,
+				entityId: state.to?.addressSource?.entityId,
+				entityTypeId: state.to?.addressSource?.entityTypeId,
+				phoneId: state.to?.address?.id,
+			};
+			this.$store.dispatch('orderCreation/setMessageData', messageData);
+		},
 		onConfigureContactPhone()
 		{
 			this.$emit('stage-block-sms-message-on-change-contact-phone');
@@ -369,14 +508,37 @@ const SmsMessage = {
 			<template v-slot:block-container>
 				<div :class="containerClassMixin" class="salescenter-app-payment-by-sms-item-container-offtop">
 					<sms-error-block
+						v-if="!messageSenderAvailable"
 						v-for="(error, index) in errors"
 						v-bind:key="index"
 						v-on:on-configure="hendleSmsErrorBlock($event)"
 						:error="error"
 					>
 					</sms-error-block>
-					
-					<div class="salescenter-app-payment-by-sms-item-container-sms">
+					<div v-if="messageSenderAvailable">
+						<sms-error-block
+							v-if="showMessageSenderEditor && clientError"
+							:error="messageSenderError"
+						>
+						</sms-error-block>
+						<div v-show="showMessageSenderEditor" :id="messageSenderId"></div>
+						<div
+							v-show="!showMessageSenderEditor"
+							@click="openMessageSenderConnectionsSlider"
+							class="salescenter-app-payment-by-sms-message-sender-empty-state"
+						>
+							<div class="salescenter-app-payment-by-sms-message-sender-empty-state-image"></div>
+							<div class="salescenter-app-payment-by-sms-message-sender-empty-state-right-block">
+								<div class="salescenter-app-payment-by-sms-message-sender-empty-state-text">
+									${Loc.getMessage('SALESCENTER_MESSAGE_SENDER_EMPTY_STATE')}
+								</div>
+								<div class="ui-btn --air ui-btn-md --style-filled ui-btn-no-caps">
+									${Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_BITRIX24_NOT_CONNECTED_FIX')}
+								</div>
+							</div>
+						</div>
+					</div>
+					<div v-else class="salescenter-app-payment-by-sms-item-container-sms">
 						<sms-user-avatar-block :manager="manager"/>
 						<div class="salescenter-app-payment-by-sms-item-container-sms-content">
 							<div v-if="currentSenderCode === 'bitrix24'" class="salescenter-app-payment-by-sms-item-container-sms-content">

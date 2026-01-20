@@ -2,7 +2,7 @@
  * @module settings-v2/ui/items/src/button
  */
 jn.define('settings-v2/ui/items/src/button', (require, exports, module) => {
-	const { SettingSelector, SettingMode } = require('ui-system/blocks/setting-selector');
+	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons');
 	const { Color } = require('tokens');
 	const { createTestIdGenerator } = require('utils/test');
 
@@ -20,17 +20,20 @@ jn.define('settings-v2/ui/items/src/button', (require, exports, module) => {
 
 		render()
 		{
-			const { id, icon } = this.props;
+			const {
+				id,
+				design = ButtonDesign.OUTLINE_ACCENT_1,
+				size = ButtonSize.MEDIUM,
+				color = Color.base1,
+			} = this.props;
 
-			return SettingSelector({
+			return Button({
 				...this.props,
 				testId: this.getTestId(id),
-				mode: SettingMode.RIGHT_ICON,
-				icon: null,
-				modeParams: {
-					icon,
-					iconColor: Color.base4,
-				},
+				design,
+				size,
+				color,
+				stretched: true,
 			});
 		}
 	}

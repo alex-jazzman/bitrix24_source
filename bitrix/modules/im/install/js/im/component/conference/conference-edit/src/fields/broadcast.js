@@ -1,5 +1,5 @@
 import "ui.vue.components.hint";
-import {ConferenceFieldState} from "im.const";
+import {ConferenceFieldState} from "call.const";
 import { TagSelector } from "ui.entity-selector";
 
 export const FieldBroadcast =

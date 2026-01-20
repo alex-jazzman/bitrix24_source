@@ -1,4 +1,3 @@
-import { EventEmitter } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 
 import { Analytics } from 'im.v2.lib.analytics';
@@ -10,6 +9,7 @@ import { ChannelManager } from 'im.v2.lib.channel';
 import './add-to-chat-content.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
 const SEARCH_ENTITY_ID = 'user';
@@ -120,7 +120,7 @@ export const AddToChatContent = {
 					},
 					onKeyUp: (event) => {
 						const { event: keyboardEvent } = event.getData();
-						EventEmitter.emit(EventType.search.keyPressed, { keyboardEvent });
+						this.getEmitter().emit(EventType.search.keyPressed, { keyboardEvent });
 					},
 					onBeforeTagRemove: () => {
 						clearTimeout(timeoutId);
@@ -200,6 +200,10 @@ export const AddToChatContent = {
 		{
 			const members = [...this.selectedItems];
 			this.$emit('inviteMembers', { members, showHistory: this.showHistory });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(key: string): string
 		{

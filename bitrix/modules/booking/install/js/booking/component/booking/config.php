@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/booking.bundle.js',
 	'rel' => [
 		'booking.component.note-popup',
+		'booking.lib.currency-format',
 		'ui.vue3.vuex',
 		'booking.component.client-popup',
 		'ui.vue3.directives.hint',

@@ -1,6 +1,6 @@
-import { CrmEntity, Model } from 'booking.const';
+import { Model } from 'booking.const';
 import { Profit } from 'booking.component.booking';
-import type { BookingModel, DealData } from 'booking.model.bookings';
+import type { BookingModel, SkuModel } from 'booking.model.bookings';
 import './profit.css';
 
 export const BookingProfit = {
@@ -23,14 +23,14 @@ export const BookingProfit = {
 		{
 			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
 		},
-		deal(): DealData | null
+		skus(): SkuModel[]
 		{
-			return this.booking.externalData?.find((data) => data.entityTypeId === CrmEntity.Deal) ?? null;
+			return this.booking?.skus ?? [];
 		},
 	},
 	template: `
 		<Profit
-			:deal
+			:skus
 			:dataAttributes="{
 				'data-id': bookingId,
 				'data-resource-id': resourceId,

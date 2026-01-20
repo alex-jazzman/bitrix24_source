@@ -112,6 +112,6 @@ export class EntityFieldsFillingResult extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'AI:Call:EntityFieldsFillingResult');
+		return (item.getType() === 'AI:EntityFieldsFillingResult');
 	}
 }

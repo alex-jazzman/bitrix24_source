@@ -56,6 +56,7 @@ export const UserListItem = {
 		handleUserClick(item): void
 		{
 			BX.SidePanel.Instance.open(item.url, {
+				width: 1100,
 				cacheable: false,
 			});
 		},

@@ -1,0 +1,104 @@
+.tasks-time-tracking-popup {
+	padding: 0;
+}
+
+.tasks-time-tracking-popup-header {
+	background-color: var(--ui-color-accent-soft-blue-2);
+	border-top-left-radius: var(--popup-window-border-radius);
+	border-top-right-radius: var(--popup-window-border-radius);
+}
+
+.tasks-time-tracking-popup-header.--disable {
+	background-color: var(--ui-color-bg-content-primary);
+	border-bottom-left-radius: var(--popup-window-border-radius);
+	border-bottom-right-radius: var(--popup-window-border-radius);
+}
+
+.tasks-time-tracking-popup-content {
+	display: flex;
+	gap: 10px;
+	padding: 24px;
+}
+
+.tasks-time-tracking-popup-content-info {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	flex: 1;
+}
+
+.tasks-time-tracking-popup-content-switcher {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	cursor: pointer;
+}
+
+.tasks-time-tracking-popup-content-switcher a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tasks-task-setting-switcher-label {
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-time-tracking-popup-content-text {
+	color: var(--ui-color-base-2);
+}
+
+.tasks-time-tracking-popup-content-more {
+	display: flex;
+	align-items: center;
+	justify-content: left;
+	cursor: pointer;
+}
+
+.tasks-time-tracking-popup-content-more-icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+}
+
+.tasks-time-tracking-popup-content-more-text {
+	color: var(--ui-color-accent-main-link);
+}
+
+.tasks-time-tracking-popup-content-icon {
+	width: 136px;
+	height: 136px;
+	background: url('./tasks-time-tracking.png') no-repeat center center;
+}
+
+.tasks-time-tracking-popup-form {
+	background-color: var(--ui-color-bg-content-primary);
+	border-bottom-left-radius: var(--popup-window-border-radius);
+	border-bottom-right-radius: var(--popup-window-border-radius);
+	padding: 24px;
+}
+
+.tasks-time-tracking-popup-form {
+	display: flex;
+	flex-direction: column;
+	justify-content: left;
+	gap: 4px;
+}
+
+.tasks-time-tracking-popup-form-title {
+	color: var(--ui-color-base-2);
+}
+
+.tasks-time-tracking-popup-form-label {
+	color: var(--ui-color-base-3);
+}
+
+.tasks-time-tracking-popup-form-fields {
+	display: flex;
+	justify-content: left;
+	gap: 16px;
+	padding: 8px 0;
+}
+
+.tasks-time-tracking-popup-form-field {
+	width: 120px;
+}

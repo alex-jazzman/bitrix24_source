@@ -23,13 +23,11 @@ import {
 	type RangeSelection,
 } from 'ui.lexical.core';
 
-import { $isLinkNode } from 'ui.lexical.link';
 import { $findMatchingParent, mergeRegister } from 'ui.lexical.utils';
 import { TextEditorLexicalNode } from '../../types/text-editor-lexical-node';
 
 import BasePlugin from '../base-plugin';
 import { type TextEditor } from '../../text-editor';
-import type { CopilotPlugin } from '../copilot';
 
 export class FloatingToolbarPlugin extends BasePlugin
 {

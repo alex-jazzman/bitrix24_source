@@ -20,3 +20,15 @@
 .ui-btn.ui-btn-icon-funnel.ui-btn-collapsed .ui-btn-text + .ui-btn-counter {
 	margin-left: 8px;
 }
+
+.menu-popup-item-text .ui-hint {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.menu-popup-item-text .ui-hint-icon {
+	margin: auto;
+	width: 1.2em;
+	height: 1.2em;
+}

@@ -44,6 +44,8 @@ export class TaskGetExtractor
 		return [
 			this.#data.creator ?? [],
 			this.#data.responsible ?? [],
+			...this.#data?.responsibleCollection ?? [],
+			...this.#data.multiResponsibles ?? [],
 			...this.#data?.accomplices ?? [],
 			...this.#data?.auditors ?? [],
 		].map((userDto: UserDto): UserModel => UserMappers.mapDtoToModel(userDto));

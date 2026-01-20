@@ -5,31 +5,46 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Crm\Integration\BizProc\Document\SmartB2eDocument;
+use Bitrix\Crm\Integration\BizProc\Document\SmartDocument;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_CRQ_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_CRQ_DESC_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'CrmChangeRequisiteActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'FILTER' => [
-		'INCLUDE' => [
-			['crm'],
+$arActivityDescription =
+	(new ActivityDescription(
+		name: Loc::getMessage('CRM_CRQ_NAME_1'),
+		description: Loc::getMessage('CRM_CRQ_DESC_1'),
+		type: [
+			ActivityType::ACTIVITY->value,
+			ActivityType::ROBOT->value,
+			ActivityType::NODE_ACTION->value,
 		],
-		'EXCLUDE' => [
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartB2eDocument::class],
-		],
-	],
-	'CATEGORY' => [
-		'ID' => 'document',
-		'OWN_ID' => 'crm',
-		'OWN_NAME' => 'CRM',
-	],
-	'ROBOT_SETTINGS' => [
-		'CATEGORY' => 'employee',
-		'GROUP' => ['paperwork', 'payment'],
-		'SORT' => 1600,
-	],
-];
+	))
+		->setClass('CrmChangeRequisiteActivity')
+		->setJsClass('BizProcActivity')
+		->setFilter([
+			'INCLUDE' => [
+				['crm'],
+			],
+			'EXCLUDE' => [
+				['crm', SmartDocument::class],
+				['crm', SmartB2eDocument::class],
+			],
+		])
+		->setCategory([
+			'ID' => 'document',
+			'OWN_ID' => 'crm',
+			'OWN_NAME' => 'CRM',
+		])
+		->setRobotSettings([
+			'CATEGORY' => 'employee',
+			'GROUP' => ['paperwork', 'payment'],
+			'SORT' => 1600,
+		])
+		->setNodeActionSettings([
+			'INCLUDE' => ['crmdealcomplexactivity'],
+			'HANDLES_DOCUMENT' => true,
+		])
+		->toArray()
+;

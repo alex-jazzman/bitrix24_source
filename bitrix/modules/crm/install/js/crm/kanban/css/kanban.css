@@ -1321,10 +1321,23 @@ a.crm-kanban-sidepanel:hover {
 	text-overflow: ellipsis;
 }
 
+.crm-mini-card-list-container {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	align-items: flex-start;
+}
+
 .crm-kanban-item-fields-item-title {
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	color: #868d96;
+}
+
+.crm-kanban-item-fields-item-title-wrapper {
+	display: flex;
+	align-items: center;
+	justify-content: start;
 	margin-bottom: 3px;
 }
 
@@ -1343,6 +1356,24 @@ a.crm-kanban-sidepanel:hover {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+.crm-kanban-item-fields-item-title-tooltip {
+	display: inline-flex;
+	margin-left: 4px;
+	width: fit-content;
+	height: fit-content;
+	transition: opacity 0.1s;
+}
+
+.crm-kanban-item-fields-item-title-tooltip.--hidden {
+	opacity: 0;
+}
+
+.crm-kanban-item-fields-item-title-tooltip .ui-hint-icon {
+	margin: 0;
+	width: 1.2em;
+	height: 1.2em;
 }
 
 .crm-kanban-item-fields-item-value {

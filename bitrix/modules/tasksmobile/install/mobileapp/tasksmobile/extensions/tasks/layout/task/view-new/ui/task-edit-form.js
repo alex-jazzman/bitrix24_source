@@ -23,6 +23,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		getFieldShowRestrictionCallback,
 	} = require('tasks/fields/restriction');
 	const { getFeatureRestriction } = require('tariff-plan-restriction');
+	const { ActionButtonsView } = require('tasks/layout/task/view-new/ui/action-buttons');
+	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
+	const { AnalyticsEvent } = require('analytics');
 
 	const { connect } = require('statemanager/redux/connect');
 	const store = require('statemanager/redux/store');
@@ -51,6 +54,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		selectCanMoveStage,
 	} = require('tasks/statemanager/redux/slices/kanban-settings');
 
+	// fields
 	const { TextAreaField: Title } = require('layout/ui/fields/textarea/theme/air-title');
 	const { TextAreaField: Description } = require('layout/ui/fields/textarea/theme/air-description');
 	const { DeadlineField } = require('tasks/layout/fields/deadline/theme/air');
@@ -63,37 +67,26 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const { CrmElementField } = require('layout/ui/fields/crm-element/theme/air');
 	const { CrmElementField: CrmElementFieldCompact } = require('layout/ui/fields/crm-element/theme/air-compact');
 	const { FileWithBackgroundAttachField } = require('layout/ui/fields/file-with-background-attach/theme/air');
-	const {
-		FileWithBackgroundAttachField: FileWithBackgroundAttachFieldCompact,
-	} = require('layout/ui/fields/file-with-background-attach/theme/air-compact');
+	const { FileWithBackgroundAttachField: FileWithBackgroundAttachFieldCompact } = require('layout/ui/fields/file-with-background-attach/theme/air-compact');
 	const { ChecklistField } = require('tasks/layout/checklist/preview');
 	const { ChecklistField: ChecklistFieldCompact } = require('tasks/layout/fields/checklist/theme/air-compact');
-
 	const { TaskFlowField } = require('tasks/layout/fields/flow/theme/air');
 	const { TaskFlowField: TaskFlowFieldCompact } = require('tasks/layout/fields/flow/theme/air-compact');
 	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking');
-	const { TimeTrackingField: TimeTrackingFieldCompact } = require(
-		'tasks/layout/fields/time-tracking/theme/air-compact',
-	);
-	const { ActionButtonsView } = require('tasks/layout/task/view-new/ui/action-buttons');
-	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
-
+	const { TimeTrackingField: TimeTrackingFieldCompact } = require('tasks/layout/fields/time-tracking/theme/air-compact');
 	const { SubTasksField } = require('tasks/layout/fields/subtask/theme/air');
 	const { SubTasksField: SubTasksFieldCompact } = require('tasks/layout/fields/subtask/theme/air-compact');
-
 	const { RelatedTasksField } = require('tasks/layout/fields/related-task/theme/air');
 	const { RelatedTasksField: RelatedTasksFieldCompact } = require('tasks/layout/fields/related-task/theme/air-compact');
 	const { TasksStageSelector } = require('tasks/layout/fields/stage-selector');
-
 	const { DatePlanField } = require('tasks/layout/fields/date-plan/theme/air');
 	const { DatePlanField: DatePlanFieldCompact } = require('tasks/layout/fields/date-plan/theme/air-compact');
-
-	const { TaskResultField } = require('tasks/layout/fields/result/theme/air');
-	const { TaskResultField: TaskResultFieldCompact } = require('tasks/layout/fields/result/theme/air-compact');
-	const { AnalyticsEvent } = require('analytics');
-
 	const { UserFieldsField } = require('tasks/layout/fields/user-fields/theme/air');
 	const { UserFieldsField: UserFieldsFieldCompact } = require('tasks/layout/fields/user-fields/theme/air-compact');
+	const { TaskResultField } = require('tasks/layout/fields/result/theme/air');
+	const { TaskResultField: TaskResultFieldCompact } = require('tasks/layout/fields/result/theme/air-compact');
+	const { TaskResultField: TaskResultFieldV2 } = require('tasks/layout/fields/result-v2/theme/air');
+	const { TaskResultField: TaskResultFieldV2Compact } = require('tasks/layout/fields/result-v2/theme/air-compact');
 
 	const deadlineFormatter = (ts) => Formatter.format(Moment.createFromTimestamp(ts));
 
@@ -134,6 +127,10 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			kanbanOwnerId,
 			isStageSelectorInitiallyHidden,
 			isFlowToolDisabled,
+			maxDeadlineChangeDate,
+			deadlineChangesLeft,
+			updateDeadline,
+			isChatFeatureEnabled,
 		} = props;
 
 		const taskCreateButtonAnalytics = {
@@ -189,8 +186,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: {
 							fileField: {
 								value: task.files,
+								config: getFileFieldConfig({ task, userId }),
 							},
-							allowFiles: false,
+							allowFiles: true,
 							autoFocus: false,
 						},
 					},
@@ -295,6 +293,10 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						required: false,
 						onContentClick: onFieldContentClick,
 						onChange: onChangeDeadlineField,
+						maxDeadlineChangeDate,
+						deadlineChangesLeft,
+						updateDeadline,
+						task,
 						config: {
 							dateFormatter: deadlineFormatter,
 							color: deadlineColor,
@@ -358,7 +360,18 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 				},
 			].filter(Boolean),
 			secondaryFields: [
-				{
+				isChatFeatureEnabled && {
+					factory: TaskResultFieldV2,
+					props: {
+						id: Field.RESULT,
+						taskId: task.id,
+						resultsCount: task.resultsCount,
+						readOnly: !selectIsResponsible(task) && !selectIsAccomplice(task),
+						onContentClick: onFieldContentClick,
+					},
+					compact: TaskResultFieldV2Compact,
+				},
+				!isChatFeatureEnabled && {
 					factory: TaskResultField,
 					props: {
 						id: Field.RESULT,
@@ -373,41 +386,17 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					factory: FileWithBackgroundAttachField,
 					props: {
 						id: Field.FILES,
-						value: [...task.files, ...task.uploadedFiles],
-						readOnly: !actions[TaskFieldActionAccess[Field.FILES]],
+						value: [...task.files, ...task.uploadedFiles].map((file) => ({
+							...file,
+							readOnly: Number(file.creator) !== Number(userId) && !actions.update,
+						})),
+						readOnly: false,
 						required: false,
 						title: Loc.getMessage('M_TASKS_FIELDS_FILES'),
 						showTitle: true,
 						multiple: true,
 						onContentClick: onFieldContentClick,
-						config: {
-							textMultiple: Loc.getMessage('M_TASKS_FIELDS_FILES_MULTI'),
-							listenCacheChanges: false,
-							attachToEntityController: {
-								entityId: `TASK_${task.id}`,
-								actionName: 'tasksmobile.Task.attachUploadedFiles',
-								fieldName: 'fileId',
-								actionConfigData: {
-									taskId: task.id,
-								},
-								entityUrl: `${currentDomain}/company/personal/user/${env.userId}/tasks/task/view/${task.id}/`,
-							},
-							uploadController: {
-								endpoint: 'tasks.FileUploader.TaskController',
-								options: {
-									taskId: task.id,
-								},
-							},
-							disk: {
-								isDiskModuleInstalled: true,
-								isWebDavModuleInstalled: true,
-								fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${userId}`,
-							},
-							enableCreation: true,
-							closeAfterCreation: false,
-							canUseRecent: false,
-							selectorType: 'file',
-						},
+						config: getFileFieldConfig({ task, userId }),
 						showFilesName: true,
 					},
 					compact: {
@@ -677,6 +666,37 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		});
 	};
 
+	const getFileFieldConfig = ({ task, userId }) => {
+		return {
+			textMultiple: Loc.getMessage('M_TASKS_FIELDS_FILES_MULTI'),
+			listenCacheChanges: false,
+			attachToEntityController: {
+				entityId: `TASK_${task.id}`,
+				actionName: 'tasksmobile.Task.attachUploadedFiles',
+				fieldName: 'fileId',
+				actionConfigData: {
+					taskId: task.id,
+				},
+				entityUrl: `${currentDomain}/company/personal/user/${env.userId}/tasks/task/view/${task.id}/`,
+			},
+			uploadController: {
+				endpoint: 'tasks.FileUploader.TaskController',
+				options: {
+					taskId: task.id,
+				},
+			},
+			disk: {
+				isDiskModuleInstalled: true,
+				isWebDavModuleInstalled: true,
+				fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${userId}`,
+			},
+			enableCreation: true,
+			closeAfterCreation: false,
+			canUseRecent: false,
+			selectorType: 'file',
+		};
+	};
+
 	const getAnalyticsForUserField = (analyticsLabel) => {
 		const analytics = new AnalyticsEvent();
 		if (analyticsLabel)
@@ -834,6 +854,11 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 				areUserFieldsLoaded: task.areUserFieldsLoaded,
 				userFieldNames: task.userFieldNames,
 				userFields: task.areUserFieldsLoaded ? task.userFieldNames.map((name) => task[name]) : [],
+				maxDeadlineChangeDate: task.maxDeadlineChangeDate,
+				deadlineChangesLeft: task.deadlineChangesLeft,
+				requireDeadlineChangeReason: task.requireDeadlineChangeReason,
+				canUpdate: task.canUpdate,
+				canUpdateDeadline: task.canUpdateDeadline,
 			},
 			actions,
 			shouldShowCompactButtons,
@@ -848,6 +873,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			view: ownProps.view,
 			canMoveStage,
 			isFlowToolDisabled: ownProps.isFlowToolDisabled,
+			isChatFeatureEnabled: ownProps.isChatFeatureEnabled,
 		};
 	};
 

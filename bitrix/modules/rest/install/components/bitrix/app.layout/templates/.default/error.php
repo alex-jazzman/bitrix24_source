@@ -41,10 +41,10 @@ Loader::includeModule('ui');
 Extension::load(['ui.common', 'ui.fonts.opensans', 'ui.info-helper']);
 
 Loc::loadMessages(__FILE__);
-$arResult['ERROR_TITLE'] = ($arResult['ERROR_TITLE']) ?: Loc::getMessage("REST_APP_LAYOUT_ERROR_TITLE_DEFAULT");
+$arResult['ERROR_TITLE'] ??= Loc::getMessage("REST_APP_LAYOUT_ERROR_TITLE_DEFAULT");
 
 $needPadding = false;
-if($arParams['SET_TITLE'] == 'Y')
+if (!empty($arParams['SET_TITLE']) && $arParams['SET_TITLE'] === 'Y')
 {
 	$APPLICATION->SetTitle($arResult['ERROR_TITLE']);
 	$needPadding = true;

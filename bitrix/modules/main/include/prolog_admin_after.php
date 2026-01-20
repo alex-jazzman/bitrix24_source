@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 if (!defined('START_EXEC_PROLOG_AFTER_1'))
@@ -34,4 +34,3 @@ if (!defined('START_EXEC_PROLOG_AFTER_2'))
 }
 
 $GLOBALS["BX_STATE"] = "WA";
-?>

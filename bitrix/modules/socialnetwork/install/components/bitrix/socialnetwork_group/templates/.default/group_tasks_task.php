@@ -16,12 +16,14 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\V2\FormV2Feature;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 $userId = CurrentUser::get()->getId();
 $pageId = "group_tasks";
@@ -58,7 +60,10 @@ $isFormV2AllowedForGroup = Loader::includeModule('tasks')
 	&& in_array($groupId, FormV2Feature::getAllowedGroups(), true)
 ;
 $request = Context::getCurrent()->getRequest();
-$isOldForm = $request->get('OLD_FORM') === 'Y';
+$isOldForm = $request->get('OLD_FORM') === 'Y'
+	&& Loader::includeModule('tasks')
+	&& FormV2Feature::isOn('old_form')
+;
 $hasTemplate = (int)$request->get('TEMPLATE') > 0 || (int)$request->get('FLOW_ID') > 0;
 $isCommentLink = (bool)$request->get('MID');
 
@@ -118,8 +123,11 @@ else if (
 	&& !$isCommentLink
 )
 {
-	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+	Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/../../.parameters.php');
+
 	$APPLICATION->SetTitle('');
+	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+	$APPLICATION->SetPageProperty('title', Loc::getMessage('INT_TASKS_GROUP'));
 	Toolbar::deleteFavoriteStar();
 
 	if (isset($showPersonalTasks) && $showPersonalTasks === true)
@@ -138,6 +146,15 @@ else if (
 		ownerId: $ownerId,
 		context: $context
 	);
+
+	if (
+		isset($arResult['groupFields'])
+		&& isset($arResult['groupFields']['SCRUM'])
+		&& $arResult['groupFields']['SCRUM'] === 'Y'
+	)
+	{
+		$pathMaker->addQueryParam('SCOPE', ScopeDictionary::SCOPE_TASKS_KANBAN_SPRINT);
+	}
 
 	$pathToList = $pathMaker->makeEntitiesListPath();
 	$pathToTask = $pathMaker->makeEntityPath();

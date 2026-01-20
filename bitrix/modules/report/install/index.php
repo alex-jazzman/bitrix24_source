@@ -31,12 +31,13 @@ class report extends CModule
 	function InstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		// Database tables creation
-		if(!$DB->Query("SELECT 'x' FROM b_report WHERE 1=0", true))
+		if (!$DB->TableExists('b_report'))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/report/install/db/mysql/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/report/install/db/' . $connection->getType() . '/install.sql');
 		}
 
 		if($this->errors !== false)
@@ -61,11 +62,12 @@ class report extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
 
 		$this->errors = false;
 		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/report/install/db/mysql/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/report/install/db/' . $connection->getType() . '/uninstall.sql');
 		}
 
 		UnRegisterModuleDependences('report', 'OnReportDelete', 'report', '\Bitrix\Report\Sharing', 'OnReportDelete');

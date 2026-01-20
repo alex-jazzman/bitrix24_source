@@ -47,6 +47,7 @@ UI\Extension::load([
 		'ui.entity-selector',
 		'ui.forms',
 		'loader',
+		'main.sidepanel',
 	]
 );
 
@@ -55,6 +56,15 @@ $this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.
 
 Connector::initIconCss();
 ?>
+<script>
+	BX.ready(() => {
+		const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+		if (slider)
+		{
+			slider.getData().delete('status');
+		}
+	});
+</script>
 <?
 if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 {
@@ -218,28 +228,53 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 	elseif (empty($arResult['ACTIVE_LINE']) && !empty($arResult['PATH_TO_ADD_LINE']))
 	{
 		?>
-		<div class="imconnector-field-container">
-			<div class="imconnector-field-section imconnector-field-section-social">
-				<div class="imconnector-field-box">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE'); ?>
-					<a class="imconnector-field-box-link" onclick="BX.ImConnectorLinesConfigEdit.createLineAction('<?= CUtil::JSEscape($arResult['PATH_TO_CONNECTOR_LINE_ADAPTED']) ?>', <?=CUtil::PhpToJSObject($arParams['IFRAME'])?>)" target="_top">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE')?>
-					</a>
-				</div>
+		<div class="imconnector-no-grants-container">
+			<img src="/bitrix/images/imconnector/marshmallow-warning.png" class="imconnector-warning-icon" />
+			<div class="imconnector-warning-message">
+				<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE'); ?>
 			</div>
+			<a
+				href="javascript:void(0);"
+				class="ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps"
+				onclick="BX.ImConnectorLinesConfigEdit.createLineAction('<?= CUtil::JSEscape($arResult['PATH_TO_CONNECTOR_LINE_ADAPTED']) ?>', <?= CUtil::PhpToJSObject($arParams['IFRAME']) ?>); return false;"
+			>
+				<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE') ?>
+			</a>
 		</div>
+		<script>
+			BX.ready(() => {
+				const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider)
+				{
+					slider.getData().set('status', 'accessDeniedNeedCreateLine');
+				}
+			});
+		</script>
 		<?
 	}
 	else
 	{
 		?>
-		<div class="imconnector-field-container">
-			<div class="imconnector-field-section imconnector-field-section-social">
-				<div class="imconnector-field-box">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE_AND_NOT_ADD_OPEN_LINE'); ?>
-				</div>
+		<div class="imconnector-no-grants-container">
+			<img src="/bitrix/images/imconnector/marshmallow-warning.png" class="imconnector-warning-icon" />
+			<div class="imconnector-warning-message">
+				<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_GRANTS'); ?>
 			</div>
+			<?php if ($arResult['FIRST_ADMIN_ID']): ?>
+				<a href="/online/?IM_DIALOG=<?= htmlspecialcharsbx($arResult['FIRST_ADMIN_ID']) ?>" class="ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps">
+					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_GRANTS_BUTTON'); ?>
+				</a>
+			<?php endif; ?>
 		</div>
+		<script>
+			BX.ready(() => {
+				const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider)
+				{
+					slider.getData().set('status', 'accessDenied');
+				}
+			});
+		</script>
 		<?
 	}
 }

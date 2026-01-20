@@ -2,7 +2,7 @@ import { ResponsePurchaseDataType } from './response-purchase-data-type';
 
 export type ResponsePackageDataType = {
 	code: string,
-	active: string,
+	isActive: boolean,
 	title: string,
 	description: string,
 	featurePromotionCode: ?string,

@@ -214,7 +214,6 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/task', (require
 					),
 				]);
 
-				this.renderService?.renderInstant();
 				this.showLoaderByRestResult(recentData);
 			}
 			catch (error)

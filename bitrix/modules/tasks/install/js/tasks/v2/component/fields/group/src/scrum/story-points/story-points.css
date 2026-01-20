@@ -1,6 +1,11 @@
-.tasks-field-group-scrum-story-points {
+.tasks-field-story-points {
+	display: flex;
+	align-items: center;
+	min-height: 26px;
+}
+
+.tasks-field-story-points-text {
 	padding: 2px 10px;
-	max-width: 30px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	border-radius: 1in;
@@ -8,14 +13,20 @@
 	cursor: text;
 }
 
-.tasks-field-group-scrum-story-points.--filled {
+.tasks-field-story-points.--filled .tasks-field-story-points-text {
 	background: var(--ui-color-accent-soft-blue-3);
 	color: var(--ui-color-accent-main-primary);
 }
 
-.tasks-field-group-scrum-story-points-input {
-	width: 38px;
+.tasks-field-story-points-input {
+	flex: 1;
 	padding: 4px 6px;
 	border: var(--ui-border-width-thin) solid var(--ui-color-accent-main-link);
 	border-radius: var(--ui-border-radius-xs);
+}
+
+.tasks-field-story-points-loader {
+	display: flex;
+	align-items: center;
+	height: 26px;
 }

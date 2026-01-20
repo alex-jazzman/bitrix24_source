@@ -1,0 +1,55 @@
+.bizproc-setuptemplateactivity-preview-header {
+	position: relative;
+	padding: 24px 0 0;
+}
+
+.bizproc-setuptemplateactivity-preview-header__title {
+	margin: 0 0 24px;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-setuptemplateactivity-preview-header__tag-preview {
+	display: inline-block;
+	height: 18px;
+	padding: 0 8px 0;
+	margin-left: 9px;
+	border-radius: 18px;
+	font-size: var(--ui-font-size-sm);
+	line-height: 18px;
+	color: var(--ui-color-base-white-fixed);
+	font-weight: var(--ui-font-weight-medium);
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-setuptemplateactivity-preview-header__line {
+	position: relative;
+	width: 100%;
+	height: 3px;
+	background-color: transparent;
+}
+
+.bizproc-setuptemplateactivity-preview-header__line:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	width: calc(50% - 2px);
+	height: 3px;
+	border-radius: 10px;
+	background-color: var(--ui-color-base-5);
+}
+
+.bizproc-setuptemplateactivity-preview-header__line:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: block;
+	width: calc(50% - 2px);
+	height: 3px;
+	border-radius: 10px;
+	background-color: var(--ui-color-base-5);
+}

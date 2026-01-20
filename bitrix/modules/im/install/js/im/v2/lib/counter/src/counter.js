@@ -10,6 +10,8 @@ import { updateBrowserTitleCounter } from './helpers/update-browser-title-counte
 
 import type { Store } from 'ui.vue3.vuex';
 
+export { CounterClearActionsByChatType, CounterClearActionsDefault } from './const/const';
+
 type CounterMap = {[chatId: string]: number};
 
 type InitialCounters = {
@@ -117,7 +119,6 @@ export class CounterManager
 		this.#subscribeToCountersChange();
 		this.#emitLegacyChatCounterUpdate(counters.TYPE.CHAT);
 		this.#emitLegacyNotificationCounterUpdate(counters.TYPE.NOTIFY);
-		this.#emitLegacyLinesCounterUpdate(counters.TYPE.LINES);
 		this.#onTotalCounterChange();
 	}
 
@@ -151,8 +152,7 @@ export class CounterManager
 			this.#onTotalCounterChange();
 		});
 
-		this.#store.watch(linesCounterWatch, (newValue: number) => {
-			this.#emitLegacyLinesCounterUpdate(newValue);
+		this.#store.watch(linesCounterWatch, () => {
 			this.#emitCountersUpdateWithDebounce();
 			this.#onTotalCounterChange();
 		});
@@ -172,13 +172,6 @@ export class CounterManager
 	{
 		const event = new BaseEvent({ compatData: [chatCounter] });
 		EventEmitter.emit(window, EventType.counter.onChatCounterChange, event);
-	}
-
-	#emitLegacyLinesCounterUpdate(linesCounter: number)
-	{
-		const LINES_TYPE = 'LINES';
-		const event = new BaseEvent({ compatData: [linesCounter, LINES_TYPE] });
-		EventEmitter.emit(window, EventType.counter.onLinesCounterChange, event);
 	}
 
 	#emitCountersUpdate()

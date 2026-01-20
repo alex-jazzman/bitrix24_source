@@ -10,8 +10,7 @@ jn.define('statemanager/redux/store', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { analyticsSenderMiddleware } = require('statemanager/redux/middleware/analytics-sender');
 
-	const { DEV_SETTINGS } = require('settings/developer/meta');
-	const { DeveloperSettingsCacheManager } = require('settings/developer/cache-manager');
+	const { REDUX_LOGGER_ID } = require('settings-v2/const');
 
 	// register user reducer in global ReducerRegistry
 	require('statemanager/redux/slices/users');
@@ -22,7 +21,10 @@ jn.define('statemanager/redux/store', (require, exports, module) => {
 
 	if (isBeta)
 	{
-		const isReduxLoggerEnabled = DeveloperSettingsCacheManager.getSettingValueById(DEV_SETTINGS.enableReduxLogger.id);
+		/**
+		 * @see settings-v2/structure/pages/developer
+		*/
+		const isReduxLoggerEnabled = Application.storage.get(REDUX_LOGGER_ID, true);
 		if (isReduxLoggerEnabled)
 		{
 			const { logger } = require('statemanager/redux/middleware/logger');

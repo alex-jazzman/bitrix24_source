@@ -1,20 +1,26 @@
 import { Loc, Dom, Text, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { Messenger } from 'im.public';
 
 import { Parser } from '../parser';
 import { ParserUtils } from '../utils/utils';
-import { getCore, getConst, getUtils } from '../utils/core-proxy';
+import { getCore, getConst } from '../utils/core-proxy';
+import { MentionHandler } from '../classes/mention-handler';
 
-const { UserType, EventType, MessageMentionType } = getConst();
+const { UserType, MessageMentionType, SpecialMentionDialogId = {} } = getConst();
+
+const SpecialMentionHandlers = {
+	[SpecialMentionDialogId.allParticipants]: (userName) => ParserMention.renderAllParticipantsMention(userName),
+};
 
 export const ParserMention = {
-
 	decode(text): string
 	{
-		text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
-			userId = Number.parseInt(userId, 10);
+		text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
+			if (SpecialMentionHandlers[userId])
+			{
+				return SpecialMentionHandlers[userId](userName);
+			}
 
+			userId = Number.parseInt(userId, 10);
 			if (!Type.isNumber(userId) || userId === 0)
 			{
 				return userName;
@@ -74,7 +80,7 @@ export const ParserMention = {
 			}
 			else
 			{
-				const dialog = getCore().store.getters['chats/get'](`chat${chatId}`);
+				const dialog = getCore().getStore().getters['chats/get'](`chat${chatId}`);
 				chatName = dialog ? dialog.name : `Chat ${chatId}`;
 			}
 
@@ -108,11 +114,11 @@ export const ParserMention = {
 			messageId = Number.parseInt(messageId, 10);
 			if (Type.isNumber(messageId) && messageId > 0)
 			{
-				const message = getCore().store.getters['messages/getById'](messageId);
+				const message = getCore().getStore().getters['messages/getById'](messageId);
 				if (message)
 				{
 					title = Parser.purifyMessage(message);
-					const user = getCore().store.getters['users/get'](message.authorId);
+					const user = getCore().getStore().getters['users/get'](message.authorId);
 					if (user)
 					{
 						title = `${user.name}: ${title}`;
@@ -142,7 +148,7 @@ export const ParserMention = {
 
 	purify(text): string
 	{
-		text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
+		text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
 			userId = Number.parseInt(userId, 10);
 
 			if (!Type.isNumber(userId) || userId === 0)
@@ -176,7 +182,7 @@ export const ParserMention = {
 
 			if (!chatName)
 			{
-				const dialog = getCore().store.getters['chats/get']('chat'+chatId);
+				const dialog = getCore().getStore().getters['chats/get']('chat'+chatId);
 				chatName = dialog? dialog.name: 'Chat '+chatId;
 			}
 
@@ -186,7 +192,7 @@ export const ParserMention = {
 		text = text.replace(/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gis, (whole, dialogId, messageId, text) => {
 			if (!text)
 			{
-				const dialog = getCore().store.getters['chats/get'](dialogId);
+				const dialog = getCore().getStore().getters['chats/get'](dialogId);
 				text = dialog? dialog.name: 'Dialog '+dialogId;
 			}
 
@@ -196,45 +202,25 @@ export const ParserMention = {
 		return text;
 	},
 
-	executeClickEvent(event: PointerEvent)
+	executeClickEvent(event: PointerEvent, context: ApplicationContext)
 	{
-		if (!Dom.hasClass(event.target, 'bx-im-mention'))
-		{
-			return;
-		}
+		const mentionHandler = new MentionHandler(context);
 
-		if (
-			event.target.dataset.type === MessageMentionType.user
-			|| event.target.dataset.type === MessageMentionType.chat
-		)
-		{
-			void Messenger.openChat(event.target.dataset.value);
-		}
-		else if (event.target.dataset.type === MessageMentionType.lines)
-		{
-			const dialogId = event.target.dataset.value;
-			if (getUtils().dialog.isLinesHistoryId(dialogId))
-			{
-				void Messenger.openLinesHistory(dialogId);
-			}
-			else if (getUtils().dialog.isLinesExternalId(dialogId))
-			{
-				void Messenger.openLines(dialogId);
-			}
-		}
-		else if (event.target.dataset.type === MessageMentionType.context)
-		{
-			EventEmitter.emit(EventType.dialog.goToMessageContext, {
-				messageId: Number.parseInt(event.target.dataset.messageId, 10),
-				dialogId: event.target.dataset.dialogId.toString(),
-			});
-		}
-		else if (event.target.dataset.type === MessageMentionType.call)
-		{
-			if (getUtils().call.isNumber(event.target.dataset.destination))
-			{
-				void Messenger.startPhoneCall(event.target.dataset.destination);
-			}
-		}
+		mentionHandler.handleClick(event);
+	},
+
+	renderAllParticipantsMention(userName: string): HTMLElement
+	{
+		const className = 'bx-im-mention';
+
+		return Dom.create({
+			tag: 'span',
+			attrs: {
+				className,
+				'data-type': MessageMentionType.user,
+				'data-value': SpecialMentionDialogId.allParticipants,
+			},
+			text: userName,
+		}).outerHTML;
 	},
 };

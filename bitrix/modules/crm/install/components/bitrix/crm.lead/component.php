@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Report\DisablingHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -79,6 +80,11 @@ $arDefaultUrlTemplates404 = [
 	'automation' => 'automation/#category_id#/',
 	'activity' => 'activity/',
 ];
+
+if (DisablingHelper::areMyReportsInDemoMode())
+{
+	unset($arDefaultUrlTemplates404['widget']);
+}
 
 $arDefaultVariableAliases404 = [];
 $arDefaultVariableAliases = [];

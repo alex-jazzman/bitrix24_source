@@ -92,7 +92,7 @@ export const WaitListItemActionsPopup = {
 					{
 						id: ActionsPopupActionEnum.fullForm,
 						props: {
-							waitListItemId,
+							bookingId: waitListItemId,
 						},
 						component: FullForm,
 					},

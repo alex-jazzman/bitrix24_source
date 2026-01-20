@@ -1,0 +1,44 @@
+.bx-im-sidebar-task-comments-history__container {
+	--im-sidebar-task-comments-history__color_title: var(--im-color-palette-blue-70);
+	--im-sidebar-task-comments-history__color_title-hover: #00789e;
+
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-shrink: 0;
+	padding: 14px 10px 12px 16px;
+	cursor: pointer;
+}
+
+.bx-im-sidebar-task-comments-history__title-container {
+	display: flex;
+	align-items: center;
+}
+
+.bx-im-sidebar-task-comments-history__icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	margin-right: 10px;
+	background: url('./images/history.svg');
+}
+
+.bx-im-sidebar-task-comments-history__container:hover .bx-im-sidebar-task-comments-history__icon {
+	background: url('./images/history-hover.svg');
+}
+
+.bx-im-sidebar-task-comments-history__title {
+	font: var(--im-font-size-md)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-semi-bold);
+	color: var(--im-sidebar-task-comments-history__color_title);
+}
+
+.bx-im-sidebar-task-comments-history__container:hover .bx-im-sidebar-task-comments-history__title {
+	color: var(--im-sidebar-task-comments-history__color_title-hover);
+}
+
+.bx-im-sidebar-task-comments-history__open-icon {
+	width: 16px;
+	height: 16px;
+	background: url('./images/chevron-right.svg');
+}

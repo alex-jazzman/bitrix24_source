@@ -1,8 +1,0 @@
-<?
-$MESS["DOCGEN_ROLE_ACTION"] = "Action";
-$MESS["DOCGEN_ROLE_CANCEL"] = "Cancel";
-$MESS["DOCGEN_ROLE_ENTITY"] = "Entity";
-$MESS["DOCGEN_ROLE_LABEL"] = "Role";
-$MESS["DOCGEN_ROLE_PERMISSION"] = "Permission";
-$MESS["DOCGEN_ROLE_SAVE"] = "Save";
-?>

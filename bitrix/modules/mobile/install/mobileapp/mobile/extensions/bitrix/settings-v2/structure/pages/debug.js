@@ -6,9 +6,9 @@ jn.define('settings-v2/structure/pages/debug', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Icon } = require('assets/icons');
 	const {
-		createButton,
+		createLinkButton,
 		createSection,
-	} = require('settings-v2/structure/src/item-create-helper');
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { NativeDebugService } = require('settings-v2/services/native');
 
 	/** @type SettingPage */
@@ -19,7 +19,7 @@ jn.define('settings-v2/structure/pages/debug', (require, exports, module) => {
 			createSection({
 				id: 'debug-section',
 				items: [
-					createButton({
+					createLinkButton({
 						id: 'debug-calls-log',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_DEBUG_CALLS_LOG'),
 						icon: Icon.CHEVRON_TO_THE_RIGHT,
@@ -27,7 +27,7 @@ jn.define('settings-v2/structure/pages/debug', (require, exports, module) => {
 							NativeDebugService.sendCallLogs();
 						},
 					}),
-					createButton({
+					createLinkButton({
 						id: 'debug-system-log',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_DEBUG_SYSTEM_LOG'),
 						icon: Icon.CHEVRON_TO_THE_RIGHT,

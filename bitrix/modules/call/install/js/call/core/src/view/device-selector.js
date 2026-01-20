@@ -1,24 +1,25 @@
-import {Dom} from 'main.core'
-import {EventEmitter} from 'main.core.events'
-import {Popup} from 'main.popup'
-import {Hardware} from '../call_hardware';
-import {BackgroundDialog} from '../dialogs/background_dialog';
+import { Dom } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Popup } from 'main.popup';
+import { Hardware } from '../call_hardware';
+import { BackgroundDialog } from '../dialogs/background_dialog';
 import 'ui.switcher';
 import Util from '../util';
 
 const DeviceSelectorEvents = {
-	onMicrophoneSelect: "onMicrophoneSelect",
-	onMicrophoneSwitch: "onMicrophoneSwitch",
-	onCameraSelect: "onCameraSelect",
-	onCameraSwitch: "onCameraSwitch",
-	onSpeakerSelect: "onSpeakerSelect",
-	onSpeakerSwitch: "onSpeakerSwitch",
-	onChangeHdVideo: "onChangeHdVideo",
-	onChangeMicAutoParams: "onChangeMicAutoParams",
-	onChangeFaceImprove: "onChangeFaceImprove",
-	onAdvancedSettingsClick: "onOpenAdvancedSettingsClick",
-	onShow: "onShow",
-	onDestroy: "onDestroy",
+	onMicrophoneSelect: 'onMicrophoneSelect',
+	onMicrophoneSwitch: 'onMicrophoneSwitch',
+	onCameraSelect: 'onCameraSelect',
+	onCameraSwitch: 'onCameraSwitch',
+	onSpeakerSelect: 'onSpeakerSelect',
+	onSpeakerSwitch: 'onSpeakerSwitch',
+	onChangeHdVideo: 'onChangeHdVideo',
+	onChangeMicAutoParams: 'onChangeMicAutoParams',
+	onChangeFaceImprove: 'onChangeFaceImprove',
+	onChangeVideoQuality: 'onChangeVideoQuality',
+	onAdvancedSettingsClick: 'onOpenAdvancedSettingsClick',
+	onShow: 'onShow',
+	onDestroy: 'onDestroy',
 };
 
 /**
@@ -55,18 +56,18 @@ export class DeviceSelector
 		this.parentElement = config.parentElement;
 		this.zIndex = config.zIndex;
 
-		this.cameraEnabled = BX.prop.getBoolean(config, "cameraEnabled", false);
-		this.cameraId = BX.prop.getString(config, "cameraId", false);
-		this.microphoneEnabled = BX.prop.getBoolean(config, "microphoneEnabled", false);
-		this.microphoneId = BX.prop.getString(config, "microphoneId", false);
-		this.speakerEnabled = BX.prop.getBoolean(config, "speakerEnabled", false);
-		this.speakerId = BX.prop.getString(config, "speakerId", false);
-		this.allowHdVideo = BX.prop.getBoolean(config, "allowHdVideo", false);
-		this.faceImproveEnabled = BX.prop.getBoolean(config, "faceImproveEnabled", false);
-		this.allowFaceImprove = BX.prop.getBoolean(config, "allowFaceImprove", false);
-		this.allowBackground = BX.prop.getBoolean(config, "allowBackground", true);
-		this.allowMask = BX.prop.getBoolean(config, "allowMask", true);
-		this.allowAdvancedSettings = BX.prop.getBoolean(config, "allowAdvancedSettings", false);
+		this.cameraEnabled = BX.prop.getBoolean(config, 'cameraEnabled', false);
+		this.cameraId = BX.prop.getString(config, 'cameraId', false);
+		this.microphoneEnabled = BX.prop.getBoolean(config, 'microphoneEnabled', false);
+		this.microphoneId = BX.prop.getString(config, 'microphoneId', false);
+		this.speakerEnabled = BX.prop.getBoolean(config, 'speakerEnabled', false);
+		this.speakerId = BX.prop.getString(config, 'speakerId', false);
+		this.allowHdVideo = BX.prop.getBoolean(config, 'allowHdVideo', false);
+		this.faceImproveEnabled = BX.prop.getBoolean(config, 'faceImproveEnabled', false);
+		this.allowFaceImprove = BX.prop.getBoolean(config, 'allowFaceImprove', false);
+		this.allowBackground = BX.prop.getBoolean(config, 'allowBackground', true);
+		this.allowMask = BX.prop.getBoolean(config, 'allowMask', true);
+		this.allowAdvancedSettings = BX.prop.getBoolean(config, 'allowAdvancedSettings', false);
 		this.switchCameraBlocked = config.switchCameraBlocked || false;
 		this.switchMicrophoneBlocked = config.switchMicrophoneBlocked || false;
 		this.isDestroying = false;
@@ -104,18 +105,18 @@ export class DeviceSelector
 		}
 		this.popup = new Popup({
 			id: 'call-view-device-selector',
+			className: 'call-view-device-selector-popup',
+			background: '#00428F',
+			contentBackground: '#00428F',
+			darkMode: true,
+			contentBorderRadius: '6px',
+			borderRadius: '6px',
 			bindElement: this.parentElement,
 			targetContainer: this.viewElement,
 			autoHide: true,
 			zIndex: this.zIndex,
 			closeByEsc: true,
-			offsetTop: 20,
-			offsetLeft: -20,
-			bindOptions: {
-				position: 'top'
-			},
 			angle: false,
-			background: '#22272B',
 			overlay: {
 				backgroundColor: '#22272B',
 				opacity: 0
@@ -165,7 +166,7 @@ export class DeviceSelector
 							icons: ["camera", "camera-off"],
 							events: {
 								onSwitch: this.onCameraSwitch.bind(this),
-								onSelect: this.onCameraSelect.bind(this)
+								onSelect: this.onCameraSelect.bind(this),
 							}
 						})).render(),
 						Hardware.canSelectSpeaker() ?
@@ -181,7 +182,7 @@ export class DeviceSelector
 								}
 							}).render()
 							: null,
-					]
+					],
 				}),
 
 				Dom.create("div", {
@@ -202,6 +203,9 @@ export class DeviceSelector
 									events: {
 										change: this.onAllowHdVideoChange.bind(this)
 									}
+								}),
+								Dom.create("div", {
+									props: { className: 'bx-call-view-device-selector-bottom-item-checkbox-checked' },
 								}),
 								Dom.create("label", {
 									props: {className: "bx-call-view-device-selector-bottom-item-label"},
@@ -381,7 +385,7 @@ export class DeviceSelector
 		this.eventEmitter.emit(DeviceSelectorEvents.onChangeFaceImprove, {
 			faceImproveEnabled: this.faceImproveEnabled
 		})
-	};
+	}
 
 	destroy()
 	{
@@ -402,8 +406,8 @@ export class DeviceSelector
 }
 
 const DeviceMenuEvents = {
-	onSelect: "onSelect",
-	onSwitch: "onSwitch"
+	onSelect: 'onSelect',
+	onSwitch: 'onSwitch',
 };
 
 class DeviceMenu

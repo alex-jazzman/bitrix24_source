@@ -5,15 +5,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports,im_v2_lib_utils,im_v2_application_core,im_v2_const,im_v2_lib_smileManager,imopenlines_v2_lib_openlines) {
 	'use strict';
 
-	const serverComponentList = new Set([im_v2_const.MessageComponent.unsupported, im_v2_const.MessageComponent.error, im_v2_const.MessageComponent.chatCreation, im_v2_const.MessageComponent.ownChatCreation, im_v2_const.MessageComponent.conferenceCreation, im_v2_const.MessageComponent.callInvite, im_v2_const.MessageComponent.copilotCreation, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.aiAssistantMessage, im_v2_const.MessageComponent.supportVote, im_v2_const.MessageComponent.supportSessionNumber, im_v2_const.MessageComponent.supportChatCreation, im_v2_const.MessageComponent.zoomInvite, im_v2_const.MessageComponent.copilotAddedUsers, im_v2_const.MessageComponent.supervisorUpdateFeature, im_v2_const.MessageComponent.supervisorEnableFeature, im_v2_const.MessageComponent.sign, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.generalChatCreationMessage, im_v2_const.MessageComponent.generalChannelCreationMessage, im_v2_const.MessageComponent.channelCreationMessage, im_v2_const.MessageComponent.callMessage, im_v2_const.MessageComponent.voteMessage, im_v2_const.MessageComponent.convertToCollabMessage]);
+	const serverComponentList = new Set([im_v2_const.MessageComponent.unsupported, im_v2_const.MessageComponent.error, im_v2_const.MessageComponent.chatCreation, im_v2_const.MessageComponent.ownChatCreation, im_v2_const.MessageComponent.conferenceCreation, im_v2_const.MessageComponent.callInvite, im_v2_const.MessageComponent.copilotCreation, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.aiAssistantMessage, im_v2_const.MessageComponent.supportVote, im_v2_const.MessageComponent.supportSessionNumber, im_v2_const.MessageComponent.supportChatCreation, im_v2_const.MessageComponent.zoomInvite, im_v2_const.MessageComponent.copilotAddedUsers, im_v2_const.MessageComponent.supervisorUpdateFeature, im_v2_const.MessageComponent.supervisorEnableFeature, im_v2_const.MessageComponent.sign, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.generalChatCreationMessage, im_v2_const.MessageComponent.generalChannelCreationMessage, im_v2_const.MessageComponent.channelCreationMessage, im_v2_const.MessageComponent.callMessage, im_v2_const.MessageComponent.voteMessage, im_v2_const.MessageComponent.convertToCollabMessage, im_v2_const.MessageComponent.sticker]);
 	const demoComponentList = new Set([im_v2_const.MessageComponent.taskChatCreationMessage]);
 	var _message = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("message");
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _isForwardedSticker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isForwardedSticker");
 	var _isServerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isServerComponent");
 	var _isDemoComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDemoComponent");
 	var _hasFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasFiles");
 	var _hasText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasText");
 	var _hasAttach = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasAttach");
+	var _hasSticker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSticker");
 	var _isEmptyMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEmptyMessage");
 	var _isDeletedMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletedMessage");
 	var _isSystemMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSystemMessage");
@@ -44,6 +46,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _isEmptyMessage, {
 	      value: _isEmptyMessage2
 	    });
+	    Object.defineProperty(this, _hasSticker, {
+	      value: _hasSticker2
+	    });
 	    Object.defineProperty(this, _hasAttach, {
 	      value: _hasAttach2
 	    });
@@ -58,6 +63,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _isServerComponent, {
 	      value: _isServerComponent2
+	    });
+	    Object.defineProperty(this, _isForwardedSticker, {
+	      value: _isForwardedSticker2
 	    });
 	    Object.defineProperty(this, _message, {
 	      writable: true,
@@ -90,8 +98,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isEmojiOnly)[_isEmojiOnly]() || babelHelpers.classPrivateFieldLooseBase(this, _hasSmilesOnly)[_hasSmilesOnly]()) {
 	      return im_v2_const.MessageComponent.smile;
 	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isForwardedSticker)[_isForwardedSticker]()) {
+	      return im_v2_const.MessageComponent.sticker;
+	    }
 	    return im_v2_const.MessageComponent.default;
 	  }
+	}
+	function _isForwardedSticker2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _hasSticker)[_hasSticker]() && babelHelpers.classPrivateFieldLooseBase(this, _isForward)[_isForward]();
 	}
 	function _isServerComponent2() {
 	  return serverComponentList.has(babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].componentId);
@@ -108,8 +122,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _hasAttach2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].attach.length > 0;
 	}
+	function _hasSticker2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/isStickerMessage'](babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].id);
+	}
 	function _isEmptyMessage2() {
-	  return !babelHelpers.classPrivateFieldLooseBase(this, _hasText)[_hasText]() && !babelHelpers.classPrivateFieldLooseBase(this, _hasFiles)[_hasFiles]() && !babelHelpers.classPrivateFieldLooseBase(this, _hasAttach)[_hasAttach]();
+	  return !babelHelpers.classPrivateFieldLooseBase(this, _hasText)[_hasText]() && !babelHelpers.classPrivateFieldLooseBase(this, _hasFiles)[_hasFiles]() && !babelHelpers.classPrivateFieldLooseBase(this, _hasAttach)[_hasAttach]() && !babelHelpers.classPrivateFieldLooseBase(this, _hasSticker)[_hasSticker]();
 	}
 	function _isDeletedMessage2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].isDeleted || babelHelpers.classPrivateFieldLooseBase(this, _isEmptyMessage)[_isEmptyMessage]();

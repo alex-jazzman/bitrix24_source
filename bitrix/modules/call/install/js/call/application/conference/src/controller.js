@@ -13,15 +13,15 @@ import { Analytics } from 'call.lib.analytics';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 import './css/view.css';
-import { Util } from 'call.core';
-import { Hardware } from 'call.core';
+import { Util, Hardware, JoinResponseError, ParticipantsPermissionPopup } from 'call.core';
+import { ConferenceChannel } from 'call.application.conference-channel';
 
 // im
 import 'im.debug';
 import 'im.application.launch';
 import 'im.component.conference.conference-public';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
-import { ConferenceModel, CallModel } from "im.model";
+import { ConferenceModel, CallModel } from "call.model";
 import { Controller } from 'im.controller';
 import { Utils } from "im.lib.utils";
 import { Cookie } from "im.lib.cookie";
@@ -29,11 +29,9 @@ import { LocalStorage } from "im.lib.localstorage";
 import { Logger } from "im.lib.logger";
 import { Clipboard } from 'im.lib.clipboard';
 import { Desktop } from "im.lib.desktop";
-import {
-	EventType,
-	ConferenceErrorCode,
-	ConferenceRightPanelMode as RightPanelMode
-} from "im.const";
+import { EventType } from "im.const";
+
+import { ConferenceErrorCode, ConferenceRightPanelMode as RightPanelMode } from "call.const";
 
 //ui
 import {Notifier, NotificationOptions} from 'ui.notification-manager';
@@ -44,10 +42,8 @@ import 'ui.viewer';
 import { VueVendorV2 } from "ui.vue";
 import { VuexBuilder } from "ui.vue.vuex";
 
-import { JoinResponseError, ParticipantsPermissionPopup } from 'call.core';
-
 // core
-import { Loc, Tag, Dom, Text, Type } from "main.core";
+import { Loc, Tag, Dom, Text, Type, Event } from "main.core";
 import "promise";
 import 'main.date';
 import {BaseEvent, EventEmitter} from 'main.core.events';
@@ -56,13 +52,14 @@ import {BaseEvent, EventEmitter} from 'main.core.events';
 import { PullClient } from "pull.client";
 import { ImCallPullHandler } from "im.provider.pull";
 
-import { ConferenceChannel } from './conference-channel';
 import { CallRestClient } from "./utils/restclient";
 
 const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
 
 class ConferenceApplication
 {
+	#onCallUserCommonRecordStateHandler;
+	#onCloudRecordStatusChangedHandler;
 	/* region 01. Initialize */
 	constructor(params = {})
 	{
@@ -121,13 +118,15 @@ class ConferenceApplication
 		this.onNeedResetMediaDevicesStateHandler = this.onNeedResetMediaDevicesState.bind(this);
 		this.onCallUserVideoPausedHandler = this.onCallUserVideoPaused.bind(this);
 		this.onCallLocalMediaReceivedHandler = BX.debounce(this.onCallLocalMediaReceived.bind(this), 1000);
+		this.onCallLocalMediaStoppedHandler = this.onCallLocalMediaStopped.bind(this);
 		this.onCallRemoteMediaReceivedHandler = this.onCallRemoteMediaReceived.bind(this);
 		this.onCallRemoteMediaStoppedHandler = this.onCallRemoteMediaStopped.bind(this);
 		this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 		this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
 		this.onUserStatsReceivedHandler = this.onUserStatsReceived.bind(this);
 		this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
-		this.onCallUserRecordStateHandler = this.onCallUserRecordState.bind(this);
+		this.#onCallUserCommonRecordStateHandler = this.#onCallUserCommonRecordState.bind(this);
+		this.#onCloudRecordStatusChangedHandler = this.#onCloudRecordStatusChanged.bind(this);
 		this.onCallUserFloorRequestHandler = this.onCallUserFloorRequest.bind(this);
 		this.onMicrophoneLevelHandler = this.onMicrophoneLevel.bind(this);
 		this._onCallJoinHandler = this.onCallJoin.bind(this);
@@ -162,9 +161,8 @@ class ConferenceApplication
 		this.waitingForCallStatus = false;
 		this.waitingForCallStatusTimeout = null;
 		this.callEventReceived = false;
-		this.callRecordState = Call.View.RecordState.Stopped;
-		this.callRecordInitiatorId = null;
-		this.callRecordInfo = null;
+
+		this.commonRecord = this.#getDefaultCommonRecord();
 
 		this.floatingScreenShareWindow = null;
 		this.webScreenSharePopup = null;
@@ -257,6 +255,17 @@ class ConferenceApplication
 				messageCount: counter
 			});
 		});
+
+		if (DesktopApi.isDesktop())
+		{
+			DesktopApi.subscribe('BXVpnStatusChange', (status) =>
+			{
+				if (status)
+				{
+					this.showVpnIsActiveNotification();
+				}
+			});
+		}
 
 		EventEmitter.subscribe(EventType.textarea.focus, this.onInputFocusHandler);
 		EventEmitter.subscribe(EventType.textarea.blur, this.onInputBlurHandler);
@@ -443,10 +452,10 @@ class ConferenceApplication
 			try {
 				this.callContainer = document.getElementById('bx-im-component-call-container');
 
-				let hiddenButtons = ['document'];
+				let hiddenButtons = ['camera', 'microphone', 'document'];
 				if (this.isViewerMode())
 				{
-					hiddenButtons = ['camera', 'microphone', 'screen', 'record', 'floorRequest', 'document'];
+					hiddenButtons = ['screen', 'record', 'floorRequest', 'document'];
 				}
 				if (!this.params.isIntranetOrExtranet)
 				{
@@ -469,7 +478,7 @@ class ConferenceApplication
 					language: this.params.language,
 					layout: Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
 					uiState: Call.View.UiState.Preparing,
-					blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record', 'copilot'],
+					blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'copilot'],
 					localUserState: Call.UserState.Idle,
 					hiddenTopButtons: !this.isBroadcast() || this.getBroadcastPresenters().length > 1? []: ['grid'],
 					hiddenButtons: hiddenButtons,
@@ -492,6 +501,7 @@ class ConferenceApplication
 				this.callView.subscribe(Call.View.Event.onUserRename, this.onCallViewUserRename.bind(this));
 				this.callView.subscribe(Call.View.Event.onUserPinned, this.onCallViewUserPinned.bind(this));
 				this.callView.subscribe(Call.View.Event.onToggleSubscribe, this.onCallToggleSubscribe.bind(this));
+				this.callView.subscribe(Call.View.Event.onCommonRecordMenu, this.#onCommonRecordMenu.bind(this));
 
 				this.callView.setCallback(Call.View.Event.onTurnOffParticipantMic, this._onCallViewTurnOffParticipantMic.bind(this));
 				this.callView.setCallback(Call.View.Event.onTurnOffParticipantCam, this._onCallViewTurnOffParticipantCam.bind(this));
@@ -784,6 +794,10 @@ class ConferenceApplication
 
 				if (!Utils.platform.isBitrixDesktop())
 				{
+					if (Number.isNaN(parseInt(payload[0].counter, 10)))
+					{
+						Util.sendLog(`[conf] setButtonCounter chat: payload[0].counter = ${payload[0].counter} (NaN)`);
+					}
 					this.callView.setButtonCounter('chat', payload[0].counter);
 				}
 			}
@@ -813,11 +827,20 @@ class ConferenceApplication
 									counter = 0;
 								}
 							}
+
+							if (Number.isNaN(parseInt(counter, 10)))
+							{
+								Util.sendLog(`[conf] setButtonCounter chat: counter = ${counter} (NaN)`);
+							}
 							this.callView.setButtonCounter('chat', counter);
 						}
 					}
 					else
 					{
+						if (Number.isNaN(parseInt(payload.fields.counter, 10)))
+						{
+							Util.sendLog(`[conf] setButtonCounter chat:  payload.fields.counter = ${payload.fields.counter} (NaN)`);
+						}
 						this.callView.setButtonCounter('chat', payload.fields.counter);
 					}
 				}
@@ -831,6 +854,10 @@ class ConferenceApplication
 			{
 				if (this.callView)
 				{
+					if (Number.isNaN(parseInt(payload.messageCount, 10)))
+					{
+						Util.sendLog(`[conf] setButtonCounter chat: payload.messageCount = ${payload.messageCount} (NaN)`);
+					}
 					this.callView.setButtonCounter('chat', payload.messageCount);
 				}
 			}
@@ -1216,6 +1243,10 @@ class ConferenceApplication
 		if (Utils.device.isMobile())
 		{
 			this.callView.show();
+			if (Number.isNaN(parseInt(this.getDialogData().counter, 10)))
+			{
+				Util.sendLog(`[conf] setButtonCounter chat: this.getDialogData().counter = ${this.getDialogData().counter} (NaN)`);
+			}
 			this.callView.setButtonCounter('chat', this.getDialogData().counter);
 		}
 		else
@@ -1340,6 +1371,8 @@ class ConferenceApplication
 								status: Analytics.AnalyticsStatus.success,
 							});
 						}
+
+						this.checkVpnStatus();
 
 						this.onUpdateLastUsedCameraId();
 					});
@@ -1485,6 +1518,9 @@ class ConferenceApplication
 				this.currentCall.answer({
 					joinAsViewer: joinAsViewer
 				});
+
+				this.checkVpnStatus();
+
 				this.onUpdateLastUsedCameraId();
 			})
 			.catch((error) =>
@@ -1518,21 +1554,19 @@ class ConferenceApplication
 
 	endCall(finishCall = false)
 	{
-		if (this.isRecording())
+		if (this.#isLocalRecordStarted())
 		{
 			Analytics.getInstance().onRecordStop({
 				callId: this.currentCall.uuid,
 				callType: Analytics.AnalyticsType.videoconf,
 				subSection: finishCall ? Analytics.AnalyticsSubSection.contextMenu : Analytics.AnalyticsSubSection.window,
 				element: finishCall ? Analytics.AnalyticsElement.finishForAllButton : Analytics.AnalyticsElement.disconnectButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo),
-			});
-			this.callRecordInfo = null;
+				recordTime: Util.getRecordTimeText(this.commonRecord.info),
+			})
 
-			BXDesktopSystem.CallRecordStop();
 		}
 
-		this.#stopRecordCall();
+		this.#stopCommonRecord();
 
 		this.setConferenceHasErrorInCall(false);
 		this.showFeedback = !!this.currentCall?.wasConnected;
@@ -1711,14 +1745,55 @@ class ConferenceApplication
 		return this.getFeature(id).state;
 	}
 
-	canRecord()
+	#canLocalRecord()
 	{
-		return Utils.platform.isBitrixDesktop() && Utils.platform.getDesktopVersion() >= 54;
+		const isDesktop = Utils.platform.isBitrixDesktop();
+		const isValidApi = Utils.platform.getDesktopVersion() >= 54;
+
+		// It's a desktop with the right API version.
+		if (!isDesktop || !isValidApi)
+		{
+			return false;
+		}
+
+		// If cloud recording is disabled, can record local
+		if (!Call.CallCloudRecord.serviceEnabled)
+		{
+			return true;
+		}
+
+		// If the cloud recording tariff is not available, can record local
+		if (!Call.CallCloudRecord.tariffAvailable)
+		{
+			return true;
+		}
+
+		// If the cloud recording is active, and it is a paid plan, then we turn it on only in plain
+		return this.currentCall.provider === Call.Provider.Plain;
 	}
 
-	isRecording()
+	#canCloudRecord()
 	{
-		return this.canRecord() && this.callRecordState != Call.View.RecordState.Stopped;
+		return Call.CallCloudRecord.serviceEnabled && Call.CallCloudRecord.tariffAvailable;
+	}
+
+	#canCommonRecord()
+	{
+		return this.#canLocalRecord() || this.#canCloudRecord();
+	}
+
+	#isLocalRecordStarted()
+	{
+		return this.#canLocalRecord()
+			&& this.commonRecord.state != Call.CallCommonRecordState.Stopped
+			&& this.commonRecord.state != Call.CallCommonRecordState.Destroyed;
+	}
+
+	#isCommonRecordStarted()
+	{
+		return this.#canCommonRecord()
+			&& this.commonRecord.state != Call.CallCommonRecordState.Stopped
+			&& this.commonRecord.state != Call.CallCommonRecordState.Destroyed;
 	}
 
 	showFeatureLimitSlider(id)
@@ -1750,6 +1825,28 @@ class ConferenceApplication
 		});
 	}
 
+	checkVpnStatus()
+	{
+		if (DesktopApi.isDesktop() && typeof  BXDesktopSystem?.IsVpnConnected === 'function' && BXDesktopSystem.IsVpnConnected())
+		{
+			this.showVpnIsActiveNotification();
+		}
+	}
+
+	showVpnIsActiveNotification()
+	{
+		if (this.callView)
+		{
+			BX.UI.Notification.Center.notify({
+				content: Text.encode(Loc.getMessage('CALL_MESSAGE_VPN_IS_ACTIVE')),
+				position: 'top-right',
+				autoHideDelay: 10000,
+				closeButton: true,
+				category: 'vpnIsActive',
+			});
+		}
+	}
+
 	showMicMutedNotification()
 	{
 		if (this.mutePopup || !this.callView || this.riseYouHandToTalkPopup || !Util.havePermissionToBroadcast('mic'))
@@ -1775,7 +1872,7 @@ class ConferenceApplication
 	createUnmuteButton()
 	{
 		return new BX.UI.Button({
-			baseClass: "ui-btn ui-btn-icon-mic",
+			baseClass: "ui-btn bx-call-view-popup-call-hint-unmute",
 			text: BX.message("IM_CALL_UNMUTE_MIC"),
 			size: BX.UI.Button.Size.EXTRA_SMALL,
 			color: BX.UI.Button.Color.LIGHT_BORDER,
@@ -2112,19 +2209,30 @@ class ConferenceApplication
 	onCallToggleSubscribe(e) {
 		if (this.currentCall && this.currentCall.provider === Call.Provider.Bitrix && e.data)
 		{
-			this.currentCall.toggleRemoteParticipantVideo(e.data.participantIds, e.data.showVideo, true)
+			// comment to update bundles
+			this.currentCall.toggleRemoteParticipantVideo(e.data.participantIds, e.data.showVideo, true);
 		}
 	}
 
-	renameGuest(newName)
+	async renameGuest(newName)
 	{
 		this.callView.localUser.userModel.renameRequested = true;
-		this.setUserName(newName).then(() => {
+		try
+		{
+			const response = await this.setUserName(newName);
+			const result = response?.answer?.result;
+			if (Type.isString(result?.userToken) && result.userToken.length > 0)
+			{
+				CallTokenManager.setUserToken(result.userToken);
+			}
+			this.currentCall?.updateUserData({ name: newName });
 			this.callView.localUser.userModel.wasRenamed = true;
 			Logger.log('setting name to', newName);
-		}).catch(error => {
+		}
+		catch (error)
+		{
 			Logger.error('error setting name', error);
-		});
+		}
 	}
 
 	renameGuestMobile(newName)
@@ -2152,7 +2260,7 @@ class ConferenceApplication
 			//inviteUser: this.onCallViewInviteUserButtonClick.bind(this),
 			toggleMute: this.onCallViewToggleMuteButtonClick.bind(this),
 			toggleScreenSharing: this.onCallViewToggleScreenSharingButtonClick.bind(this),
-			record: this.onCallViewRecordButtonClick.bind(this),
+			record: this.#onCallViewRecordButtonClick.bind(this),
 			toggleVideo: this.onCallViewToggleVideoButtonClick.bind(this),
 			toggleSpeaker: this.onCallViewToggleSpeakerButtonClick.bind(this),
 			showChat: this.onCallViewShowChatButtonClick.bind(this),
@@ -2238,10 +2346,11 @@ class ConferenceApplication
 
 		this.hangupOptionsMenu = new BX.PopupMenuWindow({
 			className: 'bx-messenger-videocall-hangup-options-container',
-			background: '#22272B',
-			contentBackground: '#22272B',
+			background: '#00428F',
+			contentBackground: '#00428F',
 			darkMode: true,
 			contentBorderRadius: '6px',
+			borderRadius: '6px',
 			angle: false,
 			bindElement: this.callView.buttons.hangupOptions.elements.root,
 			targetContainer: this.container,
@@ -2299,7 +2408,7 @@ class ConferenceApplication
 			this.template.$emit('setMicState', !event.data.muted);
 		}
 
-		if (this.isRecording())
+		if (this.#isCommonRecordStarted())
 		{
 			BXDesktopSystem.CallRecordMute(event.data.muted);
 		}
@@ -2353,7 +2462,8 @@ class ConferenceApplication
 				this.allowMutePopup = true;
 			}
 		}
-		if (this.isRecording())
+
+		if (this.#isCommonRecordStarted() && this.#canLocalRecord())
 		{
 			BXDesktopSystem.CallRecordMute(e.muted);
 		}
@@ -2391,7 +2501,7 @@ class ConferenceApplication
 		{
 			this.currentCall.stopScreenSharing();
 
-			if (this.isRecording())
+			if (this.#isCommonRecordStarted() && this.#canLocalRecord())
 			{
 				BXDesktopSystem.CallRecordStopSharing();
 			}
@@ -2428,68 +2538,248 @@ class ConferenceApplication
 
 	}
 
-	onCallViewRecordButtonClick(event)
+	#startCommonRecord(type)
 	{
+		const isPlainCall = this.currentCall.provider === Call.Provider.Plain;
+
+		this.commonRecord.type = type;
+
+		if (Call.CallCloudRecord.serviceEnabled && !isPlainCall)
+		{
+			const kind = type === 'audio' ? Call.CloudRecordKind.AUDIO : Call.CloudRecordKind.VIDEO;
+			this.callView.blockButtons(['record']);
+			this.currentCall.setCloudRecordState(Call.CloudRecordStatus.STARTED, kind);
+
+			return;
+		}
+
+		this.callView.setButtonActive('record', true);
+
+		this.currentCall.sendLocalRecordState({
+			action: Call.CallCommonRecordState.Started,
+			type: this.commonRecord.type,
+			date: new Date(),
+		});
+
+		this.commonRecord.state = Call.CallCommonRecordState.Started;
+	}
+
+	#stopCommonRecord()
+	{
+		const initiatorId = this.commonRecord.initiatorId;
+		const state = this.commonRecord.state;
+
+		this.commonRecord = this.#getDefaultCommonRecord();
+
+		if (this.#canLocalRecord())
+		{
+			BXDesktopSystem.CallRecordStop();
+		}
+
+		if (this.callView)
+		{
+			this.callView.setCommonRecordState(this.callView.getDefaultCommonRecordState());
+			this.callView.setButtonActive('record', false);
+		}
+
+		if (
+			state !== Call.CallCommonRecordState.Stopped
+			&& (this.currentCall && this.currentCall.isAnyoneParticipating())
+			&& initiatorId === this.currentCall.userId
+		)
+		{
+			this.currentCall.sendLocalRecordState({
+				action: Call.CallCommonRecordState.Stopped,
+				userId: this.currentCall.userId,
+			});
+		}
+	}
+
+	/**
+	 * @param { Object } event
+	 * @param { string } event.state
+	 * @param { string } event.kind
+	 * @param { boolean } event.hotkey
+	 */
+	#onCommonRecordMenu(event)
+	{
+		const { state, kind, hotkey } = event.data;
+
+		// Recording state (Started, Paused, Stopped, etc.)
+		switch (state)
+		{
+			case Call.CallCommonRecordState.Started:
+			{
+				// If forced recording → start immediately
+				if (hotkey)
+				{
+					this.#startCommonRecord(Call.CallCommonRecordType.Video);
+
+					return;
+				}
+
+				if (kind === Call.CallCommonRecordType.Audio)
+				{
+					// If copilot is active → ask if recording is needed
+					if (this.currentCall && this.currentCall.isCopilotActive)
+					{
+						this.callView
+							.showConfirmModal({
+								title: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
+								message: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
+								yesButtonText: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
+								noButtonText: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON'),
+							})
+							.then((choice) => {
+								if (choice === 'no')
+								{
+									this.#startCommonRecord(Call.CallCommonRecordType.Audio);
+								}
+							})
+							.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
+
+						return;
+					}
+					// Else start audio recording immediately
+					this.#startCommonRecord(Call.CallCommonRecordType.Audio);
+				}
+
+				// Start video recording
+				if (kind === Call.CallCommonRecordType.Video)
+				{
+					this.#startCommonRecord(Call.CallCommonRecordType.Video);
+				}
+
+				return;
+			}
+
+			case Call.CallCommonRecordState.Paused:
+			case Call.CallCommonRecordState.Resumed:
+			{
+				// For cloud recording → change recorder state
+				if (this.#canCloudRecord())
+				{
+					const status = (state === Call.CallCommonRecordState.Paused ? Call.CloudRecordStatus.PAUSED : Call.CloudRecordStatus.STARTED);
+					this.currentCall.setCloudRecordState(status);
+					this.commonRecord.state = state;
+
+					return;
+				}
+
+				// For desktop → pause / resume recording
+				if (this.#canLocalRecord())
+				{
+					BXDesktopSystem.CallRecordPause(state === Call.CallCommonRecordState.Paused);
+				}
+
+				break;
+			}
+
+			case Call.CallCommonRecordState.Stopped:
+			{
+				// For cloud recording → block button and stop recording
+				if (this.#canCloudRecord())
+				{
+					this.callView.blockButtons(['record']);
+					this.currentCall.setCloudRecordState(Call.CloudRecordStatus.STOPPED);
+					this.commonRecord.state = Call.CallCommonRecordState.Stopped;
+
+					return;
+				}
+
+				// For desktop → just deactivate the recording button
+				this.callView.setButtonActive('record', false);
+
+				break;
+			}
+
+			case Call.CallCommonRecordState.Destroyed:
+			{
+				// For cloud recording → confirm recording deletion
+				if (this.#canCloudRecord())
+				{
+					this.callView
+						.showConfirmModal({
+							title: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_TITLE'),
+							message: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_MESSAGE'),
+							yesButtonText: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_RESUME_BUTTON'),
+							noButtonText: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_DELETE_BUTTON'),
+						})
+						.then((choice) => {
+							if (choice === 'no')
+							{
+								this.callView.blockButtons(['record']);
+								this.currentCall.setCloudRecordState(Call.CloudRecordStatus.DESTROYED);
+								this.commonRecord.state = Call.CallCommonRecordState.Destroyed;
+							}
+						})
+						.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
+
+					return;
+				}
+				break;
+			}
+
+			default:
+			{
+				console.warn('Unknown recording state', state);
+				break;
+			}
+		}
+
+		// Send current recording state
+		this.currentCall.sendLocalRecordState({
+			action: state,
+			type: this.commonRecord.type,
+			date: new Date(),
+		});
+
+		// Save current recording state locally
+		this.commonRecord.state = state;
+	}
+
+	#onCallViewRecordButtonClick()
+	{
+		// Send analytics event for record button click
 		Analytics.getInstance().onRecordBtnClick({
 			callId: this.currentCall.uuid,
 			callType: Analytics.AnalyticsType.videoconf,
 		});
 
-		if (event.data.recordState === Call.View.RecordState.Started)
+		if (Call.CallCloudRecord.serviceEnabled)
 		{
-			if (this.getFeatureState('record') === ConferenceApplication.FeatureState.Limited)
+			if (!Call.CallCloudRecord.tariffAvailable)
 			{
-				this.showFeatureLimitSlider('record');
+				Util.openArticle(Call.CallCloudRecord.tariffSlider);
+
 				return;
 			}
 
-			if (this.getFeatureState('record') === ConferenceApplication.FeatureState.Disabled)
-			{
-				return;
-			}
+			const isPlainCall = this.currentCall.provider === Call.Provider.Plain;
 
-			if (this.canRecord())
+			if (isPlainCall && !DesktopApi.isDesktop())
 			{
-				// TODO: create popup menu with choice type of record - im/install/js/im/call/controller.js:1635
-				// Call.View.RecordType.Video / Call.View.RecordType.Audio
-
-				this.callView.setButtonActive('record', true);
-			}
-			else
-			{
-				if (window.BX.Helper)
-				{
-					window.BX.Helper.show("redirect=detail&code=22079566");
-				}
+				this.callView.showCloudRecordInfoPopup(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
 
 				return;
 			}
-		}
-		else if (event.data.recordState === Call.View.RecordState.Paused)
-		{
-			if (this.canRecord())
-			{
-				BXDesktopSystem.CallRecordPause(true);
-			}
-		}
-		else if (event.data.recordState === Call.View.RecordState.Resumed)
-		{
-			if (this.canRecord())
-			{
-				BXDesktopSystem.CallRecordPause(false);
-			}
-		}
-		else if (event.data.recordState === Call.View.RecordState.Stopped)
-		{
-			this.callView.setButtonActive('record', false);
+
+			this.callView.showCommonRecordMenuPopup(isPlainCall && DesktopApi.isDesktop());
+
+			return;
 		}
 
-		this.currentCall.sendRecordState({
-			action: event.data.recordState,
-			date: new Date()
-		});
+		if (!this.#canCommonRecord())
+		{
+			if (window.BX.Helper)
+			{
+				window.BX.Helper.show('redirect=detail&code=22079566');
+			}
 
-		this.callRecordState = event.data.recordState;
+			return;
+		}
+
+		this.callView.showCommonRecordMenuPopup(true);
 	}
 
 	_onCallViewToggleVideoButtonClickHandler(e)
@@ -3101,13 +3391,15 @@ class ConferenceApplication
 		this.currentCall.addEventListener(Call.Event.onNeedResetMediaDevicesState, this.onNeedResetMediaDevicesStateHandler);
 		this.currentCall.addEventListener(Call.Event.onUserVideoPaused, this.onCallUserVideoPausedHandler);
 		this.currentCall.addEventListener(Call.Event.onLocalMediaReceived, this.onCallLocalMediaReceivedHandler);
+		this.currentCall.addEventListener(Call.Event.onLocalMediaStopped, this.onCallLocalMediaStoppedHandler);
 		this.currentCall.addEventListener(Call.Event.onRemoteMediaReceived, this.onCallRemoteMediaReceivedHandler);
 		this.currentCall.addEventListener(Call.Event.onRemoteMediaStopped, this.onCallRemoteMediaStoppedHandler);
 		this.currentCall.addEventListener(Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler);
 		this.currentCall.addEventListener(Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 		this.currentCall.addEventListener(Call.Event.onUserStatsReceived, this.onUserStatsReceivedHandler);
 		this.currentCall.addEventListener(Call.Event.onUserScreenState, this.onCallUserScreenStateHandler);
-		this.currentCall.addEventListener(Call.Event.onUserRecordState, this.onCallUserRecordStateHandler);
+		Event.bind(this.currentCall, Call.Event.onUserCommonRecordState, this.#onCallUserCommonRecordStateHandler);
+		Event.bind(this.currentCall, Call.Event.onCloudRecordStatusChanged, this.#onCloudRecordStatusChangedHandler)
 		this.currentCall.addEventListener(Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 		this.currentCall.addEventListener(Call.Event.onMicrophoneLevel, this.onMicrophoneLevelHandler);
 		//this.currentCall.addEventListener(Call.Event.onDeviceListUpdated, this._onCallDeviceListUpdatedHandler);
@@ -3152,7 +3444,8 @@ class ConferenceApplication
 		this.currentCall.removeEventListener(Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 		this.currentCall.removeEventListener(Call.Event.onUserStatsReceived, this.onUserStatsReceivedHandler);
 		this.currentCall.removeEventListener(Call.Event.onUserScreenState, this.onCallUserScreenStateHandler);
-		this.currentCall.removeEventListener(Call.Event.onUserRecordState, this.onCallUserRecordStateHandler);
+		Event.unbind(this.currentCall, Call.Event.onUserCommonRecordState, this.#onCallUserCommonRecordStateHandler);
+		Event.unbind(this.currentCall, Call.Event.onCloudRecordStatusChanged, this.#onCloudRecordStatusChangedHandler);
 		this.currentCall.removeEventListener(Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 		this.currentCall.removeEventListener(Call.Event.onMicrophoneLevel, this.onMicrophoneLevelHandler);
 		this.currentCall.removeEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
@@ -3242,22 +3535,20 @@ class ConferenceApplication
 			e.state = Call.UserState.Idle;
 		}
 
-		if (e.state === Call.UserState.Idle && e.userId === this.callRecordInitiatorId)
+		if (e.state === Call.UserState.Idle && e.previousState === Call.UserState.Connected)
 		{
-			this.callRecordState = Call.View.RecordState.Stopped;
-			this.callView.setRecordState(this.callView.getDefaultRecordState());
-			this.callView.setButtonActive('record', false);
+			if (!this.#canCloudRecord() && e.userId === this.commonRecord.initiatorId)
+			{
+				this.#stopCommonRecord();
+			}
 		}
 
 		this.callView.setUserState(e.userId, e.state);
 		this.updateCallUser(e.userId,{state: e.state});
 
-		if (!this.isRecording())
+		if (!this.#isCommonRecordStarted())
 		{
-			this.callView.getConnectedUserCount(false)
-				? this.callView.unblockButtons(['record'])
-				: this.callView.blockButtons(['record'])
-			;
+			this.callView.unblockButtons(['record']);
 		}
 		/*if (e.direction)
 		{
@@ -3356,6 +3647,15 @@ class ConferenceApplication
 		if (this.currentCall && Call.Hardware.isCameraOn && e.tag === 'main' && e.stream.getVideoTracks().length === 0)
 		{
 			Call.Hardware.isCameraOn = false;
+		}
+	}
+
+	onCallLocalMediaStopped(e)
+	{
+		if (this.callView && e.kind === 'audio')
+		{
+			Call.Hardware.isMicrophoneMuted = true;
+			this.showNotification(Loc.getMessage('CALL_ERROR_MICROPHONE_STREAM_STOPPED'));
 		}
 	}
 
@@ -3909,8 +4209,8 @@ class ConferenceApplication
 			callFolded: false,
 			bindElement: this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.callView.container,
-			icon: 'raise-hand',
-			showAngle: true,
+			icon: 'mic',
+			showAngle: false,
 			initiatorName: params.initiatorName,
 			customClassName: 'bx-call-view-popup-call-hint-rise-hand-to-talk',
 			autoCloseDelay: (30 * 60 * 1000), // show it 30 minutes
@@ -3922,7 +4222,7 @@ class ConferenceApplication
 							'#INITIATOR_NAME#': this.initiatorName,
 							'[hint-label]': `<div class="bx-call-view-popup-call-hint-text">`,
 							'[/hint-label]': '</div>',
-							'#RISE_HAND_ICON#': `<div class="bx-call-view-popup-call-hint-hand-raise-icon"></div>`,
+							'#RISE_HAND_ICON#': `<div class="ui-btn bx-call-view-popup-call-hint-hand-raise-icon"></div>`,
 							'[label-or]': `<div class="bx-call-view-popup-call-hint-hand-raise-or-label">`,
 							'[/label-or]': '</div>',
 							'#REQUEST_NOW_BUTTON#': `<div class = "bx-call-view-popup-call-hint-button-placeholder"></div>`,
@@ -4052,37 +4352,178 @@ class ConferenceApplication
 		this.updateCallUser(e.userId, {screenState: e.screenState});
 	}
 
-	onCallUserRecordState(event)
+	/**
+	 * @param {Object} event
+	 * @param {number} event.code
+	 * @param {number} event.initiatorId
+	 * @param {number} event.userId
+	 * @param { boolean } event.justJoined
+	 * @param {Object} event.commonRecordState
+	 * @private
+	 */
+	#onCloudRecordStatusChanged(event)
 	{
-		this.callRecordState = event.recordState.state;
-		this.callView.setRecordState(event.recordState);
-		this.callRecordInitiatorId = event.userId;
-
-		if (!this.canRecord() || event.userId != this.controller.getUserId())
+		if (this.controller.getUserId() === event.userId)
 		{
-			return true;
+			const state = event.commonRecordState.state;
+			const callId = this.currentCall.uuid;
+			const callType = Analytics.AnalyticsType.videoconf;
+
+			switch (state)
+			{
+				case Call.CallCommonRecordState.Started: {
+					if (this.commonRecord.state === Call.CallCommonRecordState.Resumed)
+					{
+						Analytics.getInstance().onRecordResumed({
+							callId,
+							callType,
+							errorCode: null,
+						});
+					}
+					else
+					{
+						Analytics.getInstance().onRecordStart({
+							callId,
+							callType,
+							recordType: event.commonRecordState.type,
+							errorCode: null,
+						});
+					}
+
+					break;
+				}
+
+				case Call.CallCommonRecordState.Paused: {
+					Analytics.getInstance().onRecordPaused({
+						callId,
+						callType,
+						errorCode: null,
+					});
+					break;
+				}
+
+				case Call.CallCommonRecordState.Stopped: {
+					Analytics.getInstance().onRecordStop({
+						callId,
+						callType,
+						subSection: Analytics.AnalyticsSubSection.window,
+						element: Analytics.AnalyticsElement.recordButton,
+						recordTime: Util.getRecordTimeText(this.commonRecord.info, true),
+					});
+
+					break;
+				}
+
+				case Call.CallCommonRecordState.Destroyed: {
+					Analytics.getInstance().onRecordDelete({
+						callId,
+						callType,
+						errorCode: null,
+					});
+					break;
+				}
+
+				default: {
+					if (Util.isCloudRecordLogEnabled())
+					{
+						console.error(`Unknown record state: ${status}`);
+					}
+				}
+			}
 		}
 
-		if (event.recordState.state === Call.View.RecordState.Stopped)
+		if (event.userId && event.userId !== this.controller.getUserId())
 		{
-			this.callRecordInitiatorId = null;
+			if (event.justJoined)
+			{
+				if (event.commonRecordState.state === Call.CallCommonRecordState.Started)
+				{
+					if (Call.CallCloudRecord.isCisRegion)
+					{
+						this.callView.showCommonRecordStartNotify(event.userId, Call.CallCommonRecordState.Started);
+					}
+					else
+					{
+						this.callView.showCommonRecordStartModal();
+					}
+				}
+			}
+			else
+			{
+				this.callView.showCommonRecordStartNotify(event.userId, event.commonRecordState.state);
+			}
+		}
+
+		this.commonRecord.state = event.commonRecordState.state;
+		this.callView.setCommonRecordState(event.commonRecordState);
+		this.commonRecord.initiatorId = event.initiatorId;
+
+		if (Util.isCommonRecordStateInactive(event.commonRecordState.state))
+		{
+			this.commonRecord.info = null;
+			this.commonRecord.initiatorId = null;
 		}
 		else
 		{
-			this.callRecordInfo = event.recordState;
+			this.commonRecord.info = structuredClone(event.commonRecordState);
 		}
 
-		if (
-			event.recordState.state === Call.View.RecordState.Started
-			&& event.recordState.userId == this.controller.getUserId()
-		)
+		this.callView.unblockButtons(['record']);
+		this.callView.setButtonActive('record', [Call.CloudRecordStatus.STARTED, Call.CloudRecordStatus.PAUSED].includes(event.code));
+	}
+
+	#onCallUserCommonRecordState(event)
+	{
+		if (this.#canCloudRecord())
 		{
-			const windowId = window.bxdWindowId || window.document.title;
-			let fileName = BX.message('IM_CALL_RECORD_NAME');
-			let dialogId = this.currentCall.associatedEntity.id;
-			let dialogName = this.currentCall.associatedEntity.name;
-			let callId = this.currentCall.uuid;
-			let callDate = BX.Main.Date.format(this.params.formatRecordDate || 'd.m.Y');
+			return;
+		}
+
+		const { commonRecordState, userId } = event;
+		const { state, userId: initiatorId } = commonRecordState;
+
+		this.commonRecord.state = state;
+		this.callView.setCommonRecordState(commonRecordState);
+		this.commonRecord.initiatorId = initiatorId;
+
+		if ([Call.CallCommonRecordState.Stopped, Call.CallCommonRecordState.Destroyed].includes(state))
+		{
+			this.commonRecord.initiatorId = null;
+		}
+		else
+		{
+			this.commonRecord.info = commonRecordState;
+		}
+
+		if (!this.commonRecord.notifyShowed && state === Call.CallCommonRecordState.Started && initiatorId !== this.controller.getUserId())
+		{
+			this.commonRecord.notifyShowed = true;
+			this.callView.showCommonRecordStartNotify(initiatorId);
+		}
+
+		if (Util.isCommonRecordStateInactive(state) && initiatorId !== this.controller.getUserId())
+		{
+			this.commonRecord.notifyShowed = false;
+		}
+
+		if (!this.#canCommonRecord() || userId !== this.controller.getUserId())
+		{
+			return;
+		}
+
+		const isStartedByMe = state === Call.CallCommonRecordState.Started && initiatorId === this.controller.getUserId();
+		const isStopped = state === Call.CallCommonRecordState.Stopped;
+
+		if (isStartedByMe)
+		{
+
+			const callType = Analytics.AnalyticsType.videoconf;
+			const callId = this.currentCall.uuid;
+			const { id: dialogId, name: dialogName } = this.currentCall.associatedEntity;
+
+			const callDate = BX.Main.Date.format(this.params.formatRecordDate || 'd.m.Y');
+
+			let fileName = Loc.getMessage('IM_CALL_RECORD_NAME');
 
 			if (fileName)
 			{
@@ -4097,42 +4538,40 @@ class ConferenceApplication
 				fileName = `call_record_${callId}`;
 			}
 
-			this.callEngine.getRestClient().callMethod("call.Call.onStartRecord", {callUuid: this.currentCall.uuid});
+			this.callEngine.getRestClient().callMethod('call.Call.onStartRecord', { callUuid: this.currentCall.uuid });
 
-			Analytics.getInstance().onRecordStart({
-				callId: this.currentCall.uuid,
-				callType: Analytics.AnalyticsType.videoconf,
-			});
+			Analytics.getInstance().onRecordStart({ callId, callType, recordType: this.commonRecord.type, errorCode: null });
 
 			BXDesktopSystem.CallRecordStart({
-				windowId,
+				windowId: window.bxdWindowId || window.document.title,
 				fileName,
 				callId, // now not used
 				callDate,
 				dialogId,
 				dialogName,
+				video: this.commonRecord.type !== Call.CallCommonRecordType.Audio,
 				muted: Call.Hardware.isMicrophoneMuted,
 				cropTop: 72,
 				cropBottom: 90,
 				shareMethod: 'im.disk.record.share',
-				callType: Analytics.AnalyticsType.videoconf,
+				callType,
 			});
+
+			return;
 		}
-		else if (event.recordState.state === Call.View.RecordState.Stopped)
+
+		if (isStopped)
 		{
 			Analytics.getInstance().onRecordStop({
 				callId: this.currentCall.uuid,
 				callType: Analytics.AnalyticsType.videoconf,
 				subSection: Analytics.AnalyticsSubSection.window,
 				element: Analytics.AnalyticsElement.recordButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo),
+				recordTime: Util.getRecordTimeText(this.commonRecord.info),
 			});
-			this.callRecordInfo = null;
 
-			BXDesktopSystem.CallRecordStop();
+			this.#stopCommonRecord();
 		}
-
-		return true;
 	}
 
 	onCallUserFloorRequest(e)
@@ -4293,6 +4732,11 @@ class ConferenceApplication
 			this.webScreenSharePopup.close();
 		}
 
+		this.#stopCommonRecord();
+
+		this.commonRecord.state = Call.CallCommonRecordState.Stopped;
+		this.commonRecord.type = Call.CallCommonRecordType.None;
+
 		this.togglePictureInPictureCallWindow({ isForceClose: true });
 
 		if (!this.getActiveCallUsers().length)
@@ -4335,6 +4779,8 @@ class ConferenceApplication
 			this.riseYouHandToTalkPopup = null;
 		}
 
+		this.#stopCommonRecord();
+
 		this.restart();
 	}
 
@@ -4369,21 +4815,6 @@ class ConferenceApplication
 	setCameraState(state)
 	{
 		Call.Hardware.isCameraOn = state;
-	}
-
-	#stopRecordCall()
-	{
-		if (this.isRecording())
-		{
-			this.callRecordState = Call.View.RecordState.Stopped;
-			this.callView.setRecordState(this.callView.getDefaultRecordState());
-			this.callView.setButtonActive('record', false);
-
-			this.currentCall.sendRecordState({
-				action: Call.View.RecordState.Stopped,
-				userId: this.currentCall.userId,
-			});
-		}
 	}
 	/* endregion 01. Call methods */
 
@@ -4716,9 +5147,7 @@ class ConferenceApplication
 			this.restClient.callMethod('im.call.user.update', {
 				name: name,
 				chat_id: this.getChatId()
-			}).then(() => {
-				resolve();
-			}).catch((error) => {
+			}).then(resolve).catch((error) => {
 				reject(error)
 			});
 		});
@@ -4897,6 +5326,29 @@ class ConferenceApplication
 		return true;
 	}
 
+	#getDefaultCommonRecord()
+	{
+		return {
+			state: Call.CallCommonRecordState.Stopped,
+			type: Call.CallCommonRecordType.None,
+			initiatorId: null,
+			info: null,
+			notifyShowed: false,
+		};
+	}
+
+	#showCloudRecordPromo()
+	{
+		if (
+			this.callView
+			&& (this.currentCall && this.currentCall.isAnyoneParticipating())
+			&& Call.CallCloudRecord.serviceEnabled
+		)
+		{
+			this.callView.showCloudRecordPromo(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
+		}
+	}
+
 	/* endregion 03. Utils */
 }
 
@@ -4906,4 +5358,4 @@ ConferenceApplication.FeatureState = {
 	Limited: 'limited',
 };
 
-export { ConferenceApplication, ConferenceChannel };
+export { ConferenceApplication };

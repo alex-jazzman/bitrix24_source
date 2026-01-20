@@ -1,10 +1,10 @@
 /**
- * @module tab-presets/utils
+ * @module tab-presets/src/utils
  */
-jn.define('tab-presets/utils', (require, exports, module) => {
+jn.define('tab-presets/src/utils', (require, exports, module) => {
 	const { Icon } = require('ui-system/blocks/icon');
 	const { downloadImages, makeLibraryImagePath } = require('asset-manager');
-	const { RequestExecutor } = require('rest');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const icons = {
 		chevron: Icon.CHEVRON_TO_THE_RIGHT,
@@ -23,6 +23,8 @@ jn.define('tab-presets/utils', (require, exports, module) => {
 		bizproc: Icon.BUSINESS_PROCESS,
 		sign: Icon.SIGN,
 		file: Icon.FILE,
+		call_list: Icon.PHONE_UP,
+		mail: Icon.MAIL,
 	};
 
 	const presetInfoImagePath = {
@@ -41,7 +43,7 @@ jn.define('tab-presets/utils', (require, exports, module) => {
 	const TabPresetsNewUtils = {
 		cacheId: () => `tab.settings.user.${env.userId}`,
 		getPresetGetDataRequestExecutor: () => {
-			return new RequestExecutor('mobile.tabs.getdata').setCacheId(TabPresetsNewUtils.cacheId());
+			return new RunActionExecutor('mobile.tabs.getData').setCacheId(TabPresetsNewUtils.cacheId());
 		},
 		getSortedPresets: (list, current) => {
 			const result = {};
@@ -57,9 +59,35 @@ jn.define('tab-presets/utils', (require, exports, module) => {
 
 			return result;
 		},
+		getCurrentPresetName: () => {
+			return new RunActionExecutor('mobile.tabs.getCurrentPresetName')
+				.setSkipDuplicateRequests()
+				.call()
+				.then((result) => {
+					return result?.data ?? null;
+				})
+				.catch((error) => {
+					console.error(error);
+
+					return null;
+				});
+		},
+		getCurrentPresetItems: () => {
+			return new RunActionExecutor('mobile.tabs.getCurrentPresetItems')
+				.setSkipDuplicateRequests()
+				.call()
+				.then((result) => {
+					return result?.data ?? null;
+				})
+				.catch((error) => {
+					console.error(error);
+
+					return null;
+				});
+		},
 		setCurrentPreset: (name) => {
 			return new Promise((resolve, reject) => {
-				void new RequestExecutor('mobile.tabs.setpreset', { name })
+				void new RunActionExecutor('mobile.tabs.setPreset', { name })
 					.setHandler((result, more, error) => {
 						if (result && !error)
 						{
@@ -100,7 +128,7 @@ jn.define('tab-presets/utils', (require, exports, module) => {
 			BX.onCustomEvent('onPresetChanged', [presetId]);
 		},
 		setUserConfig: (config) => {
-			return new RequestExecutor('mobile.tabs.setconfig', { config }).call(false);
+			return new RunActionExecutor('mobile.tabs.setConfig', { config }).call(false);
 		},
 		getIcon: (code) => {
 			const list = ['crm_custom_section'];

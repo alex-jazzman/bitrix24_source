@@ -6,7 +6,9 @@ $MESS["BPCGDOC_AUTO_EXECUTE_EDIT"] = "Update";
 $MESS["BPCGDOC_AUTO_EXECUTE_NONE"] = "No";
 $MESS["BPCGDOC_DELEGATE_LOG_MSGVER_1"] = "User #FROM# delegated assignment \"#NAME#\" to #TO#";
 $MESS["BPCGDOC_DELEGATE_LOG_TITLE"] = "Delegated";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_DEFAULT"] = "#AUTHOR# delegated workflow assignment to you.";
 $MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_MSGVER_1"] = "A workflow assignment has been delegated to you: [URL=#TASK_URL#]#TASK_NAME#[/URL]";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_SIMPLE"] = "delegated to you assignment \"#TASK_NAME#\", workflow: \"#PROCESS_NAME#\".";
 $MESS["BPCGDOC_EMPTY_WD_ID_MSGVER_1"] = "The workflow template ID is missing";
 $MESS["BPCGDOC_ERROR_ACTION_MSGVER_1"] = "Assignment \"#NAME#\": #ERROR#";
 $MESS["BPCGDOC_ERROR_DELEGATE_0_MSGVER_1"] = "Assignment \"#NAME#\" cannot be delegated because the selected employee is not your subordinate.";
@@ -26,5 +28,7 @@ $MESS["BPCGDOC_WAIT"] = "wait...";
 $MESS["BPCGDOC_WI_B24_LIMITS_MESSAGE"] = "Some of the entities on your portal run more than two simultaneous workflows. A restriction of maximum two simultaneous workflows per entity will soon be introduced. It is recommended that you alter the logic of your workflows. [URL=https://helpdesk.bitrix24.com/open/4838471/]Learn more[/URL]";
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE"] = "Some of the workflows you have started (#CNT#) errored out or completed incorrectly.
 [URL=#PATH#]View these workflows[/URL].";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE_DEFAULT"] = "Some of the workflows you started (#CNT#) completed incorrectly. [URL=#PATH#]View these workflows[/URL].";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE_DEFAULT_TITLE"] = "Workflows";
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_TITLE_MSGVER_1"] = "System notification";
 $MESS["BPCGDOC_YES"] = "Yes";

@@ -104,7 +104,7 @@ if (
 	?>
 
 	<!-- WRAPPER -->
-	<table class="w100" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="width: 100%; background-color: #e5f9ff; background-image: url(<?= $arParams['BACKGROUND']?>); background-repeat: no-repeat; background-position: center; background-size: cover;">
+	<table class="w100" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="width: 100%; background-color: #e5f9ff; background-image: url(<?= $arParams['BACKGROUND'] ?? '' ?>); background-repeat: no-repeat; background-position: center; background-size: cover;">
 		<tbody>
 		<tr>
 			<td align="center" class="pad-sides-20" style="padding-top: 60px; padding-bottom: 14px;">

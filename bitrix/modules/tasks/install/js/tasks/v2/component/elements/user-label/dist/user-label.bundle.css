@@ -1,0 +1,25 @@
+.b24-user-label {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.b24-user-label-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.b24-user-label-name.--collaber {
+	color: var(--ui-color-collab-accent-primary);
+}
+
+.b24-user-label-name.--email,
+.b24-user-label-name.--extranet {
+	color: #ca8600;
+}
+
+.b24-user-label > * {
+	pointer-events: none;
+}

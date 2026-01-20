@@ -39,7 +39,9 @@ Manager::setPageView(
 		callback: (eventData) => {
 			if (eventData.command === 'Vibe:onCreate')
 			{
-				document.location.reload();
+				setTimeout(() => {
+					document.location.reload();
+				}, 10000);
 			}
 		},
 	});

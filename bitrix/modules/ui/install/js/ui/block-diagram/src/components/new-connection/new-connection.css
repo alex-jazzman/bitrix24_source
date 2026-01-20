@@ -13,3 +13,7 @@
 	stroke-width: 1;
 	fill: var(--ui-color-background-transparent, transparent);
 }
+
+.ui-block-diagram-new-connection__path.--error {
+	stroke: var(--ui-color-palette-red-70);
+}

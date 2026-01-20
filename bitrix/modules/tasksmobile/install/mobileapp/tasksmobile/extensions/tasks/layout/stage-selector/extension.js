@@ -17,12 +17,25 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 		selectCanMoveStage,
 	} = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { DeadlinePeriod } = require('tasks/enum');
+	const { selectById: selectStageById } = require('tasks/statemanager/redux/slices/stage-settings');
+	const store = require('statemanager/redux/store');
+	const { DeadlineRestrictions } = require('tasks/deadline-picker/deadline-restrictions');
+	const { Icon } = require('assets/icons');
 
 	/**
 	 * @class TasksStageSelector
 	 */
 	class TasksStageSelector extends StageSelectorField
 	{
+		constructor(props)
+		{
+			super(props);
+
+			this.deadlineRestrictions = new DeadlineRestrictions({
+				task: this.props.task,
+			});
+		}
+
 		get taskId()
 		{
 			return BX.prop.getInteger(this.props, 'taskId', null);
@@ -75,6 +88,8 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 					})
 					.catch(console.error);
 			}
+
+			this.deadlineRestrictions.updateTask(props.task);
 		}
 
 		render()
@@ -216,16 +231,41 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 
 		notifyAboutReadOnlyStatus()
 		{
-			if (this.isReadonlyNotificationEnabled())
+			if (!this.isReadonlyNotificationEnabled())
 			{
-				const { parentWidget, readonlyNotificationMessage } = this.getConfig();
-
-				const message = readonlyNotificationMessage
-					|| Loc.getMessage('TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TEXT');
-
-				Haptics.notifyWarning();
-				showSafeToast({ message }, parentWidget);
+				return;
 			}
+
+			const { parentWidget, readonlyNotificationMessage } = this.getConfig();
+
+			if (readonlyNotificationMessage)
+			{
+				Haptics.notifyWarning();
+				showSafeToast({
+					readonlyNotificationMessage,
+					icon: Icon.ALERT_ACCENT,
+				}, parentWidget);
+
+				return;
+			}
+
+			const { isReadOnly, toastCode } = this.deadlineRestrictions.isReadOnly();
+
+			if (isReadOnly)
+			{
+				this.deadlineRestrictions.showToastByCode({
+					toastCode,
+					layout: parentWidget,
+				});
+
+				return;
+			}
+
+			Haptics.notifyWarning();
+			showSafeToast({
+				message: Loc.getMessage('TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TEXT'),
+				icon: Icon.ALERT_ACCENT,
+			}, parentWidget);
 		}
 
 		onBeforeHandleChange(actionParams)
@@ -233,6 +273,21 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 			if (!isOnline())
 			{
 				showOfflineToast();
+
+				return Promise.reject();
+			}
+
+			const { maxDeadlineChangeDate } = this.props.task;
+			const { parentWidget } = this.getConfig();
+
+			const { isReadOnly, toastCode } = this.deadlineRestrictions.isReadOnly();
+
+			if (isReadOnly)
+			{
+				this.deadlineRestrictions.showToastByCode({
+					toastCode,
+					layout: parentWidget,
+				});
 
 				return Promise.reject();
 			}
@@ -256,6 +311,19 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 					Loc.getMessage('TASKS_STAGE_SELECTOR_NOTIFY_SPRINT_FINISH_TITLE'),
 					Loc.getMessage('TASKS_STAGE_SELECTOR_NOTIFY_SPRINT_FINISH_TEXT'),
 				);
+
+				return Promise.reject();
+			}
+
+			const { deadline } = selectStageById(store.getState(), actionParams.selectedStageId) || {};
+			const preparedDeadline = deadline ? deadline * 1000 : null;
+
+			if (this.deadlineRestrictions.isDeadlineRestrictedByMaxDate(preparedDeadline))
+			{
+				DeadlineRestrictions.showMaxDateRestrictionToast({
+					maxDeadlineChangeDate,
+					layout: parentWidget,
+				});
 
 				return Promise.reject();
 			}

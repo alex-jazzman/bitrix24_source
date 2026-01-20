@@ -83,3 +83,4 @@ $MESS["CRM_CTRL_PANEL_ITEM_CALL_ASSESSMENT"] = "Скрипты и Речевая
 $MESS["CRM_CTRL_PANEL_ITEM_SALE_CHANNELS"] = "Каналы продаж";
 $MESS["CRM_CTRL_PANEL_ITEM_OPERATIONAL_ANALYTICS"] = "Оперативная аналитика";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES_MANAGEMENT"] = "Управление продажами";
+$MESS['CRM_CTRL_PANEL_ITEM_DOCUMENT_PERMISSIONS'] = 'Права доступа к документам CRM';

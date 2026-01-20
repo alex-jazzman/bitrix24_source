@@ -3,6 +3,7 @@
 use Bitrix\Bizproc\FieldType;
 
 use Bitrix\Main\Loader;
+use Bitrix\Bizproc\Integration\AiAssistant\ActivityAiPropertyConverter;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Crm\Integration\Analytics\Dictionary;
@@ -499,6 +500,7 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 				'Name' => Loc::getMessage('BPSFA_MERGE_MULTIPLE'),
 				'FieldName' => 'merge_multiple_fields',
 				'Type' => 'bool',
+				ActivityAiPropertyConverter::PROPERTY_FIELD_AI_DESCRIPTION => 'Y/N is need merge multiple values in field instead of rewrite',
 			]
 		];
 	}

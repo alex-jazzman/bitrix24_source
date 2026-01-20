@@ -1,25 +1,12 @@
 <?php
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+
+CBitrixComponent::includeComponentClass("bitrix:landing.blocks.mp_widget.about");
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
-}
-
-$bossIdDefault = 1;
-if (Loader::includeModule('intranet'))
-{
-	$structure = CIntranetUtils::getStructure();
-	foreach ($structure['DATA'] as $dataItem)
-	{
-		if ($dataItem['UF_HEAD'] !== null)
-		{
-			$bossIdDefault = (int)$dataItem['UF_HEAD'];
-			break;
-		}
-	}
 }
 
 $arComponentParameters = [
@@ -38,7 +25,7 @@ $arComponentParameters = [
 			'NAME' => Loc::getMessage('LANDING_WIDGET_ABOUT_PARAMS_BOSS_ID'),
 			'TYPE' => 'CUSTOM',
 			'JS_EVENT' => 'initUserSelectField',
-			'DEFAULT' => $bossIdDefault,
+			'DEFAULT' => LandingBlocksMainpageWidgetAbout::getBossId(),
 		],
 		'SHOW_EMPLOYEES' => [
 			'NAME' => Loc::getMessage('LANDING_WIDGET_ABOUT_PARAMS_SHOW_EMPLOYEES'),

@@ -32,6 +32,7 @@ export type BookingModel = {
 	note: string | null,
 	externalData: DealData[],
 	messages: MessageModel[],
+	skus: SkuModel[],
 };
 
 export type DealData = {
@@ -42,7 +43,6 @@ export type DealData = {
 		createdTimestamp: number,
 		currencyId: string,
 		opportunity: number,
-		formattedOpportunity: string,
 	},
 };
 
@@ -70,4 +70,11 @@ export type MessageModel = {
 	id: number,
 	bookingId: number,
 	notificationType: string,
+};
+
+export type SkuModel = {
+	id: number,
+	name: string,
+	price: number,
+	currencyId: string,
 };

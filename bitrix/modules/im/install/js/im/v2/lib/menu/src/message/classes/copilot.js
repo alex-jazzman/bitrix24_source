@@ -5,42 +5,31 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { FeedbackManager } from 'im.v2.lib.feedback';
 
-import { MessageMenu } from './message-base';
+import { MessageMenu, MenuSectionCode } from './message-base';
 
 import type { ImModelChat } from 'im.v2.model';
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
-
-const MenuSectionCode = Object.freeze({
-	main: 'main',
-	select: 'select',
-	create: 'create',
-	market: 'market',
-});
+import type { MenuItemOptions } from 'ui.system.menu';
 
 export class CopilotMessageMenu extends MessageMenu
 {
 	getMenuItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
 			this.getCopyItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getForwardItem(),
 			this.getSendFeedbackItem(),
+		];
+
+		const secondGroupItems = [
 			this.getDeleteItem(),
+			this.getSelectItem(),
 		];
 
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
-		];
-	}
-
-	getMenuGroups(): MenuSectionOptions[]
-	{
-		return [
-			{ code: MenuSectionCode.main },
-			{ code: MenuSectionCode.select },
+			...this.groupItems(firstGroupItems, MenuSectionCode.first),
+			...this.groupItems(secondGroupItems, MenuSectionCode.second),
 		];
 	}
 
@@ -67,12 +56,12 @@ export class CopilotMessageMenu extends MessageMenu
 	async #openForm()
 	{
 		void (new FeedbackManager()).openCopilotForm({
-			userCounter: this.getUserCounter(),
+			userCounter: this.#getUserCounter(),
 			text: this.context.text,
 		});
 	}
 
-	getUserCounter(): number
+	#getUserCounter(): number
 	{
 		const chat: ImModelChat = this.store.getters['chats/get'](this.context.dialogId);
 

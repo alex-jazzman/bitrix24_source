@@ -2,30 +2,29 @@
  * @module tab-presets
  */
 jn.define('tab-presets', (require, exports, module) => {
-	const TabPresetsNewUtils = require('tab-presets/utils');
-	const { PresetInfo } = require('tab-presets/preset-info');
-	const { PresetManualSettings } = require('tab-presets/preset-manual-settings');
+	const TabPresetsNewUtils = require('tab-presets/src/utils');
+	const { Box } = require('ui-system/layout/box');
+	const { Area } = require('ui-system/layout/area');
+	const { AreaList } = require('ui-system/layout/area-list');
+	const { PresetInfo } = require('tab-presets/src/preset-info');
+	const { PresetManualMenu } = require('tab-presets/src/preset-manual/manual-menu');
 	const { Card, CardDesign } = require('ui-system/layout/card');
-	const { CardBanner } = require('ui-system/blocks/banners/card-banner');
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { Text3, Text7 } = require('ui-system/typography/text');
-	const { Color, Indent } = require('tokens');
+	const { Color, Indent, Component } = require('tokens');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { Alert } = require('alert');
 	const { Notify } = require('notify');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
-	const { makeLibraryImagePath } = require('asset-manager');
+	const { PresetBanner } = require('tab-presets/src/banners');
 	const { Tourist } = require('tourist');
 	const { AnalyticsEvent } = require('analytics');
 	const { Avatar, AvatarEntityType } = require('ui-system/blocks/avatar');
 
 	const ITEM_KEY_MANUAL = 'manual';
-
 	const ITEM_KEY_MENU = 'menu';
-
-	const ITEM_KEY_BANNER = 'banner';
 	const ITEM_TYPE_BANNER = 'banner';
 
 	class TabPresetsComponent extends LayoutComponent
@@ -42,11 +41,11 @@ jn.define('tab-presets', (require, exports, module) => {
 				.setCacheHandler((result) => {
 					if (result)
 					{
-						this.updateState(result, true);
+						this.updateState(result.data, true);
 					}
 				})
 				.call(true)
-				.then((result) => this.updateState(result.result, true))
+				.then((result) => this.updateState(result.data, true))
 				.catch(() => Notify.alert(Loc.getMessage('TAB_PRESETS_NEW_ERROR'), '', 'OK'))
 			;
 		}
@@ -104,34 +103,79 @@ jn.define('tab-presets', (require, exports, module) => {
 				});
 			}
 
-			return ListView({
-				ref: (ref) => {
-					this.listRef = ref;
+			return Box(
+				{
+					style: {
+						flex: 1,
+					},
 				},
-				style: {
-					flex: 1,
+				AreaList(
+					{
+						style: {
+							flex: 1,
+						},
+						withScroll: false,
+						testId: `${this.testId}-area-list`,
+					},
+					this.#renderBanner(),
+					this.#renderList(),
+				),
+			);
+		}
+
+		#renderBanner()
+		{
+			return Area(
+				{
+					isFirst: true,
+					excludePaddingSide: {
+						bottom: true,
+					},
 				},
-				isRefreshing: false,
-				dragInteractionEnabled: false,
-				data: [
-					{ items: this.getListViewItems() },
-				],
-				renderItem: (item) => this.renderItem(item.key, item),
-			});
+				PresetBanner({
+					testId: this.testId,
+				}),
+			);
+		}
+
+		#renderList()
+		{
+			return Area(
+				{
+					excludePaddingSide: {
+						horizontal: true,
+						bottom: true,
+					},
+					style: {
+						flex: 1,
+					},
+				},
+				ListView({
+					ref: (ref) => {
+						this.listRef = ref;
+					},
+					style: {
+						flex: 1,
+					},
+					isRefreshing: false,
+					dragInteractionEnabled: false,
+					data: [
+						{ items: this.getListViewItems() },
+					],
+					renderItem: this.#renderListItem,
+				}),
+			);
 		}
 
 		getListViewItems()
 		{
-			const bannerItem = this.getBannerItem();
-			const allPresetItems = this.getPresetItems();
-
+			const allPresetItems = this.#getPresetItems();
 			const selectedPreset = allPresetItems.find((item) => item.isSelected);
 			const otherPresets = allPresetItems
 				.filter((item) => !item.isSelected)
 				.sort((a, b) => (a?.sort ?? 1000) - (b?.sort ?? 1000));
 
 			const items = [
-				bannerItem,
 				selectedPreset,
 				...otherPresets,
 			].filter(Boolean);
@@ -151,7 +195,7 @@ jn.define('tab-presets', (require, exports, module) => {
 			});
 		}
 
-		getPresetItems()
+		#getPresetItems()
 		{
 			const { presets } = this.state;
 
@@ -164,24 +208,25 @@ jn.define('tab-presets', (require, exports, module) => {
 			}));
 		}
 
-		getBannerItem()
-		{
-			const { shouldShowBanner } = this.state;
+		#renderListItem = (preset) => {
+			const { type } = preset;
 
-			if (!shouldShowBanner)
+			if (type === ITEM_TYPE_BANNER)
 			{
-				return null;
+				return this.#renderBanner();
 			}
 
-			return { key: ITEM_KEY_BANNER, type: ITEM_TYPE_BANNER };
-		}
+			return this.#renderItem(preset);
+		};
 
-		renderItem(presetId, preset)
+		#renderItem(preset)
 		{
-			if (preset.type === ITEM_TYPE_BANNER)
-			{
-				return this.renderBanner();
-			}
+			const {
+				title,
+				key: presetId,
+				tabsDescription,
+				isFirst,
+			} = preset;
 
 			const isSelected = this.isPresetSelected(presetId);
 			const isManual = this.isPresetManual(presetId);
@@ -189,39 +234,35 @@ jn.define('tab-presets', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						paddingTop: (preset.isFirst ? Indent.XL.toNumber() : 0),
-						paddingBottom: Indent.XL.toNumber(),
-						paddingHorizontal: Indent.XL3.toNumber(),
+						paddingTop: (isFirst ? Component.cardListPaddingTb.toNumber() : 0),
+						paddingBottom: Component.cardListGap.toNumber(),
+						paddingHorizontal: Component.areaPaddingLr.toNumber(),
 					},
 				},
 				Card(
 					{
-						style: {
-							paddingTop: Indent.XL.toNumber(),
-							paddingBottom: Indent.XL3.toNumber(),
-						},
 						excludePaddingSide: {
-							all: true,
+							horizontal: true,
 						},
 						design: CardDesign.PRIMARY,
 						hideCross: true,
 						border: true,
 						accent: isSelected,
-						testId: `${this.testId}_preset_${presetId}`,
+						testId: `${this.testId}-preset-${presetId}`,
 						onClick: () => {
 							if (isManual)
 							{
-								this.openPresetManualSettings();
+								void this.openPresetManualMenu();
 							}
 							else
 							{
 								PresetInfo.show({
-									presetTitle: preset.title,
+									tabsDescription,
+									presetTitle: title,
 									presetImagePath: TabPresetsNewUtils.getPresetInfoImagePath(presetId),
 									isPresetSelected: isSelected,
-									tabsDescription: preset.tabsDescription,
 									tabsIcons: Object.fromEntries(
-										Object.keys(preset.tabsDescription).map((tabName) => {
+										Object.keys(tabsDescription).map((tabName) => {
 											return [tabName, this.getTabItemData(tabName).iconId];
 										}),
 									),
@@ -235,43 +276,6 @@ jn.define('tab-presets', (require, exports, module) => {
 					this.renderPresetHeader(presetId, preset),
 					this.renderPresetTabs(presetId, preset),
 				),
-			);
-		}
-
-		renderBanner()
-		{
-			return View(
-				{
-					style: {
-						paddingTop: Indent.XL.toNumber(),
-						paddingHorizontal: Indent.XL3.toNumber(),
-					},
-				},
-				CardBanner({
-					testId: `${this.testId}_banner`,
-					title: Loc.getMessage('TAB_PRESETS_NEW_BANNER_TITLE_MSGVER_1'),
-					description: Loc.getMessage('TAB_PRESETS_NEW_BANNER_DESCRIPTION_MSGVER_1'),
-					image: Image({
-						resizeMode: 'contain',
-						style: {
-							width: 64,
-							height: 64,
-						},
-						svg: {
-							uri: makeLibraryImagePath('down-menu-presets-settings.svg', 'graphic'),
-						},
-					}),
-					onClose: () => {
-						this.listRef?.deleteRowsByKeys(
-							[ITEM_KEY_BANNER],
-							'automatic',
-							async () => {
-								await Tourist.remember('show_tab_presets_banner');
-								this.setState({ shouldShowBanner: false });
-							},
-						);
-					},
-				}),
 			);
 		}
 
@@ -362,9 +366,8 @@ jn.define('tab-presets', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'row',
-						justifyContent: 'space-evenly',
 						marginTop: Indent.XL3.toNumber(),
-						marginHorizontal: Indent.M.toNumber(),
+						marginHorizontal: Indent.XL.toNumber(),
 					},
 					testId: `${this.testId}_preset_${presetId}_tabs`,
 				},
@@ -385,43 +388,25 @@ jn.define('tab-presets', (require, exports, module) => {
 				return null;
 			}
 
-			const baseColor = (isSelected ? Color.base4 : Color.base5);
-			const firstColor = (isSelected ? Color.accentMainPrimary : Color.base1);
-			const shouldRenderAvatar = tabName === ITEM_KEY_MENU && tabItem.isAvatarEnabled;
-			const avatarType = env.isCollaber ? AvatarEntityType.COLLAB : (
-				env.extranet ? AvatarEntityType.EXTRANET : AvatarEntityType.USER
-			);
+			const isAvatarTab = tabName === ITEM_KEY_MENU && tabItem.isAvatarEnabled;
 
 			return View(
 				{
 					style: {
-						flexShrink: 1,
+						flex: 2,
 						alignItems: 'center',
-						marginLeft: (isFirst ? 0 : Indent.XS.toNumber()),
 					},
 					testId: `${this.testId}_tab_${tabName}`,
 				},
-				!shouldRenderAvatar && IconView({
-					testId: `${this.testId}_tab_${tabName}_icon`,
-					icon: TabPresetsNewUtils.getIcon(tabItem.iconId) || TabPresetsNewUtils.getIcon(tabName),
-					color: (isFirst ? firstColor : baseColor),
-					size: 32,
-				}),
-				shouldRenderAvatar && Avatar({
-					testId: `${this.testId}_tab_${tabName}_avatar`,
-					id: env.userId,
-					entityType: avatarType,
-					uri: tabItem.imageUrl,
-					name: tabItem.name,
-					useLetterImage: true,
-					size: 32,
-				}),
+				!isAvatarTab && this.#renderPresetTabIcon({ isFirst, tabName, tabItem }),
+				isAvatarTab && this.#renderPresetTabAvatar({ tabName, tabItem }),
 				Text7({
 					style: {
 						marginTop: Indent.XS2.toNumber(),
 					},
+					accent: true,
 					testId: `${this.testId}_tab_${tabName}_title`,
-					color: (isFirst ? firstColor : baseColor),
+					color: (isFirst ? Color.base1 : Color.base4),
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: tabItem.shortTitle,
@@ -429,11 +414,41 @@ jn.define('tab-presets', (require, exports, module) => {
 			);
 		}
 
+		#renderPresetTabIcon({ isFirst, tabName, tabItem })
+		{
+			const icon = TabPresetsNewUtils.getIcon(tabItem.iconId) || TabPresetsNewUtils.getIcon(tabName);
+
+			return IconView({
+				icon,
+				testId: `${this.testId}_tab_${tabName}_icon`,
+				color: (isFirst ? Color.accentMainPrimaryalt : Color.base4),
+				size: 32,
+				solid: isFirst,
+			});
+		}
+
+		#renderPresetTabAvatar({ tabName, tabItem })
+		{
+			const avatarType = env.isCollaber
+				? AvatarEntityType.COLLAB
+				: (env.extranet ? AvatarEntityType.EXTRANET : AvatarEntityType.USER);
+
+			return Avatar({
+				testId: `${this.testId}_tab_${tabName}_avatar`,
+				id: env.userId,
+				entityType: avatarType,
+				uri: tabItem.imageUrl,
+				name: tabItem.name,
+				size: 32,
+				withRedux: true,
+			});
+		}
+
 		onPresetSelected(presetId)
 		{
 			if (this.isPresetManual(presetId))
 			{
-				this.openPresetManualSettings();
+				void this.openPresetManualMenu();
 
 				return;
 			}
@@ -452,7 +467,8 @@ jn.define('tab-presets', (require, exports, module) => {
 				[
 					{
 						text: Loc.getMessage('TAB_PRESETS_NEW_CONFIRM_CLOSE'),
-						onPress: () => {},
+						onPress: () => {
+						},
 					},
 					{
 						text: Loc.getMessage('TAB_PRESETS_NEW_CONFIRM_ACCEPT'),
@@ -462,11 +478,41 @@ jn.define('tab-presets', (require, exports, module) => {
 			);
 		}
 
-		openPresetManualSettings()
+		async openPresetManualMenu()
 		{
-			PresetManualSettings.show({
-				parentWidget: this.props.parentWidget,
-				tabs: this.state.tabs,
+			const { parentWidget } = this.props;
+			const { tabs } = this.state;
+
+			const layoutWidget = await parentWidget
+				.openWidget('layout', {
+					titleParams: {
+						text: Loc.getMessage('PRESET_MANUAL_SETTINGS_TITLE'),
+					},
+					backdrop: {
+						mediumPositionPercent: 100,
+					},
+				}).catch(console.error);
+
+			layoutWidget.showComponent(new PresetManualMenu({
+				tabs,
+				parentWidget: layoutWidget,
+			}));
+
+			layoutWidget.setLeftButtons([
+				{
+					type: Icon.ARROW_TO_THE_LEFT_SIZE_M.getIconName(),
+					callback: () => {
+						layoutWidget.close();
+					},
+				},
+			]);
+
+			setTimeout(() => {
+				layoutWidget.expandBottomSheet();
+			}, 50);
+
+			layoutWidget.on('opened', () => {
+				layoutWidget.expandBottomSheet();
 			});
 		}
 
@@ -531,5 +577,5 @@ jn.define('tab-presets', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { TabPresetsComponent };
+	module.exports = { TabPresetsComponent, TabPresetsNewUtils };
 });

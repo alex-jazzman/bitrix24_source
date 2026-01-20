@@ -569,6 +569,24 @@ export default class Dom
 	}
 
 	/**
+	 * Checks if element is shown with recursive check of its ancestors
+	 */
+	static isShownRecursive(element: ?HTMLElement): boolean
+	{
+		if (!Type.isDomNode(element))
+		{
+			return false;
+		}
+
+		if (element === document.body)
+		{
+			return Dom.isShown(element);
+		}
+
+		return Dom.isShown(element) && Dom.isShownRecursive(element.parentElement);
+	}
+
+	/**
 	 * Toggles element visibility
 	 * @param element
 	 */

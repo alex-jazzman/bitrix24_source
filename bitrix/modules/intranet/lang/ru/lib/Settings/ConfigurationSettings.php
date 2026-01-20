@@ -32,6 +32,8 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON"] = 'Любой 
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1"] = 'У сотрудников в профиле есть замер уровня стресса. #MORE_DETAILS#';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_SETTINGS_ALL_USER_CLICK_ON"] = 'Все сотрудники видят настройки, но не могут вносить изменения. При выключенной настройке просматривать и менять настройки может только администратор';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1"] = 'Данные о географическом местоположении пользователей собираются. #MORE_DETAILS#';
+$MESS['INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_BICONNECTOR_DASHBOARD_LANGUAGE'] = 'BI Конструктор';
+$MESS['INTRANET_SETTINGS_FIELD_LABEL_BICONNECTOR_DASHBOARD_LANGUAGE'] = 'Язык отчётов';
 
 
 

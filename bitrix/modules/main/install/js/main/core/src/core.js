@@ -17,6 +17,8 @@ import BaseError from './lib/base-error';
 import Extension from './lib/extension/extension';
 import ZIndexManager from './lib/z-index/z-index-manager';
 import Collections from './lib/collections';
+import { Easing } from './lib/animation/easing';
+import { LocalStorage, localStorage } from './lib/local-storage';
 
 export {
 	Type,
@@ -36,6 +38,9 @@ export {
 	Extension,
 	ZIndexManager,
 	Collections,
+	Easing,
+	LocalStorage,
+	localStorage,
 };
 
 export * from './core-compatibility';

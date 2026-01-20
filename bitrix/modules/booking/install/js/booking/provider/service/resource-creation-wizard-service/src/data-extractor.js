@@ -1,5 +1,5 @@
 import type { SlotRange } from 'booking.model.resources';
-import type { AdvertisingResourceType, NotificationsSettings } from './types';
+import type { AdvertisingResourceType, CatalogSkuEntityOptions, NotificationsSettings } from './types';
 
 export class ResourceCreationWizardDataExtractor
 {
@@ -35,6 +35,11 @@ export class ResourceCreationWizardDataExtractor
 		return Boolean(this.#data.isCompanyScheduleAccess);
 	}
 
+	showLicenseWarning(): boolean
+	{
+		return Boolean(this.#data.notificationsSettings.showLicenseWarning);
+	}
+
 	getCompanyScheduleUrl(): string
 	{
 		return this.#data.companyScheduleUrl;
@@ -48,5 +53,10 @@ export class ResourceCreationWizardDataExtractor
 	isChannelChoiceAvailable(): boolean
 	{
 		return this.#data.isChannelChoiceAvailable;
+	}
+
+	getCatalogSkuEntityOptions(): CatalogSkuEntityOptions
+	{
+		return this.#data.catalogSkuEntityOptions;
 	}
 }

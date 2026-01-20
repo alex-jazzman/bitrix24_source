@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Mail\MailboxTable;
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load([
@@ -7,6 +8,8 @@ use Bitrix\Main\Localization\Loc;
 	'ui.fonts.opensans',
 	'ui.info-helper',
 	'ui.mail.provider-showcase',
+	'ui.system.highlighter',
+	'mail.notification.mail-guide',
 ]);
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -26,14 +29,16 @@ if (!$arResult['CAN_CONNECT_NEW_MAILBOX'])
 }
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."workarea-transparent no-background");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."no-background");
 
 $isMainPage = $arParams['VARIABLES']['IS_MAIN_MAIL_PAGE'] ?? false;
+
+global $USER;
+
+$hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: true));
 ?>
 
-<div class="mail-provider-showcase-container <?= $isMainPage === true ? 'mail-provider-showcase-container-wide' : '' ?>">
-
-</div>
+<div class="mail-provider-showcase-container <?= $isMainPage === true ? 'mail-provider-showcase-container-wide' : '' ?>"></div>
 
 <script>
 	const slider = BX.SidePanel.Instance.getTopSlider();
@@ -60,6 +65,16 @@ $isMainPage = $arParams['VARIABLES']['IS_MAIN_MAIL_PAGE'] ?? false;
 				{
 					BX.Dom.prepend(titleNode, providerContainer);
 				}
+
+				<?php if ($hasUserMailbox): ?>
+					BX.UI.Analytics.sendData({
+						tool: 'mail',
+						event: 'mailbox_connect_start',
+						category: 'mail_general_ops',
+						c_section: 'mail',
+					});
+				<?php endif;?>
+
 				loader.destroy();
 			})
 			.catch(() => {
@@ -104,4 +119,23 @@ $isMainPage = $arParams['VARIABLES']['IS_MAIN_MAIL_PAGE'] ?? false;
 		}
 	);
 
+	BX.ready(function()
+	{
+		<?php if (
+			($arParams['IS_SEEN_MAILBOX_GRID_BUTTON'] ?? false)
+			&& ($arParams['NEED_SHOW_MAILBOX_GRID_GUIDE'] ?? false)
+		): ?>
+		const button = document.querySelector('[data-id="mail-provider-showcase-mailbox-grid-button"]');
+		if (button)
+		{
+			(new BX.Mail.MailGuide({
+				id: 'mail-provider-showcase-mailbox-grid-guide',
+				description: '<?= Loc::getMessage("MAIL_CLIENT_CONFIG_MAILBOX_GRID_GUIDE_TEXT") ?>',
+				bindElement: button,
+				addHighlighter: true,
+				userOptionName: '<?= \CUtil::jsEscape($arParams['MAILBOX_GRID_GUIDE_NAME'] ?? null) ?>',
+			})).show();
+		}
+		<?php endif; ?>
+	});
 </script>

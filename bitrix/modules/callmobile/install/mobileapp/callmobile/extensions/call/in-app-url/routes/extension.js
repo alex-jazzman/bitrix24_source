@@ -14,7 +14,7 @@ jn.define('call/in-app-url/routes', (require, exports, module) => {
 				settings: {
 					objectName: 'layoutWidget',
 					titleParams: {
-						text: 'CoPilot Follow-up',
+						text: BX.message('MOBILE_CALL_COPILOT_COMPONENT_TITLE'),
 						type: 'entity',
 						textColor: Color.base4.toHex(),
 					},

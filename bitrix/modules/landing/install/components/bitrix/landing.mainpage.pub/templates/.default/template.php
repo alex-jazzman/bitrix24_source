@@ -172,7 +172,7 @@ Manager::initAssets($landing->getId());
 		<?php if ($isAnalyticsEnabled): ?>
 			void new BX.Landing.Pub.Analytics({
 				isPublished: <?= $isPublished ? 'true' : 'false' ?>,
-				templateCode: '<?= $landing->getCode() ?>',
+				templateCode: '<?= $landing->getMeta()['TPL_CODE'] ?? '' ?>',
 			});
 		<?php endif; ?>
 

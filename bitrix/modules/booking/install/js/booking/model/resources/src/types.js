@@ -7,9 +7,14 @@ export type ResourceModel = {
 	typeId: number,
 	name: string,
 	description: string | null,
+	avatar: {
+		id: number | null,
+		url: string | null,
+	} | null,
 	slotRanges: SlotRange[],
 	counter: number | null,
 	isMain: false,
+	isPrimary: false,
 	isDeleted: false,
 	createdBy: number,
 	createdAt: number,
@@ -44,6 +49,9 @@ export type ResourceModel = {
 	isFeedbackNotificationOn: boolean,
 	templateTypeFeedback: string,
 
+	skus: Skus[];
+	skusYandex: Skus[];
+
 	// integrationCalendar
 	entities: IntegrationCalendarType[],
 };
@@ -74,3 +82,19 @@ export type IntegrationCalendarReminder = {
 	type: 'min';
 	count: number;
 }
+
+export type ResourceModelWithFile = ResourceModel & {
+	avatar: {
+		id: number | null,
+		url: string | null,
+		file: File | null,
+	} | null
+};
+
+export type Skus = {
+	id: number,
+	name: string,
+	permissions: {
+		read: boolean,
+	},
+};

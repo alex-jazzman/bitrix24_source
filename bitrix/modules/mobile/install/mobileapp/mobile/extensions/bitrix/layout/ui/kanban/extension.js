@@ -964,6 +964,25 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 			return null;
 		}
 
+		/**
+		 * @param {number} itemId
+		 * @param {Object} ahaMomentProps
+		 * @returns {void}
+		 */
+		displayItemAhaMoment(itemId, ahaMomentProps = {})
+		{
+			this.getCurrentStatefulList()?.displayItemAhaMoment(itemId, ahaMomentProps);
+		}
+
+		/**
+		 * @param {Object} ahaMomentProps
+		 * @returns {void}
+		 */
+		displayFloatingButtonAhaMoment(ahaMomentProps = {})
+		{
+			this.getCurrentStatefulList()?.displayFloatingButtonAhaMoment({ ...ahaMomentProps });
+		}
+
 		getItemMenuViewRef(itemId)
 		{
 			const statefulList = this.getCurrentStatefulList();

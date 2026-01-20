@@ -9,6 +9,7 @@ jn.define('im/messenger/const/dialog-status', (require, exports, module) => {
 		recordingVoice: 'recordingVoice',
 		sendingPhoto: 'sendingPhoto',
 		sendingFile: 'sendingFile',
+		recordingVideoNote: 'recordingVideoNote',
 	});
 
 	module.exports = {

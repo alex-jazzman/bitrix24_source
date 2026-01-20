@@ -56,6 +56,7 @@ const ChatHeader = {
 			<div class="bx-im-component-call-right-header-left">
 				<div @click="onCloseChat" class="bx-im-component-call-right-header-close" :title="localize['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']"></div>
 				<div class="bx-im-component-call-right-header-title">{{ localize['BX_IM_COMPONENT_CALL_CHAT_TITLE'] }}</div>
+ 
 			</div>
 			<template v-if="showTotalCounter">
 				<div @click="onTotalCounterClick" class="bx-im-component-call-right-header-right bx-im-component-call-right-header-all-chats">

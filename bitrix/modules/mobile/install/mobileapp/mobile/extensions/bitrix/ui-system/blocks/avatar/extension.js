@@ -50,10 +50,17 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		{
 			if (this.withRedux())
 			{
-				return reduxConnect(Avatar.getAvatar)(this.props);
+				return this.#renderWithRedux();
 			}
 
 			return Avatar.getAvatar(this.props);
+		}
+
+		#renderWithRedux()
+		{
+			const stateConnector = this.getStateConnector();
+
+			return stateConnector(Avatar.getAvatar)(this.props);
 		}
 
 		/**
@@ -90,6 +97,11 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			const { withRedux } = this.props;
 
 			return Boolean(withRedux);
+		}
+
+		getStateConnector()
+		{
+			return reduxConnect;
 		}
 	}
 

@@ -19,6 +19,9 @@ class WorkflowStartList
 
 	#canEdit: boolean;
 	#bizprocEditorUrl: string;
+	#bizprocNewEditorUrl: string;
+
+	static NEW_TEMPLATE_TYPE = 'nodes';
 
 	popupHint;
 	hintTimeout;
@@ -35,6 +38,7 @@ class WorkflowStartList
 		this.errorsContainerDiv = options.errorsContainerDiv;
 		this.#canEdit = options.canEdit;
 		this.#bizprocEditorUrl = options.bizprocEditorUrl;
+		this.#bizprocNewEditorUrl = options.bizprocNewEditorUrl;
 
 		if (Type.isStringFilled(options.signedDocumentType))
 		{
@@ -59,7 +63,7 @@ class WorkflowStartList
 		EventEmitter.subscribe('Grid::updated', this.#onAfterGridUpdated.bind(this));
 	}
 
-	editTemplate(event, templateId): void
+	editTemplate(event, templateId, templateType): void
 	{
 		if (!this.#canEdit)
 		{
@@ -75,7 +79,7 @@ class WorkflowStartList
 			return;
 		}
 
-		this.openBizprocEditor(templateId);
+		this.openBizprocEditor(templateId, templateType);
 	}
 
 	showAngleHint(node, text)
@@ -204,7 +208,7 @@ class WorkflowStartList
 		return null;
 	}
 
-	startWorkflow(event: PointerEvent, templateId: number)
+	startWorkflow(event: PointerEvent, templateId: number, triggerType: ?string)
 	{
 		event.preventDefault();
 
@@ -236,6 +240,7 @@ class WorkflowStartList
 			signedDocumentId: this.#signedDocumentId,
 			signedDocumentType: this.#signedDocumentType,
 			templateId: id,
+			triggerType,
 		}, afterSuccessStart);
 	}
 
@@ -286,9 +291,16 @@ class WorkflowStartList
 		return Tag.render`<div class="ui-typography-text-xs">${message}</div>`;
 	}
 
-	openBizprocEditor(templateId)
+	openBizprocEditor(templateId, templateType)
 	{
-		top.window.location.href = this.#bizprocEditorUrl.replace('#ID#', templateId);
+		if (templateType === WorkflowStartList.NEW_TEMPLATE_TYPE)
+		{
+			top.window.location.href = this.#bizprocNewEditorUrl.replace('#ID#', templateId);
+		}
+		else
+		{
+			top.window.location.href = this.#bizprocEditorUrl.replace('#ID#', templateId);
+		}
 	}
 }
 

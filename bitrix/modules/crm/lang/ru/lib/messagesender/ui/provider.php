@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_MESSAGESENDER_UI_PROVIDER_VIA'] = 'через #CHANNEL#';

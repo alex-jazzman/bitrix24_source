@@ -15,7 +15,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { defaultUserIcon } = require('im/messenger/assets/common');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 	const {
-		ReactionType,
 		UserColor,
 		UserType,
 	} = require('im/messenger/const');
@@ -26,6 +25,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
 	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
+	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
@@ -47,7 +47,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions | {}} options
 		 */
 		constructor(modelMessage = {}, options = {})
 		{
@@ -62,8 +62,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.avatar = null;
 			this.me = false;
 			this.time = '';
-			this.likeCount = 0;
-			this.meLiked = false;
 			this.read = true;
 			this.showReaction = true;
 			this.canBeQuoted = true;
@@ -113,7 +111,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setStatus(modelMessage)
 				.setStatusText(modelMessage)
 				.setForwardText(modelMessage)
-				.setLikes(modelMessage.reactions)
 				.setReactions(modelMessage.reactions)
 				.setShowAvatarsInReaction(String(modelMessage.id), options)
 				.setShowUsername(modelMessage, options.showUsername)
@@ -152,10 +149,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				isAuthorTopMessage: this.isAuthorTopMessage,
 				isBackgroundWide: this.isBackgroundWide,
 				keyboard: this.keyboard,
-				likeCount: this.likeCount,
 				loadText: this.loadText,
 				me: this.me,
-				meLiked: this.meLiked,
 				message: this.message,
 				reactions: this.reactions,
 				read: this.read,
@@ -419,30 +414,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		}
 
 		/**
-		 *
-		 * @param {ReactionsModelState} reactions
-		 * @return {Message}
-		 */
-		setLikes(reactions)
-		{
-			if (!Type.isPlainObject(reactions))
-			{
-				return this;
-			}
-
-			this.likeCount = Object.values(reactions.reactionCounters)
-				.reduce((currentSum, currentNumber) => {
-					return currentSum + currentNumber;
-				}, 0)
-			;
-
-			this.meLiked = reactions.ownReactions.size > 0;
-
-			return this;
-		}
-
-		/**
-		 *
 		 * @param {ReactionsModelState} reactionsList
 		 */
 		setReactions(reactionsList)
@@ -454,63 +425,61 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 				return this;
 			}
-
+			const availableReactionCollection = ReactionAssetsManager.getInstance().getAvailableReactions();
 			const reactions = [];
-			Object.values(ReactionType)
-				/** @type {ReactionType} */
-				.forEach((reactionType) => {
-					if (!reactionsList.reactionCounters[reactionType])
-					{
-						return;
-					}
+			[...availableReactionCollection].forEach((reactionType) => {
+				if (!reactionsList.reactionCounters[reactionType])
+				{
+					return;
+				}
 
-					const reaction = {
-						id: reactionType,
-						testId: `REACTION_${reactionType.toUpperCase()}`,
-						counter: reactionsList.reactionCounters[reactionType],
-						meLiked: reactionsList.ownReactions.has(reactionType),
-					};
+				const reaction = {
+					id: reactionType,
+					testId: `REACTION_${reactionType.toUpperCase()}`,
+					counter: reactionsList.reactionCounters[reactionType],
+					meLiked: reactionsList.ownReactions.has(reactionType),
+				};
 
-					if (reactionsList.reactionUsers.has(reactionType))
-					{
-						reaction.users = reactionsList.reactionUsers
-							.get(reactionType)
-							.map((userId) => {
-								const userModel = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
+				if (reactionsList.reactionUsers.has(reactionType))
+				{
+					reaction.users = reactionsList.reactionUsers
+						.get(reactionType)
+						.map((userId) => {
+							const userModel = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
 
-								const result = {
-									isCurrentUser: userId === MessengerParams.getUserId(),
-								};
+							const result = {
+								isCurrentUser: userId === MessengerParams.getUserId(),
+							};
 
-								if (!userModel)
-								{
-									return result;
-								}
+							if (!userModel)
+							{
+								return result;
+							}
 
-								const chatAvatar = ChatAvatar.createFromDialogId(userModel.id);
-								result.avatar = chatAvatar.getReactionAvatarProps();
-								if (userModel.avatar !== '')
-								{
-									/** @deprecated */
-									result.imageUrl = userModel.avatar;
-
-									return result;
-								}
-
-								const color = Type.isStringFilled(chatAvatar.getColor())
-									? chatAvatar.getColor()
-									: colorUtils.getColorByNumber(userModel.id)
-								;
-
-								result.defaultIconSvg = defaultUserIcon(color);
+							const chatAvatar = ChatAvatar.createFromDialogId(userModel.id);
+							result.avatar = chatAvatar.getReactionAvatarProps();
+							if (userModel.avatar !== '')
+							{
+								/** @deprecated */
+								result.imageUrl = userModel.avatar;
 
 								return result;
-							})
-						;
-					}
+							}
 
-					reactions.push(reaction);
-				})
+							const color = Type.isStringFilled(chatAvatar.getColor())
+								? chatAvatar.getColor()
+								: colorUtils.getColorByNumber(userModel.id)
+							;
+
+							result.defaultIconSvg = defaultUserIcon(color);
+
+							return result;
+						})
+					;
+				}
+
+				reactions.push(reaction);
+			})
 			;
 
 			this.reactions = reactions;
@@ -635,7 +604,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		}
 
 		/**
-		 * @param {MessagesModelState} modelMessage
+		 * @param {MessagesModelState|null} modelMessage
 		 * @param {?boolean} shouldShowReaction
 		 */
 		setShowReaction(modelMessage, shouldShowReaction)
@@ -644,6 +613,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			{
 				this.showReaction = shouldShowReaction;
 
+				return this;
+			}
+
+			if (Type.isNull(modelMessage))
+			{
 				return this;
 			}
 

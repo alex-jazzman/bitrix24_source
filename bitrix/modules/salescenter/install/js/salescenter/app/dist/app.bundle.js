@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,bitrix24_phoneverify,ui_designTokens,ui_dialogs_messagebox,main_loader,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,catalog_productForm,ui_vue,DeliverySelector,ui_fonts_ruble,currency,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,ui_icons_disk,popup,ui_buttons_icons,ui_forms,ui_fonts_opensans,ui_pinner,main_core_events,salescenter_component_stageBlock_smsMessage,salescenter_manager,TimeLineItem,ui_notification,Tile,ui_entitySelector,salescenter_component_stageBlock,currency_currencyCore,salescenter_lib,landing_backend,landing_pageobject,rest_client,ui_vue_vuex,ui_iconSet_actions,main_core,main_popup,ui_buttons) {
+(function (exports,bitrix24_phoneverify,ui_designTokens,ui_dialogs_messagebox,main_loader,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,catalog_productForm,ui_vue,DeliverySelector,ui_fonts_ruble,currency,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,ui_icons_disk,popup,ui_buttons_icons,ui_forms,ui_fonts_opensans,ui_pinner,main_core_events,salescenter_component_stageBlock_smsMessage,salescenter_manager,crm_messagesender_editor,crm_router,TimeLineItem,ui_notification,Tile,ui_entitySelector,salescenter_component_stageBlock,currency_currencyCore,salescenter_lib,landing_backend,landing_pageobject,rest_client,ui_vue_vuex,ui_iconSet_actions,main_core,main_popup,ui_buttons,crm_integration_analytics,ui_analytics) {
 	'use strict';
 
 	DeliverySelector = DeliverySelector && DeliverySelector.hasOwnProperty('default') ? DeliverySelector['default'] : DeliverySelector;
@@ -222,7 +222,7 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    title: function title() {
-	      return this.installed === true ? main_core.Loc.getMessage('SALESCENTER_CASHBOX_SET_BLOCK_TITLE') : main_core.Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_TITLE');
+	      return main_core.Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_TITLE_MSGVER_1');
 	    },
 	    configForBlock: function configForBlock() {
 	      return {
@@ -302,7 +302,7 @@ this.BX = this.BX || {};
 	      isCatalogDiscountSetEnabled: this.$root.$app.options.isCatalogDiscountSetEnabled,
 	      fieldHints: this.$root.$app.options.fieldHints,
 	      hideUnselectedProperties: this.$root.$app.options.templateMode === 'view',
-	      showCompilationModeSwitcher: this.$root.$app.options.templateMode === 'create' && this.$root.$app.options.showCompilationModeSwitcher === 'Y' && this.$root.$app.options.mode === ModeDictionary.paymentDelivery,
+	      showCompilationModeSwitcher: this.showCompilationModeSwitcher(),
 	      compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
 	      facebookFailProducts: (_this$$root$$app$comp = this.$root.$app.compilation) === null || _this$$root$$app$comp === void 0 ? void 0 : _this$$root$$app$comp.FAIL_PRODUCTS,
 	      ownerId: this.$root.$app.options.ownerId,
@@ -318,7 +318,20 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onModeChange', this.onProductFormModeChange);
 	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onCompilationCreated', this.onProductFormCompilationCreated.bind(this));
 	  },
+	  watch: {
+	    messageDataSenderCode: function messageDataSenderCode() {
+	      this.productForm.setShowCompilationModeSwitcher(this.showCompilationModeSwitcher());
+	    }
+	  },
+	  computed: {
+	    messageDataSenderCode: function messageDataSenderCode() {
+	      return this.$store.state.orderCreation.messageData.senderCode;
+	    }
+	  },
 	  methods: {
+	    showCompilationModeSwitcher: function showCompilationModeSwitcher() {
+	      return this.$root.$app.options.templateMode === 'create' && this.$root.$app.options.showCompilationModeSwitcher === 'Y' && this.$root.$app.options.mode === ModeDictionary.paymentDelivery && this.messageDataSenderCode !== 'bitrix24';
+	    },
 	    onProductFormCompilationCreated: function onProductFormCompilationCreated(event) {
 	      var data = event.getData();
 	      this.$root.$app.newCompilationId = data.compilationId;
@@ -373,9 +386,11 @@ this.BX = this.BX || {};
 	      }
 	      if (this.isNeedDisableSubmit()) {
 	        this.$store.commit('orderCreation/disableSubmit');
+	        this.$store.commit('orderCreation/setHasAvailableProducts', false);
 	        return;
 	      }
 	      this.$store.commit('orderCreation/enableSubmit');
+	      this.$store.commit('orderCreation/setHasAvailableProducts', true);
 	      var requestId = main_core.Text.getRandom(20);
 	      this.refreshId = requestId;
 	      main_core.ajax.runAction('salescenter.api.order.refreshBasket', {
@@ -424,13 +439,21 @@ this.BX = this.BX || {};
 	    checkProductErrors: function checkProductErrors() {
 	      if (this.isNeedDisableSubmit()) {
 	        this.$store.commit('orderCreation/disableSubmit');
+	        this.$store.commit('orderCreation/setHasAvailableProducts', false);
 	      } else {
 	        this.$store.commit('orderCreation/enableSubmit');
+	        this.$store.commit('orderCreation/setHasAvailableProducts', true);
 	      }
 	    },
 	    isNeedDisableSubmit: function isNeedDisableSubmit() {
 	      var basket = this.$store.getters['orderCreation/getBasket']();
-	      return basket.length <= 0 || this.productForm && main_core.Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors();
+	      if (basket.length <= 0 || this.productForm && main_core.Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors()) {
+	        return true;
+	      }
+	      var filledProducts = basket.filter(function (item) {
+	        return main_core.Type.isStringFilled(item.module) && item.productId > 0 || item.name.length > 0;
+	      });
+	      return filledProducts.length <= 0;
 	    }
 	  },
 	  template: "\n\t\t<div class=\"salescenter-app-payment-side\">\n\t\t\t<div class=\"salescenter-app-page-content\">\n\t\t\t\t<div class=\"salescenter-app-form-wrapper\"></div>\n\t\t\t\t<slot name=\"footer\"></slot>\n\t\t\t</div>\n\t\t</div>\n\t"
@@ -440,10 +463,6 @@ this.BX = this.BX || {};
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Product$1 = {
 	  props: {
-	    status: {
-	      type: String,
-	      required: true
-	    },
 	    counter: {
 	      type: Number,
 	      required: true
@@ -478,6 +497,9 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  computed: {
+	    status: function status() {
+	      return this.$store.getters['orderCreation/getHasAvailableProducts'] ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current;
+	    },
 	    configForBlock: function configForBlock() {
 	      return {
 	        counter: this.counter,
@@ -895,7 +917,7 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    title: function title() {
-	      return this.installed === true ? main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_SET_BLOCK_TITLE') : main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_TITLE');
+	      return main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_TITLE_MSGVER_1');
 	    }
 	  },
 	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\n\t\t\t:config=\"configForBlock\"\n\t\t\t@on-item-hint.stop.prevent=\"onItemHint\"\n\t\t\t@on-tile-slider-close=\"onSliderClose\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_SETTINGS_TITLE'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"!installed\"\n\t\t\t\t\tclass=\"salescenter-app-explanation\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"salescenter-app-explanation-img\"></div>\n\t\t\t\t\t<div class=\"salescenter-app-explanation-area\">\n\t\t\t\t\t\t<div class=\"salescenter-app-explanation-text\">\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_TERMINAL_PAYMENT_SYSTEM_SETUP_HINT'), "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<tile-collection-uninstalled-block \t:tiles=\"tiles\" v-if=\"!installed\" v-on:on-tile-slider-close=\"onSliderClose\"/>\n\t\t\t\t\t<tile-collection-installed-block :tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-else />\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
@@ -909,6 +931,59 @@ this.BX = this.BX || {};
 	  imOpenlines: 'imopenlines_app',
 	  terminalList: 'terminal_list'
 	});
+
+	var MessageMixin = {
+	  watch: {
+	    isCompilationMode: function isCompilationMode(compilationMode) {
+	      if (this.messageSenderEditor) {
+	        var textModes = this.$root.$app.sendingMethodDesc.text_modes;
+	        var currentMessage = compilationMode ? textModes.compilation : textModes.payment;
+	        this.messageSenderEditor.setMessageText(currentMessage);
+	        this.$store.dispatch('orderCreation/setMessageData', {
+	          body: currentMessage
+	        });
+	      }
+	    }
+	  },
+	  computed: {
+	    messageSenderAvailable: function messageSenderAvailable() {
+	      return BX.type.isObject(this.messageSenderData);
+	    },
+	    messageSenderId: function messageSenderId() {
+	      return this.messageSenderData.renderTo.replace('#', '');
+	    },
+	    isCompilationMode: function isCompilationMode() {
+	      return this.$store.getters['orderCreation/isCompilationMode'];
+	    },
+	    messageData: function messageData() {
+	      return this.$store.getters['orderCreation/getMessageData'];
+	    }
+	  },
+	  methods: {
+	    onMessageBodyChangeHandler: function onMessageBodyChangeHandler(event) {
+	      var body = event.getData().body;
+	      this.$store.dispatch('orderCreation/setMessageData', {
+	        body: body
+	      });
+	      if (this.messageData.senderCode !== 'bitrix24') {
+	        this.$root.$app.sendingMethodDesc.text_modes[this.isCompilationMode ? 'compilation' : 'payment'] = body;
+	      }
+	    },
+	    setTemplateError: function setTemplateError(show) {
+	      if (this.messageSenderEditor) {
+	        if (show) {
+	          if (!this.templateError) {
+	            this.templateError = true;
+	            this.messageSenderEditor.setError(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'));
+	          }
+	        } else if (this.templateError) {
+	          this.templateError = false;
+	          this.messageSenderEditor.resetAlert();
+	        }
+	      }
+	    }
+	  }
+	};
 
 	var ChatMessage = {
 	  props: {
@@ -943,9 +1018,13 @@ this.BX = this.BX || {};
 	    selectedMode: {
 	      type: String,
 	      required: true
+	    },
+	    messageSenderData: {
+	      type: Object,
+	      required: false
 	    }
 	  },
-	  mixins: [StageMixin],
+	  mixins: [StageMixin, MessageMixin],
 	  components: {
 	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'chat-user-avatar-block': salescenter_component_stageBlock_smsMessage.UserAvatar,
@@ -956,7 +1035,9 @@ this.BX = this.BX || {};
 	      currentSenderCode: null,
 	      senders: [],
 	      pushedToUseBitrix24Notifications: null,
-	      smsSenderListComponentKey: 0
+	      smsSenderListComponentKey: 0,
+	      messageSenderEditor: null,
+	      templateError: false
 	    };
 	  },
 	  computed: {
@@ -980,8 +1061,37 @@ this.BX = this.BX || {};
 	      return this.$root.$app.context !== ContextDictionary.sms;
 	    }
 	  },
-	  created: function created() {},
+	  watch: {
+	    messageData: function messageData(newMessageData) {
+	      if (!this.messageSenderEditor) {
+	        return;
+	      }
+	      this.setTemplateError(!newMessageData.body || !newMessageData.body.includes('#LINK#'));
+	      this.$store.commit('orderCreation/setIsSenderSelected', !this.templateError);
+	    }
+	  },
+	  mounted: function mounted() {
+	    if (this.messageSenderAvailable) {
+	      this.initMessageSenderEditor();
+	    }
+	  },
 	  methods: {
+	    initMessageSenderEditor: function initMessageSenderEditor() {
+	      var _this = this;
+	      this.messageSenderEditor = new crm_messagesender_editor.Editor(this.messageSenderData);
+	      this.messageSenderEditor.render().then(function () {
+	        return _this.initMessageData();
+	      })["catch"](function () {});
+	      this.messageSenderEditor.subscribe('onMessageBodyChange', this.onMessageBodyChangeHandler.bind(this));
+	    },
+	    initMessageData: function initMessageData() {
+	      var _state$message;
+	      var state = this.messageSenderEditor.getState();
+	      var messageData = {
+	        body: (_state$message = state.message) === null || _state$message === void 0 ? void 0 : _state$message.body
+	      };
+	      this.$store.dispatch('orderCreation/setMessageData', messageData);
+	    },
 	    onItemHint: function onItemHint(e) {
 	      BX.Salescenter.Manager.openSlider(this.$root.$app.options.urlSettingsCompanyContacts, {
 	        width: 1200
@@ -991,7 +1101,7 @@ this.BX = this.BX || {};
 	      BX.Salescenter.Manager.openBitrix24NotificationsHelp(event);
 	    }
 	  },
-	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template\n\t\t\t\tv-if=\"showHint\"\n\t\t\t\tv-slot:block-hint-title\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_SHORTER_VERSION'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" class=\"salescenter-app-payment-by-sms-item-container-offtop\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t<chat-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t<chat-message-editor-block :editor=\"editor\" :isReadOnly=\"isMessageReadOnly\" :selectedMode=\"selectedMode\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template\n\t\t\t\tv-if=\"showHint\"\n\t\t\t\tv-slot:block-hint-title\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_SHORTER_VERSION'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" class=\"salescenter-app-payment-by-sms-item-container-offtop\">\n\t\t\t\t\t<div v-if=\"messageSenderAvailable && !isMessageReadOnly\">\n\t\t\t\t\t\t<div :id=\"messageSenderId\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-else class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t<chat-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t<chat-message-editor-block :editor=\"editor\" :isReadOnly=\"isMessageReadOnly\" :selectedMode=\"selectedMode\"/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var Automation = {
@@ -1471,15 +1581,16 @@ this.BX = this.BX || {};
 	      message: {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        manager: this.$root.$app.options.entityResponsible,
-	        titleTemplate: main_core.Loc.getMessage('SALESCENTER_APP_CHAT_MESSAGE_TITLE'),
+	        titleTemplate: main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_SENDER_MSGVER_1'),
 	        showHint: this.$root.$app.options.templateMode !== 'view',
 	        editorTemplate: this.$root.$app.sendingMethodDesc.text,
 	        editorUrl: this.$root.$app.orderPublicUrl,
-	        selectedMode: 'payment'
+	        selectedMode: 'payment',
+	        messageSenderData: this.$root.$app.options.messageSenderData
 	      },
 	      product: {
 	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
-	        title: this.$root.$app.options.templateMode === 'view' ? main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW') : main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+	        title: main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 	        hintTitle: this.$root.$app.options.templateMode === 'view' ? '' : main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')
 	      },
 	      paysystem: {
@@ -1657,7 +1768,7 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<chat-message-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t@on-product-form-mode-change=\"onProductFormModeChange\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"stages.delivery && !stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t:isDeliveryStageVisible=\"stages.delivery && stages.delivery.installed\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t@on-submit-compilation-link-to-facebook=\"onSendCompilationLinkToFacebook\"\n\t\t\t\t:buttonEnabled=\"isSendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t\t:isFacebookForm=\"isFacebookForm\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t@on-product-form-mode-change=\"onProductFormModeChange\"\n\t\t\t/>\n\t\t\t<chat-message-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t\t:messageSenderData=\"stages.message.messageSenderData\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"stages.delivery && !stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t:isDeliveryStageVisible=\"stages.delivery && stages.delivery.installed\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t@on-submit-compilation-link-to-facebook=\"onSendCompilationLinkToFacebook\"\n\t\t\t\t:buttonEnabled=\"isSendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t\t:isFacebookForm=\"isFacebookForm\"\n\t\t\t\t:showWhatClientSeesControl=\"false\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var ComponentMixin = {
@@ -2312,9 +2423,6 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  computed: _objectSpread$5({
-	    ModeDictionary: function ModeDictionary$$1() {
-	      return ModeDictionary;
-	    },
 	    config: function (_config) {
 	      function config() {
 	        return _config.apply(this, arguments);
@@ -2442,13 +2550,13 @@ this.BX = this.BX || {};
 	      type: String,
 	      required: false
 	    },
+	    messageSenderData: {
+	      type: Object,
+	      required: false
+	    },
 	    initPushedToUseBitrix24Notifications: {
 	      type: String,
 	      required: false
-	    },
-	    status: {
-	      type: String,
-	      required: true
 	    },
 	    counter: {
 	      type: Number,
@@ -2499,7 +2607,7 @@ this.BX = this.BX || {};
 	      required: true
 	    }
 	  },
-	  mixins: [StageMixin],
+	  mixins: [StageMixin, MessageMixin],
 	  components: {
 	    'stage-block-item': salescenter_component_stageBlock.Block,
 	    'sms-error-block': salescenter_component_stageBlock_smsMessage.Error,
@@ -2516,10 +2624,22 @@ this.BX = this.BX || {};
 	      currentSenderCode: null,
 	      senders: [],
 	      pushedToUseBitrix24Notifications: null,
-	      smsSenderListComponentKey: 0
+	      smsSenderListComponentKey: 0,
+	      messageSenderEditor: null,
+	      showMessageSenderEditor: true,
+	      templateError: false,
+	      clientError: false
 	    };
 	  },
 	  computed: {
+	    messageSenderError: function messageSenderError() {
+	      return {
+	        text: main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY')
+	      };
+	    },
+	    status: function status() {
+	      return this.$store.getters['orderCreation/isSenderSelected'] ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current;
+	    },
 	    configForBlock: function configForBlock() {
 	      return {
 	        counter: this.counter,
@@ -2545,6 +2665,9 @@ this.BX = this.BX || {};
 	    },
 	    errors: function errors() {
 	      var _this2 = this;
+	      if (this.messageSenderAvailable) {
+	        return [];
+	      }
 	      var result = [];
 	      var bitrix24ConnectUrlError;
 	      if (!this.currentSender) {
@@ -2623,10 +2746,95 @@ this.BX = this.BX || {};
 	      return result;
 	    }
 	  },
+	  watch: {
+	    messageData: function messageData(newMessageData) {
+	      if (!this.messageSenderEditor) {
+	        return;
+	      }
+	      this.showMessageSenderEditor = Boolean(newMessageData.fromId && newMessageData.senderId && newMessageData.senderCode);
+	      if (newMessageData.senderCode === 'bitrix24') {
+	        this.setTemplateError(false);
+	      } else {
+	        this.setTemplateError(!newMessageData.body || !newMessageData.body.includes('#LINK#'));
+	      }
+	      this.clientError = Boolean(!newMessageData.entityId || !newMessageData.entityTypeId || !newMessageData.phoneId);
+	      this.$store.commit('orderCreation/setIsSenderSelected', this.showMessageSenderEditor && !this.templateError && !this.clientError);
+	    }
+	  },
 	  created: function created() {
 	    this.initialize(this.initCurrentSenderCode, this.initSenders, this.initPushedToUseBitrix24Notifications);
 	  },
+	  mounted: function mounted() {
+	    if (this.messageSenderAvailable) {
+	      this.$store.commit('orderCreation/setIsSenderSelected', false);
+	      this.initMessageSenderEditor();
+	    }
+	  },
 	  methods: {
+	    initMessageSenderEditor: function initMessageSenderEditor() {
+	      var _this3 = this;
+	      this.messageSenderEditor = new crm_messagesender_editor.Editor(this.messageSenderData);
+	      this.messageSenderEditor.render().then(function () {
+	        return _this3.initMessageData();
+	      })["catch"](function () {});
+	      this.messageSenderEditor.subscribe('onToChange', this.onToChangeHandler.bind(this));
+	      this.messageSenderEditor.subscribe('onMessageBodyChange', this.onMessageBodyChangeHandler.bind(this));
+	      this.messageSenderEditor.subscribe('onFromChange', this.onFromChangeHandler.bind(this));
+	      this.messageSenderEditor.subscribe('onChannelChange', this.onChannelChangeHandler.bind(this));
+	    },
+	    openMessageSenderConnectionsSlider: function openMessageSenderConnectionsSlider() {
+	      var _this4 = this;
+	      crm_router.Router.Instance.openMessageSenderConnectionsSlider({
+	        c_section: crm_integration_analytics.Dictionary.SECTION_SALESCENTER_SLIDER
+	      }).then(function () {
+	        if (_this4.messageSenderEditor) {
+	          _this4.messageSenderEditor.reload().then(function () {
+	            _this4.initMessageData();
+	          });
+	        }
+	      });
+	    },
+	    onFromChangeHandler: function onFromChangeHandler(event) {
+	      var _event$getData$from, _event$getData$from2;
+	      this.$store.dispatch('orderCreation/setMessageData', {
+	        fromId: (_event$getData$from = event.getData().from) === null || _event$getData$from === void 0 ? void 0 : _event$getData$from.id,
+	        fromType: (_event$getData$from2 = event.getData().from) === null || _event$getData$from2 === void 0 ? void 0 : _event$getData$from2.type
+	      });
+	    },
+	    onChannelChangeHandler: function onChannelChangeHandler(event) {
+	      var channel = event.getData().channel;
+	      var backend = channel === null || channel === void 0 ? void 0 : channel.backend;
+	      this.$store.dispatch('orderCreation/setMessageData', {
+	        senderId: backend === null || backend === void 0 ? void 0 : backend.id,
+	        senderCode: backend === null || backend === void 0 ? void 0 : backend.senderCode,
+	        channelId: channel === null || channel === void 0 ? void 0 : channel.id
+	      });
+	    },
+	    onToChangeHandler: function onToChangeHandler(event) {
+	      var _to$addressSource, _to$addressSource2, _to$address;
+	      var to = event.getData().to;
+	      this.$store.dispatch('orderCreation/setMessageData', {
+	        entityId: to === null || to === void 0 ? void 0 : (_to$addressSource = to.addressSource) === null || _to$addressSource === void 0 ? void 0 : _to$addressSource.entityId,
+	        entityTypeId: to === null || to === void 0 ? void 0 : (_to$addressSource2 = to.addressSource) === null || _to$addressSource2 === void 0 ? void 0 : _to$addressSource2.entityTypeId,
+	        phoneId: to === null || to === void 0 ? void 0 : (_to$address = to.address) === null || _to$address === void 0 ? void 0 : _to$address.id
+	      });
+	    },
+	    initMessageData: function initMessageData() {
+	      var _state$message, _state$from, _state$from2, _state$channel, _state$channel$backen, _state$channel2, _state$channel2$backe, _state$channel3, _state$to, _state$to$addressSour, _state$to2, _state$to2$addressSou, _state$to3, _state$to3$address;
+	      var state = this.messageSenderEditor.getState();
+	      var messageData = {
+	        body: (_state$message = state.message) === null || _state$message === void 0 ? void 0 : _state$message.body,
+	        fromId: (_state$from = state.from) === null || _state$from === void 0 ? void 0 : _state$from.id,
+	        fromType: (_state$from2 = state.from) === null || _state$from2 === void 0 ? void 0 : _state$from2.type,
+	        senderId: (_state$channel = state.channel) === null || _state$channel === void 0 ? void 0 : (_state$channel$backen = _state$channel.backend) === null || _state$channel$backen === void 0 ? void 0 : _state$channel$backen.id,
+	        senderCode: (_state$channel2 = state.channel) === null || _state$channel2 === void 0 ? void 0 : (_state$channel2$backe = _state$channel2.backend) === null || _state$channel2$backe === void 0 ? void 0 : _state$channel2$backe.senderCode,
+	        channelId: (_state$channel3 = state.channel) === null || _state$channel3 === void 0 ? void 0 : _state$channel3.id,
+	        entityId: (_state$to = state.to) === null || _state$to === void 0 ? void 0 : (_state$to$addressSour = _state$to.addressSource) === null || _state$to$addressSour === void 0 ? void 0 : _state$to$addressSour.entityId,
+	        entityTypeId: (_state$to2 = state.to) === null || _state$to2 === void 0 ? void 0 : (_state$to2$addressSou = _state$to2.addressSource) === null || _state$to2$addressSou === void 0 ? void 0 : _state$to2$addressSou.entityTypeId,
+	        phoneId: (_state$to3 = state.to) === null || _state$to3 === void 0 ? void 0 : (_state$to3$address = _state$to3.address) === null || _state$to3$address === void 0 ? void 0 : _state$to3$address.id
+	      };
+	      this.$store.dispatch('orderCreation/setMessageData', messageData);
+	    },
 	    onConfigureContactPhone: function onConfigureContactPhone() {
 	      this.$emit('stage-block-sms-message-on-change-contact-phone');
 	    },
@@ -2689,18 +2897,18 @@ this.BX = this.BX || {};
 	      this.$emit('stage-block-sms-send-on-change-provider', value);
 	    },
 	    handleErrorFix: function handleErrorFix() {
-	      var _this3 = this;
+	      var _this5 = this;
 	      main_core.ajax.runComponentAction("bitrix:salescenter.app", "refreshSenderSettings", {
 	        mode: "class"
 	      }).then(function (resolve) {
 	        if (BX.type.isObject(resolve.data) && Object.values(resolve.data).length > 0) {
-	          _this3.initialize(resolve.data.currentSenderCode, resolve.data.senders, resolve.data.pushedToUseBitrix24Notifications);
-	          _this3.smsSenderListComponentKey += 1;
+	          _this5.initialize(resolve.data.currentSenderCode, resolve.data.senders, resolve.data.pushedToUseBitrix24Notifications);
+	          _this5.smsSenderListComponentKey += 1;
 	        }
 	      });
 	    },
 	    handlePhoneErrorFix: function handlePhoneErrorFix() {
-	      var _this4 = this;
+	      var _this6 = this;
 	      main_core.ajax.runComponentAction("bitrix:salescenter.app", "refreshContactPhone", {
 	        mode: "class",
 	        data: {
@@ -2711,15 +2919,15 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (resolve) {
 	        if (BX.type.isObject(resolve.data) && Object.values(resolve.data).length > 0) {
-	          if (_this4.contactPhone != resolve.data.contactPhone) {
+	          if (_this6.contactPhone != resolve.data.contactPhone) {
 	            ui_notification.UI.Notification.Center.notify({
 	              content: main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_PHONE_CHANGE', {
 	                '#TITLE#': resolve.data.title
 	              })
 	            });
 	          }
-	          _this4.contactPhone = resolve.data.contactPhone;
-	          _this4.onConfigureContactPhone();
+	          _this6.contactPhone = resolve.data.contactPhone;
+	          _this6.onConfigureContactPhone();
 	        }
 	      });
 	    },
@@ -2738,7 +2946,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  //language=Vue
-	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template\n\t\t\t\tv-if=\"showHint\"\n\t\t\t\tv-slot:block-hint-title\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_V3'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" class=\"salescenter-app-payment-by-sms-item-container-offtop\">\n\t\t\t\t\t<sms-error-block\n\t\t\t\t\t\tv-for=\"(error, index) in errors\"\n\t\t\t\t\t\tv-bind:key=\"index\"\n\t\t\t\t\t\tv-on:on-configure=\"hendleSmsErrorBlock($event)\"\n\t\t\t\t\t\t:error=\"error\"\n\t\t\t\t\t>\n\t\t\t\t\t</sms-error-block>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t<sms-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t<div v-if=\"currentSenderCode === 'bitrix24'\" class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\n\t\t\t\t\t\t\t\t\t<div contenteditable=\"false\" class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-text\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT'), "\n\t\t\t\t\t\t\t\t\t\t<a @click.stop.prevent=\"openBitrix24NotificationsHelp(event)\" href=\"#\">\n\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_MORE_DETAILS'), "\n\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<sms-message-editor-block v-else :editor=\"editor\" :selectedMode=\"selectedMode\"/>\n\t\t\t\t\t\t\t<template v-if=\"currentSenderCode === 'bitrix24'\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-info\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24'), "\n\t\t\t\t\t\t\t\t\t<span @click=\"openBitrix24NotificationsWorks(event)\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'), "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"currentSenderCode === 'sms_provider'\">\n\t\t\t\t\t\t\t\t<sms-sender-list-block\n\t\t\t\t\t\t\t\t\t:key=\"smsSenderListComponentKey\"\n\t\t\t\t\t\t\t\t\t:list=\"currentSender.smsSenders\"\n\t\t\t\t\t\t\t\t\t:initSelected=\"selectedSmsSender\"\n\t\t\t\t\t\t\t\t\t:settingUrl=\"currentSender.connectUrl\"\n\t\t\t\t\t\t\t\t\tv-on:on-configure=\"handleErrorFix\"\n\t\t\t\t\t\t\t\t\tv-on:on-selected=\"handleOnSmsSenderSelected\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-slot:sms-sender-list-text-send-from>\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER'), "\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</sms-sender-list-block>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template\n\t\t\t\tv-if=\"showHint\"\n\t\t\t\tv-slot:block-hint-title\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_V3'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" class=\"salescenter-app-payment-by-sms-item-container-offtop\">\n\t\t\t\t\t<sms-error-block\n\t\t\t\t\t\tv-if=\"!messageSenderAvailable\"\n\t\t\t\t\t\tv-for=\"(error, index) in errors\"\n\t\t\t\t\t\tv-bind:key=\"index\"\n\t\t\t\t\t\tv-on:on-configure=\"hendleSmsErrorBlock($event)\"\n\t\t\t\t\t\t:error=\"error\"\n\t\t\t\t\t>\n\t\t\t\t\t</sms-error-block>\n\t\t\t\t\t<div v-if=\"messageSenderAvailable\">\n\t\t\t\t\t\t<sms-error-block\n\t\t\t\t\t\t\tv-if=\"showMessageSenderEditor && clientError\"\n\t\t\t\t\t\t\t:error=\"messageSenderError\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t</sms-error-block>\n\t\t\t\t\t\t<div v-show=\"showMessageSenderEditor\" :id=\"messageSenderId\"></div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-show=\"!showMessageSenderEditor\"\n\t\t\t\t\t\t\t@click=\"openMessageSenderConnectionsSlider\"\n\t\t\t\t\t\t\tclass=\"salescenter-app-payment-by-sms-message-sender-empty-state\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-message-sender-empty-state-image\"></div>\n\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-message-sender-empty-state-right-block\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-message-sender-empty-state-text\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_MESSAGE_SENDER_EMPTY_STATE'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"ui-btn --air ui-btn-md --style-filled ui-btn-no-caps\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_BITRIX24_NOT_CONNECTED_FIX'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-else class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t<sms-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t<div v-if=\"currentSenderCode === 'bitrix24'\" class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\n\t\t\t\t\t\t\t\t\t<div contenteditable=\"false\" class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-text\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT'), "\n\t\t\t\t\t\t\t\t\t\t<a @click.stop.prevent=\"openBitrix24NotificationsHelp(event)\" href=\"#\">\n\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_MORE_DETAILS'), "\n\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<sms-message-editor-block v-else :editor=\"editor\" :selectedMode=\"selectedMode\"/>\n\t\t\t\t\t\t\t<template v-if=\"currentSenderCode === 'bitrix24'\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-info\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24'), "\n\t\t\t\t\t\t\t\t\t<span @click=\"openBitrix24NotificationsWorks(event)\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'), "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"currentSenderCode === 'sms_provider'\">\n\t\t\t\t\t\t\t\t<sms-sender-list-block\n\t\t\t\t\t\t\t\t\t:key=\"smsSenderListComponentKey\"\n\t\t\t\t\t\t\t\t\t:list=\"currentSender.smsSenders\"\n\t\t\t\t\t\t\t\t\t:initSelected=\"selectedSmsSender\"\n\t\t\t\t\t\t\t\t\t:settingUrl=\"currentSender.connectUrl\"\n\t\t\t\t\t\t\t\t\tv-on:on-configure=\"handleErrorFix\"\n\t\t\t\t\t\t\t\t\tv-on:on-selected=\"handleOnSmsSenderSelected\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-slot:sms-sender-list-text-send-from>\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER'), "\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</sms-sender-list-block>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var StageBlocksList$1 = {
@@ -2763,23 +2971,22 @@ this.BX = this.BX || {};
 	      message: {
 	        initSenders: this.$root.$app.options.senders,
 	        initCurrentSenderCode: this.$root.$app.options.currentSenderCode,
+	        messageSenderData: this.$root.$app.options.messageSenderData,
 	        initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
-	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
 	        manager: this.$root.$app.options.entityResponsible,
 	        phone: this.$root.$app.options.contactPhone,
 	        ownerId: this.$root.$app.options.ownerId,
 	        ownerTypeId: this.$root.$app.options.ownerTypeId,
 	        contactEditorUrl: this.$root.$app.options.contactEditorUrl,
-	        titleTemplate: this.$root.$app.sendingMethodDesc.sent ? main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME') : main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
+	        titleTemplate: this.getTitleTemplate(),
 	        showHint: this.$root.$app.options.templateMode !== 'view',
 	        editorTemplate: this.$root.$app.sendingMethodDesc.text,
 	        editorUrl: this.$root.$app.orderPublicUrl,
 	        selectedMode: 'payment'
 	      },
 	      product: {
-	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
-	        title: this.$root.$app.options.templateMode === 'view' ? main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW') : main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+	        title: main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 	        hintTitle: this.$root.$app.options.templateMode === 'view' ? '' : main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')
 	      },
 	      paysystem: {
@@ -2847,6 +3054,15 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  methods: {
+	    getTitleTemplate: function getTitleTemplate() {
+	      if (this.$root.$app.options.messageSenderData) {
+	        return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_SENDER_MSGVER_1');
+	      }
+	      if (this.$root.$app.sendingMethodDesc.sent) {
+	        return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME');
+	      }
+	      return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2');
+	    },
 	    initCounter: function initCounter() {
 	      this.counter = 1;
 	    },
@@ -2956,8 +3172,8 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  //language=Vue
-	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t@stage-block-sms-message-on-change-contact-phone=\"changeContactPhone\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:contactEditorUrl=\"stages.message.contactEditorUrl\"\n\t\t\t\t:ownerId=\"stages.message.ownerId\"\n\t\t\t\t:ownerTypeId=\"stages.message.ownerTypeId\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t@on-product-form-mode-change=\"onProductFormModeChange\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"!isHideDeliveryStage\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t:isDeliveryStageVisible=\"stages.delivery.installed\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  // language=Vue
+	  template: "\n\t\t<div>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t@on-product-form-mode-change=\"onProductFormModeChange\"\n\t\t\t/>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t@stage-block-sms-message-on-change-contact-phone=\"changeContactPhone\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:messageSenderData=\"stages.message.messageSenderData\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:contactEditorUrl=\"stages.message.contactEditorUrl\"\n\t\t\t\t:ownerId=\"stages.message.ownerId\"\n\t\t\t\t:ownerTypeId=\"stages.message.ownerTypeId\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"!isHideDeliveryStage\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t:isDeliveryStageVisible=\"stages.delivery.installed\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var EntityCreatePaymentStages = {
@@ -2982,23 +3198,22 @@ this.BX = this.BX || {};
 	      message: {
 	        initSenders: this.$root.$app.options.senders,
 	        initCurrentSenderCode: this.$root.$app.options.currentSenderCode,
+	        messageSenderData: this.$root.$app.options.messageSenderData,
 	        initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
-	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
 	        manager: this.$root.$app.options.entityResponsible,
 	        phone: this.$root.$app.options.contactPhone,
 	        ownerId: this.$root.$app.options.ownerId,
 	        ownerTypeId: this.$root.$app.options.ownerTypeId,
 	        contactEditorUrl: this.$root.$app.options.contactEditorUrl,
-	        titleTemplate: this.$root.$app.sendingMethodDesc.sent ? main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME') : main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
+	        titleTemplate: this.getTitleTemplate(),
 	        showHint: this.$root.$app.options.templateMode !== 'view',
 	        editorTemplate: this.$root.$app.sendingMethodDesc.text,
 	        editorUrl: this.$root.$app.orderPublicUrl,
 	        selectedMode: 'payment'
 	      },
 	      product: {
-	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
-	        title: this.$root.$app.options.templateMode === 'view' ? main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW') : main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+	        title: main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 	        hintTitle: this.$root.$app.options.templateMode === 'view' ? '' : main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')
 	      },
 	      paysystem: {
@@ -3064,6 +3279,15 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  methods: {
+	    getTitleTemplate: function getTitleTemplate() {
+	      if (this.$root.$app.options.messageSenderData) {
+	        return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_SENDER_MSGVER_1');
+	      }
+	      if (this.$root.$app.sendingMethodDesc.sent) {
+	        return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME');
+	      }
+	      return main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2');
+	    },
 	    initCounter: function initCounter() {
 	      this.counter = 1;
 	    },
@@ -3136,7 +3360,7 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:contactEditorUrl=\"stages.message.contactEditorUrl\"\n\t\t\t\t:ownerId=\"stages.message.ownerId\"\n\t\t\t\t:ownerTypeId=\"stages.message.ownerTypeId\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:messageSenderData=\"stages.message.messageSenderData\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:contactEditorUrl=\"stages.message.contactEditorUrl\"\n\t\t\t\t:ownerId=\"stages.message.ownerId\"\n\t\t\t\t:ownerTypeId=\"stages.message.ownerTypeId\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var Send$1 = {
@@ -3178,7 +3402,7 @@ this.BX = this.BX || {};
 	    var stages = {
 	      product: {
 	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
-	        title: this.$root.$app.options.templateMode === 'view' ? main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHIPMENT_VIEW') : main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT_SHIPMENT')
+	        title: main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1')
 	      },
 	      delivery: {
 	        status: this.$root.$app.options.deliveryList.isInstalled ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
@@ -3548,7 +3772,7 @@ this.BX = this.BX || {};
 	      },
 	      product: {
 	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
-	        title: this.$root.$app.options.templateMode === 'view' ? main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW') : main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+	        title: main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 	        hintTitle: ''
 	      },
 	      paysystem: {
@@ -3707,7 +3931,7 @@ this.BX = this.BX || {};
 	    this.initCounter();
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"salescenter-app-terminal-wrapper\">\n\t\t\t<responsible-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.responsible.status\"\n\t\t\t\t:title=\"stages.responsible.title\"\n\t\t\t\t:selectedUser=\"stages.responsible.selectedUser\"\n\t\t\t\t:responsible=\"stages.responsible.responsible\"\n\t\t\t\t:isMobileInstalledForResponsible=\"stages.responsible.isMobileInstalledForResponsible\"\n\t\t\t\t:contact=\"stages.responsible.contact\"\n\t\t\t\t:editable=\"stages.responsible.editable\"\n\t\t\t\t:hintTitle=\"stages.responsible.hintTitle\"\n\t\t\t\t@on-responsible-changed=\"onResponsibleChanged\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\tv-if=\"hasProducts\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t:additionalContainerClasses=\"{ 'salescenter-app-teminal-products-item': true }\"\n\t\t\t/>\n\t\t\t<amount-block\n\t\t\t\tv-else\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-terminal-wrapper\">\n\t\t\t<product-block\n\t\t\t\tv-if=\"hasProducts\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t:additionalContainerClasses=\"{ 'salescenter-app-teminal-products-item': true }\"\n\t\t\t/>\n\t\t\t<responsible-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.responsible.status\"\n\t\t\t\t:title=\"stages.responsible.title\"\n\t\t\t\t:selectedUser=\"stages.responsible.selectedUser\"\n\t\t\t\t:responsible=\"stages.responsible.responsible\"\n\t\t\t\t:isMobileInstalledForResponsible=\"stages.responsible.isMobileInstalledForResponsible\"\n\t\t\t\t:contact=\"stages.responsible.contact\"\n\t\t\t\t:editable=\"stages.responsible.editable\"\n\t\t\t\t:hintTitle=\"stages.responsible.hintTitle\"\n\t\t\t\t@on-responsible-changed=\"onResponsibleChanged\"\n\t\t\t/>\n\t\t\t<amount-block\n\t\t\t\tv-if=\"!hasProducts\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -3882,6 +4106,9 @@ this.BX = this.BX || {};
 	    },
 	    isAllowedPaymentDeliverySubmitButton: function isAllowedPaymentDeliverySubmitButton() {
 	      var _this2 = this;
+	      if (this.$root.$app.options.messageSenderData) {
+	        return this.$store.getters['orderCreation/isAllowedSubmit'];
+	      }
 	      if (!this.$root.$app.hasClientContactInfo()) {
 	        return false;
 	      }
@@ -4205,6 +4432,8 @@ this.BX = this.BX || {};
 	  return DocumentSelectorModel;
 	}(ui_vue_vuex.VuexBuilderModel);
 
+	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var OrderCreationModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(OrderCreationModel, _VuexBuilderModel);
 	  function OrderCreationModel() {
@@ -4249,7 +4478,9 @@ this.BX = this.BX || {};
 	        availablePaySystemsIds: [],
 	        paymentResponsibleId: null,
 	        isMobileInstalledForResponsible: false,
-	        responsiblePhoneNumbers: []
+	        responsiblePhoneNumbers: [],
+	        messageData: {},
+	        hasAvailableProducts: false
 	      };
 	    }
 	  }, {
@@ -4308,6 +4539,14 @@ this.BX = this.BX || {};
 	        setAvailablePaySystemsIds: function setAvailablePaySystemsIds(_ref13, payload) {
 	          var commit = _ref13.commit;
 	          commit('setAvailablePaySystemsIds', payload);
+	        },
+	        setMessageData: function setMessageData(_ref14, payload) {
+	          var commit = _ref14.commit;
+	          commit('setMessageData', payload);
+	        },
+	        setHasAvailableProducts: function setHasAvailableProducts(_ref15, payload) {
+	          var commit = _ref15.commit;
+	          commit('setHasAvailableProducts', payload);
 	        }
 	      };
 	    }
@@ -4322,6 +4561,9 @@ this.BX = this.BX || {};
 	        },
 	        isAllowedSubmit: function isAllowedSubmit(state) {
 	          return state.isEnabledSubmit && state.isSenderSelected;
+	        },
+	        isSenderSelected: function isSenderSelected(state) {
+	          return state.isSenderSelected;
 	        },
 	        isCompilationMode: function isCompilationMode(state) {
 	          return state.isCompilationMode;
@@ -4361,6 +4603,12 @@ this.BX = this.BX || {};
 	        },
 	        getAvailablePaySystemsIds: function getAvailablePaySystemsIds(state) {
 	          return state.availablePaySystemsIds;
+	        },
+	        getMessageData: function getMessageData(state) {
+	          return state.messageData;
+	        },
+	        getHasAvailableProducts: function getHasAvailableProducts(state) {
+	          return state.hasAvailableProducts;
 	        }
 	      };
 	    }
@@ -4437,6 +4685,12 @@ this.BX = this.BX || {};
 	        },
 	        disableCompilationMode: function disableCompilationMode(state) {
 	          state.isCompilationMode = false;
+	        },
+	        setMessageData: function setMessageData(state, payload) {
+	          state.messageData = _objectSpread$7(_objectSpread$7({}, state.messageData), payload);
+	        },
+	        setHasAvailableProducts: function setHasAvailableProducts(state, payload) {
+	          state.hasAvailableProducts = payload;
 	        }
 	      };
 	    }
@@ -4826,6 +5080,17 @@ this.BX = this.BX || {};
 	    instances.set(this.dialogId, this);
 	  }
 	  babelHelpers.createClass(App, [{
+	    key: "sendMessageAnalytic",
+	    value: function sendMessageAnalytic() {
+	      var messageData = this.store.getters['orderCreation/getMessageData'];
+	      var channelId = messageData === null || messageData === void 0 ? void 0 : messageData.channelId;
+	      if (!channelId) {
+	        return;
+	      }
+	      var eventData = crm_integration_analytics.Builder.Communication.Editor.SendEvent.createDefault(channelId).setSection(crm_integration_analytics.Dictionary.SECTION_SALESCENTER_SLIDER).buildData();
+	      ui_analytics.sendData(eventData);
+	    }
+	  }, {
 	    key: "initPull",
 	    value: function initPull() {
 	      var _this2 = this;
@@ -5184,7 +5449,8 @@ this.BX = this.BX || {};
 	        sessionId: this.sessionId,
 	        sendCompilationLinkToFacebook: sendCompilationLinkToFacebook,
 	        compilationId: this.compilation ? this.compilation.ID : this.newCompilationId,
-	        editable: this.options.templateMode === 'create'
+	        editable: this.options.templateMode === 'create',
+	        messageData: this.store.getters['orderCreation/getMessageData']
 	      };
 	      if (this.stageOnOrderPaid !== null) {
 	        options.stageOnOrderPaid = this.stageOnOrderPaid;
@@ -5372,6 +5638,7 @@ this.BX = this.BX || {};
 	        },
 	        analyticsLabel: 'salescenterCreateCompilation'
 	      }).then(function (result) {
+	        _this12.sendMessageAnalytic();
 	        _this12.store.dispatch('orderCreation/resetBasket');
 	        _this12.stopProgress(buttonEvent);
 	        if (result.data && result.data.compilation) {
@@ -5477,7 +5744,8 @@ this.BX = this.BX || {};
 	        connector: this.connector,
 	        context: this.context,
 	        currency: this.currencyCode,
-	        assignedById: this.assignedById
+	        assignedById: this.assignedById,
+	        messageData: this.store.getters['orderCreation/getMessageData']
 	      };
 	      if (this.documentSelector) {
 	        data.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
@@ -5502,6 +5770,7 @@ this.BX = this.BX || {};
 	          skipPublicMessage: skipPublicMessage
 	        }
 	      }).then(function (result) {
+	        _this14.sendMessageAnalytic();
 	        _this14.store.dispatch('orderCreation/resetBasket');
 	        _this14.stopProgress(buttonEvent);
 	        if (skipPublicMessage === 'y') {
@@ -5736,7 +6005,8 @@ this.BX = this.BX || {};
 	        sendingMethodDesc: this.sendingMethodDesc,
 	        stageOnOrderPaid: this.stageOnOrderPaid,
 	        ownerTypeId: this.ownerTypeId,
-	        ownerId: this.ownerId
+	        ownerId: this.ownerId,
+	        messageData: this.store.getters['orderCreation/getMessageData']
 	      };
 	      if (this.documentSelector) {
 	        options.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
@@ -5753,6 +6023,7 @@ this.BX = this.BX || {};
 	          context: this.context
 	        }
 	      }).then(function (result) {
+	        _this17.sendMessageAnalytic();
 	        _this17.stopProgress(buttonEvent);
 	        _this17.closeApplication();
 	        _this17.emitGlobalEvent('salescenter.app:onpaymentresend');
@@ -5831,5 +6102,5 @@ this.BX = this.BX || {};
 
 	exports.App = App;
 
-}((this.BX.Salescenter = this.BX.Salescenter || {}),BX.Bitrix24,BX,BX.UI.Dialogs,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter.Component.StageBlock,BX.Catalog,BX,BX.Salescenter,BX,BX,BX.Salescenter.Component.StageBlock,BX.Salescenter.AutomationStage,BX.Salescenter.Component.StageBlock.TimeLine,BX,BX,BX,BX,BX,BX,BX.Event,BX.Salescenter.Component.StageBlock,BX.Salescenter,BX.Salescenter,BX,BX.Salescenter.Tile,BX.UI.EntitySelector,BX.Salescenter.Component,BX.Currency,BX.Salescenter,BX.Landing,BX.Landing,BX,BX,BX,BX,BX.Main,BX.UI));
+}((this.BX.Salescenter = this.BX.Salescenter || {}),BX.Bitrix24,BX,BX.UI.Dialogs,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter.Component.StageBlock,BX.Catalog,BX,BX.Salescenter,BX,BX,BX.Salescenter.Component.StageBlock,BX.Salescenter.AutomationStage,BX.Salescenter.Component.StageBlock.TimeLine,BX,BX,BX,BX,BX,BX,BX.Event,BX.Salescenter.Component.StageBlock,BX.Salescenter,BX.Crm.MessageSender,BX.Crm,BX.Salescenter,BX,BX.Salescenter.Tile,BX.UI.EntitySelector,BX.Salescenter.Component,BX.Currency,BX.Salescenter,BX.Landing,BX.Landing,BX,BX,BX,BX,BX.Main,BX.UI,BX.Crm.Integration.Analytics,BX.UI.Analytics));
 //# sourceMappingURL=app.bundle.js.map

@@ -184,8 +184,7 @@ $APPLICATION->IncludeComponent(
 		}
 	</script>
 <?php
-
-if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
+if (!$arResult['IS_BI_BUILDER_SERVICE'] && !\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {
 	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '');
 }

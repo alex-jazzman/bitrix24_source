@@ -108,6 +108,7 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.getParentWidget(),
+				analyticsSection: 'ui_user_list_item',
 			});
 		}
 	}

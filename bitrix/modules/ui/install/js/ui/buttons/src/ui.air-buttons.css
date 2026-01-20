@@ -61,80 +61,66 @@
 	--ui-btn-spinner: url(../images/ui-loading-spinner.svg);
 }
 
-.ui-btn.--wide {
+.ui-btn.--wide,
+.ui-btn-split.--wide {
 	width: 100%;
+}
+
+.ui-btn.--air,
+.ui-btn.--air.--with-left-icon,
+.ui-btn-split.--air {
+	border: var(--ui-btn-border);
+	border-radius: var(--ui-btn-radius);
+	border-color: var(--ui-btn-border-color);
+	font-family: var(--ui-font-family-primary);
+	color: var(--ui-btn-color);
+	transition-duration: 0s;
+	background-position: unset;
+	background: var(--ui-btn-background-gradient), var(--ui-btn-custom-background, none);
+}
+
+.ui-btn.--air:hover,
+.ui-btn.--air:hover,
+.ui-btn.--air.ui-btn-hover,
+.ui-btn.--air.ui-btn-hover,
+.ui-btn.--air:focus,
+.ui-btn.--air:focus,
+.ui-btn.--air.ui-btn-focus,
+.ui-btn.--air.ui-btn-focus {
+	background: var(--ui-btn-background-gradient-hover), var(--ui-btn-custom-background, none);
+	border-color: var(--ui-btn-border-color-hover);
 }
 
 .ui-btn.--air.--remove-left-corners {
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 }
-
 .ui-btn.--air.--remove-right-corners {
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
 }
 
-.ui-btn.--air,
-.ui-btn-split.--air .ui-btn-main,
-.ui-btn-split.--air .ui-btn-menu,
-.ui-btn-split.--air .ui-btn-extra {
-	transition-duration: 0s;
-	font-family: var(--ui-font-family-primary);
-	border-radius: var(--ui-btn-radius);
-}
-
-.ui-btn.--air,
-.ui-btn-split.--air,
-.ui-btn-split.--air .ui-btn-main,
-.ui-btn-split.--air .ui-btn-menu {
-	color: var(--ui-btn-color);
-	border-color: var(--ui-btn-border-color);
-}
-
-.ui-btn.--air,
-.ui-btn.--air.--with-left-icon,
-.ui-btn-split.--air,
-.ui-btn-split.--air.--with-left-icon {
-	background-image: none;
-	background-repeat: unset;
-	background-position: unset;
-	background-size: unset;
-	background: var(--ui-btn-background-gradient), var(--ui-btn-custom-background, none);
-}
-
-.ui-btn.--air:hover:not([disabled]),
-.ui-btn.--air:hover:not(.ui-btn-disabled),
-.ui-btn.--air.ui-btn-hover:not([disabled]),
-.ui-btn.--air.ui-btn-hover:not(.ui-btn-disabled),
-.ui-btn.--air:focus:not([disabled]),
-.ui-btn.--air:focus:not(.ui-btn-disabled),
-.ui-btn.--air.ui-btn-focus:not([disabled]),
-.ui-btn.--air.ui-btn-focus:not(.ui-btn-disabled) {
-	background: var(--ui-btn-background-gradient-hover), var(--ui-btn-custom-background, none);
-	border-color: var(--ui-btn-border-color-hover);
-}
-
-.ui-btn.--air:active:not([disabled]),
-.ui-btn.--air.ui-btn-active:not([disabled]),
-.ui-btn.--air:active:not(.ui-btn-disabled),
-.ui-btn.--air.ui-btn-active:not(.ui-btn-disabled),
-.ui-btn.--air:active:hover:not(.ui-btn-disabled),
-.ui-btn.--air.ui-btn-active:hover:not(.ui-btn-disabled) {
-	background: var(--ui-btn-background-gradient-active), var(--ui-btn-custom-background, none);
-	border-color: var(--ui-btn-border-color-active);
-}
 
 .ui-btn-split.--air .ui-btn-main {
 	border-right: none;
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
+	width: 100%;
 }
 
 .ui-btn-split.--air .ui-btn-menu {
+	flex-shrink: 0;
 	border-left: none;
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
+}
+
+.ui-btn-split.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-menu,
+.ui-btn-split.--air .ui-btn-extra {
+	border: none;
+	height: auto;
+	transition-duration: 0s;
 }
 
 .ui-btn.--air,
@@ -146,7 +132,6 @@
 	margin-left: 0;
 	font-weight: var(--ui-btn-font-weight);
 	font-size: var(--ui-btn-font-size);
-	line-height: var(--ui-btn-height);
 	padding-left: var(--ui-btn-padding-left);
 	padding-right: var(--ui-btn-padding-right);
 }
@@ -170,55 +155,49 @@
 
 .ui-btn.--air:hover,
 .ui-btn.--air:focus,
-a.ui-btn.--air:focus,
-.ui-btn.--air .ui-btn-main:hover,
-.ui-btn.--air .ui-btn-main:focus,
-.ui-btn.--air .ui-btn-extra:hover,
-.ui-btn.--air .ui-btn-menu:not(.--switcher):hover,
-.ui-btn.--air.ui-btn-hover,
-.ui-btn.--air.ui-btn-hover .ui-btn-main,
-.ui-btn.--air.ui-btn-hover .ui-btn-extra,
-.ui-btn.--air.ui-btn-hover .ui-btn-menu,
-.ui-btn.--air.ui-btn-main-hover .ui-btn-main,
-.ui-btn.--air.ui-btn-extra-hover .ui-btn-extra,
-.ui-btn.--air.ui-btn-menu-hover .ui-btn-menu {
+.ui-btn-split.--air .ui-btn-main:hover,
+.ui-btn-split.--air .ui-btn-main:focus,
+.ui-btn-split.--air .ui-btn-menu:not(.--switcher):hover,
+.ui-btn-split.--air .ui-btn-menu:not(.--switcher):focus,
+.ui-btn-split.--air .ui-btn-extra:hover,
+.ui-btn-split.--air .ui-btn-extra:focus,
+.ui-btn-split.--air.ui-btn-hover,
+.ui-btn-split.--air.ui-btn-hover .ui-btn-main,
+.ui-btn-split.--air.ui-btn-hover .ui-btn-menu,
+.ui-btn-split.--air.ui-btn-hover .ui-btn-extra,
+.ui-btn-split.--air.ui-btn-main-hover .ui-btn-main,
+.ui-btn-split.--air.ui-btn-menu-hover .ui-btn-menu,
+.ui-btn-split.--air.ui-btn-extra-hover .ui-btn-extra {
 	border-color: var(--ui-btn-border-color-hover);
 	background: var(--ui-btn-background-gradient-hover);
 	color: var(--ui-btn-color-hover);
 }
 
-.ui-btn.--air:active,
 a.ui-btn.--air:focus,
 a.ui-btn-split.--air:focus,
+.ui-btn.--air:active,
 .ui-btn-split.--air .ui-btn-main:active,
 .ui-btn-split.--air .ui-btn-menu:not(.--switcher):active,
+	/*TODO: ui-btn-extra - check, remove or fix*/
 .ui-btn-split.--air .ui-btn-extra:active,
-.ui-btn-wait.ui-btn.--air,
-.ui-btn-wait.ui-btn.--air .ui-btn-main,
-.ui-btn-clock.ui-btn.--air,
-.ui-btn.ui-btn-clock.--air .ui-btn-main,
-.ui-btn-active.ui-btn.--air,
-.ui-btn.--air.ui-btn-active .ui-btn-main,
-.ui-btn.--air.ui-btn-active .ui-btn-menu,
-.ui-btn.--air.ui-btn-active .ui-btn-extra,
-.ui-btn-main-active.--air .ui-btn-main,
-.ui-btn-menu-active.--air .ui-btn-menu,
-.ui-btn-extra-active.--air .ui-btn-extra,
-.ui-btn-wait.ui-btn.--air:hover,
-.ui-btn-wait.--air .ui-btn-main:hover,
-.ui-btn-clock.ui-btn.--air:hover,
-.ui-btn-clock.--air .ui-btn-main:hover,
-.ui-btn-active.--air.ui-btn:hover,
-.ui-btn-active.--air .ui-btn-main:hover,
-.ui-btn-active.--air .ui-btn-menu:not(.--switcher):hover,
 .ui-btn-active.--air .ui-btn-extra:hover,
-.ui-btn-main-active.--air .ui-btn-main:hover,
-.ui-btn-menu-active.--air .ui-btn-menu:not(.--switcher):hover,
 .ui-btn-extra-active.--air .ui-btn-extra:hover {
 	outline: none;
 	border-color: var(--ui-btn-border-color-active);
 	background: var(--ui-btn-background-gradient-active);
 	color: var(--ui-btn-color-active);
+}
+
+.ui-btn-wait.--air,
+.ui-btn-clock.--air,
+.ui-btn-active.--air,
+.ui-btn-wait.--air:hover,
+.ui-btn-clock.--air:hover,
+.ui-btn-active.--air:hover {
+	border-color: var(--ui-btn-border-color-active);
+	background: var(--ui-btn-background-gradient-active);
+	color: var(--ui-btn-color-active);
+	opacity: 1;
 }
 
 /*region Size*/
@@ -590,7 +569,8 @@ a.ui-btn-split.--air:focus,
 	--ui-btn-split-divider-color: var(--ui-color-design-filled-boost-content-divider);
 }
 
-.ui-btn.--air.--style-filled-boost {
+.ui-btn.--air.--style-filled-boost,
+.ui-btn-split.--air.--style-filled-boost {
 	--hover-color-1: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-1) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
 	--hover-color-2: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-2) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
 	--hover-color-3: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-3) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
@@ -624,42 +604,35 @@ a.ui-btn-split.--air:focus,
 	content: none;
 }
 
-.ui-btn.--air[disabled]:not(.ui-btn-wait):not(.ui-btn-clock),
-.ui-btn-disabled.--air:not(.ui-btn-wait):not(.ui-btn-clock),
-.ui-btn-split.--air[disabled]:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main,
-.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main,
-.ui-btn-split.--air[disabled]:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu,
-.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu {
+.ui-btn[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock),
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock),
+.ui-btn.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock),
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) {
 	--ui-btn-background: var(--ui-color-design-disabled-bg);
 	--ui-btn-background-gradient: linear-gradient(180deg, var(--ui-btn-background) 0%, var(--ui-btn-background) 100%);
 	--ui-btn-border-color: var(--ui-color-design-disabled-stroke);
 	--ui-btn-color: var(--ui-color-design-disabled-content);
-
-	opacity: 1;
 }
 
-.ui-btn.--air.ui-btn-disabled,
-.ui-btn.--air.ui-btn-disabled:hover,
-.ui-btn.--air.ui-btn-disabled:active,
-.ui-btn.--air[disabled],
-.ui-btn.--air[disabled]:hover,
-.ui-btn.--air[disabled]:active {
-	background: var(--ui-btn-background-gradient);
-	border-color: var(--ui-btn-border-color);
-}
-
-.ui-btn-split[disabled].--air .ui-btn-main,
-.ui-btn-split[disabled].--air .ui-btn-main:hover,
-.ui-btn-split[disabled].--air .ui-btn-main:active,
-.ui-btn-split[disabled].--air .ui-btn-menu,
-.ui-btn-split[disabled].--air .ui-btn-menu:hover,
-.ui-btn-split[disabled].--air .ui-btn-menu:active,
-.ui-btn-split.ui-btn-disabled.--air .ui-btn-main,
-.ui-btn-split.ui-btn-disabled.--air .ui-btn-main:hover,
-.ui-btn-split.ui-btn-disabled.--air .ui-btn-main:active,
-.ui-btn-split.ui-btn-disabled.--air .ui-btn-menu,
-.ui-btn-split.ui-btn-disabled.--air .ui-btn-menu:hover,
-.ui-btn-split.ui-btn-disabled.--air .ui-btn-menu:active {
+.ui-btn[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock),
+.ui-btn[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock):hover,
+.ui-btn[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock):active,
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main,
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main:hover,
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main:active,
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu,
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu:hover,
+.ui-btn-split[disabled].--air:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu:active,
+.ui-btn.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock),
+.ui-btn.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock):hover,
+.ui-btn.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock):active,
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main,
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main:hover,
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-main:active,
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu,
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu:hover,
+.ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu:active
+{
 	opacity: initial;
 	cursor: not-allowed;
 	background: var(--ui-btn-background-gradient), var(--ui-btn-custom-background, none);
@@ -713,6 +686,9 @@ a.ui-btn-split.--air:focus,
 	display: none;
 }
 
+.ui-btn.ui-btn-dropdown.--air::before {
+	content: normal;
+}
 .ui-btn.ui-btn-dropdown.--air::after {
 	content: '';
 	position: relative;
@@ -732,20 +708,18 @@ a.ui-btn-split.--air:focus,
 	transition: none;
 }
 
-.ui-btn-dropdown.--air:not(.ui-btn-wait)::before,
-.ui-btn-dropdown.--air:not(.ui-btn-clock)::before,
-.ui-btn-dropdown.--air:not(.ui-btn-wait) .ui-btn-main::before,
-.ui-btn-dropdown.--air:not(.ui-btn-clock) .ui-btn-main::before{
-	content: none;
-}
-
 .ui-btn-dropdown.--with-right-icon.--air::after {
 	margin-left: calc((var(--ui-btn-dropdown-icon-inline-space) - var(--ui-btn-icon-compensation)));
 }
 
+.ui-btn.--air,
+.ui-btn-split.--air {
+	height: var(--ui-btn-height);
+	box-sizing: border-box;
+}
+
 .ui-btn.--air .ui-btn-text,
 .ui-btn-split.--air .ui-btn-main .ui-btn-text {
-	height: var(--ui-btn-height);
 	max-width: 100%;
 	display: inline-flex;
 	align-items: center;
@@ -769,28 +743,19 @@ a.ui-btn-split.--air:focus,
 	max-width: calc(100% - var(--ui-btn-dropdown-icon-size));
 }
 
-.ui-btn-wait.--air[disabled],
-.ui-btn-clock.--air[disabled],
-.ui-btn-split.--air[disabled] .ui-btn-main,
-.ui-btn-split.--air[disabled] .ui-btn-menu,
-.ui-btn-split.--air[disabled] .ui-btn-main,
-.ui-btn-split.--air[disabled] .ui-btn-menu,
-.ui-btn-split.--air.ui-btn-disabled .ui-btn-main,
-.ui-btn-split.--air.ui-btn-disabled .ui-btn-menu {
-	opacity: 1;
+.ui-btn-wait.--air,
+.ui-btn-wait.--air *,
+.ui-btn-clock.--air,
+.ui-btn-clock.--air * {
+	cursor: default;
+}
+.ui-btn-wait.--air *,
+.ui-btn-clock.--air * {
+	opacity: 0;
 }
 
-.ui-btn.--air.ui-btn-wait,
-.ui-btn-wait.--air .ui-btn-main,
-.ui-btn.--air.ui-btn-clock,
-.ui-btn-clock.--air .ui-btn-main {
-	background: var(--ui-btn-background-gradient);
-}
-
-.ui-btn.ui-btn-wait.--air::before,
-.ui-btn.ui-btn-clock.--air::before,
-.ui-btn-split.ui-btn-wait.--air .ui-btn-main::before,
-.ui-btn-split.ui-btn-clock.--air .ui-btn-main::before {
+.ui-btn-wait.--air::before,
+.ui-btn-clock.--air::before {
 	content: '';
 	display: inline-block;
 	position: absolute;
@@ -807,33 +772,11 @@ a.ui-btn-split.--air:focus,
 	mask-repeat: no-repeat;
 	border: none;
 }
-
-.ui-btn.ui-btn-wait.--air::before,
-.ui-btn-split.ui-btn-wait.--air .ui-btn-main::before {
+.ui-btn-wait.--air::before {
 	mask-image: var(--ui-btn-wait-loader);
 }
-
-.ui-btn.ui-btn-clock.--air::before,
-.ui-btn-split.ui-btn-clock.--air .ui-btn-main::before {
+.ui-btn-clock.--air::before {
 	mask-image: var(--ui-btn-clock-loader);
-}
-
-.ui-btn-wait.--air .ui-btn-text,
-.ui-btn-clock.--air .ui-btn-text {
-	color: transparent;
-}
-
-.ui-btn-wait.--air .ui-btn-text::before,
-.ui-btn-clock.--air .ui-btn-text::before,
-.ui-btn-wait.--air::after,
-.ui-btn-clock.--air::after,
-.ui-btn-wait.--air .ui-btn-text::after,
-.ui-btn-clock.--air .ui-btn-text::after,
-.ui-btn-wait.--air:not(.ui-btn-collapsed) .ui-btn-left-counter,
-.ui-btn-clock.--air:not(.ui-btn-collapsed) .ui-btn-left-counter,
-.ui-btn-wait.--air:not(.ui-btn-collapsed) .ui-btn-right-counter,
-.ui-btn-clock.--air:not(.ui-btn-collapsed) .ui-btn-right-counter {
-	opacity: 0;
 }
 
 .ui-btn-split.--air .ui-btn-menu {
@@ -941,7 +884,8 @@ a.ui-btn-split.--air:focus,
 	display: inline-flex;
 }
 
-.ui-btn .ui-icon-set {
+.ui-btn .ui-icon-set,
+.ui-btn-split .ui-icon-set {
 	--ui-icon-set__icon-size: var(--ui-btn-icon-size);
 	--ui-icon-set__icon-color: var(--ui-btn-color);
 	margin-right: var(--ui-btn-icon-space);

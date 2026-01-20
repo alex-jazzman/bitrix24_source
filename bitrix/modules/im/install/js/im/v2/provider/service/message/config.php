@@ -15,6 +15,7 @@ return [
 		'im.v2.lib.analytics',
 		'main.core.events',
 		'im.v2.lib.utils',
+		'im.v2.lib.permission',
 		'rest.client',
 		'im.v2.lib.notifier',
 		'ui.vue3.vuex',

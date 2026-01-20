@@ -1,2 +1,5 @@
 <?php
+
 $MESS['MAIL_MAILBOX_LIST_TITLE'] = 'Подключённые ящики';
+$MESS['MAIL_MAILBOX_GRID_MASSCONNECT_BUTTON'] = 'Подключить';
+$MESS['MAIL_MAILBOX_LIST_CONFIG_PERMISSIONS_BUTTON'] = 'Права доступа';

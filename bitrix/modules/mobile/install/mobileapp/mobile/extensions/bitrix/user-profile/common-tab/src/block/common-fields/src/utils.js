@@ -12,7 +12,10 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/utils', (require,
 			: Type.isNil(value) || value === '' || value === '0';
 	};
 
+	const isFieldVisible = (field) => field.isVisible;
+
 	module.exports = {
 		isFieldValueEmpty,
+		isFieldVisible,
 	};
 });

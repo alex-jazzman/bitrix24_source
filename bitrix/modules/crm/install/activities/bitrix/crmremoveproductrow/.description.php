@@ -5,43 +5,58 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Crm\Integration\BizProc\Document\Dynamic;
+use Bitrix\Crm\Integration\BizProc\Document\Order;
+use Bitrix\Crm\Integration\BizProc\Document\Quote;
+use Bitrix\Crm\Integration\BizProc\Document\SmartDocument;
+use Bitrix\Crm\Integration\BizProc\Document\SmartInvoice;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_RMPR_NAME_MSGVER_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_RMPR_DESC_2_MSGVER_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'CrmRemoveProductRow',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
-		'ID' => 'document',
-		'OWN_ID' => 'crm',
-		'OWN_NAME' => 'CRM',
-	],
-	'FILTER' => [
-		'INCLUDE' => [
-			['crm', 'CCrmDocumentDeal'],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
+$arActivityDescription =
+	(new ActivityDescription(
+		name: Loc::getMessage('CRM_RMPR_NAME_MSGVER_1'),
+		description: Loc::getMessage('CRM_RMPR_DESC_2_MSGVER_1'),
+		type: [
+			ActivityType::ACTIVITY->value,
+			ActivityType::ROBOT->value,
+			ActivityType::NODE_ACTION->value,
 		],
-	],
-	'ROBOT_SETTINGS' => [
-		'CATEGORY' => 'employee',
-		'GROUP' => ['goods'],
-		'SORT' => 700,
-	],
-];
+	))
+		->setClass('CrmRemoveProductRow')
+		->setJsClass('BizProcActivity')
+		->setCategory([
+			'ID' => 'document',
+			'OWN_ID' => 'crm',
+			'OWN_NAME' => 'CRM',
+		])
+		->setFilter([
+			'INCLUDE' => [
+				['crm', 'CCrmDocumentDeal'],
+				['crm', SmartInvoice::class],
+				['crm', Quote::class],
+				['crm', Order::class],
+				['crm', SmartDocument::class],
+			],
+		])
+		->setRobotSettings([
+			'CATEGORY' => 'employee',
+			'GROUP' => ['goods'],
+			'SORT' => 700,
+		])
+		->setNodeActionSettings([
+			'INCLUDE' => ['crmdealcomplexactivity'],
+			'HANDLES_DOCUMENT' => true,
+		])
+		->toArray()
+;
 
-if (\Bitrix\Main\Loader::includeModule('crm'))
+if (Loader::includeModule('crm'))
 {
-	if (
-		isset($documentType)
-		&& $documentType[0] === 'crm'
-		&& CCrmBizProcHelper::isDynamicEntityWithProducts(CCrmOwnerType::ResolveID((string)$documentType[2]))
-	)
-	{
-		$arActivityDescription['FILTER']['INCLUDE'][] = ['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class];
-	}
+	$arActivityDescription['FILTER']['INCLUDE'] = array_merge(
+		$arActivityDescription['FILTER']['INCLUDE'],
+		CCrmBizProcHelper::getDynamicDocumentTypesWithProducts()
+	);
 }

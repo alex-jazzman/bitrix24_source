@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_SETTINGS_ALL_WEEKDAY_SELECTED_ERROR"] = "Select at least one workday.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_HOLIDAYS"] = "Custom holidays and days off:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEKEND"] = "Weekend days:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEK_START"] = "First day of week:";

@@ -7,6 +7,7 @@ import {
 	TimeSelector,
 	UserSelector,
 	MenuSelector,
+	EntitySelector,
 } from 'bizproc.automation';
 import { Type } from 'main.core';
 import { InlineTimeSelector } from './inline-time-selector';
@@ -21,6 +22,7 @@ export class Manager
 	static SELECTOR_ROLE_SAVE_STATE = 'save-state-checkbox';
 	static SELECTOR_ROLE_INLINE_TIME = 'inline-selector-time';
 	static SELECTOR_ROLE_MENU = 'menu-selector';
+	static SELECTOR_ROLE_ENTITY = 'bp-entity-selector';
 
 	static getSelectorByTarget(targetInput: HTMLElement): ?InlineSelector
 	{
@@ -68,6 +70,10 @@ export class Manager
 		else if (role === this.SELECTOR_ROLE_MENU)
 		{
 			return new MenuSelector(selectorProps);
+		}
+		else if (role === this.SELECTOR_ROLE_ENTITY)
+		{
+			return new EntitySelector(selectorProps);
 		}
 		else
 		{

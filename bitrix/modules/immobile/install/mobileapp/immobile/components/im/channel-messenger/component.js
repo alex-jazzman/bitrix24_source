@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var
-var REVISION = 21; // API revision - sync with im/lib/revision.php
+var REVISION = 22; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -68,9 +68,6 @@ window.messengerDebug = {};
 		Logger.error('CopilotApplication init error: ', error);
 	}
 	serviceLocator.add('core', core);
-
-	const emitter = new JNEventEmitter();
-	serviceLocator.add('emitter', emitter);
 
 	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const channelInitService = new MessengerInitService({

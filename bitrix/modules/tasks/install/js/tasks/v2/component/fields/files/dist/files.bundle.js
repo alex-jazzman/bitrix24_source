@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_directives_hint,tasks_v2_component_elements_hint,main_core,ui_vue3_vuex,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,ui_iconSet_api_vue,ui_uploader_core,ui_iconSet_animated,tasks_v2_component_elements_chip,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,ui_vue3_components_popup,ui_vue3_components_button,ui_iconSet_api_core,ui_iconSet_outline,disk_uploader_userFieldWidget,tasks_v2_provider_service_fileService) {
+(function (exports,ui_vue3_directives_hint,tasks_v2_component_elements_hint,main_core,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,main_sidepanel,tasks_v2_component_fields_group,ui_uploader_core,ui_system_chip_vue,ui_iconSet_animated,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,ui_vue3_components_popup,ui_vue3_components_button,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_provider_service_fileService,tasks_v2_component_elements_userFieldWidgetComponent) {
 	'use strict';
 
 	const filesMeta = Object.freeze({
@@ -12,26 +12,252 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	});
 
 	// @vue/component
-	const Files = {
-	  name: 'TaskFiles',
+	const UploadButton = {
 	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent
+	    UiButton: ui_vue3_components_button.Button
 	  },
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
+	  inject: {
+	    taskId: {}
+	  },
+	  setup() {
+	    return {
+	      ButtonSize: ui_vue3_components_button.ButtonSize,
+	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  methods: {
+	    handleClick() {
+	      tasks_v2_provider_service_fileService.fileService.get(this.taskId).browse({
+	        bindElement: this.$el
+	      });
+	    }
+	  },
+	  template: `
+		<span data-task-files-upload>
+			<UiButton
+				:text="loc('TASKS_V2_FILES_UPLOAD')"
+				:size="ButtonSize.MEDIUM"
+				:style="AirButtonStyle.SELECTION"
+				:leftIcon="Outline.ATTACH"
+				@click="handleClick"
+			/>
+		</span>
+	`
+	};
+
+	// @vue/component
+	const DownloadArchiveButton = {
+	  components: {
+	    UiButton: ui_vue3_components_button.Button
+	  },
+	  inject: {
+	    task: {},
+	    taskId: {}
+	  },
+	  props: {
+	    files: {
+	      type: Array,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      ButtonSize: ui_vue3_components_button.ButtonSize,
+	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+	      ButtonCounterColor: ui_vue3_components_button.ButtonCounterColor,
+	      ButtonState: ui_vue3_components_button.ButtonState,
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  data() {
+	    return {
+	      loading: false
+	    };
+	  },
+	  computed: {
+	    archiveLink() {
+	      return this.task.archiveLink;
+	    },
+	    filesSize() {
+	      return this.files.reduce((total, file) => total + file.size, 0);
+	    },
+	    formattedFilesSize() {
+	      return ui_uploader_core.formatFileSize(this.filesSize);
+	    }
+	  },
+	  methods: {
+	    async downloadArchive() {
+	      if (tasks_v2_provider_service_fileService.fileService.get(this.taskId).hasPendingRequests()) {
+	        this.loading = true;
+	        await tasks_v2_provider_service_fileService.fileService.get(this.taskId).handleSave();
+	        this.loading = false;
+	      }
+	      main_sidepanel.SidePanel.Instance.emulateAnchorClick(this.archiveLink);
+	    }
+	  },
+	  template: `
+		<div data-task-files-download-archive @click="downloadArchive">
+			<UiButton
+				:text="loc('TASKS_V2_FILES_DOWNLOAD_ARCHIVE', { '#FILES_SIZE#': formattedFilesSize })"
+				:size="ButtonSize.MEDIUM"
+				:style="AirButtonStyle.PLAIN_NO_ACCENT"
+				:state="loading ? ButtonState.WAITING : null"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const FilesSheet = {
+	  name: 'TaskFilesSheet',
+	  components: {
+	    UploadButton,
+	    DownloadArchiveButton,
+	    BottomSheet: tasks_v2_component_elements_bottomSheet.BottomSheet,
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    DropZone: tasks_v2_component_dropZone.DropZone,
+	    UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent
+	  },
+	  inject: {
+	    task: {},
+	    isEdit: {}
 	  },
 	  props: {
 	    taskId: {
 	      type: [Number, String],
 	      required: true
+	    },
+	    sheetBindProps: {
+	      type: Object,
+	      required: true
 	    }
 	  },
-	  emits: ['open'],
+	  emits: ['close'],
 	  setup(props) {
 	    return {
-	      Animated: ui_iconSet_api_core.Animated,
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
+	      EntityTypes: tasks_v2_provider_service_fileService.EntityTypes,
+	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
+	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
+	    };
+	  },
+	  data() {
+	    return {
+	      uniqueKey: main_core.Text.getRandom(),
+	      files: this.fileService.getFiles()
+	    };
+	  },
+	  computed: {
+	    canAttachFiles() {
+	      return this.task.rights.attachFile || this.task.rights.edit;
+	    },
+	    filesCount() {
+	      return this.files.length;
+	    },
+	    archiveLink() {
+	      return this.task.archiveLink;
+	    },
+	    widgetOptions() {
+	      return {
+	        isEmbedded: true,
+	        withControlPanel: false,
+	        canCreateDocuments: false,
+	        tileWidgetOptions: {
+	          compact: true,
+	          autoCollapse: false,
+	          readonly: !this.canAttachFiles,
+	          enableDropzone: false,
+	          hideDropArea: true,
+	          removeFromServer: !this.isEdit,
+	          forceDisableSelection: true
+	        }
+	      };
+	    },
+	    showFooter() {
+	      return this.filesCount > 1 || this.canAttachFiles;
+	    },
+	    canDownloadArchive() {
+	      return this.filesCount > 1 && this.archiveLink;
+	    },
+	    bottomSheetContainer() {
+	      return document.getElementById(`b24-bottom-sheet-${this.uniqueKey}`) || null;
+	    }
+	  },
+	  template: `
+		<BottomSheet
+			:sheetBindProps
+			:padding="0"
+			:uniqueKey
+			@close="$emit('close')"
+		>
+			<div class="tasks-field-files-sheet" :data-task-id="taskId" ref="content">
+				<div class="tasks-field-files-header">
+					<div class="tasks-field-files-title">{{ loc('TASKS_V2_FILES_TITLE') }}</div>
+					<BIcon
+						data-task-files-close
+						class="tasks-field-files-close"
+						hoverable
+						:name="Outline.CROSS_L"
+						@click="$emit('close')"
+					/>
+				</div>
+				<div class="tasks-field-files-list">
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+				</div>
+				<div
+					v-if="showFooter"
+					class="tasks-field-files-footer"
+					:class="{ '--with-archive': canDownloadArchive }"
+				>
+					<DownloadArchiveButton v-if="canDownloadArchive" :files/>
+					<UploadButton v-if="canAttachFiles"/>
+				</div>
+			</div>
+			<DropZone
+				v-if="canAttachFiles"
+				:container="bottomSheetContainer || {}"
+				:entityId="taskId"
+				:entityType="EntityTypes.Task"
+			/>
+		</BottomSheet>
+	`
+	};
+
+	// @vue/component
+	const Files = {
+	  name: 'TaskFiles',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent,
+	    FilesSheet
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  inject: {
+	    task: {},
+	    isEdit: {}
+	  },
+	  props: {
+	    isSheetShown: {
+	      type: Boolean,
+	      required: true
+	    },
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    sheetBindProps: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  emits: ['update:isSheetShown'],
+	  setup(props) {
+	    return {
+	      Animated: ui_iconSet_api_vue.Animated,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      filesMeta,
 	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
 	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
@@ -45,9 +271,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    filesCount() {
 	      return this.files.length;
 	    },
@@ -66,9 +289,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    canAttachFiles() {
 	      return this.task.rights.attachFile || this.task.rights.edit;
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
 	    },
 	    widgetOptions() {
 	      return {
@@ -130,7 +350,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          onHideCallback: this.onFileBrowserClose
 	        });
 	      } else {
-	        this.$emit('open');
+	        this.setSheetShown(true);
 	      }
 	    },
 	    async handleFilesScrollable() {
@@ -144,6 +364,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    onFileBrowserClose() {
 	      this.fileService.setFileBrowserClosed(true);
+	    },
+	    setSheetShown(isShown) {
+	      this.$emit('update:isSheetShown', isShown);
 	    }
 	  },
 	  template: `
@@ -173,7 +396,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<BIcon
 						class="tasks-field-files-add"
 						:name="Outline.PLUS_L"
-						:hoverable="true"
+						hoverable
 						data-task-files-plus
 						@click="handleAddClick"
 						ref="add"
@@ -185,10 +408,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				class="tasks-field-files-list --card"
 				ref="files"
 			>
-				<UserFieldWidgetComponent
-					:uploaderAdapter="uploaderAdapter"
-					:widgetOptions="widgetOptions"
-				/>
+				<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 			</div>
 			<template v-if="isFilesScrollable">
 				<div class="tasks-field-files-shadow">
@@ -196,234 +416,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</div>
 				<div
 					class="tasks-field-files-more-button"
-					@click="$emit('open')"
+					@click="setSheetShown(true)"
 				>
-					<div class="tasks-field-files-more-button-text">
-						{{ loc('TASKS_V2_FILES_MORE') }}
-					</div>
+					<div class="tasks-field-files-more-button-text">{{ loc('TASKS_V2_FILES_MORE') }}</div>
 				</div>
 			</template>
 		</div>
-	`
-	};
-
-	// @vue/component
-	const UploadButton = {
-	  components: {
-	    UiButton: ui_vue3_components_button.Button
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      ButtonSize: ui_vue3_components_button.ButtonSize,
-	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  methods: {
-	    handleClick() {
-	      tasks_v2_provider_service_fileService.fileService.get(this.taskId).browse({
-	        bindElement: this.$el
-	      });
-	    }
-	  },
-	  template: `
-		<span data-task-files-upload>
-			<UiButton
-				:text="loc('TASKS_V2_FILES_UPLOAD')"
-				:size="ButtonSize.MEDIUM"
-				:style="AirButtonStyle.SELECTION"
-				:leftIcon="Outline.ATTACH"
-				@click="handleClick"
-			/>
-		</span>
-	`
-	};
-
-	// @vue/component
-	const DownloadArchiveButton = {
-	  components: {
-	    UiButton: ui_vue3_components_button.Button
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    files: {
-	      type: Array,
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      ButtonSize: ui_vue3_components_button.ButtonSize,
-	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      ButtonCounterColor: ui_vue3_components_button.ButtonCounterColor,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    archiveLink() {
-	      return this.task.archiveLink;
-	    },
-	    filesSize() {
-	      return this.files.reduce((total, file) => total + file.size, 0);
-	    },
-	    formattedFilesSize() {
-	      return ui_uploader_core.formatFileSize(this.filesSize);
-	    }
-	  },
-	  template: `
-		<a :href="archiveLink" data-task-files-download-archive>
-			<UiButton
-				:text="loc('TASKS_V2_FILES_DOWNLOAD_ARCHIVE', { '#FILES_SIZE#': formattedFilesSize })"
-				:size="ButtonSize.MEDIUM"
-				:style="AirButtonStyle.PLAIN_NO_ACCENT"
-			/>
-		</a>
-	`
-	};
-
-	// @vue/component
-	const FilesSheet = {
-	  name: 'TaskFilesSheet',
-	  components: {
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent,
-	    UploadButton,
-	    DownloadArchiveButton,
-	    BottomSheet: tasks_v2_component_elements_bottomSheet.BottomSheet,
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    DropZone: tasks_v2_component_dropZone.DropZone
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    isShown: {
-	      type: Boolean,
-	      required: true
-	    },
-	    getBindElement: {
-	      type: Function,
-	      default: null
-	    },
-	    getTargetContainer: {
-	      type: Function,
-	      default: null
-	    }
-	  },
-	  emits: ['close'],
-	  setup(props) {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
-	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
-	    };
-	  },
-	  data() {
-	    return {
-	      files: this.fileService.getFiles()
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
-	    }),
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    canAttachFiles() {
-	      return this.task.rights.attachFile || this.task.rights.edit;
-	    },
-	    filesCount() {
-	      return this.files.length;
-	    },
-	    archiveLink() {
-	      return this.task.archiveLink;
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
-	    widgetOptions() {
-	      return {
-	        isEmbedded: true,
-	        withControlPanel: false,
-	        canCreateDocuments: false,
-	        tileWidgetOptions: {
-	          compact: true,
-	          autoCollapse: false,
-	          readonly: !this.canAttachFiles,
-	          enableDropzone: false,
-	          hideDropArea: true,
-	          removeFromServer: !this.isEdit,
-	          forceDisableSelection: true
-	        }
-	      };
-	    },
-	    showFooter() {
-	      return this.filesCount > 1 || this.canAttachFiles;
-	    },
-	    canDownloadArchive() {
-	      return this.filesCount > 1 && this.archiveLink;
-	    }
-	  },
-	  watch: {
-	    titleFieldOffsetHeight() {
-	      var _this$$refs$bottomShe;
-	      (_this$$refs$bottomShe = this.$refs.bottomSheet) == null ? void 0 : _this$$refs$bottomShe.adjustPosition();
-	    }
-	  },
-	  template: `
-		<BottomSheet
-			v-if="isShown"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="bottomSheet"
-		>
-			<div class="tasks-field-files-sheet" :data-task-id="taskId">
-				<div class="tasks-field-files-header">
-					<div class="tasks-field-files-title">
-						{{ loc('TASKS_V2_FILES_TITLE') }}
-					</div>
-					<BIcon
-						data-task-files-close
-						class="tasks-field-files-close"
-						:hoverable="true"
-						:name="Outline.CROSS_L"
-						@click="$emit('close')"
-					/>
-				</div>
-				<div class="tasks-field-files-list">
-					<UserFieldWidgetComponent
-						:uploaderAdapter="uploaderAdapter"
-						:widgetOptions="widgetOptions"
-					/>
-				</div>
-				<div
-					v-if="showFooter"
-					class="tasks-field-files-footer"
-					:class="{ '--with-archive': canDownloadArchive }"
-				>
-					<DownloadArchiveButton
-						v-if="canDownloadArchive"
-						:taskId="taskId"
-						:files="files"
-					/>
-					<UploadButton v-if="canAttachFiles" :taskId="taskId"/>
-				</div>
-			</div>
-			<DropZone :taskId="taskId"/>
-		</BottomSheet>
+		<FilesSheet
+			v-if="isSheetShown"
+			:taskId
+			:sheetBindProps
+			@close="setSheetShown(false)"
+		/>
 	`
 	};
 
@@ -432,7 +436,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    Popup: ui_vue3_components_popup.Popup,
 	    UiButton: ui_vue3_components_button.Button,
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent
+	    UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent
 	  },
 	  props: {
 	    taskId: {
@@ -450,7 +454,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      ButtonSize: ui_vue3_components_button.ButtonSize,
 	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
 	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
 	    };
 	  },
@@ -463,7 +467,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    bindElement() {
 	      return this.getBindElement();
 	    },
-	    popupOptions() {
+	    options() {
 	      return {
 	        id: 'tasks-field-files-popup',
 	        bindElement: this.bindElement,
@@ -525,14 +529,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<Popup
-			:options="popupOptions"
-			ref="popup"
-			@close="closePopup"
-		>
+		<Popup :options ref="popup" @close="closePopup">
 			<div class="tasks-field-files-popup">
 				<div class="tasks-field-files-popup-files">
-					<UserFieldWidgetComponent :uploaderAdapter="uploaderAdapter" :widgetOptions="widgetOptions"/>
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 				</div>
 				<div class="tasks-field-files-popup-footer">
 					<div class="tasks-field-files-popup-add-buttons">
@@ -567,10 +567,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	// @vue/component
 	const FilesChip = {
 	  components: {
-	    Chip: tasks_v2_component_elements_chip.Chip,
+	    Chip: ui_system_chip_vue.Chip,
 	    FilesPopup
 	  },
-	  inject: ['analytics', 'cardType'],
+	  inject: {
+	    analytics: {},
+	    cardType: {},
+	    task: {}
+	  },
 	  props: {
 	    taskId: {
 	      type: [Number, String],
@@ -595,9 +599,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    group() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId);
 	    },
@@ -606,25 +607,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    design() {
 	      return {
-	        [!this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent,
-	        [!this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowAccent,
-	        [this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineNoAccent,
-	        [this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineAccent,
-	        [this.hasError]: tasks_v2_component_elements_chip.ChipDesign.OutlineAlert
+	        [!this.isAutonomous && !this.isSelected]: ui_system_chip_vue.ChipDesign.ShadowNoAccent,
+	        [!this.isAutonomous && this.isSelected]: ui_system_chip_vue.ChipDesign.ShadowAccent,
+	        [this.isAutonomous && !this.isSelected]: ui_system_chip_vue.ChipDesign.OutlineNoAccent,
+	        [this.isAutonomous && this.isSelected]: ui_system_chip_vue.ChipDesign.OutlineAccent,
+	        [this.hasError]: ui_system_chip_vue.ChipDesign.OutlineAlert
 	      }.true;
 	    },
 	    isSelected() {
 	      if (this.isAutonomous) {
 	        return this.files.length > 0;
 	      }
-	      const wasFilesFilled = this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, filesMeta.id);
-	      return wasFilesFilled || this.files.length > 0;
+	      return this.task.filledFields[filesMeta.id] || this.files.length > 0;
 	    },
 	    icon() {
 	      if (this.isAutonomous && this.isUploading) {
-	        return ui_iconSet_api_core.Animated.LOADER_WAIT;
+	        return ui_iconSet_api_vue.Animated.LOADER_WAIT;
 	      }
-	      return ui_iconSet_api_core.Outline.ATTACH;
+	      return ui_iconSet_api_vue.Outline.ATTACH;
 	    },
 	    text() {
 	      if (this.isAutonomous && this.filesCount > 0) {
@@ -717,9 +717,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<Chip
 			v-if="isSelected || canAttachFiles"
-			:design="design"
-			:icon="icon"
-			:text="text"
+			:design
+			:icon
+			:text
 			:data-task-id="taskId"
 			:data-task-chip-id="filesMeta.id"
 			ref="chip"
@@ -727,7 +727,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		/>
 		<FilesPopup
 			v-if="isPopupShown"
-			:taskId="taskId"
+			:taskId
 			:getBindElement="() => $refs.chip.$el"
 			@upload="browseFiles"
 			@close="closePopup"
@@ -740,5 +740,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.FilesChip = FilesChip;
 	exports.filesMeta = filesMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Vuex,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.UI.IconSet,BX.UI.Uploader,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Vue3.Components,BX.UI.IconSet,BX,BX.Disk.Uploader,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.SidePanel,BX.Tasks.V2.Component.Fields,BX.UI.Uploader,BX.UI.System.Chip.Vue,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Vue3.Components,BX.UI.IconSet,BX,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=files.bundle.js.map

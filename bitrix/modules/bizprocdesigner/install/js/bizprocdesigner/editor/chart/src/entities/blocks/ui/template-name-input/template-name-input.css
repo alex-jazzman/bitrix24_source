@@ -1,0 +1,61 @@
+.ui-top-panel-editable-title-box,
+.ui-top-panel-editable-title-edit-box,
+.ui-top-panel-editable-title-edit-buttons
+{
+	display: flex;
+	align-items: center;
+}
+
+.ui-top-panel-editable-title-box,
+.ui-top-panel-editable-title-edit-box
+{
+	flex-grow:1;
+}
+
+.ui-top-panel-editable-title,
+.ui-top-panel-editable-title-edit-input
+{
+	font-weight: var(--ui-font-weight-medium);
+	/* todo: replace with token when available */
+	font-size: var(--ui-font-size-xl);
+	line-height: 26px;
+	letter-spacing: var(--ui-letter-spacing-s);
+	color: var(--ui-color-base-1);
+	text-align: right;
+	flex-grow:1;
+}
+
+.ui-top-panel-editable-title
+{
+	width: 100px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.ui-top-panel-editable-title-edit-input
+{
+	border: none;
+	border-bottom: 1px solid var(--ui-color-base-6);
+}
+
+.ui-top-panel-editable-title-edit-box
+{
+	padding-left: var(--ui-space-inset-xs);
+	gap: var(--ui-space-inline-sm);
+}
+
+.ui-top-panel-editable-title-edit-buttons
+{
+	gap: var(--ui-space-inline-2xs);
+}
+
+.ui-top-panel-editable-title-box > .ui-btn.ui-btn-collapsed.--air:hover,
+.ui-top-panel-editable-title-box > .ui-btn.ui-btn-collapsed.--air:active,
+.ui-top-panel-editable-title-box > .ui-btn.ui-btn-collapsed.--air:focus {
+	background: transparent;
+}
+
+.ui-top-panel-editable-title-box > .ui-btn:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-80);
+}

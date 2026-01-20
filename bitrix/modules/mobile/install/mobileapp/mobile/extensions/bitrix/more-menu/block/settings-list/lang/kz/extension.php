@@ -1,0 +1,2 @@
+<?php
+$MESS["MENU_SETTINGS_SETTINGS_SECTION_TITLE"] = "Баптаулар";

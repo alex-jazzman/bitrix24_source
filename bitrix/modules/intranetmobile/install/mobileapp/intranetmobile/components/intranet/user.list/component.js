@@ -27,8 +27,12 @@
 	const { UserListSorting, UserListMoreMenu, UserListFilter, DepartmentButton } = require('intranet/user-list');
 	const { ListItemType, ListItemsFactory } = require('intranet/simple-list/items');
 	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+	const { Type } = require('type');
 
 	const isAndroid = (Application.getPlatform() === 'android');
+	const TAB_HEIGHT = 61;
+	const TAB_Z_INDEX = 2;
+	const DEPARTMENT_BUTTON_INDENT = TAB_HEIGHT + Indent.M.toNumber();
 
 	class UserList extends LayoutComponent
 	{
@@ -37,19 +41,19 @@
 			super(props);
 
 			this.stateFulListRef = null;
+			this.tabViewRef = null;
 
 			this.userListFilter = new UserListFilter({
 				presetId: UserListFilter.presetType.default,
-				department: UserListFilter.defaultDepartment,
+				department: this.initialDepartment,
 			});
 
 			this.search = new SearchLayout({
 				layout,
+				disablePresets: true,
 				id: 'users',
 				cacheId: `users_${env.userId}`,
 				presetId: this.userListFilter.getPresetId(),
-				searchDataAction: 'intranetmobile.employees.getSearchBarPresets',
-				searchDataActionParams: {},
 				onSearch: this.onSearch,
 				onCancel: this.onSearch,
 			});
@@ -67,31 +71,34 @@
 			this.state = {
 				sorting: this.sorting.getType(),
 				order: this.sorting.getOrder(),
-				department: this.userListFilter.getDefaultDepartment(),
+				department: this.initialDepartment,
+				tabItems: [],
+				areTabsAlreadyLoaded: false,
+				selectedTab: null,
 			};
 
 			// todo need to use the Application.getApiVersion() when it becomes clear which one
 			// todo bug on android when opening the keyboard a scroll appears and hides the departments area
-			this.scrollOffset = Animated.newCalculatedValue2D(0, Indent.M.toNumber());
+			this.scrollOffset = Animated.newCalculatedValue2D(0, DEPARTMENT_BUTTON_INDENT);
 			if (this.scrollOffset.getValue2().diffClampWithConfig)
 			{
-				this.departmentTop = this.scrollOffset.getValue2().diffClampWithConfig(-52, Indent.M.toNumber(), { direction: 'reverse', option: 'disableTopBounce' });
+				this.departmentTop = this.scrollOffset.getValue2().diffClampWithConfig(-52, DEPARTMENT_BUTTON_INDENT, { direction: 'reverse', option: 'disableTopBounce' });
 			}
 			else
 			{
-				this.departmentTop = Indent.M.toNumber();
+				this.departmentTop = DEPARTMENT_BUTTON_INDENT;
 			}
 		}
 
 		onMomentumScrollEnd = () => {
-			const initialValue = Indent.M.toNumber();
+			const initialValue = DEPARTMENT_BUTTON_INDENT;
 			const departmentTopValue = this.departmentTop.getValue();
 
 			if (departmentTopValue !== initialValue && departmentTopValue !== -52)
 			{
 				if (departmentTopValue > -26)
 				{
-					const dY = departmentTopValue - Indent.M.toNumber();
+					const dY = departmentTopValue - initialValue;
 					this.stateFulListRef.scrollBy({ x: 0, y: dY, animated: true, duration: 350 });
 				}
 				else
@@ -159,6 +166,17 @@
 			return BX.componentParameters.get('openInviteOnMount', false);
 		}
 
+		get initialDepartment()
+		{
+			const department = BX.componentParameters.get('department', null);
+			if (Type.isNumber(department?.id) && department.id > 0)
+			{
+				return department;
+			}
+
+			return UserListFilter.defaultDepartment;
+		}
+
 		setSorting(sorting)
 		{
 			if (this.sorting.getType() !== sorting)
@@ -183,6 +201,7 @@
 				{
 					backgroundColor: Color.bgPrimary,
 				},
+				this.renderTabs(),
 				View(
 					{
 						style: {
@@ -245,9 +264,10 @@
 				},
 				onBeforeItemsRender: this.onBeforeItemsRender,
 
-				onScrollCalculated: {
+				// Workaround to avoid a bug with hiding departments on iOS with a small number of items
+				onScrollCalculated: this.state.itemsCount > 4 && !isAndroid ? {
 					contentOffsetWithoutOverscroll: this.scrollOffset,
-				},
+				} : {},
 				onMomentumScrollEnd: isAndroid ? this.onMomentumScrollEnd : null,
 				onMomentumScrollBegin: isAndroid ? this.onMomentumScrollBegin : null,
 				onScrollEndDrag: isAndroid ? this.onScrollEndDrag : null,
@@ -256,32 +276,11 @@
 
 		renderDepartmentButton()
 		{
-			// Workaround to avoid a bug with hiding departments on iOS with a small number of items
-			if (this.state.itemsCount > 4 && !isAndroid)
-			{
-				return View(
-					{
-						style: {
-							position: 'absolute',
-							top: this.departmentTop,
-							width: '100%',
-							alignItems: 'center',
-							paddingHorizontal: Component.paddingLr.toNumber(),
-						},
-					},
-					new DepartmentButton({
-						department: this.state.department,
-						onSelect: this.setDepartment,
-						layout,
-					}),
-				);
-			}
-
 			return View(
 				{
 					style: {
 						position: 'absolute',
-						top: Indent.M.toNumber(),
+						top: this.departmentTop,
 						width: '100%',
 						alignItems: 'center',
 						paddingHorizontal: Component.paddingLr.toNumber(),
@@ -293,6 +292,33 @@
 					layout,
 				}),
 			);
+		}
+
+		renderTabs()
+		{
+			const { tabItems, selectedTab } = this.state;
+
+			return TabView({
+				style: {
+					height: TAB_HEIGHT,
+					zIndex: TAB_Z_INDEX,
+				},
+				params: {
+					items: tabItems,
+				},
+				onTabSelected: (tab) => {
+					if (selectedTab === tab.id)
+					{
+						return;
+					}
+
+					this.userListFilter.setPresetId(tab.id);
+					this.setState({ selectedTab: tab.id }, () => this.stateFulListRef.reload());
+				},
+				ref: (ref) => {
+					this.tabViewRef = ref;
+				},
+			});
 		}
 
 		getEmptyListComponent = () => {
@@ -313,7 +339,7 @@
 				testId: 'empty-state',
 				title,
 				description,
-				emptyScreen: true,
+				emptyScreen: false,
 				onRefresh: () => {},
 				image: Image({
 					resizeMode: 'contain',
@@ -359,8 +385,10 @@
 		getItemCustomStyles = (item, section, row) => {
 			if (item.key === 'EmptySpace_top')
 			{
+				const departmentHeight = 52;
+
 				return {
-					minHeight: Indent.XL.toNumber() + 52 + Indent.M.toNumber(),
+					minHeight: departmentHeight + Indent.XL.toNumber(),
 				};
 			}
 
@@ -387,11 +415,8 @@
 			if (removed.length > 0)
 			{
 				void this.removeEmployees(removed);
-				// need to update counters
-				if (this.search?.searchLayoutView)
-				{
-					this.search.fetchPresets(true);
-				}
+
+				void this.#updateTabsCounter(removed);
 			}
 
 			if (added.length > 0)
@@ -435,6 +460,33 @@
 		// replaceEmployees(created)
 		// {}
 
+		#updateTabsCounter(removedUsers = [])
+		{
+			const presetsToCheck = [
+				UserListFilter.presetsIds.invited,
+				UserListFilter.presetsIds.waitConfirmation,
+			];
+
+			const statusesToReload = new Set();
+
+			presetsToCheck.forEach((presetId) => {
+				const filter = new UserListFilter({
+					presetId,
+					department: this.userListFilter.getDepartment(),
+				});
+				const params = filter.getEmployeesFilter();
+				const statuses = Array.isArray(params?.employeeStatus) ? params.employeeStatus : [];
+				statuses.forEach((status) => statusesToReload.add(status));
+			});
+
+			const shouldUpdate = removedUsers.some((user) => user && statusesToReload.has(user.employeeStatus));
+
+			if (shouldUpdate)
+			{
+				void this.stateFulListRef.reload();
+			}
+		}
+
 		onSelectSorting = (sortingType) => {
 			this.setSorting(sortingType);
 		};
@@ -460,7 +512,10 @@
 		};
 
 		onItemsLoaded = (responseData, context) => {
-			const { items = [], users = [] } = responseData || {};
+			const { items = [], users = [], tabs = [] } = responseData || {};
+
+			this.onTabsLoaded(tabs);
+
 			const isCache = context === 'cache';
 			const usersMainInfo = items;
 			const usersIntranetInfo = users;
@@ -485,6 +540,41 @@
 			this.setState({ itemsCount: items.length });
 		};
 
+		onTabsLoaded = (tabs) => {
+			const { areTabsAlreadyLoaded, tabItems } = this.state;
+			if (tabs && !areTabsAlreadyLoaded)
+			{
+				const newTabItems = tabs.map((tab) => {
+					const item = { id: tab.id, title: tab.name };
+					if (tab.value > 0)
+					{
+						item.counter = tab.value;
+						item.label = tab.value.toString();
+					}
+
+					return item;
+				});
+
+				this.setState({ tabItems: newTabItems, areTabsAlreadyLoaded: true });
+
+				return;
+			}
+
+			if (tabs && this.tabViewRef)
+			{
+				tabs.forEach((tab) => {
+					const tabItem = tabItems.find((item) => item.id === tab.id);
+					if (tabItem)
+					{
+						const newCounter = tab.value > 0 ? tab.value : 0;
+						const newLabel = tab.value > 0 ? tab.value.toString() : '';
+
+						this.tabViewRef.updateItem(tab.id, { counter: newCounter, label: newLabel });
+					}
+				});
+			}
+		};
+
 		openUserDetail = (userId) => {
 			if (!userId)
 			{
@@ -501,6 +591,7 @@
 			const { id, avatarSize100, fullName, link, workPosition } = user;
 			void UserProfile.open({
 				ownerId: userId,
+				analyticsSection: 'intranet_user_list',
 				widgetParams: {
 					userId: id,
 					imageUrl: encodeURI(avatarSize100),
@@ -517,7 +608,8 @@
 		};
 
 		onSearch = ({ text, presetId }) => {
-			this.userListFilter.setPresetId(presetId);
+			const selectedPreset = this.state.selectedTab ?? presetId;
+			this.userListFilter.setPresetId(selectedPreset);
 			this.userListFilter.setSearchString(text);
 
 			this.setState({}, () => this.stateFulListRef.reload());

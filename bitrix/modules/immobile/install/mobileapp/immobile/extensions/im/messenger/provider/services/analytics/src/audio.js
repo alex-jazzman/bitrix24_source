@@ -19,6 +19,24 @@ jn.define('im/messenger/provider/services/analytics/src/audio', (require, export
 
 		/**
 		 * @param {DialogId} dialogId
+		 * @param {number} recordLength
+		 */
+		sendRecordAudioInChat({ dialogId, recordLength })
+		{
+			/** @type {DialoguesModelState} */
+			const dialog = this.#getDialog(dialogId);
+
+			new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(Analytics.Category.audiomessage)
+				.setEvent(Analytics.Event.record)
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
+				.setP2(`recordLength_${recordLength}`)
+				.send();
+		}
+
+		/**
+		 * @param {DialogId} dialogId
 		 */
 		sendClickToPlayAudioInChat({ dialogId })
 		{
@@ -29,7 +47,7 @@ jn.define('im/messenger/provider/services/analytics/src/audio', (require, export
 				.setTool(Analytics.Tool.im)
 				.setCategory(Analytics.Category.audiomessage)
 				.setEvent(Analytics.Event.play)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.send();
 		}
 
@@ -45,7 +63,7 @@ jn.define('im/messenger/provider/services/analytics/src/audio', (require, export
 				.setTool(Analytics.Tool.im)
 				.setCategory(Analytics.Category.audiomessage)
 				.setEvent(Analytics.Event.pause)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.send();
 		}
 
@@ -62,8 +80,26 @@ jn.define('im/messenger/provider/services/analytics/src/audio', (require, export
 				.setTool(Analytics.Tool.im)
 				.setCategory(Analytics.Category.audiomessage)
 				.setEvent(Analytics.Event.changeSpeed)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialog.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(`speed_${speed}`)
+				.send();
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {?string} status
+		 */
+		sendViewTranscriptionInChat({ dialogId, status = Analytics.Status.success })
+		{
+			/** @type {DialoguesModelState} */
+			const dialog = this.#getDialog(dialogId);
+
+			new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(Analytics.Category.audiomessage)
+				.setEvent(Analytics.Event.viewTranscription)
+				.setStatus(status)
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.send();
 		}
 

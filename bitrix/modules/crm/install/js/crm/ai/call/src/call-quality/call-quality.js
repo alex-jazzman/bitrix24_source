@@ -1,8 +1,8 @@
 import { Loc, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BitrixVue } from 'ui.vue3';
-import type { aiCallData } from '../base.js';
-import { Base } from '../base.js';
+import type { aiData } from '../base.js';
+import { ActivityProvider, Base } from '../base.js';
 import './style.css';
 import { CallQuality as CallQualityComponent } from './components/call-quality';
 import { Rating } from './rating';
@@ -25,8 +25,11 @@ export class CallQuality extends Base
 	#userPhotoUrl: ?string;
 	#assessmentSettingsId: ?number;
 
-	constructor(data: aiCallData)
+	constructor(data: aiData)
 	{
+		// eslint-disable-next-line no-param-reassign
+		data.activityProvider = ActivityProvider.call; // for call only
+
 		super(data);
 
 		this.#jobId = Type.isNumber(data.jobId) ? data.jobId : null;
@@ -51,7 +54,7 @@ export class CallQuality extends Base
 
 		this.textboxTitle = Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
 
-		this.aiJobResultAndCallRecordAction = 'crm.timeline.ai.getCopilotCallQuality';
+		this.aiDataAction = 'crm.timeline.ai.getCopilotCallQuality';
 	}
 
 	getExtensions(): Array<string>
@@ -105,7 +108,7 @@ export class CallQuality extends Base
 	open()
 	{
 		const content = new Promise((resolve, reject) => {
-			this.getAiJobResultAndCallRecord()
+			this.getAiData()
 				.then((response) => {
 					const audioProps = this.prepareAudioProps(response);
 
@@ -150,7 +153,7 @@ export class CallQuality extends Base
 		this.wrapperSlider.open();
 	}
 
-	getAiJobResultAndCallRecord(): Promise
+	getAiData(): Promise
 	{
 		const actionData = {
 			data: {
@@ -162,7 +165,7 @@ export class CallQuality extends Base
 			},
 		};
 
-		return BX.ajax.runAction(this.aiJobResultAndCallRecordAction, actionData);
+		return BX.ajax.runAction(this.aiDataAction, actionData);
 	}
 
 	getNotAccuratePhraseCode(): string

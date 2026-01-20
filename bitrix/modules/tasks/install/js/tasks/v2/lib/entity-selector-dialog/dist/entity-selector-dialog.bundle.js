@@ -13,11 +13,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    const minTagSelectorHeight = 34;
 	    const options = {
 	      tagSelectorOptions: {
-	        maxHeight: minTagSelectorHeight * 2
+	        maxHeight: minTagSelectorHeight * 2,
+	        textBoxWidth: '50%'
 	      },
+	      height: Math.max(minHeight, (_dialogOptions$height = dialogOptions.height) != null ? _dialogOptions$height : window.innerHeight / 2 - minTagSelectorHeight * 2),
 	      ...dialogOptions,
-	      height: Math.max(minHeight, (_dialogOptions$height = dialogOptions.height) != null ? _dialogOptions$height : window.innerHeight / 2 - minTagSelectorHeight),
-	      offsetAnimation: false
+	      offsetAnimation: false,
+	      compactView: true
 	    };
 	    super(options);
 	    Object.defineProperty(this, _inIds, {
@@ -27,6 +29,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  showTo(targetNode) {
 	    this.getPopup();
 	    this.setTargetNode(targetNode);
+	    this.getPopup().bringToFront();
+	    this.unfreeze();
 	    this.show();
 	  }
 	  selectItemsByIds(items) {
@@ -52,9 +56,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        item.setDeselectable(false);
 	      }
 	    });
-	  }
-	  getItemsByIds(items) {
-	    return this.getItems().filter(item => babelHelpers.classPrivateFieldLooseBase(this, _inIds)[_inIds](item, items));
 	  }
 	}
 	function _inIds2(item, items) {

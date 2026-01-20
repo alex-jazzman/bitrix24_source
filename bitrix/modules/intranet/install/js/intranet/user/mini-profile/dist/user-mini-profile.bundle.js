@@ -1006,11 +1006,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  fired: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_USER_STATUS_FIRED')
 	};
 
+	const PERSONAL_GENDER_FEMALE_MARKER = 'F';
+
 	// @vue/component
 	const UserStatusDescription = {
 	  name: 'UserStatusDescription',
 	  mixins: [LocMixin],
 	  props: {
+	    personalGender: {
+	      type: [String, null],
+	      default: null,
+	      required: false
+	    },
 	    status: {
 	      /** @type UserStatusType */
 	      type: Object,
@@ -1055,7 +1062,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	      const dayMonthFormat = main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
 	      const shortTimeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-	      return this.loc('INTRANET_USER_MINI_PROFILE_USER_STATUS_OFFLINE_LAST_SEEN_TEMPLATE', {
+	      const phraseCode = this.personalGender === PERSONAL_GENDER_FEMALE_MARKER ? 'INTRANET_USER_MINI_PROFILE_USER_STATUS_OFFLINE_LAST_SEEN_TEMPLATE_F' : 'INTRANET_USER_MINI_PROFILE_USER_STATUS_OFFLINE_LAST_SEEN_TEMPLATE';
+	      return this.loc(phraseCode, {
 	        '#DATE#': main_date.DateTimeFormat.format(dayMonthFormat, status.lastSeenTs),
 	        '#TIME#': main_date.DateTimeFormat.format(shortTimeFormat, status.lastSeenTs)
 	      });
@@ -1274,6 +1282,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
 						<UserStatusDescription v-if="info.status"
+							:personalGender="info.personalGender"   
 							:status="info.status"
 							data-test-id="usermp_status-description"
 						/>
@@ -2131,7 +2140,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	let _ = t => t,
 	  _t;
 	const PopupPrefixId = 'intranet-user-mini-profile-';
-	const AngleWidth = 33;
+	const FixedAngleOffset = 23;
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _tracking = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tracking");
@@ -2227,12 +2236,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      padding: 0,
 	      contentNoPaddings: true,
 	      angle: {
-	        offset: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].bindElement.offsetWidth / 2 + AngleWidth / 2
+	        offset: main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].bindElement).width / 2 + FixedAngleOffset
 	      },
 	      animation: 'fading',
 	      bindOptions: {
 	        forceBindPosition: true,
-	        forceTop: true
+	        forceTop: true,
+	        position: 'top'
 	      }
 	    });
 	  });

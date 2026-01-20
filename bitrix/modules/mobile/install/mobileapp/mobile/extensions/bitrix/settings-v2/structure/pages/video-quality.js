@@ -2,7 +2,12 @@
  * @module settings-v2/structure/pages/video-quality
  */
 jn.define('settings-v2/structure/pages/video-quality', (require, exports, module) => {
-	const { createVideoQualitySwitch, createSection, createDescription, createVideoBanner } = require('settings-v2/structure/src/item-create-helper');
+	const {
+		createVideoQualitySwitch,
+		createSection,
+		createDescription,
+		createVideoBanner,
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { NativeSettingController } = require('settings-v2/controller/native');
 	const { SettingsPageId, EventType } = require('settings-v2/const');
 	const { SettingEmitter } = require('settings-v2/emitter');

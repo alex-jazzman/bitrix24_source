@@ -1,8 +1,12 @@
 <?php
 $MESS["TASKSMOBILE_ENTRY_COLLAB_TASK_LIST_TITLE"] = "Collab tasks";
+$MESS["TASKSMOBILE_ENTRY_DEADLINE_PICKER_ACCESS_DENIED"] = "Insufficient permission to change deadline in this task";
 $MESS["TASKSMOBILE_ENTRY_EFFICIENCY_TITLE"] = "Efficiency";
+$MESS["TASKSMOBILE_ENTRY_TASK_ALREADY_COMPLETED"] = "This task is already completed.";
+$MESS["TASKSMOBILE_ENTRY_TASK_COMPLETE_NOT_ACCESSIBLE"] = "Insufficient permission to complete the task.";
 $MESS["TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE"] = "Task";
 $MESS["TASKSMOBILE_ENTRY_TASK_LIST_INPUT_PANEL_PLACEHOLDER"] = "New task";
 $MESS["TASKSMOBILE_ENTRY_TASK_LIST_TITLE"] = "Tasks and Projects";
+$MESS["TASKSMOBILE_ENTRY_TASK_NOT_ACCESSIBLE"] = "Insufficient permission to view the task, or it was deleted";
 $MESS["TASKSMOBILE_ENTRY_TASK_TABS_COMMENTS"] = "Comments";
 $MESS["TASKSMOBILE_ENTRY_TASK_TABS_VIEW"] = "Task";

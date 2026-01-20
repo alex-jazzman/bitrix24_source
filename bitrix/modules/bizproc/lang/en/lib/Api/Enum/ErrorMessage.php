@@ -1,6 +1,7 @@
 <?php
 $MESS["BIZPROC_API_ENUM_ERRORS_ACCESS_DENIED"] = "Access denied.";
 $MESS["BIZPROC_API_ENUM_ERRORS_ACTIVITY_NOT_FOUND"] = "Activity was not found (#ACTIVITY#).";
+$MESS["BIZPROC_API_ENUM_ERRORS_AI_AGENT_DELETE_ERROR"] = "Cannot delete item(s).";
 $MESS["BIZPROC_API_ENUM_ERRORS_BP_NOT_FOUND"] = "Workflow was not found.";
 $MESS["BIZPROC_API_ENUM_ERRORS_BP_NO_ACCESS"] = "Insufficient permission to stop workflow.";
 $MESS["BIZPROC_API_ENUM_ERRORS_CONSTANTS_NOT_TUNED"] = "Workflow constants are not configured";
@@ -20,6 +21,7 @@ $MESS["BIZPROC_API_ENUM_ERRORS_INVALID_PARAM_TYPE"] = "The '#PARAM#' argument mu
 $MESS["BIZPROC_API_ENUM_ERRORS_INVALID_TYPE"] = "Parameter type is not defined.";
 $MESS["BIZPROC_API_ENUM_ERRORS_INVALID_USER_ID"] = "User ID is missing.";
 $MESS["BIZPROC_API_ENUM_ERRORS_MODULE_NOT_INSTALLED"] = "The Business Processes module is not installed.";
+$MESS["BIZPROC_API_ENUM_ERRORS_NO_AVAILABLE_AI_AGENTS_TO_DELETE"] = "Selected agents cannot be deleted.";
 $MESS["BIZPROC_API_ENUM_ERRORS_NO_ENTITY"] = "Workflow element is not specified.";
 $MESS["BIZPROC_API_ENUM_ERRORS_OVER_LIMITED"] = "Automation limit exceeded.";
 $MESS["BIZPROC_API_ENUM_ERRORS_PARAM_REQUIRED"] = "The required field '#NAME#' is empty.";

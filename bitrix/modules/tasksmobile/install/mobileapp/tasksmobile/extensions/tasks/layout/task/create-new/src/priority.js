@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/task/create-new/priority
+ * @module tasks/layout/task/create-new/src/priority
  */
-jn.define('tasks/layout/task/create-new/priority', (require, exports, module) => {
+jn.define('tasks/layout/task/create-new/src/priority', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { Color } = require('tokens');
 	const { TaskPriority } = require('tasks/enum');

@@ -72,7 +72,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 			false,
 			['ID', 'TITLE']
 		);
-		$arResult['value']['LEAD']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.lead.show/card.ajax.php';
 
 		while($lead = $leads->Fetch())
 		{
@@ -110,7 +109,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				? ['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME']
 				: ['ID', 'FULL_NAME']
 		);
-		$arResult['value']['CONTACT']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.contact.show/card.ajax.php';
 
 		while($contact = $contatcs->Fetch())
 		{
@@ -164,7 +162,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				'TITLE',
 			]
 		);
-		$arResult['value']['COMPANY']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.company.show/card.ajax.php';
 
 		while($company = $companies->Fetch())
 		{
@@ -201,7 +198,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				'TITLE',
 			]
 		);
-		$arResult['value']['DEAL']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.deal.show/card.ajax.php';
 
 		while ($deal = $deals->Fetch())
 		{
@@ -234,8 +230,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 			'order' => ['ID' => 'DESC']
 		]);
 
-		$arResult['value']['ORDER']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
-
 		while($order = $orders->fetch())
 		{
 			$arResult['value']['ORDER']['items'][$order['ID']] = [
@@ -256,12 +250,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		}
 	}
 
-	$uri = UrlManager::getInstance()->create(
-		'bitrix:crm.controller.tooltip.card',
-		[
-			'sessid' => bitrix_sessid(),
-		]
-	);
 	foreach ($arParams['userField']['SETTINGS'] as $entityTypeName => $status)
 	{
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
@@ -285,7 +273,6 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if ($status === 'Y' && isset($values[$entityTypeName]))
 		{
-			$arResult['value'][$entityTypeName]['tooltipLoaderUrl'] = $uri;
 			$list = $factory->getItemsFilteredByPermissions([
 				'filter' => ['@ID' => $values[$entityTypeName]],
 				'order' => ['ID' => 'DESC'],

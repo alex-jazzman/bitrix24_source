@@ -70,6 +70,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/lib/utils', (re
 			const copilotChatsArr = recentData.copilot?.chats || [];
 			const copilotRoles = recentData.copilot?.roles;
 			const copilotMessagesArr = recentData.copilot?.messages || [];
+			const copilotEngines = recentData.copilot?.engines || [];
 
 			Object.entries(copilotChats)
 				.forEach(([dialogId, chat]) => {
@@ -82,6 +83,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/lib/utils', (re
 						messages: [copilotMessages],
 						aiProvider: '',
 						roles: copilotRoles,
+						engines: copilotEngines,
 					};
 
 					copilotResult.push(copilotItem);

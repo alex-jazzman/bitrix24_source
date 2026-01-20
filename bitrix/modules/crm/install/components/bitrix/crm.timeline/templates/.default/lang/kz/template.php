@@ -175,7 +175,6 @@ $MESS["CRM_TIMELINE_SCHEDULE_STUB"] = "Жоспарланған міндетте
 $MESS["CRM_TIMELINE_SCHEDULE_STUB_DEAL"] = "Клиент туралы ұмытпау үшін мәміле бойынша келесі қадамды жоспарлаңыз";
 $MESS["CRM_TIMELINE_SCHEDULE_STUB_DEFAULT"] = "Маңызды нәрсені ұмытпау үшін келесі қадамды жоспарлаңыз";
 $MESS["CRM_TIMELINE_SCHEDULE_STUB_LEAD"] = "Клиент туралы ұмытпау үшін лид бойынша келесі қадамды жоспарлаңыз";
-$MESS["CRM_TIMELINE_SCORING_TITLE_2"] = "AI скоринг:";
 $MESS["CRM_TIMELINE_SEND"] = "Жіберу";
 $MESS["CRM_TIMELINE_SENDER_CLICK"] = "Сілтеме арқылы өтті";
 $MESS["CRM_TIMELINE_SENDER_ERROR"] = "Қате";

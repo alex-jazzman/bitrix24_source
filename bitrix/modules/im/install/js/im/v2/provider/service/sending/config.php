@@ -16,6 +16,7 @@ return [
 		'im.v2.lib.rest',
 		'im.v2.application.core',
 		'im.v2.const',
+		'im.v2.lib.sticker-manager',
 		'im.v2.provider.service.message',
 	],
 	'skip_core' => false,

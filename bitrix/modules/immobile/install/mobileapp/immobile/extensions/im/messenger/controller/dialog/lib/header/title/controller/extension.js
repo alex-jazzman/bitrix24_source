@@ -100,9 +100,22 @@ jn.define('im/messenger/controller/dialog/lib/header/title/controller', (require
 			return controller.createTitleParams();
 		}
 
+		getExtraParams()
+		{
+			return {
+				spotlightIds: {
+					titlePanel: 'titlePanel',
+				},
+			};
+		}
+
 		async renderTitle()
 		{
-			const titleParams = await this.createTitleParams();
+			const titleParams = {
+				...await this.createTitleParams(),
+				...this.getExtraParams(),
+			};
+
 			if (!isEqual(this.titleParams, titleParams))
 			{
 				Logger.info('Dialog.renderTitle: before: ', this.titleParams, ' after: ', titleParams);

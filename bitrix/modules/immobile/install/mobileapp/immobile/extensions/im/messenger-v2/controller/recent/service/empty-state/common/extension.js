@@ -20,8 +20,7 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 			this.logger.log('onInit');
 
 			this.WelcomeScreenClass = require(this.props.welcomeScreenExtension);
-			this.recentCollectionSize = null;
-			this.subscribeEvents();
+			this.itemCollectionSize = null;
 		}
 
 		/**
@@ -35,11 +34,33 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 			this.renderedWelcomeScreen = null;
 		}
 
+		subscribeEvents()
+		{
+			this.recentLocator.get('emitter')
+				.on(
+					RecentEventType.render.itemCollectionSizeChanged,
+					this.itemCollectionSizeChangedHandler,
+				)
+			;
+		}
+
+		redraw()
+		{
+			const size = this.recentLocator.get('render').getItemCollectionSize();
+			void this.itemCollectionSizeChangedHandler(size);
+		}
+
+		/**
+		 * @private
+		 */
 		get isWelcomeScreenShown()
 		{
 			return !Type.isNull(this.renderedWelcomeScreen);
 		}
 
+		/**
+		 * @private
+		 */
 		async show()
 		{
 			this.logger.log('show');
@@ -47,6 +68,9 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 			this.renderWelcomeScreenIfNeeded();
 		}
 
+		/**
+		 * @private
+		 */
 		async hide()
 		{
 			this.logger.log('hide');
@@ -63,19 +87,6 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 
 		/**
 		 * @private
-		 */
-		subscribeEvents()
-		{
-			this.recentLocator.get('emitter')
-				.on(
-					RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded,
-					this.updateUIByRecentCollectionSizeIfNeededHandler,
-				)
-			;
-		}
-
-		/**
-		 * @private
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
@@ -87,18 +98,17 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 		 * @private
 		 * @return {Promise<void>}
 		 */
-		updateUIByRecentCollectionSizeIfNeededHandler = async () => {
-			this.logger.log('updateUIByRecentCollectionSizeIfNeededHandler');
-			const tabId = this.recentLocator.get('id');
-			const recentCollectionSize = this.store.getters['recentModel/getCollectionSizeByTabId'](tabId);
-			if (recentCollectionSize === this.recentCollectionSize)
+		itemCollectionSizeChangedHandler = async (itemCollectionSize) => {
+			this.logger.log('itemCollectionSizeChangedHandler', itemCollectionSize);
+
+			if (itemCollectionSize === this.itemCollectionSize)
 			{
-				this.logger.log('updateUIByRecentCollectionSizeIfNeededHandler skipped');
+				this.logger.log('itemCollectionSizeChangedHandler skipped');
 
 				return;
 			}
 
-			if (recentCollectionSize > 0)
+			if (itemCollectionSize > 0)
 			{
 				await this.hide();
 			}
@@ -107,8 +117,8 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 				await this.show();
 			}
 
-			this.recentCollectionSize = recentCollectionSize;
-			this.logger.log('updateUIByRecentCollectionSizeIfNeededHandler complete');
+			this.itemCollectionSize = itemCollectionSize;
+			this.logger.log('itemCollectionSizeChangedHandler complete');
 		};
 
 		/**

@@ -1,5 +1,3 @@
-import type { reactionType as Reaction } from 'ui.reactions-select';
-
 import type { JsonObject } from 'main.core';
 import type { MessageStatus } from 'im.v2.const';
 
@@ -129,6 +127,7 @@ type RawRestrictions = {
 	send: boolean,
 	userList: boolean,
 };
+
 type RawPermissions = {
 	can_post: string,
 	manage_messages: string,
@@ -180,7 +179,7 @@ export type RawReaction = {
 	messageId: number,
 	reactionCounters: {[reactionType: string]: number},
 	reactionUsers: {[reactionType: string]: number[]},
-	ownReactions?: Array<$Values<typeof Reaction>>
+	ownReactions?: string[],
 };
 
 export type RawUser = {
@@ -287,4 +286,23 @@ export type RawRecentItem = {
 	options: JsonObject,
 	pinned: boolean,
 	unread: boolean,
+};
+
+type RawStickerType = 'image';
+
+type RawPackType = 'vendor' | 'custom' | 'market';
+
+export type RawSticker = {
+	id: number,
+	uri: string,
+	type: RawStickerType,
+	packId?: number,
+	packType?: string,
+};
+
+export type RawStickerPack = {
+	id: number,
+	type: RawPackType,
+	name: string,
+	stickers: Array<RawSticker>,
 };

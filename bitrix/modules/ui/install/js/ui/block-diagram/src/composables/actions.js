@@ -13,6 +13,7 @@ import type {
 	DiagramBlock,
 	DiagramConnectionId,
 	DiagramConnection,
+	DiagramAddConnection,
 	DiagramPortId,
 	DiagramPort,
 	Point,
@@ -21,7 +22,7 @@ import type {
 export type UseActions = {
 	setState: () => void,
 	isExistConnection: (connection: DiagramConnection) => boolean,
-	addConnection: (connection: DiagramConnection) => void,
+	addConnection: (connection: DiagramAddConnection) => void,
 	deleteConnectionById: (connectionId: DiagramConnectionId) => void,
 	addBlock: (block: DiagramBlock) => void,
 	updateBlockPositionByIndex: (index: number, x: number, y: number) => void,
@@ -97,7 +98,7 @@ export function useActions({ state, getters, hooks }): UseActions
 		});
 	};
 
-	const addConnection = (newConnection: DiagramConnection): void => {
+	const addConnection = (newConnection: DiagramAddConnection): void => {
 		if (!isExistConnection(newConnection))
 		{
 			hooks.changedConnections.trigger(

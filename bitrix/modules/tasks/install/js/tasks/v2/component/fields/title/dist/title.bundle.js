@@ -3,11 +3,17 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_growingTextArea,tasks_v2_provider_service_taskService,tasks_v2_const) {
+(function (exports,tasks_v2_component_elements_growingTextArea,tasks_v2_provider_service_taskService,main_core,tasks_v2_const) {
 	'use strict';
 
 	const titleMeta = Object.freeze({
-	  id: tasks_v2_const.TaskField.Title
+	  id: tasks_v2_const.TaskField.Title,
+	  getTitle: isTemplate => {
+	    if (isTemplate) {
+	      return main_core.Loc.getMessage('TASKS_V2_TEMPLATE_TITLE_PLACEHOLDER');
+	    }
+	    return main_core.Loc.getMessage('TASKS_V2_TITLE_PLACEHOLDER');
+	  }
 	});
 
 	// @vue/component
@@ -16,11 +22,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {},
+	    isTemplate: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    disabled: {
 	      type: Boolean,
 	      default: false
@@ -41,15 +49,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          title
 	        });
 	      }
-	    },
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    isEdit() {
-	      return Number.isInteger(this.taskId) && this.taskId > 0;
-	    },
-	    readonly() {
-	      return !this.task.rights.edit;
 	    }
 	  },
 	  methods: {
@@ -67,8 +66,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-id="titleMeta.id"
 			:data-task-field-value="task.title"
 			data-field-container
-			:placeholder="loc('TASKS_V2_TITLE_PLACEHOLDER')"
-			:readonly="readonly || disabled"
+			:placeholder="titleMeta.getTitle(isTemplate)"
+			:readonly="!task.rights.edit || disabled"
 			@input="handleInput"
 		/>
 	`
@@ -77,5 +76,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.Title = Title;
 	exports.titleMeta = titleMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
 //# sourceMappingURL=title.bundle.js.map

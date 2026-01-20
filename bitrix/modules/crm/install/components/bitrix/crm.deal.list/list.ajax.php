@@ -233,7 +233,7 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';
 	$stageID = isset($_REQUEST['VALUE']) ? $_REQUEST['VALUE'] : '';
 
-	if($stageID === '' || $ID <= 0  || $typeName !== CCrmOwnerType::DealName)
+	if($stageID === '' || $ID <= 0  || ($typeName !== CCrmOwnerType::DealName && $typeName !== CCrmOwnerType::DealRecurringName))
 	{
 		__CrmDealListEndResponse(array('ERROR' => 'Invalid data.'));
 	}
@@ -277,24 +277,23 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		])
 	)
 	{
-		$arErrors = array();
-		CCrmBizProcHelper::AutoStartWorkflows(
-			CCrmOwnerType::Deal,
-			$ID,
-			CCrmBizProcEventType::Edit,
-			$arErrors
-		);
-
 		$dealUpdateAction->after(static function ($processInventoryManagementResult) {
 			__CrmDealListEndResponse([
 				'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
 			]);
 		});
 
-		//Region automation
-		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
-		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
-		//end region
+		if (($arPreviousFields['IS_RECURRING'] ?? 'N') !== 'Y')
+		{
+			$starter = new \Bitrix\Crm\Integration\BizProc\Starter\CrmStarter(
+				new \Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto(\CCrmOwnerType::Deal, $ID)
+			);
+			$starter->runOnDocumentUpdate(new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+				actualFields: $arFields,
+				previousFields: [],
+				userId: \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+			));
+		}
 
 		//Region synchronization
 		(new \Bitrix\Crm\Order\OrderDealSynchronizer)->updateOrderFromDeal($ID);

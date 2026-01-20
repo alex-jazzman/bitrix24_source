@@ -13,6 +13,10 @@
 	bottom: 0;
 }
 
+.b24-window-popup.b24-window-popup-on-top {
+	z-index: 1100002;
+}
+
 .b24-window-popup-p-center {
 	-webkit-box-pack: center;
 	-ms-flex-pack: center;

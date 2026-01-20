@@ -10,6 +10,7 @@ jn.define('im/messenger/provider/rest', (require, exports, module) => {
 	const { UserRest } = require('im/messenger/provider/rest/user');
 	const { OpenLinesRest } = require('im/messenger/provider/rest/openlines');
 	const { CopilotRest } = require('im/messenger/provider/rest/copilot');
+	const { OnboardingRest } = require('im/messenger/provider/rest/src/onboarding');
 
 	module.exports = {
 		DialogRest: new DialogRest(),
@@ -20,5 +21,6 @@ jn.define('im/messenger/provider/rest', (require, exports, module) => {
 		UserRest: new UserRest(),
 		OpenLinesRest: new OpenLinesRest(),
 		CopilotRest: new CopilotRest(),
+		OnboardingRest: new OnboardingRest(),
 	};
 });

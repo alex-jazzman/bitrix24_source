@@ -198,6 +198,10 @@ class EntityCounterPanel extends CounterPanel
 				const userName = isOtherUsersFilter ? Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : this.#userName;
 				const counterTypeId = this.#prepareFilterTypeId(typeId);
 
+				const filterItem = JSON.stringify([
+					isOtherUsersFilter ? 'meta-user' : 'user',
+					userId,
+				]);
 
 				const api = this.#filterManager.getApi();
 
@@ -210,9 +214,9 @@ class EntityCounterPanel extends CounterPanel
 				const responsibleField = this.#filterResponsibleFiledName;
 				fields = {
 					...fields,
-					[responsibleField]: { 0: userId },
-					[responsibleField + '_label']: [ userName ]
-				}
+					[responsibleField]: { 0: filterItem },
+					[`${responsibleField}_label`]: [userName],
+				};
 
 				api.setFields(fields);
 				api.apply({'COUNTER': this.#makeFilterAnalyticsLabel(counterTypeId)});

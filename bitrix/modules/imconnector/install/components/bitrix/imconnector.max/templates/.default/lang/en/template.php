@@ -1,0 +1,24 @@
+<?php
+$MESS["IMCONNECTOR_COMPONENT_MAX_ACCESS_TOKEN"] = "Access token:";
+$MESS["IMCONNECTOR_COMPONENT_MAX_ACCESS_TOKEN_HIDDEN"] = "Access token";
+$MESS["IMCONNECTOR_COMPONENT_MAX_BOT_LINK"] = "Bot link";
+$MESS["IMCONNECTOR_COMPONENT_MAX_BOT_NAME"] = "Bot name";
+$MESS["IMCONNECTOR_COMPONENT_MAX_BOT_USERNAME"] = "Bot name";
+$MESS["IMCONNECTOR_COMPONENT_MAX_CHANGE_ANY_TIME"] = "You can change or disconnect it at any time.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_CHANGE_ANY_TIME_MSGVER_1"] = "You can change or disconnect it at any time.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_CONNECTED"] = "MAX is connected.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I want</div><div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Connect</span> MAX</div>";
+$MESS["IMCONNECTOR_COMPONENT_MAX_CONNECT_STEP_NEW"] = "To connect, you must #LINK_START#perform a series of actions#LINK_END#.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_CONNECT_TITLE"] = "Connect MAX to your Open Channel.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_FINAL_FORM_DESCRIPTION"] = "MAX has been successfully connected to your Open Channel. Now all requests will be automatically routed to your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_FINAL_FORM_DESCRIPTION_MSGVER_1"] = "MAX has been successfully connected to your Open Channel. Now all requests will be automatically routed to your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_1"] = "Contacts and correspondence are saved in the CRM.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_2"] = "The CRM helps guide clients through the sales funnel.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_3"] = "You respond to clients quickly and wherever they prefer.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_4"] = "Client questions are automatically distributed among managers based on queue rules.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE"] = "Respond to clients wherever they are comfortable and used to. If clients prefer to contact you in MAX, give them that option. You'll see, clients will appreciate it.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE_MSGVER_1"] = "Respond to clients wherever they are comfortable and used to. If clients prefer to contact you in MAX, give them that option. You'll see, clients will appreciate it.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE_LINK"] = "#LINK_START#Use your own chat bot#LINK_END# with Max messenger.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_TITLE"] = "Chat with clients in MAX";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INFO"] = "Information";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Instructions</span> for connecting MAX:";

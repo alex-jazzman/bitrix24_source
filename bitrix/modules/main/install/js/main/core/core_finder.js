@@ -770,3 +770,4 @@ BX.Finder.loadAll = function(params)
 };
 
 })(window);
+

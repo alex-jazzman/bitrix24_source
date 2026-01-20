@@ -319,7 +319,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  async created() {
-	    this.contextMenuManager = new CopilotRecentMenu();
+	    this.contextMenuManager = new CopilotRecentMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.isLoading = true;
 	    await this.getRecentService().loadFirstPage();
 	    this.isLoading = false;
@@ -354,6 +356,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.service = new CopilotRecentService();
 	      }
 	      return this.service;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);

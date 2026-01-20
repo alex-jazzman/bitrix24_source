@@ -282,8 +282,8 @@
 .intranet-avatar-widget-main-tools__wrapper {
 	display: grid;
 	gap: 10px;
-	grid-template-columns: repeat(4, 1fr);
-	align-items: start
+	align-items: start;
+	width: 100%;
 }
 
 .intranet-avatar-widget-main-tool__wrapper {
@@ -292,7 +292,6 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	width: 82px;
 	margin-top: 10px;
 }
 
@@ -305,6 +304,7 @@
 	border: 1px solid var(--ui-color-accent-soft-blue-1);
 	border-radius: 12px;
 	margin-bottom: 8px;
+	box-sizing: border-box;
 	transition: 0.2s ease-in-out color;
 	cursor: pointer;
 }
@@ -436,4 +436,109 @@
 	position: absolute;
 	left: 70px;
 	top: -5px;
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper {
+	cursor: pointer;
+	border-radius: 16px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-image: linear-gradient(
+			281deg,
+			#A5E4FF -36.79%,
+			#08A6FF 34.01%,
+			#143AFF 79.28%
+	);
+	position: relative;
+	overflow: visible;
+	z-index: 1;
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper--loading {
+	opacity: .8;
+	cursor: default;
+}
+
+.intranet-avatar-widget-annual-summary-tool__background {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	width: 100%;
+	border-radius: inherit;
+	overflow: hidden;
+}
+
+.intranet-avatar-widget-annual-summary-tool__background:after {
+	content: '';
+	position: absolute;
+	height: 50px;
+	width: 155px;
+	right: 0;
+	top: 0;
+	background-image:  image-set(
+			url(../images/annual-summary-spiral.png) 1x,
+			url(../images/annual-summary-spiral@2x.png) 2x
+	);
+	transition: transform 0.7s;
+	transform-origin: top right;
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper:hover .intranet-avatar-widget-annual-summary-tool__background:after {
+	transform: scale(1.08);
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper:before {
+	content: '';
+	position: absolute;
+	height: 49px;
+	width: 43px;
+	left: -5px;
+	bottom: -19px;
+	background-image: image-set(
+			url(../images/annual-summary-arrow.png) 1x,
+			url(../images/annual-summary-arrow@2x.png) 2x
+	);
+	transition: transform 0.7s;
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper:hover:before {
+	transform: translate(4px, -8px);
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper:after {
+	content: '';
+	position: absolute;
+	height: 43px;
+	width: 43px;
+	right: 12px;
+	top: -25px;
+	background-image: image-set(
+			url(../images/annual-summary-check.png) 1x,
+			url(../images/annual-summary-check@2x.png) 2x
+	);
+	transition: transform 0.7s;
+}
+
+.intranet-avatar-widget-annual-summary-tool__wrapper:hover:after {
+	transform: translate(-6px, 6px);
+}
+
+.intranet-avatar-widget-annual-summary-tool__title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: #FFFFFF;
+	position: relative;
+}
+
+.intranet-avatar-widget-annual-summary-tool__title:after {
+	content: '';
+	width: 9px;
+	height: 9px;
+	position: absolute;
+	top: 4px;
+	right: -10px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='9' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.998 5.002h2.5v-1h-1.5v-1.75h-1v2.75z' fill='%23fff'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M4.5 0a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 8a3.5 3.5 0 110-7 3.5 3.5 0 010 7z' fill='%23fff'/%3E%3C/svg%3E");
 }

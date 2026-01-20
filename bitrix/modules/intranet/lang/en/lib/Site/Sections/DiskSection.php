@@ -1,0 +1,8 @@
+<?php
+
+$MESS["DISK_SECTION_MENU_DISK_COMMON"] = "Company Drive";
+$MESS["DISK_SECTION_MENU_DISK_MACOS_APP"] = "Desktop App for MacOS";
+$MESS["DISK_SECTION_MENU_DISK_MP_APPS"] = "Applications";
+$MESS["DISK_SECTION_MENU_DISK_USER"] = "My Drive";
+$MESS["DISK_SECTION_MENU_DISK_VOLUME"] = "Drive Cleanup";
+$MESS["DISK_SECTION_MENU_DISK_WINDOWS_APP"] = "Desktop App for Windows";

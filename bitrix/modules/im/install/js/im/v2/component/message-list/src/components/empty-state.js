@@ -1,11 +1,10 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 
 import '../css/empty-state.css';
 
-import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 
 const defaultMessages = [
 	Loc.getMessage('IM_MESSAGE_LIST_EMPTY_STATE_DEFAULT_MESSAGE_1'),
@@ -25,10 +24,6 @@ export const EmptyState = {
 			required: true,
 		},
 	},
-	data(): JsonObject
-	{
-		return {};
-	},
 	computed:
 	{
 		defaultMessages: () => defaultMessages,
@@ -37,10 +32,14 @@ export const EmptyState = {
 	{
 		onMessageClick(text: string): void
 		{
-			EventEmitter.emit(EventType.textarea.insertText, {
+			this.getEmitter().emit(EventType.textarea.insertText, {
 				text,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

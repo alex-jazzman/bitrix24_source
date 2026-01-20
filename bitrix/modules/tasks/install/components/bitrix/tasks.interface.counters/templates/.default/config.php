@@ -8,6 +8,7 @@ return [
 	'css' => 'script.css',
 	'js' => 'script.js',
 	'rel' => [
+		'ui.buttons',
 		'ui.counterpanel',
 		'main.core',
 		'main.core.events',

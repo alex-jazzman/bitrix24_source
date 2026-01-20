@@ -669,6 +669,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ButtonIcon, "PERSON", 'ui-btn-icon-person');
 	babelHelpers.defineProperty(ButtonIcon, "WORKFLOW_STOP", 'ui-btn-icon-workflow-stop');
 	babelHelpers.defineProperty(ButtonIcon, "MARKET", 'ui-btn-icon-market');
+	babelHelpers.defineProperty(ButtonIcon, "KEY", 'ui-btn-icon-key');
 
 	/**
 	 * @namespace {BX.UI}

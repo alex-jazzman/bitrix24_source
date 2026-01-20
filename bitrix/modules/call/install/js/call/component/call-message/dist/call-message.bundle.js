@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,ui_vue3_directives_hint,main_core,im_v2_component_message_elements,im_v2_component_message_base,im_v2_lib_dateFormatter,im_v2_lib_call,im_public,im_v2_const,call_lib_analytics) {
+(function (exports,ui_vue3_directives_hint,main_core,im_v2_component_message_elements,im_v2_component_message_base,im_public,im_v2_const,im_v2_lib_dateFormatter,call_lib_callManager,call_lib_analytics) {
 	'use strict';
 
 	const MESSAGE_TYPE = {
@@ -78,13 +78,13 @@ this.BX.Call = this.BX.Call || {};
 	      return im_v2_lib_dateFormatter.DateFormatter.formatByCode(this.message.date, im_v2_lib_dateFormatter.DateCode.shortTimeFormat);
 	    },
 	    currentCall() {
-	      return im_v2_lib_call.CallManager.getInstance().getCurrentCall();
+	      return call_lib_callManager.CallManager.getInstance().getCurrentCall();
 	    },
 	    hasActiveCurrentCall() {
-	      return im_v2_lib_call.CallManager.getInstance().hasActiveCurrentCall(this.dialogId);
+	      return call_lib_callManager.CallManager.getInstance().hasActiveCurrentCall(this.dialogId);
 	    },
 	    hasActiveAnotherCall() {
-	      return im_v2_lib_call.CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
+	      return call_lib_callManager.CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
 	    },
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
@@ -162,5 +162,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallMessage = CallMessage;
 
-}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Vue3.Directives,BX,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Call.Lib));
+}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Vue3.Directives,BX,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Call.Lib));
 //# sourceMappingURL=call-message.bundle.js.map

@@ -7,6 +7,10 @@
 	height: 150px;
 }
 
+.crm-entity-stream-content-sharing.crm-entity-stream-content-wait-detail {
+	margin-top: -24px;
+}
+
 .crm-entity-stream-calendar-sharing-container {
 	padding: 10px;
 }

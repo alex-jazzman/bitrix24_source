@@ -15,11 +15,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var emptyStateHelpdeskCode = 26311976;
 	var _cache = /*#__PURE__*/new WeakMap();
-	var _containerId = /*#__PURE__*/new WeakMap();
 	var _wizard = /*#__PURE__*/new WeakMap();
 	var _template = /*#__PURE__*/new WeakMap();
 	var _api = /*#__PURE__*/new WeakMap();
-	var _hasCompanies = /*#__PURE__*/new WeakMap();
 	var _getCompaniesNotFoundEmptyState = /*#__PURE__*/new WeakSet();
 	var _getStepsMetadata = /*#__PURE__*/new WeakSet();
 	var _getSubmitDocumentInfoStep = /*#__PURE__*/new WeakSet();
@@ -27,8 +25,6 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _getLayout = /*#__PURE__*/new WeakSet();
 	var B2EOnboardingSignSettings = /*#__PURE__*/function () {
 	  function B2EOnboardingSignSettings() {
-	    var containerId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	    var hasCompanies = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	    babelHelpers.classCallCheck(this, B2EOnboardingSignSettings);
 	    _classPrivateMethodInitSpec(this, _getLayout);
 	    _classPrivateMethodInitSpec(this, _enableNoStepMode);
@@ -38,10 +34,6 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    _classPrivateFieldInitSpec(this, _cache, {
 	      writable: true,
 	      value: new main_core_cache.MemoryCache()
-	    });
-	    _classPrivateFieldInitSpec(this, _containerId, {
-	      writable: true,
-	      value: void 0
 	    });
 	    _classPrivateFieldInitSpec(this, _wizard, {
 	      writable: true,
@@ -55,12 +47,6 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      writable: true,
 	      value: new sign_v2_api.Api()
 	    });
-	    _classPrivateFieldInitSpec(this, _hasCompanies, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _hasCompanies, hasCompanies);
-	    babelHelpers.classPrivateFieldSet(this, _containerId, containerId);
 	    var currentSlider = BX.SidePanel.Instance.getTopSlider();
 	    babelHelpers.classPrivateFieldSet(this, _wizard, new ui_wizard.Wizard(_classPrivateMethodGet(this, _getStepsMetadata, _getStepsMetadata2).call(this, this), {
 	      back: {
@@ -97,38 +83,30 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	                target: container
 	              });
 	              void loader.show();
-	              if (babelHelpers.classPrivateFieldGet(this, _hasCompanies)) {
-	                _context.next = 8;
-	                break;
-	              }
-	              main_core.Dom.append(_classPrivateMethodGet(this, _getCompaniesNotFoundEmptyState, _getCompaniesNotFoundEmptyState2).call(this), container);
-	              void loader.hide();
-	              return _context.abrupt("return");
-	            case 8:
 	              response = null;
-	              _context.prev = 9;
-	              _context.next = 12;
+	              _context.prev = 5;
+	              _context.next = 8;
 	              return babelHelpers.classPrivateFieldGet(this, _api).template.installOnboardingTemplate();
-	            case 12:
+	            case 8:
 	              response = _context.sent;
-	              _context.next = 20;
+	              _context.next = 16;
 	              break;
-	            case 15:
-	              _context.prev = 15;
-	              _context.t0 = _context["catch"](9);
+	            case 11:
+	              _context.prev = 11;
+	              _context.t0 = _context["catch"](5);
 	              main_core.Dom.append(_classPrivateMethodGet(this, _getCompaniesNotFoundEmptyState, _getCompaniesNotFoundEmptyState2).call(this), container);
 	              void loader.hide();
 	              return _context.abrupt("return");
-	            case 20:
+	            case 16:
 	              babelHelpers.classPrivateFieldSet(this, _template, response.template);
 	              void loader.hide();
 	              main_core.Dom.append(_classPrivateMethodGet(this, _getLayout, _getLayout2).call(this), container);
 	              babelHelpers.classPrivateFieldGet(this, _wizard).moveOnStep(0);
-	            case 24:
+	            case 20:
 	            case "end":
 	              return _context.stop();
 	          }
-	        }, _callee, this, [[9, 15]]);
+	        }, _callee, this, [[5, 11]]);
 	      }));
 	      function renderToContainer(_x) {
 	        return _renderToContainer.apply(this, arguments);

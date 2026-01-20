@@ -1,0 +1,45 @@
+.editor-chart-block-icon {
+	background-color: var(--ui-color-palette-blue-25);
+	background-repeat: no-repeat;
+	border-radius: 7px;
+	overflow: hidden;
+	background-position: center center;
+	width: 38px;
+	height: 38px;
+	margin-right: 8px;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+}
+
+.editor-chart-block-icon.--background-color-1 {
+	background-color: var(--ui-color-design-outline-copilot-stroke);
+}
+
+.editor-chart-block-icon.--background-color-2 {
+	background-color: var(--ui-color-palette-blue-25);
+}
+
+.editor-chart-block-icon.--background-color-3 {
+	background-color: #FFEECC;
+}
+
+.editor-chart-block-icon.--background-color-4 {
+	background-color: #EBEEF3;
+}
+
+.editor-chart-block-icon.--background-color-5 {
+	background-color: #D8FFCB;
+}
+
+.editor-chart-block-icon.--background-color-6 {
+	background-color: #E3F5ED;
+}
+
+.editor-chart-block-icon.--background-color-7 {
+	background-color: #F2F8D8;
+}
+
+.editor-chart-block-icon.--background-color-8 {
+	background-color: rgba(31, 134, 255, 1);
+}

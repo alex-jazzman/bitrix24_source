@@ -216,6 +216,16 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.type === DialogType.copilot;
 		}
 
+		get isCopilotDirect()
+		{
+			return this.isCopilot && this.dialogModel.userCounter === 2;
+		}
+
+		get isCopilotGroupChat()
+		{
+			return this.isCopilot && this.dialogModel.userCounter > 2;
+		}
+
 		get isOpenChat()
 		{
 			return this.dialogModel.type === DialogType.open;
@@ -259,6 +269,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		get isCurrentUserOwner()
 		{
 			return Number(this.dialogModel.owner) === serviceLocator.get('core').getUserId();
+		}
+
+		get isCurrentUserManager()
+		{
+			return this.dialogModel.role === UserRole.manager;
 		}
 
 		get isCurrentUserGuest()
@@ -337,9 +352,12 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		 */
 		get chatLink()
 		{
-			const chatGetParameter = this.isCopilot
-				? UrlGetParameter.openCopilotChat
-				: UrlGetParameter.openChat;
+			const parameters = {
+				[DialogType.copilot]: UrlGetParameter.openCopilotChat,
+				[DialogType.tasksTask]: UrlGetParameter.openTaskChat,
+			};
+
+			const chatGetParameter = parameters[this.dialogModel.type] ?? UrlGetParameter.openChat;
 
 			return `${serviceLocator.get('core').getHost()}/online/?${chatGetParameter}=${this.dialogId}`;
 		}
@@ -361,6 +379,21 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			const recentItemState = store.getters['recentModel/getById'](this.dialogModel.dialogId);
 
 			return recentItemState?.pinned;
+		}
+
+		get isCopilotMentionSupported()
+		{
+			if (this.isChannel)
+			{
+				return false;
+			}
+
+			if (this.isCopilot)
+			{
+				return false;
+			}
+
+			return true;
 		}
 	}
 

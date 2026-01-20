@@ -1196,7 +1196,6 @@ class crm extends CModule
 		$eventManager->registerEventHandler('main', 'OnUISelectorBeforeSave', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorBeforeSave');
 		$eventManager->registerEventHandler('main', 'OnUISelectorFillLastDestination', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination');
 
-		$eventManager->registerEventHandler('ml', 'onModelStateChange', 'crm', '\Bitrix\Crm\Ml\Scoring', 'onMlModelStateChange');
 		$eventManager->registerEventHandler('location', 'onCurrentFormatCodeChanged', 'crm', '\Bitrix\Crm\Integration\Location\Format', 'onCurrentFormatCodeChanged');
 		$eventManager->registerEventHandler('location', 'onInitialFormatCodeSet', 'crm', '\Bitrix\Crm\Integration\Location\Format', 'onInitialFormatCodeSet');
 
@@ -1297,6 +1296,14 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Telegram',
+			'onMessageSent'
+		);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Sms',
@@ -1308,6 +1315,14 @@ class crm extends CModule
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\WhatsApp',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Telegram',
 			'onMessageStatusUpdated'
 		);
 
@@ -1772,8 +1787,6 @@ class crm extends CModule
 			);
 		}
 
-		CAgent::AddAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm', 'N', 300);
-		CAgent::AddAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm', 'N', 86400);
 		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 3600);
 
 		CAgent::AddAgent(
@@ -1803,6 +1816,17 @@ class crm extends CModule
 		CAgent::AddAgent(
 			/** @see \Bitrix\Crm\Service\Factory\SmartDocument::createTypeIfNotExists() */
 			"\\Bitrix\\Crm\\Service\\Factory\\SmartDocument::createTypeIfNotExists();",
+			"crm",
+			"N",
+			3600,
+			'',
+			'Y',
+			$startTime
+		);
+
+		CAgent::AddAgent(
+		/** @see \Bitrix\Crm\Service\Factory\SmartB2eDocument::createTypeIfNotExists() */
+			"\\Bitrix\\Crm\\Service\\Factory\\SmartB2eDocument::createTypeIfNotExists();",
 			"crm",
 			"N",
 			3600,
@@ -2140,8 +2164,6 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnUISelectorBeforeSave', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorBeforeSave');
 		$eventManager->unRegisterEventHandler('main', 'OnUISelectorFillLastDestination', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination');
 
-		$eventManager->unRegisterEventHandler('ml', 'onModelStateChange', 'crm', '\Bitrix\Crm\Ml\Scoring', 'onMlModelStateChange');
-
 		$eventManager->unRegisterEventHandler('landing', '\Bitrix\Landing\Internals\Landing::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingDelete');
 		$eventManager->unRegisterEventHandler('landing', 'onBeforeLandingRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeLandingRecycle');
 		$eventManager->unRegisterEventHandler('landing', 'onBeforeSiteRecycle', 'crm', '\Bitrix\Crm\Integration\Landing\EventHandler', 'onBeforeSiteRecycle');
@@ -2219,6 +2241,14 @@ class crm extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Telegram',
+			'onMessageSent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Sms',
@@ -2230,6 +2260,14 @@ class crm extends CModule
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\WhatsApp',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Telegram',
 			'onMessageStatusUpdated'
 		);
 

@@ -40,6 +40,7 @@ type ConnectionProperties = {
 	connectionId: Number,
 	connectionName: String,
 	tableName: String,
+	connectionIsSupportMapping: Boolean,
 };
 
 type Config = {

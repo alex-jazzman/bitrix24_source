@@ -4,6 +4,7 @@ $MESS["MENU_SALESCENTER_SECTION"] = "Сату орталығы";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Қойма есебі";
 $MESS["TOP_MENU_ABOUT"] = "Компания";
 $MESS["TOP_MENU_AI"] = "AI Зертхана";
+$MESS["TOP_MENU_AI_AGENTS"] = "AI-агенттері";
 $MESS["TOP_MENU_BICONNECTOR_CONSTRUCTOR"] = "BI Құрастырушы";
 $MESS["TOP_MENU_BIZPROC"] = "Бизнес-процесстер";
 $MESS["TOP_MENU_BLOG"] = "Хабарламалар";

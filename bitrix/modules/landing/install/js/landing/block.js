@@ -1448,10 +1448,9 @@
 		onDesignerBlockClick: function()
 		{
 			BX.UI.Analytics.sendData({
-				tool: 'landing',
+				tool: BX.Landing.Main.getAnalyticsCategoryByType(),
 				category: 'superblock',
 				event: 'open',
-				type: BX.Landing.Main.getAnalyticsCategoryByType(),
 			});
 			// get actual block content before designer edit
 			var oldContent = null;
@@ -1498,10 +1497,9 @@
 									if (oldContent !== newContent)
 									{
 										BX.UI.Analytics.sendData({
-											tool: 'landing',
+											tool: BX.Landing.Main.getAnalyticsCategoryByType(),
 											category: 'superblock',
 											event: 'save',
-											type: BX.Landing.Main.getAnalyticsCategoryByType(),
 										});
 
 										BX.Landing.History.getInstance().push();
@@ -1513,10 +1511,9 @@
 									else
 									{
 										BX.UI.Analytics.sendData({
-											tool: 'landing',
+											tool: BX.Landing.Main.getAnalyticsCategoryByType(),
 											category: 'superblock',
 											event: 'close',
-											type: BX.Landing.Main.getAnalyticsCategoryByType(),
 										});
 									}
 								}.bind(this));
@@ -3131,6 +3128,7 @@
 		 */
 		onStyleShow: function(selector = null)
 		{
+			this.sendDesignSliderAnalytics('site_editor');
 			BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
 			BX.Landing.PageObject.getInstance().design()
 				.then((stylePanel) => {
@@ -4415,6 +4413,7 @@
 
 			BX.Landing.PageObject.getInstance().design()
 				.then((stylePanel) => {
+					this.sendDesignSliderAnalytics('form_editor');
 					if (formSelector)
 					{
 						this.showStylePanel(formSelector, stylePanel.blockId);
@@ -6175,6 +6174,20 @@
 			}
 
 			return true;
+		},
+
+		/**
+		 * Sends analytics event for design slider opening with custom c_section
+		 * @param {string} cSection - The section name for analytics (e.g., 'site_editor', 'forms_editor')
+		 */
+		sendDesignSliderAnalytics: function(cSection)
+		{
+			BX.UI.Analytics.sendData({
+				tool: BX.Landing.Main.getAnalyticsCategoryByType(),
+				category: 'design_slider',
+				event: 'open',
+				c_section: cSection,
+			});
 		},
 	};
 })();

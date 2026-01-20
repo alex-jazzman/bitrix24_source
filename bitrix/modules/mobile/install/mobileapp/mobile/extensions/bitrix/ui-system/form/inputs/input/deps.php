@@ -2,17 +2,17 @@
 
 return [
 	'extensions' => [
-		'type',
+		'layout/pure-component',
 		'tokens',
-		'utils/type',
-		'utils/object',
-		'utils/function',
-		'utils/validation',
-		'utils/enums/base',
+		'type',
 		'ui-system/blocks/icon',
 		'ui-system/typography/text',
 		'ui-system/typography/text-input',
-		'layout/pure-component',
+		'utils/function',
+		'utils/object',
+		'utils/type',
+		'utils/validation',
+		'utils/enums/base',
 	],
 	'bundle' => [
 		'./src/visual-decorator',

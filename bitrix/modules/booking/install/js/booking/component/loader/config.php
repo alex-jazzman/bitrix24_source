@@ -8,8 +8,7 @@ return [
 	'css' => 'dist/loader.bundle.css',
 	'js' => 'dist/loader.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'ui.loader',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

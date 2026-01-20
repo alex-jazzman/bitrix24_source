@@ -1,0 +1,5 @@
+<?php
+$MESS["AI_ACTIVITY_PROCESSING_AI_RESULT"] = "AI processing result";
+$MESS["AI_ACTIVITY_PROCESSING_DESC"] = "Runs an AI prompt.";
+$MESS["AI_ACTIVITY_PROCESSING_NAME_MSGVER_1"] = "Execute AI prompt";
+$MESS["AI_ACTIVITY_PROCESSING_RETURN_ERROR_MESSAGE"] = "AI processing error";

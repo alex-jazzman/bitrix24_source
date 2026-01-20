@@ -115,8 +115,8 @@ export class DashboardExportMaster
 		}
 		const groupSelector = new Dialog({
 			targetNode: groupSelectorButton,
-			width: 324,
-			height: 240,
+			width: 325,
+			height: 260,
 			autoHide: true,
 			multiple: false,
 			showAvatars: true,

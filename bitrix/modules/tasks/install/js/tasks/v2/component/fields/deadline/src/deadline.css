@@ -3,6 +3,15 @@
 	white-space: nowrap;
 }
 
+.tasks-field-deadline.--readonly {
+	cursor: default;
+}
+
+.tasks-field-deadline-inner {
+	display: flex;
+	gap: 18px;
+}
+
 .tasks-field-deadline-icon {
 	margin-right: var(--ui-space-inline-2xs2);
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
@@ -16,8 +25,8 @@
 	color: var(--ui-color-accent-main-alert);
 }
 
-
 .tasks-field-deadline-expired {
+	max-width: max-content;
 	display: block;
 	margin-top: 5px;
 	padding: 4px 10px;
@@ -25,4 +34,11 @@
 	border: var(--ui-border-width-thin) solid var(--ui-color-accent-soft-red-1);
 	color: var(--ui-color-accent-main-alert);
 	cursor: default;
+}
+
+.tasks-field-deadline-exceeded-hint {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-left: 12px;
 }

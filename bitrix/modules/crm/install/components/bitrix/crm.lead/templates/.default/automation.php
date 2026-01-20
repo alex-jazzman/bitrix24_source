@@ -55,13 +55,13 @@ else
 	<script>
 		BX.ready(function()
 		{
-			var a = document.querySelector('.crm-robot-btn');
+			var a = document.querySelector('.robot-button-container');
 			if (a && BX.SidePanel)
 			{
 				var url = a.href;
 
 				<?php if (!empty($_GET['id'])): ?>
-					url += '?id=<?=(int)$_GET['id']?>';
+				url += '?id=<?=(int)$_GET['id']?>';
 				<?php endif ?>
 
 				BX.SidePanel.Instance.open(url, { customLeftBoundary: 0 });

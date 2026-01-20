@@ -1,7 +1,7 @@
 import { NotificationSettingsType, type NotificationSettingsItem } from 'im.v2.const';
+import { SettingsService } from 'im.v2.provider.service.settings';
 
 import { CheckboxOption } from '../../../../elements/checkbox';
-import { NotificationService } from '../../../classes/notification-service';
 
 import type { JsonObject } from 'main.core';
 
@@ -18,7 +18,7 @@ export const NotificationItem = {
 		blockId: {
 			type: String,
 			required: true,
-		}
+		},
 	},
 	data(): JsonObject
 	{
@@ -48,12 +48,21 @@ export const NotificationItem = {
 	{
 		onItemChange(newValue: boolean, type: $Values<typeof NotificationSettingsType>)
 		{
-			NotificationService.changeExpertOption({
+			this.getSettingsService().changeExpertOption({
 				moduleId: this.blockId,
 				optionName: this.notification.id,
 				type,
 				value: newValue,
 			});
+		},
+		getSettingsService(): SettingsService
+		{
+			if (!this.settingsService)
+			{
+				this.settingsService = new SettingsService();
+			}
+
+			return this.settingsService;
 		},
 	},
 	template: `

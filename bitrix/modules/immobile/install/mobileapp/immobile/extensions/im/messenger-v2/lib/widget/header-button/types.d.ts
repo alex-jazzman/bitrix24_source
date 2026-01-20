@@ -27,7 +27,8 @@ export type HeaderSectionConfig = {
 
 export type HeaderPopupButtonConfig = {
 	id: string;
-	title: string;
+	title?: string;
+	getTitle?: () => string;
 	callback: () => Promise<void>;
 	sectionCode?: string;
 	iconName?: string;

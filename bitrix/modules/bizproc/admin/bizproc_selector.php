@@ -299,52 +299,45 @@ function BPSHideShow(id)
 	</tr>
 	<tr id="BPSId4" style="display:none">
 		<td>
-<?
+<?php
+
 $runtime = CBPRuntime::GetRuntime();
-$arAllActivities = $runtime->SearchActivitiesByType("activity", $documentType);
+$arAllActivities = $runtime->SearchActivitiesByType('activity', $documentType);
 
 function _RecFindParams($act, $arFilter)
 {
 	global $arAllActivities;
+
 	$result = [];
 	foreach($act as $key => $value)
 	{
-		$value["Type"] = mb_strtolower($value["Type"]);
-		if(
-			isset($arAllActivities[$value["Type"]]['RETURN'])
-			&& is_array($arAllActivities[$value["Type"]]['RETURN'])
-			&& count($arAllActivities[$value["Type"]]['RETURN']) > 0
-		)
+		$value['Type'] = mb_strtolower($value['Type']);
+
+		$resultTmp = [];
+
+		$returnProperties = $arAllActivities[$value['Type']]['RETURN'] ?? null;
+		if($returnProperties && is_array($returnProperties))
 		{
-			$arResultTmp = [];
-			foreach($arAllActivities[$value["Type"]]['RETURN'] as $return_name=>$return_props)
+			foreach ($returnProperties as $name => $property)
 			{
-				if($arFilter!==false && !in_array($return_props['TYPE'], $arFilter))
+				$property = array_change_key_case($property, CASE_UPPER);
+				if ($arFilter !== false && !in_array($property['TYPE'], $arFilter, true))
+				{
 					continue;
+				}
 
-				$arResultTmp[] = Array(
-						'ID' => '{='.$value["Name"].':'.$return_name.'}',
-						'NAME'	=>	'...'.$return_props['NAME'],
-						'TYPE' => $return_props['TYPE'],
-					);
-			}
-
-			if(count($arResultTmp)>0)
-			{
-				$result[] = Array(
-					'ID' => $value["Name"],
-					'NAME'=>$value['Properties']['Title'],
-					'ITEMS' => $arResultTmp,
-				);
+				$resultTmp[] = [
+					'ID' => '{=' . $value['Name'] . ':' . $name . '}',
+					'NAME'=>'...' . $property['NAME'],
+					'TYPE' => $property['TYPE'],
+				];
 			}
 		}
-		elseif(
-			isset($arAllActivities[$value['Type']]['ADDITIONAL_RESULT'])
-			&& is_array($arAllActivities[$value['Type']]['ADDITIONAL_RESULT'])
-		)
+
+		$additionalResult = $arAllActivities[$value['Type']]['ADDITIONAL_RESULT'] ?? null;
+		if ($additionalResult && is_array($additionalResult))
 		{
-			$resultTmp = [];
-			foreach($arAllActivities[$value['Type']]['ADDITIONAL_RESULT'] as $propertyKey)
+			foreach($additionalResult as $propertyKey)
 			{
 				if (!isset($value['Properties'][$propertyKey]) || !is_array($value['Properties'][$propertyKey]))
 				{
@@ -353,32 +346,35 @@ function _RecFindParams($act, $arFilter)
 
 				foreach($value['Properties'][$propertyKey] as $fieldId => $fieldData)
 				{
-					if($arFilter !== false && !in_array($fieldData['Type'], $arFilter))
+					if ($arFilter !== false && !in_array($fieldData['Type'], $arFilter, true))
+					{
 						continue;
+					}
 
 					$resultTmp[] = array(
-						'ID' => '{='.$value['Name'].':'.$fieldId.'}',
-						'NAME' => '...'.$fieldData['Name'],
+						'ID' => '{=' . $value['Name'] . ':' . $fieldId . '}',
+						'NAME' => '...' . $fieldData['Name'],
 						'TYPE' => $fieldData['Type'],
 					);
 				}
 			}
-
-			if(count($resultTmp) > 0)
-			{
-				$result[] = array(
-					'ID' => $value['Name'],
-					'NAME' => $value['Properties']['Title'],
-					'ITEMS' => $resultTmp,
-				);
-			}
 		}
 
-		if (is_array($value["Children"]))
+		if ($resultTmp)
 		{
-			$result = array_merge($result, _RecFindParams($value["Children"], $arFilter));
+			$result[] = [
+				'ID' => $value['Name'],
+				'NAME'=>$value['Properties']['Title'],
+				'ITEMS' => $resultTmp,
+			];
+		}
+
+		if (is_array($value['Children']))
+		{
+			$result = array_merge($result, _RecFindParams($value['Children'], $arFilter));
 		}
 	}
+
 	return $result;
 }
 

@@ -46,6 +46,7 @@ export const SidebarMainPanelBlock = {
 	fileUnsortedList: 'fileUnsortedList',
 	task: 'task',
 	taskList: 'taskList',
+	taskCommentsHistory: 'taskCommentsHistory',
 	meetingList: 'meetingList',
 	marketAppList: 'marketAppList',
 	multidialog: 'multidialog',

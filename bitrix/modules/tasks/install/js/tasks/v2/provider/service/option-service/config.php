@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'tasks.v2.lib.api-client',
+		'tasks.v2.const',
 	],
 	'skip_core' => true,
 ];

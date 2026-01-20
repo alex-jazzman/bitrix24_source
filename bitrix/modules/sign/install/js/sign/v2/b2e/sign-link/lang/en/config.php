@@ -7,6 +7,7 @@ $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_DISCLAIMER_MSGVER1"] = "We recommend that you d
 $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_DOCUMENT_DATE"] = "Signed on #DATE#";
 $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_BTN"] = "Download";
 $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_MSG"] = "Signed document";
+$MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY"] = "The document is being processed. It will be available for download in a few minutes.";
 $MESS["SIGN_V2_B2E_LINK_ERROR_CODE_ACCESS_DENIED"] = "Access to document was denied";
 $MESS["SIGN_V2_B2E_LINK_ERROR_MESSAGE_PLACEHOLDER"] = "Try again later.";
 $MESS["SIGN_V2_B2E_LINK_ERROR_TITLE_PLACEHOLDER"] = "Something's gone wrong.";

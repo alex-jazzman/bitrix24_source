@@ -85,6 +85,7 @@ elseif (\CModule::IncludeModule('tasks'))
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 			"POPUP_COMPONENT_PARAMS" => $componentParams,
 			"POPUP_COMPONENT_PARENT" => $component,
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

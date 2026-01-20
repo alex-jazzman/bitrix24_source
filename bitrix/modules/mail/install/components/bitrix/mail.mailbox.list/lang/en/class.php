@@ -1,2 +1,4 @@
 <?php
+$MESS["MAIL_MAILBOX_GRID_MASSCONNECT_BUTTON"] = "Connect";
+$MESS["MAIL_MAILBOX_LIST_CONFIG_PERMISSIONS_BUTTON"] = "Access permissions";
 $MESS["MAIL_MAILBOX_LIST_TITLE"] = "Connected mailboxes";

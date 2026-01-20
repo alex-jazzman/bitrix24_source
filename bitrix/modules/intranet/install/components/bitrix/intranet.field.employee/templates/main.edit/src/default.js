@@ -6,135 +6,76 @@ BX.Default.Field.Employee = function (params)
 BX.Default.Field.Employee.prototype = {
 	init: function (params)
 	{
-		this.selectorName = (params['selectorName'] || '');
-		this.isMultiple = (params['isMultiple'] || '');
-		this.fieldNameJs = (params['fieldNameJs'] || '');
-		this.selectControl = this.createSelectControl();
-		this.entity = this.createEntity();
+		this.selectorName = params.selectorName || '';
+		this.isMultiple = params.isMultiple || false;
+		this.fieldNameJs = params.fieldNameJs || '';
+		this.selectedItems = params.selectedItems || [];
 
-		BX.addCustomEvent(
-			this.selectControl,
-			'onUpdateValue',
-			BX.delegate(this.updateHandler, this)
-		);
-
-		BX.addCustomEvent(
-			this.entity,
-			'BX.Intranet.UserFieldEmployeeEntity:remove',
-			BX.delegate(this.removeHandler, this)
-		);
+		this.initTagSelector();
 	},
 
-	createSelectControl: function ()
+	initTagSelector: function ()
 	{
-		return new BX.Intranet.UserFieldEmployee(this.selectorName, {
-			multiple: this.isMultiple
+		this.tagSelector = new BX.UI.EntitySelector.TagSelector({
+			multiple: this.isMultiple,
+			dialogOptions: {
+				context: `entity_selector_${this.selectorName}`,
+				width: 450,
+				height: 300,
+				preselectedItems: this.selectedItems,
+				entities: [
+					{
+						id: 'user',
+						options: {
+							emailUsers: false,
+							intranetUsersOnly: true,
+							inviteEmployeeLink: false,
+							inviteGuestLink: false,
+						}
+					},
+					{
+						id: 'structure-node',
+						options: {
+							selectMode: 'usersOnly',
+						}
+					},
+				]
+			},
+			events: {
+				onAfterTagAdd: (event) => this.onAfterTagUpdate(event),
+				onAfterTagRemove: (event) => this.onAfterTagUpdate(event),
+			}
 		});
+
+		this.tagSelector.renderTo(document.getElementById(`cont_${this.selectorName}`));
 	},
 
-	createEntity: function ()
+	onAfterTagUpdate: function (event)
 	{
-		return new BX.Intranet.UserFieldEmployeeEntity({
-			field: `field_${this.selectorName}`,
-			multiple: this.isMultiple
-		});
+		const tags = event.getTarget().tags;
+		const ids = tags.map(tag => tag.id);
+
+		this.setData(ids);
 	},
 
-	updateHandler: function (value, userStack)
-	{
-		if (this.isMultiple)
-		{
-			let result = [];
-			for (let i = 0; i < value.length; i++)
-			{
-				result.push({
-					name: userStack[value[i]].name,
-					value: value[i]
-				});
-			}
-			this.setData(result);
-		}
-		else
-		{
-			if (value === null)
-			{
-				this.setData(null);
-			}
-			else
-			{
-				this.setData({
-					name: userStack[value].name,
-					value: value
-				});
-			}
-		}
-	},
-
-	removeHandler: function (value)
-	{
-		let result = (this.isMultiple ? [] : null);
-		let	selectControlValue = (this.isMultiple ? [] : null);
-
-		for (let i = 0; i < value.length; i++)
-		{
-			let item = {
-				name: value[i].label,
-				value: value[i].value
-			};
-
-			if (!this.isMultiple)
-			{
-				selectControlValue = item.value;
-				result = item;
-				break;
-			}
-			else
-			{
-				selectControlValue.push(item.value);
-				result.push(item);
-			}
-		}
-		this.selectControl.setValue(selectControlValue);
-		this.setData(result);
-	},
-
-	setData: function (value)
+	setData: function (values)
 	{
 		let valueContainer = BX(`value_${this.selectorName}`);
 		let html = '';
 
-		if (this.isMultiple)
+		if (values.length > 0)
 		{
-			if (value.length > 0)
+			if (this.isMultiple)
 			{
-				let entityValue = [];
-				for (let i = 0; i < value.length; i++)
+				for (let i = 0; i < values.length; i++)
 				{
-					entityValue.push({
-						value: value[i].value,
-						label: value[i].name
-					});
-
-					html += `<input type="hidden" name="${this.fieldNameJs}" value="${BX.util.htmlspecialchars(value[i].value)}">`;
+					html += `<input type="hidden" name="${this.fieldNameJs}" value="${BX.util.htmlspecialchars(values[i])}">`;
 				}
 
-				this.entity.setData(entityValue);
 			}
 			else
 			{
-				this.entity.removeSquares();
-			}
-		}
-		else
-		{
-			if (value !== null)
-			{
-				this.entity.setData(value.name, value.value);
-				html += `<input type="hidden" name="${this.fieldNameJs}" value="${BX.util.htmlspecialchars(value.value)}">`;
-			}
-			else
-			{
-				this.entity.removeSquares();
+				html += `<input type="hidden" name="${this.fieldNameJs}" value="${BX.util.htmlspecialchars(values[0])}">`;
 			}
 		}
 

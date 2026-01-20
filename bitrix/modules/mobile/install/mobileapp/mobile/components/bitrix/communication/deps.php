@@ -14,5 +14,8 @@ return [
 		'ava-menu',
 		'type',
 		'user-profile',
+		'settings-v2/services/notification-load',
+		'settings-v2/services/db/messenger',
+		'in-app-url',
 	],
 ];

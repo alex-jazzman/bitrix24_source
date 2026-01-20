@@ -18,12 +18,14 @@ jn.define('im/messenger/lib/helper/worker', (require, exports, module) => {
 		 * @param {Object} options
 		 * @param {Number} [options.frequency]
 		 * @param {Function} [options.callback]
+		 * @param {string} [options.context]
 		 */
 		constructor(options = {})
 		{
 			this.frequency = options.frequency ? options.frequency : 1000;
 			this.callback = options.callback ? options.callback : () => {};
 			this.isStarted = false;
+			this.context = options.context ?? '';
 
 			this.tickIntervalId = null;
 		}

@@ -14,9 +14,18 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 	const {
 		createLink,
 		createSection,
-		createButton,
+		createLinkButton,
 		createLocSelector,
-	} = require('settings-v2/structure/src/item-create-helper');
+	} = require('settings-v2/structure/helpers/item-create-helper');
+	const { preloadAssets } = require('settings-v2/services/assets-preload');
+
+	const resolveEulaPage = () => {
+		const lang = env?.region ?? Application.getLang();
+
+		return lang && ['ru', 'kz', 'by'].includes(lang)
+			? 'https://www.1c-bitrix.ru/download/files/law/eula-desktop.pdf'
+			: 'https://bitrix24.com/eula/mobile-app.php';
+	};
 
 	/**
 	 * @returns {NativeSettingController}
@@ -25,12 +34,16 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 		return new NativeSettingController({
 			settingId: 'app_language',
 			fallbackValue: 'ru',
+			onChangeAlertTitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_LOC_ALERT_TITLE'),
+			onChangeAlertDescription: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_ALERT_DESCRIPTION'),
+			onChangeAlertOkButton: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_LOC_ALERT_OK_BUTTON'),
 		});
 	};
 
 	const isAndroid = Application.getPlatform() === 'android';
 
 	const requestSettingsData = async () => {
+		preloadAssets();
 		const devMenuEnabled = await checkFeatureFlag(FeatureFlagType.DEVELOPER_MENU);
 
 		return {
@@ -92,15 +105,15 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 				id: 'additionally-settings',
 				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_ADDITIONAL_SETTINGS'),
 				items: [
-					createButton({
+					createLinkButton({
 						id: 'license',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_LICENSE'),
 						onClick: () => PageManager.openPage({
-							url: 'https://www.1c-bitrix.ru/download/files/law/eula-desktop.pdf'
+							url: resolveEulaPage(),
 						}),
 						icon: Icon.CHEVRON_TO_THE_RIGHT,
 					}),
-					createButton({
+					createLinkButton({
 						id: 'feedback',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_FEEDBACK'),
 						icon: Icon.CHEVRON_TO_THE_RIGHT,
@@ -118,7 +131,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_DEBUG'),
 						nextPage: SettingsPageId.DEBUG,
 					}),
-					createButton({
+					createLinkButton({
 						id: 'app-version',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_APP_VERSION'),
 						icon: Icon.COPY,
@@ -139,7 +152,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 						id: 'developer',
 						title: 'Developer',
 						nextPage: SettingsPageId.DEVELOPER,
-						prefilter: (settingsData) => settingsData.devMenuEnabled,
+						prefilter: (settingsData) => settingsData.devMenuEnabled && Application.isBeta(),
 					}),
 				],
 			}),

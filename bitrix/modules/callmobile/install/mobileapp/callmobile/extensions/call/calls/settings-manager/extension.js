@@ -8,6 +8,8 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		{
 			this.jwtCallsEnabled = BX.componentParameters.get('jwtCallsEnabled');
 			this.plainCallsUseJwt = BX.componentParameters.get('jwtInPlainCallsEnabled');
+			this.plainCallFollowUpEnabled = BX.componentParameters.get('plainCallFollowUpEnabled');
+			this.plainCallCloudRecordingEnabled = BX.componentParameters.get('plainCallCloudRecordingEnabled');
 			this.callBalancerUrl = BX.componentParameters.get('callBalancerUrl');
 		}
 
@@ -24,6 +26,16 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			if (settings.plainCallsUseJwt !== undefined)
 			{
 				this.plainCallsUseJwt = settings.plainCallsUseJwt;
+			}
+
+			if (settings.plainCallFollowUpEnabled !== undefined)
+			{
+				this.plainCallFollowUpEnabled = settings.plainCallFollowUpEnabled;
+			}
+
+			if (settings.plainCallCloudRecordingEnabled !== undefined)
+			{
+				this.plainCallCloudRecordingEnabled = settings.plainCallCloudRecordingEnabled;
 			}
 
 			if (settings.callBalancerUrl !== undefined)
@@ -62,6 +74,38 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		set plainCallsUseJwt(flag)
 		{
 			this._plainCallsUseJwt = flag;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get plainCallFollowUpEnabled()
+		{
+			return this.isJwtInPlainCallsEnabled && this._plainCallFollowUpEnabled;
+		}
+
+		/**
+		 * @param {boolean} flag
+		 */
+		set plainCallFollowUpEnabled(flag)
+		{
+			this._plainCallFollowUpEnabled = flag;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get plainCallCloudRecordingEnabled()
+		{
+			return this.isJwtInPlainCallsEnabled && this._plainCallCloudRecordingEnabled;
+		}
+
+		/**
+		 * @param {boolean} flag
+		 */
+		set plainCallCloudRecordingEnabled(flag)
+		{
+			this._plainCallCloudRecordingEnabled = flag;
 		}
 
 		/**

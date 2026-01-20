@@ -5,6 +5,7 @@ return [
 		'im:messenger/controller/sidebar-v2/loc',
 		'im:messenger/lib/feature',
 		'assets/icons',
+		'layout/ui/loaders/spinner',
 	],
 	'bundle' => [],
 ];

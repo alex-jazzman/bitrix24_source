@@ -1,9 +1,10 @@
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { crmMeta } from './crm-meta';
@@ -15,13 +16,11 @@ export const CrmChip = {
 	components: {
 		Chip,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -29,21 +28,17 @@ export const CrmChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		design(): string
 		{
 			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, crmMeta.id);
+			return this.task.filledFields[crmMeta.id];
 		},
-		readonly(): boolean
+		isLocked(): boolean
 		{
-			return !this.task.rights.edit;
+			return !Core.getParams().restrictions.crmIntegration.available;
 		},
 	},
 	methods: {
@@ -56,8 +51,20 @@ export const CrmChip = {
 				return;
 			}
 
-			crmDialog.setTaskId(this.taskId).showTo(this.$el);
-			crmDialog.onUpdateOnce(this.highlightField);
+			if (this.isLocked)
+			{
+				void showLimit({
+					featureId: Core.getParams().restrictions.crmIntegration.featureId,
+				});
+
+				return;
+			}
+
+			crmDialog.show({
+				targetNode: this.$el,
+				taskId: this.taskId,
+				onClose: this.highlightField,
+			});
 		},
 		highlightField(): void
 		{
@@ -66,9 +73,10 @@ export const CrmChip = {
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			v-if="task.rights.edit || isSelected"
+			:design
 			:icon="Outline.CRM"
+			:lock="isLocked"
 			:text="loc('TASKS_V2_CRM_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="crmMeta.id"

@@ -333,6 +333,7 @@ $arResult['BLOG_POST_LISTS'] = (
 $arResult['BLOG_POST_TASKS'] = (
 	ComponentHelper::checkLivefeedTasksAllowed()
 	&& Loader::includeModule("tasks")
+	&& !(class_exists(\Bitrix\Tasks\V2\FormV2Feature::class) && \Bitrix\Tasks\V2\FormV2Feature::isOn())
 );
 
 if (

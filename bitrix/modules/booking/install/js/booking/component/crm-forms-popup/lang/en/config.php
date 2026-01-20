@@ -1,0 +1,10 @@
+<?php
+
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_TITLE'] = "Booking forms";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_DESCRIPTION'] = "Publish a booking form on your site, send it in a message or use it in an ad. [helpdesk]Learn more[/helpdesk]";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_SORT_LATEST_CREATED_LABEL'] = "Recent forms";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_PLACEHOLDER'] = "You don't have booking forms yet.";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_ITEM_COPY_LINK_BUTTON_LABEL'] = "Copy link";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_ITEM_LINK_COPED'] = "Link has been copied.";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_ADD_FORM_BUTTON_LABEL'] = "[plus] Add";
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_ALL_FORMS_BUTTON_LABEL'] = "All forms";

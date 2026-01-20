@@ -651,6 +651,12 @@ this.BX.Landing = this.BX.Landing || {};
 	    value: function getPopupConfig() {
 	      var _this4 = this;
 	      if (!this.popupConfig) {
+	        var items = this.disableMenuItems(this.mergeMenuItems(this.menuItems));
+	        items.forEach(function (item) {
+	          if (item.access === 'settings' && main_core.Type.isString(item.onclick)) {
+	            item.onclick = item.onclick.replace('#ID#', _this4.id);
+	          }
+	        });
 	        this.popupConfig = new main_popup.Menu({
 	          className: 'landing-sites__status-popup',
 	          bindElement: this.getContainerSiteMore(),
@@ -661,7 +667,7 @@ this.BX.Landing = this.BX.Landing || {};
 	          angle: {
 	            offset: 97
 	          },
-	          items: this.disableMenuItems(this.mergeMenuItems(this.menuItems)),
+	          items: items,
 	          events: {
 	            onPopupClose: function onPopupClose() {
 	              _this4.getContainerSiteMore().classList.remove('--hover');
@@ -1193,9 +1199,11 @@ this.BX.Landing = this.BX.Landing || {};
 	var _templateObject$6, _templateObject2$5;
 	var PopupCopilot = /*#__PURE__*/function () {
 	  function PopupCopilot(options) {
+	    var _options$zone;
 	    babelHelpers.classCallCheck(this, PopupCopilot);
 	    this.id = options.id;
 	    this.videoSrc = options.videoSrc;
+	    this.zone = (_options$zone = options.zone) !== null && _options$zone !== void 0 ? _options$zone : null;
 	    this.container = null;
 	    this.content = null;
 	    this.popup = this.getPopup();
@@ -1204,7 +1212,11 @@ this.BX.Landing = this.BX.Landing || {};
 	    key: "getContent",
 	    value: function getContent() {
 	      if (!this.content) {
-	        this.content = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-site_title-popup-content\">\n\t\t\t\t\t<div class=\"landing-site_title-popup-main\">\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-list\">\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --about\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --ai\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --rocket\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-desc\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_TITLE'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION'), this.renderVideo());
+	        var popupDescriptionMessageCode = 'LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION';
+	        if (this.zone === 'ru') {
+	          popupDescriptionMessageCode = 'LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION_2';
+	        }
+	        this.content = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-site_title-popup-content\">\n\t\t\t\t\t<div class=\"landing-site_title-popup-main\">\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-list\">\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --about\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --ai\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --rocket\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-desc\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_TITLE'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3'), main_core.Loc.getMessage(popupDescriptionMessageCode), this.renderVideo());
 	      }
 	      return this.content;
 	    }
@@ -1260,12 +1272,39 @@ this.BX.Landing = this.BX.Landing || {};
 	            style: ui_buttons.Button.AirStyle.FILLED_SUCCESS,
 	            onclick: function onclick(button) {
 	              button.setWaiting();
-	              BX.ajax.runAction('bitrix24.license.demolicense.activate').then(function () {
-	                window.location.href = '/sites/ai/';
-	              })["catch"](function (err) {
-	                console.error(err);
-	                window.location.href = '/sites/ai/';
-	              });
+	              if (_this.zone === 'ru') {
+	                BX.ajax.runAction('bitrix24.license.demolicense.activate').then(function () {
+	                  return new Promise(function (resolve, reject) {
+	                    BX.ajax({
+	                      dataType: 'json',
+	                      method: 'POST',
+	                      url: '/bitrix/tools/rest.php',
+	                      data: {
+	                        action: 'activate_demo',
+	                        sessid: BX.bitrix_sessid()
+	                      },
+	                      onsuccess: function onsuccess(response) {
+	                        resolve(response);
+	                      },
+	                      onfailure: function onfailure(response) {
+	                        reject(response);
+	                      }
+	                    });
+	                  });
+	                }).then(function () {
+	                  window.location.href = '/sites/ai/';
+	                })["catch"](function (err) {
+	                  console.error(err);
+	                  window.location.href = '/sites/ai/';
+	                });
+	              } else {
+	                BX.ajax.runAction('bitrix24.license.demolicense.activate').then(function () {
+	                  window.location.href = '/sites/ai/';
+	                })["catch"](function (err) {
+	                  console.error(err);
+	                  window.location.href = '/sites/ai/';
+	                });
+	              }
 	            }
 	          })]
 	        });
@@ -1311,6 +1350,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    this.$container = null;
 	    this.scroller = null;
 	    var videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/en/siteWithCopilot.webm';
+	    this.zone = options.zone || null;
 	    if (options.lang === 'ru') {
 	      videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/ru/siteWithCopilot.webm';
 	    }
@@ -1326,7 +1366,8 @@ this.BX.Landing = this.BX.Landing || {};
 	          });
 	          _this.popupCopilot = new PopupCopilot({
 	            id: 'popupCopilot',
-	            videoSrc: videoSrc
+	            videoSrc: videoSrc,
+	            zone: _this.zone
 	          });
 	          _this.popupCopilot.showPopup(1000);
 	          _this.popupCopilot.getPopup().subscribe('onAfterClose', function () {

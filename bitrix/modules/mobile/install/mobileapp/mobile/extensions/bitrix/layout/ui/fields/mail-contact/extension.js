@@ -2,13 +2,16 @@
  * @module layout/ui/fields/mail-contact
  */
 jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
-	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { EntitySelectorFieldClass, CastType } = require('layout/ui/fields/entity-selector');
 	const { AnalyticsEvent } = require('analytics');
 	const { Loc } = require('loc');
 	const { clone, isEqual } = require('utils/object');
 	const { Haptics } = require('haptics');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { UserProfile } = require('user-profile');
+	const { Color } = require('tokens');
+	const { Avatar } = require('mail/message/elements/avatar');
+	const { EntitySelectorFactoryType } = require('selector/widget/factory');
 
 	const CONTACT_TYPE_ID = 3;
 	const COMPANY_TYPE_ID = 4;
@@ -17,6 +20,21 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 	if (!deviceWidth)
 	{
 		deviceWidth = 360;
+	}
+
+	const EMAIL_TYPE = 'email';
+
+	const compositeEmail = {
+		[EntitySelectorFactoryType.USER]: false,
+		[EntitySelectorFactoryType.MAIL_ADDRESSBOOK_CONTACT]: false,
+		[EMAIL_TYPE]: true,
+		[EntitySelectorFactoryType.CRM_COMPANY]: true,
+		[EntitySelectorFactoryType.CRM_CONTACT]: true,
+	};
+
+	function isCompositeEmail(type)
+	{
+		return (compositeEmail[type] === undefined || compositeEmail[type]);
 	}
 
 	/**
@@ -28,9 +46,11 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 		{
 			super(props);
 			this.mode = null;
-			this.companyMode = this.getConfig().companyMode ? this.getConfig().companyMode : false;
-			this.userMode = this.getConfig().userMode ? this.getConfig().userMode : false;
-			this.contactMode = this.getConfig().contactMode ? this.getConfig().contactMode : false;
+			this.companyMode = this.getConfig().companyMode ?? false;
+			this.userMode = this.getConfig().userMode ?? false;
+			this.contactMode = this.getConfig().contactMode ?? false;
+			this.crmMode = this.getConfig().crmMode ?? false;
+			this.addressBookMode = this.getConfig().addressBookMode ?? false;
 		}
 
 		getConfig()
@@ -49,8 +69,16 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 						idsForFilterCompany,
 						idsForFilterContact,
 						onlyWithEmail: true,
+						[EntitySelectorFactoryType.CRM_COMPANY]: {
+							onlyWithEmail: true,
+						},
+						[EntitySelectorFactoryType.CRM_CONTACT]: {
+							onlyWithEmail: true,
+						},
 					},
 				},
+				castType: CastType.STRING,
+				enableCreation: this.mode === EntitySelectorFactoryType.MAIL_ADDRESSBOOK_CONTACT,
 			};
 		}
 
@@ -124,6 +152,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 		{
 			void UserProfile.open({
 				ownerId: userId,
+				analyticsSection: 'mail_contact_field',
 			});
 		}
 
@@ -171,7 +200,23 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 
 			const svgIconSelect = '<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.1503 6.71608C16.9572 6.54226 16.6495 6.67925 16.6495 6.93902V11.3001C16.6291 11.2962 16.6081 11.2943 16.5866 11.2948C8.03278 11.4888 5.55567 19.8219 4.9578 22.6728C4.89734 22.9611 5.24978 23.1333 5.46082 22.9278C7.08721 21.3436 11.4872 17.5837 16.5795 17.6217C16.6035 17.6218 16.627 17.6193 16.6495 17.6144V22.6579C16.6495 22.9177 16.9572 23.0547 17.1503 22.8809L25.7961 15.0957C25.9725 14.9368 25.9725 14.6601 25.7961 14.5012L17.1503 6.71608Z" fill="#525C69"/></svg>';
 
-			if (entityType === 'user')
+			if (isCompositeEmail(entityType))
+			{
+				actions = emailList.map((email, index) => ({
+					id: email.value,
+					isSelected: (index === selectedEmailId),
+					title: String(email.value),
+					data: {
+						svgIcon: svgIconSelect,
+					},
+					onClickCallback: () => {
+						contextMenu.close(() => {
+							this.selectEmailInRecipient(entityId, entityType, index);
+						});
+					},
+				}));
+			}
+			else
 			{
 				const email = customData.email;
 				if (email)
@@ -189,24 +234,8 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 					});
 				}
 			}
-			else
-			{
-				actions = emailList.map((email, index) => ({
-					id: email.value,
-					isSelected: (index === selectedEmailId),
-					title: String(email.value),
-					data: {
-						svgIcon: svgIconSelect,
-					},
-					onClickCallback: () => {
-						contextMenu.close(() => {
-							this.selectEmailInRecipient(entityId, entityType, index);
-						});
-					},
-				}));
-			}
 
-			if (entityType === 'user')
+			if (entityType === EntitySelectorFactoryType.USER)
 			{
 				actions.push({
 					id: 'open-recipient-card',
@@ -222,7 +251,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 				});
 			}
 
-			if (entityType === 'company')
+			if (entityType === EntitySelectorFactoryType.CRM_COMPANY)
 			{
 				actions.push({
 					id: 'open-recipient-card',
@@ -238,7 +267,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 				});
 			}
 
-			if (entityType === 'contact')
+			if (entityType === EntitySelectorFactoryType.CRM_CONTACT)
 			{
 				actions.push({
 					id: 'open-recipient-card',
@@ -300,6 +329,20 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 			});
 		}
 
+		renderAvatar(fullName, email, isEmailHidden)
+		{
+			if (isEmailHidden)
+			{
+				return null;
+			}
+
+			return Avatar({
+				size: 20,
+				fullName,
+				email,
+			});
+		}
+
 		renderEntity(recipient, showPadding = false)
 		{
 			const arrowWidth = 17;
@@ -324,7 +367,37 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 				selectedEmailId = 0;
 			}
 
-			const recipientText = (type === 'user') ? title : email[selectedEmailId].value;
+			let recipientText = '';
+			let emailValue = '';
+
+			if (
+				type !== EMAIL_TYPE && isCompositeEmail(type)
+				&& Array.isArray(email) && email[selectedEmailId]
+			)
+			{
+				recipientText = email[selectedEmailId].value;
+				emailValue = recipientText;
+			}
+			else
+			{
+				if (customData && customData.email)
+				{
+					emailValue = customData.email;
+				}
+				else if (
+					type === EMAIL_TYPE
+					&& email[selectedEmailId]
+				)
+				{
+					emailValue = email[selectedEmailId].value;
+				}
+				else
+				{
+					emailValue = title;
+				}
+
+				recipientText = title;
+			}
 
 			return View(
 				{
@@ -340,12 +413,17 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 				View(
 					{
 						style: {
+							flexDirection: 'row',
 							maxWidth: (deviceWidth - allMarginsWidth),
 						},
 					},
+					this.renderAvatar(title, emailValue, isEmailHidden),
 					Text({
-						color: this.styles.textColor[type],
-						style: this.styles.tagTitle,
+						style: {
+							marginLeft: 4,
+							...this.styles.tagTitle,
+							color: this.styles.textColor[type],
+						},
 						numberOfLines: 1,
 						ellipsize: 'end',
 						text: isEmailHidden ? Loc.getMessage('FIELDS_MAIL_CONTACT_RECIPIENT_HIDDEN') : recipientText,
@@ -389,25 +467,27 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					height: 24,
-					borderRadius: 3,
+					borderRadius: 50,
 					paddingVertical: 3,
-					paddingLeft: 4,
+					paddingLeft: 2,
 					paddingRight: 3,
 					marginRight: 4,
 					marginBottom: 5,
 					flexShrink: 2,
 				},
 				textColor: {
-					email: '#525C69',
 					company: '#7A5100',
 					user: '#0B66C3',
-					contact: '#506900',
+					contact: Color.bgContentInapp.toHex(),
+					email: Color.accentMainPrimary.toHex(),
+					address_book: Color.accentMainPrimary.toHex(),
 				},
 				backgroundColor: {
-					email: '#E6E7E9',
 					company: '#FFE9BE',
 					user: '#D8EBFF',
 					contact: '#EAF6C3',
+					email: Color.bgContentTertiary.toHex(),
+					address_book: Color.bgContentTertiary.toHex(),
 				},
 				tagTitle: {
 					paddingRight: 1,
@@ -436,10 +516,56 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 		{
 			const actions = [];
 
+			if (this.addressBookMode)
+			{
+				actions.push({
+					id: EntitySelectorFactoryType.MAIL_ADDRESSBOOK_CONTACT,
+					title: Loc.getMessage('FIELDS_MAIL_CONTACT_SELECT_MENU_ADDRESSBOOK'),
+					subTitle: '',
+					data: {
+						svgIcon: `
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M8.58566 12.9759C9.40122 12.5271 10.372 12.3945 11.225 12.3945C12.0779 12.3945 13.0487 12.5271 13.8643 12.9759C14.7161 13.4446 15.3627 14.2425 15.5206 15.4485C15.6195 16.2034 14.9917 16.7391 14.3579 16.7391H8.09206C7.45824 16.7391 6.83042 16.2034 6.92927 15.4485C7.08719 14.2425 7.73382 13.4446 8.58566 12.9759ZM8.37301 15.3391H14.0769C13.9331 14.7795 13.6088 14.4333 13.1893 14.2024C12.6651 13.914 11.9622 13.7945 11.225 13.7945C10.4877 13.7945 9.78479 13.914 9.26062 14.2024C8.84112 14.4333 8.51684 14.7795 8.37301 15.3391Z" fill="#6A737F"/>
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M11.216 12.0394C9.03797 12.0394 8.5262 8.80263 10.0683 7.65888C10.3243 7.46895 10.8165 7.29004 11.216 7.29004C14.0566 7.29004 13.8308 12.0394 11.216 12.0394ZM10.615 9.98003C10.4883 9.39827 10.6958 8.94473 10.894 8.78961C10.8982 8.78726 10.9058 8.78305 10.9174 8.77736C10.9461 8.76324 10.9856 8.74659 11.0319 8.73112C11.0781 8.71569 11.1222 8.7044 11.1597 8.69744C11.195 8.69088 11.2138 8.69013 11.2159 8.69005C11.216 8.69005 11.2161 8.69004 11.2159 8.69005C11.4853 8.69005 11.592 8.7797 11.6663 8.87772C11.7737 9.01949 11.8704 9.28377 11.8622 9.63145C11.8539 9.97781 11.7439 10.2692 11.6113 10.4406C11.504 10.5793 11.3927 10.6394 11.216 10.6394C11.0486 10.6394 10.9552 10.5882 10.8774 10.5125C10.7796 10.4174 10.6718 10.2407 10.615 9.98003Z" fill="#6A737F"/>
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M4.7002 6.7C4.7002 5.20883 5.90903 4 7.4002 4H15.0002C16.4914 4 17.7002 5.20883 17.7002 6.7V17.3C17.7002 17.7706 17.5798 18.2131 17.3681 18.5984C18.0544 18.5629 18.6 17.9952 18.6 17.3001V8.70008L18.5999 8.68401V6.33301C19.4345 6.79231 20 7.68015 20 8.70008V17.3001C20 18.7913 18.7911 20.0001 17.3 20.0001H9.69995L9.674 20H7.40019C5.90903 20 4.7002 18.7912 4.7002 17.3V6.7ZM7.4002 5.4H15.0002C15.7182 5.4 16.3002 5.98203 16.3002 6.7V17.3C16.3002 18.018 15.7182 18.6 15.0002 18.6H7.40019C6.68222 18.6 6.1002 18.018 6.1002 17.3V6.7C6.1002 5.98203 6.68222 5.4 7.4002 5.4Z" fill="#6A737F"/>
+							</svg>
+						`,
+					},
+					onClickCallback: () => {
+						menu.close(() => {
+							this.openEntitySelectionSlider(EntitySelectorFactoryType.MAIL_ADDRESSBOOK_CONTACT);
+						});
+					},
+				});
+			}
+
+			if (this.crmMode)
+			{
+				actions.push({
+					id: EntitySelectorFactoryType.MAIL_CRM_ELEMENT,
+					title: Loc.getMessage('FIELDS_MAIL_CONTACT_SELECT_MENU_CRM_MODE'),
+					subTitle: '',
+					data: {
+						svgIcon: `
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M3.97477 7.97183C3.37356 6.60574 4.37409 5.07227 5.86663 5.07227H18.8134C20.3059 5.07227 21.3065 6.60574 20.7053 7.97183L20.6844 8.01926C20.3543 8.76939 19.6121 9.25362 18.7925 9.25362H5.8875C5.06793 9.25362 4.32578 8.76939 3.99565 8.01926L3.97477 7.97183ZM5.86663 6.47227C5.38502 6.47227 5.06217 6.96708 5.25617 7.40789L5.27704 7.45532C5.38357 7.69737 5.62304 7.85362 5.8875 7.85362H18.7925C19.057 7.85362 19.2965 7.69737 19.403 7.45532L19.4239 7.40789C19.6179 6.96708 19.295 6.47227 18.8134 6.47227H5.86663Z" fill="#6A737F"/>
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M6.01182 13.3704C5.43347 12.0073 6.4339 10.4961 7.91459 10.4961H16.7662C18.2468 10.4961 19.2473 12.0073 18.6689 13.3704L18.6488 13.4178C18.3248 14.1815 17.5756 14.6774 16.746 14.6774H7.93471C7.10515 14.6774 6.35596 14.1815 6.03194 13.4178L6.01182 13.3704ZM7.91459 11.8961C7.4368 11.8961 7.11399 12.3837 7.30061 12.8236L7.32073 12.871C7.42529 13.1174 7.66703 13.2774 7.93471 13.2774H16.746C17.0137 13.2774 17.2555 13.1174 17.36 12.871L17.3801 12.8236C17.5668 12.3837 17.2439 11.8961 16.7662 11.8961H7.91459Z" fill="#6A737F"/>
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M10.5337 15.7969C9.01467 15.7969 8.01455 17.3805 8.6674 18.7522L8.68997 18.7996C9.03266 19.5196 9.75893 19.9782 10.5563 19.9782H14.1251C14.9225 19.9782 15.6488 19.5196 15.9915 18.7996L16.014 18.7522C16.6669 17.3805 15.6668 15.7969 14.1477 15.7969H10.5337ZM9.93151 18.1505C9.72085 17.7079 10.0436 17.1969 10.5337 17.1969H14.1477C14.6379 17.1969 14.9606 17.7079 14.7499 18.1505L14.7274 18.1979C14.6168 18.4302 14.3824 18.5782 14.1251 18.5782H10.5563C10.299 18.5782 10.0647 18.4302 9.95408 18.1979L9.93151 18.1505Z" fill="#6A737F"/>
+							</svg>
+						`,
+					},
+					onClickCallback: () => {
+						menu.close(() => {
+							this.openEntitySelectionSlider(EntitySelectorFactoryType.MAIL_CRM_ELEMENT);
+						});
+					},
+				});
+			}
+
 			if (this.contactMode)
 			{
 				actions.push({
-					id: 'contact',
+					id: EntitySelectorFactoryType.CRM_CONTACT,
 					title: Loc.getMessage('FIELDS_MAIL_CONTACT_SELECT_MENU_CONTACT'),
 					subTitle: '',
 					data: {
@@ -451,7 +577,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 					},
 					onClickCallback: () => {
 						menu.close(() => {
-							this.openEntitySelectionSlider(EntitySelectorFactory.Type.CRM_CONTACT);
+							this.openEntitySelectionSlider(EntitySelectorFactoryType.CRM_CONTACT);
 						});
 					},
 				});
@@ -460,7 +586,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 			if (this.companyMode)
 			{
 				actions.push({
-					id: 'company',
+					id: EntitySelectorFactoryType.CRM_COMPANY,
 					title: Loc.getMessage('FIELDS_MAIL_CONTACT_SELECT_MENU_COMPANY'),
 					subTitle: '',
 					data: {
@@ -472,7 +598,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 					},
 					onClickCallback: () => {
 						menu.close(() => {
-							this.openEntitySelectionSlider(EntitySelectorFactory.Type.CRM_COMPANY);
+							this.openEntitySelectionSlider(EntitySelectorFactoryType.CRM_COMPANY);
 						});
 					},
 				});
@@ -481,7 +607,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 			if (this.userMode)
 			{
 				actions.push({
-					id: 'employee',
+					id: EntitySelectorFactoryType.USER,
 					title: Loc.getMessage('FIELDS_MAIL_CONTACT_SELECT_MENU_EMPLOYEE'),
 					subTitle: '',
 					data: {
@@ -493,7 +619,7 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 					},
 					onClickCallback: () => {
 						menu.close(() => {
-							this.openEntitySelectionSlider(EntitySelectorFactory.Type.USER);
+							this.openEntitySelectionSlider(EntitySelectorFactoryType.USER);
 						});
 					},
 				});

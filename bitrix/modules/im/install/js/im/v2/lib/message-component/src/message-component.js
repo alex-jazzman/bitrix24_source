@@ -32,6 +32,7 @@ const serverComponentList = new Set([
 	MessageComponent.callMessage,
 	MessageComponent.voteMessage,
 	MessageComponent.convertToCollabMessage,
+	MessageComponent.sticker,
 ]);
 
 const demoComponentList = new Set([
@@ -83,7 +84,17 @@ export class MessageComponentManager
 			return MessageComponent.smile;
 		}
 
+		if (this.#isForwardedSticker())
+		{
+			return MessageComponent.sticker;
+		}
+
 		return MessageComponent.default;
+	}
+
+	#isForwardedSticker(): boolean
+	{
+		return this.#hasSticker() && this.#isForward();
 	}
 
 	#isServerComponent(): boolean
@@ -111,9 +122,14 @@ export class MessageComponentManager
 		return this.#message.attach.length > 0;
 	}
 
+	#hasSticker(): boolean
+	{
+		return this.#store.getters['messages/stickers/isStickerMessage'](this.#message.id);
+	}
+
 	#isEmptyMessage(): boolean
 	{
-		return !this.#hasText() && !this.#hasFiles() && !this.#hasAttach();
+		return !this.#hasText() && !this.#hasFiles() && !this.#hasAttach() && !this.#hasSticker();
 	}
 
 	#isDeletedMessage(): boolean

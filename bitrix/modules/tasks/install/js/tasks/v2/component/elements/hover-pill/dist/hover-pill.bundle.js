@@ -8,6 +8,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	// @vue/component
 	const HoverPill = {
+	  name: 'HoverPill',
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
@@ -16,32 +17,58 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: Boolean,
 	      default: false
 	    },
+	    withSettings: {
+	      type: Boolean,
+	      default: false
+	    },
+	    textOnly: {
+	      type: Boolean,
+	      default: false
+	    },
+	    noOffset: {
+	      type: Boolean,
+	      default: false
+	    },
 	    readonly: {
 	      type: Boolean,
 	      default: false
 	    },
-	    transparentHover: {
+	    active: {
+	      type: Boolean,
+	      default: false
+	    },
+	    compact: {
 	      type: Boolean,
 	      default: false
 	    }
 	  },
-	  emits: ['clear'],
+	  emits: ['clear', 'settings'],
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
+	  computed: {
+	    classes() {
+	      return {
+	        '--text-only': this.textOnly,
+	        '--no-offset': this.noOffset,
+	        '--readonly': this.readonly,
+	        '--active': this.active,
+	        '--compact': this.compact
+	      };
+	    }
+	  },
 	  template: `
-		<div
-			class="b24-hover-pill"
-			:class="{ '--readonly': readonly, '--transparent': transparentHover }"
-			tabindex="0"
-		>
+		<div class="b24-hover-pill" :class="classes" tabindex="0">
 			<div class="b24-hover-pill-content">
 				<slot/>
 			</div>
-			<div v-if="withClear" class="b24-hover-pill-remover" @click.capture.stop="$emit('clear')">
+			<div v-if="withClear && !readonly" class="b24-hover-pill-remover" @click.stop="$emit('clear')">
 				<BIcon :name="Outline.CROSS_L"/>
+			</div>
+			<div v-if="withSettings" class="b24-hover-pill-remover" @click.stop="$emit('settings')">
+				<BIcon :name="Outline.FILTER_2_LINES"/>
 			</div>
 		</div>
 	`

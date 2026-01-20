@@ -45,7 +45,8 @@ export class PictureInPictureWindow {
 
 		this.eventEmitter = new EventEmitter(this, 'BX.Call.View');
 
-		this.isMinSize = false;
+		this.isMinHeight = false;
+		this.isMinWidth = false;
 
 		this.floorRequestElements = {
 			counter: null,
@@ -182,7 +183,7 @@ export class PictureInPictureWindow {
 
 	getButtonTextBySizePictureWindow(text)
 	{
-		return this.isMinSize ? "" : text;
+		return (this.isMinHeight || this.isMinWidth) ? '' : text;
 	}
 
 	renderButtons()
@@ -643,11 +644,11 @@ export class PictureInPictureWindow {
 
 					const self = this;
 
-					if (!this.floorRequestElements.popup && !this.isMinSize)
+					if (!this.floorRequestElements.popup && !this.isMinHeight)
 					{
 						this.updateTemplateForFloorRequestsPopup();
 						this.floorRequestElements.popup = new Popup({
-							className : "bx-call-picture-in-picture-window__popup",
+							className: "bx-call-picture-in-picture-window__popup",
 							bindElement: this.floorRequestElements.counter,
 							targetContainer: this.pictureWindow.document.body,
 							content: this.floorRequestElements.popupTemplate,
@@ -656,9 +657,9 @@ export class PictureInPictureWindow {
 							},
 							autoHide: true,
 							closeByEsc: true,
-							background: '#ffffff',
-							contentBackground: '#ffffff',
-							darkMode: false,
+							background: '#00428F',
+							contentBackground: '#00428F',
+							darkMode: true,
 							contentNoPaddings: true,
 							animation: "fading",
 							padding: 0,
@@ -729,31 +730,55 @@ export class PictureInPictureWindow {
 		}
 	}
 
-	setSizePictureWindow()
+	setHeightPictureWindow()
 	{
 		// TODO: debounce/throttle
 		if (!this.template)
 		{
-			return;
+			return false;
 		}
 
 		const pictureWindowHeight = this.template.clientHeight;
-		const isMinSize = pictureWindowHeight <= 80;
+		const isMinHeight = pictureWindowHeight <= 80;
 
-		if (this.isMinSize === isMinSize)
+		if (this.isMinHeight === isMinHeight)
 		{
-			return;
+			return false;
 		}
 
-		if (isMinSize && !!this.floorRequestElements.popup)
+		if (isMinHeight && !!this.floorRequestElements.popup)
 		{
 			this.floorRequestElements.popup.close();
 		}
 
-		this.isMinSize = isMinSize;
+		this.isMinHeight = isMinHeight;
 
-		this.updateButtons();
-		this.template.classList[this.isMinSize ? 'add' : 'remove']('bx-call-picture-in-picture-window_min');
+		this.template.classList[this.isMinHeight ? 'add' : 'remove']('bx-call-picture-in-picture-window_min');
+
+		return true;
+	}
+
+	setWidthPictureWindow()
+	{
+		// TODO: debounce/throttle
+		if (!this.template)
+		{
+			return false;
+		}
+
+		const pictureWindowWidth = this.template.clientWidth;
+		const isMinWidth = pictureWindowWidth <= 310;
+
+		if (this.isMinWidth === isMinWidth)
+		{
+			return false;
+		}
+
+		this.isMinWidth = isMinWidth;
+
+		this.template.classList[this.isMinWidth ? 'add' : 'remove']('bx-call-picture-in-picture-window_thin');
+
+		return true;
 	}
 
 	setAvatarSettings()
@@ -778,7 +803,13 @@ export class PictureInPictureWindow {
 	onResize()
 	{
 		this.setAvatarSettings();
-		this.setSizePictureWindow();
+		const isHeightUpdated = this.setHeightPictureWindow();
+		const isWidthUpdated = this.setWidthPictureWindow();
+
+		if (isHeightUpdated || isWidthUpdated)
+		{
+			this.updateButtons();
+		}
 
 		if (this.floorRequestElements.popup)
 		{

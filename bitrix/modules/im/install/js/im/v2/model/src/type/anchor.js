@@ -8,5 +8,4 @@ export type Anchor = {
 	parentMessageId: number;
 	type: AnchorType;
 	subType: string | null;
-	userId: number;
 };

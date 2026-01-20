@@ -79,6 +79,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 				withAnimation = true,
 				force = false,
 				prevMessageId = null,
+				position = AfterScrollMessagePosition.top,
 			} = params;
 			logger.log(`${this.constructor.name}.onScrollToBottom params`, params);
 
@@ -121,7 +122,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 							});
 					}, 300);
 				},
-				AfterScrollMessagePosition.top,
+				position,
 			);
 		}
 
@@ -238,7 +239,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 		{
 			const { indexList } = this.view.getCompletelyVisibleMessages();
 
-			this.needScrollToFirstUnread = indexList.includes(BOTTOM_MESSAGE_INDEX);
+			this.needScrollToFirstUnread = indexList?.includes(BOTTOM_MESSAGE_INDEX);
 		}
 
 		onScrollBegin()

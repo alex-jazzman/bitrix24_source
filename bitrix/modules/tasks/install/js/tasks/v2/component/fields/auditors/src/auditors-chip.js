@@ -1,30 +1,26 @@
-import { Item } from 'ui.entity-selector';
-import { Outline } from 'ui.icon-set.api.core';
+import { Chip, ChipDesign } from 'ui.system.chip.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
-import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
-import { participantMeta } from 'tasks.v2.component.elements.participant-list';
+import { Core } from 'tasks.v2.core';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
-import { UserSelectorDialog } from 'tasks.v2.lib.user-selector-dialog';
+import { showLimit } from 'tasks.v2.lib.show-limit';
+import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { auditorsMeta } from './auditors-meta';
-import { AuditorsMixin } from './auditors-mixin';
 
 // @vue/component
 export const AuditorsChip = {
 	components: {
 		Chip,
 	},
-	mixins: [AuditorsMixin],
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -32,30 +28,18 @@ export const AuditorsChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		preselected(): [string, number][]
-		{
-			return this.task.auditorsIds.map((id: number) => ['user', id]);
-		},
 		design(): string
 		{
 			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, auditorsMeta.id);
+			return this.task.filledFields[auditorsMeta.id];
 		},
-		readonly(): boolean
+		isLocked(): boolean
 		{
-			return !this.task.rights.edit;
+			return !Core.getParams().restrictions.stakeholder.available;
 		},
-	},
-	unmounted(): void
-	{
-		this.selector?.destroy();
 	},
 	methods: {
 		handleClick(): void
@@ -67,30 +51,30 @@ export const AuditorsChip = {
 				return;
 			}
 
-			this.selector ??= new UserSelectorDialog({
-				taskId: this.taskId,
-				preselected: this.preselected,
-				dialogOptions: participantMeta.dialogOptions(this.taskId, 'auditors'),
-				events: {
-					onHide: () => {
-						const users = this.selector.getDialog().getSelectedItems().map((item: Item) => ({
-							id: item.getId(),
-							name: item.getTitle(),
-							image: item.getAvatar(),
-						}));
+			if (this.isLocked)
+			{
+				void showLimit({
+					featureId: Core.getParams().restrictions.stakeholder.featureId,
+					bindElement: this.$el,
+				});
 
-						if (!this.isSelected && users.length > 0)
-						{
-							this.highlightField();
-						}
+				return;
+			}
 
-						this.update(users);
-					},
-				},
+			void usersDialog.show({
+				targetNode: this.$el,
+				ids: this.task.auditorsIds,
+				onClose: this.handleClose,
 			});
+		},
+		handleClose(auditorsIds: number[]): void
+		{
+			if (!this.isSelected && auditorsIds.length > 0)
+			{
+				this.highlightField();
+			}
 
-			this.selector.selectItemsByIds(this.preselected);
-			this.selector.show(this.$el);
+			void taskService.update(this.taskId, { auditorsIds });
 		},
 		highlightField(): void
 		{
@@ -99,9 +83,10 @@ export const AuditorsChip = {
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			v-if="isSelected || task.rights.addAuditors"
+			:design
 			:icon="Outline.OBSERVER"
+			:lock="isLocked"
 			:text="loc('TASKS_V2_AUDITORS_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="auditorsMeta.id"

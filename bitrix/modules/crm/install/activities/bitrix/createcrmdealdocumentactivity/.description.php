@@ -2,19 +2,28 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
 
 $arActivityDescription = [
 	'NAME' => GetMessage('CRM_ACTIVITY_CREATE_DEAL_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_ACTIVITY_CREATE_DEAL_DESC'),
-	'TYPE' => 'activity',
+	'TYPE' => [
+		'activity',
+		enum_exists('\Bitrix\Bizproc\Activity\Enum\ActivityType')
+			? \Bitrix\Bizproc\Activity\Enum\ActivityType::NODE_ACTION->value
+			: 'node_action'
+		,
+	],
 	'CLASS' => 'CreateCrmDealDocumentActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
 		'ID' => 'document',
 		"OWN_ID" => 'crm',
 		"OWN_NAME" => 'CRM',
+	],
+	'NODE_ACTION_SETTINGS' => [
+		'INCLUDE' => ['crmdealcomplexactivity'],
 	],
 	'RETURN' => [
 		'DealId' => [

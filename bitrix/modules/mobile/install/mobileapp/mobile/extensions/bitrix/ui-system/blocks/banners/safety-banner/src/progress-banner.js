@@ -55,7 +55,7 @@ jn.define('ui-system/blocks/banners/safety-banner/src/progress-banner', (require
 				View(
 					{
 						style: {
-							flex: 1,
+							flexShrink: 1,
 						},
 					},
 					this.renderImage(),
@@ -63,8 +63,9 @@ jn.define('ui-system/blocks/banners/safety-banner/src/progress-banner', (require
 				View(
 					{
 						style: {
-							flex: 2,
-							marginLeft: Indent.XL3.toNumber(),
+							flex: 1,
+							marginTop: Indent.S.toNumber(),
+							marginLeft: Indent.S.toNumber(),
 						},
 					},
 					this.renderTitle(),
@@ -110,7 +111,7 @@ jn.define('ui-system/blocks/banners/safety-banner/src/progress-banner', (require
 						position: 'relative',
 						height: 6,
 						marginTop: Indent.S.toNumber(),
-						backgroundColor: Color.baseWhiteFixed.toHex(),
+						backgroundColor: Color.bgContentTertiary.toHex(),
 						borderRadius: Component.elementAccentCorner.toNumber(),
 					},
 				},
@@ -137,8 +138,8 @@ jn.define('ui-system/blocks/banners/safety-banner/src/progress-banner', (require
 				testId: this.getTestId('image'),
 				resizeMode: 'contain',
 				style: {
-					height: 108,
-					width: 108,
+					height: 130,
+					width: 130,
 				},
 			});
 		}

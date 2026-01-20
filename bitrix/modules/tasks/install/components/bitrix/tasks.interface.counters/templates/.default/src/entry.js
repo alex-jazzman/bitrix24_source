@@ -1,5 +1,6 @@
 import { Loc, Runtime, Event, ajax as Ajax } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Button, AirButtonStyle, ButtonSize, ButtonCounterStyle } from 'ui.buttons';
 import { CounterItem, CounterPanel } from 'ui.counterpanel';
 import { Filter } from './counters-helper';
 import { Controller as Viewed } from 'tasks.viewed';
@@ -82,6 +83,7 @@ export class Counters extends CounterPanel
 				'scrum_total_comments',
 				'scrum_foreign_comments',
 				'flow_total_comments',
+				'new_comments_total',
 			],
 			project: [
 				'project_expired',
@@ -129,6 +131,9 @@ export class Counters extends CounterPanel
 		this.role = options.role;
 		this.signedParameters = options.signedParameters;
 		this.#filterId = options.filterId;
+
+		this.tasksChatUri = options.tasksChatUri;
+		this.chatButton = null;
 
 		this.setData(this.counters);
 		this.initPull();
@@ -564,6 +569,7 @@ export class Counters extends CounterPanel
 
 	setData(counters)
 	{
+		this.counters = counters;
 		this.myCounters = {};
 		this.otherCounters = {};
 
@@ -642,6 +648,7 @@ export class Counters extends CounterPanel
 	rerender(counters)
 	{
 		this.setData(counters);
+		this.initChatButtonCounter();
 
 		let isValueUpdated = false;
 		let parentTotal = 0;
@@ -691,6 +698,70 @@ export class Counters extends CounterPanel
 	render(): void
 	{
 		super.init();
+
+		this.renderChatButton();
+	}
+
+	renderChatButton(): void
+	{
+		const container = document.getElementById('tasks-chat-button');
+
+		if (!container || !this.tasksChatUri)
+		{
+			return;
+		}
+
+		this.chatButton = new Button({
+			text: Loc.getMessage('TASKS_COUNTERS_CHAT_BUTTON'),
+			onclick: () => this.handleChatButtonClick(),
+			style: AirButtonStyle.OUTLINE,
+			size: ButtonSize.SMALL,
+			useAirDesign: true,
+		});
+
+		this.initChatButtonCounter();
+
+		this.chatButton.renderTo(container);
+	}
+
+	async handleChatButtonClick(): void
+	{
+		const { Messenger } = await top.BX.Runtime.loadExtension('im.public');
+
+		if (Messenger?.isEmbeddedMode() || Messenger?.isMessengerSliderOpened())
+		{
+			BX.SidePanel.Instance.emulateAnchorClick('/online/?IM_TASK');
+
+			return;
+		}
+
+		BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
+	}
+
+	initChatButtonCounter(): void
+	{
+		if (this.counters.new_comments_total && this.chatButton)
+		{
+			const value = Number(this.counters.new_comments_total.VALUE);
+
+			if (this.chatButton.getLeftCounter())
+			{
+				this.chatButton.getLeftCounter().setValue(value);
+				this.chatButton.getLeftCounter().setColor(this.getChatButtonCounterColor(value));
+
+				return;
+			}
+
+			this.chatButton.setLeftCounter({
+				value,
+				color: this.getChatButtonCounterColor(value),
+			});
+		}
+	}
+
+	getChatButtonCounterColor(value): String
+	{
+		return value ? ButtonCounterStyle.FILLED_SUCCESS : ButtonCounterStyle.OUTLINE_NO_ACCENT;
 	}
 
 	connectWithFilter(): void

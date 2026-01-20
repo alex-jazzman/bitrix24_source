@@ -24,7 +24,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
-	const { ChatDataProvider } = require('im/messenger/provider/data');
+	const { ChatDataProvider, ReactionDataProvider } = require('im/messenger/provider/data');
 
 	const {
 		DialogType,
@@ -60,18 +60,14 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			}
 			this.logger.log(`${this.getClassName()}.handleMessage `, params, extra);
 
-			const dialogId = params.dialogId;
 			const userId = MessengerParams.getUserId();
-
-			const recipientId = params.message.senderId === userId
-				? params.message.recipientId
-				: params.message.senderId
-			;
-
 			const recentParams = clone(params);
-			const userData = recentParams.users[recipientId];
+			const dialogId = recentParams.dialogId;
+			const senderId = recentParams.message.senderId;
+
+			const userData = recentParams.users[dialogId];
 			const recentItem = RecentDataConverter.fromPushToModel({
-				id: recipientId,
+				id: dialogId,
 				user: userData,
 				message: recentParams.message,
 				counter: recentParams.counter,
@@ -84,19 +80,25 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				return;
 			}
-			recentItem.message.status = recentParams.message.senderId === userId ? 'received' : '';
+			recentItem.message.status = senderId === userId ? 'received' : '';
 			this.updateDialog(params)
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
+				.then(() => this.setUsers(params))
 				.then(() => {
-					if (extra && extra.server_time_ago <= 5 && params.message.senderId !== userId)
+					if (extra && extra.server_time_ago <= 5 && senderId !== userId)
 					{
-						const userName = ChatTitle.createFromDialogId(params.message.senderId).getTitle();
-						const userAvatar = ChatAvatar.createFromDialogId(params.message.senderId).getAvatarUrl();
+						const userName = ChatTitle.createFromDialogId(dialogId).getTitle();
+						const userAvatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
+
+						const textPrefix = senderId === dialogId
+							? null
+							: this.store.getters['usersModel/getById'](senderId).name
+						;
 
 						Notifier.notify({
-							dialogId: recipientId,
+							dialogId,
 							title: userName,
-							text: recentItem.message.text,
+							text: this.createMessageChatNotifyText(params.message.text, textPrefix, params.message),
 							avatar: userAvatar,
 							recentConfig: params.recentConfig,
 						}).catch((error) => {
@@ -108,7 +110,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 					this.saveShareDialogCache();
 				})
-				.then(() => this.setUsers(params))
 				.then(() => this.setFiles(params))
 				.then(() => {
 					this.checkTimerInputAction(params.dialogId, params.message.senderId);
@@ -193,7 +194,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 						Notifier.notify({
 							dialogId: dialog.dialogId,
 							title: dialogTitle,
-							text: this.createMessageChatNotifyText(recentItem.message.text, userName),
+							text: this.createMessageChatNotifyText(recentItem.message.text, userName, params.message),
 							avatar,
 							recentConfig: params.recentConfig,
 						}).catch((error) => {
@@ -318,25 +319,64 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				reaction,
 				dialogId,
 			} = params;
-			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
-			if (!('id' in message))
-			{
-				return;
-			}
 
-			if (MessengerParams.getUserId().toString() === userId.toString())
+			if (String(MessengerParams.getUserId()) === String(userId))
 			{
 				actualReactionsState.ownReactions = [reaction];
 			}
 
+			if (Type.isStringFilled(dialogId))
+			{
+				actualReactionsState.dialogId = dialogId;
+			}
+
+			this.#updateAnchor(dialogId, params)
+				.catch((err) => this.logger.error(`${this.getClassName()}.handleAddReaction.updateAnchor.catch err:`, err));
+
+			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
+			if (Type.isNil(message?.id))
+			{
+				try
+				{
+					const reactionDataProvider = new ReactionDataProvider();
+					reactionDataProvider.setToSource(
+						ReactionDataProvider.source.database,
+						actualReactionsState,
+					)
+						.catch((error) => this.logger.error(`${this.getClassName()}.handleAddReaction ReactionDataProvider.setToSource catch:`, error));
+
+				}
+				catch (error)
+				{
+					this.logger.error(
+						`${this.getClassName()}.handleAddReaction ReactionDataProvider.setToSource catch:`,
+						error,
+					);
+				}
+
+				return;
+			}
+
 			this.store.dispatch('usersModel/addShort', usersShort)
 				.then(() => {
-					this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
+					return this.store.dispatch('messagesModel/updateReactionState', {
+						id: message.id,
+						fields: {
+							reactionsViewed: false,
+							lastReactionId: reaction,
+						},
+					});
+				})
+				.then(() => {
+					return this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
 						usersShort,
 						reactions: [actualReactionsState],
 					});
 				})
-				.catch((err) => this.logger.error(`${this.getClassName()}.handleAddReaction.usersModel/addShort.catch err:`, err));
+				.catch((err) => this.logger.error(
+					`${this.getClassName()}.handleAddReaction.usersModel/addShort.catch err:`,
+					err,
+				));
 
 			this.#updateRecentReaction(dialogId, userId, actualReactionsState.messageId, true);
 		}
@@ -362,16 +402,52 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				userId,
 			} = params;
 
-			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
-			if (!('id' in message))
+			if (Type.isStringFilled(dialogId))
 			{
+				actualReactionsState.dialogId = dialogId;
+			}
+
+			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
+			if (Type.isNil(message?.id))
+			{
+				try
+				{
+					const reactionDataProvider = new ReactionDataProvider();
+					reactionDataProvider.deleteFromSource(
+						ReactionDataProvider.source.database,
+						actualReactionsState,
+					)
+						.catch((error) => this.logger.error('handleDeleteReaction ReactionDataProvider.deleteFromSource catch:', error));
+
+				}
+				catch (error)
+				{
+					this.logger.error(
+						'handleDeleteReaction ReactionDataProvider.deleteFromSource catch:',
+						error,
+					);
+				}
+
 				return;
 			}
 
-			this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
-				usersShort,
-				reactions: [actualReactionsState],
-			}).catch((err) => this.logger.error(`${this.getClassName()}.handleDeleteReaction.messagesModel.catch err:`, err));
+			this.store.dispatch('messagesModel/updateReactionState', {
+				id: message.id,
+				fields: {
+					reactionsViewed: true,
+					lastReactionId: '',
+				},
+			})
+				.then(() => {
+					return this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
+						usersShort,
+						reactions: [actualReactionsState],
+					});
+				})
+				.catch((err) => this.logger.error(
+					`${this.getClassName()}.handleDeleteReaction.messagesModel.catch err:`,
+					err,
+				));
 
 			this.#updateRecentReaction(dialogId, userId, actualReactionsState.messageId, false);
 		}
@@ -1345,12 +1421,14 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 * @protected
 		 * @param {string} messageText
 		 * @param {?string} userName
+		 * @param {RawMessage} message
 		 * @return {string}
 		 */
-		createMessageChatNotifyText(messageText, userName)
+		createMessageChatNotifyText(messageText, userName, message)
 		{
 			const simplifiedMessageText = parser.simplify({
 				text: messageText,
+				sticker: Type.isPlainObject(message.params?.STICKER_PARAMS),
 			});
 
 			return (userName ? `${userName}: ` : '') + simplifiedMessageText;
@@ -1407,6 +1485,42 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				id: dialogId,
 				liked,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.updateRecentReaction.recentModel/like.catch:`, err));
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {AddReactionParams} params
+		 */
+		async #updateAnchor(dialogId, params)
+		{
+			const chatId = DialogHelper.isDialogId(dialogId) ? Number(dialogId.slice(4)) : dialogId;
+			const { userId, actualReactions, reaction } = params;
+			const anchors = this.store.getters['anchorModel/getByMessageId'](
+				chatId,
+				actualReactions.reaction.messageId,
+			);
+
+			if (!Type.isArrayFilled(anchors))
+			{
+				return;
+			}
+
+			let userAnchor = null;
+			for (let i = anchors.length - 1; i >= 0; i--)
+			{
+				if (anchors[i].fromUserId === userId && anchors[i].messageId === actualReactions.reaction.messageId)
+				{
+					userAnchor = anchors[i];
+					break;
+				}
+			}
+
+			if (userAnchor)
+			{
+				userAnchor.subType = reaction;
+
+				await this.store.dispatch('anchorModel/updateByAuthorId', userAnchor);
+			}
 		}
 	}
 

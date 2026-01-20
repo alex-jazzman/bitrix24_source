@@ -1,8 +1,10 @@
 import {DialogId} from '../../../types/common';
 import {DialoguesModelState} from '../../../model/dialogues/src/types';
-import {MessengerCoreStore } from '../../../core/types/store';
+import {MessengerCoreStore} from '../../../core/types/store';
 import {IServiceLocator} from '../../../lib/di/service-locator/types';
 import {ForwardMessageIds} from '../lib/reply-manager/types/reply-manager';
+import {AvatarDetail} from "../../../lib/element/chat-avatar/chat-avatar";
+import {ReactionLottieUrlMap, ReactionPngUrlMap, ReactionSvgUrlMap} from "../../../lib/reaction-manager/types";
 
 declare type DialogOpenOptions = {
 	dialogId: string,
@@ -32,6 +34,20 @@ declare type DialogTitleParams = {
 	chatType?: DialogTitleParamsChatType,
 }
 
+declare type DialogWidgetReactionSettings = {
+	lottie: ReactionLottieUrlMap,
+	svg?: ReactionSvgUrlMap,
+	png?: ReactionPngUrlMap,
+	currentUserAvatar: DialogReactionSettingCurrentUserAvatar,
+	version?: number,
+	isMultiSelection?: boolean,
+}
+declare type DialogReactionSettingCurrentUserAvatar = {
+	defaultIconSvg?: string,
+	imageUrl?: string,
+	avatar: AvatarDetail,
+}
+
 declare type DialogTitleParamsChatType = 'lines' | 'open'
 
 declare type DialogEvents = {
@@ -56,8 +72,13 @@ declare type DialogLocatorServices = Partial<{
 	'message-service': MessageService,
 	'reply-manager': ReplyManager,
 	'select-manager': SelectManager,
+	'draft-manager': DraftManager,
+	'vote-manager': VoteManager,
+	'action-button-manager': ActionButtonManager,
+	'input-action-manager': InputActionManager,
 	'text-field-manager': DialogTextFieldManager,
 	'header-buttons': HeaderButtonsController,
+	'message-sender': MessageSender,
 	'store': MessengerCoreStore,
 	'view': DialogView,
 	'emitter': DialogEmitter,

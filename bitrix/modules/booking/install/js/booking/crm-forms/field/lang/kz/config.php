@@ -6,6 +6,7 @@ $MESS["BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_LABEL"] = "Ресурсты та
 $MESS["BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_PLACEHOLDER"] = "Таңдалмаған";
 $MESS["BOOKING_CRM_FORMS_FIELD_DATE_TIME_TITLE"] = "Күн мен уақытты таңдаңыз";
 $MESS["BOOKING_CRM_FORMS_FIELD_TIME_TITLE"] = "#DATE# күнге уақыт таңдаңыз";
+$MESS["BOOKING_CRM_FORMS_RESOURCE_DESCRIPTION_MORE"] = "...тағы";
 $MESS["BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE"] = "Бұл күні бос слоттар жоқ, #BR# басқа күнді таңдап көріңіз";
 $MESS["BOOKING_CRM_FORMS_RESOURCE_RESOURCE_NOT_WORKING_MESSAGE"] = "Бұл демалыс күні, басқа күнді таңдауға тырысыңыз";
 $MESS["BOOKING_CRM_FORMS_SHOW_MORE_SLOTS"] = "Тағы көрсету";

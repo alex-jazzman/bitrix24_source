@@ -1,0 +1,25 @@
+.tasks-time-tracking-list-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	padding: 74px 42px 0 42px;
+}
+
+.tasks-time-tracking-list-empty-icon {
+	width: 145px;
+	height: 140px;
+	background: url('./tasks-time-tracking-empty.png') no-repeat center center;
+}
+
+.tasks-time-tracking-list-empty-text {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.tasks-time-tracking-list-empty-text .ui-headline {
+	text-align: center;
+	color: var(--ui-color-base-2);
+	font-weight: var(--ui-font-weight-normal);
+}

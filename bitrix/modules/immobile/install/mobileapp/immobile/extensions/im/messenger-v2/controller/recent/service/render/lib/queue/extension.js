@@ -2,14 +2,8 @@
  * @module im/messenger-v2/controller/recent/service/render/lib/queue
  */
 jn.define('im/messenger-v2/controller/recent/service/render/lib/queue', (require, exports, module) => {
-	const QueueOperation = {
-		setItems: 'setItems',
-		setPreparedItems: 'setPreparedItems',
-		removeItems: 'removeItems',
-		removeItemsByIds: 'removeItemsByIds',
-		upsertItems: 'upsertItems',
-		upsertPreparedItems: 'upsertPreparedItems',
-	};
+	const { QueueOperation } = require('im/messenger-v2/controller/recent/service/render/lib/queue/const');
+	const { optimizeQueue } = require('im/messenger-v2/controller/recent/service/render/lib/queue/optimize');
 
 	/**
 	 * @class RenderQueue
@@ -184,5 +178,9 @@ jn.define('im/messenger-v2/controller/recent/service/render/lib/queue', (require
 		}
 	}
 
-	module.exports = { RenderQueue, QueueOperation };
+	module.exports = {
+		RenderQueue,
+		QueueOperation,
+		optimizeQueue,
+	};
 });

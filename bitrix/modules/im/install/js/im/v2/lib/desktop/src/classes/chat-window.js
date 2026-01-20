@@ -42,9 +42,9 @@ export class DesktopChatWindow
 
 	#sendInitEvent()
 	{
-		const { currentUser } = Core.getApplicationData();
+		const { preloadedEntities: { legacyCurrentUser } } = Core.getApplicationData();
 		DesktopApi.emit(EventType.desktop.onInit, [{
-			userInfo: currentUser ?? {},
+			userInfo: legacyCurrentUser,
 		}]);
 	}
 

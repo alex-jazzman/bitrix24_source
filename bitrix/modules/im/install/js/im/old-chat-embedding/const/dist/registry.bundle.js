@@ -392,58 +392,6 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 	  viewed: 'viewed'
 	});
 
-	/**
-	 * Bitrix Messenger
-	 * Conference constants
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2020 Bitrix
-	 */
-
-	const ConferenceFieldState = Object.freeze({
-	  view: 'view',
-	  edit: 'edit',
-	  create: 'create'
-	});
-	const ConferenceStateType = Object.freeze({
-	  preparation: 'preparation',
-	  call: 'call'
-	});
-	const ConferenceErrorCode = Object.freeze({
-	  userLimitReached: 'userLimitReached',
-	  detectIntranetUser: 'detectIntranetUser',
-	  bitrix24only: 'bitrix24only',
-	  kickedFromCall: 'kickedFromCall',
-	  unsupportedBrowser: 'unsupportedBrowser',
-	  missingMicrophone: 'missingMicrophone',
-	  unsafeConnection: 'unsafeConnection',
-	  wrongAlias: 'wrongAlias',
-	  notStarted: 'notStarted',
-	  finished: 'finished',
-	  userLeftCall: 'userLeftCall',
-	  noSignalFromCamera: 'noSignalFromCamera'
-	});
-	const ConferenceRightPanelMode = Object.freeze({
-	  hidden: 'hidden',
-	  chat: 'chat',
-	  users: 'users',
-	  split: 'split'
-	});
-
-	//BX.Call.UserState sync
-	const ConferenceUserState = Object.freeze({
-	  Idle: 'Idle',
-	  Busy: 'Busy',
-	  Calling: 'Calling',
-	  Unavailable: 'Unavailable',
-	  Declined: 'Declined',
-	  Ready: 'Ready',
-	  Connecting: 'Connecting',
-	  Connected: 'Connected',
-	  Failed: 'Failed'
-	});
-
 	const RecentSection = {
 	  general: 'general',
 	  pinned: 'pinned'
@@ -603,6 +551,40 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 	  smileLastUpdateTime: 'smileLastUpdateTime'
 	});
 
+	const SpecialMentionDialogId = Object.freeze({
+	  allParticipants: 'all'
+	});
+
+	const ChatType = Object.freeze({
+	  user: 'user',
+	  chat: 'chat',
+	  open: 'open',
+	  general: 'general',
+	  videoconf: 'videoconf',
+	  announcement: 'announcement',
+	  call: 'call',
+	  support24Notifier: 'support24Notifier',
+	  support24Question: 'support24Question',
+	  crm: 'crm',
+	  sonetGroup: 'sonetGroup',
+	  calendar: 'calendar',
+	  tasks: 'tasks',
+	  taskComments: 'tasksTask',
+	  thread: 'thread',
+	  mail: 'mail',
+	  lines: 'lines',
+	  copilot: 'copilot',
+	  channel: 'channel',
+	  openChannel: 'openChannel',
+	  generalChannel: 'generalChannel',
+	  comment: 'comment',
+	  collab: 'collab'
+	});
+
+	const DataAttribute = {
+	  useNativeContextMenu: 'data-use-native-context-menu'
+	};
+
 	exports.DateFormat = DateFormat;
 	exports.DeviceType = DeviceType;
 	exports.DeviceOrientation = DeviceOrientation;
@@ -631,11 +613,6 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 	exports.MessageComponent = MessageComponent;
 	exports.MessageMentionType = MessageMentionType;
 	exports.OwnMessageStatus = OwnMessageStatus;
-	exports.ConferenceFieldState = ConferenceFieldState;
-	exports.ConferenceStateType = ConferenceStateType;
-	exports.ConferenceErrorCode = ConferenceErrorCode;
-	exports.ConferenceRightPanelMode = ConferenceRightPanelMode;
-	exports.ConferenceUserState = ConferenceUserState;
 	exports.RecentSection = RecentSection;
 	exports.MessageStatus = MessageStatus;
 	exports.RecentCallStatus = RecentCallStatus;
@@ -655,6 +632,9 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 	exports.ApplicationLayout = ApplicationLayout;
 	exports.PopupType = PopupType;
 	exports.LocalStorageKey = LocalStorageKey;
+	exports.SpecialMentionDialogId = SpecialMentionDialogId;
+	exports.ChatType = ChatType;
+	exports.DataAttribute = DataAttribute;
 
 }((this.BX.Messenger.Embedding.Const = this.BX.Messenger.Embedding.Const || {})));
 //# sourceMappingURL=registry.bundle.js.map

@@ -41,7 +41,7 @@ $MESS["BICONNECTOR_CONNECTION_NOTE"] = "
 </pre>
 <p>Примерное содержимое файла after_connect_bi.php:</p>
 <pre>
-\$this->queryExecute(\"SET NAMES 'cp1251'\");
+\$this->queryExecute(\"SET NAMES 'utf-8'\");
 \$this->queryExecute(\"SET sql_mode=''\");
 </pre>
 <p>Обратите внимание на использование '\$this' для донастройки подключения.</p>

@@ -92,7 +92,7 @@ $APPLICATION->IncludeComponent(
 	false
 );
 
-$entity = Bitrix\Main\Entity\Base::getInstance('Bitrix\Tasks\TaskTable');
+$entity = Bitrix\Main\Entity\Base::getInstance('Bitrix\Tasks\TaskTable'); // todo: move phrases
 $status_lang = $entity->getField('STATUS')->getLangCode();
 $status_lang_pseudo = $entity->getField('STATUS_PSEUDO')->getLangCode();
 $priority_lang = $entity->getField('PRIORITY')->getLangCode();

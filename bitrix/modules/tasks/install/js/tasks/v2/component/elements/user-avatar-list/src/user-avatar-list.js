@@ -3,7 +3,6 @@ import type { PopupOptions } from 'main.popup';
 import { Popup } from 'ui.vue3.components.popup';
 import 'ui.tooltip';
 
-import { hrefClick } from 'tasks.v2.lib.href-click';
 import { userService } from 'tasks.v2.provider.service.user-service';
 import { UserAvatar } from 'tasks.v2.component.elements.user-avatar';
 import type { UserModel } from 'tasks.v2.model.users';
@@ -27,6 +26,10 @@ export const UserAvatarList = {
 		visibleAmount: {
 			type: Number,
 			default: 3,
+		},
+		withPopup: {
+			type: Boolean,
+			default: true,
 		},
 	},
 	data(): Object
@@ -69,11 +72,16 @@ export const UserAvatarList = {
 	methods: {
 		showListUsers(): void
 		{
+			if (!this.withPopup)
+			{
+				return;
+			}
+
 			this.isPopupShown = true;
 		},
 		handleClickFromListUsers(userId: number): void
 		{
-			hrefClick(userService.getUrl(userId));
+			BX.SidePanel.Instance.emulateAnchorClick(userService.getUrl(userId));
 		},
 	},
 	template: `
@@ -107,9 +115,8 @@ export const UserAvatarList = {
 				<div class="b24-user-avatar-list-users --popup">
 					<UserAvatarListUsers
 						:users="popupUsers"
-						:withCross="false"
 						ref="popupUserList"
-						@onClick="(userId) => handleClickFromListUsers(userId)"
+						@onUserClick="(userId) => handleClickFromListUsers(userId)"
 					/>
 				</div>
 			</Popup>

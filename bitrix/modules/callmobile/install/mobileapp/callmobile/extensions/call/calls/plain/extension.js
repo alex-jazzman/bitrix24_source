@@ -1,7 +1,10 @@
 "use strict";
 
-(function ()
-{
+jn.define('call/calls/plain', (require, exports, module) => {
+
+	const { CallLogger } = require('call/calls/logger');
+	const { ActiveCallNotification } = require('call/calls/active-call-notification');
+
 	const DoNothing = function ()
 	{
 	};
@@ -110,6 +113,11 @@
 			this.created = new Date();
 
 			this.initPeers();
+
+			this.activeCallNotification = new ActiveCallNotification({
+				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
+				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
+			});
 		}
 
 		get provider()
@@ -548,9 +556,10 @@
 			callEngine.getRestClient().callMethod(ajaxActions.decline, data).then(() => this.destroy());
 		};
 
-		hangup()
+		hangup(force = false)
 		{
-			if (!this.ready)
+			this.dismissActiveCallNotification();
+			if (!this.ready && !force)
 			{
 				let error = new Error("Hangup in wrong state");
 				this.log(error);
@@ -596,6 +605,38 @@
 		runCallback(eventName, event)
 		{
 
+		}
+
+		showActiveCallNotification(notificationParams)
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.show(notificationParams);
+			}
+		}
+
+		updateActiveCallNotificationMicrophoneStatus(notificationParams)
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.update(notificationParams);
+			}
+		}
+
+		dismissActiveCallNotification()
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.dismiss();
+			}
+		}
+
+		destroyActiveCallNotification()
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.destroy();
+			}
 		}
 
 		_onPullEvent(command, params, extra)
@@ -931,6 +972,7 @@
 
 		destroy()
 		{
+			this.destroyActiveCallNotification();
 			this.ready = null;
 			this._active = false;
 			this._joinStatus = BX.Call.JoinStatus.None;
@@ -984,6 +1026,8 @@
 			this.peerConnection = null;
 			this.pendingIceCandidates = {};
 			this.localIceCandidates = [];
+			this.isWaitAnswer = false;
+			this.offersStack = 0;
 
 			this.trackList = {};
 
@@ -1300,6 +1344,7 @@
 
 			if (!skipOffer)
 			{
+				this.offersStack++;
 				this.createAndSendOffer();
 			}
 		}
@@ -1391,6 +1436,7 @@
 			if (this.isRenegotiationSupported())
 			{
 				this.updateOutgoingTracks();
+				this.offersStack++;
 				this.createAndSendOffer();
 			}
 			else
@@ -1439,7 +1485,15 @@
 
 		createAndSendOffer(config)
 		{
-			let connectionConfig = Object.assign({}, defaultConnectionOptions, config);
+			if (this.offersStack === 0 || this.isWaitAnswer)
+			{
+				return;
+			}
+
+			this.offersStack--;
+			this.isWaitAnswer = true;
+
+			const connectionConfig = Object.assign({}, defaultConnectionOptions, config);
 
 			this.peerConnection.createOffer(connectionConfig).then((offer) =>
 			{
@@ -1482,7 +1536,8 @@
 				}
 				else
 				{
-					this.createAndSendOffer({iceRestart: true});
+					this.offersStack++;
+					this.createAndSendOffer({ iceRestart: true });
 				}
 			}
 			else
@@ -1586,18 +1641,22 @@
 
 			this.log("User: " + this.userId + "; Applying remote answer");
 
-			this.maybeSetPendingLocalOffer().then(() =>
-			{
-				return this.peerConnection.setRemoteDescription(sessionDescription);
-			}).then(() =>
-			{
-				return this.applyPendingIceCandidates();
-			}).catch((e) =>
-			{
-				this.failureReason = e.toString();
-				this.updateCalculatedState();
-				this.log(e);
-			});
+			this.maybeSetPendingLocalOffer()
+				.then(() => {
+					return this.peerConnection.setRemoteDescription(sessionDescription);
+				})
+				.then(() => {
+					this.applyPendingIceCandidates();
+					this.createAndSendOffer();
+				})
+				.catch((e) => {
+					this.failureReason = e.toString();
+					this.updateCalculatedState();
+					this.log(e);
+				})
+				.finally(() => {
+					this.isWaitAnswer = false;
+				});
 		}
 
 		maybeSetPendingLocalOffer()
@@ -1863,6 +1922,7 @@
 
 			/*if (this.isInitiator())
 			{
+				this.offersStack++;
 				this.createAndSendOffer();
 			}
 			else
@@ -1941,6 +2001,8 @@
 						}
 					}
 				})
+
+				this.call.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
 			}
 
 			// if we set screen track before video track in Android after screen track was deleted on the other side
@@ -2218,7 +2280,8 @@
 		};
 	}
 
-	window.PlainCall = PlainCall;
-	window.PlainCallPeer = Peer;
-
-})();
+	module.exports = {
+		PlainCall,
+		PlainCallPeer: Peer,
+	};
+});

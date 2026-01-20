@@ -244,6 +244,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.props.layout,
+				analyticsSection: 'tasks_flow_detail_flow_administrator',
 			});
 		};
 

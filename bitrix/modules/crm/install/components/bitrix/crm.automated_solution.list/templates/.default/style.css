@@ -1,0 +1,37 @@
+.crm-automated-solution-grid-types-title {
+	display: flex;
+}
+
+.crm-automated-solution-grid-types-title .ui-icon-set {
+	opacity: .3;
+	margin-top: -2px;
+}
+
+.crm-automated-solution-grid-types-title .ui-icon-set.--lock {
+	--ui-icon-set__icon-color: #0154C8;
+}
+
+.crm-automated-solution-grid-types-container a {
+	margin-bottom: 6px;
+}
+
+.crm-automated-solution-grid-types-show-list-button {
+	margin-top: 4px;
+	padding: 0 !important;
+	line-height: 22px !important;
+	--ui-btn-color: var(--ui-color-accent-main-link) !important;
+	text-decoration: none !important;
+}
+
+.crm-automated-solution-grid-types-show-list-button:hover,
+.crm-automated-solution-grid-types-show-list-button:focus {
+	background: inherit !important;
+}
+
+.crm-automated-solution-grid-types-show-list-button .ui-btn-text-inner{
+	border-bottom: 1px dashed rgba(1, 84, 200, 0.28);
+}
+
+.crm-automated-solution-list-wrapper .main-grid-empty-block-description {
+	max-width: 850px;
+}

@@ -78,3 +78,4 @@ $MESS["CRM_VAT_1"] = "ҚҚС қоспағанда";
 $MESS["CRM_VAT_2"] = "ҚҚС 18%";
 $MESS["CRM_VAT_3"] = "ҚҚС 12%";
 $MESS["CRM_VAT_21"] = "ҚҚС 20%";
+$MESS["CRM_VAT_22"] = "ҚҚС 22%";

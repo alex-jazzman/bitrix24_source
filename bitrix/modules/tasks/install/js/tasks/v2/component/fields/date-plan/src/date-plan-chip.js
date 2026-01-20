@@ -1,26 +1,35 @@
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { datePlanMeta } from './date-plan-meta';
+import { DatePlanSheet } from './date-plan-sheet';
 
 // @vue/component
 export const DatePlanChip = {
 	components: {
 		Chip,
+		DatePlanSheet,
+	},
+	inject: {
+		task: {},
+		taskId: {},
 	},
 	props: {
-		taskId: {
-			type: [Number, String],
+		isSheetShown: {
+			type: Boolean,
+			required: true,
+		},
+		sheetBindProps: {
+			type: Object,
 			required: true,
 		},
 	},
-	emits: ['open'],
-	setup(): Object
+	emits: ['update:isSheetShown'],
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -28,21 +37,13 @@ export const DatePlanChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		design(): string
 		{
 			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, datePlanMeta.id);
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
+			return this.task.filledFields[datePlanMeta.id];
 		},
 	},
 	methods: {
@@ -55,17 +56,21 @@ export const DatePlanChip = {
 				return;
 			}
 
-			this.$emit('open');
+			this.setSheetShown(true);
 		},
 		highlightField(): void
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(datePlanMeta.id);
 		},
+		setSheetShown(isShown: boolean): void
+		{
+			this.$emit('update:isSheetShown', isShown);
+		},
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			v-if="task.rights.edit || isSelected"
+			:design
 			:icon="Outline.PLANNING"
 			:text="loc('TASKS_V2_DATE_PLAN_TITLE_CHIP')"
 			:data-task-id="taskId"
@@ -74,5 +79,6 @@ export const DatePlanChip = {
 			:data-task-plan-end="task.endPlanTs"
 			@click="handleClick"
 		/>
+		<DatePlanSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
 	`,
 };

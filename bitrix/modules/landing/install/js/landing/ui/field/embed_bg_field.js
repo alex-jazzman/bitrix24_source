@@ -19,7 +19,7 @@
 	 */
 	BX.Landing.UI.Field.EmbedBg = function(data)
 	{
-		data.description = "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage('LANDING_EMBED_BG_FIELD_DESCRIPTION')+"</span>";
+		data.description = "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage('LANDING_EMBED_BG_FIELD_DESCRIPTION_MSGVER_1')+"</span>";
 		BX.Landing.UI.Field.Embed.apply(this, arguments);
 
 		BX.Dom.addClass(this.error, 'landing-ui-error');

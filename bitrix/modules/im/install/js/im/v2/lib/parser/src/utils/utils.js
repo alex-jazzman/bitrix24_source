@@ -76,7 +76,7 @@ export const ParserUtils = {
 
 	getDialogIdByChatId(chatId: number): string
 	{
-		const dialog = getCore().store.getters['chats/getByChatId'](chatId);
+		const dialog = getCore().getStore().getters['chats/getByChatId'](chatId);
 		if (!dialog)
 		{
 			return '';

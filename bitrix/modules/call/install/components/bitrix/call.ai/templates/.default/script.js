@@ -32,8 +32,11 @@
 			this.initUserList();
 			this.initPlaybackMarks();
 			this.initGradeChart();
+			this.initCallAiEfficiencyChart();
+			this.initCallAiEfficiencyValue();
+			this.initScrollEventForInsights();
 
-		Analytics.getInstance().copilot.onOpenFollowUpSlider({
+			Analytics.getInstance().copilot.onOpenFollowUpSlider({
 				callId: this.callId,
 			});
 		},
@@ -568,6 +571,160 @@
 				`,
 			});
 			this.deletePopupInstance.mount('.bx-call-component-call-ai__delete-popup');
+		},
+		initCallAiEfficiencyChart() {
+			class CallAiEfficiencyChart extends HTMLElement {
+				constructor() {
+					super();
+					this.percent = Number(this.getAttribute('percent') || "0");
+					this.painted = this.getAttribute('painted') === "true" ? true : false;
+
+					this.div = document.createElement('div');
+					this.div.classList.add('bx-call-component-call-ai__efficiency-chart');
+
+					this.appendChild(this.div);
+				}
+
+				connectedCallback() {
+					this._observer = new IntersectionObserver(
+						entries => {
+							for (const entry of entries) {
+								if (entry.isIntersecting) {
+									this.#animateFill(0, this.percent, 500);
+									this._observer.disconnect();
+								}
+							}
+						},
+						{ threshold: 0.5 }
+					);
+					this._observer.observe(this);
+				}
+
+				#getBackground(percent = 0, painted = false) {
+					const colors = {
+						gray: '#e6ebef',
+						blue: '#1f86ff',
+						green: '#1bce7b',
+						orange: '#faa72c',
+						red: '#FF5752',
+					};
+
+					const mainColor = (() => {
+						if (!painted)
+						{
+							return colors.blue;
+						}
+						else if (percent >= 80) {
+							return colors.green
+						}
+						else if (percent >= 50) {
+							return colors.orange
+						}
+						else if (percent >= 0) {
+							return colors.red
+						}
+						else {
+							return colors.gray;
+						}
+					})();
+
+					const deg = percent * 3.6;
+
+					return `conic-gradient(${mainColor} 0deg ${deg}deg, ${colors.gray} ${deg}deg 360deg)`;
+				}
+
+				#animateFill(from, to, duration) {
+					const start = performance.now();
+					const frame = now => {
+						const t = Math.min((now - start) / duration, 1);
+						const current = from + (to - from) * t;
+						this.div.style.background = this.#getBackground(current, this.painted);
+						if (t < 1) {
+							requestAnimationFrame(frame);
+						}
+					};
+
+					requestAnimationFrame(frame);
+				}
+			}
+
+			customElements.define('call-ai-efficiency-chart', CallAiEfficiencyChart);
+		},
+		initCallAiEfficiencyValue() {
+			class CallAiEfficiencyValue extends HTMLElement {
+				constructor() {
+					super();
+					this.span = document.createElement('span');
+					this.span.textContent = 0;
+					this.appendChild(this.span);
+				}
+
+				connectedCallback() {
+					this._observer = new IntersectionObserver(
+						entries => {
+							for (const entry of entries) {
+								if (entry.isIntersecting) {
+									this.#startAnimation();
+									this._observer.disconnect();
+								}
+							}
+						},
+						{ threshold: 0.5 }
+					);
+					this._observer.observe(this);
+				}
+
+				#startAnimation() {
+					const start = 0;
+					const end = Number(this.getAttribute('value')) || 0;
+					const duration = 500;
+
+					let startTime = null;
+					const range = end - start;
+
+					const step = timestamp => {
+						if (!startTime) startTime = timestamp;
+						const progress = Math.min((timestamp - startTime) / duration, 1);
+						const current = start + range * progress;
+						this.span.textContent = current.toFixed(0);
+						if (progress < 1) {
+							requestAnimationFrame(step);
+						}
+					};
+
+					this.span.textContent = start.toFixed(0);
+					requestAnimationFrame(step);
+				}
+			}
+
+			customElements.define('call-ai-efficiency-value', CallAiEfficiencyValue);
+		},
+		initScrollEventForInsights() {
+			const mainContainer = document.querySelector('.bx-call-component-call-ai__tab-content-wrapper');
+
+			if (!mainContainer)
+			{
+				return;
+			}
+
+			const insightRows = document.querySelectorAll('[data-insights-user-id]');
+			insightRows.forEach((row) => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+				row.addEventListener('click', (e) => {
+					const id = e.currentTarget.dataset.insightsUserId;
+					const targetElement = document.querySelector(`[data-insights-user-id-full='${id}']`);
+					if (!targetElement)
+					{
+						return;
+					}
+
+					const containerRect = mainContainer.getBoundingClientRect();
+					const targetRect = targetElement.getBoundingClientRect();
+					const top = (targetRect.top - containerRect.top) + mainContainer.scrollTop - 12;
+
+					mainContainer.scrollTo({ top, behavior: 'smooth' });
+				});
+			});
 		},
 	};
 

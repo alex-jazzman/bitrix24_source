@@ -2,7 +2,7 @@ import type { Point, DiagramPortPosition } from '../types';
 import { PORT_POSITION } from '../constants';
 
 const DIR_ACCESSOR_X = 'x';
-const DIR_ACCESSOR_Y = 'x';
+const DIR_ACCESSOR_Y = 'y';
 
 const DIRECTIONS_BY_POSITION: { [DiagramPortPosition]: Point } = {
 	[PORT_POSITION.LEFT]: { x: -1, y: 0 },
@@ -34,9 +34,19 @@ export function getLinePath(start: Point, end: Point): PathInfo
 	};
 }
 
-export function getBeziePath(start: Point, end: Point): PathInfo
+export const BEZIER_DIR = {
+	VERTICAL: 'vertical',
+	HORIZONTAL: 'horizontal',
+};
+
+export function getBeziePath(
+	start: Point,
+	end: Point,
+	dir: 'vertical' | 'horizontal' = BEZIER_DIR.VERTICAL,
+): PathInfo
 {
 	const midX: number = (start.x + end.x) / 2;
+	const midY: number = (start.y + end.y) / 2;
 	const [centerX, centerY] = getConnectionCenter({
 		sourceX: start.x,
 		sourceY: start.y,
@@ -45,7 +55,9 @@ export function getBeziePath(start: Point, end: Point): PathInfo
 	});
 
 	return {
-		path: `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}`,
+		path: dir === BEZIER_DIR.HORIZONTAL
+			? `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}`
+			: `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`,
 		center: {
 			x: centerX,
 			y: centerY,
@@ -415,6 +427,7 @@ export function getSmoothStepPath(params: GetSmoothStepPathParams): PathInfo
 
 	return {
 		path,
+		points,
 		center: {
 			x: pointsCenterX,
 			y: pointsCenterY,

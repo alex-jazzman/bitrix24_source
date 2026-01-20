@@ -2,6 +2,7 @@
  * @module im/messenger-v2/controller/recent/service/select/common
  */
 jn.define('im/messenger-v2/controller/recent/service/select/common', (require, exports, module) => {
+	const { throttle } = require('utils/function');
 	const { EventType } = require('im/messenger/const');
 	const { BaseUiRecentService } = require('im/messenger-v2/controller/recent/service/base');
 	const { openDialog } = require('im/messenger-v2/controller/recent/service/select/lib/opener');
@@ -16,12 +17,15 @@ jn.define('im/messenger-v2/controller/recent/service/select/common', (require, e
 		onInit()
 		{
 			this.logger.log('onInit');
+
+			this.onItemSelectedThrottled = throttle(this.onItemSelected, 300, this);
 		}
 
 		async onUiReady(ui)
 		{
 			this.logger.log('onUiReady');
-			ui?.on(EventType.recent.itemSelected, this.onItemSelected);
+
+			ui?.on(EventType.recent.itemSelected, this.onItemSelectedThrottled);
 		}
 
 		/**

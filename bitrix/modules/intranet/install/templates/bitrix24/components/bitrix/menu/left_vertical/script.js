@@ -15,6 +15,7 @@ this.BX = this.BX || {};
 	Options.isCustomPresetRestricted = false;
 	Options.settingsPath = null;
 	Options.isMainPageEnabled = false;
+	Options.isMessengerEmbedded = false;
 	Options.availablePresetTools = null;
 	Options.inviteDialogLink = null;
 	Options.showMarta = null;
@@ -370,7 +371,7 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    const siteDir = main_core.Loc.getMessage('SITE_DIR') || '/';
-	    const context = window.location.pathname.toString().startsWith(`${siteDir}online/`) ? 'online' : '';
+	    const context = Options.isMessengerEmbedded ? 'online' : '';
 	    return main_core.ajax.runAction(`intranet.leftmenu.${collapse ? "collapseMenu" : "expandMenu"}`, {
 	      data: {
 	        context
@@ -3201,6 +3202,7 @@ this.BX = this.BX || {};
 	    Options.showSitemapMenuItem = params.showSitemapMenuItem;
 	    Options.showLicenseButton = params.showLicenseButton;
 	    Options.licenseButtonPath = params.licenseButtonPath;
+	    Options.isMessengerEmbedded = params.isMessengerEmbedded === 'Y';
 	    this.isCollapsedMode = params.isCollapsedMode;
 	    this.analytics = new Analytics(params.isAdmin);
 	    this.initAndBindNodes();

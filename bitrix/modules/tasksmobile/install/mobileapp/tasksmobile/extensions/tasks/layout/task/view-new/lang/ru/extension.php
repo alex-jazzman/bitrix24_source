@@ -21,12 +21,17 @@ $MESS['M_TASK_DETAILS_FIELD_DELEGATE_TITLE'] = 'Делегировать';
 $MESS['M_TASK_DETAILS_COMMENTS_TITLE'] = 'Комментарии';
 $MESS['M_TASK_DETAILS_COMMENTS_BUTTON_MSGVER_1'] = 'Комментарии: #COMMENTS_COUNT#';
 $MESS['M_TASK_DETAILS_COMMENTS_BUTTON_EMPTY'] = 'Комментарии';
+$MESS['M_TASK_DETAILS_CHAT_BUTTON'] = 'Чат задачи';
 $MESS['M_TASK_FORM_FIELD_CHECKLIST_TITLE'] = 'Чеклисты';
 $MESS['M_TASK_DETAILS_START_BUTTON'] = 'Начать';
 $MESS['M_TASK_DETAILS_APPROVE_BUTTON'] = 'Принять';
+$MESS['M_TASK_TOAST_FILES_DELETE_DENIED'] = "Нельзя удалить файлы, добавленные другим сотрудником";
 
 $MESS['M_TASK_RATING_LIKE_QUESTION'] = "Вам нравится?";
 $MESS['M_TASK_RATING_LIKE_YES'] = "Да";
 $MESS['M_TASK_RATING_LIKE_NO'] = "Нет";
 $MESS['M_TASK_RATING_LIKE_YES_WITH_COUNTER'] = "Да: #QUANTITY#";
 $MESS['M_TASK_RATING_LIKE_NO_WITH_COUNTER'] = "Нет: #QUANTITY#";
+$MESS['M_TASK_CHAT_BUTTON_AHA_MOMENT_TITLE'] = 'Чат теперь прямо в задаче';
+$MESS['M_TASK_CHAT_BUTTON_AHA_MOMENT_DESCRIPTION'] = 'В чате можно обсуждать детали, созваниваться, обмениваться файлами и контролировать все изменения по задаче';
+

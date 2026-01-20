@@ -6,6 +6,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/loc',
 		'im:messenger/lib/anchors',
+		'im:messenger/lib/copilot',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',

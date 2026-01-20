@@ -1,0 +1,17 @@
+.booking-confirm-page__booking-detail_total-price-container {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.booking-confirm-page__booking-detail_total-price-title {
+	display: flex;
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page__booking-detail_total-price-price {
+	display: flex;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-xl);
+}

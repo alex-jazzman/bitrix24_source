@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Baas = this.BX.Baas || {};
 (function (exports,ui_iconSet,main_core,ui_dialogs_messagebox) {

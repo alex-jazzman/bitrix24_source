@@ -11,8 +11,8 @@ this.BX.Vote = this.BX.Vote || {};
 	var _canRevokeVote = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canRevokeVote");
 	var _getCurrentQuestion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentQuestion");
 	class VoteMessageMenu extends im_v2_lib_menu.MessageMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    Object.defineProperty(this, _getCurrentQuestion, {
 	      value: _getCurrentQuestion2
 	    });

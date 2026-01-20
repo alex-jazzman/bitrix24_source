@@ -3,7 +3,9 @@
 return [
 	'extensions' => [
 		'type',
+		'tokens',
 		'utils/object',
+		'assets/icons',
 		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/view/dialog',

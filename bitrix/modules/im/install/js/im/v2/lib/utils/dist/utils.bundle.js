@@ -50,6 +50,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openLink(link, target = '_blank') {
 	    window.open(link, target);
 	  },
+	  redirectTo(url) {
+	    location.href = url;
+	  },
 	  waitForSelectionToUpdate() {
 	    return new Promise(resolve => {
 	      setTimeout(() => {
@@ -98,7 +101,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const minutes = Math.floor(seconds % 3600 / 60);
 	    const remainingSeconds = Math.floor(seconds % 60);
 	    const formattedHours = hours > 0 ? `${hours}:` : '';
-	    const formattedMinutes = hours > 0 ? padZero(minutes) : minutes.toString();
+	    const formattedMinutes = padZero(minutes);
 	    const formattedSeconds = padZero(remainingSeconds);
 	    return `${formattedHours}${formattedMinutes}:${formattedSeconds}`;
 	  }

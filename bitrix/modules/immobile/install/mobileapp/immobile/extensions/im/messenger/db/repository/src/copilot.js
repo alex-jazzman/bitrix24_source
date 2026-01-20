@@ -49,7 +49,7 @@ jn.define('im/messenger/db/repository/copilot', (require, exports, module) => {
 			const copilotItemsToAdd = [];
 
 			copilotItems.forEach((copilotItem) => {
-				const requestToAdd = this.validateCopilotItem(copilotItem);
+				const requestToAdd = this.copilotTable.validate(this.validateCopilotItem(copilotItem));
 
 				copilotItemsToAdd.push(requestToAdd);
 			});
@@ -99,17 +99,17 @@ jn.define('im/messenger/db/repository/copilot', (require, exports, module) => {
 
 			if (Type.isPlainObject(copilotItem.roles) && Object.keys(copilotItem.roles).length > 0)
 			{
-				result.roles = JSON.stringify(copilotItem.roles);
+				result.roles = copilotItem.roles;
 			}
 
 			if (Type.isArrayFilled(copilotItem.chats))
 			{
-				result.chats = JSON.stringify(copilotItem.chats);
+				result.chats = copilotItem.chats;
 			}
 
 			if (Type.isArrayFilled(copilotItem.messages))
 			{
-				result.messages = JSON.stringify(copilotItem.messages);
+				result.messages = copilotItem.messages;
 			}
 
 			return result;

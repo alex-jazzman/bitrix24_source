@@ -9,8 +9,6 @@ import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { CallManager } from 'im.v2.lib.call';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 
-import type { JsonObject } from 'main.core';
-
 import type { ImModelUser } from 'im.v2.model';
 
 type PhoneSettings = {
@@ -174,7 +172,7 @@ export class PhoneManager
 			phoneEnabled: phoneSettings.phoneEnabled,
 
 			userId: Core.getUserId(),
-			isAdmin: this.#getCurrentUser().isAdmin,
+			isAdmin: this.#isCurrentUserAdmin(),
 
 			restApps: phoneSettings.restApps,
 			canInterceptCall: phoneSettings.canInterceptCall,
@@ -257,11 +255,9 @@ export class PhoneManager
 		DesktopApi.activateWindow(target);
 	}
 
-	#getCurrentUser(): ImModelUser
+	#isCurrentUserAdmin(): boolean
 	{
-		const userId = Core.getUserId();
-
-		return Core.getStore().getters['users/get'](userId);
+		return Core.getStore().getters['users/isCurrentUserAdmin'];
 	}
 
 	#getUserAvatar(userId: number): string

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_layout,main_core,im_v2_const,im_v2_application_core,im_v2_lib_copilot,im_v2_lib_logger,im_v2_lib_rest,im_v2_lib_user) {
+(function (exports,im_v2_lib_layout,main_core,im_v2_const,im_v2_lib_copilot,im_v2_lib_logger,im_v2_lib_rest,im_v2_lib_user,im_v2_application_core) {
 	'use strict';
 
 	var _restResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restResult");
@@ -314,7 +314,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!recentItem) {
 	      return;
 	    }
-	    void im_v2_application_core.Core.getStore().dispatch('recent/delete', {
+	    void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 	      id: dialogId
 	    });
 	    const chatIsOpened = im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId);
@@ -583,8 +583,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 
+	class UnreadRecentService extends LegacyRecentService {
+	  static getInstance() {
+	    if (!this.instance) {
+	      this.instance = new this();
+	    }
+	    return this.instance;
+	  }
+	  getQueryParams(firstPage) {
+	    return {
+	      ...super.getQueryParams(firstPage),
+	      UNREAD_ONLY: 'Y'
+	    };
+	  }
+	  getModelSaveMethod() {
+	    return 'recent/setUnread';
+	  }
+	  getCollection() {
+	    return im_v2_application_core.Core.getStore().getters['recent/getUnreadCollection'];
+	  }
+	}
+	UnreadRecentService.instance = null;
+
 	exports.LegacyRecentService = LegacyRecentService;
 	exports.BaseRecentService = BaseRecentService;
+	exports.UnreadRecentService = UnreadRecentService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application));
 //# sourceMappingURL=registry.bundle.js.map

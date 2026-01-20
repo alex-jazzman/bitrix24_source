@@ -1,6 +1,7 @@
-import { GroupType, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
+import { GroupType, Model, Endpoint } from 'tasks.v2.const';
 import { apiClient } from 'tasks.v2.lib.api-client';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { GroupModel } from 'tasks.v2.model.groups';
 
 import { mapDtoToModel, mapStageDtoToModel } from './mappers';
@@ -17,7 +18,7 @@ class GroupService
 
 		try
 		{
-			return apiClient.post('Group.Url.get', { group: { id, type } });
+			return apiClient.post(Endpoint.GroupUrlGet, { group: { id, type } });
 		}
 		catch (error)
 		{
@@ -31,7 +32,7 @@ class GroupService
 	{
 		try
 		{
-			const data = await apiClient.post('Group.Stage.list', { group: { id } });
+			const data = await apiClient.post(Endpoint.GroupStageList, { group: { id } });
 
 			const stages = data.map((stage) => mapStageDtoToModel(stage));
 			const stagesIds = stages.map((stage) => stage.id);
@@ -54,7 +55,7 @@ class GroupService
 	{
 		try
 		{
-			const data = await apiClient.post('Group.get', { group: { id } });
+			const data = await apiClient.post(Endpoint.GroupGet, { group: { id } });
 
 			const group = mapDtoToModel(data);
 
@@ -70,33 +71,32 @@ class GroupService
 		}
 	}
 
-	#scrumInfoCache: { [taskId: number]: boolean } = {
-		0: true,
-	};
+	#scrumInfoPromises: { [taskId: number | string]: Promise } = {};
 
 	async getScrumInfo(taskId: number): Promise<void>
 	{
 		if (this.hasScrumInfo(taskId))
 		{
+			await this.#scrumInfoPromises[taskId];
+
 			return;
 		}
 
-		this.#scrumInfoCache[taskId] = true;
+		this.#scrumInfoPromises[taskId] = new Resolvable();
 
 		try
 		{
-			const data = await apiClient.post('Scrum.getTaskInfo', { taskId });
+			const data = await apiClient.post(Endpoint.ScrumGetTaskInfo, { taskId });
 
 			await Promise.all([
 				Core.getStore().dispatch(`${Model.Epics}/upsert`, data.epic),
-				Core.getStore().dispatch(`${Model.Tasks}/update`, {
-					id: taskId,
-					fields: {
-						storyPoints: data.storyPoints,
-						epicId: data.epic?.id,
-					},
+				taskService.updateStoreTask(taskId, {
+					storyPoints: data.storyPoints,
+					epicId: data.epic?.id,
 				}),
 			]);
+
+			this.#scrumInfoPromises[taskId].resolve();
 		}
 		catch (error)
 		{
@@ -104,9 +104,15 @@ class GroupService
 		}
 	}
 
-	hasScrumInfo(taskId: number): boolean
+	setHasScrumInfo(taskId: number): boolean
 	{
-		return this.#scrumInfoCache[taskId];
+		this.#scrumInfoPromises[taskId] = new Resolvable();
+		this.#scrumInfoPromises[taskId].resolve();
+	}
+
+	hasScrumInfo(taskId: number | string): boolean
+	{
+		return (Number.isInteger(taskId) && taskId > 0) ? (taskId in this.#scrumInfoPromises) : true;
 	}
 
 	#groupInfoPromises: { [groupId: number]: Promise<GroupInfo> } = {};

@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
+		'assets/icons/types',
+		'feature',
+		'loc',
 		'tokens',
 		'utils/enums/base',
 		'utils/url',
-		'assets/icons/types',
-		'loc',
 	],
 	'bundle' => [
 		'./src/main',

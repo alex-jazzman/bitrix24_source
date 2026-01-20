@@ -10,3 +10,4 @@ export { RetryButton } from './retry-button/retry-button';
 export { MessageHeader } from './message-header/message-header';
 export { MessageFooter } from './message-footer/message-footer';
 export { DefaultMessageContent } from './default-message-content/default-message-content';
+export { CompactCommentsPanel } from './comments-panel/compact-comments-panel';

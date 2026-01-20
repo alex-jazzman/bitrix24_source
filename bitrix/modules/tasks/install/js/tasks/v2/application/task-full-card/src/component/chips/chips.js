@@ -2,8 +2,11 @@ import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { heightTransition } from 'tasks.v2.lib.height-transition';
+import type { AppChip } from 'tasks.v2.application.task-card';
+
 import './chips.css';
+
+const maxVisible = 50;
 
 // @vue/component
 export const Chips = {
@@ -11,10 +14,7 @@ export const Chips = {
 		Chip,
 	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+		/** @type AppChip[] */
 		chips: {
 			type: Array,
 			required: true,
@@ -33,25 +33,31 @@ export const Chips = {
 			chipsCollapsed: true,
 		};
 	},
-	mounted(): void
-	{
-		heightTransition.animate(this.$el);
-	},
-	updated(): void
-	{
-		heightTransition.animate(this.$el);
+	computed: {
+		preparedChips(): AppChip[]
+		{
+			return this.chips.filter(({ isEnabled }) => isEnabled ?? true).map((chip, index) => ({
+				...chip,
+				collapsed: index >= maxVisible,
+			}));
+		},
+		hasCollapsedChips(): boolean
+		{
+			return this.preparedChips.some(({ collapsed }) => collapsed);
+		},
 	},
 	template: `
 		<div class="tasks-full-card-chips">
-			<template v-for="(chip, index) of chips" :key="index">
+			<template v-for="(chip, key) of preparedChips" :key>
 				<component
 					v-if="!chip.collapsed || !chipsCollapsed"
-					:is="chip.component ?? chip"
-					v-bind="{ taskId }"
+					:is="chip.component"
+					v-bind="chip.props ?? {}"
 					v-on="chip.events ?? {}"
 				/>
 			</template>
 			<Chip
+				v-if="hasCollapsedChips"
 				:design="ChipDesign.ShadowNoAccent"
 				:icon="chipsCollapsed ? Outline.APPS : Outline.CHEVRON_TOP_L"
 				:text="chipsCollapsed ? loc('TASKS_V2_TASK_FULL_CARD_MORE') : ''"

@@ -332,6 +332,11 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		).name('im:copilot:openDialog');
 
 		inAppUrl.register(
+			'/online/\\?IM_TASK=:dialogId$',
+			({ dialogId }) => openDialog(ComponentCode.imMessenger, dialogId),
+		).name('im:task:openDialog');
+
+		inAppUrl.register(
 			'/online/\\?IM_COPILOT=:dialogId&IM_MESSAGE=:messageId$',
 			({ dialogId, messageId }) => openDialog(ComponentCode.imCopilotMessenger, dialogId, messageId),
 		).name('im:copilot:goToMessageContext');
@@ -349,6 +354,15 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 				redirectUrl: '/?feature_promoter=limit_boost_copilot',
 			}),
 		).name('im:copilot:openGoToWeb');
+
+		inAppUrl.register(
+			'/online/\\?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
+			() => openGoToWebWidget({
+				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_SUBSCRIPTION_BAAS_LIMIT_TITLE'),
+				hintText: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_SUBSCRIPTION_BAAS_LIMIT_HINT'),
+				redirectUrl: '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
+			}),
+		).name('im:aiAssistant_openGoToWeb');
 
 		// lines
 		inAppUrl.register(

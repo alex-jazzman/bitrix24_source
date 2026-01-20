@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
 import { LineLoader } from 'im.v2.component.elements.loader';
@@ -8,6 +7,7 @@ import { FadeAnimation } from 'im.v2.component.animation';
 
 import '../css/collab-title.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelCollabInfo } from 'im.v2.model';
 
 // @vue/component
@@ -55,15 +55,19 @@ export const CollabTitle = {
 		{
 			if (this.currentSidebarPanel === SidebarDetailBlock.members)
 			{
-				EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
+				this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
 
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.members,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

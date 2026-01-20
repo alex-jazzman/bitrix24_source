@@ -707,3 +707,27 @@ select {
 #workarea-content {
 	background-color: transparent !important;
 }
+
+.imconnector-no-grants-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 200px 20px;
+	text-align: center;
+	max-width: 500px;
+	margin: 0 auto;
+}
+
+.imconnector-warning-icon {
+	width: 240px;
+	height: auto;
+	margin-bottom: 20px;
+}
+
+.imconnector-warning-message {
+	font-size: 16px;
+	line-height: 1.5;
+	color: #333;
+	margin-bottom: 40px;
+}

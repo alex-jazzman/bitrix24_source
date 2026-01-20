@@ -44,9 +44,6 @@
 	height: 446px;
 }
 /*region tabs*/
-.crm-entity-section-tabs {
-	margin: 0 0 23px 0;
-}
 
 .crm-entity-section-tab-content-show,
 .crm-entity-section-tab-content-hide { position: relative; }
@@ -261,10 +258,6 @@ input.pagetitle-item {
 	padding-top: 13px;
 	display: flex;
 	justify-content: flex-end;
-}
-
-.crm-entity-section-tabs .main-buttons-item.main-buttons-item-more {
-	padding-right: 32px;
 }
 
 .bp_starter {

@@ -97,6 +97,8 @@ if (!class_exists('imconnector'))
 				'network',
 				'notifications',
 				'whatsappbyedna',
+				'wazzup',
+				'max',
 			];
 			Option::set($this->MODULE_ID, 'list_connector', implode(',', $listConnector));
 
@@ -227,6 +229,7 @@ if (!class_exists('imconnector'))
 			\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]. '/bitrix/modules/imconnector/install/pub', $_SERVER['DOCUMENT_ROOT']. '/pub', true, true);
 			\CopyDirFiles($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/imconnector/install/components', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true);
 			\CopyDirFiles($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/imconnector/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js', true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/imconnector/install/images', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images', true, true);
 
 			return true;
 		}

@@ -1,14 +1,17 @@
-import { Dom, Runtime, Tag, Text } from 'main.core';
+import { Dom, Tag, Text, Type } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import type { Popup } from 'main.popup';
 
 import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import { locMixin } from 'ui.vue3.mixins.loc-mixin';
 
+import { settings } from 'tasks.v2.lib.analytics';
+import { TaskCard, type Params } from 'tasks.v2.application.task-card';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { TaskMappers } from 'tasks.v2.provider.service.task-service';
 import { Core } from 'tasks.v2.core';
-import { EventName } from 'tasks.v2.const';
-import type { Params } from 'tasks.v2.application.task-card';
+import { EventName, GroupType, Model } from 'tasks.v2.const';
+import { UserTypes } from 'tasks.v2.model.users';
 
 import { App } from './component/app';
 
@@ -18,15 +21,21 @@ export class TaskCompactCard
 	#popup: Popup;
 	#application: ?VueCreateAppResult;
 	#handlers: { [eventName: string]: Function };
+	#openingFullCard: boolean;
 
 	constructor(params: Params = {})
 	{
 		this.#params = params;
 
-		this.#params.taskId = this.#params.taskId || Text.getRandom();
+		this.#params.taskId ||= Text.getRandom();
+		if (this.#params.taskId === 'template0')
+		{
+			this.#params.taskId = idUtils.boxTemplate(Text.getRandom());
+		}
+		this.#params.groupId = this.#getInitialGroupId();
 	}
 
-	async mountCard(popup: Popup): Promise<void>
+	async mount(popup: Popup): Promise<void>
 	{
 		this.#popup = popup;
 
@@ -35,7 +44,7 @@ export class TaskCompactCard
 		this.#adjustPosition();
 		this.#subscribe();
 
-		const dragHandle = Tag.render`<div class="tasks-compact-card-popup-drag-handle"></div>`;
+		const dragHandle = Tag.render`<div class="tasks-compact-card-popup-drag-handle"/>`;
 		Dom.append(dragHandle, popup.getContentContainer());
 		this.#popup.setDraggable({
 			element: dragHandle,
@@ -43,7 +52,7 @@ export class TaskCompactCard
 		});
 	}
 
-	unmountCard(): void
+	unmount(): void
 	{
 		this.#unmountApplication();
 
@@ -54,7 +63,13 @@ export class TaskCompactCard
 	{
 		await Core.init();
 
-		const application = BitrixVue.createApp(App, this.#params);
+		const { taskId, analytics, url, closeCompleteUrl, ...initialTask } = this.#params;
+
+		const application = BitrixVue.createApp(App, {
+			id: taskId,
+			initialTask: Object.fromEntries(Object.entries(initialTask).filter(([, value]) => !Type.isNil(value))),
+			analytics,
+		});
 
 		application.mixin(locMixin);
 		application.use(Core.getStore());
@@ -66,6 +81,11 @@ export class TaskCompactCard
 	#unmountApplication(): void
 	{
 		this.#application.unmount();
+
+		if (!this.#openingFullCard)
+		{
+			EventEmitter.emit(EventName.CardClosed, this.#params);
+		}
 	}
 
 	#subscribe(): void
@@ -88,12 +108,10 @@ export class TaskCompactCard
 		Object.entries(this.#handlers).forEach(([event, handler]) => EventEmitter.unsubscribe(event, handler));
 	}
 
-	#openFullCard = async (baseEvent: BaseEvent): Promise<void> => {
+	#openFullCard = (): void => {
+		this.#openingFullCard = true;
+
 		this.#closeCard();
-
-		const { TaskCard } = await Runtime.loadExtension('tasks.v2.application.task-card');
-
-		this.#params.taskId = baseEvent.getData();
 
 		TaskCard.showFullCard(this.#params);
 	};
@@ -103,8 +121,17 @@ export class TaskCompactCard
 		const checkLists = baseEvent.getData().checkLists;
 
 		const data = TaskMappers.mapModelToSliderData(task, checkLists);
+		// Analytic data
+		// ta_sec=tasks&ta_sub=list&ta_el=create_button&p1=isDemo_N&p2=user_intranet
+		const path = BX.Uri.addParam(Core.getParams().paths.editPath, {
+			SCOPE: 'tasks_grid',
+			ta_sec: this.#params.analytics?.context,
+			ta_sub: this.#params.analytics?.additionalContext,
+			ta_el: this.#params.analytics?.element,
+			p1: settings.isDemo ? 'isDemo_Y' : 'isDemo_N',
+			p2: settings.userType,
+		});
 
-		const path = Core.getParams().paths.editPath;
 		BX.SidePanel.Instance.open(path, {
 			requestMethod: 'post',
 			requestParams: data,
@@ -184,4 +211,18 @@ export class TaskCompactCard
 		this.#handlePopupShow.openedPopupsCount++;
 		Dom.addClass(popupContainer, '--disable-drag');
 	};
+
+	#getInitialGroupId(): number | null
+	{
+		if (this.#params.groupId && Core.getParams().currentUser?.type === UserTypes.Collaber)
+		{
+			const group = Core.getStore()?.getters[`${Model.Groups}/getById`](this.#params.groupId);
+			if (group && group.type !== GroupType.Collab)
+			{
+				return Core.getParams().defaultCollab?.id;
+			}
+		}
+
+		return this.#params.groupId || Core.getParams().defaultCollab?.id || undefined;
+	}
 }

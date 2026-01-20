@@ -223,49 +223,93 @@ export class PackageItem extends EventEmitter
 
 	#getPurchaseBlock(): HTMLElement
 	{
-		return this.#cache.remember('purchase-block', (): HTMLElement => {
-			const data: ResponsePackageDataType = this.#data;
+		function getStatusLabels(response: ResponsePackageDataType): Array<Label>
+		{
+			const labels: Array<Label> = [];
+			const purchaseInfo = response.purchaseInfo;
 
-			if (Type.isPlainObject(data.purchaseInfo))
+			if (!purchaseInfo || purchaseInfo.purchaseCount <= 0)
 			{
-				const purchaseInfo = data.purchaseInfo;
-
-				if (purchaseInfo && purchaseInfo.purchaseCount > 0)
-				{
-					const activityLabel = new Label({
-						text: (purchaseInfo.purchaseCount > 1
-							? Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE')
-							: Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE')
-						),
-						size: LabelSize.SM,
-						fill: true,
-						customClass: '--active',
-					});
-					const limitLabel = purchaseInfo.purchaseBalance > 20 ? null : (
-						purchaseInfo.purchaseBalance > 0 ? new Label({
-							text: Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED'),
-							size: LabelSize.SM,
-							fill: true,
-							customClass: '--almost',
-						}) : new Label({
-							text: Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED'),
-							size: LabelSize.SM,
-							fill: true,
-							customClass: '--exceeded',
-						})
-					);
-
-					return Tag.render`
-						<div class="ui-popupconstructor-content-item__purchase-description" onclick="${this.showPurchases.bind(this)}">
-							<span class="ui-link ui-link-dashed">${Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE')}: ${purchaseInfo.purchaseCount}</span>
-							${activityLabel.render()}
-							${limitLabel ? limitLabel.render() : ''}
-						</div>
-					`;
-				}
+				return labels;
 			}
 
-			return Tag.render`<div></div>`;
+			const isAnnual = response.code === 'COPILOT_Q1000_P12';
+			const hasZeroBalance = purchaseInfo.purchaseBalance === 0;
+			const isExceedAnnual = isAnnual
+				&& hasZeroBalance
+				&& purchaseInfo.purchases.length === 1
+				&& purchaseInfo.purchases[0].length === 1;
+
+			if (purchaseInfo.purchaseBalance <= 20 && !hasZeroBalance)
+			{
+				labels.push(
+					new Label({
+						text: Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED'),
+						size: LabelSize.SM,
+						fill: true,
+						customClass: '--almost',
+					}),
+				);
+			}
+
+			if (isExceedAnnual || (hasZeroBalance && !isAnnual))
+			{
+				labels.push(
+					new Label({
+						text: Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED'),
+						size: LabelSize.SM,
+						fill: true,
+						customClass: '--exceeded',
+					}),
+				);
+			}
+
+			if (hasZeroBalance && isAnnual)
+			{
+				labels.push(
+					new Label({
+						text: Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED_THIS_MONTH'),
+						size: LabelSize.SM,
+						fill: true,
+						customClass: '--exceeded',
+					}),
+				);
+			}
+
+			const isActiveAnnual = isAnnual && (labels.length === 0 || !isExceedAnnual);
+			const isActiveMonthly = !isAnnual && labels.length === 0;
+
+			if (isActiveAnnual || isActiveMonthly)
+			{
+				labels.unshift(new Label({
+					text: Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'),
+					size: LabelSize.SM,
+					fill: true,
+					customClass: '--active',
+				}));
+			}
+
+			return labels;
+		}
+
+		return this.#cache.remember('purchase-block', (): HTMLElement => {
+			const data: ResponsePackageDataType = this.#data;
+			let htmlToRender = Tag.render`<div></div>`;
+			const purchaseInfo = data.purchaseInfo;
+
+			if (Type.isPlainObject(purchaseInfo) && purchaseInfo.purchaseCount > 0)
+			{
+				const labels = getStatusLabels(data);
+
+				htmlToRender = Tag.render`
+					<div class="ui-popupconstructor-content-item__purchase-description" onclick="${this.showPurchases.bind(this)}">
+						<span class="ui-link ui-link-dashed">${Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE')}: ${purchaseInfo.purchaseCount}</span>
+						${labels.map((label: Label) => label.render())}
+					</div>
+				`;
+			}
+
+			return htmlToRender;
 		});
 	}
 

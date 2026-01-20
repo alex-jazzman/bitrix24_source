@@ -109,3 +109,12 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 		(new BX.Crm.TypeListComponent(params)).init();
     });
 </script>
+
+<?php
+if ($arResult['hasImportedAutomatedSolution'])
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.automated_solution.notify',
+		'',
+	);
+}

@@ -1,13 +1,12 @@
 import { SidePanel } from 'main.sidepanel';
-import { mapGetters } from 'ui.vue3.vuex';
-import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.vue3.components.menu';
+import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.system.menu.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
+import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
-import { Stage } from 'tasks.v2.component.fields.group';
 import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { FlowModel } from 'tasks.v2.model.flows';
@@ -25,15 +24,13 @@ export const Flow = {
 		BMenu,
 		HoverPill,
 		FieldAdd,
-		Stage,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			flowMeta,
@@ -47,20 +44,9 @@ export const Flow = {
 		};
 	},
 	computed: {
-		...mapGetters({
-			currentUserId: `${Model.Interface}/currentUserId`,
-		}),
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		flow(): FlowModel
 		{
 			return this.$store.getters[`${Model.Flows}/getById`](this.task.flowId);
-		},
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
 		},
 		menuOptions(): MenuOptions
 		{
@@ -106,41 +92,33 @@ export const Flow = {
 
 			if (this.isEdit && this.flow)
 			{
-				this.showMenu();
+				this.isMenuShown = true;
 			}
 			else
 			{
 				this.showDialog();
 			}
 		},
-		showMenu(): void
-		{
-			this.isMenuShown = true;
-		},
-		handleClear(): void
-		{
-			this.clearField();
-		},
 		openFlow(): void
 		{
-			const href = flowService.getUrl(this.flow.id, this.currentUserId);
+			const href = flowService.getUrl(this.flow.id, Core.getParams().currentUser.id);
 
 			SidePanel.Instance.open(href);
 		},
 		clearField(): void
 		{
-			void taskService.update(
-				this.taskId,
-				{
-					flowId: 0,
-					groupId: 0,
-					stageId: 0,
-				},
-			);
+			void taskService.update(this.taskId, {
+				flowId: 0,
+				groupId: 0,
+				stageId: 0,
+			});
 		},
 		showDialog(): void
 		{
-			flowDialog.setTaskId(this.taskId).showTo(this.$refs.container);
+			flowDialog.show({
+				targetNode: this.$refs.container,
+				taskId: this.taskId,
+			});
 		},
 	},
 	template: `
@@ -148,12 +126,14 @@ export const Flow = {
 			:data-task-id="taskId"
 			:data-task-field-id="flowMeta.id"
 			:data-task-field-value="task.flowId"
+			ref="container"
 		>
 			<HoverPill
 				v-if="flow"
 				:withClear="!readonly && !isEdit"
+				:active="isMenuShown"
 				@click="handleClick"
-				@clear="handleClear"
+				@clear="clearField"
 			>
 				<div class="tasks-field-flow">
 					<BIcon :name="Outline.BOTTLENECK"/>
@@ -161,7 +141,6 @@ export const Flow = {
 				</div>
 			</HoverPill>
 			<FieldAdd v-else :icon="Outline.BOTTLENECK" @click="handleClick"/>
-			<Stage v-if="isEdit && flow" :taskId="taskId"/>
 		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`,

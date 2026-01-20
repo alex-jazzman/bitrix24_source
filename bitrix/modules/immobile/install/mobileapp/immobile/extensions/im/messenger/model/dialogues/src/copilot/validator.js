@@ -18,6 +18,25 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 			result.chats = fields.chats;
 		}
 
+		if (Type.isObjectLike(fields.engine))
+		{
+			result.engine = fields.engine;
+		}
+
+		if (Type.isArrayFilled(fields.engines))
+		{
+			result.engine = fields.engines[0];
+		}
+
+		if (Type.isBoolean(fields.changeEngine))
+		{
+			result.changeEngine = fields.changeEngine;
+		}
+		else
+		{
+			result.changeEngine = false;
+		}
+
 		if (!Type.isUndefined(fields.roles) && !Type.isNull(fields.roles))
 		{
 			Object.entries(fields.roles).forEach(([roleId, roleData]) => {
@@ -69,6 +88,24 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 		else
 		{
 			result.chats = existingElem.chats;
+		}
+
+		if (Type.isNil(newElem.engine))
+		{
+			result.engine = existingElem.engine;
+		}
+		else
+		{
+			result.engine = { ...existingElem.engine, ...newElem.engine };
+		}
+
+		if (Type.isBoolean(newElem.changeEngine))
+		{
+			result.changeEngine = newElem.changeEngine;
+		}
+		else
+		{
+			result.changeEngine = existingElem.changeEngine ?? false;
 		}
 
 		if (!Type.isUndefined(newElem.roles) && !Type.isNull(newElem.roles))

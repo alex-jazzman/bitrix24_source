@@ -1,6 +1,7 @@
 import { Cache, Event, Loc, Type } from 'main.core';
 import { PopupWindow, PopupWindowButtonLink } from 'main.popup';
 import { UI } from 'ui.notification';
+import { sendData } from 'ui.analytics';
 import Backend from '../backend';
 import { Category } from '../category/category';
 import CategoryStub from '../category/category-stub';
@@ -9,6 +10,7 @@ import type CategorySourceOptions from '../type/category-source-options';
 import type Link from '../type/link';
 import type Stage, { Tunnel } from '../type/stage';
 import type TunnelScheme from '../type/tunnel-scheme';
+import type AnalyticsLabels from '../type/analytics-labels';
 import createStageStubs from './internal/create-stage-stubs';
 import makeErrorMessageFromResponse from './internal/make-error-message';
 
@@ -28,6 +30,7 @@ export default class Manager
 		robotsUrl: string,
 		generatorUrl: string,
 		permissionEditUrl: string,
+		analyticsLabels: AnalyticsLabels,
 
 		isCategoryEditable: boolean,
 		isCategoryCreatable: boolean,
@@ -47,6 +50,7 @@ export default class Manager
 		this.robotsUrl = options.robotsUrl;
 		this.generatorUrl = options.generatorUrl;
 		this.permissionEditUrl = options.permissionEditUrl;
+		this.analyticsLabels = options.analyticsLabels;
 		this.tunnelScheme = options.tunnelScheme;
 		this.isCategoryEditable = Boolean(options.isCategoryEditable);
 		this.isCategoryCreatable = Boolean(options.isCategoryCreatable);
@@ -78,6 +82,8 @@ export default class Manager
 		Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
 
 		this.constructor.lastInstance = this;
+
+		sendData(this.analyticsLabels.openSliderLabel);
 	}
 
 	hasTunnels(): boolean
@@ -123,6 +129,11 @@ export default class Manager
 	onAddCategoryClick(event)
 	{
 		event.preventDefault();
+		const analyticsLabelElement =
+			event.currentTarget === this.addCategoryButtonTop
+				? 'green_button'
+				: 'gray_button'
+		;
 
 		if (!this.isCategoryCreatable)
 		{
@@ -175,9 +186,16 @@ export default class Manager
 				{
 					this.hideCategoryStub();
 				}
+
+				this.analyticsLabels.createFunnelLabel.status = 'success';
 			})
 			.catch((response) => {
+				this.analyticsLabels.createFunnelLabel.status = 'error';
 				this.showErrorPopup(makeErrorMessageFromResponse(response));
+			})
+			.finally(() => {
+				this.analyticsLabels.createFunnelLabel.c_element = analyticsLabelElement;
+				sendData(this.analyticsLabels.createFunnelLabel);
 			});
 	}
 
@@ -318,9 +336,15 @@ export default class Manager
 							category: 'save',
 						});
 						this.isChanged = true;
+
+						this.analyticsLabels.renameFunnelLabel.status = 'success';
 					})
 					.catch((response) => {
+						this.analyticsLabels.renameFunnelLabel.status = 'error';
 						this.showErrorPopup(makeErrorMessageFromResponse(response));
+					})
+					.finally(() => {
+						sendData(this.analyticsLabels.renameFunnelLabel);
 					});
 			})
 			.subscribe('Category:access', (event) => {
@@ -387,10 +411,17 @@ export default class Manager
 							Marker.adjustLinks();
 						});
 						this.isChanged = true;
+
+						this.analyticsLabels.deleteFunnelLabel.status = 'success';
 					})
 					.catch((response) => {
 						event.data.onCancel();
+						this.analyticsLabels.deleteFunnelLabel.status = 'error';
+
 						this.showErrorPopup(makeErrorMessageFromResponse(response));
+					})
+					.finally(() => {
+						sendData(this.analyticsLabels.deleteFunnelLabel);
 					});
 			})
 			.subscribe('Column:link', (event) => {
@@ -433,11 +464,18 @@ export default class Manager
 							});
 
 							stage.TUNNELS.push(response.data.tunnel);
+							this.analyticsLabels.createTunnelLabel.status = 'success';
 						})
 						.catch((response) => {
 							const link = event.data.link;
 							link.from.removeLink(link);
+
+							this.analyticsLabels.createTunnelLabel.status = 'error';
+
 							this.showErrorPopup(makeErrorMessageFromResponse(response));
+						})
+						.finally(() => {
+							sendData(this.analyticsLabels.createTunnelLabel);
 						});
 				}
 
@@ -481,9 +519,14 @@ export default class Manager
 									autoHideDelay: 1500,
 									category: 'save',
 								});
+								this.analyticsLabels.deleteTunnelLabel.status = 'success';
 							})
 							.catch((response) => {
+								this.analyticsLabels.deleteTunnelLabel.status = 'error';
 								this.showErrorPopup(makeErrorMessageFromResponse(response));
+							})
+							.finally(() => {
+								sendData(this.analyticsLabels.deleteTunnelLabel);
 							});
 
 						const stage = this.getStageDataById(srcStage);
@@ -662,10 +705,17 @@ export default class Manager
 								});
 								this.isChanged = true;
 							}
+
+							this.analyticsLabels.deleteStageLabel.status = 'success';
 						})
 						.catch((response) => {
 							event.data.onCancel();
+							this.analyticsLabels.deleteStageLabel.status = 'error';
+
 							this.showErrorPopup(makeErrorMessageFromResponse(response));
+						})
+						.finally(() => {
+							sendData(this.analyticsLabels.deleteStageLabel);
 						});
 				}
 			})
@@ -688,11 +738,16 @@ export default class Manager
 								category: 'save',
 							});
 							this.isChanged = true;
+
+							this.analyticsLabels.renameStageLabel.status = 'success';
 						}
 						else
 						{
+							this.analyticsLabels.renameStageLabel.status = 'error';
 							this.showErrorPopup(makeErrorMessageFromResponse({ data }));
 						}
+
+						sendData(this.analyticsLabels.renameStageLabel);
 					});
 			})
 			.subscribe('Column:addColumn', (event) => {
@@ -749,9 +804,15 @@ export default class Manager
 						});
 						column.switchToEditMode();
 						Marker.adjustLinks();
+
+						this.analyticsLabels.createStageLabel.status = 'success';
 					})
 					.catch((response) => {
+						this.analyticsLabels.createStageLabel.status = 'error';
 						this.showErrorPopup(makeErrorMessageFromResponse(response));
+					})
+					.finally(() => {
+						sendData(this.analyticsLabels.createStageLabel);
 					});
 			})
 			.subscribe('Column:sort', (event) => {
@@ -786,11 +847,16 @@ export default class Manager
 								category: 'save',
 							});
 							this.isChanged = true;
+
+							this.analyticsLabels.updateStageLabel.status = 'success';
 						}
 						else
 						{
+							this.analyticsLabels.updateStageLabel.status = 'error';
 							this.showErrorPopup(makeErrorMessageFromResponse({ data }));
 						}
+
+						sendData(this.analyticsLabels.updateStageLabel);
 					});
 			})
 			.subscribe('Category:slider:close', () => {

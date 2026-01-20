@@ -4,7 +4,6 @@ export class Linkaction
 {
 	constructor()
 	{
-		console.log('BX.Landing.UI.Field.LinkActions');
 		this.createEl = BX.Landing.UI.Field.Link.createElement();
 	}
 

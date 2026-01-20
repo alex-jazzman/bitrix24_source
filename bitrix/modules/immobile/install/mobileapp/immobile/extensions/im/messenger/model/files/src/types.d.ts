@@ -7,6 +7,7 @@ export enum FileType
 	audio = 'audio',
 	file = 'file',
 }
+
 export enum FileStatus
 {
 	upload = 'upload',
@@ -38,6 +39,8 @@ export type FilesModelState = {
 	viewerAttrs: Object,
 	localUrl?: string,
 	isTranscribable?: boolean,
+	isVoiceNote?: boolean,
+	isVideoNote?: boolean,
 	mediaUrl?: {
 		preview?: Record<number, string>
 	}

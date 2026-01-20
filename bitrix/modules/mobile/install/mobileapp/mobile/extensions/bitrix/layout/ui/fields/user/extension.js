@@ -268,6 +268,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.getPageManager(),
+				analyticsSection: 'ui_field_user',
 			});
 		}
 

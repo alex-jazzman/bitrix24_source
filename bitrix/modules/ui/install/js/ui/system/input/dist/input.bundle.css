@@ -184,6 +184,7 @@
 	left: var(--inline-label-margin);
 	max-width: calc(100% - 2 * (var(--ui-space-inline-2xs) + var(--inline-label-margin)));
 	overflow: hidden;
+	white-space: nowrap;
 	text-overflow: ellipsis;
 	margin: 0;
 	padding: 0 var(--ui-space-inline-2xs);

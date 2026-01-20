@@ -26,3 +26,5 @@ $MESS["LOCATION_REPO_FRMT_UK_NAME"] = "UK";
 $MESS["LOCATION_REPO_FRMT_UNKNOWN"] = "Extra address information";
 $MESS["LOCATION_REPO_FRMT_US_DESCR"] = "137 One Nice Way<br/>Caprica, CA<br/>92908<br/>USA";
 $MESS["LOCATION_REPO_FRMT_US_NAME"] = "USA";
+$MESS["LOCATION_REPO_FRMT_UZ_DESCR"] = "32 Inzhobod st. Floor 6 Apt 10, Yunusabad district<br/>Tashkent<br/>Uzbekistan<br/>100084";
+$MESS["LOCATION_REPO_FRMT_UZ_NAME"] = "Uzbekistan";

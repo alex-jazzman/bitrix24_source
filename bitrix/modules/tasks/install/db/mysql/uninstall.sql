@@ -164,6 +164,6 @@ DROP TABLE IF EXISTS b_tasks_deadline_user_option;
 
 DROP TABLE IF EXISTS b_tasks_task_chat;
 
-DROP TABLE IF EXISTS b_tasks_task_result_file;
-
 DROP TABLE IF EXISTS b_tasks_deadline_change_log;
+
+DROP TABLE IF EXISTS b_tasks_result_message;

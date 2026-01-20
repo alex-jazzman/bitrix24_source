@@ -192,6 +192,15 @@ Class mail extends CModule
 
 			CAgent::AddAgent("CMailbox::CleanUp();", "mail", "N", 60*60*24);
 
+			$startTime = \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL');
+			CAgent::AddAgent(
+				name: "\Bitrix\Mail\Access\Install\AccessInstaller::install();",
+				module: $this->MODULE_ID,
+				interval: 60,
+				next_exec: $startTime,
+				existError: false,
+			);
+
 			return true;
 		}
 	}

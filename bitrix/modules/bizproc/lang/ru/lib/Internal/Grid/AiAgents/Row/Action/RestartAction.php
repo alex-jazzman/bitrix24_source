@@ -1,0 +1,2 @@
+<?php
+$MESS['BIZPROC_AI_AGENTS_ACTION_RESTART_TITLE'] = 'Перезапустить';

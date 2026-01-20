@@ -43,8 +43,11 @@ this.BX.UI.System.Skeleton = this.BX.UI.System.Skeleton || {};
 	      return line;
 	    }
 	  },
+	  // div wrapper is here for outer v-if support
 	  template: `
-		<div v-if="!isMounted" ref="line"></div>
+		<div>
+			<div v-if="!isMounted" ref="line"></div>
+		</div>
 	`
 	};
 

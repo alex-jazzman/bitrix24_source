@@ -55,11 +55,18 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					: (Analytics.Category[chatData.type] || Analytics.Category.chat)
 				;
 
+				let type = Analytics.Type.Dialog[chatData?.type] || Analytics.Type.custom;
 				const isNotes = chatHelper?.isNotes;
-				const type = isNotes
-					? Analytics.Type.notes
-					: Analytics.Type[chatData?.type] || Analytics.Type.custom
-				;
+				const isAiAssistant = chatHelper?.isAiAssistant;
+				if (isNotes)
+				{
+					type = Analytics.Type.Dialog.notes;
+				}
+
+				if (isAiAssistant)
+				{
+					type = Analytics.Type.Dialog.aiAssistant;
+				}
 
 				let section = Analytics.Section.chatTab;
 				switch (MessengerParams.getComponentCode())
@@ -184,6 +191,36 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 			catch (e)
 			{
 				console.error(`${this.constructor.name}.sendOpenCopilotDialog.catch:`, e);
+			}
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendOpenAiAssistantDialog({ dialogId })
+		{
+			try
+			{
+				const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+				if (!dialog)
+				{
+					return;
+				}
+
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.Tool.ai)
+					.setCategory(Analytics.Category.chatOperations)
+					.setEvent(Analytics.Event.openChat)
+					.setType(Analytics.Type.Dialog.aiAssistant)
+					.setSection(Analytics.Section.chatTab)
+					.setP3(`chatType_${Analytics.Type.Dialog.aiAssistant}`)
+					.setP5(`chatId_${dialog.chatId}`);
+
+				analytics.send();
+			}
+			catch (e)
+			{
+				console.error(`${this.constructor.name}.sendOpenAiAssistantDialog.catch:`, e);
 			}
 		}
 	}

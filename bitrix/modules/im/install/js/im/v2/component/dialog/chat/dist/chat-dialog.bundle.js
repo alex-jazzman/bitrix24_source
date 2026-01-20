@@ -32,22 +32,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        chatId
 	      }
 	    }).then(() => {
-	      const userId = im_v2_application_core.Core.getUserId();
-	      babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/anchors/removeChatAnchors', {
-	        userId,
-	        chatId
-	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/anchors/removeChatAnchors', chatId);
 	    }).catch(error => {
 	      console.error('AnchorService: read chat anchors error', error);
 	    });
 	  }
 	  debouncedReadMessageAnchors(messageId) {
-	    const userId = im_v2_application_core.Core.getUserId();
 	    this.messagesToRead.add(messageId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/anchors/removeUserAnchorsFromMessage', {
-	      userId,
-	      messageId
-	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/anchors/removeUserAnchorsFromMessage', messageId);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _timerBeforeSendRequest)[_timerBeforeSendRequest]) {
 	      clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _timerBeforeSendRequest)[_timerBeforeSendRequest]);
 	      babelHelpers.classPrivateFieldLooseBase(this, _timerBeforeSendRequest)[_timerBeforeSendRequest] = null;
@@ -889,23 +881,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isText(node) {
 	      return node.nodeName === '#text';
 	    },
-	    isMessageTextNode(node) {
-	      if (!(node instanceof HTMLElement)) {
-	        return false;
-	      }
-	      const textNode = node.matches(MESSAGE_TEXT_NODE_CLASS);
-	      return Boolean(textNode);
-	    },
-	    extractTextFromMessageNode(node) {
-	      const textNode = node.querySelector(MESSAGE_TEXT_NODE_CLASS);
-	      if (!textNode) {
-	        return node.textContent;
-	      }
-	      return textNode.textContent;
-	    },
 	    onQuoteClick() {
-	      im_v2_lib_quote.Quote.sendQuoteEvent(this.message, this.text, this.dialogId);
+	      im_v2_lib_quote.Quote.sendQuoteEvent({
+	        message: this.message,
+	        text: this.text,
+	        dialogId: this.dialogId,
+	        context: {
+	          emitter: this.getEmitter()
+	        }
+	      });
 	      this.$emit('close');
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -1376,12 +1364,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.getScrollManager().scrollToBottom();
 	    },
 	    showLoadingBar() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.showLoadingBar, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.showLoadingBar, {
 	        dialogId: this.dialogId
 	      });
 	    },
 	    hideLoadingBar() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.hideLoadingBar, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.hideLoadingBar, {
 	        dialogId: this.dialogId
 	      });
 	    },
@@ -1840,28 +1828,31 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    subscribeToEvents() {
 	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.scrollToBottom, this.onScrollToBottom);
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.goToMessageContext, this.onGoToMessageContext);
 	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.call.onFold, this.onCallFold);
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.showForwardPopup, this.onShowForwardPopup);
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.showQuoteButton, this.onShowQuoteButton);
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.goToMessageContext, this.onGoToMessageContext);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.showForwardPopup, this.onShowForwardPopup);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.showQuoteButton, this.onShowQuoteButton);
 	      main_core.Event.bind(window, 'focus', this.onWindowFocus);
 	      main_core.Event.bind(window, 'blur', this.onWindowBlur);
 	    },
 	    unsubscribeFromEvents() {
 	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.scrollToBottom, this.onScrollToBottom);
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.goToMessageContext, this.onGoToMessageContext);
 	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.call.onFold, this.onCallFold);
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.showForwardPopup, this.onShowForwardPopup);
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.showQuoteButton, this.onShowQuoteButton);
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.goToMessageContext, this.onGoToMessageContext);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.showForwardPopup, this.onShowForwardPopup);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.showQuoteButton, this.onShowQuoteButton);
 	      main_core.Event.unbind(window, 'focus', this.onWindowFocus);
 	      main_core.Event.unbind(window, 'blur', this.onWindowBlur);
 	    },
 	    getContainer() {
 	      return this.$refs.container;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `

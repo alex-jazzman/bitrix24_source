@@ -18,5 +18,9 @@ return [
 		'task.parent.delete' => 'transaction',
 		'task.related.add' => 'transaction',
 		'task.gantt.add.dependence' => 'transaction',
+		'template.add' => 'transaction',
+		'template.update' => 'transaction',
+		'template.delete' => 'transaction',
+		'template.related.add' => 'transaction',
 	],
 ];

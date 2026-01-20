@@ -4,7 +4,7 @@ import { PromoManager } from 'im.v2.lib.promo';
 
 import { Analytics } from 'call.lib.analytics';
 
-import '../css/copilot-notify.css'
+import '../css/copilot-notify.css';
 
 export const CopilotNotifyType = {
 	COPILOT_ENABLED: 'COPILOT_ENABLED',
@@ -19,9 +19,9 @@ export const CopilotNotifyType = {
 	DISABLE_AI_INTERNAL_ERROR: 'DISABLE_AI_INTERNAL_ERROR',
 };
 
-export class CopilotNotify {
-	constructor(config)
-	{
+export class CopilotNotify
+{
+	constructor(config) {
 		this.callId = config.callId || 0;
 		this.type = config.type || '';
 		this.code = config.code || '';
@@ -34,85 +34,87 @@ export class CopilotNotify {
 
 		this.callbacks = {
 			onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
-		}
+		};
 	}
 
-	getPopupTemplate()
-	{
-		this.setAdditionalInformation();
-
+	getPopupTemplate() {
 		if (!this.notifyText)
 		{
 			this.popupTemplate = null;
 		}
 
-		this.popupTemplate = Dom.create("div", {
-			props: {className: 'bx-call-copilot-notify__content'},
+		this.popupTemplate = Dom.create('div', {
+			props: { className: 'bx-call-copilot-notify__content' },
 			children: [
-				Dom.create("div", {
-					props: {className: 'bx-call-copilot-notify__icon'},
+				Dom.create('div', {
+					props: { className: 'bx-call-copilot-notify__icon' },
 				}),
-				Dom.create("div", {
-					props: {className: 'bx-call-copilot-notify__message'},
+				Dom.create('div', {
+					props: { className: 'bx-call-copilot-notify__message' },
 					text: this.notifyText,
 				}),
-				Dom.create("button", {
-					props: {className: 'bx-call-copilot-notify__close-btn'},
+				Dom.create('button', {
+					props: { className: 'bx-call-copilot-notify__close-btn' },
 					events: {
 						click: () => {
 							this.close();
 						},
-					}
-				})
-			]
+					},
+				}),
+			],
 		});
 	}
 
-	setAdditionalInformation()
-	{
+	setAdditionalInformation() {
 		switch (this.type)
 		{
 			case CopilotNotifyType.COPILOT_ENABLED:
-				this.notifyText = BX.message('CALL_POPUP_WARNING_ENABLED');
+				this.notifyText = Loc.getMessage('CALL_POPUP_WARNING_ENABLED');
 				this.promoId = 'call:copilot-notify-warning:21112024:all';
 				this.notifyColor = '#8E52EC';
 				break;
 			case CopilotNotifyType.COPILOT_DISABLED:
-				this.notifyText = BX.message('CALL_POPUP_PROMO_ENABLED');
+				this.notifyText = Loc.getMessage('CALL_POPUP_PROMO_ENABLED');
 				this.promoId = 'call:copilot-notify-promo:21112024:all';
 				this.notifyColor = '#8E52EC';
 				break;
 			case CopilotNotifyType.COPILOT_RESULT:
-				this.notifyText = BX.message('CALL_POPUP_RESULT_WARNING');
+				this.notifyText = Loc.getMessage('CALL_POPUP_RESULT_WARNING');
 				this.promoId = 'call:copilot-notify-result:24112024:all';
 				this.notifyColor = '#8E52EC';
 				break;
 			case CopilotNotifyType.AI_UNAVAILABLE_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_AI_UNAVAILABLE_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_UNAVAILABLE_ERROR');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_MODULE_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_AI_MODULE_ERROR').replace('#ERROR_CODE#', this.code);
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_MODULE_ERROR').replace('#ERROR_CODE#', this.code);
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_SETTINGS_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_AI_SETTINGS_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_SETTINGS_ERROR');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_AGREEMENT_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_AI_AGREEMENT_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_AGREEMENT_ERROR');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_NOT_ENOUGH_BAAS_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR');
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR');
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.ENABLE_AI_INTERNAL_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_ENABLE_AI_INTERNAL_ERROR').replace('#ERROR_CODE#', this.code);
+				this.notifyText = Loc.getMessage('CALL_POPUP_ENABLE_AI_INTERNAL_ERROR').replace(
+					'#ERROR_CODE#',
+					this.code,
+				);
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.DISABLE_AI_INTERNAL_ERROR:
-				this.notifyText = BX.message('CALL_POPUP_DISABLE_AI_INTERNAL_ERROR').replace('#ERROR_CODE#', this.code);
+				this.notifyText = Loc.getMessage('CALL_POPUP_DISABLE_AI_INTERNAL_ERROR').replace(
+					'#ERROR_CODE#',
+					this.code,
+				);
 				this.notifyColor = '#FF5752';
 				break;
 			default:
@@ -122,10 +124,7 @@ export class CopilotNotify {
 		}
 	}
 
-	create()
-	{
-		const self = this;
-
+	create() {
 		this.getPopupTemplate();
 
 		if (!this.bindElement || !this.popupTemplate)
@@ -134,12 +133,12 @@ export class CopilotNotify {
 		}
 
 		this.popup = new Popup({
-			className : "bx-call-copilot-notify",
+			className: 'bx-call-copilot-notify',
 			bindElement: this.bindElement,
 			targetContainer: document.body,
 			content: this.popupTemplate,
 			bindOptions: {
-				position: "top"
+				position: 'top',
 			},
 			padding: 0,
 			contentBorderRadius: '1024px',
@@ -147,17 +146,15 @@ export class CopilotNotify {
 			contentBackground: this.notifyColor,
 			darkMode: true,
 			contentNoPaddings: true,
-			animation: "fading",
+			animation: 'fading',
 			autoHide: true,
 			events: {
-				onPopupClose: function ()
-				{
-					self.callbacks.onClose();
-					this.destroy();
+				onPopupClose: () => {
+					this.callbacks.onClose();
+					this.popup.destroy();
 				},
-				onPopupDestroy: function ()
-				{
-					self.popup = null;
+				onPopupDestroy: () => {
+					this.popup = null;
 				},
 				onShow: () => {
 					const popupWidth = this.popup.getPopupContainer().offsetWidth;
@@ -165,7 +162,7 @@ export class CopilotNotify {
 					const offsetFix = 7;
 
 					this.popup.setOffset({
-						offsetLeft: elementWidth - offsetFix - popupWidth / 2
+						offsetLeft: elementWidth - offsetFix - popupWidth / 2,
 					});
 
 					this.popup.setAngle({
@@ -175,26 +172,25 @@ export class CopilotNotify {
 					this.popup.adjustPosition();
 				},
 				onClose: () => {
-					if (!this.promoId)
+					if (this.promoId)
 					{
-						return;
+						PromoManager.getInstance().markAsWatched(this.promoId);
 					}
-
-					PromoManager.getInstance().markAsWatched(this.promoId);
 				},
-			}
+			},
 		});
 	}
 
-	show()
-	{
+	show() {
 		this.close();
-		this.create();
+		this.setAdditionalInformation();
 
-		if (!this.canShowCopilotNotify())
+		if (this.promoId && !PromoManager.getInstance().needToShow(this.promoId))
 		{
 			return;
 		}
+
+		this.create();
 
 		if (this.type === CopilotNotifyType.COPILOT_ENABLED || this.type === CopilotNotifyType.COPILOT_DISABLED)
 		{
@@ -210,21 +206,10 @@ export class CopilotNotify {
 		}
 	}
 
-	close()
-	{
+	close() {
 		if (this.popup)
 		{
 			this.popup.close();
 		}
-	}
-
-	canShowCopilotNotify()
-	{
-		if (!this.promoId)
-		{
-			return true;
-		}
-
-		return PromoManager.getInstance().needToShow(this.promoId);
 	}
 }

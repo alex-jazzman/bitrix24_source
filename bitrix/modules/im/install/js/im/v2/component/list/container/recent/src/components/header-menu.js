@@ -1,45 +1,59 @@
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { ChatService } from 'im.v2.provider.service.chat';
-import { MessengerMenu, MenuItem } from 'im.v2.component.elements.menu';
-
-import type { PopupOptions } from 'main.popup';
+import { MenuItem } from 'im.v2.component.elements.menu';
+import { showReadMessagesConfirm } from 'im.v2.lib.confirm';
+import { BaseHeaderMenu } from 'im.v2.component.list.container.elements.base-header-menu';
 
 // @vue/component
 export const HeaderMenu = {
-	components: { MessengerMenu, MenuItem },
-	emits: ['showUnread'],
-	data(): { showPopup: boolean }
+	components: { BaseHeaderMenu, MenuItem },
+	props:
 	{
-		return {
-			showPopup: false,
-		};
+		unreadOnlyMode: {
+			type: Boolean,
+			default: false,
+		},
 	},
+	emits: ['toggleUnreadMode'],
 	computed:
 	{
-		menuConfig(): PopupOptions
-		{
-			return {
-				id: 'im-recent-header-menu',
-				width: 284,
-				bindElement: this.$refs.icon || {},
-				offsetTop: 4,
-				padding: 0,
-			};
-		},
 		unreadCounter(): number
 		{
-			return this.$store.getters['counters/getTotalChatCounter'];
+			const counter = this.$store.getters['counters/getTotalChatCounter'];
+
+			return this.unreadOnlyMode ? 0 : counter;
+		},
+		unreadToggleTitle(): string
+		{
+			return this.unreadOnlyMode
+				? this.loc('IM_RECENT_HEADER_MENU_SHOW_ALL')
+				: this.loc('IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY_MSGVER_1');
+		},
+		isUnreadRecentModeAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.unreadRecentModeAvailable);
 		},
 	},
 	methods:
 	{
-		onIconClick()
+		async onReadAllClick(closeCallback: () => void)
 		{
-			this.showPopup = true;
-		},
-		onReadAllClick()
-		{
+			const confirmResult = await showReadMessagesConfirm(this.loc('IM_RECENT_HEADER_MENU_READ_ALL_CONFIRM_TEXT'));
+
+			if (!confirmResult)
+			{
+				return;
+			}
+
 			(new ChatService()).readAll();
-			this.showPopup = false;
+
+			closeCallback();
+		},
+		onToggleUnreadMode(closeCallback: () => void)
+		{
+			this.$emit('toggleUnreadMode');
+
+			closeCallback();
 		},
 		loc(phraseCode: string): string
 		{
@@ -47,29 +61,25 @@ export const HeaderMenu = {
 		},
 	},
 	template: `
-		<div
-			class="bx-im-list-container-recent__header-menu_icon"
-			:class="{'--active': showPopup}"
-			@click="onIconClick"
-			ref="icon"
-		></div>
-		<MessengerMenu v-if="showPopup" :config="menuConfig" @close="showPopup = false">
-			<MenuItem
-				:title="loc('IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1')"
-				@click="onReadAllClick"
-			/>
-			<MenuItem
-				v-if="false"
-				:title="loc('IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY')"
-				:counter="unreadCounter"
-				:disabled="true"
-			/>
-			<MenuItem
-				v-if="false"
-				:title="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE')"
-				:subtitle="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE')"
-				:disabled="true"
-			/>
-		</MessengerMenu>
+		<BaseHeaderMenu>
+			<template #menu-items="{ closeCallback }">
+				<MenuItem
+					:title="loc('IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1')"
+					@click="onReadAllClick(closeCallback)"
+				/>
+				<MenuItem
+					v-if="isUnreadRecentModeAvailable"
+					:title="unreadToggleTitle"
+					:counter="unreadCounter"
+					@click="onToggleUnreadMode(closeCallback)"
+				/>
+				<MenuItem
+					v-if="false"
+					:title="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE')"
+					:subtitle="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE')"
+					:disabled="true"
+				/>
+			</template>
+		</BaseHeaderMenu>
 	`,
 };

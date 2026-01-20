@@ -101,3 +101,9 @@ export type InputActionNotifyPullHandlerParams = {
 	type: InputActionNotifyType,
 	duration?: string | null,
 };
+
+export type CopilotChangeEnginePullHandlerParams = {
+	chatId: number,
+	engineCode: string,
+	engineName: string,
+};

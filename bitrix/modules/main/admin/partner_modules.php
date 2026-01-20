@@ -360,7 +360,7 @@ while($info = $rsData->Fetch())
 		{
 			if($modules[$info["id"]]["UPDATE_END"] == "Y")
 			{
-				if($linkToBuy && !empty($modules[$info["id"]]["VERSION"]))
+				if($linkToBuy)
 					$row->AddViewField("DATE_TO", "<span style=\"color:red;\">".$modules[$info["id"]]["DATE_TO"]."</span><br /><a href=\"".str_replace("#CODE#", $info["id"], $linkToBuyUpdate)."\" target=\"_blank\">".GetMessage("MOD_UPDATE_BUY")."</a>");
 				else
 					$row->AddViewField("DATE_TO", "<span style=\"color:red;\">".$modules[$info["id"]]["DATE_TO"]."</span>");

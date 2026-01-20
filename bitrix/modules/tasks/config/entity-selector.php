@@ -11,6 +11,7 @@ use Bitrix\Tasks\Integration\UI\EntitySelector\SprintSelectorProvider;
 use Bitrix\Tasks\Integration\UI\EntitySelector\TaskProvider;
 use Bitrix\Tasks\Integration\UI\EntitySelector\TaskTagProvider;
 use Bitrix\Tasks\Integration\UI\EntitySelector\TaskTemplateProvider;
+use Bitrix\Tasks\Integration\UI\EntitySelector\TaskTemplateWithIdProvider;
 use Bitrix\Tasks\Integration\UI\EntitySelector\TaskWithIdProvider;
 use Bitrix\Tasks\Integration\UI\EntitySelector\TemplateTagProvider;
 
@@ -43,6 +44,13 @@ return [
 				'provider' => [
 					'moduleId' => 'tasks',
 					'className' => TaskTemplateProvider::class,
+				],
+			],
+			[
+				'entityId' => 'task-template-with-id',
+				'provider' => [
+					'moduleId' => 'tasks',
+					'className' => TaskTemplateWithIdProvider::class,
 				],
 			],
 			[

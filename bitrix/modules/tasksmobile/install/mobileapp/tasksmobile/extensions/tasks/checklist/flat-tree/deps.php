@@ -2,11 +2,13 @@
 
 return [
 	'extensions' => [
+		'loc',
+		'type',
 		'utils/hash',
-		'utils/type',
-		'utils/string',
 		'utils/object',
 		'utils/random',
+		'utils/string',
+		'utils/type',
 		'tasks:checklist/flat-tree/item',
 	],
 ];

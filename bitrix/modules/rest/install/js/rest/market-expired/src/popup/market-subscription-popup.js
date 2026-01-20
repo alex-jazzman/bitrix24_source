@@ -15,25 +15,44 @@ export class MarketSubscriptionPopup extends MarketExpiredPopup
 	getTitle(): string
 	{
 		const replacements = { '#DAYS#': this.expireDays };
-		const marketLabel = this.type === PopupType.WARNING ? this.marketLabel : '';
 
-		return Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_${this.type}${marketLabel}`, replacements);
+		if (this.type === PopupType.FINAL)
+		{
+			return this.isRenamedMarket
+				? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_FINAL_BITRIX_GPT', replacements)
+				: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_FINAL_MARKET_PLUS', replacements);
+		}
+
+		return this.isRenamedMarket
+			? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_WARNING_BITRIX_GPT', replacements)
+			: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_WARNING_MARKET_PLUS', replacements);
 	}
 
 	renderDescription(): HTMLElement
 	{
-		const replacements = { '#DATE#': this.expireDate };
-		const marketLabel = this.type === PopupType.FINAL ? this.marketLabel : '';
-
 		return Tag.render`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
-					${
-						Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_${this.type}${marketLabel}`, replacements)
-					}
+					${this.#getDescription()}
 				</p>
 			</div>
 		`;
+	}
+
+	#getDescription(): string
+	{
+		const replacements = { '#DATE#': this.expireDate };
+
+		if (this.type === PopupType.FINAL)
+		{
+			return this.isRenamedMarket
+				? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_BITRIX_GPT', replacements)
+				: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_MARKET_PLUS', replacements);
+		}
+
+		return this.isRenamedMarket
+			? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_WARNING_BITRIX_GPT', replacements)
+			: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_WARNING_MARKET_PLUS', replacements);
 	}
 
 	renderButtons(): HTMLElement

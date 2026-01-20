@@ -1,12 +1,13 @@
 <?php
 
 return [
-    'extensions' => [
-        'tokens',
+	'extensions' => [
+		'tokens',
 		'ui-system/typography/text',
 		'ui-system/blocks/badges/counter',
 		'ui-system/layout/card',
 		'ui-system/blocks/icon',
+		'im:messenger/controller/sidebar-v2/ui/sidebar-avatar',
+		'im:messenger/lib/promotion',
 	],
-    'bundle' => [],
 ];

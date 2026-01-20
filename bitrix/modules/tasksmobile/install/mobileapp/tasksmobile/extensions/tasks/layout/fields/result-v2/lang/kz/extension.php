@@ -1,0 +1,19 @@
+<?php
+$MESS["TASKS_FIELDS_RESULT_V2_ADD_WIDGET_PLACEHOLDER"] = "Адамды, топты немесе бөлімді белгілеу үшін @ басыңыз";
+$MESS["TASKS_FIELDS_RESULT_V2_ADD_WIDGET_TITLE"] = "Жұмыс нәтижесі";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_ADD_RESULT"] = "Тағы нәтижені қосу";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_COMPACT_TITLE"] = "Жұмыс нәтижелері";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_COMPACT_TITLE_MULTI"] = "Zusammenfassungen der Aufgabenstatus: #COUNT#";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_0"] = "Тағы #COUNT# нәтижені көрсету";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_1"] = "Тағы #COUNT# нәтижені көрсету";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_2"] = "Тағы #COUNT# нәтижені көрсету";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_TITLE"] = "Жұмыс нәтижесі";
+$MESS["TASKS_FIELDS_RESULT_V2_EMPTY_ERROR"] = "Geben Sie die Zusammenfassung  des Aufgabenstatus an";
+$MESS["TASKS_FIELDS_RESULT_V2_LIST_WIDGET_TITLE"] = "Жұмыс нәтижелері";
+$MESS["TASKS_FIELDS_RESULT_V2_MENU_REMOVE"] = "Нәтижені алып тастау";
+$MESS["TASKS_FIELDS_RESULT_V2_MENU_UPDATE"] = "Нәтижені өзгерту";
+$MESS["TASKS_FIELDS_RESULT_V2_REMOVE_CONFIRM_DESCRIPTION"] = "Пікір міндетте қалады, бірақ нәтиже ретінде белгіленбейді.";
+$MESS["TASKS_FIELDS_RESULT_V2_REMOVE_CONFIRM_TITLE"] = "Нәтижені алып тастау керек пе?";
+$MESS["TASKS_FIELDS_RESULT_V2_REMOVE_CONFIRM_YES"] = "Löschen";
+$MESS["TASKS_FIELDS_RESULT_V2_VIEW_ACTION_COMPLETE"] = "Aufgabe fertigstellen";
+$MESS["TASKS_FIELDS_RESULT_V2_VIEW_ANOTHER_RESULTS"] = "Andere Zusammenfassung des Aufgabenstatus";

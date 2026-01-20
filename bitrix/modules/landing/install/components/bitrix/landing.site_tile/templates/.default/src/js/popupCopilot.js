@@ -9,6 +9,8 @@ export default class PopupCopilot
 		this.id = options.id;
 		this.videoSrc = options.videoSrc;
 
+		this.zone = options.zone ?? null;
+
 		this.container = null;
 		this.content = null;
 
@@ -19,6 +21,12 @@ export default class PopupCopilot
 	{
 		if (!this.content)
 		{
+			let popupDescriptionMessageCode = 'LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION';
+			if (this.zone === 'ru')
+			{
+				popupDescriptionMessageCode = 'LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION_2';
+			}
+
 			this.content = Tag.render`
 				<div class="landing-site_title-popup-content">
 					<div class="landing-site_title-popup-main">
@@ -46,7 +54,7 @@ export default class PopupCopilot
 							</div>
 						</div>
 						<div class="landing-site_title-popup-desc">
-							${Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION')}
+							${Loc.getMessage(popupDescriptionMessageCode)}
 						</div>
 					</div>
 					${this.renderVideo()}
@@ -112,14 +120,47 @@ export default class PopupCopilot
 						onclick: (button: Button) => {
 							button.setWaiting();
 
-							BX.ajax.runAction('bitrix24.license.demolicense.activate')
-								.then(() => {
-									window.location.href = '/sites/ai/';
-								})
-								.catch((err) => {
-									console.error(err);
-									window.location.href = '/sites/ai/';
-								});
+							if (this.zone === 'ru')
+							{
+								BX.ajax.runAction('bitrix24.license.demolicense.activate')
+									.then(() => {
+										return new Promise((resolve, reject) => {
+											BX.ajax({
+												dataType: 'json',
+												method: 'POST',
+												url: '/bitrix/tools/rest.php',
+												data: {
+													action: 'activate_demo',
+													sessid: BX.bitrix_sessid(),
+												},
+												onsuccess: (response) => {
+													resolve(response);
+												},
+												onfailure: (response) => {
+													reject(response);
+												},
+											});
+										});
+									})
+									.then(() => {
+										window.location.href = '/sites/ai/';
+									})
+									.catch((err) => {
+										console.error(err);
+										window.location.href = '/sites/ai/';
+									});
+							}
+							else
+							{
+								BX.ajax.runAction('bitrix24.license.demolicense.activate')
+									.then(() => {
+										window.location.href = '/sites/ai/';
+									})
+									.catch((err) => {
+										console.error(err);
+										window.location.href = '/sites/ai/';
+									});
+							}
 						},
 					}),
 				],

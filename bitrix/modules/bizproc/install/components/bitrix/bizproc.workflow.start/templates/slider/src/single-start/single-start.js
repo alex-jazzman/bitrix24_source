@@ -43,6 +43,7 @@ export class SingleStart
 	#templateId: number;
 	#signedDocumentType: string;
 	#signedDocumentId: string;
+	#triggerType: ?string;
 
 	#startTime: number;
 
@@ -104,6 +105,7 @@ export class SingleStart
 		this.#signedDocumentType = config.signedDocumentType;
 		this.#signedDocumentId = config.signedDocumentId;
 		this.#templateId = Text.toInteger(config.id);
+		this.#triggerType = config.triggerType;
 
 		this.#subscribeOnSliderClose();
 	}
@@ -230,6 +232,7 @@ export class SingleStart
 				signedDocumentType: this.#signedDocumentType,
 				signedDocumentId: this.#signedDocumentId,
 				startDuration: Math.round(Date.now() / 1000) - this.#startTime,
+				triggerType: this.#triggerType,
 			};
 
 			startWorkflowAction(data)
@@ -353,6 +356,7 @@ export class SingleStart
 				documentType: config.documentType,
 				signedDocumentType: config.signedDocumentType,
 				signedDocumentId: config.signedDocumentId,
+				triggerType: config.triggerType,
 			}),
 			buttons: [
 				Buttons.createBackButton(this.#back.bind(this)),
@@ -380,6 +384,7 @@ export class SingleStart
 				documentType: config.documentType,
 				signedDocumentId: config.signedDocumentId,
 				signedDocumentType: config.signedDocumentType,
+				triggerType: config.triggerType,
 			}),
 			buttons: [
 				Buttons.createBackButton(this.#back.bind(this)),

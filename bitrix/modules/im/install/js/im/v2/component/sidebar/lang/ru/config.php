@@ -26,6 +26,7 @@ $MESS['IM_SIDEBAR_FAVORITE_DETAIL_TITLE'] = "Избранное";
 $MESS['IM_SIDEBAR_LINK_DETAIL_TITLE'] = "Ссылки из сообщений";
 $MESS['IM_SIDEBAR_SHARED_CHATS_TITLE'] = "Общие чаты";
 $MESS['IM_SIDEBAR_TASK_DETAIL_TITLE'] = "Задачи";
+$MESS['IM_SIDEBAR_TASK_COMMENTS_HISTORY_TITLE'] = "История задачи";
 $MESS['IM_SIDEBAR_MEDIA_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_FILEUNSORTED_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_MEETING_DETAIL_TITLE'] = "Встречи";
@@ -98,10 +99,11 @@ $MESS['IM_SIDEBAR_ADD_BUTTON_TEXT'] = "Добавить";
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_ADD_BUTTON_TEXT'] = "Открыть новый";
 
 // ai models
-$MESS['IM_SIDEBAR_AI_MODEL_POPUP_MARKET'] = "Выбрать в маркете";
+$MESS['IM_SIDEBAR_AI_MODEL_POPUP_MARKET_MSGVER_1'] = "Выбрать в Маркетплейсе";
 $MESS['IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS'] = "Настройки";
 $MESS['IM_SIDEBAR_AI_MODEL_POPUP_HELP'] = "Что выбрать?";
 
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_LIMIT'] = "Превышено число вопросов в поддержку, которые ждут решения.";
 $MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_DIALOG_TITLE'] = "Изменить роль";
-$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT'] = "Выберите роль [copilot_color]CoPilot[/copilot_color] для более точных ответов в нужной области";
+$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT'] = "Выберите роль [copilot_color]BitrixGPT[/copilot_color] для более точных ответов в нужной области";
+$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE'] = "BitrixGPT";

@@ -40,6 +40,7 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 		{
 			void UserProfile.open({
 				ownerId: userId,
+				analyticsSection: 'crm_timeline_comment_user',
 			});
 		}
 

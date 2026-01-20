@@ -16,5 +16,6 @@ return array(
 		"main.polyfill.promise",
 		"ui.design-tokens",
 		"ui.fonts.opensans",
+		"intranet.old-interface.intranet-common",
 	]
 );

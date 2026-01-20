@@ -57,6 +57,7 @@ export type CopilotChatOptions = {
 	userAvatar: string;
 	inputPlaceholder?: string;
 	loaderText?: string;
+	articleCode?: string;
 }
 
 export class CopilotChat extends EventEmitter
@@ -496,7 +497,7 @@ export class CopilotChat extends EventEmitter
 			inputPlaceholder: this.#inputPlaceholder,
 			loaderText: this.#loaderText,
 			isOldMessagesLoading: this.#isOldMessagesLoading,
-			isShowLoadHistoryError: this.#isShowLoadHistoryError,
+			isShowLoadHistoryError: this.#isShowLoadHistoryError
 		});
 
 		this.#app.mount(appContainer);

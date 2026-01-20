@@ -1,10 +1,8 @@
-import {BaseEvent} from 'main.core.events';
-import {Dom, Event, Tag, Text} from 'main.core';
-
-import ColorValue from "../../color_value";
+import { Dom, Event, Tag, Text } from 'main.core';
+import ColorValue from '../../color_value';
+import BaseControl from '../base_control/base_control';
+import { PageObject } from 'landing.pageobject';
 import './css/spectrum.css';
-import BaseControl from "../base_control/base_control";
-import {PageObject} from 'landing.pageobject';
 
 export default class Spectrum extends BaseControl
 {
@@ -13,18 +11,6 @@ export default class Spectrum extends BaseControl
 	static HUE_RANGE_GRAY_THRESHOLD: number = 360;
 	static HUE_RANGE_GRAY_MIDDLE: number = 367;
 	static HIDE_CLASS: string = 'hidden';
-
-	// todo: debug, del method, change calls, change css
-	static getDefaultSaturation()
-	{
-		const global = window.top.document.location.saturation;
-		const urlParam = (new URL(window.top.document.location)).searchParams.get('saturation');
-		const saturation = global || urlParam || Spectrum.DEFAULT_SATURATION;
-
-		window.top.document.body.style.setProperty('--saturation', saturation + '%');
-
-		return parseInt(saturation);
-	}
 
 	constructor(options)
 	{
@@ -36,7 +22,6 @@ export default class Spectrum extends BaseControl
 		this.onPickerDragEnd = this.onPickerDragEnd.bind(this);
 		this.onScroll = this.onScroll.bind(this);
 
-		this.document = PageObject.getRootWindow().document;
 		this.scrollContext = options.contentRoot;
 
 		Event.bind(this.getLayout(), 'mousedown', this.onPickerDragStart);
@@ -73,13 +58,14 @@ export default class Spectrum extends BaseControl
 			return;
 		}
 
+		const documentBody = this.getLayout().ownerDocument.body;
 		Event.bind(this.scrollContext, 'scroll', this.onScroll);
-		Event.bind(this.document, 'mousemove', this.onPickerDragMove);
-		Event.bind(this.document, 'mouseup', this.onPickerDragEnd);
-
-		Dom.addClass(this.document.body, 'landing-ui-field-color-draggable');
+		Event.bind(this.getLayout(), 'mousemove', this.onPickerDragMove);
+		Event.bind(this.getLayout(), 'mouseup', this.onPickerDragEnd);
+		Dom.addClass(documentBody, 'landing-ui-field-color-draggable');
 		this.onScroll();
 		this.showPicker();
+		this.emit('onPickerDragStart', { color: this.getValue() });
 		this.onPickerDragMove(event);
 	}
 
@@ -95,11 +81,12 @@ export default class Spectrum extends BaseControl
 
 	onPickerDragEnd()
 	{
+		const documentBody = this.getLayout().ownerDocument.body;
 		Event.unbind(this.scrollContext, 'scroll', this.onScroll);
-		Event.unbind(this.document, 'mousemove', this.onPickerDragMove);
-		Event.unbind(this.document, 'mouseup', this.onPickerDragEnd);
-
-		Dom.removeClass(this.document.body, 'landing-ui-field-color-draggable');
+		Event.unbind(this.getLayout(), 'mousemove', this.onPickerDragMove);
+		Event.unbind(this.getLayout(), 'mouseup', this.onPickerDragEnd);
+		Dom.removeClass(documentBody, 'landing-ui-field-color-draggable');
+		this.emit('onPickerDragEnd', { color: this.getValue() });
 	}
 
 	onScroll()
@@ -109,13 +96,17 @@ export default class Spectrum extends BaseControl
 
 	getLayoutRect(): {}
 	{
+		const ownerDocument = this.getLayout().ownerDocument;
+
 		return this.cache.remember('layoutSize', () => {
 			const layoutRect = this.getLayout().getBoundingClientRect();
+			const scrollTop = ownerDocument.documentElement.scrollTop || 0;
+
 			return {
 				width: layoutRect.width,
 				height: layoutRect.height,
-				top: layoutRect.top,
 				left: layoutRect.left,
+				top: layoutRect.top + scrollTop,
 			};
 		});
 	}
@@ -127,7 +118,7 @@ export default class Spectrum extends BaseControl
 	 */
 	setPickerPos(x: number, y: number)
 	{
-		const {width, height, top, left} = this.getLayoutRect();
+		const { width, height, top, left } = this.getLayoutRect();
 
 		let leftToSet = Math.min(Math.max((x - left), 0), width);
 		leftToSet = (leftToSet > width / Spectrum.HUE_RANGE * Spectrum.HUE_RANGE_GRAY_THRESHOLD)
@@ -161,8 +152,8 @@ export default class Spectrum extends BaseControl
 
 			return new ColorValue({
 				h: Math.min(h, Spectrum.HUE_RANGE_GRAY_THRESHOLD),
-				s: (h >= Spectrum.HUE_RANGE_GRAY_THRESHOLD) ? 0 : Spectrum.getDefaultSaturation(),
-				l: l,
+				s: (h >= Spectrum.HUE_RANGE_GRAY_THRESHOLD) ? 0 : Spectrum.DEFAULT_SATURATION,
+				l,
 			});
 		});
 	}
@@ -174,7 +165,7 @@ export default class Spectrum extends BaseControl
 		if ((value !== null) && Spectrum.isSpectrumValue(value))
 		{
 			// in first set value we can't match bounding client rect (layout not render). Then, use percents
-			const {h, s, l} = value.getHsl();
+			const { h, s, l } = value.getHsl();
 
 			const left = (s === 0)
 				? Spectrum.HUE_RANGE_GRAY_MIDDLE / Spectrum.HUE_RANGE * 100
@@ -211,7 +202,7 @@ export default class Spectrum extends BaseControl
 	{
 		return (value !== null)
 			&& (
-				value.getHsl().s === Spectrum.getDefaultSaturation()
+				value.getHsl().s === Spectrum.DEFAULT_SATURATION
 				|| value.getHsl().s === 0
 			);
 	}

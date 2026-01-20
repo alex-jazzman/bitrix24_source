@@ -92,6 +92,7 @@ class Common
 					text: itemTitle,
 					title: itemTitle,
 					href: params.urls.requestUser,
+					onclick: (event, menuItem) => menuItem.getMenuWindow().close(),
 				});
 			}
 
@@ -110,6 +111,7 @@ class Common
 					text: itemTitle,
 					title: itemTitle,
 					href: params.urls.edit,
+					onclick: (event, menuItem) => menuItem.getMenuWindow().close(),
 				});
 
 				if (!params.hideArchiveLinks)
@@ -117,6 +119,7 @@ class Common
 					const featuresItem = {
 						text: Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_FEAT'),
 						title: Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_FEAT'),
+						onclick: (event, menuItem) => menuItem.getMenuWindow().close(),
 					};
 
 					if (params.editFeaturesAllowed)
@@ -186,6 +189,7 @@ class Common
 				text: (params.perms.canModerate ? Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_EDIT') : Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_VIEW')),
 				title: (params.perms.canModerate ? Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_EDIT') : Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_VIEW')),
 				href: params.urls.members,
+				onclick: (event, menuItem) => menuItem.getMenuWindow().close(),
 			});
 
 			if (params.perms.canInitiate)
@@ -196,6 +200,7 @@ class Common
 						text: Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_REQ_IN'),
 						title: Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_REQ_IN'),
 						href: params.urls.requests,
+						onclick: (event, menuItem) => menuItem.getMenuWindow().close(),
 					});
 				}
 
@@ -229,6 +234,7 @@ class Common
 				const copyGroupItem = {
 					text: itemTitle,
 					title: itemTitle,
+					onclick: (event, menuItem) => menuItem.getMenuWindow().close(),
 				}
 				if (params.copyFeatureAllowed)
 				{
@@ -548,28 +554,6 @@ class Common
 				}, 0);
 			}
 		});
-	}
-
-	static closeGroupCardMenu(node)
-	{
-		if (!node)
-		{
-			return;
-		}
-
-		const doc = node.ownerDocument;
-		const win = doc.defaultView || doc.parentWindow;
-
-		if (
-			!win
-			|| Type.isUndefined(win.BX.Socialnetwork.UIGroupMenu)
-			|| !win.BX.Socialnetwork.UIGroupMenu.getInstance().menuPopup
-		)
-		{
-			return;
-		}
-
-		win.BX.Socialnetwork.UIGroupMenu.getInstance().menuPopup.close();
 	}
 
 	static openMessenger(groupId: number): Promise

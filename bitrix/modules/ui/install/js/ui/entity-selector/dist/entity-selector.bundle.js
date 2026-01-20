@@ -2241,6 +2241,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(this, "searchFields", null);
 	    babelHelpers.defineProperty(this, "dynamicLoad", false);
 	    babelHelpers.defineProperty(this, "dynamicSearch", false);
+	    babelHelpers.defineProperty(this, "dynamicSearchMatchMode", 'exact');
 	    babelHelpers.defineProperty(this, "substituteEntityId", null);
 	    babelHelpers.defineProperty(this, "searchCacheLimits", []);
 	    babelHelpers.defineProperty(this, "filters", new Map());
@@ -2279,6 +2280,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.setSearchable(options.searchable);
 	    this.setDynamicLoad(options.dynamicLoad);
 	    this.setDynamicSearch(options.dynamicSearch);
+	    this.setDynamicSearchMatchMode(options.dynamicSearchMatchMode);
 	    this.setSearchFields(options.searchFields);
 	    this.setSearchCacheLimits(options.searchCacheLimits);
 	  }
@@ -2448,6 +2450,18 @@ this.BX.UI = this.BX.UI || {};
 	      if (main_core.Type.isBoolean(flag)) {
 	        this.dynamicSearch = flag;
 	      }
+	    }
+	  }, {
+	    key: "setDynamicSearchMatchMode",
+	    value: function setDynamicSearchMatchMode(mode) {
+	      if (mode === 'all' || mode === 'exact') {
+	        this.dynamicSearchMatchMode = mode;
+	      }
+	    }
+	  }, {
+	    key: "getDynamicSearchMatchMode",
+	    value: function getDynamicSearchMatchMode() {
+	      return this.dynamicSearchMatchMode;
 	    }
 	  }, {
 	    key: "getFilters",
@@ -4863,8 +4877,14 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getRemoveIcon() {
 	      return this.cache.remember('remove-icon', () => {
 	        return main_core.Tag.render(_t6 || (_t6 = _$5`
-				<div class="ui-tag-selector-tag-remove ui-icon-set__scope" onclick="${0}"></div>
-			`), this.handleRemoveIconClick.bind(this));
+				<div
+					class="ui-tag-selector-tag-remove ui-icon-set__scope"
+					onclick="${0}"
+					data-testid="ui-tag-selector-remove-item-button"
+					data-item-entity-id="${0}"
+					data-item-id="${0}"
+				></div>
+			`), this.handleRemoveIconClick.bind(this), this.getEntityId(), this.getId());
 	      });
 	    }
 	  }, {
@@ -5540,7 +5560,10 @@ this.BX.UI = this.BX.UI || {};
 	      return this.cache.remember('add-button', () => {
 	        const className = this.addButtonVisible ? '' : ' ui-tag-selector-item-hidden';
 	        return main_core.Tag.render(_t5$2 || (_t5$2 = _$6`
-				<span class="ui-tag-selector-item ui-tag-selector-add-button${0}">
+				<span
+					class="ui-tag-selector-item ui-tag-selector-add-button${0}"
+					data-testid="ui-tag-selector-add-item-button"
+				>
 					${0}
 				</span>
 			`), className, this.getAddButtonLink());
@@ -6253,25 +6276,18 @@ this.BX.UI = this.BX.UI || {};
 	}(Tab);
 
 	let MatchResult = /*#__PURE__*/function () {
-	  function MatchResult(item, queryWords, matchIndexes = []) {
+	  function MatchResult(item, matchIndexes = []) {
 	    babelHelpers.classCallCheck(this, MatchResult);
 	    babelHelpers.defineProperty(this, "item", null);
-	    babelHelpers.defineProperty(this, "queryWords", null);
 	    babelHelpers.defineProperty(this, "matchFields", new Map());
 	    babelHelpers.defineProperty(this, "sort", null);
 	    this.item = item;
-	    this.queryWords = queryWords;
 	    this.addIndexes(matchIndexes);
 	  }
 	  babelHelpers.createClass(MatchResult, [{
 	    key: "getItem",
 	    value: function getItem() {
 	      return this.item;
-	    }
-	  }, {
-	    key: "getQueryWords",
-	    value: function getQueryWords() {
-	      return this.queryWords;
 	    }
 	  }, {
 	    key: "getMatchFields",
@@ -6317,10 +6333,11 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  babelHelpers.createClass(SearchEngine, null, [{
 	    key: "matchItems",
-	    value: function matchItems(items, searchQuery) {
+	    value: function matchItems(items, searchQuery, options = {}) {
 	      const matchResults = [];
 	      const queryWords = searchQuery.getQueryWords();
 	      let limit = searchQuery.getResultLimit();
+	      const matchAll = options.matchAll === true;
 	      for (let i = 0; i < items.length; i++) {
 	        if (limit === 0) {
 	          break;
@@ -6332,6 +6349,9 @@ this.BX.UI = this.BX.UI || {};
 	        const matchResult = this.matchItem(item, queryWords);
 	        if (matchResult) {
 	          matchResults.push(matchResult);
+	          limit--;
+	        } else if (matchAll && item.getEntity().getDynamicSearchMatchMode() === 'all') {
+	          matchResults.push(new MatchResult(item, []));
 	          limit--;
 	        }
 	      }
@@ -6355,7 +6375,7 @@ this.BX.UI = this.BX.UI || {};
 	      }
 
 	      if (matches.length > 0) {
-	        return new MatchResult(item, queryWords, matches);
+	        return new MatchResult(item, matches);
 	      } else {
 	        return null;
 	      }
@@ -6978,7 +6998,9 @@ this.BX.UI = this.BX.UI || {};
 	            items.add(item);
 	          });
 	          const isTabEmpty = this.isEmptyResult();
-	          const matchResults = SearchEngine.matchItems([...items.values()], this.getLastSearchQuery());
+	          const matchResults = SearchEngine.matchItems([...items.values()], this.getLastSearchQuery(), {
+	            matchAll: true
+	          });
 	          this.appendResults(matchResults);
 	          if (isTabEmpty && this.getDialog().shouldFocusOnFirst()) {
 	            this.getDialog().focusOnFirstNode();

@@ -12,7 +12,7 @@ jn.define('user-profile/common-tab/src/block/header/block', (require, exports, m
 	{
 		prepareProps(commonTabData)
 		{
-			const { owner, ownerId, statusData = {}, isEditMode, onChange } = commonTabData ?? {};
+			const { owner, ownerId, statusData = {}, isEditMode, onChange, currentTheme } = commonTabData ?? {};
 
 			if (owner)
 			{
@@ -28,6 +28,7 @@ jn.define('user-profile/common-tab/src/block/header/block', (require, exports, m
 				personalGender: owner?.personalGender,
 				onVacationDateTo: statusData.onVacationDateTo,
 				status: UserStatus.getEnum(statusData?.status),
+				currentTheme,
 			};
 		}
 

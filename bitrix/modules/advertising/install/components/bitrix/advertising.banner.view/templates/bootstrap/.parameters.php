@@ -1,8 +1,13 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("advertising"))
 	return;
+
+/**
+ * @var array $arCurrentValues Defined in CComponentUtil::GetTemplateProps()
+ */
 
 $arTemplateParameters = array(
 	"PARAMETERS" => array(
@@ -20,7 +25,7 @@ $arTemplateParameters = array(
 		)
 	)
 );
-if ($arCurrentValues['BACKGROUND'] == 'image')
+if (isset($arCurrentValues['BACKGROUND']) && $arCurrentValues['BACKGROUND'] == 'image')
 {
 	$arTemplateParameters["PARAMETERS"]["IMG"] = Array(
 		"NAME" => GetMessage("ADV_BS_PARAMETER_IMG"),
@@ -29,7 +34,7 @@ if ($arCurrentValues['BACKGROUND'] == 'image')
 		"SORT" => 20
 	);
 }
-if ($arCurrentValues['BACKGROUND'] == 'stream')
+if (isset($arCurrentValues['BACKGROUND']) && $arCurrentValues['BACKGROUND'] == 'stream')
 {
 	$arTemplateParameters["PARAMETERS"]["STREAM"] = Array(
 		"NAME" => GetMessage("ADV_BS_PARAMETER_STREAM"),
@@ -44,7 +49,7 @@ if ($arCurrentValues['BACKGROUND'] == 'stream')
 		"SORT" => 40
 	);
 }
-if ($arCurrentValues['BACKGROUND'] == 'video')
+if (isset($arCurrentValues['BACKGROUND']) && $arCurrentValues['BACKGROUND'] == 'video')
 {
 	$arTemplateParameters["PARAMETERS"]["VIDEO_MP4"] = Array(
 		"NAME" => GetMessage("ADV_BS_PARAMETER_VIDEO_MP4"),
@@ -90,7 +95,7 @@ $arTemplateParameters["PARAMETERS"]["LINK_TARGET"] = Array(
 	"DEFAULT" => "left",
 	"SORT" => 70
 );
-if ($arCurrentValues['EXTENDED_MODE'] == 'Y')
+if (isset($arCurrentValues['EXTENDED_MODE']) && $arCurrentValues['EXTENDED_MODE'] == 'Y')
 {
 	$arTemplateParameters["PARAMETERS"]["HEADING"] = Array(
 		"NAME" => GetMessage("ADV_BS_PARAMETER_HEADING"),
@@ -99,7 +104,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'Y')
 		"SORT" => 90
 	);
 }
-if ($arCurrentValues['EXTENDED_MODE'] == 'N')
+if (isset($arCurrentValues['EXTENDED_MODE']) && $arCurrentValues['EXTENDED_MODE'] == 'N')
 {
 	$arTemplateParameters["PARAMETERS"]["PRESET"] = Array(
 		"NAME" => GetMessage("ADV_BS_PARAMETER_PRESET"),
@@ -120,7 +125,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => 'Y',
 		"SORT" => 80
 	);
-	if ($arCurrentValues['HEADING_SHOW'] == 'Y')
+	if (isset($arCurrentValues['HEADING_SHOW']) && $arCurrentValues['HEADING_SHOW'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["HEADING"] = Array(
 			"NAME" => GetMessage("ADV_BS_PARAMETER_HEADING_TEXT"),
@@ -163,7 +168,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => 'Y',
 		"SORT" => 170
 	);
-	if ($arCurrentValues['ANNOUNCEMENT_SHOW'] == 'Y')
+	if (isset($arCurrentValues['ANNOUNCEMENT_SHOW']) && $arCurrentValues['ANNOUNCEMENT_SHOW'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["ANNOUNCEMENT"] = Array(
 			"NAME" => GetMessage("ADV_BS_PARAMETER_ANNOUNCEMENT_TEXT"),
@@ -211,7 +216,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => "Y",
 		"SORT" => 260
 	);
-	if ($arCurrentValues['BUTTON'] == 'Y')
+	if (isset($arCurrentValues['BUTTON']) && $arCurrentValues['BUTTON'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["BUTTON_TEXT"] = Array(
 			"NAME" => GetMessage("ADV_BS_PARAMETER_BUTTON_TEXT"),
@@ -264,7 +269,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => "Y",
 		"SORT" => 330
 	);
-	if ($arCurrentValues['ANIMATION'] == 'Y')
+	if (isset($arCurrentValues['ANIMATION']) && $arCurrentValues['ANIMATION'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["ANIMATION_DURATION"] = Array(
 			"NAME" => GetMessage("ADV_BS_PARAMETER_ANIMATION_DURATION"),
@@ -286,7 +291,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => "Y",
 		"SORT" => 360
 	);
-	if ($arCurrentValues['OVERLAY'] == 'Y')
+	if (isset($arCurrentValues['OVERLAY']) && $arCurrentValues['OVERLAY'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["OVERLAY_COLOR"] = Array(
 			"NAME" => GetMessage("ADV_BS_PARAMETER_OVERLAY_COLOR"),

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\BIConnector\Services\GoogleDataStudio;
+
 define('NOT_CHECK_PERMISSIONS', true);
 define('NO_KEEP_STATISTIC', true);
 define('BX_SECURITY_SESSION_VIRTUAL', true);
@@ -59,22 +61,17 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$manager = Bitrix\BIConnector\Manager::getInstance();
 
 	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
-	if ($supersetKey)
-	{
-		$limitManager->setSupersetKey($supersetKey);
-	}
-	else if (
-		!\Bitrix\Main\Loader::includeModule('bitrix24')
-		&& $accessKey === \Bitrix\BIConnector\Superset\KeyManager::getAccessKey()
-	)
-	{
-		$limitManager->setIsSuperset();
-	}
-
-	$serviceCode = \Bitrix\BIConnector\Services\GoogleDataStudio::getServiceId();
+	$serviceCode = GoogleDataStudio::getServiceId();
 	$service = $manager->createService($serviceCode);
 	$service->setLanguage($languageCode);
+	$limitManager->setService($service);
 	$tableName = isset($_GET['table']) ? (string)$_GET['table'] : null;
+
+	$isV2 = isset($_GET['v2']);
+	if ($isV2)
+	{
+		$limitManager->releaseLock();
+	}
 
 	if (!$manager->checkAccessKey($accessKey))
 	{
@@ -84,7 +81,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'DISABLED']);
 	}
-	elseif (!$limitManager->checkLimit())
+	elseif (!$isV2 && !$limitManager->checkLimit())
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'LIMIT_EXCEEDED']);
 	}
@@ -157,228 +154,28 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		}
 		else
 		{
-			$fields = [];
-			foreach ($result['schema'] as $fieldInfo)
-			{
-				$fields[] = $fieldInfo['ID'];
-			}
-
-			$connection = $manager->getDatabaseConnection();
-			$connection->lock('biconnector_data', -1);
-			$comma = '';
-
-			$getIdFunction = function ($x)
-			{
-				return $x['ID'];
-			};
-
-			$logId = $manager->startQuery(
-				$tableName
-				,implode(', ', array_map($getIdFunction, $result['schema']))
-				,\Bitrix\Main\Web\Json::encode($result['where'], JSON_UNESCAPED_UNICODE)
-				,\Bitrix\Main\Web\Json::encode($input, JSON_UNESCAPED_UNICODE)
-				,$_SERVER['REQUEST_METHOD']
-				,preg_replace('/(?:^|\\?|&)token=(.+?)(?:$|&)/', 'token=hide-the-key-from-the-log', $_SERVER['REQUEST_URI'])
+			$resultQuery = $service->printQuery(
+				$tableName,
+				$input,
+				$_SERVER['REQUEST_METHOD'],
+				$_SERVER['REQUEST_URI'],
+				$limit,
+				$limitManager,
 			);
 
-			$res = $connection->biQuery($result['sql']);
-			if ($res)
+			if (!$resultQuery->isSuccess())
 			{
-				$extraCount = count($result['shadowFields']);
-				$selectFields = array_merge(array_values($result['schema']) , array_values($result['shadowFields']));
-
-				$primary = [];
-				foreach ($selectFields as $i => $fieldInfo)
+				foreach ($resultQuery->getErrorCollection() as $error)
 				{
-					if (isset($fieldInfo['IS_PRIMARY']) && $fieldInfo['IS_PRIMARY'] === 'Y')
+					$outputError = ['error' => $error->getMessage()];
+					if (!empty($error->getCustomData()['description']))
 					{
-						$primary[] = $i;
+						$outputError['error_message'] = $error->getCustomData()['description'];
 					}
+
+					echo Bitrix\Main\Web\Json::encode($outputError);
 				}
-
-				$group_fields = [];
-				foreach ($selectFields as $i => $fieldInfo)
-				{
-					if (isset($fieldInfo['GROUP_CONCAT']))
-					{
-						foreach ($selectFields as $j => $keyInfo)
-						{
-							if ($keyInfo['ID'] == $fieldInfo['GROUP_KEY'])
-							{
-								$group_fields[$i] = [
-									'unique_id' => $j,
-									'state' => new Bitrix\BIConnector\Aggregate\ConcatState($fieldInfo['GROUP_CONCAT']),
-								];
-								break;
-							}
-						}
-					}
-					elseif (isset($fieldInfo['GROUP_COUNT']))
-					{
-						foreach ($selectFields as $j => $keyInfo)
-						{
-							if ($keyInfo['ID'] == $fieldInfo['GROUP_KEY'])
-							{
-								$group_fields[$i] = [
-									'unique_id' => $j,
-									'state' => new Bitrix\BIConnector\Aggregate\CountState($fieldInfo['GROUP_COUNT'] === 'DISTINCT'),
-								];
-								break;
-							}
-						}
-					}
-				}
-
-				//Cleanup
-				foreach ($result['schema'] as $i => $tableInfo)
-				{
-					unset($result['schema'][$i]['GROUP_KEY']);
-					unset($result['schema'][$i]['GROUP_CONCAT']);
-					unset($result['schema'][$i]['GROUP_COUNT']);
-					unset($result['schema'][$i]['IS_PRIMARY']);
-					if (!$tableInfo['AGGREGATION_TYPE'])
-					{
-						unset($result['schema'][$i]['AGGREGATION_TYPE']);
-					}
-					if (!$tableInfo['DESCRIPTION'])
-					{
-						unset($result['schema'][$i]['DESCRIPTION']);
-					}
-					if (!$tableInfo['NAME'])
-					{
-						unset($result['schema'][$i]['NAME']);
-					}
-				}
-
-				$out = '{"schema":' . \Bitrix\Main\Web\Json::encode($result['schema'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ',"rows":[' . "\n";
-				echo $out;
-				$count = 0;
-				$size = strlen($out);
-
-				$prevPrimaryKey = '';
-				$output_row = false;
-				while ($row = $res->fetch())
-				{
-					if ($limit && $count === $limit)
-					{
-						/** It`s Avoiding "Commands out of sync" error. The issue is 0205035 */
-						continue;
-					}
-
-					foreach ($result['onAfterFetch'] as $i => $callback)
-					{
-						$row[$i] = $callback($row[$i], $service::$dateFormats);
-					}
-
-					$primaryKey = '';
-					foreach ($primary as $primaryIndex)
-					{
-						if ($primaryKey)
-						{
-							$primaryKey .= '-';
-						}
-						$primaryKey .= $row[$primaryIndex];
-					}
-
-					if ($primary && $group_fields)
-					{
-						if (!$output_row)
-						{
-							$output_row = $row;
-							foreach ($group_fields as $i => $groupInfo)
-							{
-								$group_id = $row[$groupInfo['unique_id']];
-								$output_row[$i] = clone $groupInfo['state'];
-								$output_row[$i]->updateState($group_id, $row[$i]);
-							}
-						}
-						elseif ($primaryKey === $prevPrimaryKey)
-						{
-							foreach ($group_fields as $i => $groupInfo)
-							{
-								$group_id = $row[$groupInfo['unique_id']];
-								$output_row[$i]->updateState($group_id, $row[$i]);
-							}
-						}
-						else
-						{
-							foreach ($group_fields as $i => $groupInfo)
-							{
-								$output_row[$i] = $output_row[$i]->output();
-							}
-
-							if ($extraCount)
-							{
-								array_splice($output_row, -$extraCount);
-							}
-
-							$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
-							echo $out;
-							$count++;
-							$size += strlen($out);
-
-							$comma = ',';
-
-							$output_row = $row;
-							foreach ($group_fields as $i => $groupInfo)
-							{
-								$group_id = $row[$groupInfo['unique_id']];
-								$output_row[$i] = clone $groupInfo['state'];
-								$output_row[$i]->updateState($group_id, $row[$i]);
-							}
-						}
-						$prevPrimaryKey = $primaryKey;
-					}
-					else
-					{
-						if ($extraCount)
-						{
-							array_splice($row, -$extraCount);
-						}
-
-						$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
-						echo $out;
-						$count++;
-						$size += strlen($out);
-
-						$comma = ',';
-					}
-				}
-
-				if ($output_row && !($limit && $count === $limit))
-				{
-					foreach ($group_fields as $i => $groupInfo)
-					{
-						$output_row[$i] = $output_row[$i]->output();
-					}
-
-					if ($extraCount)
-					{
-						array_splice($output_row, -$extraCount);
-					}
-
-					$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
-					echo $out;
-					$count++;
-					$size += strlen($out);
-				}
-
-				$out = ']' . ($result['filtersApplied'] ? ',"filtersApplied":true' : '') . '}';
-				echo $out;
-				$size += strlen($out);
-
-				$isOverLimit = $limitManager->fixLimit($count);
-
-				$manager->endQuery($logId, $count, $size, $isOverLimit);
 			}
-			else
-			{
-				echo Bitrix\Main\Web\Json::encode([
-					'error' => 'SQL_ERROR',
-					'errstr' => $connection->getErrorMessage(),
-				]);
-			}
-			$connection->unlock('biconnector_data');
 		}
 	}
 	else

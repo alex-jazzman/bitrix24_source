@@ -4193,17 +4193,21 @@ this.BX = this.BX || {};
 	     * @param {string} id
 	     * @param {string} name
 	     * @param {boolean} [pinned = false]
+	     * @param {boolean} [prepend = false]
 	     */
 	    addSidebarItem: function addSidebarItem(id, name, pinned) {
+	      var prepend = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 	      var Presets$$1 = this.getPreset();
 	      var presetsContainer = Presets$$1.getContainer();
 	      var sidebarItem = Presets$$1.createSidebarItem(id, name, pinned);
 	      var preset = Presets$$1.getPresetNodeById(id);
 	      if (BX.type.isDomNode(preset)) {
 	        BX.remove(preset);
-	        presetsContainer.insertBefore(sidebarItem, Presets$$1.getAddPresetField());
+	      }
+	      if (prepend) {
+	        presetsContainer.prepend(sidebarItem);
 	      } else {
-	        presetsContainer && presetsContainer.insertBefore(sidebarItem, Presets$$1.getAddPresetField());
+	        presetsContainer.insertBefore(sidebarItem, Presets$$1.getAddPresetField());
 	      }
 	      BX.bind(sidebarItem, 'click', BX.delegate(Presets$$1._onPresetClick, Presets$$1));
 	    },
@@ -4791,11 +4795,21 @@ this.BX = this.BX || {};
 	     * @returns {boolean}
 	     */
 	    isInsideFilterEvent: function isInsideFilterEvent(event) {
+	      var _this = this;
 	      event = this.prepareEvent(event);
-	      return (event.path || []).some(function (current) {
-	        return BX.type.isDomNode(current) && (BX.hasClass(current, this.settings.classFilterContainer) || BX.hasClass(current, this.settings.classSearchContainer) || BX.hasClass(current, this.settings.classDefaultPopup) || BX.hasClass(current, this.settings.classPopupOverlay) || BX.hasClass(current, this.settings.classSidePanelContainer));
-	      }, this);
+	      var isEventNodeHasInsideClass = (event.path || []).some(function (current) {
+	        return BX.type.isDomNode(current) && (BX.hasClass(current, _this.settings.classFilterContainer) || BX.hasClass(current, _this.settings.classSearchContainer) || BX.hasClass(current, _this.settings.classDefaultPopup) || BX.hasClass(current, _this.settings.classPopupOverlay) || BX.hasClass(current, _this.settings.classSidePanelContainer));
+	      });
+	      if (!isEventNodeHasInsideClass) {
+	        return false;
+	      }
+	      return event.path.some(function (current) {
+	        return BX.hasClass(current, _this.settings.classDefaultPopup)
+	        //&& BX.Dom.attr(current, 'id') === this.getPopup().getId()
+	        ;
+	      });
 	    },
+
 	    _onDocumentClick: function _onDocumentClick(event) {
 	      var popup = this.getPopup();
 	      if (!this.isInsideFilterEvent(event) && !this.hasScrollClick(event)) {
@@ -4814,16 +4828,16 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    _onAddFieldClick: function _onAddFieldClick(event) {
-	      var _this = this;
+	      var _this2 = this;
 	      event.stopPropagation();
 	      event.preventDefault();
 	      if (this.getParam('USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP')) {
 	        BX.Runtime.loadExtension('ui.dialogs.checkbox-list').then(function () {
 	          if (BX.UI && BX.Type.isFunction(BX.UI.CheckboxList)) {
-	            _this.showFieldsSettingsCheckboxList();
+	            _this2.showFieldsSettingsCheckboxList();
 	            return;
 	          }
-	          _this.showFieldsSettingsPopup();
+	          _this2.showFieldsSettingsPopup();
 	        });
 	        return;
 	      }
@@ -4839,27 +4853,27 @@ this.BX = this.BX || {};
 	      this.closeFieldListPopup();
 	    },
 	    showFieldsSettingsCheckboxList: function showFieldsSettingsCheckboxList() {
-	      var _this2 = this;
+	      var _this3 = this;
 	      if (this.checkboxListPopup) {
 	        this.checkboxListPopup.show();
 	        this.syncCheckboxFields();
 	        return;
 	      }
 	      this.getFieldsListPopupContent().then(function (content) {
-	        var _this2$settings$popup;
-	        var _this2$getPreparedChe = _this2.getPreparedCheckboxListData(content),
-	          sections = _this2$getPreparedChe.sections,
-	          categories = _this2$getPreparedChe.categories,
-	          options = _this2$getPreparedChe.options;
-	        var enableFieldsSearch = _this2.enableFieldsSearch,
-	          enableHeadersSections = _this2.enableHeadersSections;
+	        var _this3$settings$popup;
+	        var _this3$getPreparedChe = _this3.getPreparedCheckboxListData(content),
+	          sections = _this3$getPreparedChe.sections,
+	          categories = _this3$getPreparedChe.categories,
+	          options = _this3$getPreparedChe.options;
+	        var enableFieldsSearch = _this3.enableFieldsSearch,
+	          enableHeadersSections = _this3.enableHeadersSections;
 	        var context = {
 	          parentType: 'filter'
 	        };
-	        _this2.checkboxListPopup = new BX.UI.CheckboxList({
-	          columnCount: (_this2$settings$popup = _this2.settings.popupColumnsCount) !== null && _this2$settings$popup !== void 0 ? _this2$settings$popup : 4,
+	        _this3.checkboxListPopup = new BX.UI.CheckboxList({
+	          columnCount: (_this3$settings$popup = _this3.settings.popupColumnsCount) !== null && _this3$settings$popup !== void 0 ? _this3$settings$popup : 4,
 	          popupOptions: {
-	            width: _this2.settings.popupWidth
+	            width: _this3.settings.popupWidth
 	          },
 	          lang: {
 	            title: main_core.Loc.getMessage('MAIN_UI_FILTER__FIELDS_SETTINGS_TITLE'),
@@ -4873,7 +4887,7 @@ this.BX = this.BX || {};
 	          options: options,
 	          events: {
 	            onApply: function onApply(event) {
-	              return _this2.onCheckboxListApply(event.data.fields);
+	              return _this3.onCheckboxListApply(event.data.fields);
 	            }
 	          },
 	          params: {
@@ -4883,18 +4897,18 @@ this.BX = this.BX || {};
 	          },
 	          context: context
 	        });
-	        _this2.checkboxListPopup.show();
+	        _this3.checkboxListPopup.show();
 	      });
 	    },
 	    syncCheckboxFields: function syncCheckboxFields() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      var fields = this.getPreset().getFields();
 	      var checkedFields = this.checkboxListPopup.getSelectedOptions();
 	      checkedFields.forEach(function (fieldName) {
 	        if (!fields.some(function (field) {
 	          return field.dataset.name === fieldName;
 	        })) {
-	          _this3.checkboxListPopup.handleOptionToggled(fieldName);
+	          _this4.checkboxListPopup.handleOptionToggled(fieldName);
 	        }
 	      });
 	    },
@@ -4905,7 +4919,7 @@ this.BX = this.BX || {};
 	    getPreparedCheckboxListData: function getPreparedCheckboxListData(content) {
 	      var _preset$parent$getPar,
 	        _preset$parent$getPar2,
-	        _this4 = this;
+	        _this5 = this;
 	      var defaultHeaderSection = this.getDefaultHeaderSection();
 	      var sectionIds = new Set();
 	      var headerSections = this.getHeadersSections();
@@ -4918,7 +4932,7 @@ this.BX = this.BX || {};
 	      var restrictedFields = this.getParam('RESTRICTED_FIELDS', []);
 	      content.forEach(function (item) {
 	        var sectionId = item.sectionId.length ? item.sectionId : defaultHeaderSection === null || defaultHeaderSection === void 0 ? void 0 : defaultHeaderSection.id;
-	        if (_this4.enableHeadersSections && !sectionIds.has(sectionId)) {
+	        if (_this5.enableHeadersSections && !sectionIds.has(sectionId)) {
 	          var title = headerSections[sectionId].name;
 	          sectionIds.add(sectionId);
 	          sections.push({
@@ -5124,25 +5138,25 @@ this.BX = this.BX || {};
 	      return wrapper;
 	    },
 	    onCheckboxListApply: function onCheckboxListApply(selectedFields) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
 	        var presetFields, oldFields, fieldsData, fieldsForAdd, fieldsForRemove, disableSaveFieldsSort;
 	        return _regeneratorRuntime().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
-	              presetFields = _this5.getPreset().getFields();
+	              presetFields = _this6.getPreset().getFields();
 	              oldFields = [];
 	              presetFields.forEach(function (field) {
 	                oldFields.push(field.dataset.name);
 	              });
-	              if (!_this5.isFieldsChangePrevented(selectedFields, oldFields)) {
+	              if (!_this6.isFieldsChangePrevented(selectedFields, oldFields)) {
 	                _context.next = 5;
 	                break;
 	              }
 	              return _context.abrupt("return");
 	            case 5:
 	              _context.next = 7;
-	              return _this5.fetchFields(selectedFields, oldFields);
+	              return _this6.fetchFields(selectedFields, oldFields);
 	            case 7:
 	              fieldsData = _context.sent;
 	              if (main_core.Type.isArray(fieldsData)) {
@@ -5157,7 +5171,7 @@ this.BX = this.BX || {};
 	              return _context.abrupt("return");
 	            case 11:
 	              fieldsData.forEach(function (field) {
-	                return _this5.params.FIELDS.push(field);
+	                return _this6.params.FIELDS.push(field);
 	              });
 	              fieldsForAdd = selectedFields.filter(function (field) {
 	                return !oldFields.includes(field);
@@ -5171,12 +5185,12 @@ this.BX = this.BX || {};
 	                  return item.NAME === fieldId;
 	                });
 	                if (field) {
-	                  _this5.getPreset().addField(field, disableSaveFieldsSort);
+	                  _this6.getPreset().addField(field, disableSaveFieldsSort);
 
 	                  // // @todo check this
 	                  if (main_core.Type.isString(field.HTML)) {
 	                    var wrap = BX.create('div');
-	                    _this5.getHiddenElement().appendChild(wrap);
+	                    _this6.getHiddenElement().appendChild(wrap);
 	                    BX.html(wrap, field.HTML);
 	                  }
 	                }
@@ -5186,10 +5200,10 @@ this.BX = this.BX || {};
 	                  return item.NAME === fieldId;
 	                });
 	                if (field) {
-	                  _this5.getPreset().removeField(field, disableSaveFieldsSort);
+	                  _this6.getPreset().removeField(field, disableSaveFieldsSort);
 	                }
 	              });
-	              _this5.saveFieldsSort();
+	              _this6.saveFieldsSort();
 	            case 18:
 	            case "end":
 	              return _context.stop();
@@ -5198,21 +5212,21 @@ this.BX = this.BX || {};
 	      }))();
 	    },
 	    fetchFields: function fetchFields(fields, oldFields) {
-	      var _this6 = this;
+	      var _this7 = this;
 	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
 	        var ids, controller, componentName, signedParameters, getFields;
 	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
 	          while (1) switch (_context2.prev = _context2.next) {
 	            case 0:
-	              if (_this6.getParam('LAZY_LOAD')) {
+	              if (_this7.getParam('LAZY_LOAD')) {
 	                _context2.next = 2;
 	                break;
 	              }
-	              return _context2.abrupt("return", _this6.getParam('FIELDS'));
+	              return _context2.abrupt("return", _this7.getParam('FIELDS'));
 	            case 2:
 	              // @todo show loader ?
 	              ids = babelHelpers.toConsumableArray(new Set([].concat(babelHelpers.toConsumableArray(fields), babelHelpers.toConsumableArray(oldFields))));
-	              controller = _this6.getParam('LAZY_LOAD')['CONTROLLER'];
+	              controller = _this7.getParam('LAZY_LOAD')['CONTROLLER'];
 	              if (!controller) {
 	                _context2.next = 7;
 	                break;
@@ -5221,7 +5235,7 @@ this.BX = this.BX || {};
 	              return _context2.abrupt("return", new Promise(function (resolve) {
 	                BX.ajax.runAction(getFields, {
 	                  data: {
-	                    filterId: _this6.getParam('FILTER_ID'),
+	                    filterId: _this7.getParam('FILTER_ID'),
 	                    ids: ids,
 	                    componentName: BX.type.isNotEmptyString(componentName) ? componentName : '',
 	                    signedParameters: BX.type.isNotEmptyString(signedParameters) ? signedParameters : ''
@@ -5231,7 +5245,7 @@ this.BX = this.BX || {};
 	                });
 	              }));
 	            case 7:
-	              return _context2.abrupt("return", _this6.getLazyLoadFieldsByIds(ids));
+	              return _context2.abrupt("return", _this7.getLazyLoadFieldsByIds(ids));
 	            case 8:
 	            case "end":
 	              return _context2.stop();
@@ -5240,13 +5254,13 @@ this.BX = this.BX || {};
 	      }))();
 	    },
 	    getLazyLoadFieldsByIds: function getLazyLoadFieldsByIds(ids) {
-	      var _this7 = this;
+	      var _this8 = this;
 	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
 	        var getFieldsUrl, url;
 	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
 	          while (1) switch (_context3.prev = _context3.next) {
 	            case 0:
-	              getFieldsUrl = _this7.getParam('LAZY_LOAD')['GET_FIELDS'];
+	              getFieldsUrl = _this8.getParam('LAZY_LOAD')['GET_FIELDS'];
 	              url = BX.Uri.addParam(getFieldsUrl, {
 	                ids: ids
 	              });
@@ -5346,10 +5360,10 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    prepareAnimation: function prepareAnimation() {
-	      var _this8 = this;
+	      var _this9 = this;
 	      if (this.enableFieldsSearch) {
 	        this.fieldsPopupItems.forEach(function (item) {
-	          BX.bind(item, 'animationend', _this8.onAnimationEnd.bind(_this8, item));
+	          BX.bind(item, 'animationend', _this9.onAnimationEnd.bind(_this9, item));
 	        });
 	      }
 	    },
@@ -6213,28 +6227,28 @@ this.BX = this.BX || {};
 	      return presetId;
 	    },
 	    isAppliedUserFilter: function isAppliedUserFilter() {
-	      var _this9 = this;
+	      var _this10 = this;
 	      var presetOptions = this.getPreset().getCurrentPresetData();
 	      if (BX.Type.isPlainObject(presetOptions)) {
 	        var hasFields = BX.Type.isArrayFilled(presetOptions.FIELDS) && presetOptions.FIELDS.some(function (field) {
-	          return !_this9.getPreset().isEmptyField(field);
+	          return !_this10.getPreset().isEmptyField(field);
 	        });
 	        var hasAdditional = BX.Type.isArrayFilled(presetOptions.ADDITIONAL) && presetOptions.ADDITIONAL.some(function (field) {
-	          return !_this9.getPreset().isEmptyField(field);
+	          return !_this10.getPreset().isEmptyField(field);
 	        });
 	        return !presetOptions.IS_PINNED && (hasFields || hasAdditional) || presetOptions.IS_PINNED && BX.Type.isArrayFilled(presetOptions.ADDITIONAL) || BX.Type.isStringFilled(this.getSearch().getSearchString());
 	      }
 	      return false;
 	    },
 	    isAppliedDefaultPreset: function isAppliedDefaultPreset() {
-	      var _this10 = this;
+	      var _this11 = this;
 	      var presetData = this.getPreset().getCurrentPresetData();
 	      if (!presetData.IS_PINNED) {
 	        return false;
 	      }
 	      if (BX.Type.isArrayFilled(presetData.ADDITIONAL)) {
 	        var hasAdditional = presetData.ADDITIONAL.some(function (field) {
-	          return !_this10.getPreset().isEmptyField(field);
+	          return !_this11.getPreset().isEmptyField(field);
 	        });
 	        if (hasAdditional) {
 	          return false;
@@ -6543,7 +6557,7 @@ this.BX = this.BX || {};
 	     */
 	    getPopup: function getPopup() {
 	      if (!(this.popup instanceof BX.PopupWindow)) {
-	        this.popup = new BX.PopupWindow(this.getParam('FILTER_ID') + this.settings.searchContainerPostfix, this.getPopupBindElement(), {
+	        this.popup = new BX.PopupWindow(this.getPopupId(), this.getPopupBindElement(), {
 	          autoHide: false,
 	          offsetTop: parseInt(this.settings.get('POPUP_OFFSET_TOP')),
 	          offsetLeft: parseInt(this.settings.get('POPUP_OFFSET_LEFT')),
@@ -6572,6 +6586,9 @@ this.BX = this.BX || {};
 	        this.getPreset().bindOnPresetClick();
 	      }
 	      return this.popup;
+	    },
+	    getPopupId: function getPopupId() {
+	      return this.getParam('FILTER_ID') + this.settings.searchContainerPostfix;
 	    },
 	    _onRestoreFieldsButtonClick: function _onRestoreFieldsButtonClick() {
 	      this.restoreDefaultFields();
@@ -6634,7 +6651,7 @@ this.BX = this.BX || {};
 	      if (BX.type.isArray(defaultPresets)) {
 	        defaultPresets.sort(function (a, b) {
 	          return a.SORT - b.SORT;
-	        });
+	        }).reverse();
 	        defaultPresets.forEach(function (defPreset) {
 	          isReplace = allPresets.some(function (current, index) {
 	            if (current.ID === defPreset.ID) {
@@ -6648,7 +6665,7 @@ this.BX = this.BX || {};
 	            allPresets.push(BX.clone(defPreset));
 	          }
 	          if (defPreset.ID !== 'default_filter') {
-	            this.addSidebarItem(defPreset.ID, defPreset.TITLE, defPreset.IS_PINNED);
+	            this.addSidebarItem(defPreset.ID, defPreset.TITLE, defPreset.IS_PINNED, true);
 	            if (defPreset.IS_PINNED) {
 	              applyPresetId = defPreset.ID;
 	            }

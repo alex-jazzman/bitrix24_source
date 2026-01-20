@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_integration_analytics,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
+(function (exports,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core,ui_analytics,crm_integration_analytics) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1273,11 +1273,96 @@ this.BX.Crm = this.BX.Crm || {};
 	  this.grid.removeColumn(params.stage.id);
 	}
 
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var NAMESPACE$2 = main_core.Reflection.namespace('BX.CRM.Kanban.Analytics');
+	var _createStageLabel = /*#__PURE__*/new WeakMap();
+	var _renameStageLabel = /*#__PURE__*/new WeakMap();
+	var _deleteStageLabel = /*#__PURE__*/new WeakMap();
+	var _updateStageLabel = /*#__PURE__*/new WeakMap();
+	var StageLabels = /*#__PURE__*/function () {
+	  function StageLabels(options) {
+	    babelHelpers.classCallCheck(this, StageLabels);
+	    _classPrivateFieldInitSpec$2(this, _createStageLabel, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _renameStageLabel, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _deleteStageLabel, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _updateStageLabel, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _createStageLabel, options.createStageLabel);
+	    babelHelpers.classPrivateFieldSet(this, _renameStageLabel, options.renameStageLabel);
+	    babelHelpers.classPrivateFieldSet(this, _deleteStageLabel, options.deleteStageLabel);
+	    babelHelpers.classPrivateFieldSet(this, _updateStageLabel, options.updateStageLabel);
+	  }
+	  babelHelpers.createClass(StageLabels, [{
+	    key: "sendCreateSuccess",
+	    value: function sendCreateSuccess() {
+	      babelHelpers.classPrivateFieldGet(this, _createStageLabel).status = crm_integration_analytics.Dictionary.STATUS_SUCCESS;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _createStageLabel));
+	    }
+	  }, {
+	    key: "sendCreateFailure",
+	    value: function sendCreateFailure() {
+	      babelHelpers.classPrivateFieldGet(this, _createStageLabel).status = crm_integration_analytics.Dictionary.STATUS_ERROR;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _createStageLabel));
+	    }
+	  }, {
+	    key: "sendRenameSuccess",
+	    value: function sendRenameSuccess() {
+	      babelHelpers.classPrivateFieldGet(this, _renameStageLabel).status = crm_integration_analytics.Dictionary.STATUS_SUCCESS;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _renameStageLabel));
+	    }
+	  }, {
+	    key: "sendRenameFailure",
+	    value: function sendRenameFailure() {
+	      babelHelpers.classPrivateFieldGet(this, _renameStageLabel).status = crm_integration_analytics.Dictionary.STATUS_ERROR;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _renameStageLabel));
+	    }
+	  }, {
+	    key: "sendDeleteSuccess",
+	    value: function sendDeleteSuccess() {
+	      babelHelpers.classPrivateFieldGet(this, _deleteStageLabel).status = crm_integration_analytics.Dictionary.STATUS_SUCCESS;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _deleteStageLabel));
+	    }
+	  }, {
+	    key: "sendDeleteFailure",
+	    value: function sendDeleteFailure() {
+	      babelHelpers.classPrivateFieldGet(this, _deleteStageLabel).status = crm_integration_analytics.Dictionary.STATUS_ERROR;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _deleteStageLabel));
+	    }
+	  }, {
+	    key: "sendUpdateSuccess",
+	    value: function sendUpdateSuccess() {
+	      babelHelpers.classPrivateFieldGet(this, _updateStageLabel).status = crm_integration_analytics.Dictionary.STATUS_SUCCESS;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _updateStageLabel));
+	    }
+	  }, {
+	    key: "sendUpdateFailure",
+	    value: function sendUpdateFailure() {
+	      babelHelpers.classPrivateFieldGet(this, _updateStageLabel).status = crm_integration_analytics.Dictionary.STATUS_ERROR;
+	      ui_analytics.sendData(babelHelpers.classPrivateFieldGet(this, _updateStageLabel));
+	    }
+	  }]);
+	  return StageLabels;
+	}();
+	NAMESPACE$2.StageLabels = StageLabels;
+
 	exports.DeleteAction = DeleteAction;
 	exports.SimpleAction = SimpleAction;
 	exports.FieldsSelector = FieldsSelector;
 	exports.PullManager = PullManager;
 	exports.ViewMode = ViewMode;
+	exports.StageLabels = StageLabels;
 
-}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.Crm.Integration.Analytics,BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX));
+}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX,BX.UI.Analytics,BX.Crm.Integration.Analytics));
 //# sourceMappingURL=kanban.js.map

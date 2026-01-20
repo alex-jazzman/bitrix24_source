@@ -36,6 +36,8 @@ return [
 		'main.core.events',
 		'salescenter.component.stage-block.sms-message',
 		'salescenter.manager',
+		'crm.messagesender.editor',
+		'crm.router',
 		'salescenter.timeline',
 		'ui.notification',
 		'salescenter.tile',
@@ -51,6 +53,8 @@ return [
 		'main.core',
 		'main.popup',
 		'ui.buttons',
+		'crm.integration.analytics',
+		'ui.analytics',
 	],
 	'skip_core' => false,
 ];

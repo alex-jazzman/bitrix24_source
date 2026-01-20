@@ -10,6 +10,7 @@ export const RestMethod = Object.freeze({
 	imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 	imV2ChatRead: 'im.v2.Chat.read',
 	imV2ChatReadAll: 'im.v2.Chat.readAll',
+	imV2ChatReadAllByType: 'im.v2.Chat.readByType',
 	imV2ChatUnread: 'im.v2.Chat.unread',
 	imV2ChatJoin: 'im.v2.Chat.join',
 	imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
@@ -65,6 +66,18 @@ export const RestMethod = Object.freeze({
 
 	imV2RecentPin: 'im.v2.Chat.pin',
 	imV2RecentUnpin: 'im.v2.Chat.unpin',
+
+	imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
+	imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
+	imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
+	imV2StickerPackAdd: 'im.v2.Sticker.Pack.add',
+	imV2StickerPackDelete: 'im.v2.Sticker.Pack.delete',
+
+	imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
+	imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
+
+	imV2StickerAdd: 'im.v2.Sticker.add',
+	imV2StickerDelete: 'im.v2.Sticker.delete',
 
 	imV2AnchorRead: 'im.v2.Anchor.read',
 
@@ -123,6 +136,8 @@ export const RestMethod = Object.freeze({
 
 	imNotifyGet: 'im.notify.get',
 	imNotifyRead: 'im.notify.read',
+	imNotifyReadAll: 'im.notify.read.all',
+	imV2NotifyRead: 'im.v2.Notify.read',
 	imNotifySchemaGet: 'im.notify.schema.get',
 	imNotifyHistorySearch: 'im.notify.history.search',
 	imNotifyAnswer: 'im.notify.answer',

@@ -145,6 +145,18 @@ export class Analytic
 		this.addEvent('security_' + event, options);
 	}
 
+	addEventEnablePushOtp(): void
+	{
+		const options = {
+			event: 'click_setting_portal',
+			tool: this.#tool,
+			category: 'security',
+			c_element: 'banner_on',
+		};
+
+		sendData(options);
+	}
+
 	addEventConfigPortal(event: string): void
 	{
 		const options = {

@@ -131,6 +131,9 @@ if (!$uri->isPathTraversal())
 	}
 }
 
+# include routing
+require_once __DIR__ . '/routing_index.php';
+
 //admin section 404
 if (str_starts_with($requestUri, "/bitrix/admin/"))
 {

@@ -52,6 +52,9 @@ declare type TaskReduxModel = {
 	endDatePlan?: number,
 	startDate?: number,
 	endDate?: number,
+	maxDeadlineChangeDate: number | null,
+	deadlineChangesLeft: number | null,
+	requireDeadlineChangeReason: boolean,
 
 	checklist?: ChecklistDTO,
 	checklistDetails?: ChecklistDetailsDTO[],
@@ -87,6 +90,7 @@ declare type TaskReduxModel = {
 	isCreationErrorExist?: boolean,
 	creationErrorText?: string,
 
+	chatId?: number,
 	imChatId?: number,
 	imMessageId?: number,
 };
@@ -131,6 +135,7 @@ export type TagsDTO = {
 export type FilesDTO = {
 	id: number,
 	objectId: number,
+	creator: number,
 	name: string,
 	size: string,
 	url: string,

@@ -3,14 +3,13 @@ import { Menu, MenuManager } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MessageBox } from 'ui.dialogs.messagebox';
 import { ApacheSupersetAnalytics, PermissionsAnalytics, PermissionsAnalyticsSource } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
 import { Dialog } from 'ui.entity-selector';
 import { Guide } from 'ui.tour';
 import { ApacheSupersetMarketManager } from 'biconnector.apache-superset-market-manager';
 import { TagFooter } from 'biconnector.entity-selector';
-import { AirButtonStyle, Button, ButtonColor, CancelButton, ButtonSize } from 'ui.buttons';
+import { AirButtonStyle, Button, CancelButton, ButtonSize } from 'ui.buttons';
 import 'ui.alerts';
 import 'ui.forms';
 import { Dialog as SystemDialog } from 'ui.system.dialog';
@@ -461,6 +460,13 @@ class SupersetDashboardGridManager
 					creationMenu.close();
 				},
 			},
+			{
+				text: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_ORDER_DASHBOARD'),
+				onclick: () => {
+					BX.Biconnector.ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
+					creationMenu.close();
+				},
+			},
 		);
 
 		const creationMenu = MenuManager.create({
@@ -833,6 +839,13 @@ class SupersetDashboardGridManager
 		this.#dashboardManager.openCreationSlider(selectedGroups);
 	}
 
+	notifyPermissionErrorOpenCreationSlider(): void
+	{
+		BX.UI.Notification.Center.notify({
+			content: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD'),
+		});
+	}
+
 	showCreationGroupPopup(): void
 	{
 		if (this.#isActiveGroupIdFilter())
@@ -1104,6 +1117,18 @@ class SupersetDashboardGridManager
 
 	handleGroupTitleClick(groupJson: Object): void
 	{
+		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
+		const currentFilteredGroups = filterFieldsValues['GROUPS.ID'] ?? [];
+		const isAlreadyFilteredByGroup = currentFilteredGroups.length > 0;
+		if (isAlreadyFilteredByGroup)
+		{
+			const filterApi = this.getFilter().getApi();
+			filterApi.extendFilter({
+				'GROUPS.ID': [],
+				'GROUPS.ID_label': [],
+			});
+		}
+
 		this.handleFilterChange({
 			fieldId: 'GROUPS.ID',
 			...groupJson,

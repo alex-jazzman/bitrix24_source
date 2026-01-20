@@ -430,12 +430,6 @@ BX.ready(function(){
 			deadlineText += ' ' + eventCalendar.util.formatTime(deadline.getHours(), deadline.getMinutes(), true);
 		}
 
-		BX.loadExt('ui.notification').then(function(){
-			BX.UI.Notification.Center.notify({
-				content: BX.message('TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE').replace("#date#", deadlineText)
-			});
-		});
-
 		BX.ajax.runComponentAction('<?= $this->getComponent()->getName()?>',
 			'changeDeadline',
 			{
@@ -445,6 +439,25 @@ BX.ready(function(){
 				}
 			}).then(function (response)
 			{
+				BX.loadExt('ui.notification').then(function(){
+					BX.UI.Notification.Center.notify({
+						content: BX.message('TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE').replace("#date#", deadlineText)
+					});
+				});
+			}).catch((error) => {
+				BX.loadExt('ui.notification').then(() => {
+					BX.UI.Notification.Center.notify({
+						content: (
+							error.errors
+								? error.errors[0].message
+								|| error.errors[0].MESSAGE
+								: 'System error'
+						),
+					});
+					setTimeout(() => {
+						BX.reload();
+					}, 2000)
+				});
 			});
 	});
 	<?php if ($isCollab): ?>

@@ -1,8 +1,8 @@
-import { EventEmitter } from 'main.core.events';
-
 import { SidebarDetailBlock, EventType } from 'im.v2.const';
 
 import './chat-shared.css';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const ChatShared = {
@@ -18,11 +18,15 @@ export const ChatShared = {
 	{
 		async onLinkClick()
 		{
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.chatsWithUser,
 				standalone: true,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

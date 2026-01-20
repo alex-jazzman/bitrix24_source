@@ -840,3 +840,4 @@
 	BX.Main.UF.Factory.setTypeHandler(BX.Main.UF.TypeDate.USER_TYPE_ID, BX.Main.UF.TypeDate);
 	BX.Main.UF.Factory.setTypeHandler(BX.Main.UF.TypeDateTime.USER_TYPE_ID, BX.Main.UF.TypeDateTime);
 })();
+

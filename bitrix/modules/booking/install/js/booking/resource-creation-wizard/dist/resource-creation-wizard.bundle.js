@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_notifications,booking_model_resourceCreationWizard,booking_lib_sidePanelInstance,main_loader,booking_core,ui_notificationManager,crm_messagesender,booking_provider_service_resourcesService,booking_lib_analytics,booking_model_resourceTypes,booking_provider_service_resourcesTypeService,booking_component_reminder,ui_entitySelector,main_core_events,booking_lib_timezone,ui_buttons,booking_lib_duration,ui_forms,ui_layoutForm,booking_lib_ahaMoments,ui_vue3_components_menu,ui_vue3_directives_hint,ui_iconSet_actions,ui_iconSet_crm,ui_hint,booking_component_switcher,booking_provider_service_resourceCreationWizardService,main_popup,main_core,main_date,booking_component_popup,booking_component_button,booking_component_helpDeskLoc,ui_iconSet_api_vue,ui_iconSet_api_core,ui_vue3_components_richLoc,ui_vue3_vuex,ui_iconSet_main,booking_const,booking_component_cyclePopup) {
+(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_notifications,booking_model_resourceCreationWizard,main_loader,booking_core,ui_notificationManager,crm_messagesender,booking_provider_service_resourcesService,booking_lib_analytics,ui_uploader_core,ui_notification,booking_model_resourceTypes,booking_provider_service_resourcesTypeService,booking_provider_service_catalogServiceSkuService,booking_lib_sidePanelInstance,booking_component_reminder,booking_component_uiErrorMessage,ui_entitySelector,main_core_events,booking_lib_timezone,ui_buttons,booking_lib_duration,ui_forms,ui_layoutForm,booking_lib_ahaMoments,ui_vue3_components_menu,ui_iconSet_outline,booking_lib_limit,ui_vue3_directives_hint,ui_iconSet_actions,ui_iconSet_crm,ui_hint,booking_component_switcher,booking_provider_service_resourceCreationWizardService,main_popup,main_core,main_date,booking_component_popup,booking_component_button,booking_component_helpDeskLoc,ui_iconSet_api_vue,ui_vue3_components_richLoc,ui_iconSet_main,booking_const,booking_component_cyclePopup,ui_vue3_vuex,ui_iconSet_api_core,booking_component_uiAlerts,booking_component_uiResourceWizardItem) {
 	'use strict';
 
 	const UiLoader = {
@@ -198,11 +198,13 @@ this.BX = this.BX || {};
 
 	var _resource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resource");
 	var _entityCalendar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCalendar");
+	var _resourceAvatarFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourceAvatarFile");
 	var _isBitrix24Approved = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24Approved");
 	var _isBitrix24SenderAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24SenderAvailable");
 	var _prepareCompanySlotRanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareCompanySlotRanges");
 	var _prepareResourceTypeNotifications = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareResourceTypeNotifications");
 	var _upsertResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("upsertResource");
+	var _prepareResourceToProcess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareResourceToProcess");
 	var _prepareNotificationOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareNotificationOptions");
 	var _checkEntityCalendar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkEntityCalendar");
 	var _disabledCalendarIntegration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabledCalendarIntegration");
@@ -218,6 +220,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _prepareNotificationOptions, {
 	      value: _prepareNotificationOptions2
 	    });
+	    Object.defineProperty(this, _prepareResourceToProcess, {
+	      value: _prepareResourceToProcess2
+	    });
 	    Object.defineProperty(this, _upsertResource, {
 	      value: _upsertResource2
 	    });
@@ -232,6 +237,10 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _isBitrix24Approved, {
 	      value: _isBitrix24Approved2
+	    });
+	    Object.defineProperty(this, _resourceAvatarFile, {
+	      get: _get_resourceAvatarFile,
+	      set: void 0
 	    });
 	    Object.defineProperty(this, _entityCalendar, {
 	      get: _get_entityCalendar,
@@ -278,6 +287,9 @@ this.BX = this.BX || {};
 	}
 	function _get_entityCalendar() {
 	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
+	}
+	function _get_resourceAvatarFile() {
+	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getResourceAvatarFile`];
 	}
 	function _isBitrix24Approved2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isBitrix24SenderAvailable)[_isBitrix24SenderAvailable]()) {
@@ -327,13 +339,30 @@ this.BX = this.BX || {};
 	}
 	async function _upsertResource2(resource) {
 	  const isUpdate = Boolean(resource.id);
-	  const result = await (isUpdate ? booking_provider_service_resourcesService.resourceService.update(resource) : booking_provider_service_resourcesService.resourceService.add(resource));
+	  const resourceToProcess = babelHelpers.classPrivateFieldLooseBase(this, _prepareResourceToProcess)[_prepareResourceToProcess](resource);
+	  const result = await (isUpdate ? booking_provider_service_resourcesService.resourceService.update(resourceToProcess) : booking_provider_service_resourcesService.resourceService.add(resourceToProcess));
 	  let text = main_core.Loc.getMessage(isUpdate ? 'BRCW_UPDATE_SUCCESS_MESSAGE' : 'BRCW_CREATE_SUCCESS_MESSAGE');
 	  if (main_core.Type.isArrayFilled(result.errors)) {
 	    text = result.errors[0].message;
 	  }
 	  ui_notificationManager.Notifier.notify(babelHelpers.classPrivateFieldLooseBase(this, _prepareNotificationOptions)[_prepareNotificationOptions](text));
 	  return !main_core.Type.isArrayFilled(result.errors);
+	}
+	function _prepareResourceToProcess2(resource) {
+	  const uploadedAvatar = babelHelpers.classPrivateFieldLooseBase(this, _resourceAvatarFile)[_resourceAvatarFile];
+	  if (!uploadedAvatar) {
+	    return {
+	      ...resource
+	    };
+	  }
+	  return {
+	    ...resource,
+	    avatar: {
+	      id: null,
+	      url: null,
+	      file: uploadedAvatar
+	    }
+	  };
 	}
 	function _prepareNotificationOptions2(text) {
 	  return {
@@ -537,62 +566,176 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const ErrorMessage = {
-	  name: 'ErrorMessage',
+	// @vue/component
+	const AvatarField = {
+	  name: 'ResourceAvatarField',
+	  components: {
+	    RichLoc: ui_vue3_components_richLoc.RichLoc,
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
 	  props: {
-	    message: {
+	    avatarUrl: {
 	      type: String,
 	      default: ''
 	    }
 	  },
+	  emits: ['avatarFileUpdate'],
+	  setup() {
+	    return {
+	      IconSet: ui_iconSet_api_vue.Set
+	    };
+	  },
+	  computed: {
+	    hasAvatar() {
+	      return this.avatarUrl.trim().length > 0;
+	    }
+	  },
+	  mounted() {
+	    this.uploader = new ui_uploader_core.Uploader({
+	      browseElement: this.$refs.uploaderContainer,
+	      assignServerFile: false,
+	      acceptedFileTypes: ['.jpg', '.jpeg', '.png'],
+	      maxFileSize: 1024 * 1024 * 5,
+	      // 5 MB
+
+	      events: {
+	        [ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
+	          const file = event.getData().file;
+	          this.$emit('avatarFileUpdate', file);
+	        },
+	        [ui_uploader_core.UploaderEvent.FILE_ERROR]: event => {
+	          const error = event.getData().error;
+	          const errorMessage = error.getMessage();
+	          BX.UI.Notification.Center.notify({
+	            content: errorMessage
+	          });
+	        }
+	      }
+	    });
+	  },
+	  methods: {
+	    removeCurrentAvatar() {
+	      this.uploader.removeFiles();
+	      this.$emit('avatarFileUpdate', null);
+	    }
+	  },
 	  template: `
-		<div class="booking--rcw--error-message-container">
-			<div class="booking--rcw--error-message">
-				<span class="ui-icon-set --warning"></span>
-				<span>{{ message }}</span>
+		<div class="ui-form-row booking--rcw--avatar-field">
+			<div class="ui-form-label">
+				{{ loc('BRCW_SETTINGS_CARD_AVATAR_UPLOAD_LABEL') }}
+			</div>
+			<div class="booking--rcw--avatar-container">
+				<div
+					class="booking--rcw--avatar"
+					:class="{ '--has-img': hasAvatar }"
+					data-id="brcw-settings-resource-avatar-input"
+					ref="uploaderContainer"
+				>
+					<img
+						v-if="hasAvatar"
+						class="booking--rcw--avatar-img"
+						:src="avatarUrl"
+						alt="Resource avatar"
+						draggable="false"
+					/>
+					<span v-else class="booking--rcw--avatar-icon --default-icon">
+						<BIcon :name="IconSet.PICTURE" :size="36"></BIcon>
+					</span>
+					<span class="booking--rcw--avatar-icon --hover-icon">
+						<BIcon :name="IconSet.DOWNLOAD_3" :size="29"></BIcon>
+					</span>
+				</div>
+				<span v-if="hasAvatar" class="booking--rcw--avatar-remove" @click="removeCurrentAvatar">
+					<BIcon :name="IconSet.CROSS_25" :size="14"></BIcon>
+				</span>
 			</div>
 		</div>
 	`
 	};
 
-	const BaseFields = {
-	  name: 'ResourceSettingsCardBaseFields',
-	  emits: ['nameUpdate', 'typeUpdate'],
+	// @vue/component
+	const NameField = {
+	  name: 'ResourceNameField',
+	  components: {
+	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage,
+	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
+	  },
 	  props: {
-	    initialResourceName: {
+	    resourceName: {
 	      type: String,
 	      default: ''
 	    },
-	    initialResourceType: {
-	      type: Object,
-	      required: true
+	    invalid: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
+	  emits: ['nameUpdate'],
+	  computed: {
+	    localName: {
+	      get() {
+	        return this.resourceName;
+	      },
+	      set(value) {
+	        this.$emit('nameUpdate', value);
+	      }
+	    }
+	  },
+	  template: `
+		<div class="ui-form-row booking--rcw--name-field">
+			<div class="ui-form-label">
+				<label class="ui-ctl-label-text" for="brcw-settings-resource-name">
+					{{ loc('BRCW_SETTINGS_CARD_NAME_LABEL') }}
+				</label>
+			</div>
+			<div class="ui-form-content booking--rcw--field-with-validation">
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<input
+						data-id="brcw-settings-resource-name-input"
+						v-model.trim="localName"
+						id="brcw-settings-resource-name"
+						type="text"
+						class="ui-ctl-element"
+						:class="{ '--error': invalid }"
+						:placeholder="loc('BRCW_SETTINGS_CARD_NAME_LABEL')"
+					/>
+				</div>
+				<UiErrorMessage
+					v-if="invalid"
+					:message="loc('BRCW_SETTINGS_CARD_REQUIRED_FIELD')"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const TypeField = {
+	  name: 'ResourceTypeField',
+	  components: {
+	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage
+	  },
+	  props: {
+	    initialTypeId: {
+	      type: [Number, String],
+	      default: null
+	    },
+	    initialTypeName: {
+	      type: String,
+	      default: ''
+	    },
+	    invalid: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['typeUpdate'],
 	  data() {
 	    return {
 	      entityId: booking_const.EntitySelectorEntity.ResourceType,
 	      typeSelectorId: `booking-resource-creation-types${main_core.Text.getRandom()}`,
-	      typeName: this.initialResourceType.typeName
+	      typeName: this.initialTypeName
 	    };
-	  },
-	  computed: {
-	    resourceName: {
-	      get() {
-	        return this.initialResourceName;
-	      },
-	      set(name = '') {
-	        this.$emit('nameUpdate', name);
-	      }
-	    },
-	    invalidResourceName() {
-	      return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceName;
-	    },
-	    invalidResourceType() {
-	      return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceType;
-	    },
-	    errorMessage() {
-	      return this.loc('BRCW_SETTINGS_CARD_REQUIRED_FIELD');
-	    }
 	  },
 	  methods: {
 	    showTypeSelector() {
@@ -600,11 +743,10 @@ this.BX = this.BX || {};
 	      dialog.show();
 	    },
 	    getTypeSelectorDialog(bindElement) {
-	      var _this$initialResource;
-	      const typeSelectorDialog = ui_entitySelector.Dialog.getById(this.typeSelectorId);
-	      if (typeSelectorDialog) {
-	        typeSelectorDialog.setTargetNode(bindElement);
-	        return typeSelectorDialog;
+	      const existing = ui_entitySelector.Dialog.getById(this.typeSelectorId);
+	      if (existing) {
+	        existing.setTargetNode(bindElement);
+	        return existing;
 	      }
 	      return new ui_entitySelector.Dialog({
 	        id: this.typeSelectorId,
@@ -616,7 +758,7 @@ this.BX = this.BX || {};
 	        context: 'bookingResourceCreationType',
 	        multiple: false,
 	        cacheable: true,
-	        preselectedItems: [[this.entityId, (_this$initialResource = this.initialResourceType) == null ? void 0 : _this$initialResource.typeId]],
+	        preselectedItems: [[this.entityId, this.initialTypeId]],
 	        entities: [{
 	          id: this.entityId,
 	          dynamicLoad: true,
@@ -632,33 +774,28 @@ this.BX = this.BX || {};
 	          }
 	        },
 	        events: {
-	          'Search:onItemCreateAsync': baseEvent => {
+	          'Search:onItemCreateAsync': event => {
 	            return new Promise(resolve => {
-	              const {
-	                searchQuery
-	              } = baseEvent.getData();
-	              const dialog = baseEvent.getTarget();
-	              this.createType(searchQuery.getQuery()).then(resourceType => {
-	                this.updateResourceType(resourceType.id, resourceType.name);
-	                dialog.addItem(this.prepareTypeToDialog(resourceType));
-	                dialog.hide();
+	              const query = event.getData().searchQuery.getQuery();
+	              this.createType(query).then(type => {
+	                this.updateResourceType(type.id, type.name);
+	                event.getTarget().addItem(this.prepareTypeToDialog(type));
+	                event.getTarget().hide();
 	                resolve();
-	              }).catch(() => {
-	                resolve();
-	              });
+	              }).catch(() => resolve());
 	            });
 	          },
-	          'Item:onSelect': baseEvent => {
-	            const selectedItem = baseEvent.getData().item;
-	            this.updateResourceType(selectedItem.getId(), selectedItem.getTitle());
+	          'Item:onSelect': event => {
+	            const item = event.getData().item;
+	            this.updateResourceType(item.getId(), item.getTitle());
 	          }
 	        }
 	      });
 	    },
-	    async createType(typeName) {
+	    async createType(name) {
 	      return booking_provider_service_resourcesTypeService.resourceTypeService.add({
 	        moduleId: 'booking',
-	        name: typeName
+	        name
 	      });
 	    },
 	    prepareTypeToDialog(type) {
@@ -676,101 +813,75 @@ this.BX = this.BX || {};
 	    updateResourceType(typeId, typeName) {
 	      this.typeName = typeName;
 	      this.$emit('typeUpdate', typeId);
-	    },
-	    scrollToBaseFieldsForm() {
-	      var _this$$refs$baseField;
-	      (_this$$refs$baseField = this.$refs.baseFieldsForm) == null ? void 0 : _this$$refs$baseField.scrollIntoView(true, {
-	        behavior: 'smooth',
-	        block: 'center'
-	      });
 	    }
-	  },
-	  watch: {
-	    invalidResourceName(invalid) {
-	      if (invalid) {
-	        this.scrollToBaseFieldsForm();
-	      }
-	    },
-	    invalidResourceType(invalid) {
-	      if (invalid) {
-	        this.scrollToBaseFieldsForm();
-	      }
-	    }
-	  },
-	  components: {
-	    ErrorMessage,
-	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
 	  },
 	  template: `
-		<div ref="baseFieldsForm" class="ui-form resource-creation-wizard__form-settings --base">
-			<div class="ui-form-row-inline booking--rcw--form-row-align">
-				<div class="ui-form-row">
-					<div class="ui-form-label">
-						<label class="ui-ctl-label-text" for="brcw-settings-resource-name">
-							{{ loc('BRCW_SETTINGS_CARD_NAME_LABEL') }}
-						</label>
-					</div>
-					<div class="ui-form-content booking--rcw--field-with-validation">
-						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-							<input
-								v-model.trim="resourceName"
-								id="brcw-settings-resource-name"
-								data-id="brcw-settings-resource-name-input"
-								type="text"
-								class="ui-ctl-element"
-								:class="{ '--error': invalidResourceName }"
-								:placeholder="loc('BRCW_SETTINGS_CARD_NAME_LABEL')"
-							/>
-						</div>
-						<ErrorMessage
-							v-if="invalidResourceName"
-							:message="errorMessage"
-						/>
-					</div>
-					<div class="ui-form-line">
-						<div class="booking--rcw--resource-name-description">
-							<EmptyRichLoc
-								:message="loc('BRCW_SETTINGS_CARD_NAME_DESCRIPTION')"
-								:rules="['nowrap']"
-							/>
-						</div>
+		<div class="ui-form-row booking--rcw--type-field">
+			<div class="ui-form-label">
+				<div class="ui-ctl-label-text">
+					{{ loc('BRCW_SETTINGS_CARD_TYPE_LABEL') }}
+				</div>
+			</div>
+			<div class="ui-form-content booking--rcw--field-with-validation">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+					<div ref="typeSelectorAngle" class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<div
+						data-id="brcw-settings-resource-type-selector"
+						class="ui-ctl-element resource-creation-wizard__form-settings-element"
+						:class="{'--placeholder': !typeName, '--error': invalid}"
+						@click="showTypeSelector"
+					>
+						{{ typeName || loc('BRCW_SETTINGS_CARD_TYPE_PLACEHOLDER') }}
 					</div>
 				</div>
-				<div class="ui-form-row">
-					<div class="ui-form-label">
-						<div class="ui-ctl-label-text">
-							{{ loc('BRCW_SETTINGS_CARD_TYPE_LABEL') }}
-						</div>
-					</div>
-					<div class="ui-form-content booking--rcw--field-with-validation">
-						<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-							<div
-								ref="typeSelectorAngle"
-								class="ui-ctl-after ui-ctl-icon-angle"
-							></div>
-							<div
-								ref="typeSelectorElement"
-								data-id="brcw-settings-resource-type-selector"
-								class="ui-ctl-element resource-creation-wizard__form-settings-element"
-								:class="{
-									'--placeholder': !typeName,
-									'--error': invalidResourceType,
-								}"
-								@click="showTypeSelector"
-							>
-								<template v-if="typeName">
-									{{ typeName }}
-								</template>
-								<template v-else>
-									{{ loc('BRCW_SETTINGS_CARD_TYPE_PLACEHOLDER') }}
-								</template>
-							</div>
-						</div>
-						<ErrorMessage
-							v-if="invalidResourceType"
-							:message="errorMessage"
-						/>
-					</div>
+				<UiErrorMessage
+					v-if="invalid"
+					:message="loc('BRCW_SETTINGS_CARD_REQUIRED_FIELD')"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DescriptionField = {
+	  name: 'ResourceDescriptionField',
+	  components: {
+	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
+	  },
+	  props: {
+	    description: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  emits: ['descriptionUpdate'],
+	  computed: {
+	    localDescription: {
+	      get() {
+	        return this.description;
+	      },
+	      set(value) {
+	        this.$emit('descriptionUpdate', value);
+	      }
+	    }
+	  },
+	  template: `
+		<div class="ui-form-row booking--rcw--description-field">
+			<div class="ui-form-label">
+				<label class="ui-ctl-label-text" for="brcw-settings-resource-description">
+					{{ loc('BRCW_SETTINGS_CARD_DESCRIPTION_LABEL') }}
+				</label>
+			</div>
+			<div class="ui-form-content booking--rcw--field-with-validation booking--rcw--resource-description">
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<textarea
+						data-id="brcw-settings-resource-description-input"
+						v-model.trim="localDescription"
+						id="brcw-settings-resource-description"
+						class="ui-ctl-element"
+						:placeholder="loc('BRCW_SETTINGS_CARD_DESCRIPTION_PLACEHOLDER')"
+					></textarea>
 				</div>
 			</div>
 		</div>
@@ -801,6 +912,339 @@ this.BX = this.BX || {};
 			/>
 			<div class="resource-creation-wizard__form-settings-title">
 				{{ title }}
+			</div>
+		</div>
+	`
+	};
+
+	const TextLayout = {
+	  name: 'ResourceSettingsCardTextLayout',
+	  props: {
+	    type: {
+	      type: String,
+	      required: true
+	    },
+	    text: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  setup(props) {
+	    return {
+	      code: booking_const.HelpDesk[`Resource${props.type}`].code,
+	      anchorCode: booking_const.HelpDesk[`Resource${props.type}`].anchorCode
+	    };
+	  },
+	  components: {
+	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
+	  },
+	  template: `
+		<div class="resource-creation-wizard__form-settings-text-row">
+			<HelpDeskLoc
+				:message="text"
+				:code="code"
+				:anchor="anchorCode"
+				class="resource-creation-wizard__form-settings-text"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const BaseFields = {
+	  name: 'ResourceSettingsCardBaseFields',
+	  components: {
+	    TitleLayout,
+	    TextLayout,
+	    NameField,
+	    TypeField,
+	    DescriptionField,
+	    AvatarField,
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    initialResourceName: {
+	      type: String,
+	      default: ''
+	    },
+	    initialResourceDescription: {
+	      type: String,
+	      default: ''
+	    },
+	    initialResourceType: {
+	      type: Object,
+	      required: true
+	    },
+	    initialResourceAvatarUrl: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  emits: ['nameUpdate', 'descriptionUpdate', 'typeUpdate', 'avatarFileUpdate'],
+	  setup() {
+	    return {
+	      IconSet: ui_iconSet_api_vue.Set
+	    };
+	  },
+	  data() {
+	    return {
+	      additionalInfoExpanded: this.initialAdditionalInfoExpanded(),
+	      Actions: ui_iconSet_api_core.Actions
+	    };
+	  },
+	  computed: {
+	    invalidResourceName() {
+	      return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceName;
+	    },
+	    invalidResourceType() {
+	      return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceType;
+	    }
+	  },
+	  watch: {
+	    invalidResourceName(invalid) {
+	      if (invalid) {
+	        this.scrollToBaseFieldsForm();
+	      }
+	    },
+	    invalidResourceType(invalid) {
+	      if (invalid) {
+	        this.scrollToBaseFieldsForm();
+	      }
+	    }
+	  },
+	  methods: {
+	    scrollToBaseFieldsForm() {
+	      var _this$$refs$baseField;
+	      (_this$$refs$baseField = this.$refs.baseFieldsForm) == null ? void 0 : _this$$refs$baseField.scrollIntoView(true, {
+	        behavior: 'smooth',
+	        block: 'center'
+	      });
+	    },
+	    initialAdditionalInfoExpanded() {
+	      return this.initialResourceAvatarUrl.length > 0 || this.initialResourceDescription.length > 0;
+	    },
+	    toggleAdditionalInfo() {
+	      this.additionalInfoExpanded = !this.additionalInfoExpanded;
+	    }
+	  },
+	  template: `
+		<div ref="baseFieldsForm" class="ui-form resource-creation-wizard__form-settings --base">
+			<TitleLayout
+				:title="loc('BRCW_SETTINGS_CARD_BASE_TITLE')"
+				:icon-type="IconSet.INFO"
+			/>
+			<TextLayout
+				type="BaseFields"
+				:text="loc('BRCW_SETTINGS_CARD_BASE_DESCRIPTION')"
+			/>
+			<div class="ui-form-row-inline booking--rcw--form-row-align">
+				<NameField
+					:resourceName="initialResourceName"
+					:invalid="invalidResourceName"
+					@nameUpdate="$emit('nameUpdate', $event)"
+				/>
+				<TypeField
+					:initialTypeId="initialResourceType.typeId"
+					:initialTypeName="initialResourceType.typeName"
+					:invalid="invalidResourceType"
+					@typeUpdate="$emit('typeUpdate', $event)"
+				/>
+			</div>
+			<div class="booking--rcw--additional-info">
+				<div class="booking--rcw--additional-info-header" @click="toggleAdditionalInfo">
+					<span class="booking--rcw--additional-info-title">
+						{{ loc('BRCW_SETTINGS_CARD_ADDITIONAL_INFO_TITLE') }}
+					</span>
+					<BIcon :name="additionalInfoExpanded ? Actions.CHEVRON_UP : Actions.CHEVRON_DOWN" />
+				</div>
+				<Transition name="booking--rcw--additional-info">
+					<div v-if="additionalInfoExpanded" class="booking--rcw--additional-info-content">
+						<AvatarField
+							:avatarUrl="initialResourceAvatarUrl"
+							@avatarFileUpdate="$emit('avatarFileUpdate', $event)"
+						/>
+						<DescriptionField
+							:description="initialResourceDescription"
+							@descriptionUpdate="$emit('descriptionUpdate', $event)"
+						/>
+					</div>
+				</Transition>
+			</div>
+		</div>
+	`
+	};
+
+	const {
+	  mapGetters: mapResourceGetters,
+	  mapActions
+	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.ResourceCreationWizard);
+
+	// @vue/component
+	const ServicesSkus = {
+	  name: 'ResourceSettingsCardServicesSkus',
+	  components: {
+	    TitleLayout,
+	    TextLayout
+	  },
+	  computed: {
+	    ...mapResourceGetters({
+	      skus: 'skus'
+	    }),
+	    title() {
+	      return this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_TITLE');
+	    },
+	    text() {
+	      return this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_TEXT');
+	    },
+	    titleIconType() {
+	      return ui_iconSet_api_vue.Set.PERSONS_3;
+	    },
+	    catalogSkuEntityOptions() {
+	      return this.$store.state[booking_const.Model.ResourceCreationWizard].catalogSkuEntityOptions;
+	    },
+	    disabled() {
+	      return this.catalogSkuEntityOptions.length === 0;
+	    }
+	  },
+	  created() {
+	    this.selector = this.createSelector();
+	  },
+	  mounted() {
+	    this.mountSelector();
+	  },
+	  beforeUnmount() {
+	    this.destroySelector();
+	  },
+	  methods: {
+	    ...mapActions(['addSku', 'deleteSku']),
+	    createSelector() {
+	      var _this$catalogSkuEntit;
+	      const dialogOptions = this.disabled ? null : {
+	        context: 'bookingResourceServices',
+	        width: 390,
+	        height: 340,
+	        dropdownMode: true,
+	        compactView: true,
+	        enableSearch: true,
+	        cacheable: true,
+	        showAvatars: false,
+	        popupOptions: {
+	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+	        },
+	        searchOptions: {
+	          allowCreateItem: (_this$catalogSkuEntit = this.catalogSkuEntityOptions) == null ? void 0 : _this$catalogSkuEntit.canCreate
+	        },
+	        entities: [{
+	          id: booking_const.EntitySelectorEntity.Product,
+	          dynamicLoad: true,
+	          dynamicSearch: true,
+	          options: this.catalogSkuEntityOptions
+	        }],
+	        preselectedItems: this.skus.map(sku => [booking_const.EntitySelectorEntity.Product, sku.id]),
+	        events: {
+	          'Item:onSelect': event => {
+	            this.select(event.getData().item.id);
+	          },
+	          'Item:onDeselect': event => {
+	            this.deselect(event.getData().item.id);
+	          },
+	          'Search:onItemCreateAsync': event => {
+	            return this.createService(event);
+	          }
+	        },
+	        recentTabOptions: {
+	          stub: true,
+	          stubOptions: {
+	            title: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_TITLE_MSGVER_1'),
+	            subtitle: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_SUBTITLE_MSGVER_1')
+	          }
+	        }
+	      };
+	      const items = [{
+	        id: '0',
+	        entityId: booking_const.EntitySelectorEntity.Product,
+	        title: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_HIDDEN_ITEM'),
+	        hidden: true,
+	        deselectable: false
+	      }];
+	      const tagSelectionOptions = {
+	        showAddButton: !this.disabled,
+	        multiple: true,
+	        textBoxWidth: 190,
+	        placeholder: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'),
+	        addButtonCaption: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'),
+	        showCreateButton: false,
+	        dialogOptions,
+	        items: this.disabled ? items : null,
+	        tagBgColor: this.disabled ? 'var(--ui-color-gray-20)' : null,
+	        tagTextColor: this.disabled ? 'var(--ui-color-gray-70)' : null,
+	        tagClickable: !this.disabled
+	      };
+	      return new ui_entitySelector.TagSelector(tagSelectionOptions);
+	    },
+	    async select(id) {
+	      await this.addSku(id);
+	    },
+	    async deselect(id) {
+	      await this.deleteSku(id);
+	    },
+	    mountSelector() {
+	      this.selector.renderTo(this.$refs.servicesSelector);
+	      if (this.disabled) {
+	        this.selector.setLocked(this.disabled);
+	      }
+	    },
+	    destroySelector() {
+	      var _this$selector$getDia;
+	      (_this$selector$getDia = this.selector.getDialog()) == null ? void 0 : _this$selector$getDia.destroy();
+	      this.selector = null;
+	      this.$refs.servicesSelector.innerHTML = '';
+	    },
+	    async createService(event) {
+	      var _this$catalogSkuEntit2;
+	      const serviceName = event.getData().searchQuery.getQuery();
+	      const iblockId = (_this$catalogSkuEntit2 = this.catalogSkuEntityOptions) == null ? void 0 : _this$catalogSkuEntit2.iblockId;
+	      const serviceId = await booking_provider_service_catalogServiceSkuService.catalogServiceSkuService.create(iblockId, serviceName);
+	      const dialog = event.getTarget();
+	      if (!main_core.Type.isNumber(serviceId)) {
+	        return;
+	      }
+	      const blockId = this.catalogSkuEntityOptions.iblockId;
+	      const url = new main_core.Uri(`/crm/catalog/${blockId}/product/${serviceId}/`).toString();
+	      const item = dialog.addItem({
+	        id: serviceId,
+	        entityId: booking_const.EntitySelectorEntity.Product,
+	        title: serviceName,
+	        tabs: dialog.getRecentTab().getId(),
+	        sort: 2,
+	        link: url
+	      });
+	      if (item) {
+	        item.select();
+	        booking_lib_sidePanelInstance.SidePanelInstance.open(url);
+	      }
+	      dialog.hide();
+	    }
+	  },
+	  template: `
+		<div class="ui-form resource-creation-wizard__form-settings" data-id="brcw-resource-settings-services-skus">
+			<TitleLayout
+				:title="title"
+				:iconType="titleIconType"
+			/>
+			<TextLayout
+				type="WorkTime"
+				:text="text"
+			/>
+			<div
+				ref="servicesSelector"
+				class="resource-creation-wizard__services_services-selector"
+			></div>
+			<div
+				v-if="this.catalogSkuEntityOptions.length === 0"
+				class="resource-creation-wizard__services_warning"
+			>
+				{{ loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_WARNING') }}
 			</div>
 		</div>
 	`
@@ -943,44 +1387,11 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const TextLayout = {
-	  name: 'ResourceSettingsCardTextLayout',
-	  props: {
-	    type: {
-	      type: String,
-	      required: true
-	    },
-	    text: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  setup(props) {
-	    return {
-	      code: booking_const.HelpDesk[`Resource${props.type}`].code,
-	      anchorCode: booking_const.HelpDesk[`Resource${props.type}`].anchorCode
-	    };
-	  },
-	  components: {
-	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
-	  },
-	  template: `
-		<div class="resource-creation-wizard__form-settings-text-row">
-			<HelpDeskLoc
-				:message="text"
-				:code="code"
-				:anchor="anchorCode"
-				class="resource-creation-wizard__form-settings-text"
-			/>
-		</div>
-	`
-	};
-
 	// @vue/component
 	const SettingsItem = {
 	  name: 'IntegrationSettingsItem',
 	  components: {
-	    ErrorMessage
+	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage
 	  },
 	  props: {
 	    title: {
@@ -1007,7 +1418,7 @@ this.BX = this.BX || {};
 				</div>
 			</div>
 			<slot/>
-			<ErrorMessage v-if="errorMessage" :message="errorMessage"/>
+			<UiErrorMessage v-if="errorMessage" :message="errorMessage"/>
 		</div>
 	`
 	};
@@ -1032,9 +1443,13 @@ this.BX = this.BX || {};
 	      type: Boolean,
 	      default: false
 	    },
-	    tab: {
-	      type: Boolean,
-	      default: false
+	    emptyTitle: {
+	      type: String,
+	      default: ''
+	    },
+	    emptySubtitle: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['change'],
@@ -1058,6 +1473,27 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    createSelector() {
+	      const showEmptyState = this.emptyTitle && this.emptySubtitle;
+	      const emptyState = showEmptyState ? {
+	        recentTabOptions: {
+	          visible: false
+	        },
+	        searchTabOptions: {
+	          stub: true,
+	          stubOptions: {
+	            title: this.emptyTitle,
+	            subtitle: this.emptySubtitle
+	          }
+	        },
+	        tabs: [{
+	          id: this.entitiesId,
+	          stub: true,
+	          stubOptions: {
+	            title: this.emptyTitle,
+	            subtitle: this.emptySubtitle
+	          }
+	        }]
+	      } : {};
 	      const tagSelectionOptions = {
 	        multiple: this.multiple,
 	        addButtonCaption: this.loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'),
@@ -1087,15 +1523,21 @@ this.BX = this.BX || {};
 	            },
 	            'Item:onDeselect': event => {
 	              this.deselect(event.getData().item.id);
+	            },
+	            onLoad: () => {
+	              if (!showEmptyState) {
+	                return;
+	              }
+	              const tab = this.selector.dialog.tabs.get(this.entitiesId);
+	              if ((tab == null ? void 0 : tab.dialog.items.size) === 0) {
+	                var _tab$getStub;
+	                (_tab$getStub = tab.getStub()) == null ? void 0 : _tab$getStub.show();
+	              }
 	            }
-	          }
+	          },
+	          ...emptyState
 	        }
 	      };
-	      if (this.tab) {
-	        tagSelectionOptions.dialogOptions.tabs = [{
-	          id: this.entitiesId
-	        }];
-	      }
 	      return new ui_entitySelector.TagSelector(tagSelectionOptions);
 	    },
 	    select(itemId) {
@@ -1127,32 +1569,27 @@ this.BX = this.BX || {};
 	};
 
 	const {
-	  mapGetters: mapResourceGetters,
-	  mapActions
+	  mapGetters: mapResourceGetters$1,
+	  mapActions: mapActions$1
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.ResourceCreationWizard);
 
 	// @vue/component
 	const IntegrationCalendar = {
 	  name: 'IntegrationCalendar',
 	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon,
+	    BIcon: ui_iconSet_api_vue.BIcon,
 	    Switcher: booking_component_switcher.Switcher,
 	    SettingsItem,
 	    SettingsSelector,
 	    UiReminder: booking_component_reminder.Reminder
 	  },
 	  setup() {
-	    const iconName = ui_iconSet_api_vue.Main.CALENDAR_1;
-	    const iconColor = 'var(--ui-color-primary)';
-	    const iconSize = 22;
 	    const entityRoomId = booking_const.EntitySelectorEntity.Room;
 	    const entityUserId = booking_const.EntitySelectorEntity.User;
 	    return {
-	      iconName,
-	      iconColor,
-	      iconSize,
 	      entityRoomId,
-	      entityUserId
+	      entityUserId,
+	      Main: ui_iconSet_api_vue.Main
 	    };
 	  },
 	  data() {
@@ -1161,14 +1598,17 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  computed: {
-	    ...mapResourceGetters({
+	    ...mapResourceGetters$1({
 	      entityCalendar: 'entityCalendar',
 	      isIntegrationCalendarEnabled: 'isIntegrationCalendarEnabled',
 	      invalidIntegrationCalendarUser: 'invalidIntegrationCalendarUser'
 	    }),
+	    featureEnabled() {
+	      return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingCalendar;
+	    },
 	    isEnabled: {
 	      get() {
-	        return this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+	        return this.featureEnabled && this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
 	      },
 	      set(isIntegrationCalendarEnabled) {
 	        this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setIsIntegrationCalendarEnabled`, isIntegrationCalendarEnabled);
@@ -1212,10 +1652,10 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  beforeMount() {
-	    this.isVisible = this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+	    this.isVisible = this.featureEnabled && this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
 	  },
 	  methods: {
-	    ...mapActions(['updateResource', 'updateResourceEntityCalendar', 'createResourceEntityCalendar', 'setInvalidIntegrationCalendarUser']),
+	    ...mapActions$1(['updateResource', 'updateResourceEntityCalendar', 'createResourceEntityCalendar', 'setInvalidIntegrationCalendarUser']),
 	    async toggleEnabled() {
 	      if (!this.entityCalendar) {
 	        await this.createResourceEntityCalendar();
@@ -1248,21 +1688,36 @@ this.BX = this.BX || {};
 	        behavior: 'smooth',
 	        block: 'center'
 	      });
+	    },
+	    switcherClick() {
+	      if (!this.featureEnabled) {
+	        void booking_lib_limit.limit.show(booking_const.LimitFeatureId.CalendarIntegration);
+	      }
 	    }
 	  },
 	  template: `
-		<div class="resource-creation-wizard__integration-block">
+		<div
+			class="resource-creation-wizard__integration-block booking--rcw--integration-calendar"
+			:class="{'--disabled': !featureEnabled}"
+			data-id="brcw-resource-settings-integration-calendar"
+		>
 			<div class="resource-creation-wizard__integration-block-header">
-				<Icon :name="iconName" :size="iconSize" :color="iconColor"/>
+				<BIcon
+					:name="featureEnabled ? Main.CALENDAR_1 : Main.LOCK"
+					:size="22"
+					:color="featureEnabled ? 'var(--ui-color-primary)' : 'var(--ui-color-gray-40)'"
+				/>
 				<div class="resource-creation-wizard__integration-block-title">
 					{{ loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_TITLE') }}
 				</div>
 				<Switcher
 					class="resource-creation-wizard__integration-block-switcher"
 					data-id="resource-creation-wizard__integration-block-switcher-calendar"
+					:disabled="!featureEnabled"
 					:hiddenText="true"
 					:model-value="isEnabled"
 					@toggle="toggleEnabled"
+					@click="switcherClick"
 				/>
 			</div>
 			<div class="resource-creation-wizard__integration-block-description">
@@ -1299,7 +1754,8 @@ this.BX = this.BX || {};
 						:multiple="false"
 						:values="entityCalendar?.data.locationId ? [String(entityCalendar.data.locationId)] : []"
 						:disabled="isDisabled"
-						tab
+						:emptyTitle="loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_ROOM_TITLE')"
+						:emptySubtitle="loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_ROOM_SUBTITLE')"
 						@change="updateLocationId"
 					/>
 				</SettingsItem>
@@ -1317,8 +1773,9 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
 	const Integration = {
-	  name: 'Integration',
+	  name: 'ResourceIntegration',
 	  components: {
 	    TitleLayout,
 	    TextLayout,
@@ -1333,7 +1790,7 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  template: `
-		<div class="ui-form resource-creation-wizard__form-settings">
+		<div class="ui-form resource-creation-wizard__form-settings" data-id="brcw-resource-settings-integrations">
 			<TitleLayout
 				:title="title"
 				:iconType="titleIconType"
@@ -1348,7 +1805,7 @@ this.BX = this.BX || {};
 	};
 
 	const {
-	  mapGetters: mapResourceGetters$1
+	  mapGetters: mapResourceGetters$2
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
 	const WorkTimeMixin = {
 	  data() {
@@ -1404,7 +1861,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  computed: {
-	    ...mapResourceGetters$1({
+	    ...mapResourceGetters$2({
 	      companyScheduleSlots: 'getCompanyScheduleSlots',
 	      weekStart: 'weekStart'
 	    }),
@@ -2405,10 +2862,12 @@ this.BX = this.BX || {};
 	};
 
 	const {
-	  mapGetters: mapResourceGetters$2,
-	  mapActions: mapActions$1,
+	  mapGetters: mapResourceGetters$3,
+	  mapActions: mapActions$2,
 	  mapMutations
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
+
+	// @vue/component
 	const ResourceSettingsCard = {
 	  name: 'ResourceSettingsCard',
 	  components: {
@@ -2416,14 +2875,8 @@ this.BX = this.BX || {};
 	    ScheduleTypes,
 	    WorkTime,
 	    SlotLength,
+	    ServicesSkus,
 	    Integration
-	  },
-	  created() {
-	    var _this$resource$slotRa, _this$resource$slotRa2, _this$resource$slotRa3;
-	    this.initialTimezone = this.getInitialSlotTimeZone();
-	    this.selectedSlotLength = (_this$resource$slotRa = (_this$resource$slotRa2 = this.resource.slotRanges) == null ? void 0 : (_this$resource$slotRa3 = _this$resource$slotRa2[0]) == null ? void 0 : _this$resource$slotRa3.slotSize) != null ? _this$resource$slotRa : 60;
-	    const slotRanges = main_core.Type.isArrayFilled(this.resource.slotRanges) ? this.resource.slotRanges : this.companyScheduleSlots;
-	    this.updateSlotRanges(slotRanges);
 	  },
 	  data() {
 	    return {
@@ -2431,8 +2884,69 @@ this.BX = this.BX || {};
 	      initialTimezone: ''
 	    };
 	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      timezone: `${booking_const.Model.Interface}/timezone`
+	    }),
+	    ...mapResourceGetters$3({
+	      resource: 'getResource',
+	      companyScheduleSlots: 'getCompanyScheduleSlots',
+	      isCompanyScheduleAccess: 'isCompanyScheduleAccess',
+	      companyScheduleUrl: 'companyScheduleUrl',
+	      isGlobalSchedule: 'isGlobalSchedule'
+	    }),
+	    resourceName() {
+	      return this.resource.name;
+	    },
+	    resourceType() {
+	      const resourceType = this.$store.getters[`${booking_const.Model.ResourceTypes}/getById`](this.resource.typeId);
+	      return {
+	        typeId: this.resource.typeId,
+	        typeName: resourceType == null ? void 0 : resourceType.name
+	      };
+	    },
+	    resourceDescription() {
+	      var _this$resource$descri;
+	      return (_this$resource$descri = this.resource.description) != null ? _this$resource$descri : '';
+	    },
+	    resourceAvatarUrl() {
+	      var _this$resource$avatar, _this$resource$avatar2;
+	      return (_this$resource$avatar = (_this$resource$avatar2 = this.resource.avatar) == null ? void 0 : _this$resource$avatar2.url) != null ? _this$resource$avatar : '';
+	    },
+	    slotRanges() {
+	      return this.resource.slotRanges;
+	    },
+	    defaultSlotRange() {
+	      return this.companyScheduleSlots[0];
+	    },
+	    slotSize() {
+	      var _this$resource$slotRa, _slotRange$slotSize;
+	      const slotRange = (_this$resource$slotRa = this.resource.slotRanges) == null ? void 0 : _this$resource$slotRa[0];
+	      return (_slotRange$slotSize = slotRange == null ? void 0 : slotRange.slotSize) != null ? _slotRange$slotSize : 60;
+	    },
+	    isMain: {
+	      get() {
+	        return this.resource.isMain;
+	      },
+	      set(isMain) {
+	        this.updateResource({
+	          isMain
+	        });
+	      }
+	    },
+	    isEditForm() {
+	      return this.resource.id !== null;
+	    }
+	  },
+	  created() {
+	    var _this$resource$slotRa2, _this$resource$slotRa3, _this$resource$slotRa4;
+	    this.initialTimezone = this.getInitialSlotTimeZone();
+	    this.selectedSlotLength = (_this$resource$slotRa2 = (_this$resource$slotRa3 = this.resource.slotRanges) == null ? void 0 : (_this$resource$slotRa4 = _this$resource$slotRa3[0]) == null ? void 0 : _this$resource$slotRa4.slotSize) != null ? _this$resource$slotRa2 : 60;
+	    const slotRanges = main_core.Type.isArrayFilled(this.resource.slotRanges) ? this.resource.slotRanges : this.companyScheduleSlots;
+	    this.updateSlotRanges(slotRanges);
+	  },
 	  methods: {
-	    ...mapActions$1(['updateResource', 'setInvalidResourceName', 'setInvalidResourceType']),
+	    ...mapActions$2(['updateResource', 'setResourceAvatarFile', 'setInvalidResourceName', 'setInvalidResourceType']),
 	    ...mapMutations(['setGlobalSchedule']),
 	    updateResourceName(name) {
 	      this.updateResource({
@@ -2448,6 +2962,27 @@ this.BX = this.BX || {};
 	      });
 	      if (typeId) {
 	        this.setInvalidResourceType(false);
+	      }
+	    },
+	    updateResourceDescription(description) {
+	      this.updateResource({
+	        description
+	      });
+	    },
+	    updateResourceAvatarFile(avatarFile) {
+	      if (avatarFile) {
+	        this.setResourceAvatarFile(avatarFile.getBinary());
+	        this.updateResource({
+	          avatar: {
+	            id: null,
+	            url: avatarFile.getPreviewUrl()
+	          }
+	        });
+	      } else {
+	        this.setResourceAvatarFile(null);
+	        this.updateResource({
+	          avatar: null
+	        });
 	      }
 	    },
 	    updateSlotRanges(slotRanges) {
@@ -2487,61 +3022,20 @@ this.BX = this.BX || {};
 	      return (_slotRanges$ = slotRanges[0]) == null ? void 0 : _slotRanges$.timezone;
 	    }
 	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      timezone: `${booking_const.Model.Interface}/timezone`
-	    }),
-	    ...mapResourceGetters$2({
-	      resource: 'getResource',
-	      companyScheduleSlots: 'getCompanyScheduleSlots',
-	      isCompanyScheduleAccess: 'isCompanyScheduleAccess',
-	      companyScheduleUrl: 'companyScheduleUrl',
-	      isGlobalSchedule: 'isGlobalSchedule'
-	    }),
-	    resourceName() {
-	      return this.resource.name;
-	    },
-	    resourceType() {
-	      const resourceType = this.$store.getters[`${booking_const.Model.ResourceTypes}/getById`](this.resource.typeId);
-	      return {
-	        typeId: this.resource.typeId,
-	        typeName: resourceType == null ? void 0 : resourceType.name
-	      };
-	    },
-	    slotRanges() {
-	      return this.resource.slotRanges;
-	    },
-	    defaultSlotRange() {
-	      return this.companyScheduleSlots[0];
-	    },
-	    slotSize() {
-	      var _this$resource$slotRa4, _slotRange$slotSize;
-	      const slotRange = (_this$resource$slotRa4 = this.resource.slotRanges) == null ? void 0 : _this$resource$slotRa4[0];
-	      return (_slotRange$slotSize = slotRange == null ? void 0 : slotRange.slotSize) != null ? _slotRange$slotSize : 60;
-	    },
-	    isMain: {
-	      get() {
-	        return this.resource.isMain;
-	      },
-	      set(isMain) {
-	        this.updateResource({
-	          isMain
-	        });
-	      }
-	    },
-	    isEditForm() {
-	      return this.resource.id !== null;
-	    }
-	  },
 	  template: `
 		<div class="resource-settings-card">
 			<BaseFields
 				data-id="brcw-resource-settings-base"
 				:initialResourceName="resourceName"
 				:initialResourceType="resourceType"
+				:initialResourceDescription="resourceDescription"
+				:initialResourceAvatarUrl="resourceAvatarUrl"
 				@nameUpdate="updateResourceName"
 				@typeUpdate="updateResourceType"
+				@descriptionUpdate="updateResourceDescription"
+				@avatarFileUpdate="updateResourceAvatarFile"
 			/>
+			<ServicesSkus/>
 			<ScheduleTypes
 				data-id="brcw-resource-settings-schedule-types"
 				v-model="isMain"
@@ -2588,7 +3082,8 @@ this.BX = this.BX || {};
 	  },
 	  setup() {
 	    return {
-	      Actions: ui_iconSet_api_core.Actions
+	      Actions: ui_iconSet_api_core.Actions,
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  data() {
@@ -2597,6 +3092,9 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  computed: {
+	    locked() {
+	      return !this.$store.state[booking_const.Model.Interface].enabledFeature.bookingNotificationsSettings;
+	    },
 	    text() {
 	      return this.items.find(({
 	        value
@@ -2620,13 +3118,19 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    handleClick() {
+	      if (this.locked) {
+	        void booking_lib_limit.limit.show(booking_const.LimitFeatureId.NotificationsSettings);
+	        return;
+	      }
 	      this.isMenuShown = true;
 	    }
 	  },
 	  template: `
 		<div class="booking-resource-creation-wizard-label-dropdown" ref="container" @click="handleClick">
 			<span>{{ text }}</span>
-			<BIcon :name="Actions.CHEVRON_DOWN"/>
+			<BIcon
+				:name="locked ? Outline.LOCK_M : Actions.CHEVRON_DOWN"
+			/>
 		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`
@@ -3280,7 +3784,7 @@ this.BX = this.BX || {};
 	      }[this.messenger]) != null ? _NotificationChannel$ : '';
 	    },
 	    hasTemplate() {
-	      return this.isCurrentSenderAvailable && this.messageTemplate;
+	      return Boolean(this.messageTemplate);
 	    },
 	    disableSwitcher() {
 	      return this.disabled || !this.isCurrentSenderAvailable || !this.template;
@@ -3299,6 +3803,9 @@ this.BX = this.BX || {};
 	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
 	        }
 	      };
+	    },
+	    isNotificationSettingsFeatureEnabled() {
+	      return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingNotificationsSettings;
 	    }
 	  },
 	  created() {
@@ -3359,7 +3866,13 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  template: `
-		<div class="booking-resource-creation-wizard-notification-container" :class="{'--disabled': !checked}">
+		<div
+			class="booking-resource-creation-wizard-notification-container"
+			:class="{
+				'--disabled': !checked,
+				'--locked': !isNotificationSettingsFeatureEnabled,
+			}"
+		>
 			<div class="booking-resource-creation-wizard-notification">
 				<div class="booking-resource-creation-wizard-notification-header" @click="expand">
 					<div class="booking-resource-creation-wizard-notification-number">{{ ordinal }}</div>
@@ -3726,7 +4239,10 @@ this.BX = this.BX || {};
 				<ResourceNotificationTextRow icon="--clock-2">
 					<RichLoc :text="locSendReminderTime" :placeholder="'[delay/]'">
 						<template #delay>
-							<LabelDropdown v-model:value="reminderNotificationDelay" :items="model.settings.notification.delayValues"/>
+							<LabelDropdown
+								v-model:value="reminderNotificationDelay"
+								:items="model.settings.notification.delayValues"
+							/>
 						</template>
 					</RichLoc>
 				</ResourceNotificationTextRow>
@@ -3901,9 +4417,54 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const {
+	  mapGetters: mapResourceGetters$4
+	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
+
+	// @vue/component
+	const TariffInfo = {
+	  name: 'TariffInfo',
+	  components: {
+	    UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+	    UiAlerts: booking_component_uiAlerts.UiAlerts
+	  },
+	  data() {
+	    return {
+	      IconSet: ui_iconSet_api_core.Set,
+	      AlertColor: booking_component_uiAlerts.AlertColor,
+	      AlertIcon: booking_component_uiAlerts.AlertIcon,
+	      AlertSize: booking_component_uiAlerts.AlertSize
+	    };
+	  },
+	  computed: {
+	    ...mapResourceGetters$4({
+	      showLicenseWarning: 'showLicenseWarning'
+	    })
+	  },
+	  template: `
+		<UiResourceWizardItem
+			:title="loc('BRCW_NOTIFICATION_CARD_TARIFF_INFO_TITLE')"
+			:iconType="IconSet.BELL_1"
+			:description="loc('BRCW_NOTIFICATION_CARD_TARIFF_INFO_DESCRIPTION')"
+			helpDeskType="TariffInfo"
+		>
+			<UiAlerts
+				v-if="showLicenseWarning"
+				:text="loc('BRCW_NOTIFICATION_CARD_TARIFF_INFO_ALERT')"
+				:color="AlertColor.WARNING"
+				:icon="AlertIcon.DANGER"
+				:size="AlertSize.XS"
+			/>
+		</UiResourceWizardItem>
+	`
+	};
+
 	// @vue/component
 	const ResourceNotificationCard = {
 	  name: 'ResourceNotificationCard',
+	  components: {
+	    TariffInfo
+	  },
 	  computed: {
 	    notificationViews() {
 	      return this.notifications.map(model => {
@@ -3939,6 +4500,7 @@ this.BX = this.BX || {};
 	  },
 	  template: `
 		<div class="resource-notification-card">
+			<TariffInfo/>
 			<slot v-for="notification of notificationViews" :key="notification.view">
 				<component
 					:is="notification.view"
@@ -4117,5 +4679,5 @@ this.BX = this.BX || {};
 
 	exports.ResourceCreationWizard = ResourceCreationWizard;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Model,BX.Booking.Lib,BX,BX.Booking,BX.UI.NotificationManager,BX.Crm.MessageSender,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Component,BX.UI.EntitySelector,BX.Event,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX.Vue3.Directives,BX,BX,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Main,BX,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Vue3.Vuex,BX,BX.Booking.Const,BX.Booking.Component));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Model,BX,BX.Booking,BX.UI.NotificationManager,BX.Crm.MessageSender,BX.Booking.Provider.Service,BX.Booking.Lib,BX.UI.Uploader,BX,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.EntitySelector,BX.Event,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX,BX.Booking.Lib,BX.Vue3.Directives,BX,BX,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Main,BX,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.UI.Vue3.Components,BX,BX.Booking.Const,BX.Booking.Component,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Component,BX.Booking.Component));
 //# sourceMappingURL=resource-creation-wizard.bundle.js.map

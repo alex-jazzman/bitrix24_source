@@ -54,6 +54,8 @@ export class AiFormFillApplication
 		this.#store.commit('setMergeUUID', this.#options.mergeUuid);
 		this.#store.commit('setActivityId', this.#options.activityId);
 		this.#store.commit('setActivityDirection', this.#options.activityDirection);
+		this.#store.commit('setActivityProvider', this.#options.activityProvider);
+		this.#store.commit('setSummarizeJobId', this.#options.summarizeJobId);
 		this.#application.use(this.#store);
 		this.#application.mount(this.rootNode);
 	}

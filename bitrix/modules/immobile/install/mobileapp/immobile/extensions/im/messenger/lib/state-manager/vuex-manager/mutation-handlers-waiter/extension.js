@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 	const { Uuid } = require('utils/uuid');
 
 	const { MessengerMutationManagerEvent } = require('im/messenger/lib/state-manager/vuex-manager/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('core--messenger-mutation-handlers-waiter');
 
@@ -25,6 +26,11 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 			this.#actionName = actionName;
 			this.#actionUid = `${this.moduleName}/${this.actionName}|${Uuid.getV4()}`;
 			this.#mutationList = [];
+		}
+
+		get #emitter()
+		{
+			return serviceLocator.get('emitter');
 		}
 
 		get moduleName()
@@ -97,7 +103,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 				logger.log('MessengerMutationHandlersWaiter: mutation complete', this.actionUid, mutationName);
 				if (this.isActionComplete)
 				{
-					BX.removeCustomEvent(MessengerMutationManagerEvent.handleComplete, handlersCompleteHandler);
+					this.#emitter.off(MessengerMutationManagerEvent.handleComplete, handlersCompleteHandler);
 
 					logger.warn('MessengerMutationHandlersWaiter: stop waiting, action complete', this.actionUid);
 					resolveMutationCompletePromise();
@@ -108,7 +114,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 				logger.log('MessengerMutationHandlersWaiter: keep waiting', this.actionUid, this.mutationList);
 			};
 
-			BX.addCustomEvent(MessengerMutationManagerEvent.handleComplete, handlersCompleteHandler);
+			this.#emitter.on(MessengerMutationManagerEvent.handleComplete, handlersCompleteHandler);
 
 			return mutationCompletePromise;
 		}

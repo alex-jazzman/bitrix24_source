@@ -69,11 +69,6 @@ switch ($action)
 			)
 		);
 		break;
-	case 'RECOGNIZE':
-		CBitrixComponent::includeComponentClass('bitrix:crm.activity.visit');
-		$result = CrmActivityVisitComponent::recognizeFace($_POST, $curUser->getID());
-		sendResponse($result);
-		break;
 	case 'SEARCH_SOCIAL':
 		$APPLICATION->IncludeComponent('bitrix:crm.activity.visit',
 			'.default',
@@ -94,11 +89,6 @@ switch ($action)
 			null,
 			array('HIDE_ICONS' => 'Y')
 		);
-		break;
-	case 'SAVE_RECOGNIZE_CONSENT':
-		CBitrixComponent::includeComponentClass('bitrix:crm.activity.visit');
-		$result = CrmActivityVisitComponent::saveRecognizeConsent($_POST);
-		sendResponse($result);
 		break;
 	default:
 		die('Unknown action!');

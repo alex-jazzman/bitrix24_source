@@ -5,6 +5,7 @@ jn.define('ui-system/blocks/reaction/icon', (require, exports, module) => {
 	const { Component, Color } = require('tokens');
 	const { ReactionIcon } = require('assets/icons');
 	const { withCurrentDomain } = require('utils/url');
+	const { PropTypes } = require('utils/validation');
 
 	const DEFAULT_SIZE = 20;
 	const REACTION_ICON_TYPE = {
@@ -47,7 +48,12 @@ jn.define('ui-system/blocks/reaction/icon', (require, exports, module) => {
 
 		renderReactionImage()
 		{
-			const { icon, testId, resizeMode, type = REACTION_ICON_TYPE.svg } = this.props;
+			const {
+				icon,
+				testId,
+				resizeMode,
+				type = REACTION_ICON_TYPE.svg,
+			} = this.props;
 			const size = this.getSize();
 
 			return Image({
@@ -87,10 +93,10 @@ jn.define('ui-system/blocks/reaction/icon', (require, exports, module) => {
 		{
 			if (type === REACTION_ICON_TYPE.svg)
 			{
-				return { svg: { uri: withCurrentDomain(icon.getPath()) } };
+				return { svg: { uri: withCurrentDomain(icon?.getPath()) } };
 			}
 
-			return { uri: withCurrentDomain(icon.getImageUrl()) };
+			return { uri: withCurrentDomain(icon?.getImageUrl()) };
 		}
 	}
 
@@ -111,7 +117,8 @@ jn.define('ui-system/blocks/reaction/icon', (require, exports, module) => {
 		/**
 		 * @param {ReactionIconViewProps} props
 		 */
-		ReactionIconView: (props) => new ReactionIconView(props), ReactionIcon,
+		ReactionIconView: (props) => new ReactionIconView(props),
+		ReactionIcon,
 		REACTION_ICON_TYPE,
 	};
 });

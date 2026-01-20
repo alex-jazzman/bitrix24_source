@@ -12,13 +12,6 @@ export const settingsFunctions = {
 
 		return result === '1';
 	},
-	isAirDesignEnabledInDesktop(): boolean
-	{
-		// there is only AIR design now. Temporary solution, need to remove it in the future
-		const isAirDesignEnabled = true;
-
-		return this.isDesktop() && isAirDesignEnabled;
-	},
 	getCameraSmoothingStatus(): boolean
 	{
 		return this.getCustomSetting(DesktopSettingsKey.smoothing, '0') === '1';

@@ -415,6 +415,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						initSelectedIds: [task.responsible],
 						createOptions: {
 							enableCreation: true,
+							useCustomCreationElement: true,
 							analytics: new AnalyticsEvent().setSection('tasks'),
 							getParentLayout: () => layout,
 						},

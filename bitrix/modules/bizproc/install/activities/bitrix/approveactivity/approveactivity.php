@@ -368,14 +368,15 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 
 	protected function ExecuteOnApprove()
 	{
+		$this->outputPortId = 0;
+		$this->writeToTrackingService(Loc::getMessage('BPAA_ACT_APPROVE'));
+
 		if (count($this->arActivities) <= 0)
 		{
 			$this->workflow->closeActivity($this);
 
 			return;
 		}
-
-		$this->writeToTrackingService(Loc::getMessage('BPAA_ACT_APPROVE'));
 
 		$result = $this->getResult();
 		if ($result)
@@ -462,13 +463,14 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 
 	protected function ExecuteOnNonApprove()
 	{
+		$this->outputPortId = 1;
+		$this->writeToTrackingService(Loc::getMessage('BPAA_ACT_NONAPPROVE'));
+
 		if (count($this->arActivities) <= 1)
 		{
 			$this->workflow->closeActivity($this);
 			return;
 		}
-
-		$this->writeToTrackingService(Loc::getMessage('BPAA_ACT_NONAPPROVE'));
 
 		$activity = $this->arActivities[1];
 		$activity->AddStatusChangeHandler(self::ClosedEvent, $this);

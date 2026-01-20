@@ -1,0 +1,88 @@
+.mail_massconnect__connection-status-view {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	flex-grow: 1;
+	min-height: 100vh;
+	justify-content: center;
+	align-items: center;
+}
+
+.mail_massconnect__connection-status-view_content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+}
+
+.mail_massconnect__connection-status-view_icon {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.mail_massconnect__connection-status-view_icon.--processing {
+	width: 200px;
+	height: 200px;
+	background-image: url("img/animate.svg");
+}
+
+.mail_massconnect__connection-status-view_icon.--success {
+	width: 200px;
+	height: 200px;
+	background-image: url("img/envelope.svg");
+}
+
+.mail_massconnect__connection-status-view_icon.--failure {
+	width: 269px;
+	height: 195px;
+	opacity: 1;
+	top: 11px;
+	left: 88px;
+
+	background-image: url("img/error.webp");
+}
+
+.mail_massconnect__connection-status-view_text {
+	font-size: 18px;
+	color: var(--ui-color-base-0);
+}
+
+.mail_massconnect__connection-status_failure-text-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	width: fit-content;
+	margin: 0 auto;
+	align-self: center;
+}
+
+.mail_massconnect__connection-status_failure-text-title {
+	color: var(--ui-color-base-1);
+	text-align: center;
+	font-size: 19px;
+	font-style: normal;
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var(--ui-letter-spacing-s, -0.2px);
+}
+
+.mail_massconnect__connection-status_failure-text-description {
+	color: var(--ui-color-base-2);
+	text-align: center;
+	font-size: var(--ui-font-size-xl);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	width: 72%;
+	padding: 0 24px;
+	box-sizing: border-box;
+}
+
+.mail_massconnect__connection-status-view_buttons {
+	display: flex;
+	gap: 18px;
+	margin-top: 50px;
+}

@@ -201,6 +201,27 @@ jn.define('im/messenger-v2/provider/pull/counter', (require, exports, module) =>
 				});
 		}
 
+		/**
+		 * @param {ReadAllChatsByTypeParams} params
+		 * @param {PullExtraParams} extra
+		 * @param {string} command
+		 */
+		handleReadAllChatsByType(params, extra, command)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			const { type } = params;
+
+			logger.info('handleReadAllChatsByType', params);
+			this.#clearCountersByDialogType(type)
+				.catch((error) => {
+					logger.error('handleReadAllChatsByType error', error);
+				});
+		}
+
 		handleReadMessageChat(params, extra, command)
 		{
 			logger.log(params, extra, command);
@@ -529,6 +550,15 @@ jn.define('im/messenger-v2/provider/pull/counter', (require, exports, module) =>
 		async #clearCounters()
 		{
 			return this.store.dispatch('counterModel/clear');
+		}
+
+		async #clearCountersByDialogType(dialogType)
+		{
+			const counterType = CounterHelper.getCounterTypeByDialogType(dialogType);
+
+			return this.store.dispatch('counterModel/clearByType', {
+				type: counterType,
+			});
 		}
 
 		/**

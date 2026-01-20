@@ -4,11 +4,10 @@
 jn.define('more-menu/block/company/users', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 	const { Loc } = require('loc');
-	const { Indent, Color } = require('tokens');
-	const { Tourist } = require('tourist');
+	const { Indent, Color, Corner } = require('tokens');
 	const { inAppUrl } = require('in-app-url');
 
-	const { Text3, Text4 } = require('ui-system/typography/text');
+	const { Text3 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { Card, CardDesign } = require('ui-system/layout/card');
@@ -17,6 +16,8 @@ jn.define('more-menu/block/company/users', (require, exports, module) => {
 
 	const { PropTypes } = require('utils/validation');
 	const { createTestIdGenerator } = require('utils/test');
+	const { RefRegistry } = require('more-menu/ref-registry');
+	const { PureComponent } = require('layout/pure-component');
 
 	/**
 	 * @typedef {Object} CompanyInfo
@@ -27,13 +28,12 @@ jn.define('more-menu/block/company/users', (require, exports, module) => {
 	/**
 	 * @class MoreMenuUsers
 	 */
-	class MoreMenuUsers extends LayoutComponent
+	class MoreMenuUsers extends PureComponent
 	{
 		/**
 		 * @param props
 		 * @param {CompanyInfo} props.company
 		 * @param {object} props.layout
-		 * @param {object} props.styles
 		 * @param {boolean} props.canInvite
 		 * @param {boolean} props.canUseTelephony
 		 * @param {string} props.testId
@@ -46,106 +46,41 @@ jn.define('more-menu/block/company/users', (require, exports, module) => {
 				prefix: props.testId,
 			});
 
-			this.state = {
-				totalInvitation: 0,
-				inviteButtonCounter: Tourist.firstTime('visit_invitations') ? 1 : 0,
-			};
-
 			this.openUsers = this.openUsers.bind(this);
 			this.openInvite = this.openInvite.bind(this);
-
-			this.subscribeToSetUserCounters = this.subscribeToSetUserCounters.bind(this);
-			this.subscribeToPullEvent = this.subscribeToPullEvent.bind(this);
-		}
-
-		getTotalInvitation()
-		{
-			const cachedCounters = Application.sharedStorage().get('userCounters');
-			try
-			{
-				const counters = cachedCounters ? JSON.parse(cachedCounters) : {};
-				const totalInvitation = counters[env.siteId]?.total_invitation;
-				if (totalInvitation > 0)
-				{
-					return totalInvitation;
-				}
-
-				return 0;
-			}
-			catch (error)
-			{
-				console.error(error);
-
-				return 0;
-			}
 		}
 
 		componentDidMount()
 		{
-			BX.addCustomEvent('onSetUserCounters', this.subscribeToSetUserCounters);
-			BX.addCustomEvent('onUpdateUserCounters', this.subscribeToPullEvent);
-
-			const totalInvitation = this.getTotalInvitation();
-			if (totalInvitation !== 0)
-			{
-				this.setState({
-					totalInvitation,
-				});
-			}
+			RefRegistry.register('company_users_invite_button', this.inviteButtonRef);
 		}
 
 		componentWillUnmount()
 		{
-			BX.removeCustomEvent('onSetUserCounters', this.subscribeToSetUserCounters);
-			BX.removeCustomEvent('onUpdateUserCounters', this.subscribeToPullEvent);
-		}
-
-		subscribeToSetUserCounters(counters)
-		{
-			if (
-				counters[env.siteId]
-				&& Number.isInteger(counters[env.siteId].menu_invite)
-				&& this.state.inviteButtonCounter !== counters[env.siteId].menu_invite
-			)
+			try
 			{
-				this.setState({
-					inviteButtonCounter: counters[env.siteId].menu_invite,
-				});
+				RefRegistry.unregister('company_users_invite_button');
 			}
-		}
-
-		subscribeToPullEvent(counters)
-		{
-			const currentCounters = counters[env.siteId];
-			if (
-				currentCounters
-				&& this.state.totalInvitation !== currentCounters?.total_invitation
-			)
+			catch (e)
 			{
-				this.setState({
-					totalInvitation: currentCounters?.total_invitation,
-				});
+				console.error('RefRegistry unregister error', e);
 			}
 		}
 
 		render()
 		{
-			const { totalInvitation } = this.state;
-			const { company, canInvite, styles = {} } = this.props;
-			if (!company)
-			{
-				return View();
-			}
+			const { company, canInvite, counters } = this.props;
+			const totalInvitation = counters?.total_invitation ?? 0;
 
 			const users = company?.users || [];
 			const totalUsersCount = company?.totalUsersCount || 0;
 
 			const usersIds = users.map((user) => user.id);
 
-			if (usersIds.length === 4 && totalUsersCount > 4)
+			if (totalUsersCount > users.length && users.length >= 4)
 			{
 				const restCount = totalUsersCount - users.length;
-				usersIds.push(...Array.from({ length: restCount }).fill(0)); // add fake items to show rest count
+				usersIds.push(...Array.from({ length: restCount }).fill(env.userId)); // add fake items to show rest count
 			}
 
 			return Card(
@@ -154,127 +89,134 @@ jn.define('more-menu/block/company/users', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						alignItems: 'center',
-						justifyContent: 'space-between',
-						borderColor: this.shouldHighlight() ? Color.bgSeparatorSecondary.toHex() : Color.accentSoftBlue1.toHex(),
-						...styles,
+						flexGrow: 2,
+						borderRadius: Corner.XL.toNumber(),
+						backgroundColor: Color.bgContentSecondaryInvert.toHex(),
 					},
 					design: CardDesign.PRIMARY,
-					border: true,
+					border: false,
 				},
 				View(
 					{
-						testId: this.getTestId('card-content'),
+						style: {
+							flexGrow: 2,
+							flexDirection: 'row',
+							alignItems: 'center',
+							height: 28,
+						},
 						onClick: this.openUsers,
 					},
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								alignItems: 'center',
-							},
+					Text3({
+						testId: this.getTestId('title'),
+						text: Loc.getMessage('MORE_MENU_COMPANY_USERS_TITLE'),
+						color: Color.base1,
+						numberOfLines: 1,
+						ellipsize: 'end',
+						style: {
+							flexShrink: 2,
 						},
-						Text3({
-							testId: this.getTestId('title'),
-							text: Loc.getMessage('MORE_MENU_COMPANY_USERS_TITLE'),
-							color: Color.base1,
-							numberOfLines: 1,
-							ellipsize: 'end',
-						}),
-						totalInvitation && BadgeCounter({
-							testId: this.getTestId('total-invitation-counter'),
-							value: totalInvitation,
-							design: BadgeCounterDesign.ALERT,
-							style: {
-								marginLeft: Indent.XS.toNumber(),
-							},
-						}),
-						IconView({
-							testId: this.getTestId('title-chevron'),
-							size: 20,
-							icon: Icon.CHEVRON_TO_THE_RIGHT,
-							color: Color.base1,
-							resizeMode: 'cover',
-							style: {
-								marginTop: 2,
-								width: 10,
-								height: 16,
-								marginLeft: Indent.XS.toNumber(),
-							},
-						}),
-					),
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								alignItems: 'center',
-								marginTop: Indent.S.toNumber(),
-							},
+					}),
+					totalInvitation && BadgeCounter({
+						testId: this.getTestId('total-invitation-counter'),
+						value: totalInvitation,
+						design: BadgeCounterDesign.ALERT,
+						style: {
+							marginLeft: Indent.XS.toNumber(),
 						},
-						AvatarStack({
-							testId: this.getTestId('avatar-stack'),
-							entities: usersIds,
-							size: 18,
-							withRedux: true,
-							visibleEntityCount: 4,
-						}),
-						usersIds.length === 1 && Text4({
-							testId: this.getTestId('single-user-title'),
-							text: Loc.getMessage('MORE_MENU_COMPANY_USERS_DESCRIPTION'),
-							color: Color.base3,
-							numberOfLines: 1,
-							ellipsize: 'end',
-							style: {
-								marginLeft: Indent.S.toNumber(),
-							},
-						}),
-					),
+					}),
+					IconView({
+						testId: this.getTestId('title-chevron'),
+						size: 20,
+						icon: Icon.CHEVRON_TO_THE_RIGHT,
+						color: Color.base1,
+						resizeMode: 'cover',
+						style: {
+							marginTop: 2,
+							width: 10,
+							height: 16,
+							marginLeft: Indent.XS.toNumber(),
+						},
+					}),
 				),
-				canInvite && Button({
+				this.shouldShowAvatarStack() && AvatarStack({
+					testId: this.getTestId('avatar-stack'),
+					entities: usersIds,
+					size: 24,
+					withRedux: true,
+					visibleEntityCount: 4,
+					onClick: this.openUsers,
+				}),
+				canInvite && this.renderInviteButton(),
+			);
+		}
+
+		renderInviteButton()
+		{
+			if (this.shouldShowAvatarStack())
+			{
+				return Button({
 					testId: this.getTestId('invite-button'),
-					size: ButtonSize.M,
-					design: this.shouldHighlight() ? ButtonDesign.OUTLINE : ButtonDesign.FILLED,
+					size: ButtonSize.S,
+					leftIcon: Icon.PLUS,
+					design: ButtonDesign.PLAN_ACCENT,
 					style: {
-						marginLeft: Indent.XL2.toNumber(),
+						marginLeft: Indent.S.toNumber(),
+					},
+					onClick: this.openInvite,
+					badge: this.getInviteButtonBadge(),
+					forwardRef: (ref) => {
+						this.inviteButtonRef = ref;
+					},
+				});
+			}
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
+					},
+				},
+				Button({
+					testId: this.getTestId('invite-button'),
+					size: ButtonSize.S,
+					design: ButtonDesign.FILLED,
+					style: {
+						marginLeft: Indent.S.toNumber(),
 					},
 					onClick: this.openInvite,
 					text: Loc.getMessage('MORE_MENU_COMPANY_USERS_INVITE'),
-					backgroundColor: this.shouldHighlight() ? Color.bgContentPrimary : Color.accentMainPrimary,
+					backgroundColor: Color.accentMainPrimary,
 					badge: this.getInviteButtonBadge(),
-				}),
-				!canInvite && Button({
-					testId: this.getTestId('open-button'),
-					size: ButtonSize.M,
-					design: ButtonDesign.OUTLINE,
-					style: {
-						marginLeft: Indent.XL2.toNumber(),
+					forwardRef: (ref) => {
+						this.inviteButtonRef = ref;
 					},
-					onClick: this.openUsers,
-					text: Loc.getMessage('MORE_MENU_COMPANY_USERS_OPEN'),
-					backgroundColor: Color.bgContentPrimary,
 				}),
 			);
 		}
 
-		shouldHighlight()
+		shouldShowAvatarStack()
 		{
 			const { company } = this.props;
 			const users = company?.users || [];
 
-			return Array.isArray(users) && users.length >= 2;
+			return Array.isArray(users) && users.length > 1;
 		}
 
 		getInviteButtonBadge()
 		{
-			const { inviteButtonCounter, totalInvitation } = this.state;
+			const { counters } = this.props;
+			const menuInvite = counters?.menu_invite ?? 0;
+			const totalInvitation = counters?.total_invitation ?? 0;
 
-			if (!inviteButtonCounter || totalInvitation > 0)
+			if (!menuInvite || totalInvitation > 0)
 			{
 				return null;
 			}
 
 			return BadgeCounter({
 				testId: this.getTestId('invite-button-counter'),
-				value: inviteButtonCounter,
+				value: menuInvite,
 				design: BadgeCounterDesign.ALERT,
 			});
 		}
@@ -314,7 +256,6 @@ jn.define('more-menu/block/company/users', (require, exports, module) => {
 	MoreMenuUsers.propTypes = {
 		company: PropTypes.object,
 		layout: PropTypes.object.isRequired,
-		styles: PropTypes.object,
 		canInvite: PropTypes.bool,
 		canUseTelephony: PropTypes.bool,
 		testId: PropTypes.string.isRequired,

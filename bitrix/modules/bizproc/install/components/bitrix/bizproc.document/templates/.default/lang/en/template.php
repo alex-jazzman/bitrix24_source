@@ -1,7 +1,7 @@
 <?php
 $MESS["IBEL_BIZPROC_APPLY"] = "Apply";
 $MESS["IBEL_BIZPROC_CANCEL"] = "Cancel";
-$MESS["IBEL_BIZPROC_DATE_MSGVER_1"] = "Current status date:";
+$MESS["IBEL_BIZPROC_DATE_MSGVER_1"] = "Status last updated:";
 $MESS["IBEL_BIZPROC_DEL"] = "delete";
 $MESS["IBEL_BIZPROC_LOG"] = "log";
 $MESS["IBEL_BIZPROC_NEW"] = "New Business Process";

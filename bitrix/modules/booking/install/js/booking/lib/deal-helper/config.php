@@ -10,6 +10,7 @@ return [
 		'main.core',
 		'main.sidepanel',
 		'booking.provider.service.booking-service',
+		'booking.provider.service.main-page-service',
 		'booking.core',
 		'booking.const',
 		'booking.provider.service.wait-list-service',

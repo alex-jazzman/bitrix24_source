@@ -1,5 +1,4 @@
 import { Runtime } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { Logger } from 'im.v2.lib.logger';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
@@ -17,6 +16,7 @@ import { SidebarCollectionFormatter } from '../../../classes/sidebar-collection-
 import './css/message-search-panel.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -187,7 +187,11 @@ export const MessageSearchPanel = {
 		},
 		onClickBack()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.messageSearch });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.messageSearch });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{

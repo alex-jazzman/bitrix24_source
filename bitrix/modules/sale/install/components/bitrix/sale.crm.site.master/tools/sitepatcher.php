@@ -850,13 +850,6 @@ class SitePatcher
 			return;
 		}
 
-		$desktopAppFound = false;
-		$arAppTempalate = Array(
-			"SORT" => 1,
-			"CONDITION" => "CSite::InDir('/desktop_app/')",
-			"TEMPLATE" => "desktop_app"
-		);
-
 		$pubAppFound = false;
 		$arPubTempalate = Array(
 			"SORT" => 100,
@@ -868,12 +861,7 @@ class SitePatcher
 		$dbTemplates = \CSite::GetTemplateList($this->siteId);
 		while($template = $dbTemplates->Fetch())
 		{
-			if ($template["CONDITION"] == "CSite::InDir('/desktop_app/')")
-			{
-				$desktopAppFound = true;
-				$template = $arAppTempalate;
-			}
-			else if ($template["CONDITION"] == 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))')
+			if ($template["CONDITION"] == 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))')
 			{
 				$pubAppFound = true;
 				$template = $arPubTempalate;
@@ -884,8 +872,6 @@ class SitePatcher
 				"TEMPLATE" => $template['TEMPLATE'],
 			);
 		}
-		if (!$desktopAppFound)
-			$arFields["TEMPLATE"][] = $arAppTempalate;
 		if (!$pubAppFound)
 			$arFields["TEMPLATE"][] = $arPubTempalate;
 

@@ -1,0 +1,30 @@
+.bx-im-emoji-content__scope {
+	--im-emoji-content__size_emoji: 28px;
+}
+
+.bx-im-emoji-content__box {
+	box-sizing: border-box;
+	height: 370px;
+	overflow-y: auto;
+	padding: 10px;
+}
+
+.bx-im-emoji-content__box_category {
+	font: var(--im-font-size-xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-semi-bold);
+}
+
+.bx-im-emoji-content__box_category-title {
+	color: var(--im-color-palette-gray-70);
+	margin: 5px 0 0 0;
+	padding-left: 10px;
+}
+
+.bx-im-emoji-content__box_category-emoji {
+	cursor: pointer;
+	display: inline-block;
+	font-size: var(--im-emoji-content__size_emoji);
+	margin: 7px;
+	text-align: center;
+	width: calc(100%/8 - 14px);
+}

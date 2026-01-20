@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM"] = "Are you sure you want to close the page? Your call will disconnect if you close the page.";
 $MESS["IM_LIB_CONFIRM_DELETE_COLLAB_TEXT"] = "This will delete the collab including all communication history. This action cannot be undone.";
 $MESS["IM_LIB_CONFIRM_DELETE_COLLAB_TITLE"] = "Delete collab";
 $MESS["IM_LIB_CONFIRM_DELETE_DESKTOP"] = "Are you sure you want to remove Bitrix24 from the list? #BR# It acts as a fast switch between your Bitrix24s helping you to keep on top of your notifications.";
@@ -10,6 +11,8 @@ $MESS["IM_LIB_CONFIRM_LEAVE_CHAT_MSGVER_1"] = "Do you want to leave the chat?";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHAT_YES_MSGVER_1"] = "Yes";
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TEXT"] = "Do you want to leave the collab? You will lose access to the collab chat, tasks, files and meetings.";
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TITLE"] = "Leave collab";
+$MESS["IM_LIB_CONFIRM_READ_MESSAGES_TEXT_CONFIRM"] = "OK";
+$MESS["IM_LIB_CONFIRM_READ_MESSAGES_TITLE_MSGVER_1"] = "Mark all as read";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP"] = "Restart the application for changes to take effect.";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP_LATER"] = "Later";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP_OK"] = "OK";
@@ -37,5 +40,3 @@ $MESS["IM_LIB_EXIT_DELETE_CHAT_TITLE"] = "Delete chat";
 $MESS["IM_LIB_EXIT_UPDATE_CHANNEL_TITLE"] = "Do you want to save the changes and proceed to managing the subscribers?";
 $MESS["IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM"] = "Yes";
 $MESS["IM_LIB_EXIT_UPDATE_CHAT_TITLE"] = "Do you want to save the changes and proceed to managing the chat members?";
-$MESS["IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM"] = "Are you sure you want to close the page? Your call will disconnect if you close the page.";
-

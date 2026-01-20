@@ -37,6 +37,7 @@ export class NotificationsModel extends BuilderModel
 			sectionCode: NotificationTypesCodes.simple,
 			read: false,
 			settingName: 'im|default',
+			moduleId: '',
 		};
 	}
 
@@ -215,10 +216,20 @@ export class NotificationsModel extends BuilderModel
 					});
 				});
 			},
-			readAll: (store) =>
+			readAllSimple: (store) =>
 			{
-				store.commit('readAll');
-				store.commit('setCounter', 0);
+				const idsToMarkAsRead = [];
+				store.state.collection.forEach((item) => {
+					if (!item.read && item.sectionCode === NotificationTypesCodes.simple)
+					{
+						idsToMarkAsRead.push(item.id);
+					}
+				});
+
+				if (idsToMarkAsRead.length > 0)
+				{
+					store.commit('markAsRead', idsToMarkAsRead);
+				}
 			},
 			delete: (store, payload) =>
 			{
@@ -309,6 +320,22 @@ export class NotificationsModel extends BuilderModel
 					if (!item.read)
 					{
 						item.read = true;
+					}
+				});
+			},
+			markAsRead: (state, payload) =>
+			{
+				payload.forEach((id) => {
+					const item = state.collection.get(id);
+					if (item)
+					{
+						item.read = true;
+
+						const searchItem = state.searchCollection.get(id);
+						if (searchItem)
+						{
+							searchItem.read = true;
+						}
 					}
 				});
 			},
@@ -425,6 +452,11 @@ export class NotificationsModel extends BuilderModel
 		else if (Type.isString(fields.settingName))
 		{
 			result.settingName = fields.settingName;
+		}
+
+		if (Type.isString(fields.notify_module))
+		{
+			result.moduleId = fields.notify_module;
 		}
 
 		return result;

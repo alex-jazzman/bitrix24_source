@@ -1,0 +1,217 @@
+
+/* push template */
+.intranet-user-otp-security__container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.intranet-user-otp-security__section-row {
+	cursor: pointer;
+	padding: var(--ui-space-inset-lg);
+	background: var(--ui-color-background-primary);
+	border-radius: var(--ui-border-radius-lg);
+	border: 1px solid rgba(0,0,0,.04);
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.intranet-user-otp-list__section-row-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.intranet-user-otp-list__section-row-header-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-2xs);
+	align-items: flex-start;
+	align-self: stretch;
+}
+
+.intranet-user-otp-list__row-label {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs)
+}
+
+.intranet-user-otp-list__row-status {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2)
+}
+
+.intranet-user-otp-list__row-status.--single {
+	gap: var(--ui-space-inline-2xs)
+}
+
+.intranet-user-otp-list__row-value {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	color: var(--ui-color-base-3);
+}
+
+.intranet-user-otp-list__row-value .ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+}
+
+.intranet-user-otp-list__row-value .ui-icon-set.--o-circle-check {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-success);
+}
+
+.intranet-user-otp-list__row-value .ui-icon-set.--o-alert-accent {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.intranet-user-otp-list__row-status .ui-icon-set.--chevron-right-s,
+.intranet-user-otp-list__row-status .ui-icon-set.--chevron-down-s {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.intranet-user-otp-list__row-status--clickable {
+	cursor: pointer;
+}
+
+.intranet-user-otp-security__socserv-list {
+	margin: 0;
+	padding: 0;
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.intranet-user-otp-security__socserv-item {
+	--ui-icon-set__icon-size: 42px;
+	border-radius: 50%;
+	border: solid 1px var(--ui-color-background-secondary);
+}
+
+
+.intranet-user-otp-list__section-row-description
+{
+	color: var(--ui-color-base-4);
+	margin: 0;
+}
+
+.intranet-user-otp-list__row-status .ui-icon-set.--chevron-down-s.--show {
+	transform: rotate(-180deg);
+}
+
+.intranet-user-otp-list__section-row-divider {
+	border-top: 1px solid var(--ui-color-design-disabled-content-divider);
+	margin: 16px 0;
+}
+
+.intranet-user-otp__footer {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs2);
+}
+
+.intranet-user-otp__footer-description {
+	color: var(--ui-color-base-4);
+}
+
+.intranet-user-otp-list__disable-link--alert,
+.intranet-user-otp-list__disable-link--alert:hover{
+	--ui-link-color: var(--ui-color-base-4);
+}
+
+.intranet-user-otp-list__disable-link--alert.ui-link-dashed {
+	border-color: var(--ui-color-base-4);
+}
+
+.intranet-user-otp-list__change-btn,
+.intranet-user-otp-list__change-btn:hover,
+.intranet-user-otp-list__disable-link,
+.intranet-user-otp-list__disable-link:hover
+{
+	font-size: var(--ui-text-md-font-size);
+	line-height: var(--ui-text-md-line-height);
+	letter-spacing: var(--ui-text-md-letter-spacing);
+}
+
+.intranet-user-otp-list__section-row-content {
+	display: grid;
+	grid-template-rows: 0fr;
+	overflow: hidden;
+	transition: grid-template-rows ease 0.25s;
+}
+
+.intranet-user-otp-list__section-row-content > div {
+	overflow: hidden;
+}
+
+.intranet-user-otp-list__section-row-content.--show {
+	grid-template-rows: 1fr;
+}
+
+.intranet-user-otp__description {
+	margin: 0;
+	color: var(--ui-color-base-2);
+}
+
+.intranet-user-otp-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+.intranet-user-otp {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xl);
+}
+
+.intranet-user-otp-list__counter-wrapper {
+	display: flex;
+	margin-left: var(--ui-space-stack-2xs);
+}
+
+/* end push template */
+
+
+.b24network-account-popup {
+	padding: 18px 20px 10px;
+}
+
+.b24network-account-popup-inner {
+	color: #535c69;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	padding-bottom: 29px;
+	border-bottom: 1px solid #edeef0;
+}
+
+.b24network-account-popup-title {
+	font-weight: var(--ui-font-weight-bold);
+	font-size: 14px;
+	margin-bottom: 14px;
+}
+
+.b24network-account-popup-title-warning {
+	color: #ff5752;
+}
+
+.b24network-account-popup-text {
+	margin: 0;
+}
+
+.b24network-account-popup-text + .b24network-account-popup-text {
+	margin-top: 18px;
+}
+
+.b24network-account-popup .popup-window-close-icon {
+	width: 42px;
+	height: 50px;
+}

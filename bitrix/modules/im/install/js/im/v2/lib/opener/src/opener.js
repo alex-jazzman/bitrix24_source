@@ -23,7 +23,6 @@ import {
 } from './functions/helpers';
 
 import type { JsonObject } from 'main.core';
-import type { ForwardedEntityConfig } from 'im.v2.provider.service.sending';
 import type { CreatableChatType, OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
 
 export const Opener = {
@@ -68,20 +67,6 @@ export const Opener = {
 		botContextService.scheduleContextRequest(preparedDialogId, context);
 
 		return this.openChat(preparedDialogId);
-	},
-
-	async forwardEntityToChat(dialogId: string, entityConfig: ForwardedEntityConfig): Promise
-	{
-		const preparedDialogId = dialogId.toString();
-		await MessengerSlider.getInstance().openSlider();
-		const layoutParams = {
-			name: Layout.chat,
-			entityId: preparedDialogId,
-		};
-		await LayoutManager.getInstance().setLayout(layoutParams);
-		EventEmitter.emit(EventType.textarea.forwardEntity, { dialogId, entityConfig });
-
-		return Promise.resolve();
 	},
 
 	async openLines(dialogId: string = ''): Promise
@@ -315,12 +300,18 @@ export const Opener = {
 
 	async openNavigationItem(payload: NavigationMenuItemParams): void
 	{
-		await MessengerSlider.getInstance().openSlider();
+		const { id, entityId, target, asLink } = payload;
+		const isMarketApp = NavigationManager.isMarketApp(payload);
+		if (!asLink || isMarketApp)
+		{
+			await MessengerSlider.getInstance().openSlider();
+		}
 
 		NavigationManager.open({
-			id: payload.id.toString(),
-			entityId: normalizeEntityId(payload.entityId),
-			target: payload.target,
+			id: id.toString(),
+			entityId: normalizeEntityId(entityId),
+			target,
+			asLink,
 		});
 	},
 

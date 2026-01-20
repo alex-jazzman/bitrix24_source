@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,main_core_events,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,im_v2_component_message_elements,im_v2_const,im_v2_lib_permission,im_v2_lib_channel) {
+(function (exports,main_core,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,im_v2_component_message_elements,im_v2_const,im_v2_lib_permission,im_v2_lib_channel,im_v2_lib_menu) {
 	'use strict';
 
 	// @vue/component
@@ -109,15 +109,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onContainerClick(event) {
-	      im_v2_lib_parser.Parser.executeClickEvent(event);
+	      im_v2_lib_parser.Parser.executeClickEvent(event, {
+	        emitter: this.getEmitter()
+	      });
 	    },
 	    openContextMenu(event) {
 	      const isContextMenuClick = Boolean(event.target.closest('.bx-im-message-context-menu__container'));
 	      if (!this.withContextMenu || isContextMenuClick || this.hasSelectedText()) {
 	        return;
 	      }
+	      const messageMenuManager = im_v2_lib_menu.MessageMenuManager.getInstance();
+	      const shouldUseNativeContextMenu = messageMenuManager.shouldUseNativeContextMenu(event.target);
+	      if (shouldUseNativeContextMenu) {
+	        messageMenuManager.destroyMenuInstance();
+	        return;
+	      }
 	      event.preventDefault();
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onClickMessageContextMenu, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.onClickMessageContextMenu, {
 	        message: this.message,
 	        dialogId: this.dialogId,
 	        event
@@ -128,7 +136,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!this.hasSelectedText()) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.showQuoteButton, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.showQuoteButton, {
 	        message,
 	        event
 	      });
@@ -136,6 +144,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    hasSelectedText() {
 	      const selection = window.getSelection().toString().trim();
 	      return main_core.Type.isStringFilled(selection);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -179,5 +190,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.BaseMessage = BaseMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=base-message.bundle.js.map

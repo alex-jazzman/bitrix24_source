@@ -13,7 +13,6 @@ import {
 	$isTextNode,
 	createCommand,
 	$getRoot,
-	$setSelection,
 	$isParagraphNode,
 	$createParagraphNode,
 	COMMAND_PRIORITY_EDITOR,
@@ -24,6 +23,8 @@ import {
 	type ElementNode,
 	type RangeSelection,
 } from 'ui.lexical.core';
+
+import { $restoreSelection } from '../../helpers/restore-selection';
 
 import Button from '../../toolbar/button';
 import BasePlugin from '../base-plugin';
@@ -85,7 +86,14 @@ export class CopilotPlugin extends BasePlugin
 			),
 			this.getEditor().registerCommand(
 				HIDE_DIALOG_COMMAND,
-				(): boolean => {
+				(payload): boolean => {
+					if (payload?.sender === 'copilot')
+					{
+						return false;
+					}
+
+					this.#lastSelection = null;
+
 					this.#hide();
 
 					return false;
@@ -250,7 +258,7 @@ export class CopilotPlugin extends BasePlugin
 				return;
 			}
 
-			this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
+			this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND, { sender: 'copilot' });
 
 			const selectionText = selection.getTextContent();
 			const editorPosition = Dom.getPosition(this.getEditor().getScrollerContainer());
@@ -379,11 +387,14 @@ export class CopilotPlugin extends BasePlugin
 		this.getEditor().update(() => {
 			this.#restoreSelection();
 
-			const selectionPosition = $getSelectionPosition(this.getEditor(), $getSelection(), document.body);
+			const selection: RangeSelection = $getSelection();
+			const selectionPosition = $getSelectionPosition(this.getEditor(), selection, document.body);
 			if (selectionPosition === null)
 			{
 				return;
 			}
+
+			this.#lastSelection = selection.clone();
 
 			const { top, left, bottom } = selectionPosition;
 			const scrollerRect: DOMRect = Dom.getPosition(this.getEditor().getScrollerContainer());
@@ -425,16 +436,10 @@ export class CopilotPlugin extends BasePlugin
 
 	#restoreSelection(): boolean
 	{
-		const selection = $getSelection();
-		if (!$isRangeSelection(selection) && this.#lastSelection !== null)
-		{
-			$setSelection(this.#lastSelection);
-			this.#lastSelection = null;
+		const success = $restoreSelection(this.#lastSelection);
+		this.#lastSelection = null;
 
-			return true;
-		}
-
-		return false;
+		return success;
 	}
 
 	#handleCopilotSave(event: BaseEvent): void
@@ -492,10 +497,8 @@ export class CopilotPlugin extends BasePlugin
 		Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', this.#onEditorScroll);
 		this.getEditor().resetHighlightSelection();
 		this.getEditor().update(() => {
-			if (!this.#restoreSelection())
-			{
-				this.getEditor().focus();
-			}
+			this.#restoreSelection();
+			// this.getEditor().focus();
 		});
 	}
 

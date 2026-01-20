@@ -1,0 +1,35 @@
+.bx-im-video-note__container {
+	position: relative;
+}
+
+.bx-im-video-note__header_container {
+	margin-bottom: 4px;
+}
+
+.bx-im-video-note__status_container {
+	position: absolute;
+	bottom: 0;
+	left: 202px;
+}
+
+.bx-im-video-note__comments-panel {
+	position: absolute;
+	right: -11px;
+	bottom: 28px;
+}
+
+/* External reaction list */
+.bx-im-video-note__reaction-list-container {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.bx-im-message-base__wrap.--opponent .bx-im-video-note__reaction-list-container,
+.bx-im-content-chat__container.--left-align .bx-im-video-note__reaction-list-container {
+	justify-content: flex-start;
+}
+
+.bx-im-video-note__reaction-list-container > .bx-im-reaction-list__container {
+	margin-top: 8px;
+}
+/* End external reaction list */

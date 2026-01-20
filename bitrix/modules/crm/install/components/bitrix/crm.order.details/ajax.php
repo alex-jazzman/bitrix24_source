@@ -3,7 +3,6 @@
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
-define('BX_PUBLIC_MODE', true);
 define('DisableEventsCheck', true);
 
 use Bitrix\Catalog;
@@ -25,6 +24,8 @@ use Bitrix\Sale\Payment;
 use Bitrix\SalesCenter;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+
+define('BX_PUBLIC_MODE', true);
 
 Loc::loadMessages(__FILE__);
 

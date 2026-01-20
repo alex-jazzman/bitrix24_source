@@ -1,18 +1,22 @@
 import { Dom } from 'main.core';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { EventEmitter } from 'main.core.events';
+
 import { BLine } from 'ui.system.skeleton.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 
-import { UserFieldWidgetComponent, type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
 
-import { Model } from 'tasks.v2.const';
+import { EventName, Model } from 'tasks.v2.const';
 import { GrowingTextArea } from 'tasks.v2.component.elements.growing-text-area';
 import { UserAvatarList } from 'tasks.v2.component.elements.user-avatar-list';
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
+import { highlighter } from 'tasks.v2.lib.highlighter';
+import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
 
-import { CheckListManager } from '../../../lib/check-list-manager';
 import { CheckListItemMixin } from './check-list-item-mixin';
+import { CheckListCheckbox } from './check-list-checkbox';
 
 // @vue/component
 export const CheckListChildItem = {
@@ -22,7 +26,8 @@ export const CheckListChildItem = {
 		BLine,
 		GrowingTextArea,
 		UserAvatarList,
-		UserFieldWidgetComponent,
+		CheckListCheckbox,
+		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 	},
 	mixins: [
 		CheckListItemMixin,
@@ -33,9 +38,14 @@ export const CheckListChildItem = {
 			type: String,
 			default: '0',
 		},
+		checkListId: {
+			type: [Number, String],
+			default: 0,
+		},
 	},
 	emits: [
 		'toggleGroupModeSelected',
+		'openCheckList',
 	],
 	setup(props: Object): { uploaderAdapter: VueUploaderAdapter }
 	{
@@ -104,14 +114,20 @@ export const CheckListChildItem = {
 		{
 			return (
 				this.isHovered
+				&& this.canModify
 				&& !this.item.panelIsShown
 				&& !this.groupMode
-				&& !this.isPreview
+				&& !this.readOnly
 			);
 		},
-		readOnly(): boolean
+		toggleable(): boolean
 		{
-			return this.isPreview;
+			if (this.isPreview)
+			{
+				return this.canModify;
+			}
+
+			return this.canToggle;
 		},
 	},
 	created(): void
@@ -120,12 +136,6 @@ export const CheckListChildItem = {
 		{
 			void this.loadFiles();
 		}
-
-		this.checkListManager = new CheckListManager({
-			computed: {
-				checkLists: () => this.checkLists,
-			},
-		});
 	},
 	mounted(): void
 	{
@@ -133,6 +143,15 @@ export const CheckListChildItem = {
 		{
 			this.setItemsRef(this.id, this);
 		}
+
+		if (this.checkListId === this.id)
+		{
+			setTimeout(() => {
+				this.$refs.growingTextArea?.focusTextarea();
+			}, 500);
+		}
+
+		this.subscribeToEvents();
 	},
 	beforeUnmount(): void
 	{
@@ -140,8 +159,18 @@ export const CheckListChildItem = {
 		{
 			this.setItemsRef(this.id, null);
 		}
+
+		this.unsubscribeToEvents();
 	},
 	methods: {
+		subscribeToEvents(): void
+		{
+			EventEmitter.subscribe(EventName.HighlightCheckListItem + this.id, this.handleHighlightItemEvent);
+		},
+		unsubscribeToEvents(): void
+		{
+			EventEmitter.unsubscribe(EventName.HighlightCheckListItem + this.id, this.handleHighlightItemEvent);
+		},
 		toggleGroupModeSelected(): void
 		{
 			this.$store.dispatch(`${Model.CheckList}/update`, {
@@ -189,9 +218,9 @@ export const CheckListChildItem = {
 				this.toggleGroupModeSelected();
 			}
 
-			if (this.isPreview)
+			if (this.isPreview && this.canModify)
 			{
-				this.complete(!this.completed);
+				this.$emit('openCheckList', this.id);
 			}
 		},
 		isClickInsideFilesWidget(filesNode: HTMLElement, target: HTMLElement): boolean
@@ -213,6 +242,10 @@ export const CheckListChildItem = {
 
 			return !hasExcludedClass;
 		},
+		handleHighlightItemEvent(): void
+		{
+			void highlighter.highlight(this.$el);
+		},
 	},
 	template: `
 		<div
@@ -223,32 +256,34 @@ export const CheckListChildItem = {
 				'--group-mode': groupMode,
 				'--group-mode-selected': groupModeSelected,
 				'--preview': isPreview,
-				'--toggleable': canToggle,
+				'--toggleable': toggleable,
 			}"
-			:data-id="id"
 			:style="{ marginLeft: itemOffset }"
 			@mouseover="isHovered = true"
 			@mouseleave="isHovered = false"
 			@click="handleClick"
 		>
 			<div class="check-list-widget-child-item-base">
-				<label
-					class="check-list-widget-child-item-checkbox"
-					:class="{'--important': !item.isImportant}"
+				<div
+					v-if="!readOnly"
+					class="check-list-widget-item-drag"
+					:class="{
+						'check-list-drag-item': canDragItem,
+					}"
 				>
-					<input
-						ref="checkbox"
-						type="checkbox"
-						:checked="completed"
-						:disabled="!canToggle || groupMode"
-						@click.stop="complete(!completed)"
-					>
-				</label>
+					<BIcon v-if="canDragItem" :name="Outline.DRAG_L"/>
+				</div>
+				<CheckListCheckbox
+					:important="!item.isImportant"
+					:disabled="!canToggle || groupMode"
+					:checked="completed"
+					@click="complete(!completed)"
+				/>
 				<div
 					v-if="item.isImportant"
 					class="check-list-widget-child-item-important"
 				>
-					<BIcon :name="Outline.FIRE_SOLID" :hoverable="false"/>
+					<BIcon :name="Outline.FIRE_SOLID"/>
 				</div>
 				<GrowingTextArea
 					ref="growingTextArea"
@@ -256,7 +291,7 @@ export const CheckListChildItem = {
 					:data-check-list-id="'check-list-child-item-title-' + item.id"
 					:modelValue="item.title"
 					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
-					:readonly="groupMode || isPreview"
+					:readonly="textReadOnly"
 					:fontColor="textColor"
 					:fontSize="15"
 					:lineHeight="20"
@@ -265,7 +300,7 @@ export const CheckListChildItem = {
 					@focus="handleFocus"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
-					@emptyFocus="focusToItem"
+					@emptyFocus="scrollToItem"
 					@enterBlur="handleEnter"
 				/>
 				<div
@@ -275,14 +310,10 @@ export const CheckListChildItem = {
 				>
 					<BIcon :name="Outline.TRASHCAN"/>
 				</div>
-				<div v-else-if="groupMode" class="check-list-widget-child-item-action-checkbox">
-					<input
-						ref="checkbox"
-						type="checkbox"
-						:checked="groupModeSelected"
-					>
-				</div>
-				<div v-else class="check-list-widget-child-item-action-stub"></div>
+				<template v-else-if="groupMode">
+					<CheckListCheckbox :checked="groupModeSelected" highlight @click="toggleGroupModeSelected"/>
+				</template>
+				<div v-else class="check-list-widget-child-item-action-stub"/>
 			</div>
 			<template v-if="hasAttachments">
 				<div class="check-list-widget-item-attach">
@@ -300,20 +331,11 @@ export const CheckListChildItem = {
 						<div class="check-list-widget-item-attach-files-list">
 							<template v-if="filesLoading">
 								<div class="check-list-widget-item-attach-files-list-skeleton">
-									<BLine
-										v-for="index in filesNumber"
-										:key="index"
-										:width="114"
-										:height="90"
-									/>
+									<BLine v-for="key in filesNumber" :key :height="90"/>
 								</div>
 							</template>
 							<template v-else>
-								<UserFieldWidgetComponent
-									ref="files-widget"
-									:uploaderAdapter="uploaderAdapter"
-									:widgetOptions="widgetOptions"
-								/>
+								<UserFieldWidgetComponent :uploaderAdapter :widgetOptions ref="files-widget"/>
 							</template>
 						</div>
 					</div>

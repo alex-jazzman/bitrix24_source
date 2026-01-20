@@ -27,7 +27,7 @@ if (Facade\Bitrix24::shouldUseB24() === false)
 }
 Engine::triggerEngineAddedEvent();
 
-include('prompt_updater.php');
+include(__DIR__ . '/prompt_updater.php');
 
 //\Bitrix\Main\Config\Option::set('ai', 'MARTA_BOT_ENABLE', 'Y');
 

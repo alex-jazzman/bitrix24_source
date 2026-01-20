@@ -16,7 +16,9 @@ import type { GetterTree, ActionTree, MutationTree, NestedModuleTree } from 'ui.
 type CopilotModelState = {
 	recommendedRoles: string[],
 	aiProvider: string,
-	availableAIModels: ImModelCopilotAIModel[],
+	availableAIModels: {
+		[code: string]: ImModelCopilotAIModel[]
+	},
 };
 
 const RECOMMENDED_ROLES_LIMIT = 4;
@@ -43,7 +45,7 @@ export class CopilotModel extends BuilderModel
 		return {
 			recommendedRoles: [],
 			aiProvider: '',
-			availableAIModels: [],
+			availableAIModels: {},
 		};
 	}
 
@@ -56,7 +58,7 @@ export class CopilotModel extends BuilderModel
 			},
 			/** @function copilot/getAIModels */
 			getAIModels: (state): ImModelCopilotAIModel[] => {
-				return state.availableAIModels;
+				return Object.values(state.availableAIModels);
 			},
 			/** @function copilot/getRecommendedRoles */
 			getRecommendedRoles: (state) => (): ImModelCopilotRole[] => {
@@ -65,6 +67,26 @@ export class CopilotModel extends BuilderModel
 				});
 
 				return roles.slice(0, RECOMMENDED_ROLES_LIMIT);
+			},
+			/** @function copilot/getDefaultModelName */
+			getDefaultModelName: (state): string => {
+				const allModels = Object.values(state.availableAIModels);
+				if (allModels.length === 0)
+				{
+					return '';
+				}
+
+				const defaultModel: ?ImModelCopilotAIModel = allModels.find((model) => model.default === true);
+				if (!defaultModel)
+				{
+					return '';
+				}
+
+				return defaultModel.name;
+			},
+			/** @function copilot/isReasoningAvailableInModel */
+			isReasoningAvailableInModel: (state) => (code: string): boolean => {
+				return Boolean(state.availableAIModels[code]?.supportsReasoning);
 			},
 		};
 	}
@@ -91,13 +113,15 @@ export class CopilotModel extends BuilderModel
 				store.commit('setProvider', payload);
 			},
 			/** @function copilot/setAvailableAIModels */
-			setAvailableAIModels: (store, payload) => {
+			setAvailableAIModels: (store, payload: ImModelCopilotAIModel[]) => {
 				if (!Type.isArrayFilled(payload))
 				{
 					return;
 				}
 
-				store.commit('setAvailableAIModels', payload);
+				payload.forEach((model) => {
+					store.commit('setAvailableAIModel', this.formatFields(model));
+				});
 			},
 		};
 	}
@@ -105,14 +129,14 @@ export class CopilotModel extends BuilderModel
 	getMutations(): MutationTree
 	{
 		return {
-			setRecommendedRoles: (state, payload) => {
+			setRecommendedRoles: (state: CopilotModelState, payload) => {
 				state.recommendedRoles = payload;
 			},
-			setProvider: (state, payload) => {
+			setProvider: (state: CopilotModelState, payload) => {
 				state.aiProvider = payload;
 			},
-			setAvailableAIModels: (state, payload) => {
-				state.availableAIModels = payload;
+			setAvailableAIModel: (state: CopilotModelState, payload: ImModelCopilotAIModel) => {
+				state.availableAIModels[payload.code] = payload;
 			},
 		};
 	}

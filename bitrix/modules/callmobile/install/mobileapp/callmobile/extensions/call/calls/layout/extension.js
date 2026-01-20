@@ -6,10 +6,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	include('Calls');
 
 	const { BottomSheet } = require('bottom-sheet');
+	const { UserRegistry, UserModel } = require('call/calls/users');
 	const { Color, Corner, Indent } = require('tokens');
+	const { CallMenu } = require('call/calls/menu');
 	const { CopilotDrawer } = require('call/calls/layout/copilot-drawer');
 	const { FloorRequestsList } = require('call/calls/layout/floor-requests-list');
 	const { ParticipantsList } = require('call/calls/layout/participants-list');
+	const { CallSettingsManager } = require('call/settings-manager');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { Avatar, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
@@ -539,6 +542,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		SelectAudioDevice: 'selectAudioDevice',
 		ToggleSubscriptionRemoteVideo: 'toggleSubscriptionRemoteVideo',
 		ToggleCopilot: 'toggleCopilot',
+		TestSwitchConnectionType: 'testSwitchConnectionType',
+		SwitchCallType: 'switchCallType',
 	};
 
 	const GridUserCount = {
@@ -633,6 +638,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				userScrollUserPerPage: 3,
 				isAppActive: true,
 				inactivityTimer: null,
+				connectionType: 1,
 			};
 
 			this.localUserModel = new UserModel({
@@ -681,10 +687,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				order: this.getNextPosition(),
 			}));
 
-			if (CallUtil.isNewMobileGridEnabled())
-			{
-				this.userRegistry.users = [...this.rankUsers()];
-			}
+			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
 				users: this.getUsers(),
@@ -994,9 +997,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const result = [];
 			for (const userModel of this.userRegistry.users)
 			{
-				if (userModel.state === BX.Call.UserState.Connected
+				if (
+					userModel.state === BX.Call.UserState.Connected
 					&& userModel.floorRequestState
-					&& !userModel.localUser)
+				)
 				{
 					result.push(userModel);
 					if (limit > 0 && result.length >= limit)
@@ -1098,10 +1102,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			{
 				return;
 			}
-			if (CallUtil.isNewMobileGridEnabled())
-			{
-				this.userRegistry.users = [...this.rankUsers()];
-			}
+
+			this.userRegistry.users = [...this.rankUsers()];
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
 			});
@@ -1198,10 +1200,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}
 			}
 
-			if (CallUtil.isNewMobileGridEnabled())
-			{
-				this.userRegistry.users = [...this.rankUsers()];
-			}
+			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
@@ -1210,19 +1209,16 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				status: newCallStatus,
 			});
 
-			if (CallUtil.isNewMobileGridEnabled())
+			const currentPage = this.state.currentGridPage
+			if (currentPage !== 1)
 			{
-				const currentPage = this.state.currentGridPage
-				if (currentPage !== 1)
+				let newPage = this.getCurrentPage();
+				if (currentPage > newPage)
 				{
-					let newPage = this.getCurrentPage();
-					if (currentPage > newPage)
-					{
-						this.state.currentGridPage = newPage;
-						this.subscribeOnNewPage();
-						//TODO: should we do smooth scroll after triggering page change due to another user exit?
-						//this.scrollPage();
-					}
+					this.state.currentGridPage = newPage;
+					this.subscribeOnNewPage();
+					//TODO: should we do smooth scroll after triggering page change due to another user exit?
+					//this.scrollPage();
 				}
 			}
 
@@ -1281,10 +1277,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		updateUserTalkingState(userId)
 		{
-			if (CallUtil.isNewMobileGridEnabled())
-			{
-				this.userRegistry.users = [...this.rankUsers()];
-			}
+			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
 				floorRequestUsers: this.getFloorRequestUsers(3),
@@ -1388,81 +1381,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				this.switchPresenter();
 			}
 
-			if (CallUtil.isNewMobileGridEnabled())
-			{
-				this.userRegistry.users = [...this.rankUsers()];
-			}
+			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
 			});
 
 			this.toggleSubscriptionRemoteVideo();
-		}
-
-		toggleSubscriptionRemoteVideoCarousel()
-		{
-			const ids = this.state.connectedUsers.map(user => user.id)
-
-			if (ids.length === 0)
-			{
-				return;
-			}
-
-			const toggleList = [];
-			const leftUserId = this.getLeftUser(this.centralUserId);
-			const rightUserId = this.getRightUser(this.centralUserId);
-
-			const checkNecessityAddUser = (newState) => {
-				const currentUser = this.state.toggleListPrev.find((user) => user.id === newState.id);
-
-				return Boolean(!currentUser
-					|| (
-						currentUser
-						&& (
-							currentUser.quality !== newState.quality
-							|| currentUser.isShowVideo !== newState.isShowVideo
-						)
-					));
-			};
-
-			ids.forEach((id) => {
-				const userModel = this.userRegistry.get(id);
-
-				if (!userModel || userModel.localUser || userModel.state !== 'Connected')
-				{
-					return;
-				}
-
-				const isActiveUser = id === this.centralUserId || id === leftUserId || id === rightUserId;
-
-				if (isActiveUser)
-				{
-					toggleList.push({
-						id,
-						quality: id === this.centralUserId ? this.streamQuality.medium : this.streamQuality.low,
-						isShowVideo: true,
-					});
-				}
-
-				if (!isActiveUser)
-				{
-					toggleList.push({
-						id,
-						quality: this.streamQuality.low,
-						isShowVideo: false,
-					});
-				}
-			});
-
-			const filterToggleList = toggleList.filter((item) => checkNecessityAddUser(item));
-
-			this.state.toggleListPrev = toggleList;
-
-			if (filterToggleList.length > 0)
-			{
-				this.emit(EventName.ToggleSubscriptionRemoteVideo, [filterToggleList]);
-			}
 		}
 
 		toggleSubscriptionRemoteVideoGrid()
@@ -1597,9 +1522,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		toggleSubscriptionRemoteVideo()
 		{
-			CallUtil.isNewMobileGridEnabled()
-				? this.toggleSubscriptionRemoteVideoGrid()
-				: this.toggleSubscriptionRemoteVideoCarousel();
+			this.toggleSubscriptionRemoteVideoGrid();
 		}
 
 		setVideoStream(userId, stream, mirrorLocalVideo = false)
@@ -1614,14 +1537,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			if (stream)
 			{
-				if (CallUtil.isNewMobileGridEnabled() && Array.isArray(stream))
+				if (this.videoStreams.hasOwnProperty(userId) && this.screenshareStreams.hasOwnProperty(userId))
 				{
-					if (this.videoStreams.hasOwnProperty(userId) && this.screenshareStreams.hasOwnProperty(userId))
-					{
-						delete this.videoStreams[userId];
-						delete this.screenshareStreams[userId];
-						userModel.cameraState = false;
-					}
+					delete this.videoStreams[userId];
+					delete this.screenshareStreams[userId];
+					userModel.cameraState = false;
+				}
+
+				if (Array.isArray(stream))
+				{
 					stream.forEach((item) => {
 						if (item.kind === 'sharing')
 						{
@@ -1632,7 +1556,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							this.videoStreams[userId] = item;
 							userModel.cameraState = true;
 						}
-					})
+					});
 				}
 				else
 				{
@@ -1646,7 +1570,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						userModel.cameraState = true;
 					}
 				}
-
 			}
 			else
 			{
@@ -1658,22 +1581,19 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			if (userId == this.centralUserId && userId != env.userId)
 			{
 				this.setState({
-					remoteStream: (CallUtil.isNewMobileGridEnabled() && Array.isArray(stream)) ? stream[0] : stream,
+					remoteStream: Array.isArray(stream) ? stream[0] : stream,
 				});
 			}
 			else if (userId == this.userId)
 			{
 				this.setState({
-					localStream: (CallUtil.isNewMobileGridEnabled() && Array.isArray(stream)) ? stream[0] : stream,
+					localStream: Array.isArray(stream) ? stream[0] : stream,
 					cameraState: Boolean(stream),
 					mirrorLocalVideo,
 				});
 			}
 
-			if (CallUtil.isNewMobileGridEnabled())
-			{
-				this.userRegistry.users = [...this.rankUsers()];
-			}
+			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
@@ -1857,11 +1777,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 				},
 				!userModel.microphoneState && this.renderDeviceOffHint(
-					userModel.firstName,
+					userModel.firstName.length === 0 ? userModel.name : userModel.firstName,
 					userModel.gender,
-					'microphone'
+					'microphone',
 				),
-				!userModel.cameraState && this.renderDeviceOffHint(userModel.firstName, userModel.gender, 'camera'),
+				!userModel.cameraState && this.renderDeviceOffHint(
+					userModel.firstName.length === 0 ? userModel.name : userModel.firstName,
+					userModel.gender,
+					'camera'),
+
 			);
 		}
 
@@ -2193,6 +2117,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				{
 					[users[talkingUser], users[1]] = [users[1], users[talkingUser]];
 				}
+				setTimeout(() => {
+					this.resubscribeForUserScroll();
+				});
 				return users;
 			}
 
@@ -2408,7 +2335,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					uri: this.userRegistry.get(item.data.id).avatar,
 					name: BX.utils.html.htmlDecode(item.data.name),
 					size: 90,
-					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id].color),
+					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id]?.color),
 				}),
 			);
 			const video = View(
@@ -2438,7 +2365,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				},
 				this.state.panelVisible && this.renderNameBadge(item.data.name, item.data.microphoneState),
 				item.data.state === 'Connecting' && connectingBadge,
-				item.data.floorRequestState && !isThisUser && this.renderFloorRequestBadge(),
+				item.data.floorRequestState && this.renderFloorRequestBadge(),
 				isCameraOff ? avatar : video,
 				isThisUser && !isCameraOff && switchCamera,
 			);
@@ -3399,7 +3326,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				case 'connecting':
 					return this.renderOutgoing();
 				case 'call':
-					return CallUtil.isNewMobileGridEnabled() ? this.renderGrid() : this.renderCall();
+					return this.renderGrid();
 			}
 		}
 
@@ -3415,7 +3342,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		setAppActiveState(isActive)
 		{
-			this.setState({ isAppActive: isActive })
+			this.setState({ isAppActive: isActive }, () => {
+				this.toggleSubscriptionRemoteVideoGrid();
+			});
 		}
 
 		renderIncoming()
@@ -3463,7 +3392,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		 */
 		renderTop(props)
 		{
-			const isVisible = CallUtil.isNewMobileGridEnabled() ? this.state.panelVisible : true;
+			const isVisible = this.state.panelVisible;
 			const avatar = View(
 				{
 					style: {
@@ -3617,7 +3546,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderGridTop(props)
 		{
-			const isVisible = CallUtil.isNewMobileGridEnabled() ? this.state.panelVisible : true;
+			const isVisible = this.state.panelVisible;
 			const avatar = View(
 				{
 					style: {
@@ -3634,7 +3563,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}),
 			)
 
-			const showCopilot = this.state.copilotAvailable && this.state.status === 'call' && this.state.isGroupCall;
+			const showCopilot = this.state.copilotAvailable
+				&& this.state.status === 'call'
+				&& (this.state.isGroupCall || CallSettingsManager.plainCallFollowUpEnabled);
 
 			return isVisible && View(
 				{
@@ -3765,79 +3696,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			);
 		}
 
-		renderCall()
-		{
-			const needCentralUser = this.state.isGroupCall && this.state.centralUserId !== this.userId;
-			const showLocalVideoInFrame = this.state.centralUserId !== this.userId;
-			const showJumpToPresenter = this.state.presenterUserId > 0
-				&& this.state.pinnedUserId > 0
-				&& this.state.presenterUserId !== this.state.pinnedUserId
-			;
-			let topParams = null;
-
-			if (this.state.isGroupCall)
-			{
-				topParams = {
-					svgContent: Icons.participants,
-					onClick: () => this.openParticipantsMenu(),
-					text: BX.message('MOBILE_CALL_USER_NUM_FROM_TOTAL')
-						.replace('#USER_NUM#', this.getParticipants().length)
-						.replace('#TOTAL_COUNT#', this.state.totalUsersCount),
-				};
-			}
-			else
-			{
-				if (this.userRegistry.get(this.centralUserId).state === BX.Call.UserState.Connecting)
-				{
-					topParams = {
-						svgContent: Icons.calling,
-						text: BX.message('MOBILE_CALL_LAYOUT_RESTORING_CONNECTION'),
-					};
-				}
-				else
-				{
-					topParams = {
-						svgContent: this.state.remoteStream ? Icons.calling : null,
-						text: this.state.remoteStream ? BX.message('MOBILE_CALL_LAYOUT_BITRIX24_CALL') : this.userRegistry.get(this.centralUserId).workPosition,
-					};
-				}
-			}
-			const bottomMargin = this.getBottomMargin();
-
-			return View(
-				{
-					style: {
-						flex: 1,
-						backgroundImage: this.getBackground(),
-						backgroundResizeMode: 'cover',
-					},
-					onClick: () => {
-						this.setState({ panelVisible: !this.state.panelVisible });
-					},
-					onLayout: ({ width, height }) => {
-						if (width !== this.state.screenWidth || height !== this.state.screenHeight)
-						{
-							this.setState({
-								screenHeight: height,
-								screenWidth: width,
-							});
-						}
-					},
-				},
-				Boolean(this.state.remoteStream) && this.renderRemoteStream(),
-				this.state.centralUserVideoPaused && this.renderVideoPaused(),
-				this.renderTop(topParams),
-				showJumpToPresenter && this.renderJumpToPresenter(),
-				needCentralUser && this.renderCenter(),
-				!showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
-				showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
-				this.renderOverlay(),
-				this.renderFloorRequests(bottomMargin),
-				!this.state.isGroupCall && this.renderDeviceHints(bottomMargin),
-				needCentralUser && this.renderCurrentUser(this.userRegistry.get(this.state.centralUserId), bottomMargin),
-			);
-		}
-
 		renderGrid()
 		{
 			const showLocalVideoInFrame = this.state.centralUserId !== this.userId;
@@ -3849,7 +3707,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					onClick: () => this.openParticipantsMenu(),
 					text: BX.message('MOBILE_CALL_USER_NUM_FROM_TOTAL')
 						.replace('#USER_NUM#', this.getParticipants().length)
-						.replace('#TOTAL_COUNT#', this.userRegistry.users.length),
+						.replace('#TOTAL_COUNT#', this.state.totalUsersCount),
 				};
 			}
 			else
@@ -3888,9 +3746,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				? this.renderCenterAvatar(
 					this.userRegistry.get(remoteUserId).avatar,
 					this.userRegistry.get(remoteUserId).name,
-					Color.base8
+					this.state.isGroupCall ? CallUtil.userData[remoteUserId].color : this.state.associatedEntityAvatarColor
 				)
 				: null;
+
 			return View(
 				{
 					style: {
@@ -3929,6 +3788,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				this.renderFloorRequests(bottomMargin),
 				!this.state.isGroupCall && this.renderDeviceHints(bottomMargin),
 				areTwoUsers && this.state.isGroupCall && this.renderCurrentUser(this.userRegistry.get(remoteUserId), bottomMargin),
+				// this.renderTestPanel(),
 			);
 		}
 
@@ -4054,7 +3914,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					clearTimeout(this.state.inactivityTimer);
 					return;
 				}
-				CallUtil.isNewMobileGridEnabled() && this.hideUIAfterInactivity();
+				this.state.status === 'call' && this.hideUIAfterInactivity();
 			};
 
 			return View(
@@ -4099,6 +3959,53 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		renderTestPanel()
+		{
+			return DraggableView(
+				{
+					style: {
+						position: 'absolute',
+						top: 20,
+						left: 20,
+						width: 200,
+					}
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							width: '100%',
+							backgroundColor: '#7F000000',
+						}
+					},
+					this.button(
+						'sendMessage',
+						this.state.connectionType === 1 ? Icons.buttonCamera : Icons.buttonCameraOff,
+						() => this.setState({ connectionType: this.state.connectionType === 1 ? 2 : 1 }, () => {
+							this.emit(EventName.TestSwitchConnectionType)
+						}),
+						`callsButtonCamera_${this.state.cameraState ? 'on' : 'off'}`,
+					),
+					this.button(
+						'switchCallType',
+						this.state.connectionType === 1 ? Icons.buttonCamera : Icons.buttonCameraOff,
+						() => this.setState({ connectionType: this.state.connectionType === 1 ? 2 : 1 }, () => {
+							this.emit(EventName.SwitchCallType)
+						}),
+						`callsButtonCamera_${this.state.cameraState ? 'on' : 'off'}`,
+					),
+				)
+			)
+		}
+
+		// TODO: delete after testing
+		getConnectionTypeState()
+		{
+			return this.state.connectionType;
 		}
 
 		button(text, svgContent, click, testId)

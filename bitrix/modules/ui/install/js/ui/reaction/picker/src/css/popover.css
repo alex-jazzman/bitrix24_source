@@ -40,9 +40,9 @@
 
 .reactions-select-popover.--expanded .reactions-select-popover__inner {
 	flex-direction: column;
-	max-height: 276px;
+	max-height: 242px;
 	overflow-x: hidden;
-	overflow-y: hidden;
+	overflow-y: scroll;
 
 	/* Firefox */
 	scrollbar-width: thin;

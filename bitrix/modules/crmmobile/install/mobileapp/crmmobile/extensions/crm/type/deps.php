@@ -4,4 +4,7 @@ return [
 		'./name',
 		'./id',
 	],
+	'extensions' => [
+		'utils/string',
+	],
 ];

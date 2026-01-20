@@ -1,0 +1,34 @@
+.bx-im-list-recent__calls_container {
+	--im-list-recent-calls__background-color: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), #F1FBD0;
+	--im-list-recent__border-color_calls-section: rgba(82, 92, 105, 0.08);
+
+	flex-shrink: 0;
+	background: var(--im-list-recent-calls__background-color);
+	border: 1px solid var(--im-list-recent__border-color_calls-section);
+	border-radius: 10px;
+	margin: 4px 4px 6px 4px;
+	position: relative;
+}
+
+.bx-im-list-recent__calls_container.--with-shadow {
+	margin-bottom: 0;
+}
+
+.bx-im-list-recent__calls_container.--with-shadow::after {
+	position: absolute;
+	content: '';
+	left: 0;
+	width: 100%;
+	height: 40px;
+	background: linear-gradient(178.92deg, #FFFFFF 17.38%, rgba(255, 255, 255, 0.0001) 96.59%);
+	transform: matrix(-1, 0, 0, 1, 0, 0);
+	z-index: 1;
+}
+
+.bx-im-list-recent__calls_container + .bx-im-list-recent__pinned_container {
+	margin-top: 0;
+}
+
+.bx-im-list-recent__calls_container + .bx-im-list-recent__general_container {
+	margin-top: 0;
+}

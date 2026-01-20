@@ -5,12 +5,14 @@ import { SidebarMenu } from '../sidebar-base-menu';
 import { LinkManager } from './link-manager';
 
 import type { MenuItemOptions } from 'ui.system.menu';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class LinkMenu extends SidebarMenu
 {
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
+
 		this.linkManager = new LinkManager();
 	}
 

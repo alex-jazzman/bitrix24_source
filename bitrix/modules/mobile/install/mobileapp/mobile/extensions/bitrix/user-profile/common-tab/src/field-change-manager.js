@@ -46,6 +46,11 @@ jn.define('user-profile/common-tab/src/field-change-manager', (require, exports,
 			return keys.every((key) => this.valid[key]);
 		}
 
+		getChangedCommonFieldsIds()
+		{
+			return Object.values(this.getFields()?.commonFields)?.map((field) => field.id) || [];
+		}
+
 		saveChanges(ownerId)
 		{
 			return BX.ajax.runAction('mobile.Profile.save', {

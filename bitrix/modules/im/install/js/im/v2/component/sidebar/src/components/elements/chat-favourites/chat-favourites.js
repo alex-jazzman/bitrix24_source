@@ -1,21 +1,20 @@
-import { EventEmitter } from 'main.core.events';
-
 import { SidebarDetailBlock, EventType } from 'im.v2.const';
 
 import './css/chat-favourites.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const ChatFavourites = {
 	name: 'ChatFavourites',
 	props:
-		{
-			dialogId: {
-				type: String,
-				required: true,
-			},
+	{
+		dialogId: {
+			type: String,
+			required: true,
 		},
+	},
 	computed:
 	{
 		dialog(): ImModelChat
@@ -47,10 +46,14 @@ export const ChatFavourites = {
 		},
 		onFavouriteClick()
 		{
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.favorite,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

@@ -1,0 +1,129 @@
+.crm-messagesender-channel-selector {
+	overflow: hidden;
+	background-color: var(--ui-color-bg-content-secondary, #FAFCFD);
+	border-radius: 24px;
+	font-family: var(--ui-font-family-primary);
+}
+
+.crm-messagesender-channel-selector-body {
+	padding: 5px;
+	padding-bottom: 13px;
+	border-radius: 24px;
+	background-color: var(--ui-color-palette-white-base);
+	box-shadow: var(--ui-shadow-bottom-2xs);
+}
+
+.crm-messagesender-channel-selector-title {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-90);
+	padding: var(--ui-space-inset-xs2) 15px var(--ui-space-inset-xs) 15px;
+}
+
+.crm-messagesender-channel-selector-list {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.crm-messagesender-channel-selector-item {
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs) 15px;
+	display: flex;
+	align-items: center;
+	transition: background-color 0.15s ease;
+	gap: 5px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.crm-messagesender-channel-selector-list .crm-messagesender-channel-selector-item {
+	cursor: pointer;
+}
+
+.crm-messagesender-channel-selector-list .crm-messagesender-channel-selector-item:hover {
+	background-color: #f8f9fa;
+}
+
+.crm-messagesender-channel-selector-icon {
+	width: 32px;
+	height: 32px;
+	border-radius: var(--ui-border-radius-circle);
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--ui-color-palette-white-base);
+	position: relative;
+}
+
+.crm-messagesender-channel-selector-content {
+	flex: 1;
+	min-width: 0;
+}
+
+.crm-messagesender-channel-selector-ellipsis {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-messagesender-channel-selector-item-title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-palette-black-base);
+	line-height: var(--ui-typography-text-lg-line-height);
+}
+
+.crm-messagesender-channel-selector-item-subtitle {
+	font-size: var(--ui-border-radius-lg);
+	color: var(--ui-color-palette-gray-50);
+	line-height: 1.3;
+	max-width: 100%;
+	width: 0;
+	min-width: 100%;
+}
+
+.crm-messagesender-channel-selector-footer {
+	display: flex;
+	justify-content: center;
+	gap: var(--ui-space-inline-lg);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-none);
+}
+
+.crm-messagesender-channel-selector-edit-item-subtitle {
+	margin-left: 5px;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.crm-messagesender-channel-selector-banner-list {
+	padding: var(--ui-space-inset-none) var(--ui-space-inset-lg);
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm);
+}
+
+.crm-messagesender-channel-selector-banner-list .crm-messagesender-channel-selector-item {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-lg);
+	height: 60px;
+}
+
+.crm-messagesender-channel-selector-banner-list .crm-messagesender-channel-selector-item-title,
+.crm-messagesender-channel-selector-banner-list .crm-messagesender-channel-selector-item-subtitle {
+	color: var(--ui-color-palette-white-base);
+}
+
+.crm-messagesender-channel-selector-banner-list .crm-messagesender-channel-selector-item-title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.crm-messagesender-channel-selector-banner-container {
+	margin-top: var(--ui-space-stack-md);
+}
+
+.crm-messagesender-channel-selector-banner-title {
+	font-size: var(--ui-font-size-xs);
+	margin-bottom: var(--ui-space-stack-sm);
+	color: var(--ui-color-palette-gray-70);
+	text-align: center;
+}

@@ -4,7 +4,7 @@
 jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { unique } = require('utils/array');
-	const { throttle } = require('utils/function');
+	const { throttle, debounce } = require('utils/function');
 	const { UserField } = require('layout/ui/fields/user');
 	const { UserListManager } = require('layout/ui/user-list');
 	const { ListViewQueueWorker } = require('layout/list-view-queue-worker');
@@ -41,6 +41,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			super(props);
 
 			this.handleOnFocus = throttle(this.handleOnFocus, 300, this);
+			this.handleOnSave = debounce(this.handleOnSave, 300, this);
 
 			this.itemRefMap = new Map();
 			this.focusedItemId = props.focusedItemId || null;
@@ -338,6 +339,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		 */
 		render()
 		{
+			const NativeListView = this.#nativeListView();
+
 			return View(
 				{
 					onClick: () => {
@@ -350,7 +353,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 					},
 					resizableByKeyboard: true,
 				},
-				OptimizedListView({
+				NativeListView({
 					ref: (ref) => {
 						this.checklistQueue.setListViewRef(ref);
 					},
@@ -423,7 +426,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				onSubmit: this.handleOnSubmit,
 				onRemove: this.handleOnRemoveItem,
 				onFocus: this.handleOnFocus,
-				onBlur: this.handleOnBlur,
+				onBlur: this.#handleOnBlur,
 				onChange: this.handleOnChange,
 				updateRowByKey: this.updateRowByKey,
 				updateMenu: this.updateActionMenu,
@@ -480,11 +483,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
 		 * @param {Boolean} forceDelete
 		 * @param {CheckListFlatTreeItem} item
 		 */
-		handleOnBlur = ({ item, forceDelete = false }) => {
+		#handleOnBlur = ({ item, forceDelete = false }) => {
 			if (!item)
 			{
 				return Promise.resolve();
@@ -532,18 +534,25 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		};
 
 		handleOnChange = (shouldSave = true) => {
-			const { onChange, onSave } = this.props;
+			const { onChange } = this.props;
 
-			if (onSave && shouldSave)
-			{
-				onSave();
-			}
+			this.handleOnSave(shouldSave);
 
 			if (onChange)
 			{
 				onChange();
 			}
 		};
+
+		handleOnSave(shouldSave)
+		{
+			const { onSave } = this.props;
+
+			if (onSave && shouldSave)
+			{
+				onSave();
+			}
+		}
 
 		handleOnButtonAppendItem = async () => {
 			const rootItem = this.checklist.getRootItem();
@@ -570,7 +579,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		handleOnSubmit = async (submitItem) => {
 			const focusedItem = this.getFocusedItem();
-
 			const item = submitItem || focusedItem;
 
 			if (item.isRoot())
@@ -682,9 +690,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				this.removeElementFilterIsEnabled(item);
 			}
 
+			const shouldSave = this.checklist.isAutoCompleteItem();
 			void this.updateRowByKey(item);
 			void this.updateChecklistCounter();
-			this.handleOnChange(false);
+			this.handleOnChange(shouldSave);
 		};
 
 		/**
@@ -858,7 +867,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		#handleOnChangeUsers = ({ item, memberType }) => (_, members = []) => {
 			this.#handleOnChangeMembers({ item, members, memberType });
 			this.updateActionMenu(item);
-			this.updateRows({ itemIds: [item.getId()], animation: 'fade', saveFocus: true });
+			this.updateRows({
+				itemIds: [item.getId()],
+				animation: 'fade',
+				saveFocus: true,
+			});
 			this.handleOnChange();
 		};
 
@@ -994,6 +1007,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		shouldButtonAdd(itemKey)
 		{
 			return itemKey === buttonAddItemType.key && this.checklist.canAdd();
+		}
+
+		#nativeListView()
+		{
+			return IS_IOS ? ListView : OptimizedListView;
 		}
 	}
 

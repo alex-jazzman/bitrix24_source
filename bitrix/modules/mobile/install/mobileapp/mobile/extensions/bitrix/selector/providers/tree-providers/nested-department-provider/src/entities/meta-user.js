@@ -27,6 +27,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 		getEntityOptions()
 		{
 			return {
+				'all-users': true,
 				emailUsers: true,
 				inviteEmployeeLink: false,
 			};

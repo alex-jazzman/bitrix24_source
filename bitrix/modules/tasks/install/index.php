@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -63,7 +64,6 @@ class tasks extends CModule
 		RegisterModuleDependences('search', 'OnReindex', 'tasks', 'CTasks', 'OnSearchReindex', 200);
 		RegisterModuleDependences('search', 'BeforeIndex', 'tasks', 'CTasksTools', 'FixForumCommentURL', 200);
 		RegisterModuleDependences("main", "OnUserDelete", "tasks", "CTasks", "OnUserDelete");
-		RegisterModuleDependences("im", "OnGetNotifySchema", "tasks", "CTasksNotifySchema", "OnGetNotifySchema");
 		RegisterModuleDependences('main', 'OnBeforeUserDelete', 'tasks', 'CTasks', 'OnBeforeUserDelete');
 		RegisterModuleDependences("pull", "OnGetDependentModule", "tasks", "CTasksPullSchema", "OnGetDependentModule");
 
@@ -100,13 +100,6 @@ class tasks extends CModule
 		RegisterModuleDependences("main", "OnBeforeUserTypeAdd", "tasks", "CTasksRarelyTools", "onBeforeUserTypeAdd");
 		RegisterModuleDependences("main", "OnBeforeUserTypeUpdate", "tasks", "CTasksRarelyTools", "onBeforeUserTypeUpdate");
 		RegisterModuleDependences("main", "OnBeforeUserTypeDelete", "tasks", "CTasksRarelyTools", "onBeforeUserTypeDelete");
-
-		// im "ilike"
-		RegisterModuleDependences("main", "OnGetRatingContentOwner", "tasks", "CTaskNotifications", "OnGetRatingContentOwner");
-		RegisterModuleDependences("im", "OnGetMessageRatingVote", "tasks", "CTaskNotifications", "OnGetMessageRatingVote");
-
-		// im "answer" on comment notification
-		RegisterModuleDependences("im", "OnAnswerNotify", "tasks", "CTaskNotifications", "OnAnswerNotify");
 
 		// "mail" module integration
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
@@ -246,24 +239,10 @@ class tasks extends CModule
 			'onBoostActivated'
 		);
 
-		// chat integration
-		$eventManager->registerEventHandler(
-			fromModuleId: 'im',
-			eventType: 'OnRegisterExternalChatTypes',
-			toModuleId: 'tasks',
-			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
-			toMethod: 'onRegisterType',
-		);
-
-		$eventManager->registerEventHandler(
-			fromModuleId: 'im',
-			eventType: 'OnFilterUsersByAccessExternalChatTasksTask',
-			toModuleId: 'tasks',
-			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
-			toMethod: 'onFilterUsersByAccess',
-		);
+		$this->registerChatEvents();
 
 		$this->InstallTasks();
+		$this->registerImIntegration();
 
 		CModule::includeModule('tasks');
 
@@ -728,7 +707,6 @@ class tasks extends CModule
 		UnRegisterModuleDependences('search', 'OnReindex', 'tasks', 'CTasks', 'OnSearchReindex');
 		UnRegisterModuleDependences('search', 'BeforeIndex', 'tasks', 'CTasksTools', 'FixForumCommentURL');
 		UnRegisterModuleDependences("main", "OnUserDelete", "tasks", "CTasks", "OnUserDelete");
-		UnRegisterModuleDependences("im", "OnGetNotifySchema", "tasks", "CTasksNotifySchema", "OnGetNotifySchema");
 		UnRegisterModuleDependences('main', 'OnBeforeUserDelete', 'tasks', 'CTasks', 'OnBeforeUserDelete');
 		UnRegisterModuleDependences("pull", "OnGetDependentModule", "tasks", "CTasksPullSchema", "OnGetDependentModule");
 
@@ -763,13 +741,6 @@ class tasks extends CModule
 		UnRegisterModuleDependences("main", "OnBeforeUserTypeAdd", "tasks", "CTasksRarelyTools", "onBeforeUserTypeAdd");
 		UnRegisterModuleDependences("main", "OnBeforeUserTypeUpdate", "tasks", "CTasksRarelyTools", "onBeforeUserTypeUpdate");
 		UnRegisterModuleDependences("main", "OnBeforeUserTypeDelete", "tasks", "CTasksRarelyTools", "onBeforeUserTypeDelete");
-
-		// im "ilike"
-		UnRegisterModuleDependences("main", "OnGetRatingContentOwner", "tasks", "CTaskNotifications", "OnGetRatingContentOwner");
-		UnRegisterModuleDependences("im", "OnGetMessageRatingVote", "tasks", "CTaskNotifications", "OnGetMessageRatingVote");
-
-		// im "answer" on comment notification
-		UnRegisterModuleDependences("im", "OnAnswerNotify", "tasks", "CTaskNotifications", "OnAnswerNotify");
 
 		// "mail" module integration
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
@@ -899,22 +870,7 @@ class tasks extends CModule
 			'onBoostActivated',
 		);
 
-		// chat integration
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'im',
-			eventType: 'OnRegisterExternalChatTypes',
-			toModuleId: 'tasks',
-			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
-			toMethod: 'onRegisterType',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'im',
-			eventType: 'OnFilterUsersByAccessExternalChatTasksTask',
-			toModuleId: 'tasks',
-			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
-			toMethod: 'onFilterUsersByAccess',
-		);
+		$this->unRegisterChatEvents();
 
 		// remove tasks from socnetlog table
 		if (
@@ -938,6 +894,8 @@ class tasks extends CModule
 				CIMNotify::DeleteByModule('tasks');
 			}
 		}
+
+		$this->unRegisterImIntegration();
 
 		$this->removeOptions();
 
@@ -1185,40 +1143,47 @@ class tasks extends CModule
 		);
 	}
 
-	function DoInstall()
+	public function DoInstall(): void
 	{
-		global $APPLICATION;
-
 		if (!CBXFeatures::IsFeatureEditable('Tasks'))
 		{
-			$this->errors = array(GetMessage('MAIN_FEATURE_ERROR_EDITABLE'));
-			$GLOBALS["errors"] = $this->errors;
-			$APPLICATION->IncludeAdminFile(
-				GetMessage('TASKS_INSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/step1.php');
+			$this->setInstallError(Loc::getMessage('MAIN_FEATURE_ERROR_EDITABLE'));
+
+			$this->showInstallStep(1);
 		}
-		elseif (!IsModuleInstalled("tasks"))
+
+		$dependencyErrors = $this->checkInstallDependencies();
+		if (!empty($dependencyErrors))
+		{
+			$this->setInstallError(Loc::getMessage('TASKS_MODULE_INSTALL_ERROR_DEPENDENCIES', [
+				'#MODULES#' => implode(', ', $dependencyErrors)
+			]));
+
+			$this->showInstallStep(1);
+		}
+
+		if (!ModuleManager::isModuleInstalled("tasks"))
 		{
 			$this->InstallFiles();
 			$this->InstallDB();
 			$this->InstallEvents();
 
 			$GLOBALS["errors"] = $this->errors;
-			$APPLICATION->IncludeAdminFile(GetMessage("TASKS_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/step1.php");
+			$this->showInstallStep(1);
 		}
 	}
 
 
-	function DoUninstall()
+	public function DoUninstall(): void
 	{
-		global $APPLICATION, $step;
+		global $step;
+		$step = (int)$step;
 
-		$step = intval($step);
 		if($step < 2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("TASKS_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/unstep1.php");
+			$this->showUninstallUnstep(1);
 		}
-		elseif($step == 2)
+		elseif($step === 2)
 		{
 			$GLOBALS["CACHE_MANAGER"]->CleanAll();
 			$this->UnInstallDB(array(
@@ -1227,7 +1192,8 @@ class tasks extends CModule
 			$this->UnInstallFiles();
 			$this->UnInstallEvents();
 			$GLOBALS["errors"] = $this->errors;
-			$APPLICATION->IncludeAdminFile(GetMessage("TASKS_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/unstep2.php");
+
+			$this->showUninstallUnstep(2);
 		}
 	}
 
@@ -1286,6 +1252,332 @@ class tasks extends CModule
 			'tasks',
 			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
 			'OnAfterUserDelete',
+		);
+	}
+
+	private function registerImIntegration(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterDeleteMessagesEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterDeleteMessagesExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadMessagesEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadMessagesExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadAllMessagesEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadAllMessagesExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterSendMessageEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterSendMessageExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterMuteEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterMuteChatExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Message\Event\AfterReadAllChatsEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadAllChats',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadAllChatsByTypeTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+	}
+
+	private function unRegisterImIntegration(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterDeleteMessagesEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterDeleteMessagesExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadMessagesEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadMessagesExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadAllMessagesEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadAllMessagesExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterSendMessageEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterSendMessageExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterMuteEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterMuteChatExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Message\Event\AfterReadAllChatsEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadAllChats',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterReadAllChatsByTypeTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+	}
+
+	private function showInstallStep(int $step): void
+	{
+		global $APPLICATION;
+
+		$APPLICATION->IncludeAdminFile(
+			Loc::getMessage('TASKS_INSTALL_TITLE'),
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . "/install/step{$step}.php"
+		);
+	}
+
+	private function showUninstallUnstep(int $unstep): void
+	{
+		global $APPLICATION;
+
+		$APPLICATION->IncludeAdminFile(
+			Loc::getMessage("TASKS_UNINSTALL_TITLE"),
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . "/install/unstep{$unstep}.php"
+		);
+	}
+
+	private function setInstallError(string $error): void
+	{
+		if (!is_array($this->errors))
+		{
+			$this->errors = [];
+		}
+
+		$this->errors[] = $error;
+		$GLOBALS['errors'] = $this->errors;
+	}
+
+	private function checkInstallDependencies(): array
+	{
+		$errors = [];
+
+		foreach (['im', 'socialnetwork', 'forum'] as $moduleId)
+		{
+			if (!ModuleManager::isModuleInstalled($moduleId))
+			{
+				$errors[] = $moduleId;
+			}
+		}
+
+		return $errors;
+	}
+
+	private function registerChatEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnGetNotifySchema',
+			toModuleId: 'tasks',
+			toClass: 'CTasksNotifySchema',
+			toMethod: 'OnGetNotifySchema',
+		);
+
+		// im "ilike"
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnGetRatingContentOwner',
+			toModuleId: 'tasks',
+			toClass: 'CTaskNotifications',
+			toMethod: 'OnGetRatingContentOwner',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnGetMessageRatingVote',
+			toModuleId: 'tasks',
+			toClass: 'CTaskNotifications',
+			toMethod: 'OnGetMessageRatingVote',
+		);
+
+		// im "answer" on comment notification
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAnswerNotify',
+			toModuleId: 'tasks',
+			toClass: 'CTaskNotifications',
+			toMethod: 'OnAnswerNotify',
+		);
+
+		// chat integration
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnRegisterExternalChatTypes',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onRegisterType',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnFilterUsersByAccessExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onFilterUsersByAccess',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterMessagesDelete',
+			'tasks',
+			'\Bitrix\Tasks\V2\Internal\Integration\Im\EventHandler\MessageEventHandler',
+			'onAfterMessagesDelete',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnBeforeUsersAddExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onBeforeUsersAddExternalChatTasksTask',
+		);
+	}
+
+	private function unRegisterChatEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnGetNotifySchema',
+			toModuleId: 'tasks',
+			toClass: 'CTasksNotifySchema',
+			toMethod: 'OnGetNotifySchema',
+		);
+
+		// im "ilike"
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnGetRatingContentOwner',
+			toModuleId: 'tasks',
+			toClass: 'CTaskNotifications',
+			toMethod: 'OnGetRatingContentOwner',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnGetMessageRatingVote',
+			toModuleId: 'tasks',
+			toClass: 'CTaskNotifications',
+			toMethod: 'OnGetMessageRatingVote',
+		);
+
+		// im "answer" on comment notification
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAnswerNotify',
+			toModuleId: 'tasks',
+			toClass: 'CTaskNotifications',
+			toMethod: 'OnAnswerNotify',
+		);
+
+		// chat integration
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnRegisterExternalChatTypes',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onRegisterType',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnFilterUsersByAccessExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onFilterUsersByAccess',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterMessagesDelete',
+			'tasks',
+			'\Bitrix\Tasks\V2\Internal\Integration\Im\EventHandler\MessageEventHandler',
+			'onAfterMessagesDelete',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnBeforeUsersAddExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onBeforeUsersAddExternalChatTasksTask',
 		);
 	}
 }

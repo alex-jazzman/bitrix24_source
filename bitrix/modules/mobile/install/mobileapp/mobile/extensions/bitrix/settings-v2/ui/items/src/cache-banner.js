@@ -5,7 +5,7 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 	const { createTestIdGenerator } = require('utils/test');
 	const { Area } = require('ui-system/layout/area');
 	const { Indent, Color } = require('tokens');
-	const { EventType } = require('settings-v2/const');
+	const { EventType, NativeSettingsId } = require('settings-v2/const');
 	const { NativeCacheService } = require('settings-v2/services/native');
 	const { formatFileSize } = require('utils/file');
 	const { H4, Text4 } = require('ui-system/typography');
@@ -30,11 +30,11 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 		}
 
 		loadCacheSize = async () => {
-			const fileSize = await NativeCacheService.getSettingValueById('cache_files');
-			const imagesSize = await NativeCacheService.getSettingValueById('cache_images');
+			const fileSize = await NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_FILES);
+			const mediaSize = await NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_MEDIA);
 			this.setState({
-				fileSize,
-				imagesSize,
+				fileSize: fileSize - mediaSize,
+				mediaSize,
 			});
 		};
 
@@ -56,8 +56,8 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 
 		render()
 		{
-			const { fileSize, imagesSize } = this.state;
-			const totalSize = fileSize + imagesSize;
+			const { fileSize, mediaSize } = this.state;
+			const totalSize = fileSize + mediaSize;
 			const GB_SIZE = 1024 * 1024 * 1024;
 			const precision = totalSize > GB_SIZE ? 2 : 0;
 
@@ -116,8 +116,8 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 							marginTop: Indent.XL3.toNumber(),
 						},
 					},
-					this.createDotText(Loc.getMessage('SETTINGS_V2_STRUCTURE_UI_ITEMS_CACHE_BANNER_FILES'), Color.accentMainPrimaryalt.toHex()),
-					this.createDotText(Loc.getMessage('SETTINGS_V2_STRUCTURE_UI_ITEMS_CACHE_BANNER_IMAGES'), Color.accentMainSuccess.toHex()),
+					this.createDotText(Loc.getMessage('SETTINGS_V2_STRUCTURE_UI_ITEMS_CACHE_BANNER_FILES_LABEL'), Color.accentMainPrimaryalt.toHex()),
+					this.createDotText(Loc.getMessage('SETTINGS_V2_STRUCTURE_UI_ITEMS_CACHE_BANNER_IMAGES_LABEL'), Color.accentMainSuccess.toHex()),
 				),
 			);
 		}
@@ -152,8 +152,8 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 
 		createSvgCircle()
 		{
-			const { fileSize = 0, imagesSize = 0 } = this.state;
-			const totalSize = fileSize + imagesSize;
+			const { fileSize = 0, mediaSize = 0 } = this.state;
+			const totalSize = fileSize + mediaSize;
 
 			if (totalSize === 0)
 			{
@@ -161,7 +161,6 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 			}
 
 			const filePercentage = (fileSize / totalSize) * 100 > 90 ? 90 : (fileSize / totalSize) * 100;
-			const imagesPercentage = (imagesSize / totalSize) * 100 < 10 ? 10 : (imagesSize / totalSize) * 100;
 
 			const center = VIEW_BOX_SIZE / 2;
 

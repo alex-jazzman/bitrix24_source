@@ -3,8 +3,13 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_popup,ui_entitySelector,ui_iconSet_animated,tasks_v2_component_elements_participantList,tasks_v2_lib_entitySelectorDialog,ui_vue3_components_button,ui_vue3_components_popup,tasks_v2_component_elements_bottomSheet,ui_vue3_components_menu,tasks_v2_component_elements_userCheckbox,tasks_v2_component_elements_progressBar,ui_vue3_vuex,tasks_v2_provider_service_checkListService,ui_system_skeleton_vue,disk_uploader_userFieldWidget,tasks_v2_component_elements_growingTextArea,tasks_v2_component_elements_userAvatarList,ui_iconSet_actions,ui_vue3_directives_hint,ui_iconSet_api_vue,tasks_v2_core,tasks_v2_component_elements_hint,main_core_events,ui_notification,main_core,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter,tasks_v2_component_elements_chip,tasks_v2_provider_service_fileService,tasks_v2_const) {
+(function (exports,tasks_v2_lib_userSelectorDialog,ui_vue3_components_button,ui_vue3_components_popup,tasks_v2_component_elements_bottomSheet,ui_draganddrop_draggable,ui_vue3_components_menu,tasks_v2_component_elements_userCheckbox,tasks_v2_component_elements_progressBar,ui_vue3_vuex,ui_system_skeleton_vue,tasks_v2_component_elements_growingTextArea,tasks_v2_component_elements_userAvatarList,tasks_v2_lib_highlighter,tasks_v2_component_elements_userFieldWidgetComponent,tasks_v2_component_elements_checkbox,ui_iconSet_actions,ui_vue3_directives_hint,tasks_v2_core,tasks_v2_component_elements_hint,ui_notification,main_core,main_core_events,tasks_v2_provider_service_checkListService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_animated,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_fileService,tasks_v2_provider_service_taskService) {
 	'use strict';
+
+	const checkListMeta = Object.freeze({
+	  id: tasks_v2_const.TaskField.CheckList,
+	  title: main_core.Loc.getMessage('TASKS_V2_CHECK_LIST_TITLE')
+	});
 
 	// @vue/component
 	const CheckListStub = {
@@ -15,19 +20,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['click'],
 	  setup() {
 	    return {
-	      ButtonSize: ui_vue3_components_button.ButtonSize
+	      ButtonSize: ui_vue3_components_button.ButtonSize,
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  template: `
 		<div class="check-list-stub">
+			<div class="check-list-stub-icon"/>
 			<div class="check-list-stub-title">
 				{{ loc('TASKS_V2_CHECK_LIST_STUB_TITLE') }}
 			</div>
-			<div class="check-list-stub-icon"></div>
 			<div class="check-list-stub-btn">
 				<UiButton
 					:text="loc('TASKS_V2_CHECK_LIST_STUB_BTN')"
 					:size="ButtonSize.MEDIUM"
+					:leftIcon="Outline.PLUS_L"
 					@click="$emit('click')"
 				/>
 			</div>
@@ -41,13 +48,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    Popup: ui_vue3_components_popup.Popup
 	  },
-	  inheritAttrs: false,
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    taskId: {}
 	  },
+	  inheritAttrs: false,
 	  emits: ['show', 'close', 'resize'],
 	  setup() {
 	    return {
@@ -58,7 +62,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    popupId() {
 	      return `tasks-check-list-popup-${this.taskId}`;
 	    },
-	    popupOptions() {
+	    options() {
 	      return {
 	        className: 'tasks-check-list-popup',
 	        width: 580,
@@ -74,7 +78,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          closeAnimationType: 'animation'
 	        },
 	        events: {
-	          onClose: this.handleClose.bind(this)
+	          onClose: this.handleClose
 	        }
 	      };
 	    },
@@ -102,9 +106,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  mounted() {
 	    main_core.Event.bind(window, 'resize', this.resize);
+	    main_core.Event.bind(document, 'keydown', this.handleKeyDown, {
+	      capture: true
+	    });
 	  },
 	  beforeUnmount() {
 	    main_core.Event.unbind(window, 'resize', this.resize);
+	    main_core.Event.unbind(document, 'keydown', this.handleKeyDown, {
+	      capture: true
+	    });
 	  },
 	  methods: {
 	    resize() {
@@ -127,14 +137,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.resizeObserver.disconnect();
 	      this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.CloseCheckList);
 	      this.$emit('close');
+	    },
+	    handleKeyDown(event) {
+	      if (event.key === 'Escape') {
+	        this.$emit('close');
+	        event.stopPropagation();
+	      }
 	    }
 	  },
 	  template: `
-		<Popup :options="popupOptions" ref="childComponent">
-			<slot
-				:handleShow="handleShow"
-				:handleClose="handleClose"
-			></slot>
+		<Popup :options ref="childComponent">
+			<slot :handleShow="handleShow" :handleClose="handleClose"/>
 		</Popup>
 	`
 	};
@@ -146,30 +159,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    BottomSheet: tasks_v2_component_elements_bottomSheet.BottomSheet
 	  },
 	  props: {
+	    isEmpty: {
+	      type: Boolean,
+	      default: false
+	    },
 	    isShown: {
 	      type: Boolean,
 	      required: true
 	    },
-	    getBindElement: {
-	      type: Function,
-	      default: null
-	    },
-	    getTargetContainer: {
-	      type: Function,
-	      default: null
+	    sheetBindProps: {
+	      type: Object,
+	      required: true
 	    }
 	  },
-	  emits: ['show', 'close', 'isShown'],
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
-	    })
-	  },
+	  emits: ['show', 'close', 'isShown', 'addFastCheckList', 'resize'],
 	  watch: {
-	    titleFieldOffsetHeight() {
-	      var _this$$refs$childComp;
-	      (_this$$refs$childComp = this.$refs.childComponent) == null ? void 0 : _this$$refs$childComp.adjustPosition();
-	    },
 	    async isShown(value) {
 	      await this.$nextTick();
 	      if (value === true) {
@@ -185,9 +189,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  methods: {
-	    handleShow() {
-	      this.$emit('show');
-	    },
 	    handleClose() {
 	      this.$emit('close');
 	    },
@@ -201,20 +202,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<BottomSheet
 			v-if="isShown"
+			:sheetBindProps
 			:padding="0"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="childComponent"
+			:popupPadding="0"
+			@close="handleClose"
 		>
-			<slot
-				:handleShow="handleShow"
-				:handleClose="handleClose"
-			></slot>
+			<slot :handleShow="$emit('show')" :handleClose="handleClose"/>
 		</BottomSheet>
 	`
 	};
 
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _getDraggedChildren = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDraggedChildren");
+	var _processCompletedFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processCompletedFilter");
+	var _processUserFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processUserFilter");
+	var _applyVisibilityChanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyVisibilityChanges");
+	var _splitIdsByAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("splitIdsByAction");
+	var _createVisibilityUpdates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createVisibilityUpdates");
 	var _setItemsVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setItemsVisibility");
 	var _findNestedChildren = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("findNestedChildren");
 	var _getRootParent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRootParent");
@@ -233,6 +237,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Object.defineProperty(this, _setItemsVisibility, {
 	      value: _setItemsVisibility2
 	    });
+	    Object.defineProperty(this, _createVisibilityUpdates, {
+	      value: _createVisibilityUpdates2
+	    });
+	    Object.defineProperty(this, _splitIdsByAction, {
+	      value: _splitIdsByAction2
+	    });
+	    Object.defineProperty(this, _applyVisibilityChanges, {
+	      value: _applyVisibilityChanges2
+	    });
+	    Object.defineProperty(this, _processUserFilter, {
+	      value: _processUserFilter2
+	    });
+	    Object.defineProperty(this, _processCompletedFilter, {
+	      value: _processCompletedFilter2
+	    });
+	    Object.defineProperty(this, _getDraggedChildren, {
+	      value: _getDraggedChildren2
+	    });
 	    Object.defineProperty(this, _params, {
 	      writable: true,
 	      value: void 0
@@ -240,7 +262,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
 	  }
 	  getItem(itemId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(item => item.id === itemId);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(item => item.id === this.prepareItemId(itemId));
+	  }
+	  getItems(itemIds) {
+	    const itemIdsSet = new Set(itemIds);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => itemIdsSet.has(item.id));
 	  }
 	  getItemsOnLevel(parentId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentId).sort((a, b) => a.sortIndex - b.sortIndex);
@@ -262,6 +288,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      level++;
 	    }
 	    return level;
+	  }
+	  isParentItem(itemId) {
+	    const item = this.getItem(itemId);
+	    return item && item.parentId === 0;
 	  }
 	  isItemDescendant(potentialAncestor, item) {
 	    if ((item == null ? void 0 : item.parentId) === (potentialAncestor == null ? void 0 : potentialAncestor.id)) {
@@ -393,16 +423,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      updateFn(updates);
 	    }
 	  }
+	  resortItemsBeforeIndex(parentId, sortIndex, updateFn) {
+	    const allItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentId);
+	    const itemsToResort = allItems.filter(item => item.sortIndex <= sortIndex).sort((a, b) => a.sortIndex - b.sortIndex);
+	    const updates = itemsToResort.map((item, index) => ({
+	      ...item,
+	      sortIndex: index
+	    }));
+	    updateFn(updates);
+	  }
 	  resortItemsAfterIndex(parentId, sortIndex, updateFn) {
 	    const allItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentId);
 	    const itemsToResort = allItems.filter(item => item.sortIndex >= sortIndex).sort((a, b) => a.sortIndex - b.sortIndex);
-	    const updates = itemsToResort.map(item => ({
+	    const updates = itemsToResort.map((item, index) => ({
 	      ...item,
-	      sortIndex: item.sortIndex + 1
+	      sortIndex: sortIndex + 1 + index
 	    }));
-	    if (updates.length > 0) {
-	      updateFn(updates);
-	    }
+	    updateFn(updates);
 	  }
 	  moveRight(item, updateFn) {
 	    if (item.parentId === 0 || this.getItemLevel(item) > 5) {
@@ -492,18 +529,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return item.sortIndex > currentSortIndex && (item.sortIndex < nearest.sortIndex || nearest.sortIndex <= currentSortIndex) ? item : nearest;
 	    });
 	  }
-	  getFirstChild(itemId) {
-	    const children = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === itemId).sort((a, b) => a.sortIndex - b.sortIndex);
+	  getFirstVisibleChild(itemId) {
+	    const children = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === itemId && !item.hidden).sort((a, b) => a.sortIndex - b.sortIndex);
 	    return children[0] || null;
+	  }
+	  getEmptiesItem() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => {
+	      return item.title === '';
+	    });
 	  }
 	  hasEmptyItemWithFiles(hasItemFiles) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().some(item => {
 	      return item.title === '' && hasItemFiles(item);
-	    });
-	  }
-	  hasItemWithFiles(hasItemFiles) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().some(item => {
-	      return hasItemFiles(item);
 	    });
 	  }
 	  hasEmptyParentItem() {
@@ -520,7 +557,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    return children || null;
 	  }
 	  isItemCollapsed(item, isPreview, positionIndex) {
-	    if (item.localCollapsedState !== null) {
+	    if (!main_core.Type.isNull(item.localCollapsedState) && !main_core.Type.isUndefined(item.localCollapsedState)) {
 	      return item.localCollapsedState;
 	    }
 	    if (!isPreview) {
@@ -588,6 +625,115 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    });
 	    return result;
 	  }
+	  prepareItemId(itemId) {
+	    const num = parseInt(itemId, 10);
+	    const isStringExactlyAnInteger = !Number.isNaN(num) && num.toString() === itemId;
+	    return isStringExactlyAnInteger ? parseInt(itemId, 10) : itemId;
+	  }
+	  isFirstItemHigherLevelThan(firstItem, secondItem) {
+	    const firstItemLevel = this.getItemLevel(firstItem);
+	    const secondItemLevel = this.getItemLevel(secondItem);
+	    return firstItemLevel < secondItemLevel;
+	  }
+	  hasItemChildren(item) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().some(child => child.parentId === item.id);
+	  }
+	  isItemCompleted(item) {
+	    var _item$localCompleteSt2;
+	    return (_item$localCompleteSt2 = item.localCompleteState) != null ? _item$localCompleteSt2 : item.isComplete;
+	  }
+	  scrollToCheckList(container, checkListId, behavior = 'instant') {
+	    let scrollContainer = container.closest('[data-task-card-scroll]');
+	    if (!scrollContainer) {
+	      scrollContainer = container.querySelector('[data-task-card-scroll]');
+	    }
+	    const checkListNode = container.querySelector([`[data-id="${checkListId}"]`]);
+	    if (scrollContainer && checkListNode) {
+	      const checkListRect = main_core.Dom.getPosition(checkListNode);
+	      const containerRect = main_core.Dom.getPosition(scrollContainer);
+	      const offsetTopInsideContainer = checkListRect.top - containerRect.top + scrollContainer.scrollTop;
+	      scrollContainer.scrollTo({
+	        top: offsetTopInsideContainer - 200,
+	        behavior
+	      });
+	    }
+	  }
+	  handleTargetParentFilter(movedItem, currentUserId, updateFn) {
+	    const itemIdsToUpdateInNewParent = new Map();
+	    const targetParentItem = this.getRootParentByChildId(movedItem.id);
+	    const draggedChildren = babelHelpers.classPrivateFieldLooseBase(this, _getDraggedChildren)[_getDraggedChildren](movedItem);
+	    babelHelpers.classPrivateFieldLooseBase(this, _processCompletedFilter)[_processCompletedFilter](movedItem, targetParentItem, itemIdsToUpdateInNewParent);
+	    draggedChildren.forEach(child => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _processCompletedFilter)[_processCompletedFilter](child, targetParentItem, itemIdsToUpdateInNewParent);
+	    });
+	    const myItemIds = this.findItemIdsWithUser(targetParentItem.id, currentUserId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _processUserFilter)[_processUserFilter](movedItem, targetParentItem, myItemIds, itemIdsToUpdateInNewParent);
+	    draggedChildren.forEach(child => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _processUserFilter)[_processUserFilter](child, targetParentItem, myItemIds, itemIdsToUpdateInNewParent);
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _applyVisibilityChanges)[_applyVisibilityChanges](itemIdsToUpdateInNewParent, updateFn);
+	    return true;
+	  }
+	}
+	function _getDraggedChildren2(movedItem) {
+	  return this.getAllChildren(movedItem.id);
+	}
+	function _processCompletedFilter2(item, targetParentItem, itemIdsMap) {
+	  if (targetParentItem.areCompletedCollapsed && this.isItemCompleted(item)) {
+	    itemIdsMap.set(item.id, 'hide');
+	  }
+	  if (!targetParentItem.areCompletedCollapsed && this.isItemCompleted(item)) {
+	    itemIdsMap.set(item.id, 'show');
+	  }
+	}
+	function _processUserFilter2(item, targetParentItem, myItemIds, itemIdsMap) {
+	  if (targetParentItem.myFilterActive && !myItemIds.has(item.id)) {
+	    itemIdsMap.set(item.id, 'hide');
+	  }
+	  if (!targetParentItem.myFilterActive && myItemIds.has(item.id) && !itemIdsMap.has(item.id)) {
+	    itemIdsMap.set(item.id, 'show');
+	  }
+	}
+	function _applyVisibilityChanges2(itemIdsToUpdateInNewParent, updateFn) {
+	  const {
+	    hideIds,
+	    showIds
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _splitIdsByAction)[_splitIdsByAction](itemIdsToUpdateInNewParent);
+	  const updates = babelHelpers.classPrivateFieldLooseBase(this, _createVisibilityUpdates)[_createVisibilityUpdates](hideIds, showIds);
+	  if (updates.length > 0) {
+	    updateFn(updates);
+	  }
+	}
+	function _splitIdsByAction2(itemIdsMap) {
+	  const hideIds = [];
+	  const showIds = [];
+	  for (const [id, action] of itemIdsMap) {
+	    if (action === 'hide') {
+	      hideIds.push(id);
+	    } else if (action === 'show') {
+	      showIds.push(id);
+	    }
+	  }
+	  return {
+	    hideIds,
+	    showIds
+	  };
+	}
+	function _createVisibilityUpdates2(hideIds, showIds) {
+	  const updates = [];
+	  this.getItems(showIds).forEach(item => {
+	    updates.push({
+	      ...item,
+	      hidden: false
+	    });
+	  });
+	  this.getItems(hideIds).forEach(item => {
+	    updates.push({
+	      ...item,
+	      hidden: true
+	    });
+	  });
+	  return updates;
 	}
 	function _setItemsVisibility2(itemId, hidden, updates) {
 	  const item = this.getItem(itemId);
@@ -631,22 +777,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  return (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]) == null ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.computed) == null ? void 0 : _babelHelpers$classPr4.checkLists()) != null ? _babelHelpers$classPr2 : [];
 	}
 
-	const checkListMeta = Object.freeze({
-	  id: tasks_v2_const.TaskField.CheckList,
-	  title: main_core.Loc.getMessage('TASKS_V2_CHECK_LIST_TITLE')
-	});
-
 	// @vue/component
 	const CheckListList = {
 	  name: 'TaskCheckListList',
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    isEmpty: {
 	      type: Boolean,
 	      default: false
@@ -670,17 +815,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      deletingCheckListIds: `${tasks_v2_const.Model.Interface}/deletingCheckListIds`,
 	      disableCheckListAnimations: `${tasks_v2_const.Model.Interface}/disableCheckListAnimations`
 	    }),
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
 	    checkLists() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
 	    isFilledEmpty() {
-	      return this.checkListLength === 0 && this.wasFilled;
+	      return this.checkListLength === 0 && this.task.filledFields[checkListMeta.id];
 	    },
 	    checkListLength() {
 	      const deletingRootIds = Object.values(this.deletingCheckListIds);
@@ -698,17 +837,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    containsChecklist() {
 	      return this.task.containsChecklist;
 	    },
-	    wasFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, checkListMeta.id);
-	    },
 	    loading() {
-	      return this.isLoading === true && this.isEdit;
+	      return this.isLoading === true;
 	    },
 	    canCheckListAdd() {
 	      if (!this.isEdit) {
 	        return true;
 	      }
-	      return this.task.rights.checklistAdd === true;
+	      return this.task.rights.checklistAdd;
+	    },
+	    addTooltip() {
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.loc('TASKS_V2_CHECK_LIST_STUB_BTN'),
+	        popupOptions: {
+	          offsetLeft: this.$refs.stubAddIcon.$el.offsetWidth / 2
+	        }
+	      });
 	    }
 	  },
 	  async created() {
@@ -730,7 +874,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			:data-task-field-id="checkListMeta.id"
 			class="tasks-check-list-list"
 			:class="{ '--default': loading || isFilledEmpty }"
 		>
@@ -738,32 +881,40 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				class="tasks-check-list-list-content"
 				:class="{ '--default': loading || isFilledEmpty }"
 			>
-				<Transition name="check-list-fade" mode="in-out" :css="!disableCheckListAnimations">
-					<div
-						v-if="loading"
-						key="loading"
-						class="tasks-check-list-list-transition-content"
-					>
-						<div class="tasks-check-list-list-content-row">
-							<BIcon :name="Animated.LOADER_WAIT"/>
-							<div class="tasks-check-list-list-content-text">
-								{{ loc('TASKS_V2_CHECK_LIST_LOADING') }}
-							</div>
+				<div v-if="loading" class="tasks-check-list-list-transition-content">
+					<div class="tasks-check-list-list-content-row">
+						<BIcon :name="Animated.LOADER_WAIT"/>
+						<div class="tasks-check-list-list-content-text">
+							{{ loc('TASKS_V2_CHECK_LIST_LOADING') }}
 						</div>
 					</div>
-				</Transition>
+				</div>
 				<Transition name="check-list-fade" mode="in-out" :css="!disableCheckListAnimations">
 					<div
 						v-if="!loading && isFilledEmpty"
 						key="empty"
 						class="tasks-check-list-list-transition-content"
 					>
-						<div class="tasks-check-list-list-content-row --stub" @click="$emit('addFastCheckList')">
-							<BIcon :name="Outline.CHECK_LIST"/>
-							<div class="tasks-check-list-list-content-text">
-								{{ loc('TASKS_V2_CHECK_LIST_CHIP_TITLE') }}
+						<div
+							class="tasks-check-list-list-content-row --stub"
+							@click="() => canCheckListAdd && $emit('addFastCheckList')"
+						>
+							<div class="tasks-check-list-list-content-row-main">
+								<BIcon :name="Outline.CHECK_LIST"/>
+								<div class="tasks-check-list-list-content-text">
+									{{ loc('TASKS_V2_CHECK_LIST_CHIP_TITLE') }}
+								</div>
 							</div>
-							<BIcon class="tasks-check-list-list-content-row-plus" :name="Outline.PLUS_L"/>
+							<div class="tasks-check-list-list-content-row-icon">
+								<BIcon
+									v-if="canCheckListAdd"
+									class="tasks-check-list-list-add"
+									v-hint="addTooltip"
+									:name="Outline.PLUS_L"
+									hoverable
+									ref="stubAddIcon"
+								/>
+							</div>
 						</div>
 					</div>
 				</Transition>
@@ -772,15 +923,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					key="content"
 					class="tasks-check-list-list-transition-content"
 				>
-					<slot></slot>
+					<slot/>
 					<div
 						v-if="canCheckListAdd"
 						class="tasks-check-list-list-content-row --footer"
+						@click="$emit('addFastCheckList')"
 					>
 						<div
 							class="tasks-check-list-list-content-btn"
 							:class="{ '--empty': isEmpty }"
-							@click="$emit('addFastCheckList')"
 						>
 							<BIcon :name="Outline.PLUS_L"/>
 							<div class="tasks-check-list-list-content-btn-text">
@@ -794,82 +945,596 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
-	var _activeHighlights = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("activeHighlights");
-	var _startAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startAnimation");
-	var _cleanup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cleanup");
-	var _nextTick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nextTick");
-	class Highlighter {
-	  constructor() {
-	    Object.defineProperty(this, _nextTick, {
-	      value: _nextTick2
+	const Context = Object.freeze({
+	  Sheet: 'sheet',
+	  Popup: 'popup',
+	  Preview: 'preview'
+	});
+
+	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _checkListManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkListManager");
+	var _stubItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stubItemId");
+	var _calculateAfterSortIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateAfterSortIndex");
+	var _calculateBeforeSortIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateBeforeSortIndex");
+	class CheckListDragManager extends main_core_events.EventEmitter {
+	  constructor(params) {
+	    super();
+	    Object.defineProperty(this, _calculateBeforeSortIndex, {
+	      value: _calculateBeforeSortIndex2
 	    });
-	    Object.defineProperty(this, _cleanup, {
-	      value: _cleanup2
+	    Object.defineProperty(this, _calculateAfterSortIndex, {
+	      value: _calculateAfterSortIndex2
 	    });
-	    Object.defineProperty(this, _startAnimation, {
-	      value: _startAnimation2
-	    });
-	    Object.defineProperty(this, _activeHighlights, {
+	    Object.defineProperty(this, _store, {
 	      writable: true,
-	      value: new WeakMap()
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _checkListManager, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _stubItemId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    this.setEventNamespace('Tasks.V2.CheckList.CheckListDragManager');
+	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = params.store;
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager)[_checkListManager] = params.checkListManager;
+	    babelHelpers.classPrivateFieldLooseBase(this, _stubItemId)[_stubItemId] = params.stubItemId;
+	  }
+	  moveDropPreview(draggedItem, overedItem, directionFromBottom, isSameLevelMove) {
+	    let tmpDraggedIndex = directionFromBottom ? babelHelpers.classPrivateFieldLooseBase(this, _calculateAfterSortIndex)[_calculateAfterSortIndex](overedItem) - 0.5 : babelHelpers.classPrivateFieldLooseBase(this, _calculateBeforeSortIndex)[_calculateBeforeSortIndex](overedItem) + 0.5;
+	    if (!isSameLevelMove) {
+	      const isDraggedItemHigher = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager)[_checkListManager].isFirstItemHigherLevelThan(draggedItem, overedItem);
+	      const isOverStubItem = overedItem.id === babelHelpers.classPrivateFieldLooseBase(this, _stubItemId)[_stubItemId];
+	      if (!isDraggedItemHigher && !isOverStubItem) {
+	        tmpDraggedIndex = babelHelpers.classPrivateFieldLooseBase(this, _calculateBeforeSortIndex)[_calculateBeforeSortIndex](overedItem) + 0.5;
+	        void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	          id: overedItem.id,
+	          fields: {
+	            sortIndex: tmpDraggedIndex + 1
+	          }
+	        });
+	      }
+	    }
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	      id: draggedItem.id,
+	      fields: {
+	        sortIndex: tmpDraggedIndex,
+	        parentId: overedItem.parentId
+	      }
 	    });
 	  }
-	  async highlight(element) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _nextTick)[_nextTick]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _cleanup)[_cleanup](element);
-	    babelHelpers.classPrivateFieldLooseBase(this, _activeHighlights)[_activeHighlights].set(element, {
-	      animationStart: null,
-	      timeoutId: null,
-	      handler: null
+	  resortLevelDependingOnPosition(draggedItem, overedItem, directionFromBottom, isSameLevelMove) {
+	    let newDraggedSortIndex = directionFromBottom ? babelHelpers.classPrivateFieldLooseBase(this, _calculateAfterSortIndex)[_calculateAfterSortIndex](overedItem) : babelHelpers.classPrivateFieldLooseBase(this, _calculateBeforeSortIndex)[_calculateBeforeSortIndex](overedItem);
+	    let levelResort = false;
+	    if (!isSameLevelMove) {
+	      const isDraggedItemHigher = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager)[_checkListManager].isFirstItemHigherLevelThan(draggedItem, overedItem);
+	      if (!isDraggedItemHigher) {
+	        newDraggedSortIndex = babelHelpers.classPrivateFieldLooseBase(this, _calculateBeforeSortIndex)[_calculateBeforeSortIndex](overedItem);
+	        levelResort = true;
+	      }
+	    }
+	    if (levelResort) {
+	      this.resortLevel(overedItem.parentId);
+	      return;
+	    }
+	    const updates = [{
+	      ...draggedItem,
+	      sortIndex: newDraggedSortIndex,
+	      parentId: overedItem.parentId
+	    }];
+	    if (directionFromBottom) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _checkListManager)[_checkListManager].resortItemsAfterIndex(overedItem.parentId, newDraggedSortIndex, resortUpdates => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, [...updates, ...resortUpdates]);
+	      });
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _checkListManager)[_checkListManager].resortItemsBeforeIndex(overedItem.parentId, newDraggedSortIndex, resortUpdates => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, [...updates, ...resortUpdates]);
+	      });
+	    }
+	  }
+	  resortLevel(parentId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager)[_checkListManager].resortItemsOnLevel(parentId, updates => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _startAnimation)[_startAnimation](element);
-	    const handler = () => babelHelpers.classPrivateFieldLooseBase(this, _cleanup)[_cleanup](element);
-	    main_core.Event.bind(window, 'click', handler);
-	    main_core.Event.bind(window, 'keydown', handler);
-	    const state = babelHelpers.classPrivateFieldLooseBase(this, _activeHighlights)[_activeHighlights].get(element);
-	    state.handler = handler;
-	    state.timeoutId = setTimeout(() => babelHelpers.classPrivateFieldLooseBase(this, _cleanup)[_cleanup](element), Highlighter.ANIMATION_DURATION);
 	  }
 	}
-	function _startAnimation2(element) {
-	  main_core.Dom.addClass(element, [Highlighter.HIGHLIGHT_CLASS, Highlighter.ANIMATE_CLASS]);
-	  const state = babelHelpers.classPrivateFieldLooseBase(this, _activeHighlights)[_activeHighlights].get(element);
-	  if (state) {
-	    state.animationStart = Date.now();
+	function _calculateAfterSortIndex2(item) {
+	  return item.sortIndex + 1;
+	}
+	function _calculateBeforeSortIndex2(item) {
+	  return item.sortIndex - 1;
+	}
+
+	var _store$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _checkListManager$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkListManager");
+	var _draggable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggable");
+	var _draggedItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedItem");
+	var _canAddItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canAddItem");
+	var _stubItemId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stubItemId");
+	var _currentUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
+	var _isSameLevelMove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSameLevelMove");
+	var _handleBeforeDragStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleBeforeDragStart");
+	var _handleDragStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragStart");
+	var _handleDragOver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragOver");
+	var _handleDragEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragEnd");
+	var _handleDropEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDropEnd");
+	var _handleDropZoneEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDropZoneEnter");
+	var _handleDropZoneOut = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDropZoneOut");
+	var _handleDrop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDrop");
+	var _handleItemMovingOnSameLevel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemMovingOnSameLevel");
+	var _handleItemMovingOnBetweenLevel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemMovingOnBetweenLevel");
+	var _getItemByNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemByNode");
+	class CheckListItemDragManager extends CheckListDragManager {
+	  constructor(params) {
+	    super(params);
+	    Object.defineProperty(this, _getItemByNode, {
+	      value: _getItemByNode2
+	    });
+	    Object.defineProperty(this, _handleItemMovingOnBetweenLevel, {
+	      value: _handleItemMovingOnBetweenLevel2
+	    });
+	    Object.defineProperty(this, _handleItemMovingOnSameLevel, {
+	      value: _handleItemMovingOnSameLevel2
+	    });
+	    Object.defineProperty(this, _handleDrop, {
+	      value: _handleDrop2
+	    });
+	    Object.defineProperty(this, _handleDropZoneOut, {
+	      value: _handleDropZoneOut2
+	    });
+	    Object.defineProperty(this, _handleDropZoneEnter, {
+	      value: _handleDropZoneEnter2
+	    });
+	    Object.defineProperty(this, _handleDropEnd, {
+	      value: _handleDropEnd2
+	    });
+	    Object.defineProperty(this, _handleDragEnd, {
+	      value: _handleDragEnd2
+	    });
+	    Object.defineProperty(this, _handleDragOver, {
+	      value: _handleDragOver2
+	    });
+	    Object.defineProperty(this, _handleDragStart, {
+	      value: _handleDragStart2
+	    });
+	    Object.defineProperty(this, _handleBeforeDragStart, {
+	      value: _handleBeforeDragStart2
+	    });
+	    Object.defineProperty(this, _store$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _checkListManager$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _draggable, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _draggedItem, {
+	      writable: true,
+	      value: {
+	        item: null,
+	        childrenIds: [],
+	        enterDropzone: false
+	      }
+	    });
+	    Object.defineProperty(this, _canAddItem, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _stubItemId$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _currentUserId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isSameLevelMove, {
+	      writable: true,
+	      value: false
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1] = params.store;
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1] = params.checkListManager;
+	    babelHelpers.classPrivateFieldLooseBase(this, _canAddItem)[_canAddItem] = params.canAddItem;
+	    babelHelpers.classPrivateFieldLooseBase(this, _stubItemId$1)[_stubItemId$1] = params.stubItemId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId] = params.currentUserId;
+	  }
+	  init(container, offsetX = 0, listDropzone = []) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable] = new ui_draganddrop_draggable.Draggable({
+	      container,
+	      draggable: '.check-list-draggable-item',
+	      dragElement: '.check-list-drag-item',
+	      delay: 0,
+	      type: ui_draganddrop_draggable.Draggable.MOVE,
+	      offset: {
+	        x: offsetX
+	      },
+	      dropzone: listDropzone
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('beforeStart', babelHelpers.classPrivateFieldLooseBase(this, _handleBeforeDragStart)[_handleBeforeDragStart].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('start', babelHelpers.classPrivateFieldLooseBase(this, _handleDragStart)[_handleDragStart].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('over', babelHelpers.classPrivateFieldLooseBase(this, _handleDragOver)[_handleDragOver].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('end', babelHelpers.classPrivateFieldLooseBase(this, _handleDragEnd)[_handleDragEnd].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('drop', babelHelpers.classPrivateFieldLooseBase(this, _handleDropEnd)[_handleDropEnd].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('dropzone:enter', babelHelpers.classPrivateFieldLooseBase(this, _handleDropZoneEnter)[_handleDropZoneEnter].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].subscribe('dropzone:out', babelHelpers.classPrivateFieldLooseBase(this, _handleDropZoneOut)[_handleDropZoneOut].bind(this));
+	  }
+	  destroy() {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable]) == null ? void 0 : _babelHelpers$classPr.destroy();
 	  }
 	}
-	function _cleanup2(element) {
-	  const state = babelHelpers.classPrivateFieldLooseBase(this, _activeHighlights)[_activeHighlights].get(element);
-	  if (!state) {
+	function _handleBeforeDragStart2(event) {
+	  const data = event.getData();
+	  const source = data == null ? void 0 : data.source;
+	  const dataset = source == null ? void 0 : source.dataset;
+	  if (!dataset) {
+	    event.preventDefault();
 	    return;
 	  }
-	  main_core.Dom.removeClass(element, [Highlighter.HIGHLIGHT_CLASS, Highlighter.ANIMATE_CLASS]);
-	  if (state.timeoutId) {
-	    clearTimeout(state.timeoutId);
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(draggedItemId);
+	  if (!draggedItem) {
+	    event.preventDefault();
+	    return;
 	  }
-	  if (state.handler) {
-	    main_core.Event.unbind(window, 'click', state.handler);
-	    main_core.Event.unbind(window, 'keydown', state.handler);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, true);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.Interface}/setDraggedCheckListId`, draggedItem.id);
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem] = {
+	    item: draggedItem,
+	    childrenIds: [],
+	    enterDropzone: false
+	  };
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].hasItemChildren(draggedItem)) {
+	    main_core.Dom.addClass(source, '--multiple-drag');
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _activeHighlights)[_activeHighlights].delete(element);
 	}
-	function _nextTick2() {
-	  return new Promise(resolve => {
-	    // eslint-disable-next-line no-promise-executor-return
-	    return setTimeout(resolve, 0);
+	function _handleDragStart2() {
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].item;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].hasItemChildren(draggedItem)) {
+	    const children = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getAllChildren(draggedItem.id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].childrenIds = children.map(child => child.id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].hideItems(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].childrenIds, updates => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	    });
+	  }
+	}
+	function _handleDragOver2(event) {
+	  const {
+	    source: {
+	      dataset
+	    },
+	    over,
+	    clientY
+	  } = event.getData();
+	  const overedItem = babelHelpers.classPrivateFieldLooseBase(this, _getItemByNode)[_getItemByNode](over);
+	  if (overedItem) {
+	    const isOverStubItem = overedItem.id === babelHelpers.classPrivateFieldLooseBase(this, _stubItemId$1)[_stubItemId$1];
+	    const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dataset.id);
+	    const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(draggedItemId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].item = draggedItem;
+	    const overedRootParent = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getRootParentByChildId(overedItem.id);
+	    const draggedRootParent = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getRootParentByChildId(draggedItem.id);
+	    const overedRootParentId = isOverStubItem ? overedItem.parentId : overedRootParent.id;
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canAddItem)[_canAddItem] && overedRootParentId !== draggedRootParent.id) {
+	      event.preventDefault();
+	      return;
+	    }
+	    const overMiddlePoint = babelHelpers.classPrivateFieldLooseBase(this, _draggable)[_draggable].getElementMiddlePoint(over);
+	    const direction = clientY > overMiddlePoint.y ? 1 : -1;
+	    let directionFromBottom = direction === 1;
+	    if (isOverStubItem) {
+	      directionFromBottom = false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isSameLevelMove)[_isSameLevelMove] = draggedItem.parentId === overedItem.parentId;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isSameLevelMove)[_isSameLevelMove]) {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _handleItemMovingOnSameLevel)[_handleItemMovingOnSameLevel](draggedItem, overedItem, directionFromBottom);
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _handleItemMovingOnBetweenLevel)[_handleItemMovingOnBetweenLevel](draggedItem, overedItem, directionFromBottom);
+	    }
+	  }
+	}
+	function _handleDragEnd2(event) {
+	  const {
+	    source,
+	    source: {
+	      dataset
+	    }
+	  } = event.getData();
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(draggedItemId);
+	  main_core.Dom.removeClass(source, '--multiple-drag');
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].enterDropzone) {
+	    return;
+	  }
+	  this.resortLevel(draggedItem.parentId);
+	  babelHelpers.classPrivateFieldLooseBase(this, _handleDrop)[_handleDrop](draggedItem);
+	}
+	function _handleDropEnd2(event) {
+	  const {
+	    dropzone,
+	    source: {
+	      dataset
+	    }
+	  } = event.getData();
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(draggedItemId);
+	  const newParentId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dropzone.dataset.id);
+	  if (draggedItem.parentId !== newParentId) {
+	    this.resortLevel(draggedItem.parentId);
+	  }
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	    id: draggedItem.id,
+	    fields: {
+	      sortIndex: babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getChildren(newParentId).length + 1,
+	      parentId: newParentId,
+	      hidden: false
+	    }
 	  });
+	  this.resortLevel(newParentId);
+	  babelHelpers.classPrivateFieldLooseBase(this, _handleDrop)[_handleDrop](draggedItem);
+	  main_core.Dom.removeClass(dropzone, '--dropzone');
 	}
-	Highlighter.HIGHLIGHT_CLASS = 'element-highlight';
-	Highlighter.ANIMATE_CLASS = '--animate';
-	Highlighter.ANIMATION_DURATION = 1500;
+	function _handleDropZoneEnter2(event) {
+	  const {
+	    dropzone,
+	    source: {
+	      dataset
+	    }
+	  } = event.getData();
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(draggedItemId);
+	  if (!draggedItem) {
+	    event.preventDefault();
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].enterDropzone = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].hideItems([draggedItemId], updates => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	  });
+	  main_core.Dom.addClass(dropzone, '--dropzone');
+	}
+	function _handleDropZoneOut2(event) {
+	  const {
+	    dropzone,
+	    source: {
+	      dataset
+	    }
+	  } = event.getData();
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(draggedItemId);
+	  if (!draggedItem) {
+	    event.preventDefault();
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].enterDropzone = false;
+	  babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].showItems([draggedItemId], updates => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	  });
+	  main_core.Dom.removeClass(dropzone, '--dropzone');
+	}
+	function _handleDrop2(draggedItem) {
+	  const draggedItemChanged = draggedItem.parentId !== babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].item.parentId || draggedItem.sortIndex !== babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].item.sortIndex;
+	  if (draggedItemChanged) {
+	    this.emit('update', draggedItem.id);
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].childrenIds.length > 0) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].showItems(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].childrenIds, updates => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	    });
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem] = {
+	    item: null,
+	    childrenIds: [],
+	    enterDropzone: false
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.Interface}/setDraggedCheckListId`, null);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, false);
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isSameLevelMove)[_isSameLevelMove]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].handleTargetParentFilter(draggedItem, babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId], updates => {
+	      setTimeout(() => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	      }, 1000);
+	    });
+	  }
+	  this.emit('end', draggedItem.id);
+	}
+	async function _handleItemMovingOnSameLevel2(draggedItem, overedItem, directionFromBottom) {
+	  const isFirstOnLevel = overedItem.sortIndex === 0;
+	  const numberOfItemPerLevel = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getChildren(overedItem.parentId).length;
+	  const isSimpleAndLastOnLevel = overedItem.sortIndex === numberOfItemPerLevel - 1 && !babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].hasItemChildren(overedItem);
+	  const shouldSkip = Math.abs(draggedItem.sortIndex - overedItem.sortIndex) === 1 && !isFirstOnLevel && !isSimpleAndLastOnLevel;
+	  if (shouldSkip) {
+	    return;
+	  }
+	  this.moveDropPreview(draggedItem, overedItem, directionFromBottom, true);
+	  this.resortLevelDependingOnPosition(draggedItem, overedItem, directionFromBottom, true);
+	}
+	async function _handleItemMovingOnBetweenLevel2(draggedItem, overedItem, directionFromBottom) {
+	  const previousParentId = draggedItem.parentId;
+	  this.moveDropPreview(draggedItem, overedItem, directionFromBottom, false);
+	  this.resortLevelDependingOnPosition(draggedItem, overedItem, directionFromBottom, false);
+	  this.resortLevel(previousParentId);
+	}
+	function _getItemByNode2(node) {
+	  const itemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(node.dataset.id);
+	  const isStubItem = itemId === babelHelpers.classPrivateFieldLooseBase(this, _stubItemId$1)[_stubItemId$1];
+	  if (isStubItem) {
+	    const parentId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].prepareItemId(node.dataset.parentId);
+	    const sortIndex = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getChildren(parentId).length;
+	    return {
+	      id: babelHelpers.classPrivateFieldLooseBase(this, _stubItemId$1)[_stubItemId$1],
+	      parentId,
+	      sortIndex
+	    };
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$1)[_checkListManager$1].getItem(itemId);
+	}
+
+	var _store$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _checkListManager$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkListManager");
+	var _draggable$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggable");
+	var _draggedItem$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedItem");
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _handleBeforeDragStart$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleBeforeDragStart");
+	var _handleDragStart$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragStart");
+	var _handleDragOver$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragOver");
+	var _handleDragEnd$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragEnd");
+	var _handleItemMoving = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemMoving");
+	var _setYOffset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setYOffset");
+	class CheckListListDragManager extends CheckListDragManager {
+	  constructor(params) {
+	    super(params);
+	    Object.defineProperty(this, _setYOffset, {
+	      value: _setYOffset2
+	    });
+	    Object.defineProperty(this, _handleItemMoving, {
+	      value: _handleItemMoving2
+	    });
+	    Object.defineProperty(this, _handleDragEnd$1, {
+	      value: _handleDragEnd2$1
+	    });
+	    Object.defineProperty(this, _handleDragOver$1, {
+	      value: _handleDragOver2$1
+	    });
+	    Object.defineProperty(this, _handleDragStart$1, {
+	      value: _handleDragStart2$1
+	    });
+	    Object.defineProperty(this, _handleBeforeDragStart$1, {
+	      value: _handleBeforeDragStart2$1
+	    });
+	    Object.defineProperty(this, _store$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _checkListManager$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _draggable$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _draggedItem$1, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _container, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2] = params.store;
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2] = params.checkListManager;
+	  }
+	  init(container, offsetX = 0) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = container;
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1] = new ui_draganddrop_draggable.Draggable({
+	      container: babelHelpers.classPrivateFieldLooseBase(this, _container)[_container],
+	      draggable: '.check-list-draggable-list',
+	      dragElement: '.check-list-drag-list',
+	      delay: 0,
+	      type: ui_draganddrop_draggable.Draggable.MOVE,
+	      offset: {
+	        x: offsetX
+	      }
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].subscribe('beforeStart', babelHelpers.classPrivateFieldLooseBase(this, _handleBeforeDragStart$1)[_handleBeforeDragStart$1].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].subscribe('start', babelHelpers.classPrivateFieldLooseBase(this, _handleDragStart$1)[_handleDragStart$1].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].subscribe('over', babelHelpers.classPrivateFieldLooseBase(this, _handleDragOver$1)[_handleDragOver$1].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].subscribe('end', babelHelpers.classPrivateFieldLooseBase(this, _handleDragEnd$1)[_handleDragEnd$1].bind(this));
+	  }
+	  destroy() {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1]) == null ? void 0 : _babelHelpers$classPr.destroy();
+	  }
+	}
+	function _handleBeforeDragStart2$1(event) {
+	  const data = event.getData();
+	  const source = data == null ? void 0 : data.source;
+	  const dataset = source == null ? void 0 : source.dataset;
+	  if (!dataset) {
+	    event.preventDefault();
+	    return;
+	  }
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].getItem(draggedItemId);
+	  if (!draggedItem) {
+	    event.preventDefault();
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem$1)[_draggedItem$1] = draggedItem;
+	  babelHelpers.classPrivateFieldLooseBase(this, _setYOffset)[_setYOffset](source);
+	}
+	function _handleDragStart2$1(event) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, true);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch(`${tasks_v2_const.Model.Interface}/setDraggedCheckListId`, babelHelpers.classPrivateFieldLooseBase(this, _draggedItem$1)[_draggedItem$1].id);
+	}
+	function _handleDragOver2$1(event) {
+	  const {
+	    over,
+	    clientY
+	  } = event.getData();
+	  const overedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].prepareItemId(over.dataset.id);
+	  const overedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].getItem(overedItemId);
+	  if (overedItem) {
+	    const overMiddlePoint = babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].getElementMiddlePoint(over);
+	    const direction = clientY > overMiddlePoint.y ? 1 : -1;
+	    const directionFromBottom = direction === 1;
+	    void babelHelpers.classPrivateFieldLooseBase(this, _handleItemMoving)[_handleItemMoving](babelHelpers.classPrivateFieldLooseBase(this, _draggedItem$1)[_draggedItem$1], overedItem, directionFromBottom);
+	  }
+	}
+	function _handleDragEnd2$1(event) {
+	  const {
+	    source: {
+	      dataset
+	    }
+	  } = event.getData();
+	  const draggedItemId = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].prepareItemId(dataset.id);
+	  const draggedItem = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].getItem(draggedItemId);
+	  this.resortLevel(draggedItem.parentId);
+	  const draggedItemChanged = draggedItem.sortIndex !== babelHelpers.classPrivateFieldLooseBase(this, _draggedItem$1)[_draggedItem$1].sortIndex;
+	  if (draggedItemChanged) {
+	    this.emit('update', draggedItem.id);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch(`${tasks_v2_const.Model.Interface}/setDraggedCheckListId`, null);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, false);
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem$1)[_draggedItem$1] = null;
+	  this.emit('end', draggedItem.id);
+	}
+	function _handleItemMoving2(draggedItem, overedItem, directionFromBottom) {
+	  const isFirstOnLevel = overedItem.sortIndex === 0;
+	  const numberOfItemPerLevel = babelHelpers.classPrivateFieldLooseBase(this, _checkListManager$2)[_checkListManager$2].getChildren(overedItem.parentId).length;
+	  const isLastOnLevel = overedItem.sortIndex === numberOfItemPerLevel - 1;
+	  const shouldSkip = Math.abs(draggedItem.sortIndex - overedItem.sortIndex) === 1 && !isFirstOnLevel && !isLastOnLevel;
+	  if (shouldSkip) {
+	    return;
+	  }
+	  this.moveDropPreview(draggedItem, overedItem, directionFromBottom, true);
+	  this.resortLevelDependingOnPosition(draggedItem, overedItem, directionFromBottom, true);
+	}
+	function _setYOffset2(draggedItemElement) {
+	  const relativePosition = main_core.Dom.getRelativePosition(draggedItemElement, babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	  const relativeTop = relativePosition.top;
+	  const isTopItem = relativeTop <= 0;
+	  const offsetY = isTopItem ? relativeTop : 0;
+	  const options = babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].getOptions();
+	  options.offset.y = -offsetY;
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].setOptions(options);
+	}
 
 	// @vue/component
 	const CheckListItemMixin = {
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    id: {
 	      type: [Number, String],
 	      required: true
@@ -880,70 +1545,50 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  emits: ['update', 'addItem', 'removeItem', 'focus', 'blur', 'emptyBlur', 'show', 'hide'],
+	  setup() {},
 	  data() {
 	    return {
 	      isHovered: false,
-	      scrollContainer: null
+	      scrollContainer: null,
+	      isDragEnabled: false
 	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
-	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
+	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
+	      draggedCheckListId: `${tasks_v2_const.Model.Interface}/draggedCheckListId`
 	    }),
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    checkLists() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
 	    item() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getById`](this.id);
 	    },
-	    canSave() {
-	      if (!this.isEdit) {
-	        return true;
-	      }
-	      return this.task.rights.checklistSave === true;
-	    },
 	    canAdd() {
 	      if (!this.isEdit) {
 	        return true;
 	      }
-	      return this.task.rights.checklistAdd === true;
+	      return this.task.rights.checklistAdd;
 	    },
 	    canEdit() {
-	      var _this$item$creator;
+	      var _this$item, _checkListItem$creato;
 	      if (!this.isEdit) {
 	        return true;
 	      }
-	      return this.canSave && (this.task.rights.checklistEdit === true || ((_this$item$creator = this.item.creator) == null ? void 0 : _this$item$creator.id) === this.currentUserId);
-	    },
-	    canCheckListToggle() {
-	      if (!this.isEdit) {
-	        return true;
-	      }
-	      return this.task.rights.checklistToggle === true;
+	      const checkListItem = this.checkListManager.getRootParentByChildId((_this$item = this.item) == null ? void 0 : _this$item.id);
+	      return this.task.rights.checklistEdit || (checkListItem == null ? void 0 : (_checkListItem$creato = checkListItem.creator) == null ? void 0 : _checkListItem$creato.id) === this.currentUserId;
 	    },
 	    canModify() {
-	      if (this.canEdit === true) {
-	        return true;
-	      }
-	      return this.item.actions.modify === true;
+	      var _this$item2;
+	      return ((_this$item2 = this.item) == null ? void 0 : _this$item2.actions.modify) === true;
 	    },
 	    canRemove() {
-	      if (this.canEdit === true) {
-	        return true;
-	      }
-	      return this.item.actions.remove === true;
+	      var _this$item3;
+	      return ((_this$item3 = this.item) == null ? void 0 : _this$item3.actions.remove) === true;
 	    },
 	    canToggle() {
-	      if (this.canCheckListToggle === true) {
-	        return true;
-	      }
-	      return this.item.actions.toggle === true;
+	      var _this$item4;
+	      return ((_this$item4 = this.item) == null ? void 0 : _this$item4.actions.toggle) === true;
 	    },
 	    hasAttachments() {
 	      return this.hasUsers;
@@ -980,9 +1625,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return ((_this$item$groupMode2 = this.item.groupMode) == null ? void 0 : _this$item$groupMode2.selected) === true;
 	    },
 	    completed() {
-	      var _this$item$localCompl;
-	      return (_this$item$localCompl = this.item.localCompleteState) != null ? _this$item$localCompl : this.item.isComplete;
+	      return this.checkListManager.isItemCompleted(this.item);
+	    },
+	    canDragItem() {
+	      if (!this.isDragEnabled) {
+	        return false;
+	      }
+	      return this.isHovered && this.canModify && !this.readOnly && !this.groupMode;
+	    },
+	    readOnly() {
+	      return this.isPreview;
+	    },
+	    textReadOnly() {
+	      return this.groupMode || this.isPreview || !this.canModify;
 	    }
+	  },
+	  created() {
+	    this.checkListManager = new CheckListManager({
+	      computed: {
+	        checkLists: () => this.checkLists
+	      }
+	    });
+	  },
+	  mounted() {
+	    setTimeout(() => {
+	      this.isDragEnabled = true;
+	    }, 1000);
 	  },
 	  methods: {
 	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['addCheckListCompletionCallback']),
@@ -1016,6 +1684,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.$emit('update', this.id);
 	    },
 	    addItem(sort) {
+	      if (!this.canAdd) {
+	        return;
+	      }
 	      this.$emit('addItem', {
 	        id: this.id,
 	        sort: main_core.Type.isNumber(sort) ? sort : null
@@ -1032,40 +1703,44 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        localCompleteState: isComplete
 	      });
 	      const listParents = new Map();
-	      this.checkListManager.syncParentCompletionState(this.id, async (id, fields) => {
+	      this.checkListManager.syncParentCompletionState(this.id, (id, fields) => {
 	        listParents.set(id, fields);
-	        await this.updateCheckList(id, {
+	        this.updateCheckList(id, {
 	          localCompleteState: fields.isComplete
 	        });
 	      });
 	      this.$emit('update', this.id);
-	      const completionCallback = async () => {
-	        await this.updateCheckList(this.id, {
+	      const completionCallback = () => {
+	        this.updateCheckList(this.id, {
 	          isComplete
 	        });
-	        listParents.forEach(async (fields, id) => {
-	          await this.updateCheckList(id, fields);
-	          this.saveCompleteState(id, fields.isComplete);
+	        listParents.forEach((fields, id) => {
+	          this.updateCheckList(id, fields);
+	          if (this.isPreview && this.isEdit) {
+	            this.saveCompleteState(id, fields.isComplete);
+	          }
 	        });
 	      };
 	      this.addCheckListCompletionCallback({
 	        id: this.id,
 	        callback: completionCallback
 	      });
-	      this.saveCompleteState(this.id, isComplete);
+	      if (this.isPreview && this.isEdit) {
+	        this.saveCompleteState(this.id, isComplete);
+	      }
 	    },
 	    saveCompleteState(itemId, isComplete) {
-	      if (!this.isPreview || !this.isEdit) {
-	        return;
-	      }
 	      if (isComplete) {
 	        void tasks_v2_provider_service_checkListService.checkListService.complete(this.taskId, itemId);
 	      } else {
 	        void tasks_v2_provider_service_checkListService.checkListService.renew(this.taskId, itemId);
 	      }
 	    },
-	    focusToItem() {
+	    async scrollToItem() {
 	      var _this$$parent$$el;
+	      await new Promise(resolve => {
+	        setTimeout(() => resolve(), 300);
+	      });
 	      const item = this.$refs.item;
 	      const scrollContainer = (_this$$parent$$el = this.$parent.$el) == null ? void 0 : _this$$parent$$el.closest('[data-list]');
 	      const itemRect = main_core.Dom.getPosition(item);
@@ -1104,8 +1779,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['startGroupMode', 'openCheckList'],
 	  setup() {
 	    return {
-	      Actions: ui_iconSet_api_core.Actions,
-	      Outline: ui_iconSet_api_core.Outline
+	      Actions: ui_iconSet_api_vue.Actions,
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  data() {
@@ -1133,7 +1808,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    menuItems() {
 	      const collapseItem = {
 	        title: this.item.areCompletedCollapsed ? this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_SHOW') : this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_HIDE'),
-	        icon: this.item.areCompletedCollapsed ? ui_iconSet_api_core.Outline.OBSERVER : ui_iconSet_api_core.Outline.CROSSED_EYE,
+	        icon: this.item.areCompletedCollapsed ? ui_iconSet_api_vue.Outline.OBSERVER : ui_iconSet_api_vue.Outline.CROSSED_EYE,
 	        dataset: {
 	          id: `MenuProfileHide-${this.id}`
 	        },
@@ -1147,12 +1822,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      };
 	      const groupActionsItem = {
 	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_GROUP'),
-	        icon: ui_iconSet_api_core.Outline.MULTICHOICE_ON,
+	        icon: ui_iconSet_api_vue.Outline.MULTICHOICE_ON,
 	        dataset: {
 	          id: `MenuProfileGroup-${this.id}`
 	        },
 	        onClick: () => {
-	          if (this.isCollapsed(this.item)) {
+	          if (this.collapsed) {
 	            this.toggleCollapse();
 	          }
 	          this.$emit('startGroupMode', this.id);
@@ -1161,12 +1836,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      const editItem = {
 	        sectionCode: this.menuRemoveSectionCode,
 	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_EDIT'),
-	        icon: ui_iconSet_api_core.Outline.EDIT_L,
+	        icon: ui_iconSet_api_vue.Outline.EDIT_L,
 	        dataset: {
 	          id: `MenuProfileEdit-${this.id}`
 	        },
 	        onClick: () => {
-	          if (this.canEdit) {
+	          if (this.canModify) {
 	            this.$emit('openCheckList', this.id);
 	          }
 	        }
@@ -1175,19 +1850,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        sectionCode: this.menuRemoveSectionCode,
 	        design: 'alert',
 	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_REMOVE'),
-	        icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	        icon: ui_iconSet_api_vue.Outline.TRASHCAN,
 	        dataset: {
 	          id: `MenuProfileRemove-${this.id}`
 	        },
 	        onClick: this.removeItem.bind(this)
 	      };
 	      if (this.isPreview) {
-	        return [collapseItem, this.canModify ? editItem : null, this.canModify ? removeItem : null];
+	        return [collapseItem, this.canModify ? editItem : null, this.canRemove ? removeItem : null];
 	      }
-	      return [collapseItem, groupActionsItem, removeItem];
+	      return [collapseItem, this.canModify ? groupActionsItem : null, this.canRemove ? removeItem : null];
 	    },
 	    itemIcon() {
-	      return this.completed ? ui_iconSet_api_core.Outline.CHECK_L : ui_iconSet_api_core.Outline.CHECK_LIST;
+	      return this.completed ? ui_iconSet_api_vue.Outline.CHECK_L : ui_iconSet_api_vue.Outline.CHECK_LIST;
 	    },
 	    checkListStatus() {
 	      const label = this.loc('TASKS_V2_CHECK_LIST_STATUS_LABEL_NEW');
@@ -1195,7 +1870,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    completedCount() {
 	      return this.checkLists.filter(checklist => {
-	        return checklist.parentId === this.id && (checklist.isComplete || checklist.localCompleteState);
+	        var _checklist$localCompl;
+	        if (checklist.parentId !== this.id) {
+	          return false;
+	        }
+	        return (_checklist$localCompl = checklist.localCompleteState) != null ? _checklist$localCompl : checklist.isComplete;
 	      }).length;
 	    },
 	    totalCount() {
@@ -1204,7 +1883,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }).length;
 	    },
 	    currentUserResponsible() {
-	      return this.currentUserId === this.task.responsibleId;
+	      return this.task.responsibleIds.includes(this.currentUserId);
 	    },
 	    currentUser() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.currentUserId);
@@ -1222,19 +1901,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    myFilterActive() {
 	      return this.item.myFilterActive;
+	    },
+	    fontSize() {
+	      return this.isPreview ? 15 : 17;
+	    },
+	    collapsed() {
+	      if (this.checkListManager.isParentItem(this.draggedCheckListId)) {
+	        return true;
+	      }
+	      return this.checkListManager.isItemCollapsed(this.item, this.isPreview, this.positionIndex);
 	    }
 	  },
 	  watch: {
 	    myFilterActive(value) {
 	      this.handleMyFilter(value);
-	    }
-	  },
-	  created() {
-	    this.checkListManager = new CheckListManager({
-	      computed: {
-	        checkLists: () => this.checkLists
+	    },
+	    totalCount() {
+	      this.handleCompleteState();
+	      if (!this.numberMyItems && this.myFilterActive) {
+	        this.handleMyFilter(false);
 	      }
-	    });
+	    }
 	  },
 	  mounted() {
 	    var _this$$parent$$el;
@@ -1252,6 +1939,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        childList: true,
 	        subtree: true
 	      });
+	    }
+	    if (!this.isPreview) {
+	      this.handleCompleteState();
 	    }
 	  },
 	  beforeUnmount() {
@@ -1286,8 +1976,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        const idsToHide = this.checkListManager.getAllChildren(this.id).filter(item => !myItemIds.has(item.id)).map(item => item.id);
 	        this.checkListManager.hideItems(idsToHide, updates => this.upsertCheckLists(updates));
 	      } else {
-	        const childrenIds = this.checkListManager.getAllChildren(this.id).map(item => item.id);
+	        const childrenIds = this.checkListManager.getAllChildren(this.id).filter(item => {
+	          var _item$localCompleteSt;
+	          const completed = (_item$localCompleteSt = item.localCompleteState) != null ? _item$localCompleteSt : item.isComplete;
+	          return !this.item.areCompletedCollapsed || !completed;
+	        }).map(item => item.id);
 	        this.checkListManager.showItems(childrenIds, updates => this.upsertCheckLists(updates));
+	      }
+	    },
+	    handleCompleteState() {
+	      if (this.totalCount > 0) {
+	        this.complete(this.totalCount === this.completedCount);
+	      } else if (this.completed) {
+	        this.complete(false);
 	      }
 	    },
 	    checkSticky() {
@@ -1302,7 +2003,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.isMenuShown = true;
 	    },
 	    toggleCollapse() {
-	      const localCollapsedState = !this.isCollapsed(this.item);
+	      const localCollapsedState = !this.collapsed;
 	      if (this.isPreview && this.isEdit) {
 	        if (localCollapsedState === true) {
 	          void tasks_v2_provider_service_checkListService.checkListService.collapse(this.taskId, this.id);
@@ -1317,11 +2018,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        }
 	      });
 	    },
-	    isCollapsed(item) {
-	      return this.checkListManager.isItemCollapsed(item, this.isPreview, this.positionIndex);
+	    collapse() {
+	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	        id: this.id,
+	        fields: {
+	          localCollapsedState: true
+	        }
+	      });
 	    },
 	    toggleCompleted(itemId, collapsed) {
-	      this.checkListManager.getAllCompletedChildren(itemId).forEach(item => {
+	      const myItemIds = this.checkListManager.findItemIdsWithUser(this.id, this.currentUserId);
+	      this.checkListManager.getAllCompletedChildren(itemId).filter(item => {
+	        return !this.myFilterActive || myItemIds.has(item.id);
+	      }).forEach(item => {
 	        if (collapsed === false) {
 	          this.checkListManager.showItems([item.id], updates => this.upsertCheckLists(updates));
 	        } else {
@@ -1336,15 +2045,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			class="check-list-widget-parent-item"
 			:class="{
 				'--complete': completed,
-				'--collapsed': isCollapsed(item),
+				'--collapsed': collapsed,
 				'--preview': isPreview,
 				'--editable': canModify,
 			}"
 			:data-id="id"
 			:data-parent="id"
+			@mouseover="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
 			<div class="check-list-widget-parent-item-label-container">
-				<BIcon :name="itemIcon"/>
+				<div
+					v-if="!readOnly"
+					class="check-list-widget-item-drag"
+					:class="{
+						'check-list-drag-list': canDragItem,
+					}"
+				>
+					<BIcon v-if="canDragItem" :name="Outline.DRAG_L"/>
+				</div>
+				<div class="check-list-widget-item-icon">
+					<BIcon :name="itemIcon"/>
+				</div>
 			</div>
 			<div class="check-list-widget-parent-item-title-container">
 				<GrowingTextArea
@@ -1352,17 +2074,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					class="check-list-widget-parent-item-title"
 					:data-check-list-id="'check-list-parent-item-title-' + id"
 					:modelValue="item.title"
-					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
-					:readonly="groupMode || isPreview"
+					:placeholder="loc('TASKS_V2_CHECK_LIST_LIST_PLACEHOLDER')"
+					:readonly="textReadOnly"
 					:fontColor="textColor"
-					:fontSize="17"
+					:fontSize
 					:lineHeight="20"
 					:fontWeight="500"
 					@click="handleTextClick"
 					@update:modelValue="updateTitle"
 					@input="updateTitle"
 					@focus="handleFocus"
-					@emptyFocus="focusToItem"
+					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
 				/>
@@ -1410,17 +2132,54 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						/>
 					</div>
 					<div class="check-list-widget-parent-item-main-action-actions">
-						<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu" />
+						<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu"/>
 						<BIcon
-							:name="isCollapsed(item) ? Actions.CHEVRON_DOWN : Actions.CHEVRON_UP"
+							:name="collapsed ? Outline.CHEVRON_DOWN_L : Outline.CHEVRON_TOP_L"
 							@click="toggleCollapse()"
 						/>
 					</div>
 				</div>
-				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"></div>
+				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"/>
 			</div>
 			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListCheckbox = {
+	  name: 'CheckListCheckbox',
+	  components: {
+	    UiCheckbox: tasks_v2_component_elements_checkbox.Checkbox
+	  },
+	  props: {
+	    important: {
+	      type: Boolean,
+	      default: false
+	    },
+	    disabled: {
+	      type: Boolean,
+	      default: false
+	    },
+	    checked: {
+	      type: Boolean,
+	      default: false
+	    },
+	    highlight: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['click'],
+	  template: `
+		<UiCheckbox
+			:checked
+			:important
+			:disabled
+			:highlight
+			class="check-list-widget-checkbox"
+			@click="$emit('click', $event)"
+		/>
 	`
 	};
 
@@ -1432,7 +2191,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    BLine: ui_system_skeleton_vue.BLine,
 	    GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
 	    UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList,
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent
+	    CheckListCheckbox,
+	    UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent
 	  },
 	  mixins: [CheckListItemMixin],
 	  inject: ['setItemsRef'],
@@ -1440,15 +2200,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    itemOffset: {
 	      type: String,
 	      default: '0'
+	    },
+	    checkListId: {
+	      type: [Number, String],
+	      default: 0
 	    }
 	  },
-	  emits: ['toggleGroupModeSelected'],
+	  emits: ['toggleGroupModeSelected', 'openCheckList'],
 	  setup(props) {
 	    const fileServiceInstance = tasks_v2_provider_service_fileService.fileService.get(props.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem, {
 	      parentEntityId: props.taskId
 	    });
 	    return {
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      fileService: fileServiceInstance,
 	      uploaderAdapter: fileServiceInstance.getAdapter()
 	    };
@@ -1491,33 +2255,45 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.files.length;
 	    },
 	    hasTrashcanIcon() {
-	      return this.isHovered && !this.item.panelIsShown && !this.groupMode && !this.isPreview;
+	      return this.isHovered && this.canModify && !this.item.panelIsShown && !this.groupMode && !this.readOnly;
 	    },
-	    readOnly() {
-	      return this.isPreview;
+	    toggleable() {
+	      if (this.isPreview) {
+	        return this.canModify;
+	      }
+	      return this.canToggle;
 	    }
 	  },
 	  created() {
 	    if (this.hasFilesAttach) {
 	      void this.loadFiles();
 	    }
-	    this.checkListManager = new CheckListManager({
-	      computed: {
-	        checkLists: () => this.checkLists
-	      }
-	    });
 	  },
 	  mounted() {
 	    if (this.setItemsRef) {
 	      this.setItemsRef(this.id, this);
 	    }
+	    if (this.checkListId === this.id) {
+	      setTimeout(() => {
+	        var _this$$refs$growingTe;
+	        (_this$$refs$growingTe = this.$refs.growingTextArea) == null ? void 0 : _this$$refs$growingTe.focusTextarea();
+	      }, 500);
+	    }
+	    this.subscribeToEvents();
 	  },
 	  beforeUnmount() {
 	    if (this.setItemsRef) {
 	      this.setItemsRef(this.id, null);
 	    }
+	    this.unsubscribeToEvents();
 	  },
 	  methods: {
+	    subscribeToEvents() {
+	      main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.HighlightCheckListItem + this.id, this.handleHighlightItemEvent);
+	    },
+	    unsubscribeToEvents() {
+	      main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.HighlightCheckListItem + this.id, this.handleHighlightItemEvent);
+	    },
 	    toggleGroupModeSelected() {
 	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
 	        id: this.id,
@@ -1554,8 +2330,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (this.groupMode) {
 	        this.toggleGroupModeSelected();
 	      }
-	      if (this.isPreview) {
-	        this.complete(!this.completed);
+	      if (this.isPreview && this.canModify) {
+	        this.$emit('openCheckList', this.id);
 	      }
 	    },
 	    isClickInsideFilesWidget(filesNode, target) {
@@ -1569,6 +2345,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      const hasExcludedClass = excludedClasses.some(className => main_core.Dom.hasClass(target, className));
 	      return !hasExcludedClass;
+	    },
+	    handleHighlightItemEvent() {
+	      void tasks_v2_lib_highlighter.highlighter.highlight(this.$el);
 	    }
 	  },
 	  template: `
@@ -1580,32 +2359,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				'--group-mode': groupMode,
 				'--group-mode-selected': groupModeSelected,
 				'--preview': isPreview,
-				'--toggleable': canToggle,
+				'--toggleable': toggleable,
 			}"
-			:data-id="id"
 			:style="{ marginLeft: itemOffset }"
 			@mouseover="isHovered = true"
 			@mouseleave="isHovered = false"
 			@click="handleClick"
 		>
 			<div class="check-list-widget-child-item-base">
-				<label
-					class="check-list-widget-child-item-checkbox"
-					:class="{'--important': !item.isImportant}"
+				<div
+					v-if="!readOnly"
+					class="check-list-widget-item-drag"
+					:class="{
+						'check-list-drag-item': canDragItem,
+					}"
 				>
-					<input
-						ref="checkbox"
-						type="checkbox"
-						:checked="completed"
-						:disabled="!canToggle || groupMode"
-						@click.stop="complete(!completed)"
-					>
-				</label>
+					<BIcon v-if="canDragItem" :name="Outline.DRAG_L"/>
+				</div>
+				<CheckListCheckbox
+					:important="!item.isImportant"
+					:disabled="!canToggle || groupMode"
+					:checked="completed"
+					@click="complete(!completed)"
+				/>
 				<div
 					v-if="item.isImportant"
 					class="check-list-widget-child-item-important"
 				>
-					<BIcon :name="Outline.FIRE_SOLID" :hoverable="false"/>
+					<BIcon :name="Outline.FIRE_SOLID"/>
 				</div>
 				<GrowingTextArea
 					ref="growingTextArea"
@@ -1613,7 +2394,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:data-check-list-id="'check-list-child-item-title-' + item.id"
 					:modelValue="item.title"
 					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
-					:readonly="groupMode || isPreview"
+					:readonly="textReadOnly"
 					:fontColor="textColor"
 					:fontSize="15"
 					:lineHeight="20"
@@ -1622,7 +2403,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					@focus="handleFocus"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
-					@emptyFocus="focusToItem"
+					@emptyFocus="scrollToItem"
 					@enterBlur="handleEnter"
 				/>
 				<div
@@ -1632,14 +2413,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				>
 					<BIcon :name="Outline.TRASHCAN"/>
 				</div>
-				<div v-else-if="groupMode" class="check-list-widget-child-item-action-checkbox">
-					<input
-						ref="checkbox"
-						type="checkbox"
-						:checked="groupModeSelected"
-					>
-				</div>
-				<div v-else class="check-list-widget-child-item-action-stub"></div>
+				<template v-else-if="groupMode">
+					<CheckListCheckbox :checked="groupModeSelected" highlight @click="toggleGroupModeSelected"/>
+				</template>
+				<div v-else class="check-list-widget-child-item-action-stub"/>
 			</div>
 			<template v-if="hasAttachments">
 				<div class="check-list-widget-item-attach">
@@ -1657,20 +2434,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						<div class="check-list-widget-item-attach-files-list">
 							<template v-if="filesLoading">
 								<div class="check-list-widget-item-attach-files-list-skeleton">
-									<BLine
-										v-for="index in filesNumber"
-										:key="index"
-										:width="114"
-										:height="90"
-									/>
+									<BLine v-for="key in filesNumber" :key :height="90"/>
 								</div>
 							</template>
 							<template v-else>
-								<UserFieldWidgetComponent
-									ref="files-widget"
-									:uploaderAdapter="uploaderAdapter"
-									:widgetOptions="widgetOptions"
-								/>
+								<UserFieldWidgetComponent :uploaderAdapter :widgetOptions ref="files-widget"/>
 							</template>
 						</div>
 					</div>
@@ -1695,7 +2463,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['addItem'],
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  template: `
@@ -1707,10 +2475,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<div class="check-list-widget-add-item-icon">
 				<BIcon :name="Outline.PLUS_L"/>
 			</div>
-			<div class="check-list-widget-add-item-title">
-				{{ loc('TASKS_V2_CHECK_LIST_ITEM_ADD_BTN') }}
-			</div>
+			<div class="check-list-widget-add-item-title">{{ loc('TASKS_V2_CHECK_LIST_ITEM_ADD_BTN') }}</div>
 		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListDropList = {
+	  name: 'CheckListDropList',
+	  template: `
+		<div class="check-list-widget-drop-list"/>
+	`
+	};
+
+	// @vue/component
+	const CheckListDropItem = {
+	  name: 'CheckListDropItem',
+	  props: {
+	    dropOffset: {
+	      type: String,
+	      default: '0'
+	    }
+	  },
+	  template: `
+		<div class="check-list-widget-drop-item" :style="{ marginLeft: dropOffset }"/>
 	`
 	};
 
@@ -1748,7 +2536,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				{{ completedParentsLabel }}
 			</div>
 			<div class="check-list-widget-group-completed-list-action">
-				<BIcon :name="Actions.CHEVRON_RIGHT" />
+				<BIcon :name="Actions.CHEVRON_RIGHT"/>
 			</div>
 		</div>
 	`
@@ -1761,11 +2549,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    CheckListParentItem,
 	    CheckListChildItem,
 	    CheckListAddItem,
+	    CheckListDropList,
+	    CheckListDropItem,
 	    CheckListGroupCompletedList
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
+	    context: {
+	      type: String,
 	      required: true
 	    },
 	    checkListId: {
@@ -1782,29 +2576,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  emits: ['show', 'update', 'addItem', 'addItemFromBtn', 'removeItem', 'focus', 'blur', 'emptyBlur', 'startGroupMode', 'toggleGroupModeSelected', 'openCheckList'],
+	  setup() {},
 	  data() {
-	    return {};
+	    return {
+	      scrollContainer: null
+	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
-	      disableCheckListAnimations: `${tasks_v2_const.Model.Interface}/disableCheckListAnimations`
+	      disableCheckListAnimations: `${tasks_v2_const.Model.Interface}/disableCheckListAnimations`,
+	      draggedCheckListId: `${tasks_v2_const.Model.Interface}/draggedCheckListId`
 	    }),
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
 	    checkLists() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
 	    parentCheckLists() {
 	      return this.checkLists.filter(checkList => {
 	        if (checkList.parentId !== 0 || checkList.hidden) {
-	          return false;
-	        }
-	        if (this.isEdit && !this.isPreview && !this.canEditCheckList(checkList)) {
 	          return false;
 	        }
 	        return !(this.isPreview && checkList.isComplete);
@@ -1824,10 +2613,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.checkLists.filter(item => item.parentId === this.parentId).sort((a, b) => a.sortIndex - b.sortIndex);
 	    },
 	    canAddItem() {
-	      if (!this.isEdit) {
-	        return true;
-	      }
-	      return this.task.rights.checklistAdd === true;
+	      return this.task.rights.checklistAdd;
+	    },
+	    parentItemDragged() {
+	      return this.checkListManager.isParentItem(this.draggedCheckListId);
 	    }
 	  },
 	  created() {
@@ -1836,31 +2625,110 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        checkLists: () => this.checkLists
 	      }
 	    });
+	    if (!this.isPreview) {
+	      this.listDragManager = new CheckListListDragManager({
+	        store: this.$store,
+	        checkListManager: this.checkListManager
+	      });
+	      this.listDragManager.subscribe('update', baseEvent => {
+	        const draggedItemId = baseEvent.getData();
+	        this.$emit('update', draggedItemId);
+	      });
+	      this.listDragManager.subscribe('end', baseEvent => {
+	        const draggedItemId = baseEvent.getData();
+	        setTimeout(() => {
+	          this.scrollToTarget(draggedItemId, 0, false);
+	          this.handleDropException();
+	        }, 100);
+	      });
+	      this.itemDragManager = new CheckListItemDragManager({
+	        store: this.$store,
+	        checkListManager: this.checkListManager,
+	        canAddItem: this.canAddItem,
+	        stubItemId: 'add-item',
+	        currentUserId: this.currentUserId
+	      });
+	      this.itemDragManager.subscribe('update', baseEvent => {
+	        const draggedItemId = baseEvent.getData();
+	        this.$emit('update', draggedItemId);
+	      });
+	      this.itemDragManager.subscribe('end', () => {
+	        setTimeout(() => {
+	          this.handleDropException();
+	        }, 100);
+	      });
+	    }
 	  },
 	  mounted() {
-	    if (this.checkListManager.getItem(this.checkListId)) {
-	      var _this$$root$$el;
-	      this.scrollContainer = (_this$$root$$el = this.$root.$el) == null ? void 0 : _this$$root$$el.querySelector(['[data-list]']);
-	      const childWithEmptyTitle = this.checkListManager.getChildWithEmptyTitle(this.checkListId);
-	      const isFocusToCheckList = !childWithEmptyTitle;
-	      const targetItemId = isFocusToCheckList ? this.checkListId : childWithEmptyTitle.id;
-	      const scrollOffset = isFocusToCheckList ? 0 : 140;
-	      const targetItem = this.scrollContainer.querySelector([`[data-id="${targetItemId}"]`]);
-	      setTimeout(() => {
-	        if (isFocusToCheckList) {
-	          const highlightElement = this.scrollContainer.querySelector([`[data-parent-container="${this.checkListId}"]`]);
-	          if (highlightElement) {
-	            void new Highlighter().highlight(highlightElement);
-	          }
-	        }
-	        if (targetItem) {
-	          this.scrollContainer.scrollTop = targetItem.offsetTop - scrollOffset;
-	        }
-	      }, 0);
+	    this.scrollContainer = this.$el.parentElement;
+	    this.subscribeToEvents();
+	    if (!this.isPreview) {
+	      this.initDragManager();
 	    }
+	    this.focusTo(this.checkListId);
 	    this.$emit('show');
 	  },
+	  beforeUnmount() {
+	    var _this$itemDragManager;
+	    (_this$itemDragManager = this.itemDragManager) == null ? void 0 : _this$itemDragManager.destroy();
+	    this.unsubscribeFromEvents();
+	  },
 	  methods: {
+	    subscribeToEvents() {
+	      main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.ShowCheckList, this.handleShowCheckListEvent);
+	      main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.ShowCheckListItems, this.handleShowCheckListItemsEvent);
+	    },
+	    unsubscribeFromEvents() {
+	      main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.ShowCheckList, this.handleShowCheckListEvent);
+	      main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.ShowCheckListItems, this.handleShowCheckListItemsEvent);
+	    },
+	    focusTo(checkListId) {
+	      const focusedItem = this.checkListManager.getItem(checkListId);
+	      if (!focusedItem) {
+	        return;
+	      }
+	      const {
+	        targetId,
+	        offset,
+	        shouldHighlight
+	      } = this.calculateFocusTarget(focusedItem);
+	      this.scrollToTarget(targetId, offset, shouldHighlight);
+	    },
+	    calculateFocusTarget(focusedItem) {
+	      var _childWithEmptyTitle$;
+	      const isRootItem = focusedItem.parentId === 0;
+	      if (!isRootItem) {
+	        return {
+	          targetId: focusedItem.id,
+	          offset: 140,
+	          shouldHighlight: false
+	        };
+	      }
+	      const childWithEmptyTitle = this.checkListManager.getChildWithEmptyTitle(focusedItem.id);
+	      return {
+	        targetId: (_childWithEmptyTitle$ = childWithEmptyTitle == null ? void 0 : childWithEmptyTitle.id) != null ? _childWithEmptyTitle$ : focusedItem.id,
+	        offset: childWithEmptyTitle ? 140 : 0,
+	        shouldHighlight: true
+	      };
+	    },
+	    scrollToTarget(targetId, offset, shouldHighlight) {
+	      setTimeout(() => {
+	        const targetNode = this.scrollContainer.querySelector(`[data-id="${targetId}"]`);
+	        if (!targetNode) {
+	          return;
+	        }
+	        if (shouldHighlight) {
+	          this.highlightParentContainer(targetId);
+	        }
+	        this.scrollContainer.scrollTop = targetNode.offsetTop - offset;
+	      }, 0);
+	    },
+	    highlightParentContainer(targetId) {
+	      const highlightElement = this.scrollContainer.querySelector(`[data-parent-container="${targetId}"]`);
+	      if (highlightElement) {
+	        void tasks_v2_lib_highlighter.highlighter.highlight(highlightElement);
+	      }
+	    },
 	    getItemOffset(item) {
 	      if (item.parentId === 0) {
 	        return '0';
@@ -1869,12 +2737,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (level === 1) {
 	        return '0';
 	      }
-	      return `${(level - 1) * 12}px`;
+	      return `${(level - 1) * 28}px`;
+	    },
+	    handleDropException() {
+	      const container = this.$el.closest('[data-list]');
+	      const allItems = container.querySelectorAll('.check-list-widget-item.--dragged_item');
+	      allItems.forEach(item => item.remove());
 	    },
 	    getChildren(parent) {
 	      return this.checkListManager.getAllChildren(parent.id).filter(checkList => !checkList.hidden);
 	    },
 	    isCollapsed(item, positionIndex) {
+	      if (this.checkListManager.isParentItem(this.draggedCheckListId)) {
+	        return true;
+	      }
 	      return this.checkListManager.isItemCollapsed(item, this.isPreview, positionIndex);
 	    },
 	    getFirstCompletedCheckList() {
@@ -1883,15 +2759,46 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }).sort((a, b) => a.sortIndex - b.sortIndex);
 	      return completedCheckLists[0];
 	    },
+	    handleShowCheckListEvent(event) {
+	      const {
+	        checkListId
+	      } = event.getData();
+	      if (!checkListId) {
+	        return;
+	      }
+	      this.$emit('openCheckList', checkListId);
+	      this.focusTo(checkListId);
+	    },
+	    async handleShowCheckListItemsEvent(event) {
+	      const {
+	        checkListItemIds
+	      } = event.getData();
+	      if (!main_core.Type.isArrayFilled(checkListItemIds)) {
+	        return;
+	      }
+	      const firstItemId = checkListItemIds[0];
+	      this.focusTo(firstItemId);
+	      this.$emit('openCheckList', firstItemId);
+	      await this.$nextTick();
+	      checkListItemIds.forEach(itemId => {
+	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.HighlightCheckListItem + itemId);
+	      });
+	    },
 	    showFirstCompletedCheckList() {
 	      const firstCompletedCheckList = this.getFirstCompletedCheckList();
 	      this.$emit('openCheckList', firstCompletedCheckList.id);
 	    },
-	    canEditCheckList(item) {
-	      if (!item.creator) {
-	        return true;
+	    initDragManager() {
+	      var _this$$refs$parentCom;
+	      let offsetX = 0;
+	      if (this.context !== Context.Popup && main_core.Type.isElementNode(this.$root.$el)) {
+	        const parentRect = main_core.Dom.getPosition(this.$el);
+	        const parentRelativeRect = main_core.Dom.getRelativePosition(this.$el, this.$root.$el);
+	        offsetX = parentRelativeRect.left - parentRect.left;
 	      }
-	      return this.task.rights.checklistEdit === true || item.creator.id === this.currentUserId;
+	      this.listDragManager.init(this.scrollContainer, offsetX);
+	      const listDropzone = this.canAddItem ? (_this$$refs$parentCom = this.$refs.parentComponents) == null ? void 0 : _this$$refs$parentCom.map(parent => parent.$el) : [];
+	      this.itemDragManager.init(this.scrollContainer, offsetX, listDropzone);
 	    }
 	  },
 	  template: `
@@ -1899,69 +2806,91 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<TransitionGroup
 				:css="!disableCheckListAnimations"
 				name="check-list"
-				mode="out-in"
 				tag="ul"
 				class="check-list-widget --parent"
-				:class="{'--preview': isPreview}"
+				:class="{
+					'--preview': isPreview,
+					'--dragged': parentItemDragged,
+				}"
 			>
 				<li
 					v-for="(parentItem, parentItemIndex) in parentCheckLists"
-					:key="parentItem.id"
-					class="check-list-widget-item --parent"
+					:key="'parent-' + parentItem.id + parentItemIndex"
+					class="check-list-widget-item --parent check-list-draggable-list"
 					:class="{
 						'--preview': isPreview,
 						'--collapsed': isCollapsed(parentItem, parentItemIndex),
 						'--hidden': parentItem.hidden,
+						'--dragged_item': parentItem.id === draggedCheckListId,
 					}"
+					:data-id="parentItem.id"
 					:data-parent-container="parentItem.id"
 				>
-					<CheckListParentItem
-						:id="parentItem.id"
-						:taskId="taskId"
-						:isPreview="isPreview"
-						:positionIndex="parentItemIndex"
-						@update="(id) => $emit('update', id)"
-						@removeItem="(id) => $emit('removeItem', id)"
-						@focus="(id) => $emit('focus', id)"
-						@blur="(id) => $emit('blur', id)"
-						@emptyBlur="(id) => $emit('emptyBlur', id)"
-						@startGroupMode="(id) => $emit('startGroupMode', id)"
-						@openCheckList="(id) => $emit('openCheckList', id)"
-					/>
+					<template v-if="parentItem.id === draggedCheckListId">
+						<CheckListDropList/>
+					</template>
+					<template v-else>
+						<CheckListParentItem
+							ref="parentComponents"
+							:id="parentItem.id"
+							:isPreview
+							:positionIndex="parentItemIndex"
+							@update="(id) => $emit('update', id)"
+							@removeItem="(id) => $emit('removeItem', id)"
+							@focus="(id) => $emit('focus', id)"
+							@blur="(id) => $emit('blur', id)"
+							@emptyBlur="(id) => $emit('emptyBlur', id)"
+							@startGroupMode="(id) => $emit('startGroupMode', id)"
+							@openCheckList="(id) => $emit('openCheckList', id)"
+						/>
+					</template>
 					<TransitionGroup
+						v-if="parentItem.id !== draggedCheckListId"
 						:css="!disableCheckListAnimations"
 						name="check-list"
-						mode="out-in"
 						tag="ul"
 						class="check-list-widget"
 					>
 						<li
 							v-if="!isCollapsed(parentItem, parentItemIndex)"
-							v-for="childItem in getChildren(parentItem)"
-							:key="childItem.id"
-							class="check-list-widget-item"
+							v-for="(childItem, childIndex) in getChildren(parentItem)"
+							:key="'child-' + parentItem.id + childItem.id + childIndex"
+							:data-id="childItem.id"
+							class="check-list-widget-item check-list-draggable-item"
+							:class="{
+								'--dragged_item': childItem.id === draggedCheckListId,
+							}"
 						>
-							<CheckListChildItem
-								:id="childItem.id"
-								:taskId="taskId"
-								:itemOffset="getItemOffset(childItem)"
-								:isPreview="isPreview"
-								@update="(id) => $emit('update', id)"
-								@addItem="(data) => $emit('addItem', data)"
-								@removeItem="(id) => $emit('removeItem', id)"
-								@focus="(id) => $emit('focus', id)"
-								@blur="(id) => $emit('blur', id)"
-								@emptyBlur="(id) => $emit('emptyBlur', id)"
-								@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
-							/>
+							<template v-if="childItem.id === draggedCheckListId">
+								<CheckListDropItem :dropOffset="getItemOffset(childItem)"/>
+							</template>
+							<template v-else>
+								<CheckListChildItem
+									:id="childItem.id"
+									:itemOffset="getItemOffset(childItem)"
+									:isPreview
+									:checkListId
+									@update="(id) => $emit('update', id)"
+									@addItem="(data) => $emit('addItem', data)"
+									@removeItem="(id) => $emit('removeItem', id)"
+									@focus="(id) => $emit('focus', id)"
+									@blur="(id) => $emit('blur', id)"
+									@emptyBlur="(id) => $emit('emptyBlur', id)"
+									@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
+									@openCheckList="(id) => $emit('openCheckList', id)"
+								/>
+							</template>
 						</li>
 						<li
-							v-if="!isCollapsed(parentItem, parentItemIndex) && canAddItem"
-							key="add-item"
-							class="check-list-widget-item"
+							v-if="!isCollapsed(parentItem, parentItemIndex)"
+							:key="'add-' + parentItem.id + parentItemIndex"
+							data-id="add-item"
+							:data-parent-id="parentItem.id"
+							class="check-list-widget-item check-list-draggable-item"
 						>
 							<CheckListAddItem
-								:isPreview="isPreview"
+								v-if="canAddItem"
+								:isPreview
 								@addItem="$emit('addItemFromBtn', parentItem.id)"
 							/>
 						</li>
@@ -1972,10 +2901,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					key="completed-list"
 					class="check-list-widget-item --completed-list"
 				>
-					<CheckListGroupCompletedList
-						:totalCompletedParents="totalCompletedParents"
-						@click="showFirstCompletedCheckList"
-					/>
+					<CheckListGroupCompletedList :totalCompletedParents @click="showFirstCompletedCheckList"/>
 				</li>
 			</TransitionGroup>
 		</div>
@@ -2007,8 +2933,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  defaultSections: [{
 	    name: PanelSection.Important,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.FIRE,
-	      activeIcon: ui_iconSet_api_core.Outline.FIRE_SOLID,
+	      icon: ui_iconSet_api_vue.Outline.FIRE,
+	      activeIcon: ui_iconSet_api_vue.Outline.FIRE_SOLID,
 	      action: PanelAction.SetImportant,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_IMPORTANT_HINT',
 	      className: '--important',
@@ -2017,57 +2943,57 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  }, {
 	    name: PanelSection.Attachments,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.ATTACH,
+	      icon: ui_iconSet_api_vue.Outline.ATTACH,
 	      action: PanelAction.AttachFile,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_ATTACH_HINT'
 	    }]
 	  }, {
 	    name: PanelSection.Movement,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.POINT_RIGHT,
+	      icon: ui_iconSet_api_vue.Outline.POINT_RIGHT,
 	      action: PanelAction.MoveRight,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_MOVE_RIGHT_HINT'
 	    }, {
-	      icon: ui_iconSet_api_core.Outline.POINT_LEFT,
+	      icon: ui_iconSet_api_vue.Outline.POINT_LEFT,
 	      action: PanelAction.MoveLeft,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_MOVE_LEFT_HINT'
 	    }]
 	  }, {
 	    name: PanelSection.Accomplice,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.PERSON,
+	      icon: ui_iconSet_api_vue.Outline.PERSON,
 	      action: PanelAction.AssignAccomplice,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_ACCOMPLICE_HINT'
 	    }]
 	  }, {
 	    name: PanelSection.Auditor,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.OBSERVER,
+	      icon: ui_iconSet_api_vue.Outline.OBSERVER,
 	      action: PanelAction.AssignAuditor,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_AUDITOR_HINT'
 	    }]
 	  }, {
 	    name: PanelSection.Forward,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.FORWARD,
+	      icon: ui_iconSet_api_vue.Outline.FORWARD,
 	      action: PanelAction.Forward,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_FORWARD_HINT'
 	    }]
 	  }, {
 	    name: PanelSection.Delete,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	      icon: ui_iconSet_api_vue.Outline.TRASHCAN,
 	      action: PanelAction.Delete,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_REMOVE_HINT'
 	    }]
 	  }, {
 	    name: PanelSection.Cancel,
 	    items: [{
-	      icon: ui_iconSet_api_core.Outline.CROSS_L,
+	      icon: ui_iconSet_api_vue.Outline.CROSS_L,
 	      action: PanelAction.Cancel,
 	      hint: 'TASKS_V2_CHECK_LIST_ITEM_CANCEL_HINT'
 	    }]
-	  }]
+	  }].filter(Boolean)
 	});
 
 	// @vue/component
@@ -2079,17 +3005,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    currentItem: {
 	      type: Object,
 	      default: () => null
 	    }
 	  },
 	  emits: ['action'],
+	  setup() {},
 	  data() {
 	    return {
 	      currentHintElement: null,
@@ -2097,14 +3025,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    checkLists() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
+	    isStakeholdersRestricted() {
+	      return !tasks_v2_core.Core.getParams().restrictions.stakeholder.available;
+	    },
 	    sections() {
-	      return PanelMeta.defaultSections.filter(section => this.visibleSections.includes(section.name)).map(section => ({
+	      return PanelMeta.defaultSections.filter(section => this.visibleSections.includes(section.name) && this.canShowPanelSection(section.name)).map(section => ({
 	        ...section,
 	        items: section.items.filter(item => this.visibleActions.includes(item.action)).map(item => {
 	          var _item$hoverable;
@@ -2155,10 +3083,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (this.currentItem.parentId === 0) {
 	        actions = [PanelAction.AssignAccomplice, PanelAction.AssignAuditor];
 	      }
-	      const limits = tasks_v2_core.Core.getParams().limits;
 	      const stakeholdersActions = new Set([PanelAction.AssignAccomplice, PanelAction.AssignAuditor]);
 	      return actions.filter(action => {
-	        const isDisabledStakeholders = stakeholdersActions.has(action) && !limits.stakeholders;
+	        const isDisabledStakeholders = stakeholdersActions.has(action) && this.isStakeholdersRestricted;
 	        return !isDisabledStakeholders;
 	      });
 	    },
@@ -2184,13 +3111,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          return itemLevel === 5 || this.currentItem.sortIndex === 0 || canModify === false;
 	        },
 	        [PanelAction.AssignAccomplice]: () => {
-	          return canModify === false;
+	          return canModify === false || this.canChangeAccomplices === false;
 	        },
 	        [PanelAction.AssignAuditor]: () => {
-	          return canModify === false;
+	          return canModify === false || this.canAuditorsAdd === false;
 	        },
 	        [PanelAction.Forward]: () => {
-	          return canModify === false || this.currentItem.title === '';
+	          return canModify === false || this.currentItem.title === '' || !this.canCheckListAdd;
 	        },
 	        [PanelAction.Delete]: () => {
 	          return canRemove === false;
@@ -2219,6 +3146,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return false;
 	      }
 	      return ((_this$currentItem$gro = this.currentItem.groupMode) == null ? void 0 : _this$currentItem$gro.selected) === true;
+	    },
+	    canCheckListAdd() {
+	      if (!this.isEdit) {
+	        return true;
+	      }
+	      return this.task.rights.checklistAdd;
+	    },
+	    canAuditorsAdd() {
+	      if (!this.isEdit) {
+	        return true;
+	      }
+	      return this.task.rights.addAuditors;
+	    },
+	    canChangeAccomplices() {
+	      if (!this.isEdit) {
+	        return true;
+	      }
+	      return this.task.rights.changeAccomplices;
 	    }
 	  },
 	  created() {
@@ -2251,6 +3196,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleItemMouseEnter(event, item) {
 	      this.currentHintElement = event.currentTarget;
 	      this.currentHintText = item.hint ? this.loc(item.hint) : null;
+	    },
+	    canShowPanelSection(sectionName) {
+	      return !(sectionName === PanelSection.Attachments && !tasks_v2_core.Core.getParams().features.disk);
 	    }
 	  },
 	  template: `
@@ -2329,23 +3277,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  }
 	  showBalloonWithTimer() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _counter)[_counter] = babelHelpers.classPrivateFieldLooseBase(this, _timerValue)[_timerValue];
+	    const balloonId = `check-list-balloon-${main_core.Text.getRandom()}`;
 	    babelHelpers.classPrivateFieldLooseBase(this, _balloonWithTimer)[_balloonWithTimer] = ui_notification.UI.Notification.Center.notify({
-	      id: `check-list-balloon-${main_core.Text.getRandom()}`,
+	      id: balloonId,
 	      content: babelHelpers.classPrivateFieldLooseBase(this, _getBalloonContent)[_getBalloonContent](),
 	      actions: [{
 	        title: main_core.Loc.getMessage('TASKS_V2_CHECK_LIST_BALLOON_CANCEL'),
 	        events: {
 	          mouseup: babelHelpers.classPrivateFieldLooseBase(this, _handleCancelClick)[_handleCancelClick].bind(this)
 	        }
-	      }],
-	      events: {
-	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _handleClosingBalloon)[_handleClosingBalloon].bind(this)
-	      }
+	      }]
 	    });
+	    const handler = baseEvent => {
+	      const closingBalloon = baseEvent.getTarget();
+	      if (closingBalloon.getId() === balloonId) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _handleClosingBalloon)[_handleClosingBalloon]();
+	        main_core_events.EventEmitter.unsubscribe('UI.Notification.Balloon:onClose', handler);
+	      }
+	    };
+	    main_core_events.EventEmitter.subscribe('UI.Notification.Balloon:onClose', handler);
 	    babelHelpers.classPrivateFieldLooseBase(this, _startTimer)[_startTimer]();
 	  }
 	  stopTimer() {
-	    this.emit('complete', true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _balloonWithTimer)[_balloonWithTimer].close();
 	  }
 	}
@@ -2356,27 +3309,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      content: babelHelpers.classPrivateFieldLooseBase(this, _getBalloonContent)[_getBalloonContent]()
 	    });
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _counter)[_counter] <= 0) {
-	      this.emit('complete', true);
-	      babelHelpers.classPrivateFieldLooseBase(this, _balloonWithTimer)[_balloonWithTimer].close();
+	      this.stopTimer();
 	    }
 	  }, 1000);
 	}
 	function _handleCancelClick2() {
+	  this.emit('complete', false);
 	  babelHelpers.classPrivateFieldLooseBase(this, _balloonWithTimer)[_balloonWithTimer].close();
 	}
 	function _handleClosingBalloon2() {
 	  clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _interval)[_interval]);
-	  this.emit('complete', false);
+	  this.emit('complete', true);
 	}
 	function _getBalloonContent2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _content)[_content].replace('#countdown#', babelHelpers.classPrivateFieldLooseBase(this, _counter)[_counter]);
 	}
-
-	const Context = Object.freeze({
-	  Sheet: 'sheet',
-	  Popup: 'popup',
-	  Preview: 'preview'
-	});
 
 	// @vue/component
 	const CheckList = {
@@ -2395,11 +3342,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      getItemsRef: this.getItemsRef
 	    };
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    isAutonomous: {
 	      type: Boolean,
 	      default: false
@@ -2420,12 +3368,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: Boolean,
 	      default: false
 	    },
-	    getBindElement: {
-	      type: Function,
-	      default: null
-	    },
-	    getTargetContainer: {
-	      type: Function,
+	    sheetBindProps: {
+	      type: Object,
 	      default: null
 	    }
 	  },
@@ -2436,7 +3380,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
 	      ButtonSize: ui_vue3_components_button.ButtonSize,
 	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
-	      Outline: ui_iconSet_api_core.Outline
+	      Outline: ui_iconSet_api_vue.Outline,
+	      checkListMeta
 	    };
 	  },
 	  data() {
@@ -2457,13 +3402,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      forwardMenuSectionCode: 'createSection',
 	      forwardBindElement: null,
 	      shownPopups: new Set(),
-	      notifiers: new Map()
+	      notifiers: new Map(),
+	      isFreeze: false,
+	      closing: false
 	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
+	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
 	      deletingCheckListIds: `${tasks_v2_const.Model.Interface}/deletingCheckListIds`,
-	      checkListCompletionCallback: `${tasks_v2_const.Model.Interface}/checkListCompletionCallback`
+	      checkListCompletionCallback: `${tasks_v2_const.Model.Interface}/checkListCompletionCallback`,
+	      draggedCheckListId: `${tasks_v2_const.Model.Interface}/draggedCheckListId`
 	    }),
 	    componentName() {
 	      return {
@@ -2488,16 +3437,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      return true;
 	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    canSaveCheckList() {
-	      return this.task.rights.checklistSave === true;
-	    },
 	    checkLists() {
+	      if (!this.task) {
+	        return [];
+	      }
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
 	    parentCheckLists() {
@@ -2539,9 +3482,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        onClick: () => {
 	          this.hideItemPanel();
 	          if (this.itemGroupModeSelected) {
-	            void this.forwardGroupItemsToChecklist(checkList.id);
+	            void this.forwardGroupItemsToChecklist(this.currentItem.id, checkList.id);
 	          } else {
-	            this.forwardToChecklist(checkList.id);
+	            this.forwardToChecklist(this.currentItem.id, checkList.id);
 	          }
 	        }
 	      }));
@@ -2551,7 +3494,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        dataset: {
 	          id: `ForwardMenuCreateNew-${this.currentItem.id}`
 	        },
-	        onClick: this.forwardToNewChecklist.bind(this)
+	        onClick: this.forwardToNewChecklist.bind(this, this.currentItem.id)
 	      }];
 	    },
 	    stub() {
@@ -2560,6 +3503,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    emptyList() {
 	      const siblings = this.parentCheckLists.filter(item => !this.deletingCheckListIds[item.id]);
 	      return siblings.length === 0;
+	    },
+	    parentItemDragged() {
+	      return this.checkListManager.isParentItem(this.draggedCheckListId);
+	    },
+	    canCheckListAdd() {
+	      if (!this.isEdit) {
+	        return true;
+	      }
+	      return this.task.rights.checklistAdd;
 	    }
 	  },
 	  watch: {
@@ -2578,12 +3530,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      void this.$nextTick(() => {
 	        if (value) {
 	          this.subscribeToEvents();
-	          if (this.checkListManager.getItem(this.checkListId) && this.$refs.list) {
-	            const checkListNode = this.$refs.list.querySelector([`[data-id="${this.checkListId}"]`]);
-	            checkListNode == null ? void 0 : checkListNode.scrollIntoView({
-	              block: 'center',
-	              behavior: 'instant'
-	            });
+	          if (this.checkListId && this.checkListManager.getItem(this.checkListId) && this.$refs.list) {
+	            this.scrollToCheckList(this.checkListId);
 	          }
 	        } else {
 	          this.unsubscribeFromEvents();
@@ -2618,31 +3566,46 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.subscribeToEvents();
 	    }
 	  },
-	  beforeUnmount() {
+	  async beforeUnmount() {
 	    if (this.isAutonomous || this.isPreview) {
 	      this.unsubscribeFromEvents();
 	    }
 	    if (this.isPreview) {
 	      this.executeCheckListCompletionCallbacks();
+	      if (this.isEdit) {
+	        await tasks_v2_provider_service_checkListService.checkListService.forceSavePending(this.taskId);
+	      }
 	    }
 	  },
 	  methods: {
-	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['addCheckListItemToDeleting', 'removeCheckListItemFromDeleting', 'executeCheckListCompletionCallbacks', 'clearCheckListCompletionCallbacks']),
+	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['addCheckListItemToDeleting', 'removeCheckListItemFromDeleting', 'executeCheckListCompletionCallbacks']),
 	    subscribeToEvents() {
 	      main_core.Event.bind(this.$refs.list, 'scroll', this.handleScroll);
-	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onInit', this.handleInitPopup);
 	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.handleShowPopup);
 	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onClose', this.handleClosePopup);
+	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.handleClosePopup);
 	    },
 	    unsubscribeFromEvents() {
 	      main_core.Event.unbind(this.$refs.list, 'scroll', this.handleScroll);
-	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onInit', this.handleInitPopup);
 	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.handleShowPopup);
 	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onClose', this.handleClosePopup);
+	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.handleClosePopup);
+	    },
+	    scrollToCheckList(checkListId) {
+	      this.checkListManager.scrollToCheckList(this.$refs.list, checkListId);
 	    },
 	    handleUpdate(itemId) {
 	      this.itemId = itemId;
+	      this.handleUpdatingFreezeState();
 	      this.checkListWasUpdated = true;
+	    },
+	    handleUpdatingFreezeState() {
+	      if (!this.isFreeze && (this.hasEmptyItem() || this.getItemIdWithUploadingFiles())) {
+	        this.freeze();
+	      }
+	      if (this.isFreeze) {
+	        this.unfreeze();
+	      }
 	    },
 	    handleRemove(itemId) {
 	      this.itemId = itemId;
@@ -2678,28 +3641,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.$emit('show', data);
 	    },
 	    async handleClose() {
+	      if (this.closing) {
+	        return;
+	      }
+	      this.closing = true;
 	      this.cleanNotifiers();
 	      this.cancelGroupMode();
 	      this.cleanCollapsedState();
 	      this.executeCheckListCompletionCallbacks();
-	      if (this.checkListManager.hasEmptyItemWithFiles(this.hasItemFiles) || this.checkListManager.hasEmptyParentItem()) {
+	      if (this.hasEmptyItem()) {
 	        const firstEmptyItem = this.checkListManager.getFirstEmptyItem();
 	        this.focusToItem(firstEmptyItem.id, true);
+	        this.closing = false;
 	        return;
 	      }
-	      const getItemIdWithUploadingFiles = () => {
-	        var _find;
-	        return (_find = [...this.fileServiceInstances.values()].find(fileServiceInstance => fileServiceInstance.isUploading())) == null ? void 0 : _find.getEntityId();
-	      };
-	      const itemIdWithUploadingFiles = this.fileServiceInstances ? getItemIdWithUploadingFiles() : null;
+	      const itemIdWithUploadingFiles = this.getItemIdWithUploadingFiles();
 	      if (itemIdWithUploadingFiles) {
 	        this.focusToItem(itemIdWithUploadingFiles, true);
+	        this.closing = false;
 	        return;
 	      }
-	      this.cleanEmptyCurrentItem();
+	      this.cleanEmptyItems();
 	      const checkListId = this.lastUpdatedCheckListId === 0 ? this.checkListId : this.lastUpdatedCheckListId;
-	      this.saveCheckList();
 	      this.$emit('close', this.deletingCheckListIds[checkListId] ? 0 : checkListId);
+	      await this.saveCheckList();
+	      this.closing = false;
 	    },
 	    handleIsShown(isShown) {
 	      if (isShown) {
@@ -2708,30 +3674,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.unsubscribeFromEvents();
 	      }
 	    },
-	    handleInitPopup(baseEvent) {
-	      const [id, bindElement, params] = baseEvent.getCompatData();
-	      if (id === 'b24-bottom-sheet' || id === 'tasks-relation-error') {
-	        return;
-	      }
-	      if (main_core.Type.isDomNode(bindElement)) {
-	        var _this$$refs$list;
-	        const excludedIds = ['popup-submenu-'];
-	        const shouldExclude = excludedIds.some(excludedId => id.includes(excludedId));
-	        if ((_this$$refs$list = this.$refs.list) != null && _this$$refs$list.contains(bindElement) && !shouldExclude && !this.isPreview) {
-	          params.targetContainer = this.$refs.list;
-	        } else {
-	          params.targetContainer = document.body;
-	        }
-	      }
-	    },
 	    handleShowPopup(baseEvent) {
 	      const [popup] = baseEvent.getCompatData();
-	      this.shownPopups.add(popup.getId());
+	      const isHintPopup = popup.getId().startsWith('bx-vue-hint-');
+	      if (isHintPopup) {
+	        return;
+	      }
+	      this.shownPopups.add(popup);
 	      this.freeze();
 	    },
 	    handleClosePopup(baseEvent) {
 	      const [popup] = baseEvent.getCompatData();
-	      this.shownPopups.delete(popup.getId());
+	      const isHintPopup = popup.getId().startsWith('bx-vue-hint-');
+	      if (isHintPopup) {
+	        return;
+	      }
+	      this.shownPopups.delete(popup);
 	      this.unfreeze();
 	    },
 	    async handleGroupRemove(itemId) {
@@ -2814,7 +3772,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleGroupMode(itemId) {
 	      this.itemId = itemId;
 	      this.cancelGroupMode();
-	      const firstChild = this.checkListManager.getFirstChild(itemId);
+	      const firstChild = this.checkListManager.getFirstVisibleChild(itemId);
 	      if (!firstChild) {
 	        return;
 	      }
@@ -2866,11 +3824,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        fields
 	      });
 	    },
-	    updateTask(fields) {
-	      return this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields
-	      });
+	    async updateTask(fields) {
+	      return tasks_v2_provider_service_taskService.taskService.updateStoreTask(this.taskId, fields);
 	    },
 	    upsertCheckLists(items) {
 	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, items);
@@ -2884,18 +3839,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    deleteCheckList(id) {
 	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/delete`, id);
 	    },
-	    saveCheckList() {
+	    async saveCheckList() {
 	      if (!this.isDemoCheckListModified()) {
 	        this.removeChecklists();
 	        this.checkListWasUpdated = false;
 	      }
-	      if (this.checkListWasUpdated && this.isEdit && this.canSaveCheckList) {
+	      if (this.checkListWasUpdated && this.isEdit) {
 	        const deletingIds = new Set(Object.values(this.deletingCheckListIds));
 	        const fullListDeletingIds = this.checkListManager.expandIdsWithChildren(deletingIds);
 	        const checkListsToSave = this.checkLists.filter(checkList => {
 	          return !fullListDeletingIds.has(checkList.id);
 	        });
-	        void tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, checkListsToSave);
+	        await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, checkListsToSave);
 	      }
 	      this.checkListWasUpdated = false;
 	    },
@@ -2920,18 +3875,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    async addCheckList(empty = false) {
 	      const parentId = main_core.Text.getRandom();
 	      const childId = main_core.Text.getRandom();
+	      const checklist = [...this.task.checklist, parentId];
 	      const items = [this.getDataForNewCheckList(parentId)];
 	      if (!empty) {
 	        items.push({
 	          id: childId,
 	          nodeId: childId,
 	          parentId,
+	          parentNodeId: parentId,
 	          sortIndex: 0
 	        });
+	        checklist.push(childId);
 	      }
 	      await this.insertManyCheckLists(items);
 	      void this.updateTask({
-	        checklist: [...this.task.checklist, parentId, childId]
+	        checklist
 	      });
 	      this.checkListWasUpdated = true;
 	      return parentId;
@@ -2953,6 +3911,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return {
 	        id: parentId,
 	        nodeId: parentId,
+	        parentId: 0,
 	        title: this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
 	          '#number#': this.getCountForNewCheckList()
 	        }),
@@ -2977,7 +3936,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        const itemRef = this.getItemsRef(itemId);
 	        itemRef == null ? void 0 : (_itemRef$$refs$growin = itemRef.$refs.growingTextArea) == null ? void 0 : _itemRef$$refs$growin.focusTextarea();
 	        if (highlight) {
-	          void new Highlighter().highlight(itemRef == null ? void 0 : itemRef.$refs.item);
+	          void tasks_v2_lib_highlighter.highlighter.highlight(itemRef == null ? void 0 : itemRef.$refs.item);
 	        }
 	      });
 	    },
@@ -2995,27 +3954,28 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.insertItem(parentId, childId, sort);
 	    },
 	    addItemFromBtn(checkListId) {
-	      if (this.isPreview) {
-	        this.handleOpenCheckList(checkListId);
-	      }
 	      if (this.hasActiveGroupMode()) {
 	        return;
+	      }
+	      if (this.isPreview) {
+	        this.handleOpenCheckList(checkListId);
 	      }
 	      const childId = main_core.Text.getRandom();
 	      const sortIndex = this.checkListManager.getChildren(checkListId).length;
 	      this.insertItem(checkListId, childId, sortIndex);
 	    },
 	    insertItem(parentId, childId, sortIndex) {
+	      const parentItem = parentId ? this.checkListManager.getItem(parentId) : null;
 	      void this.insertCheckList({
 	        id: childId,
 	        nodeId: childId,
 	        parentId,
+	        parentNodeId: parentItem ? parentItem.nodeId : null,
 	        sortIndex
 	      });
 	      void this.updateTask({
 	        checklist: [...this.task.checklist, childId]
 	      });
-	      this.syncParentCompletionState(childId);
 	    },
 	    removeItem(id, isRootCall = true) {
 	      if (!this.task) {
@@ -3043,7 +4003,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (isRootCall) {
 	        this.resortItemsOnLevel(item.parentId);
 	      }
-	      this.syncParentCompletionState(item.id, item.parentId);
 	      tasks_v2_provider_service_fileService.fileService.delete(item.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem);
 	    },
 	    addItemToDelete(itemId) {
@@ -3051,20 +4010,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    removeItemFromDelete(itemId) {
 	      this.removeCheckListItemFromDeleting(itemId);
-	      if (this.checkListWasUpdated === true && this.isEdit && main_core.Type.isNumber(itemId)) {
+	      if (this.isPreview && this.isEdit && main_core.Type.isNumber(itemId)) {
 	        void tasks_v2_provider_service_checkListService.checkListService.delete(this.taskId, itemId);
 	      }
 	    },
 	    resortItemsAfterIndex(parentId, sortIndex) {
 	      this.checkListManager.resortItemsAfterIndex(parentId, sortIndex, updates => {
-	        void this.upsertCheckLists(updates);
+	        if (updates.length > 0) {
+	          void this.upsertCheckLists(updates);
+	        }
 	      });
 	    },
 	    resortItemsOnLevel(parentId) {
 	      this.checkListManager.resortItemsOnLevel(parentId, updates => this.upsertCheckLists(updates));
-	    },
-	    syncParentCompletionState(itemId, parentId) {
-	      this.checkListManager.syncParentCompletionState(itemId, (id, fields) => this.updateCheckList(id, fields), parentId);
 	    },
 	    showItemPanel(itemId) {
 	      if (this.isPreview) {
@@ -3114,9 +4072,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      const paddingOffset = 18;
 	      const panelWidth = panelRect.width === 0 ? 304 : panelRect.width;
 	      const top = itemRect.top - 28;
+	      const topLimitValue = isParentItem ? -30 : 40;
+	      const panelVisible = top > topLimitValue && top < this.itemPanelTopLimit;
+	      const topPopupLimitValue = isParentItem ? 0 : 70;
+	      const popupVisible = top > topPopupLimitValue && top < this.itemPanelTopLimit;
+	      if (!popupVisible) {
+	        this.shownPopups.forEach(popup => {
+	          popup.close();
+	        });
+	      }
+	      const display = panelVisible ? 'flex' : 'none';
 	      if (isParentItem) {
 	        const left = listRect.width - panelWidth - paddingOffset * 2 - 80;
-	        const display = top > -30 && top < this.itemPanelTopLimit ? 'flex' : 'none';
 	        this.itemPanelStyles = {
 	          top: `${top}px`,
 	          left: `${left}px`,
@@ -3124,7 +4091,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        };
 	      } else {
 	        const left = listRect.width - panelWidth - paddingOffset;
-	        const display = top > 40 && top < this.itemPanelTopLimit ? 'flex' : 'none';
 	        this.itemPanelStyles = {
 	          top: `${top}px`,
 	          left: `${left}px`,
@@ -3151,6 +4117,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      (_this$fileServiceInst = this.fileServiceInstances) != null ? _this$fileServiceInst : this.fileServiceInstances = new Map();
 	      const fileServiceInstance = this.getCurrentFileService();
 	      this.fileServiceInstances.set(this.currentItem.id, fileServiceInstance);
+	      const handleFreeze = freeze => {
+	        if (freeze) {
+	          this.freeze();
+	        } else {
+	          this.unfreeze();
+	        }
+	      };
+	      handleFreeze(true);
 	      fileServiceInstance.browse({
 	        bindElement: node,
 	        onShowCallback: () => {
@@ -3160,8 +4134,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          this.isItemPanelFreeze = false;
 	        }
 	      });
+	      fileServiceInstance.subscribe('onFileAdd', () => {
+	        handleFreeze(true);
+	      });
 	      fileServiceInstance.subscribe('onFileComplete', () => {
 	        this.isItemPanelFreeze = fileServiceInstance.isUploading();
+	        handleFreeze(this.isItemPanelFreeze || this.hasEmptyItem());
 	        this.focusToItem(this.currentItem.id);
 	        this.checkListWasUpdated = true;
 	      });
@@ -3184,6 +4162,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    hasItemUsers(item) {
 	      return item.accomplices.length > 0 || item.auditors.length > 0;
+	    },
+	    getItemIdWithUploadingFiles() {
+	      var _find;
+	      if (!this.fileServiceInstances) {
+	        return null;
+	      }
+	      return (_find = [...this.fileServiceInstances.values()].find(fileServiceInstance => fileServiceInstance.isUploading())) == null ? void 0 : _find.getEntityId();
 	    },
 	    isCurrentItemEmpty() {
 	      if (!this.currentItem) {
@@ -3234,32 +4219,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.showForwardMenu(node);
 	      } else {
 	        this.hideItemPanel();
-	        void this.forwardToNewChecklist();
+	        void this.forwardToNewChecklist(this.currentItem.id);
 	      }
 	      this.checkListWasUpdated = true;
 	    },
-	    async forwardToNewChecklist() {
+	    async forwardToNewChecklist(itemId) {
 	      const newParentId = await this.addCheckList(true);
 	      if (this.itemGroupModeSelected) {
-	        void this.forwardGroupItemsToChecklist(newParentId);
+	        void this.forwardGroupItemsToChecklist(itemId, newParentId);
 	      } else {
-	        this.forwardToChecklist(newParentId);
+	        this.forwardToChecklist(itemId, newParentId);
 	      }
 	    },
-	    forwardToChecklist(checkListId) {
+	    forwardToChecklist(itemId, checkListId) {
 	      const finalSortIndex = this.checkListManager.getChildren(checkListId).length;
-	      void this.updateCheckList(this.currentItem.id, {
+	      const movingItem = this.checkListManager.getItem(itemId);
+	      void this.updateCheckList(movingItem.id, {
 	        parentId: checkListId,
 	        sortIndex: finalSortIndex
 	      });
 	      this.resortItemsOnLevel(checkListId);
-	      this.resortItemsOnLevel(this.currentItem.parentId);
+	      this.resortItemsOnLevel(movingItem.parentId);
+	      this.handleTargetParentFilter(movingItem);
 	    },
-	    async forwardGroupItemsToChecklist(checkListId) {
+	    async forwardGroupItemsToChecklist(itemId, checkListId) {
 	      const finalSortIndex = this.checkListManager.getChildren(checkListId).length;
+	      const movingItem = this.checkListManager.getItem(itemId);
 	      const checkListIdsFromWhichWereForwarded = new Set();
 	      const allSelectedItems = this.checkListManager.getAllSelectedItems();
-	      const nearestItem = this.checkListManager.findNearestItem(this.currentItem, false, allSelectedItems);
+	      const nearestItem = this.checkListManager.findNearestItem(movingItem, false, allSelectedItems);
 	      if (nearestItem) {
 	        this.showItemPanel(nearestItem.id);
 	      } else {
@@ -3305,6 +4293,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      checkListIdsFromWhichWereForwarded.forEach(id => {
 	        this.resortItemsOnLevel(id);
 	      });
+	      allSelectedWithChildren.forEach(item => {
+	        this.handleTargetParentFilter(item);
+	      });
+	    },
+	    handleTargetParentFilter(movedItem) {
+	      this.checkListManager.handleTargetParentFilter(movedItem, this.currentUserId, updates => {
+	        setTimeout(() => {
+	          void this.upsertCheckLists(updates);
+	        }, 1000);
+	      });
 	    },
 	    delete() {
 	      if (this.itemGroupModeSelected) {
@@ -3325,62 +4323,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }));
 	      void this.upsertCheckLists(updates);
 	    },
-	    cleanEmptyCurrentItem() {
-	      if (this.currentItem && this.isCurrentItemEmpty()) {
-	        this.removeItem(this.currentItem.id);
-	      }
+	    cleanEmptyItems() {
+	      this.checkListManager.getEmptiesItem().forEach(item => {
+	        this.removeItem(item.id);
+	      });
 	    },
 	    showParticipantDialog(targetNode, type) {
-	      var _this$selector;
-	      this.isItemPanelFreeze = true;
-	      const preselected = this.currentItem[type].map(user => ['user', user.id]);
-	      (_this$selector = this.selector) != null ? _this$selector : this.selector = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
-	        ...tasks_v2_component_elements_participantList.participantMeta.dialogOptions(this.taskId, 'check-list'),
-	        preselectedItems: preselected,
-	        popupOptions: {
-	          events: {
-	            onShow: baseEvent => {
-	              const popup = baseEvent.getTarget();
-	              const popupWidth = popup.getPopupContainer().offsetWidth;
-	              const targetNodeWidth = 10;
-	              const offsetLeft = targetNodeWidth - popupWidth / 2;
-	              const angleShift = main_popup.Popup.getOption('angleLeftOffset') - main_popup.Popup.getOption('angleMinTop');
-	              popup.setAngle({
-	                offset: popupWidth / 2 - angleShift
-	              });
-	              popup.setOffset({
-	                offsetLeft: offsetLeft + main_popup.Popup.getOption('angleLeftOffset')
-	              });
-	            },
-	            onClose: () => {
-	              const users = this.selector.getSelectedItems().map(item => ({
-	                id: item.getId(),
-	                name: item.getTitle(),
-	                image: item.getAvatar(),
-	                type: item.getEntityType()
-	              }));
-	              this.saveParticipants(this.selector.params.itemId, this.selector.params.type, users);
-	            }
-	          }
-	        },
-	        events: {
-	          onHide: () => {
-	            this.isItemPanelFreeze = false;
-	            if (!this.itemGroupModeSelected && this.currentItem.id === this.selector.params.itemId) {
-	              this.focusToItem(this.selector.params.itemId);
-	            }
-	            this.updatePanelPosition();
-	          }
+	      const ids = this.currentItem[type].map(user => user.id);
+	      const itemId = this.currentItem.id;
+	      const handleClose = usersIds => {
+	        this.saveParticipants(itemId, type, usersIds);
+	        this.isItemPanelFreeze = false;
+	        if (!this.itemGroupModeSelected && this.currentItem.id === itemId) {
+	          this.focusToItem(itemId);
 	        }
-	      });
-	      this.selector.selectItemsByIds(preselected);
-	      this.selector.params = {
-	        itemId: this.currentItem.id,
-	        type
+	        this.updatePanelPosition();
 	      };
-	      this.selector.showTo(targetNode);
+	      void tasks_v2_lib_userSelectorDialog.usersDialog.show({
+	        targetNode,
+	        ids,
+	        withAngle: true,
+	        onClose: handleClose
+	      });
+	      this.isItemPanelFreeze = true;
 	    },
-	    saveParticipants(id, type, users) {
+	    async saveParticipants(id, type, usersIds) {
+	      const users = this.$store.getters[`${tasks_v2_const.Model.Users}/getByIds`](usersIds);
 	      if (this.itemGroupModeSelected) {
 	        const updates = this.checkListManager.getAllSelectedItems().map(item => ({
 	          ...item,
@@ -3392,16 +4360,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          [type]: users
 	        });
 	      }
-	      const ids = users.map(user => user.id);
+	      const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+	      const existingIds = task[`${type}Ids`];
+	      const mergedIds = [...new Set([...existingIds, ...usersIds])];
 	      const fields = {
-	        [`${type}Ids`]: ids
+	        [`${type}Ids`]: mergedIds
 	      };
 	      void this.updateTask(fields);
 	      this.checkListWasUpdated = true;
 	    },
 	    activateGroupMode(parentItemId) {
 	      this.itemId = parentItemId;
-	      const updates = this.checkListManager.getAllChildren(parentItemId).map((item, index) => ({
+	      const visibleItems = this.checkListManager.getAllChildren(parentItemId).filter(item => !item.hidden);
+	      const updates = visibleItems.map((item, index) => ({
 	        ...item,
 	        groupMode: {
 	          active: true,
@@ -3432,13 +4403,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    freeze() {
 	      var _this$$refs$childComp, _this$$refs$childComp2, _this$$refs$childComp3;
+	      this.isFreeze = true;
 	      (_this$$refs$childComp = this.$refs.childComponent) == null ? void 0 : (_this$$refs$childComp2 = _this$$refs$childComp.$refs) == null ? void 0 : (_this$$refs$childComp3 = _this$$refs$childComp2.childComponent) == null ? void 0 : _this$$refs$childComp3.freeze();
 	    },
 	    unfreeze() {
-	      if (this.shownPopups.size === 0 && Object.keys(this.deletingCheckListIds).length === 0) {
-	        var _this$$refs$childComp4, _this$$refs$childComp5, _this$$refs$childComp6;
-	        (_this$$refs$childComp4 = this.$refs.childComponent) == null ? void 0 : (_this$$refs$childComp5 = _this$$refs$childComp4.$refs) == null ? void 0 : (_this$$refs$childComp6 = _this$$refs$childComp5.childComponent) == null ? void 0 : _this$$refs$childComp6.unfreeze();
+	      var _this$$refs$childComp4, _this$$refs$childComp5, _this$$refs$childComp6;
+	      if (this.hasEmptyItem() || this.getItemIdWithUploadingFiles()) {
+	        return;
 	      }
+	      this.isFreeze = false;
+	      (_this$$refs$childComp4 = this.$refs.childComponent) == null ? void 0 : (_this$$refs$childComp5 = _this$$refs$childComp4.$refs) == null ? void 0 : (_this$$refs$childComp6 = _this$$refs$childComp5.childComponent) == null ? void 0 : _this$$refs$childComp6.unfreeze();
+	    },
+	    hasEmptyItem() {
+	      return this.checkListManager.hasEmptyItemWithFiles(this.hasItemFiles) || this.checkListManager.hasEmptyParentItem();
 	    },
 	    setDefaultCheckListTitle(itemId) {
 	      void this.updateCheckList(itemId, {
@@ -3457,10 +4434,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			v-if="componentShown"
 			ref="childComponent"
 			:is="componentName"
-			:taskId="taskId"
-			:isShown="isShown"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
+			:isShown
+			:sheetBindProps
 			:isEmpty="emptyList"
 			@show="handleShow"
 			@close="handleClose"
@@ -3469,16 +4444,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			@resize="$emit('resize')"
 		>
 			<template v-slot:default="{ handleShow, handleClose }">
-				<div ref="wrapper" class="tasks-check-list-wrapper" :class="contextClass">
-					<div v-if="!isPreview" class="tasks-check-list-close-icon" :class="contextClass">
-						<BIcon :name="Outline.CROSS_L" @click="handleClose"/>
+				<div
+					ref="wrapper"
+					class="tasks-check-list-wrapper"
+					:class="contextClass"
+					data-field-container
+					:data-task-field-id="checkListMeta.id"
+				>
+					<div
+						v-if="!isPreview && !parentItemDragged"
+						class="tasks-check-list-close-icon"
+						:class="contextClass"
+					>
+						<BIcon :name="Outline.CROSS_L" @click="$emit('close')"/>
 					</div>
 					<div ref="list" data-list class="tasks-check-list-content" :class="contextClass">
 						<CheckListWidget
 							v-show="!stub"
-							:taskId="taskId"
-							:checkListId="checkListId"
-							:isPreview="isPreview"
+							:context
+							:checkListId
+							:isPreview
 							@update="handleUpdate"
 							@show="handleShow"
 							@addItem="addItem"
@@ -3491,10 +4476,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							@toggleGroupModeSelected="handleGroupModeSelect"
 							@openCheckList="handleOpenCheckList"
 						/>
-						<CheckListStub v-if="stub && !isPreview" @click="addCheckList" />
+						<CheckListStub v-if="stub && !isPreview" @click="addCheckList"/>
 					</div>
 					<div v-show="!stub && !isPreview" class="tasks-check-list-footer" :class="contextClass">
 						<UiButton
+							v-if="canCheckListAdd"
 							:text="loc('TASKS_V2_CHECK_LIST_NEW_BTN')"
 							:size="ButtonSize.MEDIUM"
 							:leftIcon="ButtonIcon.ADD"
@@ -3502,16 +4488,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							@click="addCheckList"
 						/>
 						<UiButton
-							:text="loc('TASKS_V2_CHECK_LIST_READY_BTN')"
+							:text="loc('TASKS_V2_CHECK_LIST_SAVE_BTN')"
 							:size="ButtonSize.MEDIUM"
-							@click="handleClose"
+							@click="$emit('close')"
 						/>
 					</div>
 					<CheckListItemPanel
 						v-if="itemPanelIsShown && !isPreview"
 						ref="panel"
-						:taskId="taskId"
-						:currentItem="currentItem"
+						:currentItem
 						:style="itemPanelStyles"
 						@action="handlePanelAction"
 					/>
@@ -3529,13 +4514,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	// @vue/component
 	const CheckListChip = {
 	  components: {
-	    Chip: tasks_v2_component_elements_chip.Chip
+	    Chip: ui_system_chip_vue.Chip
+	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
 	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    isAutonomous: {
 	      type: Boolean,
 	      default: false
@@ -3544,14 +4530,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['showCheckList'],
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline,
 	      checkListMeta
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    checkLists() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
@@ -3565,10 +4547,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    design() {
 	      return {
-	        [!this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent,
-	        [!this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowAccent,
-	        [this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineNoAccent,
-	        [this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineAccent
+	        [!this.isAutonomous && !this.isSelected]: ui_system_chip_vue.ChipDesign.ShadowNoAccent,
+	        [!this.isAutonomous && this.isSelected]: ui_system_chip_vue.ChipDesign.ShadowAccent,
+	        [this.isAutonomous && !this.isSelected]: ui_system_chip_vue.ChipDesign.OutlineNoAccent,
+	        [this.isAutonomous && this.isSelected]: ui_system_chip_vue.ChipDesign.OutlineAccent
 	      }.true;
 	    },
 	    isSelected() {
@@ -3578,7 +4560,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.wasFilled || this.checkLists.length > 0;
 	    },
 	    wasFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, checkListMeta.id);
+	      return this.task.filledFields[checkListMeta.id];
 	    },
 	    checkListItemCount() {
 	      return this.checkLists.filter(checkList => checkList.parentId !== 0).length;
@@ -3595,15 +4577,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    icon() {
 	      if (this.isUploading && !this.wasFilled) {
-	        return ui_iconSet_api_core.Animated.LOADER_WAIT;
+	        return ui_iconSet_api_vue.Animated.LOADER_WAIT;
 	      }
-	      return ui_iconSet_api_core.Outline.CHECK_LIST;
+	      return ui_iconSet_api_vue.Outline.CHECK_LIST;
 	    }
 	  },
+	  created() {
+	    this.checkListManager = new CheckListManager({
+	      computed: {
+	        checkLists: () => this.checkLists
+	      }
+	    });
+	  },
 	  mounted() {
+	    this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.AiAddCheckList, this.handleAiAdd);
 	    this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.CloseCheckList, this.handleFieldClose);
 	  },
 	  beforeUnmount() {
+	    this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.AiAddCheckList, this.handleAiAdd);
 	    this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.CloseCheckList, this.handleFieldClose);
 	  },
 	  methods: {
@@ -3613,10 +4604,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      } else {
 	        // eslint-disable-next-line no-lonely-if
 	        if (this.isSelected) {
-	          this.highlightField();
+	          void this.highlightField();
 	        } else {
 	          void this.showCheckList();
 	        }
+	      }
+	    },
+	    async handleAiAdd(baseEvent) {
+	      const checkListId = await this.buildAiCheckList(baseEvent.getData());
+	      await this.highlightField();
+	      this.checkListManager.scrollToCheckList(this.$root.$el, checkListId, 'smooth');
+	      if (this.isEdit) {
+	        void tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, this.checkLists);
+	      }
+	    },
+	    handleFieldClose() {
+	      if (this.isAutonomous) {
+	        this.$el.focus();
 	      }
 	    },
 	    async showCheckList() {
@@ -3639,32 +4643,65 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        nodeId: childId,
 	        parentId
 	      }]);
-	      await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields: {
-	          checklist: [parentId, childId]
-	        }
+	      await tasks_v2_provider_service_taskService.taskService.updateStoreTask(this.taskId, {
+	        checklist: [parentId, childId]
 	      });
 	    },
+	    async buildAiCheckList(baseText) {
+	      if (!main_core.Type.isString(baseText) || baseText === '') {
+	        return '';
+	      }
+	      const titles = baseText.split(/\r\n|\r|\n/g).map(line => line.trim()).filter(line => line !== '');
+	      if (titles.length === 0) {
+	        return '';
+	      }
+	      const items = [];
+	      const parentId = main_core.Text.getRandom();
+	      const checkListsNumber = this.getCheckListsNumber();
+	      const taskChecklist = [...this.task.checklist, parentId];
+	      items.push({
+	        id: parentId,
+	        nodeId: parentId,
+	        parentId: 0,
+	        title: this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
+	          '#number#': checkListsNumber + 1
+	        }),
+	        sortIndex: checkListsNumber
+	      });
+	      titles.forEach((title, index) => {
+	        const childId = main_core.Text.getRandom();
+	        items.push({
+	          id: childId,
+	          nodeId: childId,
+	          parentId,
+	          title,
+	          sortIndex: index
+	        });
+	        taskChecklist.push(childId);
+	      });
+	      await this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/insertMany`, items);
+	      await tasks_v2_provider_service_taskService.taskService.updateStoreTask(this.taskId, {
+	        checklist: taskChecklist
+	      });
+	      return parentId;
+	    },
 	    highlightField() {
-	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(checkListMeta.id);
+	      return tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(checkListMeta.id);
+	    },
+	    getCheckListsNumber() {
+	      return this.checkLists.filter(checklist => checklist.parentId === 0).length;
 	    },
 	    getCompletedCount() {
 	      return this.checkLists.filter(checklist => {
 	        return checklist.isComplete && checklist.parentId !== 0;
 	      }).length;
-	    },
-	    handleFieldClose() {
-	      if (this.isAutonomous) {
-	        this.$el.focus();
-	      }
 	    }
 	  },
 	  template: `
 		<Chip
-			:design="design"
-			:icon="icon"
-			:text="text"
+			:design
+			:icon
+			:text
 			:data-task-id="taskId"
 			:data-task-chip-id="checkListMeta.id"
 			@click="handleClick"
@@ -3677,5 +4714,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.CheckListList = CheckListList;
 	exports.checkListMeta = checkListMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Main,BX.UI.EntitySelector,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Vuex,BX.Tasks.V2.Provider.Service,BX.UI.System.Skeleton.Vue,BX.Disk.Uploader,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Directives,BX.UI.IconSet,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX.Event,BX,BX,BX.UI.IconSet,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Lib,BX.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.DragAndDrop,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Vuex,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Directives,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX,BX,BX.Event,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=check-list.bundle.js.map

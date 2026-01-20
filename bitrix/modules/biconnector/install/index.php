@@ -1,8 +1,10 @@
 <?php
 
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -164,6 +166,7 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskElapsedTime', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskEfficiency', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\HumanResources\Structure', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\HumanResources\StructureRelation', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
@@ -214,7 +217,7 @@ class BIConnector extends \CModule
 
 			ModuleManager::registerModule($this->MODULE_ID);
 
-			\Bitrix\Main\Config\Option::set('biconnector', 'check_permissions_by_group', 'Y');
+			Bitrix\Main\Config\Option::set('biconnector', 'check_permissions_by_group', 'Y');
 
 			$this->InstallTemplateRules();
 
@@ -231,6 +234,8 @@ class BIConnector extends \CModule
 	{
 		global $DB, $APPLICATION;
 		$this->errors = false;
+
+		$this->clearSupersetData();
 
 		if (!array_key_exists('save_tables', $arParams) || $arParams['save_tables'] != 'Y')
 		{
@@ -281,6 +286,7 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskElapsedTime', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskEfficiency', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\HumanResources\Structure', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\HumanResources\StructureRelation', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Bizproc\WorkflowTemplate', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
@@ -396,11 +402,26 @@ class BIConnector extends \CModule
 	public function DoUninstall()
 	{
 		global $APPLICATION, $step, $USER, $errors;
+
 		if ($USER->isAdmin())
 		{
 			$step = intval($step);
 			if ($step < 2)
 			{
+				if ($this->isActiveSuperset())
+				{
+					$dashboardUrl = $this->getUrlToDisableBuilder();
+
+					$this->errors[] = Loc::getMessage(
+						"BICONNECTOR_UNINSTALL_TITLE_DELETE_BI_BUILDER",
+						[
+							'[link]' => '<a href="' . $dashboardUrl . '" target="_blank">',
+							'[/link]' => '</a>',
+						],
+					);
+				}
+				$GLOBALS["biconnector_uninstaller_errors"] = $this->errors;
+
 				$APPLICATION->includeAdminFile(GetMessage('BICONNECTOR_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep1.php');
 			}
 			elseif ($step == 2)
@@ -497,5 +518,30 @@ class BIConnector extends \CModule
 				],
 			],
 		];
+	}
+
+	private function isActiveSuperset(): bool
+	{
+		\Bitrix\Main\Loader::includeModule($this->MODULE_ID);
+
+		return SupersetInitializer::isSupersetExist();
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getUrlToDisableBuilder(): string
+	{
+		$uri = new Uri('/bi/dashboard/');
+		$uri->addParams(['needShowSettings' => 'Y']);
+
+		return $uri->getUri();
+	}
+
+	private function clearSupersetData()
+	{
+		\Bitrix\Main\Loader::includeModule($this->MODULE_ID);
+		SupersetInitializer::clearSupersetData();
+		\Bitrix\BIConnector\Superset\Logger\SupersetInitializerLogger::logInfo('Superset data cleared during module uninstall');
 	}
 }

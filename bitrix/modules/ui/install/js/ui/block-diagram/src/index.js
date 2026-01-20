@@ -5,6 +5,8 @@ export { SearchBar } from './components/search-bar/search-bar';
 export { MoveableBlock } from './components/moveable-block/moveable-block';
 export { ResizableBlock } from './components/resizable-block/resizable-block';
 export { Port } from './components/port/port';
+export { Connection } from './components/connection/connection';
+export { DeleteConnectionBtn } from './components/delete-connection-btn/delete-connection-btn';
 export { transformPoint } from './utils';
 export {
 	useBlockDiagram,

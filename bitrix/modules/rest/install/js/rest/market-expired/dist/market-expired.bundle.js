@@ -255,7 +255,7 @@ this.BX = this.BX || {};
 	    this.type = options.type;
 	    this.expireDays = options.expireDays;
 	    this.discountEar = options.discountEar;
-	    this.marketLabel = options.isRenamedMarket ? '' : '_MARKET_PLUS';
+	    this.isRenamedMarket = options.isRenamedMarket;
 	  }
 	  getTitle() {
 	    throw new Error('Not implemented');
@@ -483,12 +483,16 @@ this.BX = this.BX || {};
 					${0}
 				</p>
 			</div>
-		`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL${this.marketLabel}`));
+		`), this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_BITRIX_GPT') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_MARKET_PLUS'));
 	  }
 	  getTitle() {
-	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_${this.type}${this.marketLabel}`, {
+	    const replacements = {
 	      '#DAYS#': this.expireDays
-	    });
+	    };
+	    if (this.type === PopupType.FINAL) {
+	      return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_FINAL_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_FINAL_MARKET_PLUS', replacements);
+	    }
+	    return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_MARKET_PLUS', replacements);
 	  }
 	  renderButtons() {
 	    return main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
@@ -548,6 +552,7 @@ this.BX = this.BX || {};
 	  _t$4,
 	  _t2$4,
 	  _t3$3;
+	var _getDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDescription");
 	var _getSubscribeButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSubscribeButton");
 	var _getHideButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHideButton");
 	class MarketSubscriptionPopup extends MarketExpiredPopup {
@@ -559,6 +564,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _getSubscribeButton$1, {
 	      value: _getSubscribeButton2$1
 	    });
+	    Object.defineProperty(this, _getDescription, {
+	      value: _getDescription2
+	    });
 	  }
 	  getCategory() {
 	    return PopupCategory.SUBSCRIPTION;
@@ -567,21 +575,19 @@ this.BX = this.BX || {};
 	    const replacements = {
 	      '#DAYS#': this.expireDays
 	    };
-	    const marketLabel = this.type === PopupType.WARNING ? this.marketLabel : '';
-	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_${this.type}${marketLabel}`, replacements);
+	    if (this.type === PopupType.FINAL) {
+	      return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_FINAL_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_FINAL_MARKET_PLUS', replacements);
+	    }
+	    return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_WARNING_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_SUBSCRIPTION_WARNING_MARKET_PLUS', replacements);
 	  }
 	  renderDescription() {
-	    const replacements = {
-	      '#DATE#': this.expireDate
-	    };
-	    const marketLabel = this.type === PopupType.FINAL ? this.marketLabel : '';
 	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
 					${0}
 				</p>
 			</div>
-		`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_${this.type}${marketLabel}`, replacements));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getDescription)[_getDescription]());
 	  }
 	  renderButtons() {
 	    return main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
@@ -620,6 +626,15 @@ this.BX = this.BX || {};
 		`), onclick, main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DETAILS'));
 	  }
 	}
+	function _getDescription2() {
+	  const replacements = {
+	    '#DATE#': this.expireDate
+	  };
+	  if (this.type === PopupType.FINAL) {
+	    return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_MARKET_PLUS', replacements);
+	  }
+	  return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_WARNING_BITRIX_GPT', replacements) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_WARNING_MARKET_PLUS', replacements);
+	}
 	function _getSubscribeButton2$1() {
 	  return new SubscribeButton({
 	    text: main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_BUTTON_RENEW_SUBSCRIPTION'),
@@ -641,11 +656,12 @@ this.BX = this.BX || {};
 	  _t$5,
 	  _t2$5,
 	  _t3$4;
+	var _getDescription$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDescription");
 	var _renderDiscountPercent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDiscountPercent");
 	var _renderTermsOfPromotion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTermsOfPromotion");
 	class DiscountEarSubscription extends DiscountEar {
 	  constructor(props) {
-	    var _props$discountPercen, _props$termsUrl, _props$marketLabel;
+	    var _props$discountPercen, _props$termsUrl, _props$isRenamedMarke;
 	    super(props);
 	    Object.defineProperty(this, _renderTermsOfPromotion, {
 	      value: _renderTermsOfPromotion2
@@ -653,9 +669,12 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _renderDiscountPercent, {
 	      value: _renderDiscountPercent2
 	    });
+	    Object.defineProperty(this, _getDescription$1, {
+	      value: _getDescription2$1
+	    });
 	    this.discountPercentage = (_props$discountPercen = props == null ? void 0 : props.discountPercentage) != null ? _props$discountPercen : null;
 	    this.termsUrl = (_props$termsUrl = props == null ? void 0 : props.termsUrl) != null ? _props$termsUrl : null;
-	    this.marketLabel = (_props$marketLabel = props == null ? void 0 : props.marketLabel) != null ? _props$marketLabel : '';
+	    this.isRenamedMarket = (_props$isRenamedMarke = props == null ? void 0 : props.isRenamedMarket) != null ? _props$isRenamedMarke : false;
 	  }
 	  getContainer() {
 	    var _this$container;
@@ -667,9 +686,12 @@ this.BX = this.BX || {};
 				</p>
 				${0}
 			</aside>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderDiscountPercent)[_renderDiscountPercent](), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION${this.marketLabel}`), babelHelpers.classPrivateFieldLooseBase(this, _renderTermsOfPromotion)[_renderTermsOfPromotion]());
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderDiscountPercent)[_renderDiscountPercent](), babelHelpers.classPrivateFieldLooseBase(this, _getDescription$1)[_getDescription$1](), babelHelpers.classPrivateFieldLooseBase(this, _renderTermsOfPromotion)[_renderTermsOfPromotion]());
 	    return this.container;
 	  }
+	}
+	function _getDescription2$1() {
+	  return this.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_BITRIX_GPT') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_MARKET_PLUS');
 	}
 	function _renderDiscountPercent2() {
 	  if (this.discountPercentage) {
@@ -798,7 +820,7 @@ this.BX = this.BX || {};
 	    return PopupCategory.TRANSITION;
 	  }
 	  getTitle() {
-	    return main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_${this.type}`);
+	    return this.type === PopupType.FINAL ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_FINAL') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_WARNING');
 	  }
 	  renderDescription() {
 	    const descriptionContainer = main_core.Tag.render(_t$7 || (_t$7 = _$7`
@@ -819,7 +841,7 @@ this.BX = this.BX || {};
 					<p class="rest-market-expired-popup__description-text">
 						${0}
 					</p>
-				`), main_core.Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_FINAL${this.marketLabel}`)), descriptionContainer);
+				`), main_core.Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_FINAL')), descriptionContainer);
 	    }
 	    main_core.Dom.append(main_core.Tag.render(_t3$5 || (_t3$5 = _$7`
 				<p class="rest-market-expired-popup__description-text">
@@ -983,7 +1005,8 @@ this.BX = this.BX || {};
 	        withDemo: this.config.withDemo,
 	        olWidgetCode: this.config.olWidgetCode,
 	        type: this.config.type,
-	        expireDays: this.config.expireDays
+	        expireDays: this.config.expireDays,
+	        isRenamedMarket: this.config.isRenamedMarket
 	      });
 	    }
 	    return popup;
@@ -1029,7 +1052,7 @@ this.BX = this.BX || {};
 	      return new DiscountEarSubscription({
 	        discountPercentage: discountConfig.percentage,
 	        termsUrl: discountConfig.termsUrl,
-	        marketLabel: this.config.isRenamedMarket ? '' : '_MARKET_PLUS'
+	        isRenamedMarket: this.config.isRenamedMarket
 	      });
 	    case PopupCategory.TRANSITION:
 	    default:
@@ -1181,7 +1204,12 @@ this.BX = this.BX || {};
 	    })];
 	  }
 	  getContent() {
-	    return this.options.type === PopupType.FINAL ? main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT${this.marketLabel}`) : main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT${this.marketLabel}`, {
+	    if (this.options.type === PopupType.FINAL) {
+	      return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_BITRIX_GPT') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_FINAL_TEXT_MARKET_PLUS');
+	    }
+	    return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_BITRIX_GPT', {
+	      '#DAYS#': this.options.expireDays
+	    }) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_TRIAL_WARNING_TEXT_MARKET_PLUS', {
 	      '#DAYS#': this.options.expireDays
 	    });
 	  }
@@ -1210,7 +1238,12 @@ this.BX = this.BX || {};
 	    })];
 	  }
 	  getContent() {
-	    return this.options.type === PopupType.FINAL ? main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT${this.marketLabel}`) : main_core.Loc.getMessage(`REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT${this.marketLabel}`, {
+	    if (this.options.type === PopupType.FINAL) {
+	      return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_BITRIX_GPT') : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_FINAL_TEXT_MARKET_PLUS');
+	    }
+	    return this.options.isRenamedMarket ? main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_BITRIX_GPT', {
+	      '#DAYS#': this.options.expireDays
+	    }) : main_core.Loc.getMessage('REST_MARKET_EXPIRED_CURTAIN_SUBSCRIPTION_WARNING_TEXT_MARKET_PLUS', {
 	      '#DAYS#': this.options.expireDays
 	    });
 	  }
@@ -1260,7 +1293,8 @@ this.BX = this.BX || {};
 	      marketSubscriptionUrl: this.config.marketSubscriptionUrl,
 	      type: this.config.type,
 	      expireDays: this.config.expireDays,
-	      curtainPage
+	      curtainPage,
+	      isRenamedMarket: this.config.isRenamedMarket
 	    });
 	  }
 	}

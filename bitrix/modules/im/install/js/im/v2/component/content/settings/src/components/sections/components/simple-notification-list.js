@@ -4,20 +4,18 @@ import { Settings } from 'im.v2.const';
 
 import { CheckboxOption } from '../../elements/checkbox';
 
-import type { JsonObject } from 'main.core';
-
-type CurrentUser = { email: string };
+import type { ImModelUser } from 'im.v2.model';
 
 // @vue/component
 export const SimpleNotificationList = {
 	name: 'SimpleNotificationList',
 	components: { CheckboxOption },
-	data(): JsonObject
-	{
-		return {};
-	},
 	computed:
 	{
+		currentUser(): ImModelUser
+		{
+			return Core.getStore().getters['users/get'](Core.getUserId());
+		},
 		enableWeb(): boolean
 		{
 			return this.$store.getters['application/settings/get'](Settings.notification.enableWeb);
@@ -38,9 +36,7 @@ export const SimpleNotificationList = {
 		},
 		userEmail(): string
 		{
-			const { currentUser: { email } }: { currentUser: CurrentUser } = Core.getApplicationData();
-
-			return email;
+			return this.currentUser.email;
 		},
 	},
 	methods:

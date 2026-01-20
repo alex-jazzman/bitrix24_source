@@ -353,7 +353,7 @@ export class SettingsWidget extends EventEmitter
 			this.getWidget().close();
 			BX.SidePanel.Instance.open(this.#mainPage.settingsPath);
 			BX.UI.Analytics.sendData({
-				tool: 'landing',
+				tool: 'vibe',
 				category: 'vibe',
 				event: 'open_settings_main',
 				c_sub_section: 'from_widget_vibe_point',

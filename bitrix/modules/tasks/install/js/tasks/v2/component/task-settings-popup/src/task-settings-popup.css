@@ -1,0 +1,40 @@
+.tasks-task-settings-popup {
+	background-color: var(--ui-color-bg-vibrant-less);
+	backdrop-filter: blur(24px);
+	padding: 15px 24px 24px 24px;
+}
+
+.tasks-task-settings-popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.tasks-task-settings-popup-title-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 6px;
+}
+.tasks-task-settings-popup-title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-task-settings-popup-close-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-task-settings-popup-content {
+	margin-top: 15px;
+}
+
+.tasks-task-settings-popup-footer {
+	display: flex;
+	align-items: center;
+	justify-content: right;
+	gap: 12px;
+	margin-top: 24px;
+}

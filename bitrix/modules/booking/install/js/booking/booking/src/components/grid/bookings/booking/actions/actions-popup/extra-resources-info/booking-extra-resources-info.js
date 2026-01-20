@@ -11,11 +11,16 @@ export const BookingExtraResourcesInfo = {
 			type: [Number, String],
 			required: true,
 		},
+		resourceId: {
+			type: Number,
+			required: true,
+		},
 	},
 	emits: ['freeze', 'unfreeze'],
 	template: `
 		<ExtraResourcesInfo
 			:id="bookingId"
+			:resourceId
 			@open="$emit('freeze')"
 			@close="$emit('unfreeze')"
 			@freeze="$emit('freeze')"

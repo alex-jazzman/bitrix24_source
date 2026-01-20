@@ -7,16 +7,17 @@ jn.define('settings-v2/structure/pages/notifications/push', (require, exports, m
 		createLink,
 		createSection,
 		createImage,
-	} = require('settings-v2/structure/src/item-create-helper');
-	const { SettingsPageId, PushConfigKeys } = require('settings-v2/const');
+	} = require('settings-v2/structure/helpers/item-create-helper');
+	const { SettingsPageId, NotificationsCacheKey } = require('settings-v2/const');
 	const { NotificationLoadService } = require('settings-v2/services/notification-load');
 	const { PushStatusSettingController } = require('settings-v2/controller/push-status');
 	const { SmartFilterStatusSettingController } = require('settings-v2/controller/smartfilter-status');
 	const { Loc } = require('loc');
+	const { ModuleToTitle, ImageName } = require('settings-v2/const');
 
 	const requestSettingsData = async () => {
-		const cachedPushTypes = Application.storage.get(PushConfigKeys.TYPES);
-		const cachedPushConfig = Application.storage.get(PushConfigKeys.CONFIG);
+		const cachedPushTypes = Application.storage.get(NotificationsCacheKey.pushTypes);
+		const cachedPushConfig = Application.storage.get(NotificationsCacheKey.pushConfig);
 
 		if (cachedPushTypes && cachedPushConfig)
 		{
@@ -32,14 +33,16 @@ jn.define('settings-v2/structure/pages/notifications/push', (require, exports, m
 		const items = [];
 
 		pushTypes.forEach((pushType) => {
+			const title = ModuleToTitle[pushType.module_id] || pushType.name;
+
 			items.push(
 				createLink({
 					id: `notifications-${pushType.module_id}`,
-					title: pushType.name,
+					title,
 					nextPage: SettingsPageId.NOTIFICATIONS_MODULE,
 					nextPageParams: {
 						moduleId: pushType.module_id,
-						title: pushType.name,
+						title,
 					},
 				}),
 			);
@@ -56,7 +59,7 @@ jn.define('settings-v2/structure/pages/notifications/push', (require, exports, m
 		items: [
 			createImage({
 				id: 'notifications-push-image',
-				name: 'notifications-push',
+				name: ImageName.NOTIFICATIONS_PUSH,
 				externalStyle: {
 					height: 246,
 				},

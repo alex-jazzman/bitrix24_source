@@ -155,6 +155,7 @@ export class FloorRequest extends EventEmitter
 		}
 		else
 		{
+			this.elements.avatar.style.setProperty("--avatar-background", "var(--call-view__floor-request-notification-avatar-background-color)");
 			this.elements.avatar.innerText = Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 		}
 

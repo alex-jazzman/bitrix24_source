@@ -12,6 +12,8 @@ jn.define('im/messenger-v2/controller/recent/service/external/chat', (require, e
 	 */
 	class ChatExternalService extends BaseRecentService
 	{
+		#callCollection = new Map();
+
 		onInit()
 		{
 			this.logger.log('on init');
@@ -44,13 +46,7 @@ jn.define('im/messenger-v2/controller/recent/service/external/chat', (require, e
 				callStatus: status,
 			};
 
-			const renderService = this.recentLocator.get('render');
-
-			renderService.upsertItems([recentCallItem], {
-				findItemMethod: 'findInNative',
-			});
-
-			renderService.renderInstant();
+			this.addCall(recentCallItem);
 		};
 
 		/**
@@ -65,10 +61,8 @@ jn.define('im/messenger-v2/controller/recent/service/external/chat', (require, e
 			}
 
 			const callId = this.#createCallId(call);
-			const renderService = this.recentLocator.get('render');
 
-			renderService.deleteItems([{ id: callId }]);
-			renderService.renderInstant();
+			this.removeCallById(callId);
 		};
 
 		/**
@@ -78,6 +72,45 @@ jn.define('im/messenger-v2/controller/recent/service/external/chat', (require, e
 		#createCallId(call)
 		{
 			return `call${call.associatedEntity.id}`;
+		}
+
+		/**
+		 * @return {Array<CallItemData>}
+		 */
+		getCallList()
+		{
+			return [...this.#callCollection.values()];
+		}
+
+		/**
+		 * @private
+		 * @param {CallItemData} recentCallItem
+		 */
+		addCall(recentCallItem)
+		{
+			this.#callCollection.set(recentCallItem.id, recentCallItem);
+
+			const renderService = this.recentLocator.get('render');
+
+			renderService.upsertItems([recentCallItem], {
+				// findItemMethod: 'findInNative',
+			});
+
+			renderService.renderInstant();
+		}
+
+		/**
+		 * @private
+		 * @param {string} callId
+		 */
+		removeCallById(callId)
+		{
+			this.#callCollection.delete(callId);
+
+			const renderService = this.recentLocator.get('render');
+
+			renderService.deleteItems([{ id: callId }]);
+			renderService.renderInstant();
 		}
 	}
 

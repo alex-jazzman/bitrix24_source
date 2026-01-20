@@ -937,7 +937,13 @@
 				this.text.value = this.comment.getText();
 				this.comment.attachments = attachments;
 				this.comment.extraData = extraData;
-				BX.onCustomEvent(this.comment, 'onSubmit', [this.comment, analyticsData]);
+
+				const preparedAnalyticsData = {
+					...analyticsData,
+					...this.comment.analyticsData,
+				};
+
+				BX.onCustomEvent(this.comment, 'onSubmit', [this.comment, preparedAnalyticsData]);
 			},
 			getForm(data) {
 				return BX.ajax.prepareForm(this.form, data).data;

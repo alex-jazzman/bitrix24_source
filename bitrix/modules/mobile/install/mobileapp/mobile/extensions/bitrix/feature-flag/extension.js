@@ -9,6 +9,7 @@ jn.define('feature-flag', (require, exports, module) => {
 		SUPPORT: 'SupportFeature',
 		WHATS_NEW: 'WhatsNewFeature',
 		DEVELOPER_MENU: 'DeveloperMenuEnabled',
+		SECURITY_SETTINGS: 'SecuritySettingsFeature',
 	};
 
 	function getFeatureFlags()

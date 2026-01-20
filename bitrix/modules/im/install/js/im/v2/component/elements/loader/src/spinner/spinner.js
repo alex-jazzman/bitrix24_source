@@ -11,6 +11,7 @@ export const SpinnerColor = Object.freeze({
 	grey: 'grey',
 	blue: 'blue',
 	copilot: 'copilot',
+	white: 'white',
 });
 
 // @vue/component

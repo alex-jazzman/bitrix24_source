@@ -14,6 +14,7 @@ jn.define('im/messenger/model', (require, exports, module) => {
 	const { queueModel, queueDefaultElement } = require('im/messenger/model/queue');
 	const { commentModel, commentDefaultElement } = require('im/messenger/model/comment');
 	const { anchorModel, anchorDefaultElement } = require('im/messenger/model/anchor');
+	const { stickerPackModel } = require('im/messenger/model/sticker-pack');
 
 	module.exports = {
 		applicationModel,
@@ -28,6 +29,7 @@ jn.define('im/messenger/model', (require, exports, module) => {
 		queueModel,
 		commentModel,
 		anchorModel,
+		stickerPackModel,
 
 		recentDefaultElement,
 		messageDefaultElement,

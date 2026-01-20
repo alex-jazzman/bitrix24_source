@@ -1,8 +1,8 @@
 /**
- * @module tab-presets/preset-info
+ * @module tab-presets/src/preset-info
  */
-jn.define('tab-presets/preset-info', (require, exports, module) => {
-	const TabPresetsNewUtils = require('tab-presets/utils');
+jn.define('tab-presets/src/preset-info', (require, exports, module) => {
+	const TabPresetsNewUtils = require('tab-presets/src/utils');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { Area } = require('ui-system/layout/area');
@@ -42,8 +42,7 @@ jn.define('tab-presets/preset-info', (require, exports, module) => {
 				.setParentWidget(parentWidget)
 				.setMediumPositionPercent(70)
 				.setBackgroundColor(Color.bgContentPrimary.toHex())
-				.open()
-			;
+				.open();
 		}
 
 		render()

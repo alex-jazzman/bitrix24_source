@@ -1,7 +1,7 @@
 <?php
 $MESS["UI_SELECTOR_CREATE_ITEM_LABEL"] = "Create:";
 $MESS["UI_SELECTOR_ITEM_LINK_TITLE"] = "Details";
-$MESS["UI_SELECTOR_RECENT_TAB_TITLE"] = "Recent items";
+$MESS["UI_SELECTOR_RECENT_TAB_TITLE"] = "Recent";
 $MESS["UI_SELECTOR_SEARCH_LOADER_TEXT"] = "Searching for additional results...";
 $MESS["UI_SELECTOR_SEARCH_STUB_SUBTITLE_MSGVER_1"] = "Try different keywords or filters.";
 $MESS["UI_SELECTOR_SEARCH_STUB_TITLE"] = "No matches";

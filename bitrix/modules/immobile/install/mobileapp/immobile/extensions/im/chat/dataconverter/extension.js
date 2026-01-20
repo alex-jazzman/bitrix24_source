@@ -1352,6 +1352,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		87: 'urlShow',
 		88: 'width',
 		89: 'height',
+		801: 'isVideoNote',
 	};
 
 	const result = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
@@ -1460,6 +1461,7 @@ ChatDataConverter.preparePushFormat = function(element)
 			file.urlDownload = result.files[fileId].urlDownload || '';
 			file.urlPreview = result.files[fileId].urlPreview || '';
 			file.urlShow = result.files[fileId].urlShow || '';
+			file.isVideoNote = result.files[fileId].isVideoNote === 'Y';
 
 			files[fileId] = file;
 		}

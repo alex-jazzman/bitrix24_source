@@ -29,6 +29,15 @@ jn.define('im/messenger-v2/controller/recent/config/task', (require, exports, mo
 				extension: 'im/messenger-v2/controller/recent/service/server-load/task',
 				props: {},
 			},
+			[RecentServiceName.floatingButton]: {
+				extension: 'im/messenger-v2/controller/recent/service/floating-button/common',
+				props: {
+					onTap: async () => {
+						const { Entry } = await requireLazy('tasks:entry');
+						void Entry.openTaskCreation({});
+					},
+				},
+			},
 			[RecentServiceName.emptyState]: {
 				extension: 'im/messenger-v2/controller/recent/service/empty-state/common',
 				props: {
@@ -55,7 +64,7 @@ jn.define('im/messenger-v2/controller/recent/config/task', (require, exports, mo
 				props: {},
 			},
 			[RecentServiceName.select]: {
-				extension: 'im/messenger-v2/controller/recent/service/select/task',
+				extension: 'im/messenger-v2/controller/recent/service/select/common',
 				props: {},
 			},
 		},

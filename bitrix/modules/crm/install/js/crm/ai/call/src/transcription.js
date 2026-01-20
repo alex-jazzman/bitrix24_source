@@ -1,15 +1,25 @@
 import { Loc } from 'main.core';
-import { Base } from './base.js';
+
+import { ActivityProvider, Base } from './base.js';
+import type { aiData } from './base.js';
 
 /**
  * @memberOf BX.Crm.AI.Call
  */
 export class Transcription extends Base
 {
+	constructor(data: aiData)
+	{
+		// eslint-disable-next-line no-param-reassign
+		data.activityProvider = ActivityProvider.call; // for call only
+
+		super(data);
+	}
+
 	initDefaultOptions(): void
 	{
 		this.id = 'crm-copilot-transcript';
-		this.aiJobResultAndCallRecordAction = 'crm.timeline.ai.getCopilotTranscriptAndCallRecord';
+		this.aiDataAction = 'crm.timeline.ai.getCopilotTranscript';
 
 		this.sliderTitle = Loc.getMessage('CRM_COMMON_COPILOT');
 		this.sliderWidth = 730;

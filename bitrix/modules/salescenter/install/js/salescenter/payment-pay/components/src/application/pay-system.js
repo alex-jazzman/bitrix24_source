@@ -1,3 +1,4 @@
+import { ajax } from 'main.core';
 import { BitrixVue } from 'ui.vue';
 import { Settings } from 'sale.payment-pay.lib';
 import { StageType } from 'sale.payment-pay.const';
@@ -21,6 +22,7 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 			loading: false,
 			paymentProcess: this.prepareParamsPaymentProcess(settings),
 			consent: this.prepareUserConsentSettings(settings),
+			isNeedPaymentViewerViewAction: settings.get('isNeedPaymentViewerViewAction'),
 		};
 	},
 	created()
@@ -28,6 +30,19 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 		this.initPayment();
 		this.initUserConsent();
 		this.subscribeToGlobalEvents();
+		if (this.isNeedPaymentViewerViewAction)
+		{
+			ajax.runComponentAction(
+				'bitrix:salescenter.payment.pay',
+				'paymentViewerView',
+				{
+					mode: 'class',
+					data: {
+						fields: this.paymentProcess.backendProvider.options,
+					},
+				},
+			);
+		}
 	},
 	methods: {
 		initUserConsent()

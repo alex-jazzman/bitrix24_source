@@ -24,6 +24,7 @@ $MESS['BIZPROC_API_ENUM_ERRORS_ENTITY_NOT_EXISTS'] = 'Запрашиваемая
 $MESS['BIZPROC_API_ENUM_ERRORS_GET_DATA_ERROR'] = 'Не удалось получить данные';
 $MESS['BIZPROC_API_ENUM_ERRORS_CREATE_WORKFLOW'] = 'Не удалось запустить бизнес-процесс';
 $MESS['BIZPROC_API_ENUM_ERRORS_INVALID_USER_ID'] = 'Не указан идентификатор пользователя';
+$MESS['BIZPROC_API_ENUM_ERRORS_NO_AVAILABLE_AI_AGENTS_TO_DELETE'] = 'Выбранные агенты недоступны для удаления';
 
 //VALIDATION
 $MESS['BIZPROC_API_ENUM_ERRORS_INVALID_TYPE'] = 'Тип параметра не определён';
@@ -41,3 +42,4 @@ $MESS['BIZPROC_API_ENUM_ERRORS_WRONG_TEMPLATE'] = 'Некорректный ша
 $MESS['BIZPROC_API_ENUM_ERRORS_UNKNOWN_ERROR'] = 'Неизвестная ошибка';
 $MESS['BIZPROC_API_ENUM_ERRORS_FEATURE_DISABLED'] = 'Бизнес-процесс недоступен. Обратитесь к администратору вашего Битрикс24';
 $MESS['BIZPROC_API_ENUM_ERRORS_OVER_LIMITED'] = 'Превышены лимиты автоматизации';
+$MESS['BIZPROC_API_ENUM_ERRORS_AI_AGENT_DELETE_ERROR'] = 'Не удалось удалить';

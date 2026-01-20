@@ -1,7 +1,9 @@
 import { Vuex } from "ui.vue.vuex";
 import { Utils } from "im.lib.utils";
+import { Utils as UtilsV2 } from 'im.v2.lib.utils';
 import { MenuManager } from "main.popup";
-import { ConferenceUserState, ConferenceStateType, EventType } from 'im.const';
+import { EventType } from 'im.const';
+import { ConferenceUserState, ConferenceStateType } from 'call.const';
 import { EventEmitter } from "main.core.events";
 
 const UserListItem = {
@@ -93,16 +95,22 @@ const UserListItem = {
 		// end statuses
 		formattedSubtitle()
 		{
-			const subtitles = [];
-
-			if (this.user.id === this.chatOwner)
-			{
-				subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OWNER'));
-			}
+			let subtitle = '';
+			const role = this.$Bitrix.Loc.getMessage(
+				this.user.id === this.chatOwner
+					? 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OWNER'
+					: 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_PARTICIPANT',
+			);
 
 			if (this.user.id === this.currentUser)
 			{
-				subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_CURRENT_USER'));
+				subtitle = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_CURRENT_USER_MSGVER_1', {
+					'#ROLE#': role,
+				});
+			}
+			else
+			{
+				subtitle = role;
 			}
 
 			// if (!this.user.extranet && !this.user.isOnline)
@@ -110,7 +118,7 @@ const UserListItem = {
 			// 	subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OFFLINE'));
 			// }
 
-			return subtitles.join(', ');
+			return subtitle;
 		},
 		isMenuNeeded()
 		{
@@ -267,6 +275,15 @@ const UserListItem = {
 
 			return style;
 		},
+		avatarInnerText()
+		{
+			if (!this.user.avatar && !this.user.extranet)
+			{
+				return UtilsV2.text.getFirstLetters(this.user.name).toUpperCase();
+			}
+
+			return '';
+		},
 		isCallStatusPanelNeeded()
 		{
 			if (this.isBroadcast)
@@ -278,17 +295,21 @@ const UserListItem = {
 				return this.conference.common.state === ConferenceStateType.call && this.isUserInCall;
 			}
 		},
+		callMenuIconClasses()
+		{
+			return ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-menu'];
+		},
 		callLeftIconClasses()
 		{
 			const classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-left'];
 
 			if (this.userCallStatus.floorRequestState)
 			{
-				classes.push('bx-im-component-call-user-list-item-icons-floor-request');
+				classes.push('bx-im-component-call-user-list-item-icons-floor-request visible');
 			}
 			else if (this.userCallStatus.screenState)
 			{
-				classes.push('bx-im-component-call-user-list-item-icons-screen');
+				classes.push('bx-im-component-call-user-list-item-icons-screen visible');
 			}
 
 			return classes;
@@ -334,6 +355,17 @@ const UserListItem = {
 
 			return classes;
 		},
+		itemClasses()
+		{
+			const classes = ['bx-im-component-call-user-list-item'];
+
+			if (this.user.id === this.chatOwner)
+			{
+				classes.push('bx-im-component-call-user-list-item-owner');
+			}
+
+			return classes;
+		},
 		...Vuex.mapState({
 			application: state => state.application,
 			conference: state => state.conference,
@@ -360,6 +392,12 @@ const UserListItem = {
 
 			this.menuPopup = MenuManager.create({
 				id: this.menuId,
+				className: 'bx-conference-user-list-item-context-menu',
+				background: '#00428F',
+				contentBackground: '#00428F',
+				darkMode: true,
+				contentBorderRadius: '6px',
+				borderRadius: '6px',
 				bindElement: this.$refs['user-menu'],
 				items: this.menuItems,
 				events: {
@@ -422,10 +460,12 @@ const UserListItem = {
 	},
 	//language=Vue
 	template: `
-		<div class="bx-im-component-call-user-list-item">
+		<div :class="itemClasses">
 			<!-- Avatar -->
 			<div :class="avatarWrapClasses">
-				<div :class="avatarClasses" :style="avatarStyle"></div>
+				<div :class="avatarClasses" :style="avatarStyle">
+					<div class="bx-im-component-call-user-list-item-avatar-inner-text" v-if="avatarInnerText">{{ avatarInnerText }}</div>
+				</div>
 			</div>
 			<!-- Body -->
 			<div :class="bodyClasses">
@@ -458,12 +498,12 @@ const UserListItem = {
 							<!-- Status subtitle -->
 							<div v-if="formattedSubtitle !== ''" class="bx-im-component-call-user-list-item-name-subtitle">{{ formattedSubtitle }}</div>
 						</div>
-						<!-- Context menu icon -->
-						<div v-if="menuItems.length > 0 && !isMobile" @click="openMenu" ref="user-menu" class="bx-im-component-call-user-list-item-menu"></div>
 					</div>
 				</template>
 				<template v-if="isCallStatusPanelNeeded">
 					<div class="bx-im-component-call-user-list-item-icons">
+						<!-- Context menu icon -->
+						<div :class="callMenuIconClasses" v-if="menuItems.length > 0 && !isMobile" @click="openMenu" ref="user-menu"></div>
 						<div :class="callLeftIconClasses"></div>
 						<div :class="callCenterIconClasses"></div>
 						<div :class="callRightIconClasses"></div>

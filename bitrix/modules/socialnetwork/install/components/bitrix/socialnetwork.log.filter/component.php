@@ -14,6 +14,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\Helper\UI\Discussions\DiscussionsFilterOld;
+use Bitrix\Tasks\V2\FormV2Feature;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -23,6 +24,15 @@ if (!CModule::IncludeModule("socialnetwork"))
 
 $arResult = $arParams["arResult"];
 $arParams = $arParams["arParams"];
+
+$expertMode = CUserOptions::getOption("socialnetwork", "~log_expertmode_popup_show", "N");
+$isTasksV2Form = Loader::includeModule('tasks') && FormV2Feature::isOn();
+if ($isTasksV2Form && $expertMode === 'N')
+{
+	CUserOptions::setOption("socialnetwork", "~log_expertmode_popup_show", "Y");
+
+	\Bitrix\Socialnetwork\LogViewTable::set($USER->GetID(), 'tasks', 'N');
+}
 
 if (
 	!ComponentHelper::checkLivefeedTasksAllowed()

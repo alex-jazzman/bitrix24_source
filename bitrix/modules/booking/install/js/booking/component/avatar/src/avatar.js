@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { AvatarRound } from 'ui.avatar';
 
 // @vue/component
@@ -16,6 +17,26 @@ export const Avatar = {
 			type: String,
 			default: null,
 		},
+		baseColor: {
+			type: String,
+			default: null,
+		},
+	},
+	watch: {
+		size(size: number): void
+		{
+			this.avatar?.setSize(size);
+		},
+		userpicPath(path: string): void
+		{
+			this.avatar?.removeUserPic();
+			this.avatar?.setPic(path);
+		},
+		userName(): void
+		{
+			this.removeAvatar();
+			this.renderAvatar();
+		},
 	},
 	created(): void
 	{
@@ -25,7 +46,7 @@ export const Avatar = {
 	{
 		this.renderAvatar();
 	},
-	updated()
+	updated(): void
 	{
 		this.renderAvatar();
 	},
@@ -36,6 +57,7 @@ export const Avatar = {
 				size: this.size,
 				userName: this.userName,
 				userpicPath: this.userpicPath,
+				baseColor: this.baseColor,
 			});
 		},
 		renderAvatar(): void
@@ -46,6 +68,11 @@ export const Avatar = {
 			}
 
 			this.avatar.renderTo(this.$refs.avatar);
+		},
+		removeAvatar(): void
+		{
+			Dom.clean(this.$refs.avatar);
+			this.avatar = null;
 		},
 	},
 	template: `

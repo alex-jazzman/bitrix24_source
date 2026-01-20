@@ -28,6 +28,10 @@ export const accountFunctions = {
 	{
 		return BXDesktopSystem?.AccountList();
 	},
+	getLogin(): string
+	{
+		return BXDesktopWindow.GetBDiskLogin();
+	},
 	login(): Promise
 	{
 		return new Promise((resolve) => {

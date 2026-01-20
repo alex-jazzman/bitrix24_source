@@ -9,7 +9,8 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 	IBPEventActivity,
 	IBPActivityExternalEventListener,
 	IBPActivityDebugEventListener,
-	IBPEventDrivenActivity
+	IBPEventDrivenActivity,
+	IBPConfigurableActivity
 {
 	private ?int $startEventId;
 	private ?int $continueEventId;
@@ -175,16 +176,21 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			'siteId' => $siteId,
 		]);
 
-		$dialog->setMap([
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	public static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
 			'TargetUser' => [
 				'Name' => GetMessage('BPWWD_PROP_TARGET_USER'),
 				'FieldName' => 'target_user',
-				'Type' => 'user',
+				'Type' => \Bitrix\Bizproc\FieldType::USER,
 				'Required' => true,
 			],
-		]);
-
-		return $dialog;
+		];
 	}
 
 	public static function getPropertiesDialogValues(

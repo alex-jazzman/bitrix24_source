@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Core } from 'im.v2.application.core';
 import { EventType, ChatType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
@@ -8,6 +6,7 @@ import { MessageAuthorTitle } from 'im.v2.component.elements.chat-title';
 
 import './author-title.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelMessage, ImModelUser, ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -93,11 +92,15 @@ export const AuthorTitle = {
 				return;
 			}
 
-			EventEmitter.emit(EventType.textarea.insertMention, {
+			this.getEmitter().emit(EventType.textarea.insertMention, {
 				mentionText: this.user.name,
 				mentionReplacement: Utils.text.getMentionBbCode(this.user.id, this.user.name),
 				dialogId: this.dialog.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

@@ -1,0 +1,167 @@
+
+/* normalize */
+
+.ui-btn-split.ui-btn-split_vue-tmp {
+	margin: 0;
+	padding: 0;
+}
+.ui-btn-split__item {
+	list-style: none;
+}
+.ui-btn-part {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+.ui-btn-part__info {
+	margin: 0;
+}
+
+/* normalize end */
+
+
+/* copypaste ui styles because of reject */
+
+
+.ui-btn-split.--air .ui-btn-part {
+	transition-duration: 0s;
+	font-family: var(--ui-font-family-primary);
+	border-radius: var(--ui-btn-radius);
+}
+
+.ui-btn-split.--air .ui-btn-part.ui-btn-part_text {
+	margin-left: 0;
+	font-weight: var(--ui-btn-font-weight);
+	font-size: var(--ui-btn-font-size);
+	line-height: var(--ui-btn-height);
+	padding-left: var(--ui-btn-padding-left);
+	padding-right: var(--ui-btn-padding-right);
+}
+
+.ui-btn-split.--air.ui-btn-md .ui-btn-part.ui-btn-part_text {
+	--ui-btn-padding-right: 13px;
+	--ui-btn-padding-left: 13px;
+	--ui-btn-icon-compensation: 6px;
+	--ui-btn-radius: var(--ui-border-radius-md);
+	--ui-btn-font-size: var(--ui-font-size-md);
+	--ui-btn-font-weight: var(--ui-font-weight-medium);
+	--ui-btn-icon-size: 24px;
+	--ui-btn-icon-space: 2px;
+	--ui-btn-dropdown-icon-size: 18px;
+	--ui-btn-dropdown-icon-inline-space: 4px;
+	--ui-btn-dropdown-icon-compensation: 4px;
+	--ui-btn-height: var(--ui-btn-size-md);
+	--ui-btn-wait-icon-size: 20px;
+	--ui-btn-split-divider-height: 18px;
+	--ui--btn-width-with-only-icon: var(--ui-btn-height);
+	--ui-btn-corner-counter-inline-shift: 13px;
+	--ui-btn-counter-inline-space: 6px;
+}
+
+.ui-btn-split.--air .ui-btn-part.ui-btn-part_dropdown::before {
+	content: '';
+	position: relative;
+	left: 1px;
+	top: auto;
+	margin: 0;
+	padding: 0;
+	width: var(--ui-btn-dropdown-icon-size);
+	height: var(--ui-btn-dropdown-icon-size);
+	border: none;
+	mask-image: var(--o-ui-icon-set__path_chevron-down-l);
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	background-color: var(--ui-btn-color);
+}
+
+.ui-btn-part.ui-btn-part_dropdown {
+	min-width: var(--ui-btn-height);
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+/* copypaste ui styles because of reject end */
+
+
+.ui-btn-split {}
+.ui-btn-split.ui-btn-split_vue-tmp {
+	position: relative;
+	border: var(--ui-btn-border);
+	height:	var(--ui-btn-height);
+	box-sizing: border-box;
+}
+.ui-btn-split__item {
+	position: relative;
+}
+.ui-btn-split__item.ui-btn-split__item_no-divider {}
+.ui-btn-split__item:has(.ui-btn-part.ui-btn-part_text) {
+	width: 100%;
+}
+.ui-btn-split__item:not(:last-of-type):not(.ui-btn-split__item_no-divider)::after {
+	content: '';
+	position: absolute;
+	right: -1px;
+	top: 50%;
+	width: 1px;
+	height: var(--ui-btn-split-divider-height);
+	background: var(--ui-btn-split-divider-color);
+	transform: translate(0, -50%);
+}
+
+.ui-btn-part {
+	position: relative;
+	text-align: center;
+	width: 100%;
+	height: 100%;
+}
+.ui-btn-part.ui-btn-part_text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-btn-icon-space);
+}
+.ui-btn-part.ui-btn-part_dropdown {}
+.ui-btn-part.ui-btn-part_fallback {
+	min-width: 20px;
+}
+.ui-btn-part.ui-btn-part_loading {}
+.ui-btn-split.--air .ui-btn-split__item:not(:last-of-type) .ui-btn-part {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+.ui-btn-split.--air .ui-btn-split__item:not(:first-of-type) .ui-btn-part {
+	border-bottom-left-radius: 0;
+	border-top-left-radius: 0;
+}
+
+.ui-btn-part__img {}
+.ui-btn-split .ui-icon-set.ui-btn-part__img {
+	margin: 0 0 0 calc(var(--ui-btn-icon-compensation) * -1);
+}
+.ui-btn-split .ui-btn-part__text ~ .ui-icon-set.ui-btn-part__img {
+	margin: 0 calc(var(--ui-btn-icon-compensation) * -1) 0 0;
+}
+
+.ui-btn-part__text {}
+
+/*override left: 1px; ultrapro style from complex ui styling with the following selector:*/
+.ui-btn-split.ui-btn-split_vue-tmp.--air .ui-btn-part.ui-btn-part_dropdown::before {
+	left: 0;
+}
+
+.ui-btn-part__info {
+	position: absolute;
+	color: red;
+}
+
+.popup-window.popup-window_for-button-split {
+	transform: translate(0, 5px);
+}

@@ -5,12 +5,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports,main_core,main_core_events,main_popup,main_sidepanel,im_v2_lib_utils,im_v2_lib_call,im_v2_application_core,im_v2_const,im_v2_lib_layout,im_v2_lib_slider,im_v2_lib_desktop,im_v2_lib_desktopApi) {
 	'use strict';
 
-	const MESSENGER_CONTAINER_SELECTOR = '.bx-im-messenger__container';
 	const EscEventAction = Object.freeze({
 	  handled: 'handled',
 	  ignored: 'ignored'
 	});
 	var _messengerContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messengerContainer");
+	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
 	var _wasKeyDownHandled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasKeyDownHandled");
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _shouldIgnoreEscape = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldIgnoreEscape");
@@ -21,7 +21,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _handleDesktopAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDesktopAction");
 	var _onKeyUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onKeyUp");
 	var _onKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onKeyDown");
-	var _getMessengerContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessengerContainer");
 	var _switchToChatLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("switchToChatLayout");
 	var _isExternalSliderOpened = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExternalSliderOpened");
 	var _handleChannelComments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleChannelComments");
@@ -35,9 +34,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _switchToChatLayout, {
 	      value: _switchToChatLayout2
-	    });
-	    Object.defineProperty(this, _getMessengerContainer, {
-	      value: _getMessengerContainer2
 	    });
 	    Object.defineProperty(this, _onKeyDown, {
 	      value: _onKeyDown2
@@ -67,6 +63,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _emitter, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _wasKeyDownHandled, {
 	      writable: true,
 	      value: false
@@ -79,13 +79,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(EscManager, _instance)[_instance] = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(EscManager, _instance)[_instance]) != null ? _babelHelpers$classPr : new EscManager();
 	    return babelHelpers.classPrivateFieldLooseBase(EscManager, _instance)[_instance];
 	  }
-	  register() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _messengerContainer)[_messengerContainer] = babelHelpers.classPrivateFieldLooseBase(this, _getMessengerContainer)[_getMessengerContainer]();
+	  register(payload) {
+	    const {
+	      messengerContainer,
+	      context: {
+	        emitter
+	      }
+	    } = payload;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _messengerContainer)[_messengerContainer] = messengerContainer;
 	    main_core.Event.bind(document, 'keyup', this.keyUpEventHandler);
 	    main_core.Event.bind(document, 'keydown', this.keyDownEventHandler);
 	  }
 	  unregister() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _messengerContainer)[_messengerContainer] = babelHelpers.classPrivateFieldLooseBase(this, _getMessengerContainer)[_getMessengerContainer]();
 	    main_core.Event.unbind(document, 'keyup', this.keyUpEventHandler);
 	    main_core.Event.unbind(document, 'keydown', this.keyDownEventHandler);
 	  }
@@ -122,8 +128,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return hasVisibleCall || isAnyPopupShown || babelHelpers.classPrivateFieldLooseBase(this, _isExternalSliderOpened)[_isExternalSliderOpened]();
 	}
 	async function _isHandledBySubscriber2() {
-	  const eventResult = await main_core_events.EventEmitter.emitAsync(im_v2_const.EventType.key.onBeforeEscape);
-	  return eventResult.includes(EscEventAction.handled);
+	  const eventResult = await babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emitAsync(im_v2_const.EventType.key.onBeforeEscape);
+	  const globalEventResult = await main_core_events.EventEmitter.emitAsync(im_v2_const.EventType.key.onBeforeEscape);
+	  const mergedEventResult = [...eventResult, ...globalEventResult];
+	  return mergedEventResult.includes(EscEventAction.handled);
 	}
 	function _handleActiveInput2() {
 	  const {
@@ -180,9 +188,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  // Viewer has its own ESC keydown handler, so we need to check if it is opened
 	  babelHelpers.classPrivateFieldLooseBase(this, _wasKeyDownHandled)[_wasKeyDownHandled] = BX.UI.Viewer.Instance.isOpen();
 	}
-	function _getMessengerContainer2() {
-	  return document.querySelector(MESSENGER_CONTAINER_SELECTOR);
-	}
 	function _switchToChatLayout2() {
 	  void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
 	    name: im_v2_const.Layout.chat,
@@ -199,7 +204,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _handleChannelComments2() {
 	  const areCommentsOpened = im_v2_application_core.Core.getStore().getters['messages/comments/areOpened'];
 	  if (areCommentsOpened) {
-	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.dialog.closeComments);
 	  }
 	  return areCommentsOpened;
 	}

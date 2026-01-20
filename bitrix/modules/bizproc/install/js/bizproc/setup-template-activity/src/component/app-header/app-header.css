@@ -1,0 +1,27 @@
+.bizproc-setuptemplateactivity-app-header {
+	width: 100%;
+}
+
+.bizproc-setuptemplateactivity-app-header__title-wrap {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.bizproc-setuptemplateactivity-app-header__title {
+	height: 24px;
+	line-height: 24px;
+	margin: 0;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-setuptemplateactivity-app-header__description {
+	margin: 12px 0;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-4);
+}

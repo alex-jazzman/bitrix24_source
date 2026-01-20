@@ -2,7 +2,7 @@
  * @module settings-v2/services/notifications-load
  */
 jn.define('settings-v2/services/notification-load', (require, exports, module) => {
-	const { PushConfigKeys, NotificationCounterKey } = require('settings-v2/const');
+	const { NotificationsCacheKey } = require('settings-v2/const');
 
 	class NotificationLoadService
 	{
@@ -15,8 +15,14 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 						pushTypes: ['mobile.push.types.get'],
 					},
 					(result) => {
-						const pushTypes = NotificationLoadService.processResponse(result.pushTypes, PushConfigKeys.TYPES);
-						const pushConfig = NotificationLoadService.processResponse(result.pushConfig, PushConfigKeys.CONFIG);
+						const pushTypes = NotificationLoadService.processResponse(
+							result.pushTypes,
+							NotificationsCacheKey.pushTypes,
+						);
+						const pushConfig = NotificationLoadService.processResponse(
+							result.pushConfig,
+							NotificationsCacheKey.pushConfig,
+						);
 
 						resolve({
 							pushTypes,
@@ -38,11 +44,11 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 					(result) => {
 						const counterTypes = NotificationLoadService.processResponse(
 							result.counterType,
-							NotificationCounterKey.TYPES,
+							NotificationsCacheKey.counterTypes,
 						);
 						const counterConfig = NotificationLoadService.processResponse(
 							result.counterConfig,
-							NotificationCounterKey.CONFIG,
+							NotificationsCacheKey.counterConfig,
 						);
 
 						resolve({
@@ -59,6 +65,8 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 			return new Promise((resolve) => {
 				BX.rest.callBatch(
 					{
+						smartFilter: ['mobile.push.smartfilter.status.get'],
+						pushStatus: ['mobile.push.status.get'],
 						pushConfig: ['mobile.push.config.get'],
 						pushTypes: ['mobile.push.types.get'],
 						counterTypes: ['mobile.counter.types.get'],
@@ -67,22 +75,32 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 					(result) => {
 						const pushTypes = NotificationLoadService.processResponse(
 							result.pushTypes,
-							PushConfigKeys.TYPES,
+							NotificationsCacheKey.pushTypes,
 						);
 						const pushConfig = NotificationLoadService.processResponse(
 							result.pushConfig,
-							PushConfigKeys.CONFIG,
+							NotificationsCacheKey.pushConfig,
 						);
 						const counterTypes = NotificationLoadService.processResponse(
 							result.counterTypes,
-							NotificationCounterKey.TYPES,
+							NotificationsCacheKey.counterTypes,
 						);
 						const counterConfig = NotificationLoadService.processResponse(
 							result.counterConfig,
-							NotificationCounterKey.CONFIG,
+							NotificationsCacheKey.counterConfig,
+						);
+						const pushStatus = NotificationLoadService.processResponse(
+							result.pushStatus,
+							NotificationsCacheKey.pushStatus,
+						);
+						const smartFilter = NotificationLoadService.processResponse(
+							result.smartFilter,
+							NotificationsCacheKey.smartFilterStatus,
 						);
 
 						resolve({
+							pushStatus,
+							smartFilter,
 							pushTypes,
 							pushConfig,
 							counterTypes,
@@ -95,7 +113,7 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 
 		static processResponse(response, key)
 		{
-			if (response.answer?.error || !response.answer?.result)
+			if (response.answer?.error)
 			{
 				console.error(response.answer?.error);
 

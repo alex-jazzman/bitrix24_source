@@ -41,7 +41,7 @@ return [
 			'defaultScheme' => 'https',
 			'defaultTarget' => '_blank',
 			'shortLink' => [
-				'enabled' => true,
+				'enabled' => false,
 				'maxLength' => 40,
 				'lastFragmentLength' => 10,
 			],

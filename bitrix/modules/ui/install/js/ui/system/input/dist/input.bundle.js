@@ -227,7 +227,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 				<BIcon v-if="withClear" class="ui-system-input-cross" :name="Outline.CROSS_L" @click.stop="$emit('clear')"/>
 				<BIcon v-if="dropdown" class="ui-system-input-dropdown" :name="Outline.CHEVRON_DOWN_L"/>
 			</div>
-			<div v-if="error?.trim() && !disabled" class="ui-system-input-label --error">{{ error }}</div>
+			<div v-if="error?.trim() && !disabled" class="ui-system-input-label --error" :title="error">{{ error }}</div>
 		</div>
 	`
 	};

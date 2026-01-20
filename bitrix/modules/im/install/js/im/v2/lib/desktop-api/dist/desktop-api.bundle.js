@@ -49,6 +49,60 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	/* eslint-disable no-undef */
+	const accountFunctions = {
+	  openAddAccountTab() {
+	    var _BXDesktopSystem;
+	    (_BXDesktopSystem = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem.AccountAddForm();
+	  },
+	  deleteAccount(host, login) {
+	    var _BXDesktopSystem2;
+	    (_BXDesktopSystem2 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem2.AccountDelete(host, login);
+	  },
+	  connectAccount(host, login, protocol, userLang) {
+	    var _BXDesktopSystem3;
+	    (_BXDesktopSystem3 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem3.AccountConnect(host, login, protocol, userLang);
+	  },
+	  disconnectAccount(host) {
+	    var _BXDesktopSystem4;
+	    (_BXDesktopSystem4 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem4.AccountDisconnect(host);
+	  },
+	  getAccountList() {
+	    var _BXDesktopSystem5;
+	    return (_BXDesktopSystem5 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem5.AccountList();
+	  },
+	  getLogin() {
+	    return BXDesktopWindow.GetBDiskLogin();
+	  },
+	  login() {
+	    return new Promise(resolve => {
+	      var _BXDesktopSystem6;
+	      (_BXDesktopSystem6 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem6.Login({
+	        // there is no fail callback. If it fails, desktop will show login form
+	        success: () => resolve()
+	      });
+	    });
+	  },
+	  async logout() {
+	    try {
+	      var _BXDesktopSystem7;
+	      await main_core.ajax.runAction(im_v2_const.RestMethod.imV2DesktopLogout);
+	      (_BXDesktopSystem7 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem7.Logout(2);
+	    } catch (error) {
+	      var _BXDesktopSystem8;
+	      console.error('DesktopApi logout error', error);
+	      (_BXDesktopSystem8 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem8.Logout(3);
+	    }
+	  },
+	  async terminate() {
+	    try {
+	      await main_core.ajax.runAction(im_v2_const.RestMethod.imV2DesktopLogout);
+	    } finally {
+	      lifecycleFunctions.shutdown();
+	    }
+	  }
+	};
+
 	const versionFunctions = {
 	  getMajorVersion() {
 	    if (!this.isDesktop()) {
@@ -65,6 +119,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    // eslint-disable-next-line no-unused-vars
 	    const [majorVersion, minorVersion, buildVersion, apiVersion] = window.BXDesktopSystem.GetProperty('versionParts');
 	    return apiVersion;
+	  },
+	  getBackendRevision() {
+	    const rawRevision = BXDesktopSystem.GetBackendRevision(location.hostname, accountFunctions.getLogin());
+	    return Number(rawRevision);
+	  },
+	  setBackendRevision(revision) {
+	    BXDesktopSystem.SetBackendRevision(location.hostname, accountFunctions.getLogin(), revision);
 	  },
 	  isFeatureEnabled(code) {
 	    var _window$BXDesktopSyst;
@@ -152,11 +213,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const result = this.getCustomSetting(DesktopSettingsKey.sliderBindingsStatus, '1');
 	    return result === '1';
 	  },
-	  isAirDesignEnabledInDesktop() {
-	    // there is only AIR design now. Temporary solution, need to remove it in the future
-	    const isAirDesignEnabled = true;
-	    return this.isDesktop() && isAirDesignEnabled;
-	  },
 	  getCameraSmoothingStatus() {
 	    return this.getCustomSetting(DesktopSettingsKey.smoothing, '0') === '1';
 	  },
@@ -199,6 +255,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	/* eslint-disable no-undef */
 	const windowFunctions = {
 	  wait(ms) {
 	    return new Promise(resolve => {
@@ -241,14 +298,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return this.isDesktop() && settings.get('isChatWindow');
 	  },
 	  isChatTab() {
-	    return this.isChatWindow() || this.isDesktop() && location.href.includes('&IM_TAB=Y');
+	    if (this.isChatWindow()) {
+	      return true;
+	    }
+	    return this.isDesktop() && location.href.includes('&IM_TAB=Y');
 	  },
 	  isActiveTab() {
 	    return this.isDesktop() && BXDesktopSystem.IsActiveTab();
-	  },
-	  async showBrowserWindow() {
-	    BXDesktopWindow.ExecuteCommand('show.main');
-	    await this.wait(im_v2_const.WINDOW_ACTIVATION_DELAY);
 	  },
 	  setActiveTab(target = window) {
 	    var _target$BXDesktopSyst;
@@ -259,6 +315,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  setActiveTabUrl(url) {
 	    BXDesktopSystem.SetActiveTabUrl(url);
+	  },
+	  async showBrowserWindow() {
+	    BXDesktopWindow.ExecuteCommand('show.main');
+	    await this.wait(im_v2_const.WINDOW_ACTIVATION_DELAY);
 	  },
 	  showWindow(target = window) {
 	    var _target$BXDesktopWind;
@@ -290,6 +350,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  reloadWindow() {
 	    BXDesktopSystem.Login({});
+	  },
+	  reloadChatWindow() {
+	    var _BXDesktopSystem2;
+	    (_BXDesktopSystem2 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem2.ExecJsInApp(location.hostname, 'location.reload()');
 	  },
 	  findWindow(name = '') {
 	    const mainWindow = opener || top;
@@ -374,16 +438,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</script>
 			`;
 	    }
-	    const head = document.head.outerHTML.replaceAll(/BX\.PULL\.start\([^)]*\);/g, '');
-	    return `
-			<!DOCTYPE html>
-			<html lang="">
-				${head}
-				<body class="im-desktop im-desktop-popup">
-					${plainHtml}${plainJs}
-				</body>
-			</html>
-		`;
+	    return `${plainHtml}${plainJs}`;
 	  },
 	  setWindowSize(width, height) {
 	    BXDesktopWindow.SetProperty('clientSize', {
@@ -608,57 +663,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      promise.resolve(currentId || "none");
 	    }, 100);
 	    return promise;
-	  }
-	};
-
-	/* eslint-disable no-undef */
-	const accountFunctions = {
-	  openAddAccountTab() {
-	    var _BXDesktopSystem;
-	    (_BXDesktopSystem = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem.AccountAddForm();
-	  },
-	  deleteAccount(host, login) {
-	    var _BXDesktopSystem2;
-	    (_BXDesktopSystem2 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem2.AccountDelete(host, login);
-	  },
-	  connectAccount(host, login, protocol, userLang) {
-	    var _BXDesktopSystem3;
-	    (_BXDesktopSystem3 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem3.AccountConnect(host, login, protocol, userLang);
-	  },
-	  disconnectAccount(host) {
-	    var _BXDesktopSystem4;
-	    (_BXDesktopSystem4 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem4.AccountDisconnect(host);
-	  },
-	  getAccountList() {
-	    var _BXDesktopSystem5;
-	    return (_BXDesktopSystem5 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem5.AccountList();
-	  },
-	  login() {
-	    return new Promise(resolve => {
-	      var _BXDesktopSystem6;
-	      (_BXDesktopSystem6 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem6.Login({
-	        // there is no fail callback. If it fails, desktop will show login form
-	        success: () => resolve()
-	      });
-	    });
-	  },
-	  async logout() {
-	    try {
-	      var _BXDesktopSystem7;
-	      await main_core.ajax.runAction(im_v2_const.RestMethod.imV2DesktopLogout);
-	      (_BXDesktopSystem7 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem7.Logout(2);
-	    } catch (error) {
-	      var _BXDesktopSystem8;
-	      console.error('DesktopApi logout error', error);
-	      (_BXDesktopSystem8 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem8.Logout(3);
-	    }
-	  },
-	  async terminate() {
-	    try {
-	      await main_core.ajax.runAction(im_v2_const.RestMethod.imV2DesktopLogout);
-	    } finally {
-	      lifecycleFunctions.shutdown();
-	    }
 	  }
 	};
 

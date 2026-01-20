@@ -1,5 +1,9 @@
-<?
+<?php
+
 /** @global CUser $USER */
+
+/** @global CMain $APPLICATION */
+global $APPLICATION;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -121,7 +125,12 @@ try
 	// </editor-fold>
 
 	// <editor-fold defaultstate="collapsed" desc="validation">
-	if ($arParams['ACTION'] == 'edit' || $arParams['ACTION'] == 'copy' || $arParams['ACTION'] == 'delete')
+	if (
+		$arParams['ACTION'] == 'edit'
+		|| $arParams['ACTION'] == 'copy'
+		|| $arParams['ACTION'] == 'delete'
+		|| $arParams['ACTION'] == 'delete_confirmed'
+	)
 	{
 		$result = Bitrix\Report\ReportTable::getById($arParams['REPORT_ID']);
 		$report = $result->fetch();
@@ -132,8 +141,10 @@ try
 		}
 
 		$rightsManager = new Bitrix\Report\RightsManager($userId);
-		if(!$rightsManager->canRead($report['ID']))
+		if ($arParams['ACTION'] == 'copy' && !$rightsManager->canRead($report['ID']))
+		{
 			throw new BXUserException(GetMessage('REPORT_VIEW_PERMISSION_DENIED'));
+		}
 
 		if ($arParams['ACTION'] === 'edit')
 		{
@@ -142,7 +153,13 @@ try
 				throw new BXUserException(GetMessage('REPORT_DEFAULT_CAN_NOT_BE_EDITED'));
 		}
 
-		if($arParams['ACTION'] === 'delete' && !$rightsManager->canDelete($report['ID']))
+		if (
+			(
+				$arParams['ACTION'] === 'delete'
+				|| $arParams['ACTION'] == 'delete_confirmed'
+			)
+			&& !$rightsManager->canDelete($report['ID'])
+		)
 		{
 			throw new BXUserException(GetMessage('REPORT_DEFAULT_CAN_NOT_BE_DELETED'));
 		}
@@ -204,7 +221,7 @@ try
 		{
 			throw new BXFormException(GetMessage('REPORT_CSRF'));
 		}
-		$reportId = intval($_POST['EXPORT_REPORT'] ?? 0);
+		$reportId = (int)($_POST['EXPORT_REPORT'] ?? 0);
 		$rightsmanager = new Bitrix\Report\RightsManager($USER->GetID());
 		if(!$rightsmanager->canRead($reportId))
 		{
@@ -213,12 +230,9 @@ try
 		}
 
 		$queryObject = Bitrix\Report\ReportTable::getById($reportId);
-		if($report = $queryObject->fetch())
+		if ($report = $queryObject->fetch())
 		{
-			unset($report['ID']);
-			unset($report['CREATED_BY']);
-			unset($report['CREATED_DATE']);
-			unset($report['MARK_DEFAULT']);
+			unset($report['ID'], $report['CREATED_BY'], $report['CREATED_DATE'], $report['MARK_DEFAULT']);
 			$arResult['REPORT'] = $report;
 		}
 

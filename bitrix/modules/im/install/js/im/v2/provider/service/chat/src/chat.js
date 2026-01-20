@@ -1,3 +1,5 @@
+import { ChatType } from 'im.v2.const';
+
 import { DeleteService } from './classes/delete';
 import { LoadService } from './classes/load';
 import { CreateService } from './classes/create';
@@ -157,6 +159,11 @@ export class ChatService
 	readAll(): void
 	{
 		this.#readService.readAll();
+	}
+
+	readAllByType(type: $Values<typeof ChatType>): void
+	{
+		this.#readService.readAllByType(type);
 	}
 
 	readDialog(dialogId: string): void

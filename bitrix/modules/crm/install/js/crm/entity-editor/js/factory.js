@@ -51,259 +51,87 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 					this.methods[name] = method;
 				}
 			},
-			create: function(type, controlId, settings)
+			create(type, controlId, settings)
 			{
-				if(!this.initialized)
+				if (!this.initialized)
 				{
 					this.initialize();
 				}
 
+				const entityCreators = {
+					column: BX.UI.EntityEditorColumn,
+					section: BX.Crm.EntityEditorSection,
+					text: BX.Crm.EntityEditorText,
+					number: BX.UI.EntityEditorNumber,
+					datetime: BX.UI.EntityEditorDatetime,
+					boolean: BX.UI.EntityEditorBoolean,
+					list: BX.UI.EntityEditorList,
+					multilist: BX.UI.EntityEditorMultiList,
+					html: BX.UI.EntityEditorHtml,
+					bb: BX.UI.EntityEditorBB,
+					bbcode: BX.UI.EntityEditorBBCode,
+					file: BX.UI.EntityEditorFile,
+					money: BX.Crm.EntityEditorMoney,
+					calculated_delivery_price: BX.Crm.EntityEditorCalculatedDeliveryPrice,
+					moneyPay: BX.Crm.EntityEditorMoneyPay,
+					image: BX.Crm.EntityEditorImage,
+					user: BX.Crm.EntityEditorUser,
+					multiple_user: BX.Crm.EntityEditorMultipleUser,
+					address_form: BX.Crm.EntityEditorAddress,
+					address: BX.Crm.EntityEditorAddressField,
+					crm_entity: BX.Crm.EntityEditorEntity,
+					crm_entity_tag: BX.Crm.EntityEditorEntityTag,
+					file_storage: BX.Crm.EntityEditorFileStorage,
+					phone: BX.Crm.EntityEditorPhone,
+					client: BX.Crm.EntityEditorClient,
+					client_light: BX.Crm.EntityEditorClientLight,
+					multifield: BX.Crm.EntityEditorMultifield,
+					product_row_summary: BX.UI.EntityEditorProductRowSummary,
+					requisite_selector: BX.Crm.EntityEditorRequisiteSelector,
+					requisite: BX.Crm.EntityEditorRequisiteField,
+					requisite_address: BX.Crm.EntityEditorRequisiteAddressField,
+					requisite_list: BX.Crm.EntityEditorRequisiteList,
+					userField: BX.Crm.EntityEditorUserField,
+					userFieldConfig: BX.Crm.EntityEditorUserFieldConfigurator,
+					recurringV2: BX.Crm.EntityEditorRecurringV2,
+					custom: BX.UI.EntityEditorCustom,
+					shipment: BX.Crm.EntityEditorShipment,
+					payment: BX.Crm.EntityEditorPayment,
+					payment_status: BX.Crm.EntityEditorPaymentStatus,
+					payment_check: BX.Crm.EntityEditorPaymentCheck,
+					order_subsection: BX.Crm.EntityEditorSubsection,
+					order_property_wrapper: BX.Crm.EntityEditorOrderPropertyWrapper,
+					order_property_subsection: BX.Crm.EntityEditorOrderPropertySubsection,
+					order_property_file: BX.Crm.EntityEditorOrderPropertyFile,
+					order_product_property: BX.Crm.EntityEditorOrderProductProperty,
+					order_trading_platform: BX.Crm.EntityEditorOrderTradingPlatform,
+					order_person_type: BX.Crm.EntityEditorOrderPersonType,
+					order_quantity: BX.Crm.EntityEditorOrderQuantity,
+					order_user: BX.Crm.EntityEditorOrderUser,
+					order_client: BX.Crm.EntityEditorOrderClient,
+					hidden: BX.Crm.EntityEditorHidden,
+					delivery_selector: BX.Crm.EntityEditorDeliverySelector,
+					shipment_extra_services: BX.Crm.EntityEditorShipmentExtraServices,
+					pay_system_selector: BX.Crm.EntityEditorPaySystemSelector,
+					document_number: BX.Crm.EntityEditorDocumentNumber,
+				};
 
-				if(type === "column")
+				if (entityCreators[type])
 				{
-					return BX.UI.EntityEditorColumn.create(controlId, settings);
-				}
-				else if(type === "section")
-				{
-					return BX.Crm.EntityEditorSection.create(controlId, settings);
-				}
-				else if(type === "text")
-				{
-					return BX.Crm.EntityEditorText.create(controlId, settings);
-				}
-				else if(type === "number")
-				{
-					return BX.UI.EntityEditorNumber.create(controlId, settings);
-				}
-				else if(type === "datetime")
-				{
-					return BX.UI.EntityEditorDatetime.create(controlId, settings);
-				}
-				else if(type === "boolean")
-				{
-					return BX.UI.EntityEditorBoolean.create(controlId, settings);
-				}
-				else if(type === "list")
-				{
-					return BX.UI.EntityEditorList.create(controlId, settings);
-				}
-				else if(type === "multilist")
-				{
-					return BX.UI.EntityEditorMultiList.create(controlId, settings);
-				}
-				else if(type === "html")
-				{
-					return BX.UI.EntityEditorHtml.create(controlId, settings);
-				}
-				else if(type === "bb")
-				{
-					return BX.UI.EntityEditorBB.create(controlId, settings);
-				}
-				else if(type === "bbcode")
-				{
-					return BX.UI.EntityEditorBBCode.create(controlId, settings);
-				}
-				else if(type === "file")
-				{
-					return BX.UI.EntityEditorFile.create(controlId, settings);
-				}
-				else if(type === "money")
-				{
-					return BX.Crm.EntityEditorMoney.create(controlId, settings);
-				}
-				else if(type === "calculated_delivery_price")
-				{
-					return BX.Crm.EntityEditorCalculatedDeliveryPrice.create(controlId, settings);
-				}
-				else if(type === "moneyPay")
-				{
-					return BX.Crm.EntityEditorMoneyPay.create(controlId, settings);
-				}
-				else if(type === "image")
-				{
-					return BX.Crm.EntityEditorImage.create(controlId, settings);
-				}
-				else if(type === "user")
-				{
-					return BX.Crm.EntityEditorUser.create(controlId, settings);
-				}
-				else if(type === "multiple_user")
-				{
-					return BX.Crm.EntityEditorMultipleUser.create(controlId, settings);
-				}
-				else if(type === "address_form")
-				{
-					return BX.Crm.EntityEditorAddress.create(controlId, settings);
-				}
-				else if(type === "address")
-				{
-					return BX.Crm.EntityEditorAddressField.create(controlId, settings);
-				}
-				else if(type === "crm_entity")
-				{
-					return BX.Crm.EntityEditorEntity.create(controlId, settings);
-				}
-				else if(type === "crm_entity_tag")
-				{
-					return BX.Crm.EntityEditorEntityTag.create(controlId, settings);
-				}
-				else if(type === "file_storage")
-				{
-					return BX.Crm.EntityEditorFileStorage.create(controlId, settings);
-				}
-				else if(type === "phone")
-				{
-					return BX.Crm.EntityEditorPhone.create(controlId, settings);
-				}
-				else if(type === "client")
-				{
-					return BX.Crm.EntityEditorClient.create(controlId, settings);
-				}
-				else if(type === "client_light")
-				{
-					return BX.Crm.EntityEditorClientLight.create(controlId, settings);
-				}
-				else if(type === "multifield")
-				{
-					return BX.Crm.EntityEditorMultifield.create(controlId, settings);
-				}
-				else if(type === "product_row_summary")
-				{
-					return BX.UI.EntityEditorProductRowSummary.create(controlId, settings);
-				}
-				else if(type === "requisite_selector")
-				{
-					return BX.Crm.EntityEditorRequisiteSelector.create(controlId, settings);
-				}
-				else if(type === "requisite")
-				{
-					return BX.Crm.EntityEditorRequisiteField.create(controlId, settings);
-				}
-				else if(type === "requisite_address")
-				{
-					return BX.Crm.EntityEditorRequisiteAddressField.create(controlId, settings);
-				}
-				else if(type === "requisite_list")
-				{
-					return BX.Crm.EntityEditorRequisiteList.create(controlId, settings);
-				}
-				else if(type === "userField")
-				{
-					return BX.Crm.EntityEditorUserField.create(controlId, settings);
-				}
-				else if(type === "userFieldConfig")
-				{
-					return BX.Crm.EntityEditorUserFieldConfigurator.create(controlId, settings);
-				}
-				else if(type === "recurring")
-				{
-					return BX.Crm.EntityEditorRecurring.create(controlId, settings);
-				}
-				else if(type === "recurring_custom_row")
-				{
-					return BX.Crm.EntityEditorRecurringCustomRowField.create(controlId, settings);
-				}
-				else if(type === "recurring_single_row")
-				{
-					return BX.Crm.EntityEditorRecurringSingleField.create(controlId, settings);
-				}
-				else if(type === "custom")
-				{
-					return BX.UI.EntityEditorCustom.create(controlId, settings);
-				}
-				else if(type === "shipment")
-				{
-					return BX.Crm.EntityEditorShipment.create(controlId, settings);
-				}
-				else if(type === "payment")
-				{
-					return BX.Crm.EntityEditorPayment.create(controlId, settings);
-				}
-				else if(type === "payment_status")
-				{
-					return BX.Crm.EntityEditorPaymentStatus.create(controlId, settings);
-				}
-				else if(type === "payment_check")
-				{
-					return BX.Crm.EntityEditorPaymentCheck.create(controlId, settings);
-				}
-				else if(type === "order_subsection")
-				{
-					return BX.Crm.EntityEditorSubsection.create(controlId, settings);
-				}
-				else if(type === "order_property_wrapper")
-				{
-					return BX.Crm.EntityEditorOrderPropertyWrapper.create(controlId, settings);
-				}
-				else if(type === "order_property_subsection")
-				{
-					return BX.Crm.EntityEditorOrderPropertySubsection.create(controlId, settings);
-				}
-				else if(type === "order_property_file")
-				{
-					return BX.Crm.EntityEditorOrderPropertyFile.create(controlId, settings);
-				}
-				else if(type === "order_product_property")
-				{
-					return BX.Crm.EntityEditorOrderProductProperty.create(controlId, settings);
-				}
-				else if(type === "order_trading_platform")
-				{
-					return BX.Crm.EntityEditorOrderTradingPlatform.create(controlId, settings);
-				}
-				else if(type === "order_person_type")
-				{
-					return BX.Crm.EntityEditorOrderPersonType.create(controlId, settings);
-				}
-				else if(type === "order_quantity")
-				{
-					return BX.Crm.EntityEditorOrderQuantity.create(controlId, settings);
-				}
-				else if(type === "order_user")
-				{
-					return BX.Crm.EntityEditorOrderUser.create(controlId, settings);
-				}
-				else if(type === "order_client")
-				{
-					return BX.Crm.EntityEditorOrderClient.create(controlId, settings);
-				}
-				else if(type === "hidden")
-				{
-					return BX.Crm.EntityEditorHidden.create(controlId, settings);
-				}
-				else if(type === "delivery_selector")
-				{
-					return BX.Crm.EntityEditorDeliverySelector.create(controlId, settings);
-				}
-				else if(type === "shipment_extra_services")
-				{
-					return BX.Crm.EntityEditorShipmentExtraServices.create(controlId, settings);
-				}
-				else if(type === "pay_system_selector")
-				{
-					return BX.Crm.EntityEditorPaySystemSelector.create(controlId, settings);
-				}
-				else if(type === "document_number")
-				{
-					return BX.Crm.EntityEditorDocumentNumber.create(controlId, settings);
+					return entityCreators[type].create(controlId, settings);
 				}
 
-				for(var name in this.methods)
+				for (const name of Object.keys(this.methods))
 				{
-					if(!this.methods.hasOwnProperty(name))
-					{
-						continue;
-					}
-
-					var control = this.methods[name](type, controlId, settings);
-					if(control)
+					const control = this.methods[name](type, controlId, settings);
+					if (control)
 					{
 						return control;
 					}
 				}
 
 				return null;
-			}
+			},
 		};
 }
 

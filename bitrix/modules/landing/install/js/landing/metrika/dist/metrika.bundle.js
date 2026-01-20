@@ -10,7 +10,7 @@ this.BX = this.BX || {};
 	  function Metrika(light) {
 	    var tool = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	    babelHelpers.classCallCheck(this, Metrika);
-	    this.tool = tool || Metrika.TOOL_NAME;
+	    this.tool = tool || null;
 	    this.sendedLabel = [];
 	    if (light === true) {
 	      return;
@@ -185,10 +185,11 @@ this.BX = this.BX || {};
 	    value: function sendData(data) {
 	      var _this4 = this;
 	      main_core.Runtime.loadExtension('ui.analytics').then(function (exports) {
+	        var _this4$tool;
 	        var preparedData = {
-	          tool: _this4.tool
+	          tool: (_this4$tool = _this4.tool) !== null && _this4$tool !== void 0 ? _this4$tool : BX.Landing.Main.getAnalyticsCategoryByType()
 	        };
-	        ['category', 'event', 'type', 'c_section', 'c_sub_section', 'c_element', 'status'].forEach(function (key) {
+	        ['tool', 'category', 'event', 'type', 'c_section', 'c_sub_section', 'c_element', 'status'].forEach(function (key) {
 	          if (data[key]) {
 	            preparedData[key] = data[key];
 	          }
@@ -209,7 +210,6 @@ this.BX = this.BX || {};
 	  }]);
 	  return Metrika;
 	}();
-	babelHelpers.defineProperty(Metrika, "TOOL_NAME", 'landing');
 
 	exports.Metrika = Metrika;
 

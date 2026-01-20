@@ -26,3 +26,5 @@ $MESS["LOCATION_REPO_FRMT_UK_NAME"] = "Ұлыбритания";
 $MESS["LOCATION_REPO_FRMT_UNKNOWN"] = "Қосымша";
 $MESS["LOCATION_REPO_FRMT_US_DESCR"] = "455 Larkspur Dr.<br/>California Springs CA 92926<br/>USA";
 $MESS["LOCATION_REPO_FRMT_US_NAME"] = "АҚШ";
+$MESS["LOCATION_REPO_FRMT_UZ_DESCR"] = "100084<br/>Өзбекстан<br/>Ташкент<br/>Юнусабад ауданы<br/>Инжобод көшесі, 32-үй, 6 қ, 10 пәтер";
+$MESS["LOCATION_REPO_FRMT_UZ_NAME"] = "Өзбекстан";

@@ -1,12 +1,11 @@
-<?
-/*
-##############################################
-# Bitrix: SiteManager                        #
-# Copyright (c) 2004 Bitrix                  #
-# https://www.bitrixsoft.com          #
-# mailto:admin@bitrix.ru                     #
-##############################################
-*/
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage advertising
+ * @copyright 2001-2025 Bitrix
+ */
 
 use Bitrix\Main\Loader;
 
@@ -188,13 +187,13 @@ $lAdmin->AddFooter($arFooter);
 ****************************************************************************/
 $lAdmin->BeginPrologContent();
 
-echo CAdminMessage::ShowMessage($strError);
+CAdminMessage::ShowMessage($strError);
 
 $width = COption::GetOptionString("advertising", "BANNER_GRAPH_WEIGHT");
 $height = COption::GetOptionString("advertising", "BANNER_GRAPH_HEIGHT");
 
 if (!function_exists("ImageCreate")) :
-	echo CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED")."<br>");
+	CAdminMessage::ShowMessage(GetMessage("AD_GD_NOT_INSTALLED")."<br>");
 else :
 	echo BeginNote();
 		echo GetMessage("AD_SERVER_TIME")."&nbsp;&nbsp;<i>".GetTime(time(),"FULL")."</i><br>";

@@ -1460,3 +1460,12 @@ CREATE TABLE b_main_messenger_message
 );
 CREATE INDEX ix_b_main_messenger_message_queue_id_status_available_at ON b_main_messenger_message (QUEUE_ID, STATUS, AVAILABLE_AT);
 CREATE INDEX ix_b_main_messenger_message_status_available_at ON b_main_messenger_message (STATUS, UPDATED_AT);
+
+CREATE TABLE b_persistent_storage (
+	"key" varchar(255) NOT NULL,
+	VALUE text NOT NULL,
+	CREATED_AT timestamp NOT NULL,
+	EXPIRED_AT timestamp NOT NULL,
+	PRIMARY KEY (KEY)
+);
+CREATE INDEX ix_b_persistent_storage_expired_at ON b_persistent_storage (expired_at);

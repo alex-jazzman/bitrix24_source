@@ -1,9 +1,7 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Analytics } from 'im.v2.lib.analytics';
 import { ImModelSidebarMeetingItem, ImModelChat } from 'im.v2.model';
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
-import { EventType, SidebarDetailBlock, ActionByRole, Layout } from 'im.v2.const';
+import { EventType, SidebarDetailBlock, ActionByRole } from 'im.v2.const';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { PermissionManager } from 'im.v2.lib.permission';
 
@@ -12,6 +10,8 @@ import { DetailEmptyState } from '../../../elements/detail-empty-state/detail-em
 import { MeetingItem } from '../../meeting/meeting-item';
 
 import '../css/meeting.css';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const MeetingListPreview = {
@@ -52,7 +52,7 @@ export const MeetingListPreview = {
 	},
 	created()
 	{
-		this.contextMenu = new MeetingMenu();
+		this.contextMenu = new MeetingMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -77,7 +77,7 @@ export const MeetingListPreview = {
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.meeting,
 				dialogId: this.dialogId,
 			});
@@ -90,6 +90,10 @@ export const MeetingListPreview = {
 			};
 
 			this.contextMenu.openMenu(item, target);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

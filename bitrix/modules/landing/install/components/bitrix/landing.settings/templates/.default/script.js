@@ -15,6 +15,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    this.siteId = options.siteId;
 	    this.landingId = options.landingId;
 	    this.type = options.type;
+	    this.tool = options.tool;
 
 	    // pages
 	    this.pages = options.pages;
@@ -41,13 +42,18 @@ this.BX.Landing = this.BX.Landing || {};
 	      }
 	    });
 	    if (currentLink) {
-	      this.onMenuLinkClick(currentLink);
+	      this.onMenuLinkClick(currentLink, false);
 	    }
 
 	    // save
 	    this.saveButton = document.getElementById(options.saveButtonId);
+	    this.cancelButton = document.getElementById(options.cancelButtonId);
 	    this.onSave = this.onSave.bind(this);
+	    this.onCancel = this.onCancel.bind(this);
 	    main_core.Event.bind(this.saveButton, 'click', this.onSave);
+	    BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', function () {
+	      _this.onCancel();
+	    });
 	  }
 	  babelHelpers.createClass(LandingSettings, [{
 	    key: "showLoader",
@@ -90,8 +96,19 @@ this.BX.Landing = this.BX.Landing || {};
 	  }, {
 	    key: "onMenuLinkClick",
 	    value: function onMenuLinkClick(link) {
+	      var isUserCLick = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+	      this.currentLink = link;
 	      if (link.dataset.page) {
 	        this.onPageChange(link.dataset.page);
+	        if (isUserCLick) {
+	          BX.UI.Analytics.sendData({
+	            tool: this.tool,
+	            category: 'settings',
+	            event: 'click_on_section',
+	            p1: this.getTypePageForMetrika(link.dataset.page),
+	            p3: "siteID_".concat(this.siteId)
+	          });
+	        }
 	      } else if (link.dataset.placement) {
 	        // for open app pages in slider
 	        if (typeof BX.rest !== 'undefined' && typeof BX.rest.Marketplace !== 'undefined') {
@@ -150,6 +167,13 @@ this.BX.Landing = this.BX.Landing || {};
 	    key: "onSave",
 	    value: function onSave() {
 	      var _this4 = this;
+	      BX.UI.Analytics.sendData({
+	        tool: this.tool,
+	        category: 'settings',
+	        event: 'save',
+	        p1: this.getTypePageForMetrika(this.currentLink.dataset.page),
+	        p3: "siteID_".concat(this.siteId)
+	      });
 	      this.showLoader();
 	      var submits = [];
 	      for (var page in this.pages) {
@@ -186,6 +210,43 @@ this.BX.Landing = this.BX.Landing || {};
 	      })["catch"](function (err) {
 	        console.error(err);
 	      });
+	    }
+	  }, {
+	    key: "onCancel",
+	    value: function onCancel() {
+	      BX.UI.Analytics.sendData({
+	        tool: this.tool,
+	        category: 'settings',
+	        event: 'close',
+	        p1: this.getTypePageForMetrika(this.currentLink.dataset.page),
+	        p3: "siteID_".concat(this.siteId)
+	      });
+	    }
+	  }, {
+	    key: "getTypePageForMetrika",
+	    value: function getTypePageForMetrika(typePage) {
+	      var type = '';
+	      switch (typePage) {
+	        case 'SITE_EDIT':
+	          type = 'site_settings';
+	          break;
+	        case 'SITE_DESIGN':
+	          type = 'site_design';
+	          break;
+	        case 'LANDING_EDIT':
+	          type = 'page_settings';
+	          break;
+	        case 'LANDING_DESIGN':
+	          type = 'page_design';
+	          break;
+	        case 'CATALOG_EDIT':
+	          type = 'catalog_settings';
+	          break;
+	        default:
+	          type = typePage;
+	          break;
+	      }
+	      return type;
 	    }
 	  }]);
 	  return LandingSettings;

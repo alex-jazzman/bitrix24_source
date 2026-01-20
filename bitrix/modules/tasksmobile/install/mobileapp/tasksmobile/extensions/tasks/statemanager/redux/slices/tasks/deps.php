@@ -17,6 +17,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks/selector',
 		'tasks:statemanager/redux/slices/tasks/thunk',
 		'tasks:statemanager/redux/slices/tasks-results/thunk',
+		'tasks:statemanager/redux/slices/tasks-results-v2/thunk',
 		'tasks/statemanager/redux/slices/tasks-stages/thunk',
 	],
 ];

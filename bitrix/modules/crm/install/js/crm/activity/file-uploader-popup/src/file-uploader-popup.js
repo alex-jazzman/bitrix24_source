@@ -1,7 +1,7 @@
+import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
 import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
-import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
 
 import type { FileUploaderPopupOptions } from './file-uploader-popup-options';
 
@@ -63,8 +63,13 @@ export class FileUploaderPopup
 
 	#updateFiles(): void
 	{
-		this.#popup?.getButton(SAVE_BUTTON_ID)?.setState(ButtonState.WAITING);
-		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
+		if (this.#getSaveButton()?.getState() === ButtonState.DISABLED)
+		{
+			return;
+		}
+
+		this.#getSaveButton()?.setState(ButtonState.WAITING);
+		this.#getCancelButton()?.setState(ButtonState.DISABLED);
 
 		Ajax.runAction('crm.activity.todo.updateFiles', {
 			data: {
@@ -87,8 +92,8 @@ export class FileUploaderPopup
 
 	#revertButtonsState()
 	{
-		this.#popup?.getButton(SAVE_BUTTON_ID)?.setState(null);
-		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(null);
+		this.#getSaveButton()?.setState(null);
+		this.#getCancelButton()?.setState(null);
 	}
 
 	#closePopup(): void
@@ -116,10 +121,10 @@ export class FileUploaderPopup
 					this.#changeUploaderContainerSize();
 					this.#revertButtonsState();
 				},
-				'onUploadStart': (event) => {
+				onUploadStart: (event) => {
 					this.#changeUploaderContainerSize();
-					this.#popup?.getButton(SAVE_BUTTON_ID)?.setState(ButtonState.DISABLED);
-					this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
+					this.#getSaveButton()?.setState(ButtonState.DISABLED);
+					this.#getCancelButton()?.setState(ButtonState.DISABLED);
 				},
 				// TODO: not implemented yet
 				//		'onUploadComplete'
@@ -132,6 +137,16 @@ export class FileUploaderPopup
 		this.#fileUploader.renderTo(uploaderContainer);
 
 		return content;
+	}
+
+	#getSaveButton(): ?SaveButton
+	{
+		return this.#popup?.getButton(SAVE_BUTTON_ID);
+	}
+
+	#getCancelButton(): ?CancelButton
+	{
+		return this.#popup?.getButton(CANCEL_BUTTON_ID);
 	}
 
 	#getPopupTitle(): string

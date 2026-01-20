@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CMain $APPLICATION */
 /** @var CBitrixComponentTemplate $this */
 
+use Bitrix\DocumentGenerator\Infrastructure\Agent\Access\DepartmentAccessCodesMigrateAgent;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Loader;
@@ -30,6 +31,7 @@ Extension::load([
 	'documentpreview',
 	'ui.buttons',
 	'ui.buttons.icons',
+	'ui.entity-selector',
 ]);
 
 if (Loader::includeModule('ui'))
@@ -49,7 +51,12 @@ if (Loader::includeModule('ui'))
 	if (isset($arResult['TEMPLATE']['ID']))
 	{
 		?><style>
-			.docs-template-load-crm, .docs-template-load-buttons, .docs-template-load-user, .docs-template-load-numerator, .docs-template-load-result {
+			.docs-template-load-crm,
+			.docs-template-load-buttons,
+			.docs-template-load-user,
+			.docs-template-load-numerator,
+			.docs-template-load-result,
+			.docs-template__template-user-control {
 				display: block;
 			}
 
@@ -204,60 +211,71 @@ if (Loader::includeModule('ui'))
 					</div>
 				</div>
 			</div>
-			<div class="docs-template-load-user" id="add-template-user-block">
-				<div class="docs-template-load-block-wrap">
-					<div class="docs-template-load-block-title-inner">
-						<span class="docs-template-load-title"><?= Loc::getMessage(
-								'DOCGEN_TEMPLATE_ADD_USERS'
-							); ?></span>
-					</div>
-					<div class="docs-template-load-block-section">
-						<span class="docs-template-load-block-item docs-template-load-block-item-user" id="container-<?= $arResult['userSelectorName']; ?>">
-						</span>
-						<a class="docs-template-load-block-link" id="link_<?= $arResult['userSelectorName']; ?>" onclick="BX.DocumentGenerator.UploadTemplate.openUserSelector(this.parentNode); return false;"><?= Loc::getMessage(
-								'DOCGEN_TEMPLATE_ADD_ADD_USER_LINK'
-							); ?></a>
+			<?php if (!DepartmentAccessCodesMigrateAgent::isDone()): ?>
+				<div class="docs-template-load-user" id="add-template-user-block">
+					<div class="docs-template-load-block-wrap">
+						<div class="docs-template-load-block-title-inner">
+							<span class="docs-template-load-title"><?= Loc::getMessage(
+									'DOCGEN_TEMPLATE_ADD_USERS'
+								); ?></span>
+						</div>
+						<div class="docs-template-load-block-section">
+							<span class="docs-template-load-block-item docs-template-load-block-item-user" id="container-<?= $arResult['userSelectorName']; ?>">
+							</span>
+							<a class="docs-template-load-block-link" id="link_<?= $arResult['userSelectorName']; ?>" onclick="BX.DocumentGenerator.UploadTemplate.openUserSelector(this.parentNode); return false;"><?= Loc::getMessage(
+									'DOCGEN_TEMPLATE_ADD_ADD_USER_LINK'
+								); ?></a>
+						</div>
 					</div>
 				</div>
-			</div>
-			<?php
-			$APPLICATION->IncludeComponent(
-				'bitrix:main.ui.selector',
-				'.default',
-				[
-					'ID' => $arResult['userSelectorName'],
-					'BIND_ID' => 'link_' . $arResult['userSelectorName'],
-					'ITEMS_SELECTED' => $arResult['TEMPLATE']['USERS'],
-					'CALLBACK' => [
-						'select' => 'BX.DocumentGenerator.UploadTemplate.onSelectUser',
-						'unSelect' => 'BX.DocumentGenerator.UploadTemplate.onUnSelectUser',
-					],
-					'OPTIONS' => [
-						'extranetContext' => false,
-						'eventInit' => 'BX.DocumentGenerator.UploadTemplate:init',
-						'eventOpen' => 'BX.DocumentGenerator.UploadTemplate:open',
-						'context' => 'ADD_TEMPLATE_USER',
-						'contextCode' => 'U',
-						'useSearch' => 'Y',
-						'userNameTemplate' => \CSite::GetNameFormat(),
-						'useClientDatabase' => 'N',
-						'allowEmailInvitation' => 'N',
-						'enableAll' => 'Y',
-						'enableDepartments' => 'Y',
-						'enableSonetgroups' => 'Y',
-						'departmentSelectDisable' => 'N',
-						'allowAddUser' => 'N',
-						'allowAddCrmContact' => 'N',
-						'allowAddSocNetGroup' => 'N',
-						'allowSearchEmailUsers' => 'N',
-						'allowSearchCrmEmailUsers' => 'N',
-						'allowSearchNetworkUsers' => 'N',
-					],
-				],
-				false,
-				['HIDE_ICONS' => 'Y'],
-			);
-			?>
+				<?php
+					$APPLICATION->IncludeComponent(
+						'bitrix:main.ui.selector',
+						'.default',
+						[
+							'ID' => $arResult['userSelectorName'],
+							'BIND_ID' => 'link_' . $arResult['userSelectorName'],
+							'ITEMS_SELECTED' => $arResult['TEMPLATE']['USERS'],
+							'CALLBACK' => [
+								'select' => 'BX.DocumentGenerator.UploadTemplate.onSelectUser',
+								'unSelect' => 'BX.DocumentGenerator.UploadTemplate.onUnSelectUser',
+							],
+							'OPTIONS' => [
+								'extranetContext' => false,
+								'eventInit' => 'BX.DocumentGenerator.UploadTemplate:init',
+								'eventOpen' => 'BX.DocumentGenerator.UploadTemplate:open',
+								'context' => 'ADD_TEMPLATE_USER',
+								'contextCode' => 'U',
+								'useSearch' => 'Y',
+								'userNameTemplate' => \CSite::GetNameFormat(),
+								'useClientDatabase' => 'N',
+								'allowEmailInvitation' => 'N',
+								'enableAll' => 'Y',
+								'enableDepartments' => 'Y',
+								'enableSonetgroups' => 'Y',
+								'departmentSelectDisable' => 'N',
+								'allowAddUser' => 'N',
+								'allowAddCrmContact' => 'N',
+								'allowAddSocNetGroup' => 'N',
+								'allowSearchEmailUsers' => 'N',
+								'allowSearchCrmEmailUsers' => 'N',
+								'allowSearchNetworkUsers' => 'N',
+							],
+						],
+						false,
+						['HIDE_ICONS' => 'Y'],
+					);
+				?>
+			<?php else: ?>
+				<div class="docs-template__template-user-control" id="add-template-user-block-v2">
+					<div class="docs-template-load-block-wrap">
+						<span class="docs-template-load-title">
+							<?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_USERS') ?>
+						</span>
+						<div id="docs-template-users-tag-selector-container"></div>
+					</div>
+				</div>
+			<?php endif; ?>
 			<div class="docs-template-load-numerator" id="add-template-region-block">
 				<div class="docs-template-load-block-wrap">
 					<div class="docs-template-load-block-title-inner">
@@ -354,6 +372,14 @@ if (Loader::includeModule('ui'))
 				{
 					?>BX.DocumentGenerator.UploadTemplate.setTemplateData(<?= CUtil::PhpToJSObject($arResult['TEMPLATE']); ?>);<?php
 				}
+
+				if (DepartmentAccessCodesMigrateAgent::isDone())
+				{
+					?>
+						BX.DocumentGenerator.UploadTemplate.initTemplateUserTagSelector();
+					<?php
+				}
+
 				?>BX.DocumentGenerator.UploadTemplate.initProviderPopup();
 				BX.DocumentGenerator.UploadTemplate.regions = <?= CUtil::PhpToJSObject(
 					Converter::toJson()->process($arResult['REGIONS'])

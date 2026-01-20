@@ -16,6 +16,7 @@ export type UserMiniProfileData = {
 		access: {
 			canChat: boolean,
 		},
+		personalGender: string | null,
 	},
 	detailInfo?: {
 		personalMobile: string;

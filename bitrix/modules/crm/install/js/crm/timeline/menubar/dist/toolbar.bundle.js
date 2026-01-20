@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,main_loader,crm_integration_analytics,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditorV2,main_core_events,ui_designTokens,crm_zoom,ui_vue3,crm_integration_ui_bannerDispatcher,crm_tourManager,main_core,ui_analytics) {
+(function (exports,ui_notification,crm_integration_ui_bannerDispatcher,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_vue3,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,ui_tour,main_loader,crm_integration_analytics,crm_template_editor,ui_analytics,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -150,8 +150,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    throw new Error('Method showSlider() must be overridden');
 	  }
 	  getSetting(setting, defaultValue = null) {
-	    var _babelHelpers$classPr;
-	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings][setting]) != null ? _babelHelpers$classPr : defaultValue;
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    return (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings]) == null ? void 0 : _babelHelpers$classPr2[setting]) != null ? _babelHelpers$classPr : defaultValue;
 	  }
 	  setSettings(settings) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings] = settings;
@@ -230,6 +230,476 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	Item.ON_FINISH_EDIT_EVENT = 'onFinishEdit';
+
+	const SPOTLIGHT_ID_PREFIX = 'spotlight-crm-timeline-menubar';
+	const SPOTLIGHT_TARGET_VERTEX = 'middle-center';
+	const SPOTLIGHT_Z_INDEX = 200;
+	const GUIDE_LINK_CLASS_NAME = 'crm-entity-stream-content-new-detail-guide-link';
+	const GUIDE_POPUP_WIDTH = 400;
+	const GUIDE_POPUP_POSITION = 'bottom';
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _spotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
+	var _guide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
+	var _guideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guideBindElement");
+	var _targetElementRect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetElementRect");
+	var _observerTimeoutId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observerTimeoutId");
+	var _getSpotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSpotlight");
+	var _getGuideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGuideBindElement");
+	var _handleTargetElementResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTargetElementResize");
+	var _assertValidParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("assertValidParams");
+	class BaseTour {
+	  constructor(_params2) {
+	    Object.defineProperty(this, _assertValidParams, {
+	      value: _assertValidParams2
+	    });
+	    Object.defineProperty(this, _handleTargetElementResize, {
+	      value: _handleTargetElementResize2
+	    });
+	    Object.defineProperty(this, _getGuideBindElement, {
+	      value: _getGuideBindElement2
+	    });
+	    Object.defineProperty(this, _getSpotlight, {
+	      value: _getSpotlight2
+	    });
+	    Object.defineProperty(this, _params, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _spotlight, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _guide, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _guideBindElement, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _targetElementRect, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _observerTimeoutId, {
+	      writable: true,
+	      value: null
+	    });
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _assertValidParams)[_assertValidParams](_params2)) {
+	      throw new TypeError('Invalid menu bar tour params');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = _params2;
+	    this.onWindowResize = main_core.Runtime.debounce(this.onWindowResize.bind(this), 100);
+	    main_core.Event.bind(window, 'resize', this.onWindowResize);
+	  }
+	  onWindowResize() {
+	    const target = babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide].getCurrentStep().setTarget(target);
+	    babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide].showNextStep();
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].setTargetElement(target);
+	  }
+	  canShow() {
+	    return true;
+	  }
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight] = babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight)[_getSpotlight]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].show();
+	    this.getGuide().showNextStep();
+	  }
+	  getGuide() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide]) {
+	      var _babelHelpers$classPr2;
+	      const guideCfg = {
+	        onEvents: true,
+	        steps: [{
+	          target: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
+	          title: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].title,
+	          text: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].text,
+	          position: GUIDE_POPUP_POSITION,
+	          rounded: true,
+	          events: {
+	            onClose: () => {
+	              this.saveUserOption(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].userOptionName);
+	              babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].close();
+	              if (babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]) {
+	                clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]);
+	                babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = null;
+	              }
+	              main_core.Event.unbind(window, 'resize', this.onWindowResize);
+	            }
+	          }
+	        }]
+	      };
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].articleCode > 0) {
+	        var _babelHelpers$classPr;
+	        guideCfg.steps[0].article = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].articleCode;
+	        guideCfg.steps[0].linkTitle = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].linkTitle) != null ? _babelHelpers$classPr : main_core.Loc.getMessage('CRM_TIMELINE_DETAILS');
+	      }
+	      const guide = new ui_tour.Guide(guideCfg);
+	      const guidePopup = guide.getPopup();
+	      guidePopup.setWidth((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guidePopupWidth) != null ? _babelHelpers$classPr2 : GUIDE_POPUP_WIDTH);
+	      const link = guidePopup.contentContainer.querySelector('.ui-tour-popup-link');
+	      main_core.Dom.addClass(link, GUIDE_LINK_CLASS_NAME);
+	      babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement]());
+	      babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = setInterval(babelHelpers.classPrivateFieldLooseBase(this, _handleTargetElementResize)[_handleTargetElementResize].bind(this), 1000);
+	      babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide] = guide;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide];
+	  }
+	  saveUserOption(optionName = null) {
+	    // eslint-disable-next-line no-console
+	    console.warn('Method save is not implemented');
+	  }
+	  getParams() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params];
+	  }
+	}
+	function _getSpotlight2() {
+	  const spotlight = new BX.SpotLight({
+	    id: `${SPOTLIGHT_ID_PREFIX}-${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}-guide`,
+	    targetElement: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
+	    targetVertex: SPOTLIGHT_TARGET_VERTEX,
+	    zIndex: SPOTLIGHT_Z_INDEX,
+	    autoSave: 'no'
+	  });
+	  spotlight.bindEvents({
+	    onTargetEnter: () => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].stayShowedSpotlight !== true) {
+	        spotlight.close();
+	      }
+	    }
+	  });
+	  return spotlight;
+	}
+	function _getGuideBindElement2(force = false) {
+	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] || force) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = document.querySelector(`[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}"]`);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetTop) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].parentElement.nextElementSibling;
+	    }
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
+	}
+	function _handleTargetElementResize2() {
+	  const currentRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement]());
+	  if (currentRect.left !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].left || currentRect.right !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].right || currentRect.top !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].top || currentRect.bottom !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].bottom) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement]);
+	    const targetElement = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
+	    const isVisible = Boolean(targetElement.offsetWidth || targetElement.offsetHeight || targetElement.getClientRects().length > 0);
+	    const guidePopup = babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide].getPopup();
+	    if (isVisible) {
+	      main_core.Dom.removeClass(guidePopup.popupContainer, '--hidden');
+	      guidePopup.adjustPosition();
+	    } else {
+	      main_core.Dom.addClass(guidePopup.popupContainer, '--hidden');
+	    }
+	  }
+	}
+	function _assertValidParams2(params) {
+	  if (!main_core.Type.isPlainObject(params)) {
+	    console.error('"params" must be specified');
+	    return false;
+	  }
+	  if (!main_core.Type.isStringFilled(params.title)) {
+	    console.error('"title" must be specified');
+	    return false;
+	  }
+	  if (!main_core.Type.isStringFilled(params.text)) {
+	    console.error('"text" must be specified');
+	    return false;
+	  }
+	  return true;
+	}
+
+	const UserOptions = main_core.Reflection.namespace('BX.userOptions');
+	var _checkOption = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkOption");
+	class Options {
+	  constructor() {
+	    Object.defineProperty(this, _checkOption, {
+	      value: _checkOption2
+	    });
+	  }
+	  saveUserOption(optionName) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkOption)[_checkOption](optionName);
+	    UserOptions.save('crm', Options.BOOKING_ADS_OPTION, optionName, 1);
+	  }
+	}
+	function _checkOption2(optionName) {
+	  if (![Options.START_BANNER, Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME, Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME].includes(optionName)) {
+	    throw new Error(`User option with name: ${optionName} unsupported`);
+	  }
+	}
+	Options.BOOKING_ADS_OPTION = 'booking_ads';
+	Options.START_BANNER = 'start_banner';
+	Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME = 'before_first_resource';
+	Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME = 'after_first_resource';
+
+	class Tour extends BaseTour {
+	  /**
+	   * @override
+	   * */
+	  saveUserOption(optionName = null) {
+	    new Options().saveUserOption(optionName);
+	  }
+	}
+
+	function Resolvable() {
+	  let resolve;
+	  const promise = new Promise(res => {
+	    resolve = res;
+	  });
+	  promise.resolve = resolve;
+	  return promise;
+	}
+
+	class BannerAnalytics {
+	  static sendShowPopup() {
+	    const options = {
+	      tool: BannerAnalytics.ANALYTICS_TOOL_BOOKING,
+	      category: BannerAnalytics.ANALYTICS_CATEGORY_BOOKING,
+	      event: 'show_popup',
+	      c_section: BannerAnalytics.ANALYTICS_SECTION_CRM
+	    };
+	    ui_analytics.sendData(options);
+	  }
+	  static sendClickEnable() {
+	    const options = {
+	      tool: BannerAnalytics.ANALYTICS_TOOL_BOOKING,
+	      category: BannerAnalytics.ANALYTICS_CATEGORY_BOOKING,
+	      event: 'click_enable',
+	      c_section: BannerAnalytics.ANALYTICS_SECTION_CRM
+	    };
+	    ui_analytics.sendData(options);
+	  }
+	}
+	BannerAnalytics.ANALYTICS_TOOL_BOOKING = 'booking';
+	BannerAnalytics.ANALYTICS_CATEGORY_BOOKING = 'booking';
+	BannerAnalytics.ANALYTICS_SECTION_CRM = 'crm';
+
+	var _bannerDispatcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bannerDispatcher");
+	var _showBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showBanner");
+	var _renderBannerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderBannerComponent");
+	var _createBannerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createBannerComponent");
+	var _shouldShowBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowBanner");
+	var _setBannerShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setBannerShown");
+	var _showAha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAha");
+	var _shouldShowAha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAha");
+	var _getAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAhaParams");
+	var _getBeforeFirstResourceAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBeforeFirstResourceAhaParams");
+	var _getAfterFirstResourceAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAfterFirstResourceAhaParams");
+	var _getFeature = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFeature");
+	var _isFeatureEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFeatureEnabled");
+	var _showFeaturePromoter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showFeaturePromoter");
+	class Booking extends Item {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _showFeaturePromoter, {
+	      value: _showFeaturePromoter2
+	    });
+	    Object.defineProperty(this, _isFeatureEnabled, {
+	      value: _isFeatureEnabled2
+	    });
+	    Object.defineProperty(this, _getFeature, {
+	      value: _getFeature2
+	    });
+	    Object.defineProperty(this, _getAfterFirstResourceAhaParams, {
+	      value: _getAfterFirstResourceAhaParams2
+	    });
+	    Object.defineProperty(this, _getBeforeFirstResourceAhaParams, {
+	      value: _getBeforeFirstResourceAhaParams2
+	    });
+	    Object.defineProperty(this, _getAhaParams, {
+	      value: _getAhaParams2
+	    });
+	    Object.defineProperty(this, _shouldShowAha, {
+	      value: _shouldShowAha2
+	    });
+	    Object.defineProperty(this, _showAha, {
+	      value: _showAha2
+	    });
+	    Object.defineProperty(this, _setBannerShown, {
+	      value: _setBannerShown2
+	    });
+	    Object.defineProperty(this, _shouldShowBanner, {
+	      value: _shouldShowBanner2
+	    });
+	    Object.defineProperty(this, _createBannerComponent, {
+	      value: _createBannerComponent2
+	    });
+	    Object.defineProperty(this, _renderBannerComponent, {
+	      value: _renderBannerComponent2
+	    });
+	    Object.defineProperty(this, _showBanner, {
+	      value: _showBanner2
+	    });
+	    Object.defineProperty(this, _bannerDispatcher, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _bannerDispatcher)[_bannerDispatcher] = new crm_integration_ui_bannerDispatcher.BannerDispatcher();
+	  }
+	  showSlider() {
+	    var _this$getSettings;
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isFeatureEnabled)[_isFeatureEnabled]()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showFeaturePromoter)[_showFeaturePromoter]();
+	      return;
+	    }
+	    const entities = (_this$getSettings = this.getSettings()) == null ? void 0 : _this$getSettings.entities;
+	    const embedEntities = JSON.stringify(entities);
+	    const url = `/booking/?embed=${embedEntities}`;
+	    if (BX.SidePanel) {
+	      BX.SidePanel.Instance.open(url, {
+	        customLeftBoundary: 0
+	      });
+	    } else {
+	      window.open(url);
+	    }
+	  }
+	  supportsLayout() {
+	    return false;
+	  }
+	  showTour() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showBanner)[_showBanner]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _showAha)[_showAha]();
+	  }
+	}
+	function _showBanner2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowBanner)[_shouldShowBanner]()) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _bannerDispatcher)[_bannerDispatcher].toQueue(async onDone => {
+	    const bannerClosed = babelHelpers.classPrivateFieldLooseBase(this, _renderBannerComponent)[_renderBannerComponent]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _setBannerShown)[_setBannerShown]();
+	    await bannerClosed;
+	    onDone();
+	  }, crm_integration_ui_bannerDispatcher.Priority.CRITICAL);
+	}
+	async function _renderBannerComponent2() {
+	  const bannerClosed = new Resolvable();
+	  const app = await babelHelpers.classPrivateFieldLooseBase(this, _createBannerComponent)[_createBannerComponent](bannerClosed.resolve);
+	  const content = main_core.Dom.create('div');
+	  main_core.Dom.append(content, document.body);
+	  app.mount(content);
+	  return bannerClosed;
+	}
+	async function _createBannerComponent2(onBannerClose) {
+	  const {
+	    PromoBanner
+	  } = await main_core.Runtime.loadExtension('booking.component.promo-banner');
+	  const app = ui_vue3.BitrixVue.createApp({
+	    components: {
+	      PromoBanner
+	    },
+	    data() {
+	      return {
+	        isBannerShown: true
+	      };
+	    },
+	    methods: {
+	      onClose() {
+	        this.isBannerShown = false;
+	        onBannerClose();
+	      },
+	      buttonClick() {
+	        BannerAnalytics.sendClickEnable();
+	      }
+	    },
+	    template: '<PromoBanner v-if="isBannerShown" type="crm" @buttonClick="buttonClick" @close="onClose" />'
+	  });
+	  app.mixin({
+	    methods: {
+	      loc(name, replacements) {
+	        return main_core.Loc.getMessage(name, replacements);
+	      }
+	    }
+	  });
+	  return app;
+	}
+	function _shouldShowBanner2() {
+	  var _this$getSettings2;
+	  return ((_this$getSettings2 = this.getSettings()) == null ? void 0 : _this$getSettings2.shouldShowBanner) || false;
+	}
+	function _setBannerShown2() {
+	  new Options().saveUserOption(Options.START_BANNER);
+	  BannerAnalytics.sendShowPopup();
+	}
+	function _showAha2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAha)[_shouldShowAha]()) {
+	    return;
+	  }
+	  const ahaParams = babelHelpers.classPrivateFieldLooseBase(this, _getAhaParams)[_getAhaParams]();
+	  if (!ahaParams) {
+	    return;
+	  }
+	  const guideBindElement = document.querySelector('.main-buttons-inner-container .main-buttons-item[data-id="booking"]');
+	  if (!guideBindElement) {
+	    return;
+	  }
+	  const tour = new Tour({
+	    ...ahaParams,
+	    guideBindElement
+	  });
+	  tour.getGuide().getPopup().setAutoHide(true);
+	  crm_tourManager.TourManager.getInstance().registerWithLaunch(tour);
+	}
+	function _shouldShowAha2() {
+	  var _this$getSettings3;
+	  return Boolean((_this$getSettings3 = this.getSettings()) == null ? void 0 : _this$getSettings3.ahaMoments.length);
+	}
+	function _getAhaParams2() {
+	  var _this$getSettings4;
+	  switch ((_this$getSettings4 = this.getSettings()) == null ? void 0 : _this$getSettings4.ahaMoments[0]) {
+	    case Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME:
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getBeforeFirstResourceAhaParams)[_getBeforeFirstResourceAhaParams]();
+	    case Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME:
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getAfterFirstResourceAhaParams)[_getAfterFirstResourceAhaParams]();
+	    default:
+	      return null;
+	  }
+	}
+	function _getBeforeFirstResourceAhaParams2() {
+	  return {
+	    itemCode: 'booking_before_first_resource',
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TITLE'),
+	    text: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TEXT'),
+	    userOptionName: Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME,
+	    articleCode: 23712054
+	  };
+	}
+	function _getAfterFirstResourceAhaParams2() {
+	  return {
+	    itemCode: 'booking_after_first_resource',
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TITLE'),
+	    text: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TEXT'),
+	    userOptionName: Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME
+	  };
+	}
+	function _getFeature2() {
+	  return this.getSetting('feature') || null;
+	}
+	function _isFeatureEnabled2() {
+	  var _babelHelpers$classPr;
+	  return Boolean((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getFeature)[_getFeature]()) == null ? void 0 : _babelHelpers$classPr.isEnabled);
+	}
+	function _showFeaturePromoter2() {
+	  var _babelHelpers$classPr2;
+	  const featureId = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getFeature)[_getFeature]()) == null ? void 0 : _babelHelpers$classPr2.id;
+	  if (featureId) {
+	    main_core.Runtime.loadExtension('ui.info-helper').then(({
+	      FeaturePromotersRegistry
+	    }) => {
+	      FeaturePromotersRegistry.getPromoter({
+	        featureId
+	      }).show();
+	    }).catch(error => {
+	      console.error(error);
+	    });
+	  }
+	}
 
 	class Call extends Item {
 	  showSlider() {
@@ -556,18 +1026,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	const ServicesConfig = new Map([['ru-whatsapp', {
-	  id: 'ru-whatsapp',
-	  connectorId: 'notifications',
-	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
-	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
-	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
-	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
-	  region: 'ru',
-	  commonClass: '--whatsapp',
-	  iconClass: ui_iconSet_api_core.Social.WHATSAPP,
-	  checkServiceId: 'virtual_whatsapp'
-	}], ['whatsapp', {
+	const ServicesConfig = new Map([['whatsapp', {
 	  id: 'whatsapp',
 	  connectorId: 'notifications',
 	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
@@ -587,17 +1046,36 @@ this.BX.Crm = this.BX.Crm || {};
 	  commonClass: '--telegram',
 	  iconClass: ui_iconSet_api_core.Social.TELEGRAM_IN_CIRCLE,
 	  iconColor: '#2FC6F6'
-	}], ['vkgroup', {
-	  id: 'vkgroup',
-	  connectorId: '',
-	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_VK'),
-	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_VK'),
-	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
-	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_VK'),
+	}], ['ru-whatsapp', {
+	  id: 'ru-whatsapp',
+	  connectorId: 'notifications',
+	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
+	  disabledLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
+	  disabledHint: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_WHATSAPP_DISABLED_HINT'),
+	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
 	  region: 'ru',
-	  commonClass: '--vk',
-	  iconClass: ui_iconSet_api_core.Social.VK
-	}], ['facebook', {
+	  commonClass: '--whatsapp',
+	  iconClass: ui_iconSet_api_core.Social.WHATSAPP,
+	  checkServiceId: 'virtual_whatsapp',
+	  hideOnBox: true
+	}],
+	// [
+	// 	'vkgroup',
+	// 	{
+	// 		id: 'vkgroup',
+	// 		connectorId: '',
+	// 		connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_VK'),
+	// 		inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_VK'),
+	// 		soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
+	// 		title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_VK'),
+	// 		region: 'ru',
+	// 		commonClass: '--vk',
+	// 		iconClass: Social.VK,
+	// 	},
+	// ],
+	['facebook', {
 	  id: 'facebook',
 	  connectorId: '',
 	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_FACEBOOK'),
@@ -629,6 +1107,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _context$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("context");
 	var _chatServiceButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatServiceButtons");
 	var _region = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("region");
+	var _isBox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBox");
 	var _entityEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityEditor");
 	var _userSelectorDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userSelectorDialog");
 	var _clientSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clientSelector");
@@ -672,6 +1151,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getServiceById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getServiceById");
 	var _restoreButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreButton");
 	var _getChannelById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChannelById");
+	var _refreshSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refreshSettingsMenu");
 	var _getLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoader");
 	var _hideLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideLoader");
 	class GoToChat extends Item {
@@ -682,6 +1162,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _getLoader, {
 	      value: _getLoader2
+	    });
+	    Object.defineProperty(this, _refreshSettingsMenu, {
+	      value: _refreshSettingsMenu2
 	    });
 	    Object.defineProperty(this, _getChannelById, {
 	      value: _getChannelById2
@@ -824,6 +1307,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _isBox, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _entityEditor, {
 	      writable: true,
 	      value: null
@@ -849,6 +1336,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.onSelectClientPhone = this.onSelectClientPhone.bind(this);
 	    this.onSelectSender = this.onSelectSender.bind(this);
 	    this.onSelectSenderPhone = this.onSelectSenderPhone.bind(this);
+	    this.onSelectTelegramOpenLineId = this.onSelectTelegramOpenLineId.bind(this);
 	  }
 	  initializeLayout() {
 	    super.initializeLayout();
@@ -856,12 +1344,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  initializeSettings() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] = this.getSetting('region');
+	    babelHelpers.classPrivateFieldLooseBase(this, _isBox)[_isBox] = this.getSetting('isBox');
 	  }
 	  activate() {
 	    super.activate();
 	    babelHelpers.classPrivateFieldLooseBase(this, _fetchConfig)[_fetchConfig]();
 	  }
 	  createLayout() {
+	    for (const tourString of this.getSetting('tours', [])) {
+	      if (main_core.Type.isStringFilled(tourString)) {
+	        main_core.Runtime.html(null, tourString);
+	      }
+	    }
 	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-gotochat --hidden --skeleton">
 			<div class="crm-entity-stream-content-new-detail-gotochat-container hidden">
 				<div class="crm-entity-stream-content-gotochat-settings-container">
@@ -933,6 +1427,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	  initSettingsMenu() {
+	    var _this$openLineItems$t;
 	    const menuId = 'crm-gotochat-channels-settings-menu';
 	    const items = babelHelpers.classPrivateFieldLooseBase(this, _getSubmenuStubItems)[_getSubmenuStubItems]();
 	    this.settingsMenu = main_popup.MenuManager.create({
@@ -958,6 +1453,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        events: {
 	          onSubMenuShow: event => {
 	            babelHelpers.classPrivateFieldLooseBase(this, _onSubMenuShow)[_onSubMenuShow](event, this.getPhoneSubMenuItems());
+	          }
+	        }
+	      }, {
+	        delimiter: true,
+	        text: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECTOR_SETTINGS')
+	      }, {
+	        id: 'telegramBotSubmenu',
+	        text: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_TELEGRAMBOT_OPENLINE_SELECTOR'),
+	        items,
+	        disabled: !((_this$openLineItems$t = this.openLineItems.telegrambot) != null && _this$openLineItems$t.selected),
+	        events: {
+	          onSubMenuShow: event => {
+	            babelHelpers.classPrivateFieldLooseBase(this, _onSubMenuShow)[_onSubMenuShow](event, this.getTelegramOpenLinesSubMenuItems());
 	          }
 	        }
 	      }]
@@ -1143,15 +1651,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      onclick: () => BX.SidePanel.Instance.open(this.marketplaceUrl)
 	    }];
 	  }
-	  onSelectSender(event, item) {
-	    const {
-	      id
-	    } = item;
+	  onSelectSender(event, {
+	    id
+	  }) {
 	    this.currentChannelId = id;
 	    const channel = babelHelpers.classPrivateFieldLooseBase(this, _getChannelById)[_getChannelById](id);
 	    this.fromPhoneId = channel.fromList[0].id;
-	    this.settingsMenu.destroy();
-	    this.initSettingsMenu();
+	    babelHelpers.classPrivateFieldLooseBase(this, _refreshSettingsMenu)[_refreshSettingsMenu]();
 	  }
 	  getPhoneSubMenuItems() {
 	    const currentChannel = babelHelpers.classPrivateFieldLooseBase(this, _getChannelById)[_getChannelById](this.currentChannelId);
@@ -1172,13 +1678,52 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    return items;
 	  }
-	  onSelectSenderPhone(event, item) {
-	    const {
-	      id
-	    } = item;
+	  getTelegramOpenLinesSubMenuItems() {
+	    var _this$openLineItems$t2, _this$openLineItems;
+	    const telegram = (_this$openLineItems$t2 = (_this$openLineItems = this.openLineItems) == null ? void 0 : _this$openLineItems.telegrambot) != null ? _this$openLineItems$t2 : {};
+	    const items = [];
+	    telegram.list.forEach(({
+	      id,
+	      name,
+	      selected
+	    }) => {
+	      const className = selected ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS;
+	      items.push({
+	        id,
+	        text: name,
+	        className,
+	        onclick: this.onSelectTelegramOpenLineId
+	      });
+	    });
+	    return items;
+	  }
+	  onSelectSenderPhone(event, {
+	    id
+	  }) {
 	    this.fromPhoneId = id;
-	    this.settingsMenu.destroy();
-	    this.initSettingsMenu();
+	    babelHelpers.classPrivateFieldLooseBase(this, _refreshSettingsMenu)[_refreshSettingsMenu]();
+	  }
+	  onSelectTelegramOpenLineId(event, {
+	    id
+	  }) {
+	    var _this$openLineItems$t3, _this$openLineItems2, _this$openLineItems2$;
+	    const list = (_this$openLineItems$t3 = (_this$openLineItems2 = this.openLineItems) == null ? void 0 : (_this$openLineItems2$ = _this$openLineItems2.telegrambot) == null ? void 0 : _this$openLineItems2$.list) != null ? _this$openLineItems$t3 : null;
+	    if (list === null) {
+	      return;
+	    }
+	    const selectedItem = list.find(item => item.selected);
+	    if (!selectedItem) {
+	      return;
+	    }
+	    if (selectedItem.id === id) {
+	      return;
+	    }
+
+	    // eslint-disable-next-line no-return-assign
+	    list.forEach(item => item.selected = false);
+	    list.find(item => item.id === id).selected = true;
+	    BX.userOptions.save('crm', 'gotochat-selected-openline-ids', 'telegrambot', id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _refreshSettingsMenu)[_refreshSettingsMenu]();
 	  }
 	  onHide() {
 	    if (this.loader) {
@@ -1473,15 +2018,20 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getServiceButtons2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _fillChatServiceButtons)[_fillChatServiceButtons]();
-	  return main_core.Tag.render(_t5 || (_t5 = _$1`
+	  const buttonsContainer = main_core.Tag.render(_t5 || (_t5 = _$1`
 			<div class="${0}">
 				${0}
 			</div>
 		`), BUTTONS_CONTAINER_CLASS, [...babelHelpers.classPrivateFieldLooseBase(this, _chatServiceButtons)[_chatServiceButtons].values()]);
+	  BX.UI.Hint.init(buttonsContainer);
+	  return buttonsContainer;
 	}
 	function _fillChatServiceButtons2() {
 	  ServicesConfig.forEach(service => {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isServiceSupportedInRegion)[_isServiceSupportedInRegion](service)) {
+	      return;
+	    }
+	    if (service.hideOnBox === true && babelHelpers.classPrivateFieldLooseBase(this, _isBox)[_isBox]) {
 	      return;
 	    }
 	    const button = babelHelpers.classPrivateFieldLooseBase(this, _createChatServiceButton)[_createChatServiceButton](service);
@@ -1500,14 +2050,16 @@ this.BX.Crm = this.BX.Crm || {};
 	function _createChatServiceButton2(service) {
 	  let className = service.commonClass;
 	  let label = service.connectLabel;
+	  let hint = null;
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isAvailableService)[_isAvailableService](service.id)) {
 	    className += ' --disabled';
-	    label = service.soonLabel;
+	    label = service.disabledLabel || service.soonLabel;
+	    hint = service.disabledHint;
 	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isServiceSelected)[_isServiceSelected](service)) {
 	    className += ' --ready';
 	    label = service.inviteLabel;
 	  }
-	  return main_core.Tag.render(_t6 || (_t6 = _$1`
+	  const button = main_core.Tag.render(_t6 || (_t6 = _$1`
 			<div 
 				class="crm-entity-stream-content-gotochat-button"
 				onclick="${0}"
@@ -1521,6 +2073,14 @@ this.BX.Crm = this.BX.Crm || {};
 				</button>
 			</div>
 		`), this.showRegistrarAndSend.bind(this, service.id), className, service.id, babelHelpers.classPrivateFieldLooseBase(this, _renderButtonIcon)[_renderButtonIcon](service), label);
+	  if (main_core.Type.isStringFilled(hint)) {
+	    main_core.Dom.attr(button, {
+	      'data-hint': hint,
+	      'data-hint-no-icon': 'Y',
+	      'data-hint-center': 'Y'
+	    });
+	  }
+	  return button;
 	}
 	function _renderButtonIcon2(service) {
 	  if (!service) {
@@ -1547,9 +2107,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return service.iconColor;
 	}
 	function _isServiceSelected2(service) {
-	  var _service$checkService, _this$openLineItems, _this$openLineItems$i;
+	  var _service$checkService, _this$openLineItems3, _this$openLineItems3$;
 	  const id = (_service$checkService = service.checkServiceId) != null ? _service$checkService : service.id;
-	  return (_this$openLineItems = this.openLineItems) == null ? void 0 : (_this$openLineItems$i = _this$openLineItems[id]) == null ? void 0 : _this$openLineItems$i.selected;
+	  return (_this$openLineItems3 = this.openLineItems) == null ? void 0 : (_this$openLineItems3$ = _this$openLineItems3[id]) == null ? void 0 : _this$openLineItems3$.selected;
 	}
 	function _getServiceConfigByCode2(code) {
 	  return ServicesConfig.get(code) || null;
@@ -1618,6 +2178,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getChannelById2(id) {
 	  return this.channels.find(channel => channel.id === id);
+	}
+	function _refreshSettingsMenu2() {
+	  this.settingsMenu.destroy();
+	  this.initSettingsMenu();
 	}
 	function _getLoader2() {
 	  if (!this.loader) {
@@ -2922,7 +3486,7 @@ this.BX.Crm = this.BX.Crm || {};
 		</component>`
 	};
 
-	const SPOTLIGHT_ID_PREFIX = 'rest_placement_spotlight';
+	const SPOTLIGHT_ID_PREFIX$1 = 'rest_placement_spotlight';
 	const MODULE_ID = 'crm';
 	const USER_SEEN_OPTION = 'rest_placement_tour_viewed';
 	const REST_PLACEMENT_SLIDER_WIDTH = 800;
@@ -2934,8 +3498,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var _appContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appContext");
 	var _isHidden = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHidden");
 	var _currentTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTarget");
-	var _guide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
-	var _spotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
+	var _guide$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
+	var _spotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
 	var _checkTargetChangeIntervalID = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkTargetChangeIntervalID");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
@@ -2944,11 +3508,11 @@ this.BX.Crm = this.BX.Crm || {};
 	var _hide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hide");
 	var _unHide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unHide");
 	var _rebindTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rebindTarget");
-	var _getSpotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSpotlight");
+	var _getSpotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSpotlight");
 	var _getTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTarget");
 	var _prepareMoreDetailsLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMoreDetailsLink");
 	var _openAppPlacementSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openAppPlacementSlider");
-	class Tour {
+	class Tour$1 {
 	  constructor(data) {
 	    Object.defineProperty(this, _openAppPlacementSlider, {
 	      value: _openAppPlacementSlider2
@@ -2959,8 +3523,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _getTarget, {
 	      value: _getTarget2
 	    });
-	    Object.defineProperty(this, _getSpotlight, {
-	      value: _getSpotlight2
+	    Object.defineProperty(this, _getSpotlight$1, {
+	      value: _getSpotlight2$1
 	    });
 	    Object.defineProperty(this, _rebindTarget, {
 	      value: _rebindTarget2
@@ -3011,11 +3575,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _guide, {
+	    Object.defineProperty(this, _guide$1, {
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _spotlight, {
+	    Object.defineProperty(this, _spotlight$1, {
 	      writable: true,
 	      value: null
 	    });
@@ -3030,7 +3594,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _appContext)[_appContext] = main_core.Type.isPlainObject(data.appContext) ? data.appContext : {};
 	  }
 	  show() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight)[_getSpotlight]().show();
+	    babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight$1)[_getSpotlight$1]().show();
 	    this.getGuide().showNextStep();
 	    babelHelpers.classPrivateFieldLooseBase(this, _prepareMoreDetailsLink)[_prepareMoreDetailsLink]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
@@ -3046,8 +3610,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _isCanShowTour)[_isCanShowTour] && isValidStringFields && main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget]());
 	  }
 	  getGuide() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide] = new ui_tour.Guide({
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1] = new ui_tour.Guide({
 	        onEvents: true,
 	        steps: [{
 	          target: babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget](),
@@ -3059,14 +3623,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          events: {
 	            onClose: () => {
 	              BX.userOptions.save(MODULE_ID, USER_SEEN_OPTION, babelHelpers.classPrivateFieldLooseBase(this, _id)[_id], true);
-	              babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight)[_getSpotlight]().close();
+	              babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight$1)[_getSpotlight$1]().close();
 	              babelHelpers.classPrivateFieldLooseBase(this, _unbindEvents)[_unbindEvents]();
 	            }
 	          }
 	        }]
 	      });
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide];
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1];
 	  }
 	}
 	function _bindEvents2() {
@@ -3114,12 +3678,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  this.getGuide().getCurrentStep().setTarget(newTarget);
 	  this.getGuide().showNextStep();
 	  babelHelpers.classPrivateFieldLooseBase(this, _prepareMoreDetailsLink)[_prepareMoreDetailsLink]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight)[_getSpotlight]().setTargetElement(newTarget);
+	  babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight$1)[_getSpotlight$1]().setTargetElement(newTarget);
 	}
-	function _getSpotlight2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight]) {
-	    const id = `${SPOTLIGHT_ID_PREFIX}_${babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]}`;
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight] = new BX.SpotLight({
+	function _getSpotlight2$1() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1]) {
+	    const id = `${SPOTLIGHT_ID_PREFIX$1}_${babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]}`;
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1] = new BX.SpotLight({
 	      id,
 	      targetElement: babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget](),
 	      autoSave: 'no',
@@ -3127,7 +3691,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      zIndex: 200
 	    });
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight];
+	  return babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1];
 	}
 	function _getTarget2() {
 	  var _target;
@@ -3158,7 +3722,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	class Base extends Item {
 	  showTour() {
-	    const tour = new Tour({
+	    const tour = new Tour$1({
 	      id: this.getSetting('id'),
 	      title: this.getSetting('newUserNotificationTitle'),
 	      text: this.getSetting('newUserNotificationText'),
@@ -4230,7 +4794,211 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	let _$4 = t => t,
-	  _t$4,
+	  _t$4;
+	var _isRendered = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRendered");
+	var _editor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editor");
+	var _renderEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEditor");
+	var _shouldRender = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldRender");
+	var _bindEvents$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _setState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setState");
+	/** @memberof BX.Crm.Timeline.MenuBar */
+	class Message extends Item {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _setState, {
+	      value: _setState2
+	    });
+	    Object.defineProperty(this, _bindEvents$2, {
+	      value: _bindEvents2$2
+	    });
+	    Object.defineProperty(this, _shouldRender, {
+	      value: _shouldRender2
+	    });
+	    Object.defineProperty(this, _renderEditor, {
+	      value: _renderEditor2
+	    });
+	    Object.defineProperty(this, _isRendered, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _editor, {
+	      writable: true,
+	      value: null
+	    });
+	  }
+	  createLayout() {
+	    const container = main_core.Tag.render(_t$4 || (_t$4 = _$4`<div class="crm-entity-stream-content-new-detail --hidden"></div>`));
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldRender)[_shouldRender]()) {
+	      return container;
+	    }
+	    const skeleton = new BX.Crm.MessageSender.Editor.Skeleton.Skeleton({
+	      layout: this.getSetting('editor').layout
+	    });
+	    skeleton.renderTo(container);
+	    for (const tourString of this.getSetting('tours', [])) {
+	      if (main_core.Type.isStringFilled(tourString)) {
+	        main_core.Runtime.html(null, tourString);
+	      }
+	    }
+	    return container;
+	  }
+	  onShow() {
+	    super.onShow();
+	    void babelHelpers.classPrivateFieldLooseBase(this, _renderEditor)[_renderEditor]();
+	  }
+	  /**
+	   * @public
+	   */
+	  shouldConfirmStateChange(params) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isRendered)[_isRendered]) {
+	      return false;
+	    }
+	    const {
+	      text,
+	      template
+	    } = params;
+	    const state = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor]) == null ? void 0 : _babelHelpers$classPr2.getState()) != null ? _babelHelpers$classPr : {};
+	    const isCustomTextChannel = main_core.Type.isNil(state.notificationTemplate) && main_core.Type.isNil(state.template);
+	    const isWantCustomTextChannel = main_core.Type.isNil(template) && main_core.Type.isStringFilled(text);
+	    if (!isCustomTextChannel && isWantCustomTextChannel) {
+	      return true;
+	    }
+	    if (isCustomTextChannel && isWantCustomTextChannel) {
+	      return main_core.Type.isStringFilled(state.message.body.trim()) && state.message.body.trim() !== text.trim();
+	    }
+	    if (isCustomTextChannel && !isWantCustomTextChannel) {
+	      return main_core.Type.isStringFilled(state.message.body.trim());
+	    }
+	    if (!isCustomTextChannel && !isWantCustomTextChannel) {
+	      var _template$FILLED_PLAC, _state$template, _state$template$FILLE, _state$template2;
+	      const templateId = template == null ? void 0 : template.ORIGINAL_ID;
+	      const filledPlaceholders = (_template$FILLED_PLAC = template == null ? void 0 : template.FILLED_PLACEHOLDERS) != null ? _template$FILLED_PLAC : [];
+	      const currentTemplateId = (_state$template = state.template) == null ? void 0 : _state$template.ORIGINAL_ID;
+	      const currentFilledPlaceholders = (_state$template$FILLE = (_state$template2 = state.template) == null ? void 0 : _state$template2.FILLED_PLACEHOLDERS) != null ? _state$template$FILLE : [];
+	      return main_core.Type.isNumber(templateId) && templateId > 0 && main_core.Type.isNumber(currentTemplateId) && currentTemplateId > 0 && (templateId !== currentTemplateId || JSON.stringify(filledPlaceholders) !== JSON.stringify(currentFilledPlaceholders));
+	    }
+	    throw new Error('Unexpected state in BX.Crm.Timeline.MenuBar.Item.Message.#shouldConfirmStateChange');
+	  }
+
+	  /**
+	   * @public
+	   */
+	  async tryToResend(params) {
+	    var _editorState$channel, _editorState$template;
+	    await babelHelpers.classPrivateFieldLooseBase(this, _renderEditor)[_renderEditor]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _setState)[_setState](params);
+	    const editorState = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].getState();
+	    const analytics = this.getSetting('analytics', {});
+	    const {
+	      Builder,
+	      sendData
+	    } = await main_core.Runtime.loadExtension('crm.integration.analytics', 'ui.analytics');
+	    const eventData = Builder.Communication.Editor.ResendEvent.createDefault((_editorState$channel = editorState.channel) == null ? void 0 : _editorState$channel.id).setSection(analytics.c_section).setSubSection(analytics.c_sub_section).setTemplateId((_editorState$template = editorState.template) == null ? void 0 : _editorState$template.ORIGINAL_ID).buildData();
+	    sendData(eventData);
+	  }
+	}
+	async function _renderEditor2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isRendered)[_isRendered]) {
+	    return;
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldRender)[_shouldRender]()) {
+	    return;
+	  }
+	  const {
+	    Editor
+	  } = await main_core.Runtime.loadExtension('crm.messagesender.editor');
+
+	  /** @see BX.Crm.MessageSender.Editor */
+	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = new Editor({
+	    ...this.getSetting('editor'),
+	    renderTo: this.getContainer()
+	  });
+	  await babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].render();
+	  babelHelpers.classPrivateFieldLooseBase(this, _isRendered)[_isRendered] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _bindEvents$2)[_bindEvents$2]();
+	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].getOptions().promoBanners)) {
+	    main_core_events.EventEmitter.emit('BX.Crm.Timeline.MenuBar.Message:ShowNewChannelsAvailableTour', {
+	      stepId: 'menubar-message-new-channels-available',
+	      target: this.getContainer().querySelector('[data-role="header-left"]')
+	    });
+	  }
+	}
+	function _shouldRender2() {
+	  return Boolean(this.getSetting('shouldRender'));
+	}
+	function _bindEvents2$2() {
+	  main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', event => {
+	    var _babelHelpers$classPr3;
+	    const {
+	      item
+	    } = event.getData();
+	    if (this.getEntityTypeId() !== (item == null ? void 0 : item.entityTypeId) || this.getEntityId() !== (item == null ? void 0 : item.entityId)) {
+	      return;
+	    }
+	    void ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor]) == null ? void 0 : _babelHelpers$classPr3.reload());
+	  });
+	  main_core_events.EventEmitter.subscribeOnce('BX.Crm.Tour.EntityDetailsMenubar.Message:onConnectionsSliderClose', async () => {
+	    var _babelHelpers$classPr4;
+	    void ((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor]) == null ? void 0 : _babelHelpers$classPr4.reload());
+	    const analytics = this.getSetting('analytics', {});
+	    const {
+	      Builder,
+	      Dictionary,
+	      sendData
+	    } = await main_core.Runtime.loadExtension('crm.integration.analytics', 'ui.analytics');
+	    const event = new Builder.Communication.Channel.ConnectEvent().setSection(analytics.c_section).setSubSection(analytics.c_sub_section).setElement(Dictionary.ELEMENT_AHA_MOMENT);
+	    sendData(event.buildData());
+	  });
+	  const hide = () => {
+	    setTimeout(() => this.emitFinishEditEvent(), 50);
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].subscribe('onSendSuccess', hide);
+	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].subscribe('onCancel', hide);
+	}
+	function _setState2(params) {
+	  var _params$backend;
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRendered)[_isRendered]) {
+	    return;
+	  }
+	  if (main_core.Type.isStringFilled(params == null ? void 0 : (_params$backend = params.backend) == null ? void 0 : _params$backend.senderCode) && main_core.Type.isStringFilled(params == null ? void 0 : params.backend.id)) {
+	    const chan = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].getOptions().channels.find(candidate => {
+	      const isSameBackend = candidate.backend.senderCode === params.backend.senderCode && candidate.backend.id === params.backend.id;
+	      if (main_core.Type.isStringFilled(params == null ? void 0 : params.fromId)) {
+	        return isSameBackend && candidate.fromList.some(from => from.id === params.fromId);
+	      }
+	      return isSameBackend;
+	    });
+	    if (chan) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setChannel(chan.id);
+	      if (main_core.Type.isStringFilled(params == null ? void 0 : params.fromId)) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setFrom(params.fromId);
+	      }
+	    }
+	  }
+	  if (main_core.Type.isPlainObject(params == null ? void 0 : params.client)) {
+	    const chan = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].getState().channel;
+	    const receiver = chan.toList.find(candidate => {
+	      return candidate.addressSource.entityTypeId === params.client.entityTypeId && candidate.addressSource.entityId === params.client.entityId && candidate.address.value === params.client.value;
+	    });
+	    if (receiver) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setTo(receiver.address.id);
+	    }
+	  }
+	  if (main_core.Type.isStringFilled(params == null ? void 0 : params.text)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setMessageText(params.text);
+	  }
+	  if (main_core.Type.isPlainObject(params == null ? void 0 : params.template)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setTemplate(params.template.ORIGINAL_ID);
+	    for (const placeholder of (_params$template$FILL = (_params$template = params.template) == null ? void 0 : _params$template.FILLED_PLACEHOLDERS) != null ? _params$template$FILL : []) {
+	      var _params$template$FILL, _params$template;
+	      babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setFilledPlaceholder(placeholder);
+	    }
+	  }
+	}
+
+	let _$5 = t => t,
+	  _t$5,
 	  _t2$4,
 	  _t3$3,
 	  _t4$3,
@@ -4246,7 +5014,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t14;
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
-	var _renderEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEditor");
+	var _renderEditor$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEditor");
 	var _renderSetupText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderSetupText");
 	var _renderTemplatesContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTemplatesContainer");
 	var _renderFilesSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderFilesSelector");
@@ -4270,8 +5038,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _renderSetupText, {
 	      value: _renderSetupText2
 	    });
-	    Object.defineProperty(this, _renderEditor, {
-	      value: _renderEditor2
+	    Object.defineProperty(this, _renderEditor$1, {
+	      value: _renderEditor2$1
 	    });
 	    this.isFetchedConfig = false;
 	    this.fetchConfigPromise = null;
@@ -4280,7 +5048,7 @@ this.BX.Crm = this.BX.Crm || {};
 	   * @override
 	   * */
 	  createLayout() {
-	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-sms --skeleton --hidden"></div>`));
+	    return main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-sms --skeleton --hidden"></div>`));
 	  }
 	  doInitialize() {
 	    this._isRequestRunning = false;
@@ -5279,11 +6047,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.setSettings(data);
 	        setTimeout(() => {
 	          const canSend = this.getSetting('canSendMessage', false);
-	          this.setContainer(main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
+	          this.setContainer(main_core.Tag.render(_t2$4 || (_t2$4 = _$5`
 						<div class="crm-entity-stream-content-new-detail --focus">
 							${0}
 						</div>
-					`), canSend ? babelHelpers.classPrivateFieldLooseBase(this, _renderEditor)[_renderEditor]() : babelHelpers.classPrivateFieldLooseBase(this, _renderSetupText)[_renderSetupText]()));
+					`), canSend ? babelHelpers.classPrivateFieldLooseBase(this, _renderEditor$1)[_renderEditor$1]() : babelHelpers.classPrivateFieldLooseBase(this, _renderSetupText)[_renderSetupText]()));
 	          if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates) {
 	            this.onTemplateSelectClick();
 	          }
@@ -5310,15 +6078,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    return self;
 	  }
 	}
-	function _renderEditor2() {
+	function _renderEditor2$1() {
 	  const config = this.getSetting('smsConfig', {});
 	  const enableSalesCenter = BX.prop.getBoolean(config, 'isSalescenterEnabled', false);
 	  const enableDocuments = BX.prop.getBoolean(config, 'isDocumentsEnabled', false);
 	  const enableFiles = this.getSetting('enableFiles', false);
-	  this._saveButton = main_core.Tag.render(_t3$3 || (_t3$3 = _$4`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SEND'));
-	  this._cancelButton = main_core.Tag.render(_t4$3 || (_t4$3 = _$4`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
-	  this._input = main_core.Tag.render(_t5$2 || (_t5$2 = _$4`<textarea class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE'));
-	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$4`<div class="crm-entity-stream-content-sms-buttons-container">
+	  this._saveButton = main_core.Tag.render(_t3$3 || (_t3$3 = _$5`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SEND'));
+	  this._cancelButton = main_core.Tag.render(_t4$3 || (_t4$3 = _$5`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
+	  this._input = main_core.Tag.render(_t5$2 || (_t5$2 = _$5`<textarea class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE'));
+	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$5`<div class="crm-entity-stream-content-sms-buttons-container">
 			${0}
 			${0}
 			${0}
@@ -5352,15 +6120,15 @@ this.BX.Crm = this.BX.Crm || {};
 					<span class="crm-entity-stream-content-sms-symbol-counter-number">200</span>
 				</div>
 			</div>
-		`), enableSalesCenter ? main_core.Tag.render(_t7$2 || (_t7$2 = _$4`
+		`), enableSalesCenter ? main_core.Tag.render(_t7$2 || (_t7$2 = _$5`
 				<div class="crm-entity-stream-content-sms-button" data-role="salescenter-starter">
 					<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
 					<div class="crm-entity-stream-content-sms-button-text">${0}</div>
-				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null, enableFiles ? main_core.Tag.render(_t8$1 || (_t8$1 = _$4`
+				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null, enableFiles ? main_core.Tag.render(_t8$1 || (_t8$1 = _$5`
 				<div class="crm-entity-stream-content-sms-button" data-role="sms-file-selector">
 					<div class="crm-entity-stream-content-sms-file-icon"></div>
 					<div class="crm-entity-stream-content-sms-button-text">${0}</div>
-				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SEND_FILE')) : null, enableDocuments ? main_core.Tag.render(_t9$1 || (_t9$1 = _$4`
+				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SEND_FILE')) : null, enableDocuments ? main_core.Tag.render(_t9$1 || (_t9$1 = _$5`
 				<div class="crm-entity-stream-content-sms-button" data-role="sms-document-selector">
 					<div class="crm-entity-stream-content-sms-document-icon"></div>
 					<div class="crm-entity-stream-content-sms-button-text">${0}</div>
@@ -5368,7 +6136,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _renderSetupText2() {
 	  const enableSalesCenter = BX.prop.getBoolean(this.getSetting('smsConfig', {}), 'isSalescenterEnabled', false);
-	  return main_core.Tag.render(_t10 || (_t10 = _$4`<div class="crm-entity-stream-content-sms-conditions-container">
+	  return main_core.Tag.render(_t10 || (_t10 = _$5`<div class="crm-entity-stream-content-sms-conditions-container">
 			<div class="crm-entity-stream-content-sms-conditions">
 				<div class="crm-entity-stream-content-sms-conditions-text">
 					<strong>${0}</strong><br>
@@ -5380,13 +6148,13 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-entity-stream-content-new-sms-btn-container">
 			<a href="#" data-role="sender-selector" target="_top" class="crm-entity-stream-content-new-sms-connect-link">${0}</a>
 			${0}
-		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t11 || (_t11 = _$4`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
+		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t11 || (_t11 = _$5`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
 	<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
 	<div class="crm-entity-stream-content-sms-button-text">${0}</div>
 </div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null);
 	}
 	function _renderTemplatesContainer2() {
-	  this._templatesContainer = main_core.Tag.render(_t12 || (_t12 = _$4`<div class="crm-entity-stream-content-new-sms-templates">
+	  this._templatesContainer = main_core.Tag.render(_t12 || (_t12 = _$5`<div class="crm-entity-stream-content-new-sms-templates">
 				<div class="ui-ctl-label-text">
 					${0}<span class="ui-hint" data-role="hint"><span class="ui-hint-icon"></span></span>
 				</div>
@@ -5407,7 +6175,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    const fileInputName = fileInputPrefix + '-sms-files';
 	    const fileUploaderInputName = fileInputPrefix + '-sms-files-uploader';
 	    const fileUploaderZoneId = 'diskuf-selectdialog-' + fileInputPrefix;
-	    return main_core.Tag.render(_t13 || (_t13 = _$4`<div class="crm-entity-stream-content-sms-file-uploader-zone" data-role="sms-file-upload-zone" data-node-id="${0}">
+	    return main_core.Tag.render(_t13 || (_t13 = _$5`<div class="crm-entity-stream-content-sms-file-uploader-zone" data-role="sms-file-upload-zone" data-node-id="${0}">
 				<div id="${0}" class="diskuf-files-entity diskuf-selectdialog bx-disk">
 					<div class="diskuf-files-block checklist-loader-files">
 						<div class="diskuf-placeholder">
@@ -5431,7 +6199,7 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>`), fileInputPrefix, fileUploaderZoneId, fileInputName, fileUploaderInputName, fileUploaderInputName);
 	  }
 	  if (showFiles) {
-	    return main_core.Tag.render(_t14 || (_t14 = _$4`<div class="crm-entity-stream-content-sms-file-external-link-popup" data-role="sms-file-external-link-disabled">
+	    return main_core.Tag.render(_t14 || (_t14 = _$5`<div class="crm-entity-stream-content-sms-file-external-link-popup" data-role="sms-file-external-link-disabled">
 				<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-container">
 					<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-inner">
 						<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-desc">
@@ -5689,207 +6457,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Object.values(newCommunications);
 	}
 
-	const SPOTLIGHT_ID_PREFIX$1 = 'spotlight-crm-timeline-menubar';
-	const SPOTLIGHT_TARGET_VERTEX = 'middle-center';
-	const SPOTLIGHT_Z_INDEX = 200;
-	const GUIDE_LINK_CLASS_NAME = 'crm-entity-stream-content-new-detail-guide-link';
-	const GUIDE_POPUP_WIDTH = 400;
-	const GUIDE_POPUP_POSITION = 'bottom';
-	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
-	var _spotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
-	var _guide$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
-	var _guideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guideBindElement");
-	var _targetElementRect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetElementRect");
-	var _observerTimeoutId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observerTimeoutId");
-	var _getSpotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSpotlight");
-	var _getGuideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGuideBindElement");
-	var _handleTargetElementResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTargetElementResize");
-	var _assertValidParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("assertValidParams");
-	class BaseTour {
-	  constructor(_params2) {
-	    Object.defineProperty(this, _assertValidParams, {
-	      value: _assertValidParams2
-	    });
-	    Object.defineProperty(this, _handleTargetElementResize, {
-	      value: _handleTargetElementResize2
-	    });
-	    Object.defineProperty(this, _getGuideBindElement, {
-	      value: _getGuideBindElement2
-	    });
-	    Object.defineProperty(this, _getSpotlight$1, {
-	      value: _getSpotlight2$1
-	    });
-	    Object.defineProperty(this, _params, {
-	      writable: true,
-	      value: {}
-	    });
-	    Object.defineProperty(this, _spotlight$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _guide$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _guideBindElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _targetElementRect, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _observerTimeoutId, {
-	      writable: true,
-	      value: null
-	    });
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _assertValidParams)[_assertValidParams](_params2)) {
-	      throw new TypeError('Invalid menu bar tour params');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = _params2;
-	    this.onWindowResize = main_core.Runtime.debounce(this.onWindowResize.bind(this), 100);
-	    main_core.Event.bind(window, 'resize', this.onWindowResize);
-	  }
-	  onWindowResize() {
-	    const target = babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1].getCurrentStep().setTarget(target);
-	    babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1].showNextStep();
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].setTargetElement(target);
-	  }
-	  canShow() {
-	    return true;
-	  }
-	  show() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1] = babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight$1)[_getSpotlight$1]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].show();
-	    this.getGuide().showNextStep();
-	  }
-	  getGuide() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1]) {
-	      var _babelHelpers$classPr2;
-	      const guideCfg = {
-	        onEvents: true,
-	        steps: [{
-	          target: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
-	          title: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].title,
-	          text: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].text,
-	          position: GUIDE_POPUP_POSITION,
-	          rounded: true,
-	          events: {
-	            onClose: () => {
-	              this.saveUserOption(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].userOptionName);
-	              babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].close();
-	              if (babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]) {
-	                clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]);
-	                babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = null;
-	              }
-	              main_core.Event.unbind(window, 'resize', this.onWindowResize);
-	            }
-	          }
-	        }]
-	      };
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].articleCode > 0) {
-	        var _babelHelpers$classPr;
-	        guideCfg.steps[0].article = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].articleCode;
-	        guideCfg.steps[0].linkTitle = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].linkTitle) != null ? _babelHelpers$classPr : main_core.Loc.getMessage('CRM_TIMELINE_DETAILS');
-	      }
-	      const guide = new ui_tour.Guide(guideCfg);
-	      const guidePopup = guide.getPopup();
-	      guidePopup.setWidth((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guidePopupWidth) != null ? _babelHelpers$classPr2 : GUIDE_POPUP_WIDTH);
-	      const link = guidePopup.contentContainer.querySelector('.ui-tour-popup-link');
-	      main_core.Dom.addClass(link, GUIDE_LINK_CLASS_NAME);
-	      babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement]());
-	      babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = setInterval(babelHelpers.classPrivateFieldLooseBase(this, _handleTargetElementResize)[_handleTargetElementResize].bind(this), 1000);
-	      babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1] = guide;
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1];
-	  }
-	  saveUserOption(optionName = null) {
-	    // eslint-disable-next-line no-console
-	    console.warn('Method save is not implemented');
-	  }
-	}
-	function _getSpotlight2$1() {
-	  const spotlight = new BX.SpotLight({
-	    id: `${SPOTLIGHT_ID_PREFIX$1}-${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}-guide`,
-	    targetElement: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
-	    targetVertex: SPOTLIGHT_TARGET_VERTEX,
-	    zIndex: SPOTLIGHT_Z_INDEX,
-	    autoSave: 'no'
-	  });
-	  spotlight.bindEvents({
-	    onTargetEnter: () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].stayShowedSpotlight !== true) {
-	        spotlight.close();
-	      }
-	    }
-	  });
-	  return spotlight;
-	}
-	function _getGuideBindElement2(force = false) {
-	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement)) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement;
-	    return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] || force) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = document.querySelector(`[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}"]`);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetTop) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].parentElement.nextElementSibling;
-	    }
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
-	}
-	function _handleTargetElementResize2() {
-	  const currentRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement]());
-	  if (currentRect.left !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].left || currentRect.right !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].right || currentRect.top !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].top || currentRect.bottom !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].bottom) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement]);
-	    const targetElement = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
-	    const isVisible = Boolean(targetElement.offsetWidth || targetElement.offsetHeight || targetElement.getClientRects().length > 0);
-	    const guidePopup = babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1].getPopup();
-	    if (isVisible) {
-	      main_core.Dom.removeClass(guidePopup.popupContainer, '--hidden');
-	      guidePopup.adjustPosition();
-	    } else {
-	      main_core.Dom.addClass(guidePopup.popupContainer, '--hidden');
-	    }
-	  }
-	}
-	function _assertValidParams2(params) {
-	  if (!main_core.Type.isPlainObject(params)) {
-	    console.error('"params" must be specified');
-	    return false;
-	  }
-	  if (!main_core.Type.isStringFilled(params.title)) {
-	    console.error('"title" must be specified');
-	    return false;
-	  }
-	  if (!main_core.Type.isStringFilled(params.text)) {
-	    console.error('"text" must be specified');
-	    return false;
-	  }
-	  return true;
-	}
-
-	const UserOptions = main_core.Reflection.namespace('BX.userOptions');
+	const UserOptions$1 = main_core.Reflection.namespace('BX.userOptions');
 
 	/** @memberof BX.Crm.Timeline.MenuBar.Whatsapp */
-	class Tour$1 extends BaseTour {
+	class Tour$2 extends BaseTour {
 	  /**
 	   * @override
 	   * */
 	  saveUserOption(optionName = null) {
-	    if (![Tour$1.USER_OPTION_PROVIDER_OFF, Tour$1.USER_OPTION_TEMPLATES_READY, Tour$1.USER_OPTION_PROVIDER_ON].includes(optionName)) {
+	    if (![Tour$2.USER_OPTION_PROVIDER_OFF, Tour$2.USER_OPTION_TEMPLATES_READY, Tour$2.USER_OPTION_PROVIDER_ON].includes(optionName)) {
 	      throw new Error(`User option with name: ${optionName} unsupported`);
 	    }
-	    UserOptions.save('crm', 'whatsapp', optionName, 1);
+	    UserOptions$1.save('crm', 'whatsapp', optionName, 1);
 	  }
 	}
-	Tour$1.USER_OPTION_PROVIDER_OFF = 'is_tour_provider_off_viewed';
-	Tour$1.USER_OPTION_TEMPLATES_READY = 'is_tour_templates_ready_viewed';
-	Tour$1.USER_OPTION_PROVIDER_ON = 'is_tour_provider_on_viewed';
+	Tour$2.USER_OPTION_PROVIDER_OFF = 'is_tour_provider_off_viewed';
+	Tour$2.USER_OPTION_TEMPLATES_READY = 'is_tour_templates_ready_viewed';
+	Tour$2.USER_OPTION_PROVIDER_ON = 'is_tour_provider_on_viewed';
 
-	let _$5 = t => t,
-	  _t$5,
+	let _$6 = t => t,
+	  _t$6,
 	  _t2$5,
 	  _t3$4,
 	  _t4$4,
@@ -6239,7 +6826,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      description = main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_HEADER_DESCRIPTION');
 	      descriptionClass = '';
 	    }
-	    return main_core.Tag.render(_t$5 || (_t$5 = _$5`
+	    return main_core.Tag.render(_t$6 || (_t$6 = _$6`
 			<div class="crm-entity-stream-content-whatsapp crm-entity-stream-content-wait-detail --hidden --skeleton">
 				<div class="crm-entity-stream-content-whatsapp-container --hidden">
 					<div class="crm-entity-stream-content-whatsapp-header">
@@ -6284,21 +6871,21 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]()) {
 	      return;
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_PROVIDER_OFF)) {
-	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$2.USER_OPTION_PROVIDER_OFF)) {
+	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$2({
 	        itemCode: 'whatsapp',
 	        title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TITLE'),
 	        text: this.getEntityTypeId() === BX.CrmEntityType.enumeration.lead ? main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_LEAD') : main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_DEAL'),
 	        articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
-	        userOptionName: Tour$1.USER_OPTION_PROVIDER_OFF
+	        userOptionName: Tour$2.USER_OPTION_PROVIDER_OFF
 	      }));
-	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_PROVIDER_ON)) {
-	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$2.USER_OPTION_PROVIDER_ON)) {
+	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$2({
 	        itemCode: 'whatsapp',
 	        title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TITLE'),
 	        text: this.getEntityTypeId() === BX.CrmEntityType.enumeration.lead ? main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TEXT_LEAD') : main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TEXT_DEAL'),
 	        articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
-	        userOptionName: Tour$1.USER_OPTION_PROVIDER_ON
+	        userOptionName: Tour$2.USER_OPTION_PROVIDER_ON
 	      }));
 	    }
 	  }
@@ -6328,16 +6915,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _showContent$1)[_showContent$1]();
 	        resolve();
 	        setTimeout(() => {
-	          if (this.supportsLayout() && babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]() && babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_TEMPLATES_READY)) {
-	            crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	          if (this.supportsLayout() && babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]() && babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$2.USER_OPTION_TEMPLATES_READY)) {
+	            crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$2({
 	              itemCode: 'whatsapp',
 	              title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TITLE'),
 	              text: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TEXT'),
 	              articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
-	              userOptionName: Tour$1.USER_OPTION_TEMPLATES_READY,
+	              userOptionName: Tour$2.USER_OPTION_TEMPLATES_READY,
 	              guideBindElement: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton]
 	            }));
-	            babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList] = babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].filter(name => name !== Tour$1.USER_OPTION_TEMPLATES_READY);
+	            babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList] = babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].filter(name => name !== Tour$2.USER_OPTION_TEMPLATES_READY);
 	          }
 	        }, 300);
 	      }).catch(() => {
@@ -6418,7 +7005,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 	function _createHelpLinkContainer2() {
-	  const container = main_core.Tag.render(_t2$5 || (_t2$5 = _$5`
+	  const container = main_core.Tag.render(_t2$5 || (_t2$5 = _$6`
 			<a class="crm-entity-stream-content-whatsapp-header-help-link" href="#">
 				${0}
 			</a>
@@ -6428,7 +7015,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _createHeaderButtons2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton] = main_core.Tag.render(_t3$4 || (_t3$4 = _$5`
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton] = main_core.Tag.render(_t3$4 || (_t3$4 = _$6`
 				<button class="crm-entity-stream-content-whatsapp-header-button-selector">
 					<span class="crm-entity-stream-content-whatsapp-header-button-text">
 						${0}
@@ -6436,12 +7023,12 @@ this.BX.Crm = this.BX.Crm || {};
 				</button>
 			`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_BUTTON_SELECTOR'));
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton], 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleTemplateSelect)[_handleTemplateSelect]());
-	    const settingsButton = main_core.Tag.render(_t4$4 || (_t4$4 = _$5`
+	    const settingsButton = main_core.Tag.render(_t4$4 || (_t4$4 = _$6`
 				<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-setting crm-entity-stream-content-whatsapp-header-button-settings">
 				</button>
 			`));
 	    main_core.Event.bind(settingsButton, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleSettingsMenuClick)[_handleSettingsMenuClick]());
-	    return main_core.Tag.render(_t5$3 || (_t5$3 = _$5`
+	    return main_core.Tag.render(_t5$3 || (_t5$3 = _$6`
 				${0}
 				${0}
 			`), babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton], settingsButton);
@@ -6450,13 +7037,13 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _createFooterButtons2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton] = main_core.Tag.render(_t6$3 || (_t6$3 = _$5`
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton] = main_core.Tag.render(_t6$3 || (_t6$3 = _$6`
 				<button class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled">
 					${0}
 				</button>
 			`), main_core.Loc.getMessage('CRM_TIMELINE_SEND'));
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton], 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleSendButtonClick)[_handleSendButtonClick]());
-	    babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton] = main_core.Tag.render(_t7$3 || (_t7$3 = _$5`
+	    babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton] = main_core.Tag.render(_t7$3 || (_t7$3 = _$6`
 				<button class="ui-btn ui-btn-xs ui-btn-link">
 					${0}
 				</button>
@@ -6468,12 +7055,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.emitFinishEditEvent();
 	      babelHelpers.classPrivateFieldLooseBase(this, _submitCancelButtonAnalytics)[_submitCancelButtonAnalytics]((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) == null ? void 0 : _babelHelpers$classPr.ORIGINAL_ID);
 	    });
-	    return main_core.Tag.render(_t8$2 || (_t8$2 = _$5`
+	    return main_core.Tag.render(_t8$2 || (_t8$2 = _$6`
 				${0}
 				${0}
 			`), babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton], babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton]);
 	  }
-	  const setupButton = main_core.Tag.render(_t9$2 || (_t9$2 = _$5`
+	  const setupButton = main_core.Tag.render(_t9$2 || (_t9$2 = _$6`
 			<button class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round">
 				${0}
 			</button>
@@ -6482,13 +7069,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  return setupButton;
 	}
 	function _createTemplatesContainer2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle] = main_core.Tag.render(_t10$1 || (_t10$1 = _$5`
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle] = main_core.Tag.render(_t10$1 || (_t10$1 = _$6`
 			<div class="crm-entity-stream-content-new-detail-whatsapp-template-title"></div>
 		`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent] = main_core.Tag.render(_t11$1 || (_t11$1 = _$5`
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent] = main_core.Tag.render(_t11$1 || (_t11$1 = _$6`
 			<div class="crm-entity-stream-content-new-detail-whatsapp-template-content"></div>
 		`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer] = main_core.Tag.render(_t12$1 || (_t12$1 = _$5`
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer] = main_core.Tag.render(_t12$1 || (_t12$1 = _$6`
 			<div class="crm-entity-stream-content-new-detail-whatsapp-template --demo">
 				${0}
 				${0}
@@ -6807,7 +7394,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _submitSuggestTemplateAnalytics)[_submitSuggestTemplateAnalytics]();
 	  };
-	  return [main_core.Tag.render(_t13$1 || (_t13$1 = _$5`<span style="width: 100%;"></span>`)), main_core.Tag.render(_t14$1 || (_t14$1 = _$5`
+	  return [main_core.Tag.render(_t13$1 || (_t13$1 = _$6`<span style="width: 100%;"></span>`)), main_core.Tag.render(_t14$1 || (_t14$1 = _$6`
 				<span onclick="${0}" class="ui-selector-footer-link">
 					${0}
 				</span>
@@ -6889,17 +7476,28 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	const UserOptions$1 = main_core.Reflection.namespace('BX.userOptions');
+	const UserOptions$2 = main_core.Reflection.namespace('BX.userOptions');
 
 	/** @memberof BX.Crm.Timeline.MenuBar.ToDo */
-	class Tour$2 extends BaseTour {
+	class Tour$3 extends BaseTour {
+	  canShow() {
+	    const {
+	      guideBindElement
+	    } = this.getParams();
+	    const mainSection = document.querySelector('[data-tab-id="main"]');
+	    if (!mainSection || main_core.Dom.style(mainSection, 'display') === 'none') {
+	      return false;
+	    }
+	    const style = window.getComputedStyle(guideBindElement);
+	    return document.contains(guideBindElement) && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && guideBindElement.offsetWidth > 0 && guideBindElement.offsetHeight > 0;
+	  }
 	  saveUserOption(optionName = null) {
-	    UserOptions$1.save('crm', 'todo', 'isTimelineTourViewedInWeb', 1);
+	    UserOptions$2.save('crm', 'todo', 'isTimelineTourViewedInWeb', 1);
 	  }
 	}
 
-	let _$6 = t => t,
-	  _t$6,
+	let _$7 = t => t,
+	  _t$7,
 	  _t2$6,
 	  _t3$5;
 	const ARTICLE_CODE = '21064046';
@@ -6937,9 +7535,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    super.initialize(context, settings);
 	  }
 	  createLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer] = main_core.Tag.render(_t$6 || (_t$6 = _$6`<div></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton] = main_core.Tag.render(_t2$6 || (_t2$6 = _$6`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON'));
-	    return main_core.Tag.render(_t3$5 || (_t3$5 = _$6`
+	    babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer] = main_core.Tag.render(_t$7 || (_t$7 = _$7`<div></div>`));
+	    babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton] = main_core.Tag.render(_t2$6 || (_t2$6 = _$7`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON'));
+	    return main_core.Tag.render(_t3$5 || (_t3$5 = _$7`
 			<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
 				${0}
 				<div class="crm-entity-stream-content-new-comment-btn-container">
@@ -7014,7 +7612,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    const guideBindElementClass = '.crm-activity__todo-show-actions-popup-button';
 	    const guideBindElement = document.querySelector(guideBindElementClass);
 	    if (guideBindElement && !babelHelpers.classPrivateFieldLooseBase(this, _isTourViewed)[_isTourViewed] && !BX.Crm.EntityEditor.getDefault().isNew()) {
-	      const tour = new Tour$2({
+	      const tour = new Tour$3({
 	        itemCode: 'todo',
 	        title: main_core.Loc.getMessage('CRM_TIMELINE_TODO_GUIDE_TITLE'),
 	        text: main_core.Loc.getMessage('CRM_TIMELINE_TODO_GUIDE_TEXT'),
@@ -7073,8 +7671,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	let _$7 = t => t,
-	  _t$7,
+	let _$8 = t => t,
+	  _t$8,
 	  _t2$7,
 	  _t3$6,
 	  _t4$5,
@@ -7177,7 +7775,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  renderDialogContent() {
 	    const container = this.getContainer();
 	    container.innerHTML = '';
-	    const wrapper = main_core.Tag.render(_t$7 || (_t$7 = _$7`<div class="crm-wait-popup-select-wrapper"></div>`));
+	    const wrapper = main_core.Tag.render(_t$8 || (_t$8 = _$8`<div class="crm-wait-popup-select-wrapper"></div>`));
 	    const contentTextNode = this.getContentTextNode();
 	    this.appendDurationInput(contentTextNode);
 	    this.appendTargetDateNode(contentTextNode);
@@ -7187,7 +7785,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getContainer() {
 	    if (!this._container) {
-	      this._container = main_core.Tag.render(_t2$7 || (_t2$7 = _$7`<div class="crm-wait-popup-select-block"></div>`));
+	      this._container = main_core.Tag.render(_t2$7 || (_t2$7 = _$8`<div class="crm-wait-popup-select-block"></div>`));
 	    }
 	    return this._container;
 	  }
@@ -7199,7 +7797,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      '#DAY_INPUT#': `<span class="crm-wait-duration-input-container" id="${this.getDurationInputContainerId()}"></span>`,
 	      '#TARGET_DATE#': this.isBeforeWaitingType() ? `<span class="crm-wait-target-date-container" id="${this.getTargetDateNodeContainerId()}"></span>` : null
 	    };
-	    return main_core.Tag.render(_t3$6 || (_t3$6 = _$7`
+	    return main_core.Tag.render(_t3$6 || (_t3$6 = _$8`
 			<span class="crm-wait-text-wrapper crm-wait-popup-settings-title">
 				${0}
 			</span>
@@ -7210,7 +7808,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getDurationInput() {
 	    if (!this._durationInput) {
-	      this._durationInput = main_core.Tag.render(_t4$5 || (_t4$5 = _$7`
+	      this._durationInput = main_core.Tag.render(_t4$5 || (_t4$5 = _$8`
 				<input type="text" class="crm-wait-popup-settings-input" value="${0}">
 			`), this.getDuration());
 	      this._durationInput.onkeyup = main_core.Runtime.debounce(this.onDurationChange.bind(this), 300);
@@ -7236,7 +7834,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getTargetDateNode() {
 	    if (!this._targetDateNode) {
-	      this._targetDateNode = main_core.Tag.render(_t5$4 || (_t5$4 = _$7`
+	      this._targetDateNode = main_core.Tag.render(_t5$4 || (_t5$4 = _$8`
 				<span class="crm-automation-popup-settings-link">
 					${0}
 				</span>
@@ -7336,8 +7934,8 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	WaitConfigurationDialog.messages = {};
 
-	let _$8 = t => t,
-	  _t$8,
+	let _$9 = t => t,
+	  _t$9,
 	  _t2$8,
 	  _t3$7,
 	  _t4$6,
@@ -7354,11 +7952,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	  createLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _waitConfigContainer)[_waitConfigContainer] = main_core.Tag.render(_t$8 || (_t$8 = _$8`<div class="crm-entity-stream-content-wait-conditions"></div>`));
-	    this._saveButton = main_core.Tag.render(_t2$8 || (_t2$8 = _$8`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CREATE_WAITING'));
-	    this._cancelButton = main_core.Tag.render(_t3$7 || (_t3$7 = _$8`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
-	    this._input = main_core.Tag.render(_t4$6 || (_t4$6 = _$8`<textarea rows="1" class="crm-entity-stream-content-wait-comment-textarea" placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_WAIT_PLACEHOLDER'));
-	    return main_core.Tag.render(_t5$5 || (_t5$5 = _$8`<div class="crm-entity-stream-content-wait-detail --focus --hidden">
+	    babelHelpers.classPrivateFieldLooseBase(this, _waitConfigContainer)[_waitConfigContainer] = main_core.Tag.render(_t$9 || (_t$9 = _$9`<div class="crm-entity-stream-content-wait-conditions"></div>`));
+	    this._saveButton = main_core.Tag.render(_t2$8 || (_t2$8 = _$9`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CREATE_WAITING'));
+	    this._cancelButton = main_core.Tag.render(_t3$7 || (_t3$7 = _$9`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
+	    this._input = main_core.Tag.render(_t4$6 || (_t4$6 = _$9`<textarea rows="1" class="crm-entity-stream-content-wait-comment-textarea" placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_WAIT_PLACEHOLDER'));
+	    return main_core.Tag.render(_t5$5 || (_t5$5 = _$9`<div class="crm-entity-stream-content-wait-detail --focus --hidden">
 			<div class="crm-entity-stream-content-wait-conditions-container">
 				${0}
 			</div>
@@ -7714,9 +8312,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  messages: {}
 	};
 
-	let _$9 = t => t,
-	  _t$9;
-	var _editor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editor");
+	let _$a = t => t,
+	  _t$a;
+	var _editor$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editor");
 	var _createEditor$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createEditor");
 	var _onFinishEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFinishEdit");
 	class Zoom extends Item {
@@ -7728,7 +8326,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _createEditor$1, {
 	      value: _createEditor2$1
 	    });
-	    Object.defineProperty(this, _editor, {
+	    Object.defineProperty(this, _editor$1, {
 	      writable: true,
 	      value: null
 	    });
@@ -7746,19 +8344,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    return this.getSetting('isConnected') && this.getSetting('isAvailable');
 	  }
 	  createLayout() {
-	    return main_core.Tag.render(_t$9 || (_t$9 = _$9`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`));
+	    return main_core.Tag.render(_t$a || (_t$a = _$a`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`));
 	  }
 	  onFocus(e) {
 	    this.setFocused(true);
 	  }
 	  onShow() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor]) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _editor$1)[_editor$1]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _createEditor$1)[_createEditor$1]();
 	    }
 	  }
 	}
 	function _createEditor2$1() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = new crm_zoom.Zoom({
+	  babelHelpers.classPrivateFieldLooseBase(this, _editor$1)[_editor$1] = new crm_zoom.Zoom({
 	    ownerTypeId: this.getEntityTypeId(),
 	    ownerId: this.getEntityId(),
 	    container: this.getContainer(),
@@ -7769,254 +8367,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _onFinishEdit2() {
 	  this.emitFinishEditEvent();
-	}
-
-	const UserOptions$2 = main_core.Reflection.namespace('BX.userOptions');
-	var _checkOption = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkOption");
-	class Options {
-	  constructor() {
-	    Object.defineProperty(this, _checkOption, {
-	      value: _checkOption2
-	    });
-	  }
-	  saveUserOption(optionName) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _checkOption)[_checkOption](optionName);
-	    UserOptions$2.save('crm', Options.BOOKING_ADS_OPTION, optionName, 1);
-	  }
-	}
-	function _checkOption2(optionName) {
-	  if (![Options.START_BANNER, Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME, Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME].includes(optionName)) {
-	    throw new Error(`User option with name: ${optionName} unsupported`);
-	  }
-	}
-	Options.BOOKING_ADS_OPTION = 'booking_ads';
-	Options.START_BANNER = 'start_banner';
-	Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME = 'before_first_resource';
-	Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME = 'after_first_resource';
-
-	class Tour$3 extends BaseTour {
-	  /**
-	   * @override
-	   * */
-	  saveUserOption(optionName = null) {
-	    new Options().saveUserOption(optionName);
-	  }
-	}
-
-	function Resolvable() {
-	  let resolve;
-	  const promise = new Promise(res => {
-	    resolve = res;
-	  });
-	  promise.resolve = resolve;
-	  return promise;
-	}
-
-	class BannerAnalytics {
-	  static sendShowPopup() {
-	    const options = {
-	      tool: BannerAnalytics.ANALYTICS_TOOL_BOOKING,
-	      category: BannerAnalytics.ANALYTICS_CATEGORY_BOOKING,
-	      event: 'show_popup',
-	      c_section: BannerAnalytics.ANALYTICS_SECTION_CRM
-	    };
-	    ui_analytics.sendData(options);
-	  }
-	  static sendClickEnable() {
-	    const options = {
-	      tool: BannerAnalytics.ANALYTICS_TOOL_BOOKING,
-	      category: BannerAnalytics.ANALYTICS_CATEGORY_BOOKING,
-	      event: 'click_enable',
-	      c_section: BannerAnalytics.ANALYTICS_SECTION_CRM
-	    };
-	    ui_analytics.sendData(options);
-	  }
-	}
-	BannerAnalytics.ANALYTICS_TOOL_BOOKING = 'booking';
-	BannerAnalytics.ANALYTICS_CATEGORY_BOOKING = 'booking';
-	BannerAnalytics.ANALYTICS_SECTION_CRM = 'crm';
-
-	var _bannerDispatcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bannerDispatcher");
-	var _showBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showBanner");
-	var _renderBannerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderBannerComponent");
-	var _createBannerComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createBannerComponent");
-	var _shouldShowBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowBanner");
-	var _setBannerShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setBannerShown");
-	var _showAha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAha");
-	var _shouldShowAha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAha");
-	var _getAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAhaParams");
-	var _getBeforeFirstResourceAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBeforeFirstResourceAhaParams");
-	var _getAfterFirstResourceAhaParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAfterFirstResourceAhaParams");
-	class Booking extends Item {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _getAfterFirstResourceAhaParams, {
-	      value: _getAfterFirstResourceAhaParams2
-	    });
-	    Object.defineProperty(this, _getBeforeFirstResourceAhaParams, {
-	      value: _getBeforeFirstResourceAhaParams2
-	    });
-	    Object.defineProperty(this, _getAhaParams, {
-	      value: _getAhaParams2
-	    });
-	    Object.defineProperty(this, _shouldShowAha, {
-	      value: _shouldShowAha2
-	    });
-	    Object.defineProperty(this, _showAha, {
-	      value: _showAha2
-	    });
-	    Object.defineProperty(this, _setBannerShown, {
-	      value: _setBannerShown2
-	    });
-	    Object.defineProperty(this, _shouldShowBanner, {
-	      value: _shouldShowBanner2
-	    });
-	    Object.defineProperty(this, _createBannerComponent, {
-	      value: _createBannerComponent2
-	    });
-	    Object.defineProperty(this, _renderBannerComponent, {
-	      value: _renderBannerComponent2
-	    });
-	    Object.defineProperty(this, _showBanner, {
-	      value: _showBanner2
-	    });
-	    Object.defineProperty(this, _bannerDispatcher, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _bannerDispatcher)[_bannerDispatcher] = new crm_integration_ui_bannerDispatcher.BannerDispatcher();
-	  }
-	  showSlider() {
-	    var _this$getSettings;
-	    const entities = (_this$getSettings = this.getSettings()) == null ? void 0 : _this$getSettings.entities;
-	    const embedEntities = JSON.stringify(entities);
-	    const url = `/booking/?embed=${embedEntities}`;
-	    if (BX.SidePanel) {
-	      BX.SidePanel.Instance.open(url, {
-	        customLeftBoundary: 0
-	      });
-	    } else {
-	      window.open(url);
-	    }
-	  }
-	  supportsLayout() {
-	    return false;
-	  }
-	  showTour() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _showBanner)[_showBanner]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _showAha)[_showAha]();
-	  }
-	}
-	function _showBanner2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowBanner)[_shouldShowBanner]()) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _bannerDispatcher)[_bannerDispatcher].toQueue(async onDone => {
-	    const bannerClosed = babelHelpers.classPrivateFieldLooseBase(this, _renderBannerComponent)[_renderBannerComponent]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _setBannerShown)[_setBannerShown]();
-	    await bannerClosed;
-	    onDone();
-	  }, crm_integration_ui_bannerDispatcher.Priority.CRITICAL);
-	}
-	async function _renderBannerComponent2() {
-	  const bannerClosed = new Resolvable();
-	  const app = await babelHelpers.classPrivateFieldLooseBase(this, _createBannerComponent)[_createBannerComponent](bannerClosed.resolve);
-	  const content = main_core.Dom.create('div');
-	  main_core.Dom.append(content, document.body);
-	  app.mount(content);
-	  return bannerClosed;
-	}
-	async function _createBannerComponent2(onBannerClose) {
-	  const {
-	    PromoBanner
-	  } = await main_core.Runtime.loadExtension('booking.component.promo-banner');
-	  const app = ui_vue3.BitrixVue.createApp({
-	    components: {
-	      PromoBanner
-	    },
-	    data() {
-	      return {
-	        isBannerShown: true
-	      };
-	    },
-	    methods: {
-	      onClose() {
-	        this.isBannerShown = false;
-	        onBannerClose();
-	      },
-	      buttonClick() {
-	        BannerAnalytics.sendClickEnable();
-	      }
-	    },
-	    template: '<PromoBanner v-if="isBannerShown" type="crm" @buttonClick="buttonClick" @close="onClose" />'
-	  });
-	  app.mixin({
-	    methods: {
-	      loc(name, replacements) {
-	        return main_core.Loc.getMessage(name, replacements);
-	      }
-	    }
-	  });
-	  return app;
-	}
-	function _shouldShowBanner2() {
-	  var _this$getSettings2;
-	  return ((_this$getSettings2 = this.getSettings()) == null ? void 0 : _this$getSettings2.shouldShowBanner) || false;
-	}
-	function _setBannerShown2() {
-	  new Options().saveUserOption(Options.START_BANNER);
-	  BannerAnalytics.sendShowPopup();
-	}
-	function _showAha2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAha)[_shouldShowAha]()) {
-	    return;
-	  }
-	  const ahaParams = babelHelpers.classPrivateFieldLooseBase(this, _getAhaParams)[_getAhaParams]();
-	  if (!ahaParams) {
-	    return;
-	  }
-	  const guideBindElement = document.querySelector('.main-buttons-inner-container .main-buttons-item[data-id="booking"]');
-	  if (!guideBindElement) {
-	    return;
-	  }
-	  const tour = new Tour$3({
-	    ...ahaParams,
-	    guideBindElement
-	  });
-	  tour.getGuide().getPopup().setAutoHide(true);
-	  crm_tourManager.TourManager.getInstance().registerWithLaunch(tour);
-	}
-	function _shouldShowAha2() {
-	  var _this$getSettings3;
-	  return Boolean((_this$getSettings3 = this.getSettings()) == null ? void 0 : _this$getSettings3.ahaMoments.length);
-	}
-	function _getAhaParams2() {
-	  var _this$getSettings4;
-	  switch ((_this$getSettings4 = this.getSettings()) == null ? void 0 : _this$getSettings4.ahaMoments[0]) {
-	    case Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME:
-	      return babelHelpers.classPrivateFieldLooseBase(this, _getBeforeFirstResourceAhaParams)[_getBeforeFirstResourceAhaParams]();
-	    case Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME:
-	      return babelHelpers.classPrivateFieldLooseBase(this, _getAfterFirstResourceAhaParams)[_getAfterFirstResourceAhaParams]();
-	    default:
-	      return null;
-	  }
-	}
-	function _getBeforeFirstResourceAhaParams2() {
-	  return {
-	    itemCode: 'booking_before_first_resource',
-	    title: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TITLE'),
-	    text: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TEXT'),
-	    userOptionName: Options.BEFORE_FIRST_RESOURCE_AHA_OPTION_NAME,
-	    articleCode: 23712054
-	  };
-	}
-	function _getAfterFirstResourceAhaParams2() {
-	  return {
-	    itemCode: 'booking_after_first_resource',
-	    title: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TITLE'),
-	    text: main_core.Loc.getMessage('CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TEXT'),
-	    userOptionName: Options.AFTER_FIRST_RESOURCE_AHA_OPTION_NAME
-	  };
 	}
 
 	class Factory {
@@ -8034,6 +8384,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        break;
 	      case 'whatsapp':
 	        item = new Whatsapp();
+	        break;
+	      case 'message':
+	        item = new Message();
 	        break;
 	      case 'gotochat':
 	        item = new GoToChat();
@@ -8298,5 +8651,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX,BX.Crm.Integration.Analytics,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Event,BX,BX.Crm,BX.Vue3,BX.Crm.Integration.UI,BX.Crm,BX,BX.UI.Analytics));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Crm.Integration.UI,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Vue3,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX.UI.Tour,BX,BX.Crm.Integration.Analytics,BX.Crm.Template,BX.UI.Analytics,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
 //# sourceMappingURL=toolbar.bundle.js.map

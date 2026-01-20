@@ -355,6 +355,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						&& toReplaceItems.length === 0
 					)
 					{
+						BX.postComponentEvent('UI.SimpleList::onAllItemsPositionStable', []);
 						resolve();
 
 						// eslint-disable-next-line promise/no-return-wrap
@@ -406,6 +407,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					return Promise.allSettled(modificationsPromises).then(() => {
 						this.currentIdsOrder = newIdsOrder;
 						this.currentItemsState = newItems;
+						BX.postComponentEvent('UI.SimpleList::onAllItemsPositionStable', []);
 						resolve();
 					});
 				});
@@ -623,6 +625,8 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				testId: `${this.testId}_LIST_VIEW`,
 				style: this.getStyle('container'),
 				data: [{ items }],
+				actionsForItem: this.props.actionsForItem,
+				onActionClick: this.props.onActionClick,
 				onScrollCalculated: this.props.onScrollCalculated,
 				onMomentumScrollEnd: this.props.onMomentumScrollEnd,
 				onMomentumScrollBegin: this.props.onMomentumScrollBegin,

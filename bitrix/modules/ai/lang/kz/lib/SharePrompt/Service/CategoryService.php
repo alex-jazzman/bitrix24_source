@@ -3,6 +3,7 @@ $MESS["AI_SERVICE_CATEGORY_CALENDAR"] = "Кездесулер";
 $MESS["AI_SERVICE_CATEGORY_CALENDAR_COMMENTS"] = "Кездесулердегі пікірлер";
 $MESS["AI_SERVICE_CATEGORY_CRM_ACTIVITY"] = "CRM-дегі істер мен пікірлер";
 $MESS["AI_SERVICE_CATEGORY_CRM_COMMENT_FIELD"] = "CRM карточкасындағы пікірлер";
+$MESS["AI_SERVICE_CATEGORY_CRM_MESSAGE_EDITOR"] = "CRM-дегі клиенттерге хабарламалар";
 $MESS["AI_SERVICE_CATEGORY_CRM_TIMELINE_COMMENT"] = "CRM-дегі пікірлер";
 $MESS["AI_SERVICE_CATEGORY_LANDING"] = "Сайттар";
 $MESS["AI_SERVICE_CATEGORY_LIVEFEED"] = "Лента";

@@ -5,3 +5,4 @@ $MESS["DOCUMENTGENERATOR_INSTALL_TITLE"] = "Установка модуля \"Г
 $MESS["DOCUMENTGENERATOR_UNINSTALL_TITLE"] = "Удаление модуля \"Генератор документов\"";
 $MESS["DOCUMENTGENERATOR_UNINSTALL_QUESTION"] = "Вы уверены что хотите удалить модуль?";
 $MESS["DOCUMENTGENERATOR_INSTALL_DEPENDENCIES_ERROR"] = "Для корректной работы модуля необходимо наличие классов php \DOMDocument и \ZipArchive<br /> Установите и активируйте php-расширения php-zip и php-xml";
+$MESS['DOCUMENTGENERATOR_INSTALL_HUMANRESOURCES_NOT_INSTALLED_ERROR'] = 'Для корректной работы модуля Генератор документов установите модуль Управление персоналом';

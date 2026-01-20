@@ -63,9 +63,11 @@ export const SpecialBackgroundId = {
 	collab: 'collab',
 	martaAI: 'martaAI',
 	copilot: 'copilot',
+	notifications: 'notifications',
 };
 
 const COPILOT_BACKGROUND_ID = 4;
+const NOTIFICATIONS_BACKGROUND_ID = 11;
 export const SpecialBackground = {
 	[SpecialBackgroundId.collab]: {
 		color: '#76c68b',
@@ -78,12 +80,18 @@ export const SpecialBackground = {
 		pattern: ThemePattern.aiAssistant,
 	},
 	[SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID],
+	[SpecialBackgroundId.notifications]: {
+		color: '#fafcfd',
+		type: ThemeType.light,
+		pattern: ThemePattern.default,
+	},
 };
 
 export const ImageFileByBackgroundId = {
 	[SpecialBackgroundId.collab]: 'collab-v2',
 	[SpecialBackgroundId.martaAI]: 'ai-assistant',
 	[SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString(),
+	[SpecialBackgroundId.notifications]: NOTIFICATIONS_BACKGROUND_ID.toString(),
 };
 
 export type BackgroundItem = {

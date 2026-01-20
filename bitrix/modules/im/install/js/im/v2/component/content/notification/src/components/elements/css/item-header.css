@@ -1,0 +1,74 @@
+:root {
+	--im-notification-item-header__color_hover-title: #525c69;
+	--im-notification-item-header__color_hover-title-extranet: #e89b06;
+	--im-notification-item-header__background_delete-icon: url('./images/delete.svg');
+	--im-notification-item-header__background_menu-icon: url('./images/menu.svg');
+}
+
+.bx-im-content-notification-item-header__container {
+	display: flex;
+	justify-content: space-between;
+}
+
+.bx-im-content-notification-item-header__title-container {
+	display: flex;
+	max-width: 632px;
+	margin-bottom: 6px;
+	align-items: flex-start;
+	overflow: hidden;
+	font-size: var(--im-font-size-md);
+	line-height: var(--im-font-line-height-3xs);
+	color: var(--im-color-palette-black-base);
+}
+
+.--subject-only .bx-im-content-notification-item-header__title-container {
+	margin-bottom: 0;
+}
+
+.bx-im-content-notification-item-header__title-container .bx-im-chat-title__text {
+	color: var(--im-color-palette-black-base);
+}
+
+.bx-im-content-notification-item-header__title-text {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.bx-im-content-notification-item-header__title-text.--short {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bx-im-content-notification-item-header__title-user-text:hover {
+	--im-chat-title__font-color: var(--im-notification-item-header__color_hover-title);
+	cursor: pointer;
+}
+
+.--extranet.bx-im-content-notification-item-header__title-user-text:hover {
+	--im-chat-title-extranet-color: var(--im-notification-item-header__color_hover-title-extranet);
+}
+
+.bx-im-content-notification-item-header__more-users {
+	display: flex;
+	font: var(--im-font-size-lg)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--im-notification-item-content-more-users-text-color);
+	margin-left: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bx-im-content-notification-item-header__more-users-start {
+	margin-right: 5px;
+}
+
+.bx-im-content-notification-item-header__more-users-dropdown {
+	display: inline-block;
+	color: var(--im-notification-item-content-link-text-color);
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+

@@ -105,14 +105,15 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 						id: MessageParams.ComponentId.ConferenceCreationMessage,
 						text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_COPY_LINK'),
 						height: ButtonSize.S.getName(),
-						callback: ({ dialogLocator, messageData }) => {
-							const descAttach = messageData?.params?.ATTACH[0]?.DESCRIPTION;
-							const text = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_COPY_LINK_TEXT');
+						callback: ({ dialogLocator }) => {
+							const dialogId = dialogLocator.get('dialogId');
+							const dialog = dialogLocator.get('store').getters['dialoguesModel/getById'](dialogId);
+							const link = dialog.public.link;
 
 							DialogTextHelper.copyToClipboard(
-								descAttach,
+								link,
 								{
-									notificationText: text,
+									notificationText: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_COPY_LINK_TEXT'),
 									parentWidget: dialogLocator.get('view')?.ui,
 								},
 							);

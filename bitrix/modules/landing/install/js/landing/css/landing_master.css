@@ -1044,7 +1044,7 @@ div[id^="popup-window-content-calendar-resourcebooking-settings-popup"] {
 }
 
 .landing-ui-field-color .landing-ui-field-header {
-	padding: 0 4px;
+	padding: 0;
 	margin-bottom: 16px;
 	font: 17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-light, 300);

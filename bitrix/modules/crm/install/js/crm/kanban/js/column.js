@@ -595,6 +595,7 @@
 								'ENABLE_CONFIG_SCOPE_TOGGLE': true,
 								'ENABLE_SETTINGS_FOR_ALL': true,
 								'ANALYTICS_CONFIG': analyticsConfig,
+								'HOST_COLUMN_FOR_QUICK_EDITOR_ID': this.getId().toString(),
 							}
 						}
 					}).then(function (response){
@@ -658,6 +659,7 @@
 							FIELDS: formFields,
 							CONTEXT: context,
 							ANALYTICS_CONFIG: analyticsConfig,
+							HOST_COLUMN_FOR_QUICK_EDITOR_ID: this.getId().toString(),
 						},
 						function (result)
 						{
@@ -872,7 +874,10 @@
 						&& this.isKeyMetaPressed && this.editorOpen)
 					{
 						this.processQuickEditor();
-						this.showQuickEditorLoader();
+						if (this.editor.isRequestRunning())
+						{
+							this.showQuickEditorLoader();
+						}
 						BX.PreventDefault(ev);
 					}
 				}.bind(this));
@@ -1511,19 +1516,11 @@
 			return timer;
 		},
 
-		/**
-		 * Hook on add column button.
-		 * @param {MouseEvent} event
-		 * @returns {void}
-		 */
 		handleAddColumnButtonClick: function(event)
 		{
-			var gridData = this.getGridData();
-			// if no access, show access-query popup
-			if (
-				gridData.rights &&
-				gridData.rights.canAddColumn
-			)
+			const gridData = this.getGridData();
+
+			if (gridData.rights?.canAddColumn)
 			{
 				const newColumn = this.getGrid().addColumn({
 					id: "kanban-new-column-" + BX.util.getRandomString(5),
@@ -1536,28 +1533,29 @@
 
 				newColumn.switchToEditMode();
 			}
-			else if (typeof BX.Intranet !== "undefined")
+			else if (gridData.isLockedEntity)
+			{
+				this.getGrid().showLockedEntitySlider();
+			}
+			else if (!BX.Type.isUndefined(BX.Intranet))
 			{
 				this.getGrid().accessNotify();
 			}
 		},
 
-		/**
-		 * Switch from view to edit mode (column).
-		 * @returns {void}
-		 */
 		switchToEditMode: function()
 		{
-			var gridData = this.getGridData();
-			// if no access, show access-query popup
-			if (
-				gridData.rights &&
-				gridData.rights.canAddColumn
-			)
+			const gridData = this.getGridData();
+
+			if (gridData.rights?.canEditColumn)
 			{
 				BX.Kanban.Column.prototype.switchToEditMode.apply(this, arguments);
 			}
-			else if (typeof BX.Intranet !== "undefined")
+			else if (gridData.isLockedEntity)
+			{
+				this.getGrid().showLockedEntitySlider();
+			}
+			else if (!BX.Type.isUndefined(BX.Intranet))
 			{
 				this.getGrid().accessNotify();
 			}

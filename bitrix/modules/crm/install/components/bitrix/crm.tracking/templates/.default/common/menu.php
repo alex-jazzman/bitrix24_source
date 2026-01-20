@@ -33,7 +33,7 @@ if ($shouldDisplayMenu)
 		"IS_ACTIVE" => $currentMenuItem === 'list',
 		'IS_DISABLED'=> false
 	];
-	if (\Bitrix\Main\Loader::includeModule('report'))
+	if (\Bitrix\Main\Loader::includeModule('report') && !\Bitrix\Crm\DbHelper::isPgSqlDb())
 	{
 		$menuItems[] = [
 			"TEXT" => Loc::getMessage('CRM_TRACKING_COMMON_MENU_REPORTS'),

@@ -4,9 +4,7 @@ import { hasDataTransferOnlyFiles } from 'ui.uploader.core';
 import { BIcon, Main } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
 
-import { Model } from 'tasks.v2.const';
-import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { fileService, EntityTypes, type FileService } from 'tasks.v2.provider.service.file-service';
 
 import './drop-zone.css';
 
@@ -16,8 +14,16 @@ export const DropZone = {
 		BIcon,
 	},
 	props: {
-		taskId: {
+		entityId: {
 			type: [Number, String],
+			required: true,
+		},
+		entityType: {
+			type: String,
+			default: EntityTypes.Task,
+		},
+		container: {
+			type: Object,
 			required: true,
 		},
 		bottom: {
@@ -29,7 +35,7 @@ export const DropZone = {
 	{
 		return {
 			Main,
-			fileService: fileService.get(props.taskId),
+			fileService: fileService.get(props.entityId, props.entityType),
 		};
 	},
 	data(): Object
@@ -40,14 +46,6 @@ export const DropZone = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
-		},
 		dropAreaStyles(): {[bottom: string]: string}
 		{
 			return {
@@ -58,23 +56,24 @@ export const DropZone = {
 		{
 			return 69;
 		},
-		container(): ?HTMLElement
-		{
-			return this.$parent?.$el;
-		},
 	},
-	mounted(): void
-	{
-		if (!Type.isElementNode(this.container) || this.readonly)
-		{
-			return;
-		}
+	watch: {
+		container: {
+			immediate: true,
+			handler(newValue): void
+			{
+				if (!Type.isElementNode(newValue))
+				{
+					return;
+				}
 
-		this.bindEvents();
+				this.bindEvents();
+			},
+		},
 	},
 	beforeUnmount(): void
 	{
-		if (!Type.isElementNode(this.container) || this.readonly)
+		if (!Type.isElementNode(this.container))
 		{
 			return;
 		}

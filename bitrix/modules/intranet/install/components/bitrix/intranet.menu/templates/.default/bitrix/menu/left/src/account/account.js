@@ -287,8 +287,11 @@ export class Account
 					<i></i>
 				</span>
 				<span class="intranet__desktop-menu_popup-label">${this.currentUser.portal}</span>
-				<div class="intranet__desktop-menu_popup-header-user" onclick="BX.SidePanel.Instance.open('${this.currentUser.profile}')">
-					<span class="intranet__desktop-menu_popup-name intranet__desktop-menu_popup-name--chevron">
+				<div
+					class="intranet__desktop-menu_popup-header-user ${this.currentUser.profile ? 'intranet__desktop-menu_popup-header-user--chevron' : ''}"
+					onclick="if (this.currentUser.profile) { BX.SidePanel.Instance.open('${this.currentUser.profile}'); }"
+					>
+					<span class="intranet__desktop-menu_popup-name">
 						${`${this.currentUser.first_name} ${this.currentUser.last_name}`}
 					</span>
 					${position}

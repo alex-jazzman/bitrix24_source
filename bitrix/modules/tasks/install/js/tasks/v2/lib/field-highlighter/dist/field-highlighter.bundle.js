@@ -12,15 +12,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _highlightTimeouts = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("highlightTimeouts");
 	var _startAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startAnimation");
 	var _stopAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stopAnimation");
-	var _scrollToField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToField");
 	var _nextTick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nextTick");
 	class FieldHighlighter {
 	  constructor() {
 	    Object.defineProperty(this, _nextTick, {
 	      value: _nextTick2
-	    });
-	    Object.defineProperty(this, _scrollToField, {
-	      value: _scrollToField2
 	    });
 	    Object.defineProperty(this, _stopAnimation, {
 	      value: _stopAnimation2
@@ -72,7 +68,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    setTimeout(() => babelHelpers.classPrivateFieldLooseBase(this, _startAnimation)[_startAnimation](fieldContainer));
 	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _highlightTimeouts)[_highlightTimeouts][fieldId]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _highlightTimeouts)[_highlightTimeouts][fieldId] = setTimeout(() => babelHelpers.classPrivateFieldLooseBase(this, _stopAnimation)[_stopAnimation](fieldContainer), 1500);
-	    babelHelpers.classPrivateFieldLooseBase(this, _scrollToField)[_scrollToField](fieldId);
+	    this.scrollToField(fieldId);
+	  }
+	  scrollToField(fieldId) {
+	    const fieldContainer = this.getFieldContainer(fieldId);
+	    if (!fieldContainer) {
+	      return this;
+	    }
+	    main_core.Dom.style(fieldContainer, 'scrollMarginTop', '100px');
+	    fieldContainer.scrollIntoView({
+	      block: 'start',
+	      behavior: 'smooth'
+	    });
+	    setTimeout(() => {
+	      main_core.Dom.style(fieldContainer, 'scrollMarginTop', null);
+	    }, 1000);
+	    return this;
 	  }
 	  getFieldContainer(fieldId) {
 	    var _babelHelpers$classPr;
@@ -87,20 +98,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	}
 	function _stopAnimation2(fieldContainer) {
 	  main_core.Dom.removeClass(fieldContainer, ['tasks-field-highlight', '--animate']);
-	}
-	function _scrollToField2(fieldId) {
-	  const fieldContainer = this.getFieldContainer(fieldId);
-	  if (!fieldContainer) {
-	    return;
-	  }
-	  main_core.Dom.style(fieldContainer, 'scrollMarginTop', '100px');
-	  fieldContainer.scrollIntoView({
-	    block: 'start',
-	    behavior: 'smooth'
-	  });
-	  setTimeout(() => {
-	    main_core.Dom.style(fieldContainer, 'scrollMarginTop', null);
-	  }, 1000);
 	}
 	function _nextTick2() {
 	  return new Promise(resolve => {

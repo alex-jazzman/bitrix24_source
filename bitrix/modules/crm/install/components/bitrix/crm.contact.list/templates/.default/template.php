@@ -59,7 +59,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 
-echo \Bitrix\Crm\Tour\GridGroupWhatsAppMessage::getInstance()->build();
+echo \Bitrix\Crm\Tour\Grid\GridGroupWhatsAppMessage::getInstance()->build();
 
 if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 	?><div id="convertContactAddressesWrapper"></div><?
@@ -173,6 +173,13 @@ $toolsManager = Container::getInstance()->getIntranetToolsManager();
 $availabilityManager = AvailabilityManager::getInstance();
 $isQuoteAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote);
 $isInvoiceAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice);
+
+$userIds = array_merge(
+	array_column($arResult['CONTACT'], 'ASSIGNED_BY_ID'),
+	array_column($arResult['CONTACT'], 'MODIFY_BY'),
+	array_column($arResult['CONTACT'], 'CREATED_BY'),
+);
+$userRender = \Bitrix\Crm\Grid\Render\User\ClickableUser::createByUserIds($userIds);
 
 foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 {
@@ -544,13 +551,11 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			'CONTACT_COMPANY' => isset($arContact['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arContact['COMPANY_INFO']) : '',
 			'COMPANY_ID' => isset($arContact['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arContact['COMPANY_INFO']) : '',
 			'ASSIGNED_BY' => $arContact['~ASSIGNED_BY_ID'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					[
-						'PREFIX' => "CONTACT_{$arContact['~ID']}_RESPONSIBLE",
-						'USER_ID' => $arContact['~ASSIGNED_BY_ID'],
-						'USER_NAME'=> $arContact['ASSIGNED_BY'],
-						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_PROFILE'],
-					]
+				? $userRender->render(
+					$arContact['~ASSIGNED_BY_ID'],
+					'ASSIGNED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
 				)
                 : '',
 			'COMMENTS' => htmlspecialcharsback($arContact['COMMENTS'] ?? ''),
@@ -562,24 +567,26 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			'SOURCE_ID' => $sourceId,
 			'WEBFORM_ID' => $webformId,
 			'CREATED_BY' => isset($arContact['~CREATED_BY']) && $arContact['~CREATED_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "CONTACT_{$arContact['~ID']}_CREATOR",
-						'USER_ID' => $arContact['~CREATED_BY'],
-						'USER_NAME'=> $arContact['CREATED_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_CREATOR']
-					)
-				) : '',
+				? $userRender->render(
+					$arContact['~CREATED_BY'],
+					'CREATED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
 			'MODIFY_BY' => isset($arContact['~MODIFY_BY']) && $arContact['~MODIFY_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "CONTACT_{$arContact['~ID']}_MODIFIER",
-						'USER_ID' => $arContact['~MODIFY_BY'],
-						'USER_NAME'=> $arContact['MODIFY_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_MODIFIER']
-					)
-				) : '',
-			'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Contact, $arContact['ID'], $arContact['~OBSERVERS'] ?? []),
+				? $userRender->render(
+					$arContact['~MODIFY_BY'],
+					'MODIFY_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
+			'OBSERVERS' => CCrmViewHelper::renderObservers(
+				$arResult['GRID_ID'],
+				$arResult['DB_FILTER'],
+				$arContact['~OBSERVERS'] ?? [],
+			),
 		) + CCrmViewHelper::RenderListMultiFields($arContact, "CONTACT_{$arContact['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::ContactName, 'ENTITY_ID' => $arContact['ID']))) + $arResult['CONTACT_UF'][$sKey]
 	];
 
@@ -1283,7 +1290,7 @@ if (\Bitrix\Crm\Settings\Crm::isWhatsAppScenarioEnabled()):
 		BX.ready(function () {
 			BX.Event.EventEmitter.subscribeOnce('Grid::selectRow', function (event) {
 				BX.Event.EventEmitter.emit(
-					'BX.Crm.Tour.GridGroupWhatsAppMessage::selectRow',
+					'BX.Crm.Tour.Grid.GridGroupWhatsAppMessage::selectRow',
 					{
 						stepId: 'grid-group-whatsapp-message',
 						target: document.getElementById('whatsapp-message_control'),

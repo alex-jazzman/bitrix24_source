@@ -10,7 +10,6 @@
 
 /* endregion */
 
-
 /* region Header */
 
 .preview__header {
@@ -623,7 +622,13 @@
 	color: var(--ui-color-base-90);
 }
 
+.settings-section-description-focus-text.--security-info span {
+	color: var(--ui-color-accent-main-alert);
+}
+
 .settings-section-description-focus-text.--security-info .ui-section__link {
+	color: var(--ui-color-base-3);
+	border-color: var(--ui-color-base-3);
 	font-weight: var(--ui-font-weight-regular);
 }
 

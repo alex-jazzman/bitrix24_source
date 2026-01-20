@@ -2698,4 +2698,31 @@
 	--ui-icon-set__icon-color: var(--ui-color-base-90);
 }
 
+.salescenter-app-payment-by-sms-message-sender-empty-state-image {
+	background: url(./../image/empty-state.png) no-repeat;
+	background-size: cover;
+	width: 250px;
+	height: 234px;
+}
+
+.salescenter-app-payment-by-sms-message-sender-empty-state-text {
+	color: #0075FF;
+	font-weight: 500;
+	font-size: 19px;
+	line-height: 26px;
+	letter-spacing: -0.2px;
+	width: 290px;
+	margin-bottom: 18px;
+	margin-top: 22px;
+}
+
+.salescenter-app-payment-by-sms-message-sender-empty-state-right-block {
+	margin-left: 10px;
+}
+
+.salescenter-app-payment-by-sms-message-sender-empty-state {
+	display: flex;
+	cursor: pointer;
+}
+
 /* endregion */

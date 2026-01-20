@@ -1,0 +1,121 @@
+.booking-yiw-settings-resource__content {
+	display: flex;
+	gap: 8px;
+}
+
+.booking-yiw-settings-resource__content-icons {
+	display: flex;
+	width: 119px;
+	height: 75px;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.booking-yiw-settings-resource__content-icon_empty {
+	display: block;
+	width: 75px;
+	height: 75px;
+	background: url("../images/yandex-settings-resource-light.png") center center no-repeat;
+}
+
+.booking-yiw-settings-resource__content-inform_button-block {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.booking-yiw-settings-resource__content-inform_text {
+	margin: 7px 0;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var( --ui-letter-spacing-l);
+}
+
+.booking-yiw-settings-resource__content-icons .booking-yiw-settings-resource__ui-avatar {
+	position: relative;
+}
+
+.booking-yiw-settings-resource__content-icons.--one .booking-yiw-settings-resource__ui-avatar {
+	left: -8px;
+	top: 4px;
+}
+
+.booking-yiw-settings-resource__content-icons.--two .booking-yiw-settings-resource__ui-avatar:nth-child(1) {
+	left: -9px;
+	top: -14px;
+}
+
+.booking-yiw-settings-resource__content-icons.--two .booking-yiw-settings-resource__ui-avatar:nth-child(2) {
+	left: 0;
+	top: 11px;
+}
+
+.booking-yiw-settings-resource__content-icons.--three .booking-yiw-settings-resource__ui-avatar:nth-child(1) {
+	left: -5px;
+	top: 18px;
+}
+
+.booking-yiw-settings-resource__content-icons.--three .booking-yiw-settings-resource__ui-avatar:nth-child(2) {
+	left: -4px;
+	top: -14px;
+}
+
+.booking-yiw-settings-resource__content-icons.--three .booking-yiw-settings-resource__ui-avatar:nth-child(3) {
+	left: -7px;
+	top: 17px;
+}
+
+.booking-yiw-settings-resource__content-icons.--many .booking-yiw-settings-resource__ui-avatar:nth-child(1) {
+	left: 4px;
+	top: 7px;
+}
+
+.booking-yiw-settings-resource__content-icons.--many .booking-yiw-settings-resource__ui-avatar:nth-child(2) {
+	left: -1px;
+	top: -21px;
+}
+
+.booking-yiw-settings-resource__content-icons.--many .booking-yiw-settings-resource__ui-avatar:nth-child(3) {
+	left: -27px;
+	top: 22px;
+}
+
+.booking-yiw-settings-resource__content-icons.--many .booking-yiw-settings-resource__ui-avatar:nth-child(4) {
+	left: -31px;
+	top: -7px;
+}
+
+
+.booking-yiw-settings-resource__amount-excess-resources {
+	--booking-yiw-settings-resource__amount-excess-resources-size: 28px;
+
+	position: absolute;
+	right: 16px;
+	bottom: 1px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: var(--booking-yiw-settings-resource__amount-excess-resources-size);
+	height: var(--booking-yiw-settings-resource__amount-excess-resources-size);
+	border-radius: var(--ui-border-radius-circle);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-accent-main-primary-alt);
+	background: var(--ui-color-accent-soft-blue-3);
+}
+
+.booking-yiw-settings-resource__content-inform_done {
+	display: flex;
+	gap: 4px;
+	padding: 4px 8px 4px 4px;
+	align-items: center;
+	border-radius: 24px;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-accent-main-success-alt);
+	background: var(--ui-color-accent-soft-green-2);
+}

@@ -15,6 +15,7 @@ type TabsList = {
 	windowClass: string
 }
 
+/* eslint-disable no-undef */
 export const windowFunctions = {
 	wait(ms: number): Promise
 	{
@@ -70,32 +71,20 @@ export const windowFunctions = {
 	{
 		const settings = Extension.getSettings('im.v2.lib.desktop-api');
 
-		return (
-			this.isDesktop()
-			&& settings.get('isChatWindow')
-		);
+		return this.isDesktop() && settings.get('isChatWindow');
 	},
 	isChatTab(): boolean
 	{
-		return (
-			this.isChatWindow()
-			|| (
-				this.isDesktop()
-				&& location.href.includes('&IM_TAB=Y')
-			)
-		);
+		if (this.isChatWindow())
+		{
+			return true;
+		}
+
+		return this.isDesktop() && location.href.includes('&IM_TAB=Y');
 	},
 	isActiveTab(): boolean
 	{
-		return (
-			this.isDesktop()
-			&& BXDesktopSystem.IsActiveTab()
-		);
-	},
-	async showBrowserWindow()
-	{
-		BXDesktopWindow.ExecuteCommand('show.main');
-		await this.wait(WINDOW_ACTIVATION_DELAY);
+		return this.isDesktop() && BXDesktopSystem.IsActiveTab();
 	},
 	setActiveTab(target = window)
 	{
@@ -108,6 +97,11 @@ export const windowFunctions = {
 	setActiveTabUrl(url: string)
 	{
 		BXDesktopSystem.SetActiveTabUrl(url);
+	},
+	async showBrowserWindow()
+	{
+		BXDesktopWindow.ExecuteCommand('show.main');
+		await this.wait(WINDOW_ACTIVATION_DELAY);
 	},
 	showWindow(target = window)
 	{
@@ -145,6 +139,10 @@ export const windowFunctions = {
 	reloadWindow()
 	{
 		BXDesktopSystem.Login({});
+	},
+	reloadChatWindow(): void
+	{
+		BXDesktopSystem?.ExecJsInApp(location.hostname, 'location.reload()');
 	},
 	findWindow(name: string = ''): ?Window
 	{
@@ -251,17 +249,7 @@ export const windowFunctions = {
 			`;
 		}
 
-		const head = document.head.outerHTML.replaceAll(/BX\.PULL\.start\([^)]*\);/g, '');
-
-		return `
-			<!DOCTYPE html>
-			<html lang="">
-				${head}
-				<body class="im-desktop im-desktop-popup">
-					${plainHtml}${plainJs}
-				</body>
-			</html>
-		`;
+		return `${plainHtml}${plainJs}`;
 	},
 	setWindowSize(width: number, height: number)
 	{

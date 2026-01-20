@@ -87,7 +87,7 @@ if (
 {
 	$menuItems[] = [
 		Loc::getMessage('EXTRANET_LEFT_MENU_IM_COLLAB'),
-		'/extranet/online/?IM_COLLAB',
+		SITE_DIR . 'online/?IM_COLLAB',
 		[],
 		[
 			'menu_item_id' => 'menu_im_collab',

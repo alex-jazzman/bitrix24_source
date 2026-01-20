@@ -138,7 +138,7 @@ export const CollabCreation = {
 				this.exitByCreation = true;
 				CreateChatManager.getInstance().setCreationStatus(false);
 				await Messenger.openChat(newDialogId);
-				EventEmitter.emit(EventType.header.openAddToChatPopup);
+				this.getEmitter().emit(EventType.header.openAddToChatPopup);
 			}
 			catch
 			{
@@ -180,6 +180,10 @@ export const CollabCreation = {
 		onAutoDeleteDelayChange(delay: number): void
 		{
 			this.autoDeleteDelay = delay;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{

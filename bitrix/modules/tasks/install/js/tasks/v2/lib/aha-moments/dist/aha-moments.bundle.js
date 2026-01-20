@@ -7,7 +7,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	var _ahaPopupWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ahaPopupWidth");
 	var _shownPopups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shownPopups");
-	var _shouldShowAuditorsInCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAuditorsInCard");
+	var _activeAhaMoment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("activeAhaMoment");
 	var _wasNotShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasNotShown");
 	var _wasShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasShown");
 	class AhaMoments {
@@ -18,9 +18,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _wasNotShown, {
 	      value: _wasNotShown2
 	    });
-	    Object.defineProperty(this, _shouldShowAuditorsInCard, {
-	      value: _shouldShowAuditorsInCard2
-	    });
 	    Object.defineProperty(this, _ahaPopupWidth, {
 	      writable: true,
 	      value: 380
@@ -28,6 +25,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _shownPopups, {
 	      writable: true,
 	      value: {}
+	    });
+	    Object.defineProperty(this, _activeAhaMoment, {
+	      writable: true,
+	      value: null
 	    });
 	  }
 	  show(params) {
@@ -66,6 +67,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      targetVertex: 'middle-center',
 	      color: 'var(--ui-color-primary)'
 	    });
+
+	    // eslint-disable-next-line consistent-return
 	    return new Promise(resolve => {
 	      const guidePopup = guide.getPopup();
 	      guidePopup.setAutoHide(true);
@@ -94,10 +97,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      main_core.Event.bind(document, 'scroll', adjustPosition, true);
 	    });
 	  }
-	  shouldShow(ahaMoment, params = {}) {
-	    return {
-	      [tasks_v2_const.Option.AhaAuditorsInCompactFormPopup]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAuditorsInCard)[_shouldShowAuditorsInCard]()
-	    }[ahaMoment];
+	  shouldShow(ahaMoment) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _activeAhaMoment)[_activeAhaMoment] !== null && babelHelpers.classPrivateFieldLooseBase(this, _activeAhaMoment)[_activeAhaMoment] !== ahaMoment) {
+	      return false;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](ahaMoment);
 	  }
 	  setShown(ahaMoment) {
 	    this.setPopupShown(ahaMoment);
@@ -106,9 +110,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  setPopupShown(ahaMoment) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _shownPopups)[_shownPopups][ahaMoment] = true;
 	  }
-	}
-	function _shouldShowAuditorsInCard2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](tasks_v2_const.Option.AhaAuditorsInCompactFormPopup);
+	  setActive(ahaMoment) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _activeAhaMoment)[_activeAhaMoment] = ahaMoment;
+	  }
+	  setInactive(ahaMoment) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _activeAhaMoment)[_activeAhaMoment] === ahaMoment) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _activeAhaMoment)[_activeAhaMoment] = null;
+	    }
+	  }
+	  isActive(ahaMoment) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _activeAhaMoment)[_activeAhaMoment] === ahaMoment;
+	  }
 	}
 	function _wasNotShown2(ahaMoment) {
 	  return !babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](ahaMoment);

@@ -1,25 +1,32 @@
 .landing-ui-field-color-gradient {
-	display: grid;
-	grid-template-columns: 1fr .5fr;
+	display: flex;
+	flex-direction: column;
+}
+
+.landing-ui-field-color-gradient-container-main {
+	display: flex;
+}
+
+.landing-ui-field-color-gradient-preset-container {
+	width: 100%;
 }
 
 .landing-ui-field-color-gradient-preset-container .landing-ui-field-color-preset {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	margin: 0 -1.5px -1.5px -1.5px;
+	grid-template-columns: repeat(4, minmax(0, var(--tile-size)));
 }
 
 .landing-ui-field-color-gradient-container {
-	/*margin-top: 4px;*/
-	/*margin-bottom: 10px;*/
 	position: relative;
-	height: 77px;
-	width: 100%;
+	width: 100px;
 	display: flex;
 	justify-content: space-between;
 	flex-direction: column;
-	margin-left: 2px;
+	margin-left: 6px;
 	border-radius: 2px;
+}
+
+.landing-ui-field-color-hex.--preview .landing-ui-field-color-hex-input {
+	padding-left: 7px;
 }
 
 .landing-ui-field-color-gradient-container.active:before {

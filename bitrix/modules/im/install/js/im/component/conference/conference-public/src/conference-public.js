@@ -13,12 +13,8 @@ import 'ui.fonts.opensans';
 import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {Utils} from "im.lib.utils";
-import {
-	ConferenceStateType,
-	EventType,
-	ConferenceErrorCode,
-	ConferenceRightPanelMode as RightPanelMode
-} from "im.const";
+import { EventType } from 'im.const';
+import { ConferenceStateType, ConferenceErrorCode, ConferenceRightPanelMode as RightPanelMode } from 'call.const';
 import { SendMessageHandler, ReadingHandler, ReactionHandler } from "im.event-handler";
 import {ConferenceTextareaHandler} from "./event-handler/conference-textarea-handler";
 import {ConferenceTextareaUploadHandler} from "./event-handler/conference-textarea-upload-handler";
@@ -511,6 +507,7 @@ BitrixVue.component('bx-im-component-conference-public',
 								<!-- Skip permissions request for desktop and show button with loader  -->
 								<template v-if="isDesktop() && (!permissionsRequested || !user) && isCurrentUserPresenter">
 									<ConferenceInfo/>
+									<div class="bx-im-component-call-info-separator"></div>
 									<RequestPermissions :skipRequest="true"/>
 								</template>
 								<!-- Step 5: Page with video and mic check -->
@@ -545,6 +542,7 @@ BitrixVue.component('bx-im-component-conference-public',
 								<!-- Skip permissions request for desktop and show button with loader  -->
 								<template v-if="isDesktop() && (!permissionsRequested || !user)">
 									<ConferenceInfo/>
+									<div class="bx-im-component-call-info-separator"></div>
 									<RequestPermissions :skipRequest="true"/>
 								</template>
 								<!-- Step 5: Page with video and mic check -->

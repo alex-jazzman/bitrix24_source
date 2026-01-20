@@ -1,0 +1,25 @@
+<?php
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_BUTTON_BACK"] = "Артқа";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CHANGE_NUMBER_BTN"] = "Нөмірді өзгерту";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECTED_TITLE"] = "Керемет!";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN"] = "Растау";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_DESC"] = "Енді сіз осы құрылғыдан кіруді растай аласыз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_NEXT_BTN"] = "Жалғастыру";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_QR_DESCRIPTION"] = "Мобильді қосымшаны орнатыңыз немесе сізде бұрыннан бар болса QR коды арқылы ашыңыз. Кіруді растау үшін мобильді қосымша қажет";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE"] = "Мобильді қосымшаны орнату";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_COOLDOWN"] = "#SEC# секундтан кейін қайта сұрауға болады";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_DANGER"] = "Бұл QR-кодын ешкімге көрсетпеңіз. Онда сіздің атыңызбен кіру туралы ақпарат бар.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESC"] = "СМС-тен кодты енгізіңіз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESCRIPTION"] = "Біз #PHONE_NUMBER# нөміріне растау коды бар СМС жібердік";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_SUBTITLE"] = "Телефон нөмірін енгізіңіз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_TITLE"] = "Телефон нөмірін растаңыз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1"] = "Телефон камерасын QR кодына бағыттау";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1_MSGVER_1"] = "Телефон камерасын QR-кодына бағыттаңыз (немесе Huawei болса [LINK]сілтеме бойынша өтіңіз[/LINK])";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_2"] = "Экрандағы сілтемеге өтіңіз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_3"] = "Қосымшаны орнату";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4"] = "Қосымшаға кіру үшін QR-кодын қайтадан сканерлеңіз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_DESC"] = "Егер сіз қосымшаға кіре алмасаңыз, СМС-тен код арқылы кіре аласыз";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_TITLE"] = "Резервтік кіру нөмірі";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_RESEND_CODE"] = "Жаңа кодты алу";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_SUBTITLE"] = "Сіздің аккаунтыңыз сенімді қорғалған";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_TITLE"] = "Дайын!";

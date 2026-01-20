@@ -1,7 +1,6 @@
-import { EventEmitter } from 'main.core.events';
 import { hint } from 'ui.vue3.directives.hint';
-import { Core } from 'im.v2.application.core';
 
+import { Core } from 'im.v2.application.core';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ActionByRole, EventType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -10,6 +9,7 @@ import { ForwardPopup } from 'im.v2.component.entity-selector';
 import { showDeleteMessagesConfirm } from 'im.v2.lib.confirm';
 import { MessageService } from 'im.v2.provider.service.message';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 import '../css/bulk-actions-panel.css';
@@ -147,7 +147,7 @@ export const BulkActionsPanel = {
 		},
 		closeBulkActionsMode()
 		{
-			EventEmitter.emit(EventType.dialog.closeBulkActionsMode, {
+			this.getEmitter().emit(EventType.dialog.closeBulkActionsMode, {
 				dialogId: this.dialogId,
 			});
 		},
@@ -159,6 +159,10 @@ export const BulkActionsPanel = {
 			}
 
 			return this.messageService;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{

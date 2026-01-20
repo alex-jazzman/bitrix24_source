@@ -1,0 +1,39 @@
+.tasks-chat-aha-container {
+	display: flex;
+	flex-direction: row;
+	padding: 0;
+	min-height: 129px;
+}
+
+.tasks-chat-aha-icon {
+	flex-shrink: 0;
+	width: 121px;
+	min-height: 129px;
+	background: url('./chat-aha.png') no-repeat center center;
+	border-radius: 18px;
+	background-size: cover;
+	align-self: stretch;
+}
+
+.tasks-chat-aha-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	padding: var(--ui-space-inset-lg);
+	flex: 1;
+}
+
+.tasks-chat-aha-info-text {
+	color: var(--ui-color-base-white-fixed);
+}
+
+.bx-im-chat-header__left.element-highlight .bx-im-task-chat-header__left_container {
+	z-index: 1;
+}
+
+.bx-im-chat-header__left.element-highlight {
+	background: transparent;
+	--highlight-offset-y: -6px;
+	--highlight-offset-x: -6px;
+	--border-radius: var(--ui-border-radius-2xl);
+}

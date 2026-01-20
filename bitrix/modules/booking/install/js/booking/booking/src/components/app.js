@@ -4,6 +4,7 @@ import { mapGetters } from 'ui.vue3.vuex';
 import { Model } from 'booking.const';
 import { EmptyFilterResultsPopup } from 'booking.component.empty-filter-results-popup';
 import { mainPageService } from 'booking.provider.service.main-page-service';
+import { saleChannelsService } from 'booking.provider.service.sale-channels-service';
 import { dictionaryService } from 'booking.provider.service.dictionary-service';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { calendarService } from 'booking.provider.service.calendar-service';
@@ -14,6 +15,8 @@ import {
 	filterResultNavigator,
 	deletingResourceFilterResultCountActualizer,
 } from 'booking.lib.filter-result-navigator';
+import { WhatsappPopupChangesSendingMessages } from 'booking.component.whatsapp-popup-changes-sending-messages';
+
 import type { BookingModel } from 'booking.model.bookings';
 import type { ResourceModel } from 'booking.model.resources';
 import type { BookingUIFilter } from 'booking.lib.booking-filter';
@@ -27,7 +30,7 @@ import { BaseComponent } from './base-component/base-component';
 import { MultiBooking } from './multi-booking/multi-booking';
 import { Banner } from './banner/banner';
 import { Trial } from './trial/trial';
-import { CrmFormsButton } from './crm-forms-button/crm-forms-button';
+import { IntegrationsButton } from './integrations-button/integrations-button';
 
 // @vue/component
 export const App = {
@@ -40,8 +43,9 @@ export const App = {
 		MultiBooking,
 		Banner,
 		Trial,
-		CrmFormsButton,
+		IntegrationsButton,
 		EmptyFilterResultsPopup,
+		WhatsappPopupChangesSendingMessages,
 	},
 	props: {
 		afterTitleContainer: HTMLElement,
@@ -78,6 +82,7 @@ export const App = {
 			fetchingNextDate: `${Model.Filter}/fetchingNextDate`,
 			datesCount: `${Model.Filter}/datesCount`,
 			requestFields: `${Model.Filter}/requestFields`,
+			shouldShowWhatsAppEmergency: `${Model.Interface}/shouldShowWhatsAppEmergency`,
 		}),
 		hasSelectedCells(): boolean
 		{
@@ -213,6 +218,7 @@ export const App = {
 			this.showLoader();
 
 			await mainPageService.fetchData(dateTs);
+			await saleChannelsService.loadData();
 
 			if (this.extraResourcesIds.length > 0)
 			{
@@ -483,7 +489,7 @@ export const App = {
 		<div>
 			<MultiBooking v-if="hasSelectedCells"/>
 			<AfterTitle ref="afterTitle"/>
-			<CrmFormsButton :container="settingsButtonContainer"/>
+			<IntegrationsButton :container="settingsButtonContainer"/>
 			<BookingFilter
 				:filterId="filterId"
 				ref="filter"
@@ -501,6 +507,9 @@ export const App = {
 			<BaseComponent ref="baseComponent"/>
 			<Banner/>
 			<Trial/>
+			<WhatsappPopupChangesSendingMessages
+				v-if="shouldShowWhatsAppEmergency"
+			/>
 		</div>
 	`,
 };

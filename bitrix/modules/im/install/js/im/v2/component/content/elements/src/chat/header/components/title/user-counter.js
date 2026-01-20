@@ -1,8 +1,8 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 const UserCounterPhraseCodeByChatType = {
@@ -58,15 +58,19 @@ export const UserCounter = {
 		{
 			if (this.isMembersPanelActive)
 			{
-				EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
+				this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
 
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.members,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

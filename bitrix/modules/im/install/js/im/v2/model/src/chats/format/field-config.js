@@ -1,7 +1,9 @@
-import { Utils } from 'im.v2.lib.utils';
 import { Type } from 'main.core';
+
+import { Utils } from 'im.v2.lib.utils';
+import { formatFieldsWithConfig } from 'im.v2.model';
+
 import { convertToNumber, convertToString, isNumberOrString } from '../../utils/format';
-import { formatFieldsWithConfig, type FieldsConfig } from 'im.v2.model';
 import {
 	prepareAvatar,
 	prepareChatName,
@@ -9,6 +11,8 @@ import {
 	prepareManagerList,
 	prepareMuteList,
 } from './format-functions';
+
+import type { FieldsConfig } from 'im.v2.model';
 
 export const chatFieldsConfig: FieldsConfig = [
 	{
@@ -204,6 +208,11 @@ export const chatFieldsConfig: FieldsConfig = [
 ];
 
 export const chatEntityFieldsConfig = [
+	{
+		fieldName: 'id',
+		targetFieldName: 'id',
+		checkFunction: Type.isString,
+	},
 	{
 		fieldName: 'type',
 		targetFieldName: 'type',

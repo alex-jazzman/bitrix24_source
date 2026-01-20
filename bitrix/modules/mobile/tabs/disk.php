@@ -38,7 +38,7 @@ final class Disk implements Tabable
 	{
 		return [
 			'id' => $this->getId(),
-			'sort' => 300,
+			'sort' => 600,
 			'section_code' => 'teamwork',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,

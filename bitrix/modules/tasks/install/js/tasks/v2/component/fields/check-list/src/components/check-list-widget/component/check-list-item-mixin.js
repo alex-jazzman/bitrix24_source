@@ -1,18 +1,22 @@
 import { Dom, Type } from 'main.core';
 import { mapActions, mapGetters } from 'ui.vue3.vuex';
+
 import { Model } from 'tasks.v2.const';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserModel } from 'tasks.v2.model.users';
 
+import { CheckListManager } from '../../../lib/check-list-manager';
+
 // @vue/component
 export const CheckListItemMixin = {
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		id: {
 			type: [Number, String],
 			required: true,
@@ -32,25 +36,20 @@ export const CheckListItemMixin = {
 		'show',
 		'hide',
 	],
+	setup(): { task: TaskModel } {},
 	data(): Object
 	{
 		return {
 			isHovered: false,
 			scrollContainer: null,
+			isDragEnabled: false,
 		};
 	},
 	computed: {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
+			draggedCheckListId: `${Model.Interface}/draggedCheckListId`,
 		}),
-		isEdit(): boolean
-		{
-			return Type.isNumber(this.taskId) && this.taskId > 0;
-		},
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		checkLists(): CheckListModel[]
 		{
 			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
@@ -59,15 +58,6 @@ export const CheckListItemMixin = {
 		{
 			return this.$store.getters[`${Model.CheckList}/getById`](this.id);
 		},
-		canSave(): boolean
-		{
-			if (!this.isEdit)
-			{
-				return true;
-			}
-
-			return this.task.rights.checklistSave === true;
-		},
 		canAdd(): boolean
 		{
 			if (!this.isEdit)
@@ -75,7 +65,7 @@ export const CheckListItemMixin = {
 				return true;
 			}
 
-			return this.task.rights.checklistAdd === true;
+			return this.task.rights.checklistAdd;
 		},
 		canEdit(): boolean
 		{
@@ -84,49 +74,24 @@ export const CheckListItemMixin = {
 				return true;
 			}
 
-			return (
-				this.canSave
-				&& (
-					this.task.rights.checklistEdit === true
-					|| this.item.creator?.id === this.currentUserId
-				)
-			);
-		},
-		canCheckListToggle(): boolean
-		{
-			if (!this.isEdit)
-			{
-				return true;
-			}
+			const checkListItem = this.checkListManager.getRootParentByChildId(this.item?.id);
 
-			return this.task.rights.checklistToggle === true;
+			return (
+				this.task.rights.checklistEdit
+				|| checkListItem?.creator?.id === this.currentUserId
+			);
 		},
 		canModify(): boolean
 		{
-			if (this.canEdit === true)
-			{
-				return true;
-			}
-
-			return this.item.actions.modify === true;
+			return this.item?.actions.modify === true;
 		},
 		canRemove(): boolean
 		{
-			if (this.canEdit === true)
-			{
-				return true;
-			}
-
-			return this.item.actions.remove === true;
+			return this.item?.actions.remove === true;
 		},
 		canToggle(): boolean
 		{
-			if (this.canCheckListToggle === true)
-			{
-				return true;
-			}
-
-			return this.item.actions.toggle === true;
+			return this.item?.actions.toggle === true;
 		},
 		hasAttachments(): boolean
 		{
@@ -173,8 +138,44 @@ export const CheckListItemMixin = {
 		},
 		completed(): boolean
 		{
-			return this.item.localCompleteState ?? this.item.isComplete;
+			return this.checkListManager.isItemCompleted(this.item);
 		},
+		canDragItem(): boolean
+		{
+			if (!this.isDragEnabled)
+			{
+				return false;
+			}
+
+			return (
+				this.isHovered
+				&& this.canModify
+				&& !this.readOnly
+				&& !this.groupMode
+			);
+		},
+		readOnly(): boolean
+		{
+			return this.isPreview;
+		},
+		textReadOnly(): boolean
+		{
+			return this.groupMode || this.isPreview || !this.canModify;
+		},
+	},
+	created(): void
+	{
+		this.checkListManager = new CheckListManager({
+			computed: {
+				checkLists: () => this.checkLists,
+			},
+		});
+	},
+	mounted(): void
+	{
+		setTimeout(() => {
+			this.isDragEnabled = true;
+		}, 1000);
 	},
 	methods: {
 		...mapActions(Model.Interface, [
@@ -215,6 +216,11 @@ export const CheckListItemMixin = {
 		},
 		addItem(sort: ?number): void
 		{
+			if (!this.canAdd)
+			{
+				return;
+			}
+
 			this.$emit(
 				'addItem',
 				{
@@ -239,19 +245,22 @@ export const CheckListItemMixin = {
 			const listParents = new Map();
 			this.checkListManager.syncParentCompletionState(
 				this.id,
-				async (id: string | number, fields: Partial<CheckListModel>) => {
+				(id: string | number, fields: Partial<CheckListModel>) => {
 					listParents.set(id, fields);
-					await this.updateCheckList(id, { localCompleteState: fields.isComplete });
+					this.updateCheckList(id, { localCompleteState: fields.isComplete });
 				},
 			);
 
 			this.$emit('update', this.id);
 
-			const completionCallback = async () => {
-				await this.updateCheckList(this.id, { isComplete });
-				listParents.forEach(async (fields: Partial<CheckListModel>, id: string | number) => {
-					await this.updateCheckList(id, fields);
-					this.saveCompleteState(id, fields.isComplete);
+			const completionCallback = () => {
+				this.updateCheckList(this.id, { isComplete });
+				listParents.forEach((fields: Partial<CheckListModel>, id: string | number) => {
+					this.updateCheckList(id, fields);
+					if (this.isPreview && this.isEdit)
+					{
+						this.saveCompleteState(id, fields.isComplete);
+					}
 				});
 			};
 
@@ -260,15 +269,13 @@ export const CheckListItemMixin = {
 				callback: completionCallback,
 			});
 
-			this.saveCompleteState(this.id, isComplete);
+			if (this.isPreview && this.isEdit)
+			{
+				this.saveCompleteState(this.id, isComplete);
+			}
 		},
 		saveCompleteState(itemId: string | number, isComplete: boolean): void
 		{
-			if (!this.isPreview || !this.isEdit)
-			{
-				return;
-			}
-
 			if (isComplete)
 			{
 				void checkListService.complete(this.taskId, itemId);
@@ -278,8 +285,12 @@ export const CheckListItemMixin = {
 				void checkListService.renew(this.taskId, itemId);
 			}
 		},
-		focusToItem(): void
+		async scrollToItem(): Promise<void>
 		{
+			await new Promise((resolve) => {
+				setTimeout(() => resolve(), 300);
+			});
+
 			const item = this.$refs.item;
 			const scrollContainer = this.$parent.$el?.closest('[data-list]');
 

@@ -18,28 +18,34 @@ jn.define('ui-system/blocks/department-card/src/card', (require, exports, module
 	 * @typedef {Object} DepartmentCardProps
 	 * @property {string} testId
 	 * @property {DepartmentCardMode} [mode = DepartmentCardMode.UPPER]
+	 * @property {number} departmentId
 	 * @property {string} departmentName
 	 * @property {string} [employeesCountText = null]
 	 * @property {boolean} [chevron = false]
 	 * @property {string} employeeName
 	 * @property {string} employeePosition
 	 * @property {string} employeeCounterValue
-	 * @property {AvatarBaseProps} employeeAvatarProps
+	 * @property {AvatarViewProps} employeeAvatarProps
 	 * @property {string} managerName
 	 * @property {string} managerTitle
-	 * @property {AvatarBaseProps} managerAvatarProps
+	 * @property {AvatarViewProps} managerAvatarProps
 	 * @property {string} managerCounterValue
 	 * @property {number} [depth = 0]
 	 * @property {boolean} [accent = false]
 	 * @property {function} [onClick]
+	 * @property {boolean} [withPressed = false]
 
 	 * @class DepartmentCard
 	 */
 	class DepartmentCard extends PureComponent
 	{
+		/**
+		 * @param {DepartmentCardProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
+
 			this.getTestId = createTestIdGenerator({
 				context: this,
 			});
@@ -54,8 +60,8 @@ jn.define('ui-system/blocks/department-card/src/card', (require, exports, module
 				employeeName = null,
 				managerTitle = null,
 				managerName = null,
+				withPressed = false,
 				mode = DepartmentCardMode.UPPER,
-				onClick,
 			} = this.props;
 			const shouldRenderLine = depth > 0;
 
@@ -68,13 +74,14 @@ jn.define('ui-system/blocks/department-card/src/card', (require, exports, module
 						style: {
 							flexDirection: 'row',
 						},
-						onClick,
+						onClick: this.#onClick,
 					},
 					shouldRenderLine && this.#renderLine(),
 					Card(
 						{
 							testId: this.getTestId('department-card'),
 							border: true,
+							withPressed,
 							style: {
 								flex: 1,
 								borderColor: accent
@@ -91,6 +98,19 @@ jn.define('ui-system/blocks/department-card/src/card', (require, exports, module
 				),
 			);
 		}
+
+		#onClick = () => {
+			const {
+				departmentId,
+				departmentName,
+				onClick,
+			} = this.props;
+
+			onClick?.({
+				departmentId,
+				departmentName,
+			});
+		};
 
 		#renderEmployee()
 		{

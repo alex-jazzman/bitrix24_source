@@ -1,11 +1,7 @@
-import { mapGetters } from 'ui.vue3.vuex';
-import type { DialogOptions } from 'ui.entity-selector';
-
-import { Model } from 'tasks.v2.const';
-import { Participant } from 'tasks.v2.component.elements.participant';
+import { Core } from 'tasks.v2.core';
+import { Participants } from 'tasks.v2.component.elements.participants';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { UserModel } from 'tasks.v2.model.users';
 
 import { creatorMeta } from './creator-meta';
 
@@ -13,49 +9,34 @@ import { creatorMeta } from './creator-meta';
 export const Creator = {
 	name: 'TaskCreator',
 	components: {
-		Participant,
+		Participants,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
-		context: {
-			type: String,
-			required: true,
-		},
-		selectorWithActionMenu: {
-			type: Boolean,
-			default: false,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
 	},
-	data(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
-			localContext: `${this.context}-${this.$options.name}`,
+			creatorMeta,
 		};
 	},
 	computed: {
-		...mapGetters({
-			currentUserId: `${Model.Interface}/currentUserId`,
-		}),
-		task(): TaskModel
+		currentUserId(): number
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+			return Core.getParams().currentUser.id;
 		},
-		dialogOptions(): DialogOptions
-		{
-			return creatorMeta.dialogOptions(this.localContext);
-		},
-		preselected(): [string, number][]
-		{
-			return [['user', this.task.creatorId || this.currentUserId]];
-		},
-		cantChangeHint(): string
+		hintText(): string
 		{
 			if (this.task.flowId > 0)
 			{
 				return this.loc('TASKS_V2_CREATOR_CANT_CHANGE_FLOW');
+			}
+
+			if (this.task.responsibleIds.length > 1)
+			{
+				return this.loc('TASKS_V2_CREATOR_CANT_CHANGE_MANY');
 			}
 
 			return this.loc('TASKS_V2_CREATOR_CANT_CHANGE');
@@ -68,48 +49,36 @@ export const Creator = {
 				'data-task-field-value': this.task.creatorId,
 			};
 		},
-		readonly(): boolean
+		isAdmin(): boolean
 		{
-			return !this.task.rights.edit;
+			return Core.getParams().rights.user.admin;
 		},
 	},
 	methods: {
+		updateTask(userIds: number[]): void
+		{
+			const creatorId = userIds[0] || this.task.creatorId;
+
+			void taskService.update(this.taskId, { creatorId });
+		},
 		handleHintClick(): void
 		{
-			if (this.task.flowId > 0)
-			{
-				return;
-			}
-
-			void taskService.update(
-				this.taskId,
-				{
-					responsibleId: this.currentUserId,
-				},
-			);
-		},
-		updateTask(user: UserModel): void
-		{
-			void this.$store.dispatch(`${Model.Users}/upsert`, user);
-			void taskService.update(
-				this.taskId,
-				{
-					creatorId: user.id,
-				},
-			);
+			void taskService.update(this.taskId, { responsibleIds: [this.currentUserId] });
 		},
 	},
 	template: `
-		<Participant
-			:taskId="taskId"
-			:dialogOptions="dialogOptions"
-			:preselected="preselected"
-			:canChange="() => task.responsibleId === currentUserId && (task.flowId ?? 0) <= 0"
-			:cantChangeHint="cantChangeHint"
-			:hintClickHandler="handleHintClick"
-			:selectorWithActionMenu="selectorWithActionMenu"
-			:dataset="dataset"
-			:readonly="readonly"
+		<Participants
+			:taskId
+			:context="creatorMeta.id"
+			:userIds="[task.creatorId || currentUserId]"
+			:canAdd="task.rights.edit"
+			:canRemove="task.rights.edit"
+			:withHint="!isAdmin && !isEdit && (task.responsibleIds.length > 1 || task.responsibleIds[0] !== currentUserId)"
+			:hintText
+			single
+			inline
+			:dataset
+			@hintClick="handleHintClick"
 			@update="updateTask"
 		/>
 	`,

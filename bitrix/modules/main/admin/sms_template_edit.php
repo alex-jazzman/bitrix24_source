@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * @global CUser $USER
  * @global CMain $APPLICATION
@@ -214,9 +214,11 @@ $tabControl->BeginNextTab();
 			if($ID > 0 && $COPY_ID <= 0):
 			?>
 				<input type="hidden" name="EVENT_NAME" value="<?= HtmlFilter::encode($template->getEventName())?>">
-				<?
+				<?php
 					$type = $eventTypes[$template->getEventName()];
-					echo HtmlFilter::encode($type["NAME"]." [".$type["EVENT_NAME"]."]");
+					$eventName = HtmlFilter::encode($template->getEventName());
+					echo '[<a href="type_edit.php?EVENT_NAME=' . $eventName . '&amp;lang=' . LANGUAGE_ID . '">' . $eventName . '</a>] ';
+					echo HtmlFilter::encode($type["NAME"]);
 				?>
 			<?else:?>
 				<select name="EVENT_NAME" onchange="window.location='sms_template_edit.php?lang=<?=LANGUAGE_ID?>&EVENT_NAME='+this[this.selectedIndex].value">

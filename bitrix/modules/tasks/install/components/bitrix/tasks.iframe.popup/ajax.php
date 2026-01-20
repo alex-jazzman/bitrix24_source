@@ -136,6 +136,8 @@ function BXTasksParseAndGetDynaParamValue($arData, $strRequest)
 
 
 $status = 'unknown';
+$message = '';
+$code = '';
 $breakExecution = false;
 try
 {
@@ -938,6 +940,8 @@ catch (Exception $e)
 	);
 
 	$status = 'error occured';
+	$message = $e->getMessage();
+	$code = $e->getCode();
 }
 
 $APPLICATION->RestartBuffer();
@@ -945,6 +949,8 @@ header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
 echo CUtil::PhpToJsObject(
 	array(
 		'status'        => $status,
+		'message' => $message,
+		'code' => $code,
 		'repliesCount'  => count($arOperationsResults),
 		'data'          => $arOperationsResults,
 		'batchId'       => $batchId

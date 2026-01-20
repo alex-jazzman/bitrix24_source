@@ -5,9 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Superset\Import\DashboardReimportService;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\BIConnector\Manager;
+use Bitrix\BIConnector\Services\ApacheSuperset;
 
 /**
  * @var CMain $APPLICATION
@@ -35,8 +38,14 @@ if (\Bitrix\Main\Loader::includeModule('pull'))
 	\CPullWatch::Add($USER->getId(), "superset_dashboard", true);
 }
 
+if (Manager::isAdmin())
+{
+	echo DashboardReimportService::getHtml();
+}
+
 Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
+	'biconnector.apache-superset-market-manager',
 	'biconnector.apache-superset-analytics',
 	'biconnector.apache-superset-cleaner',
 	'biconnector.dashboard-export-master',
@@ -64,6 +73,32 @@ if ($arResult['SHOW_DELETE_INSTANCE_BUTTON']):
 
 <?php endif; ?>
 
+<?php if ($arResult['SHOW_SECOND_DB_CONNECTION']): ?>
+	<div class='ui-alert ui-alert-warning'>
+		<span class='ui-alert-message'>
+			<?= Loc::getMessage(
+				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_INFO',
+				[
+					'[link]' => "<a href=\"{$arResult['SECOND_DB_LINK_HELP']}\" target='_blank'>",
+					'[/link]' => '</a>',
+				],
+			)?>
+		</span>
+	</div>
+<?php elseif ($arResult['SHOW_SECOND_DB_KEY_UPDATE']): ?>
+	<div class='ui-alert ui-alert-warning'>
+		<span class='ui-alert-message'>
+			<?= Loc::getMessage(
+				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_KEY_UPDATE',
+				[
+					'[link]' => "<a href=\"{$arResult['SECOND_DB_LINK_HELP']}\" target='_blank'>",
+					'[/link]' => '</a>',
+				],
+			)?>
+		</span>
+	</div>
+<?php endif; ?>
+
 <div id="biconnector-dashboard-grid">
 <?php
 
@@ -79,8 +114,9 @@ $APPLICATION->IncludeComponent(
 );
 
 $limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
-$limitManager->setIsSuperset();
-if (!$limitManager->checkLimitWarning())
+$limitManager->setService(Manager::getInstance()->createService(ApacheSuperset::getServiceId()));
+
+if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 {
 	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '', [
 		'SUPERSET_LIMIT' => 'Y',

@@ -145,6 +145,8 @@ final class imbot extends \CModule
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'imbot', '\Bitrix\ImBot\RestService', 'onRestServiceBuildDescription');
 		/** @see imbot::getTableSchema */
 		$eventManager->registerEventHandlerCompatible('perfmon', 'OnGetTableSchema', 'imbot', 'imbot', 'getTableSchema');
+		/** @see \Bitrix\ImBot\Bot\CopilotChatBot::onGetInputActionStatusMessages */
+		$eventManager->registerEventHandler('im', 'OnGetInputActionStatusMessages', 'imbot', '\Bitrix\Imbot\Bot\CopilotChatBot', 'onGetInputActionStatusMessages');
 
 		/** @see \Bitrix\ImBot\DialogSession::clearClosedSessions */
 		\CAgent::AddAgent('Bitrix\ImBot\DialogSession::clearClosedSessions();', 'imbot', 'N', 3600);
@@ -161,7 +163,7 @@ final class imbot extends \CModule
 	{
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/",true, true);
-
+		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 		return true;
 	}
 
@@ -215,6 +217,7 @@ final class imbot extends \CModule
 		$eventManager->unRegisterEventHandler('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imbot', '\Bitrix\ImBot\RestService', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('perfmon', 'OnGetTableSchema', 'imbot', 'imbot', 'getTableSchema');
+		$eventManager->unRegisterEventHandler('im', 'OnGetInputActionStatusMessages', 'imbot', '\Bitrix\Imbot\Bot\CopilotChatBot', 'onGetInputActionStatusMessages');
 
 		$dir = new Main\IO\Directory(Main\Application::getDocumentRoot().'/bitrix/modules/imbot/lib/bot/');
 		$dirList = $dir->getChildren();

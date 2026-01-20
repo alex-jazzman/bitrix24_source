@@ -18,6 +18,7 @@ type CopilotChat = {
 	dialogId: string,
 	role: string,
 	aiModel: string,
+	reasoningEnabled: boolean,
 }
 
 const AI_MODEL_DEFAULT_NAME = 'none';
@@ -38,6 +39,7 @@ export class ChatsModel extends BuilderModel
 			dialogId: '',
 			role: '',
 			aiModel: '',
+			reasoningEnabled: false,
 		};
 	}
 
@@ -45,7 +47,7 @@ export class ChatsModel extends BuilderModel
 	{
 		return {
 			/** @function copilot/chats/getRole */
-			getRole: (state) => (dialogId: string): ?ImModelCopilotRole => {
+			getRole: (state: ChatsState) => (dialogId: string): ?ImModelCopilotRole => {
 				const chat = state.collection[dialogId];
 				if (!chat)
 				{
@@ -55,7 +57,7 @@ export class ChatsModel extends BuilderModel
 				return Core.getStore().getters['copilot/roles/getByCode'](chat.role);
 			},
 			/** @function copilot/chats/getRoleAvatar */
-			getRoleAvatar: (state, getters) => (dialogId: string): string => {
+			getRoleAvatar: (state: ChatsState, getters) => (dialogId: string): string => {
 				const role = getters.getRole(dialogId);
 				if (!role)
 				{
@@ -65,7 +67,7 @@ export class ChatsModel extends BuilderModel
 				return Core.getStore().getters['copilot/roles/getAvatar'](role.code);
 			},
 			/** @function copilot/chats/getAIModel */
-			getAIModel: (state) => (dialogId: string): ?ImModelCopilotAIModel => {
+			getAIModel: (state: ChatsState) => (dialogId: string): ?ImModelCopilotAIModel => {
 				const chat = state.collection[dialogId];
 				if (!chat)
 				{
@@ -78,14 +80,24 @@ export class ChatsModel extends BuilderModel
 
 				return currentAiModel ?? AI_MODEL_DEFAULT_NAME;
 			},
+			/** @function copilot/chats/isReasoningEnabled */
+			isReasoningEnabled: (state) => (dialogId: string): boolean => {
+				const chat = state.collection[dialogId];
+				if (!chat)
+				{
+					return false;
+				}
+
+				return state.collection[dialogId].reasoningEnabled;
+			},
 		};
 	}
 
 	getActions(): ActionTree
 	{
 		return {
-			/** @function copilot/chats/add */
-			add: (store, payload) => {
+			/** @function copilot/chats/set */
+			set: (store, payload) => {
 				if (!payload)
 				{
 					return;
@@ -93,9 +105,26 @@ export class ChatsModel extends BuilderModel
 
 				const chatsToAdd = Type.isArrayFilled(payload) ? payload : [payload];
 
-				chatsToAdd.forEach((chat) => {
-					const preparedChat = { ...this.getElementState(), ...this.formatFields(chat) };
-					store.commit('add', preparedChat);
+				const preparedChats = chatsToAdd.map((chat) => {
+					return this.formatFields(chat);
+				});
+
+				preparedChats.forEach((chat) => {
+					const existingItem = store.state.collection[chat.dialogId];
+					if (existingItem)
+					{
+						store.commit('update', {
+							dialogId: chat.dialogId,
+							fields: chat,
+						});
+
+						return;
+					}
+
+					store.commit('add', {
+						dialogId: chat.dialogId,
+						fields: { ...this.getElementState(), ...chat },
+					});
 				});
 			},
 			/** @function copilot/chats/updateModel */
@@ -107,19 +136,35 @@ export class ChatsModel extends BuilderModel
 
 				store.commit('updateModel', payload);
 			},
+			/** @function copilot/chats/toggleReasoning */
+			toggleReasoning: (store, dialogId: string) => {
+				if (!store.state.collection[dialogId])
+				{
+					return;
+				}
+
+				store.commit('toggleReasoning', dialogId);
+			},
 		};
 	}
 
 	getMutations(): MutationTree
 	{
 		return {
-			add: (state, payload) => {
-				const { dialogId } = payload;
-				state.collection[dialogId] = payload;
+			add: (state: ChatsState, payload) => {
+				const { dialogId, fields } = payload;
+				state.collection[dialogId] = fields;
 			},
-			updateModel: (state, payload) => {
+			update: (state: ChatsState, payload) => {
+				const { dialogId, fields } = payload;
+				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+			},
+			updateModel: (state: ChatsState, payload) => {
 				const { dialogId, aiModel } = payload;
 				state.collection[dialogId].aiModel = aiModel;
+			},
+			toggleReasoning: (state, dialogId: string) => {
+				state.collection[dialogId].reasoningEnabled = !state.collection[dialogId].reasoningEnabled;
 			},
 		};
 	}

@@ -12,7 +12,7 @@
 .resource-creation-wizard__wrapper {
 	position: relative;
 	flex: 1;
-	padding: 24px 10px 15px 21px;
+	padding: 24px 15px 15px 21px;
 	overflow-y: scroll;
 }
 
@@ -32,6 +32,12 @@
 .resource-creation-wizard__header-title {
 	font-size: var(--ui-font-size-4xl);
 	font-weight: var(--ui-font-weight-light);
+	word-break: break-word;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .resource-creation-wizard__content {
@@ -67,7 +73,6 @@
 }
 
 .resource-creation-wizard-layout .ui-form-row-inline .ui-form-row {
-	padding-right: 15px;
 	box-sizing: border-box;
 }
 
@@ -94,7 +99,7 @@
 	font: 13px var(--ui-font-family-primary,var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.85);
 	flex-shrink: 0;
-	margin-bottom: 10px;
+	margin-bottom: 5px;
 	margin-right: 0;
 }
 
@@ -148,8 +153,8 @@
 .resource-creation-wizard__form-settings {
 	display: flex;
 	flex-direction: column;
-	gap: 22px;
-	padding: 18px 24px 24px 18px;
+	gap: 18px;
+	padding: 24px 20px 24px 20px;
 	border-radius: 18px;
 	background: var(--ui-color-palette-white-base);
 }
@@ -161,6 +166,12 @@
 .resource-creation-wizard__form-settings-element.--placeholder {
 	color: var(--ui-color-palette-gray-50);
 	cursor: pointer;
+}
+
+.resource-creation-wizard__services_warning {
+	margin-top: -15px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-gray-90);
 }
 
 .resource-notification-card {
@@ -466,8 +477,73 @@
 	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
 }
 
-.resource-creation-wizard__form-settings.--base .ui-form-row {
-	width: 50%;
+.booking--rcw--name-field {
+	flex: 2 1 0;
+	width: auto;
+}
+
+.booking--rcw--type-field {
+	flex: 1 1 0;
+	width: auto;
+}
+
+.booking--rcw--additional-info-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	cursor: pointer;
+
+	font-size: var(--ui-font-size-md);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-black-base);
+
+	margin-top: 4px;
+}
+
+.resource-creation-wizard__form-settings-text-row {
+	letter-spacing: 0.2px;
+}
+
+.booking--rcw--additional-info-header .ui-icon-set.--chevron-down,
+.booking--rcw--additional-info-header .ui-icon-set.--chevron-up {
+	width: 20px;
+	height: 20px;
+	background-color: var(--ui-color-palette-gray-70);
+}
+
+.booking--rcw--additional-info-content {
+	display: flex;
+	flex-direction: row;
+	gap: 24px;
+}
+
+.booking--rcw--additional-info-content .ui-form-label {
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.booking--rcw--additional-info-enter-active,
+.booking--rcw--additional-info-leave-active {
+	transition: max-height 0.5s ease, opacity 0.5s ease;
+}
+
+.booking--rcw--additional-info-enter-from,
+.booking--rcw--additional-info-leave-to {
+	max-height: 0;
+	opacity: var(--ui-opacity-none);
+}
+
+.booking--rcw--additional-info-enter-to,
+.booking--rcw--additional-info-leave-from {
+	max-height: 600px;
+	opacity: var(--ui-opacity-full);
+}
+
+.booking--rcw--additional-info-content .ui-form-row {
+	margin-top: 22px;
 }
 
 .booking--rcw--field-with-validation {
@@ -480,11 +556,6 @@
 	align-items: start;
 }
 
-.booking--rcw--resource-name-description {
-	color: var(--ui-color-palette-gray-90);
-	font-size: var(--ui-font-size-sm);
-}
-
 .resource-creation-wizard__form-settings-schedule-view {
 	display: flex;
 	flex-direction: column;
@@ -493,7 +564,7 @@
 
 .booking--rcw--schedule-item {
 	display: flex;
-	gap: 16px;
+	gap: 12px;
 	background-color: var(--ui-color-palette-gray-04);
 	border: 1px solid var(--ui-color-palette-gray-04);
 	padding: 16px;
@@ -629,20 +700,145 @@
 	border-color: var(--ui-color-accent-soft-border-red);
 }
 
-.booking--rcw--error-message-container {
-	padding-top: 5px;
+.booking--rcw--avatar-field {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 0;
+	margin-bottom: 0;
+	gap: 8px;
 }
 
-.booking--rcw--error-message {
+.booking--rcw--avatar-container {
+	position: relative;
+	width: 78px;
+	height: 78px;
+	border-radius: 97px;
+}
+
+.booking--rcw--avatar {
+	position: relative;
+	width: 78px;
+	height: 78px;
+	border: var(--ui-border-width-thin) dashed var(--ui-color-palette-blue-50);
+	border-radius: 97px;
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+	box-sizing: border-box;
+	overflow: hidden;
+	transition: .4s;
+}
+
+.booking--rcw--avatar.--has-img {
+	border: none;
+	background: transparent;
+}
+
+.booking--rcw--avatar-container:hover .booking--rcw--avatar:not(.--has-img) {
+	border-color: #6aa1ff;
+	background-color: rgb(247, 248, 248);
+}
+
+.booking--rcw--avatar-img {
+	width: calc(100% - 2px);
+	height: calc(100% - 2px);
+	object-fit: cover;
+	object-position: center center;
+	display: block;
+	border-radius: 97px;
+	margin: 1px;
+}
+
+.booking--rcw--avatar-icon {
+	position: absolute;
+	inset: 0;
 	display: flex;
 	align-items: center;
-	color: var(--ui-field-color-danger);
-	font-size: var(--ui-font-size-xs);
+	justify-content: center;
+	border-radius: 97px;
+
+	opacity: var(--ui-opacity-none);
+	transition: .4s;
 }
 
-.booking--rcw--error-message .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-field-color-danger);
-	height: 18px;
+.booking--rcw--avatar-icon.--default-icon {
+	opacity: var(--ui-opacity-full);
+}
+
+.booking--rcw--avatar-icon.--hover-icon {
+	background: rgba(247, 248, 248, 0.95);
+}
+
+.booking--rcw--avatar-icon .ui-icon-set.--picture {
+	background-color: var(--ui-color-palette-gray-50);
+}
+
+.booking--rcw--avatar-icon .ui-icon-set.--download-3 {
+	background-color: var(--ui-color-palette-gray-70);
+	transform: rotate(180deg);
+}
+
+.booking--rcw--avatar:hover .booking--rcw--avatar-icon.--default-icon {
+	opacity: var(--ui-opacity-none);
+}
+
+.booking--rcw--avatar:hover .booking--rcw--avatar-icon.--hover-icon {
+	opacity: var(--ui-opacity-full);
+}
+
+.booking--rcw--avatar-remove {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 14px;
+	height: 14px;
+	border-radius: var(--ui-border-radius-xl);
+	background-color: var(--ui-color-palette-white-base);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.12);
+	transition: .4s;
+	opacity: var(--ui-opacity-none);
+}
+
+.booking--rcw--avatar-remove .ui-icon-set {
+	background-color: var(--ui-color-palette-gray-60);
+}
+
+.booking--rcw--avatar-container:hover .booking--rcw--avatar-remove,
+.booking--rcw--avatar-remove:hover {
+	cursor: pointer;
+	opacity: var(--ui-opacity-full);
+}
+
+.booking--rcw--resource-name-description {
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-sm);
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.booking--rcw--description-field {
+	flex: 1;
+	gap: 8px;
+}
+
+.booking--rcw--resource-description {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.booking--rcw--resource-description .ui-ctl.ui-ctl-textbox .ui-ctl-element {
+	height: 78px;
+	min-height: 78px;
+	max-height: 78px;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px 12px;
+	resize: none;
+	overflow-y: auto;
+	white-space: pre-wrap;
+
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-palette-gray-40) transparent;
 }
 
 .resource-creation-wizard__form-settings-title-row {
@@ -658,6 +854,14 @@
 .resource-creation-wizard__form-settings-text {
 	color: var(--ui-color-palette-gray-90);
 	font-size: var(--ui-font-size-sm);
+}
+
+.booking--rcw--integration-calendar.--disabled .resource-creation-wizard__integration-block-title {
+	color: var(--ui-color-gray-50);
+}
+
+.booking--rcw--integration-calendar.--disabled .resource-creation-wizard__integration-block-description {
+	color: var(--ui-color-gray-40);
 }
 
 .resource-creation-wizard__form-work-time-selector {
@@ -752,13 +956,18 @@
 	--text-color: var(--ui-color-palette-black-base);
 }
 
-.booking-resource-creation-wizard-notification-container.--disabled .booking-resource-creation-wizard-label-dropdown {
+:where(
+.booking-resource-creation-wizard-notification-container.--disabled,
+.booking-resource-creation-wizard-notification-container.--locked
+) .booking-resource-creation-wizard-label-dropdown {
 	--border-color: var(--ui-color-base-10);
 	--background-color: var(--ui-color-base-03);
 	--text-color: var(--ui-color-base-40);
-	pointer-events: none;
 }
 
+.booking-resource-creation-wizard-notification-container.--disabled:not(.--locked) .booking-resource-creation-wizard-label-dropdown {
+	pointer-events: none;
+}
 
 .booking-resource-creation-wizard-label-dropdown {
 	position: relative;

@@ -21,7 +21,6 @@ return [
 		'main.polyfill.core',
 		'im.v2.application.core',
 		'im.v2.component.messenger',
-		'im.v2.provider.pull',
 	],
 	'skip_core' => true,
 	'settings' => [

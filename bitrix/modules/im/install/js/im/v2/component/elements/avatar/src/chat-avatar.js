@@ -7,6 +7,7 @@ import { CollabChatAvatar } from './components/collab/collab-chat';
 import { CollaberAvatar } from './components/collab/collaber';
 import { ExtranetChatAvatar } from './components/extranet/extranet-chat-avatar';
 import { ExtranetUserAvatar } from './components/extranet/extranet-user-avatar';
+import { AiAssistantAvatar } from './components/ai-assistant-avatar';
 import { CopilotAvatar } from './components/copilot/copilot';
 import { NotesAvatar } from './components/notes-avatar';
 
@@ -16,24 +17,14 @@ import type { ImModelChat, ImModelUser } from 'im.v2.model';
 // @vue/component
 export const ChatAvatar = {
 	name: 'ChatAvatar',
-	components:
-	{
-		Avatar,
-		CollabAvatar:
-		CollabChatAvatar,
-		CollaberAvatar,
-		ExtranetUserAvatar,
-		NotesAvatar,
-		CopilotAvatar,
-	},
 	props: {
 		avatarDialogId: {
 			type: [String, Number],
-			default: 0,
+			default: '0',
 		},
 		contextDialogId: {
-			type: String,
-			required: true,
+			type: [String, null],
+			default: null,
 		},
 		size: {
 			type: String,
@@ -77,10 +68,7 @@ export const ChatAvatar = {
 				return '';
 			}
 
-			return this.copilotManager.getRoleAvatarUrl({
-				avatarDialogId: this.avatarDialogId,
-				contextDialogId: this.contextDialogId,
-			});
+			return this.copilotRoleAvatarUrl;
 		},
 		avatarDialog(): ImModelChat
 		{
@@ -102,9 +90,25 @@ export const ChatAvatar = {
 		{
 			return this.user?.type === UserType.extranet;
 		},
+		isAiAssistant(): boolean
+		{
+			return this.$store.getters['users/bots/isAiAssistant'](this.avatarDialogId);
+		},
 		isCopilot(): boolean
 		{
 			return this.copilotManager.isCopilotChatOrBot(this.avatarDialogId);
+		},
+		copilotRoleAvatarUrl(): string
+		{
+			if (!this.contextDialogId)
+			{
+				return this.copilotManager.getDefaultAvatarUrl();
+			}
+
+			return this.copilotManager.getRoleAvatarUrl({
+				avatarDialogId: this.avatarDialogId,
+				contextDialogId: this.contextDialogId,
+			});
 		},
 		avatarComponent(): BitrixVueComponentProps
 		{
@@ -131,6 +135,11 @@ export const ChatAvatar = {
 			if (this.isCopilot)
 			{
 				return CopilotAvatar;
+			}
+
+			if (this.isAiAssistant)
+			{
+				return AiAssistantAvatar;
 			}
 
 			return this.isExtranetChat ? ExtranetChatAvatar : Avatar;

@@ -3,3 +3,14 @@
 .bx-im-fullscreen .bx-desktop-appearance-menu { }
 .bx-im-fullscreen .bx-messenger-box-contact { box-shadow: none; }
 .bx-im-fullscreen .bx-desktop-appearance-content { box-shadow: none;  }
+
+html {-webkit-text-size-adjust:none; min-height:100%;}
+
+body {
+	padding: 0;
+	margin: 0;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	min-height: 100%;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}

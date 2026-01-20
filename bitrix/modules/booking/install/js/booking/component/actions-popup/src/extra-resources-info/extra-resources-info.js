@@ -2,9 +2,9 @@ import { Loc } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as UiIcon, Outline, Set as IconSet } from 'ui.icon-set.api.vue';
 
-import { Model } from 'booking.const';
+import { LimitFeatureId, Model } from 'booking.const';
 import { Button as UiButton, AirButtonStyle, ButtonColor, ButtonSize, ButtonStyle } from 'booking.component.button';
-import type { BookingModel } from 'booking.model.bookings';
+import { limit } from 'booking.lib.limit';
 import { bookingService } from 'booking.provider.service.booking-service';
 
 import { ExtraResourcesDialog } from './extra-resources-dialog';
@@ -34,17 +34,20 @@ export const ExtraResourcesInfo = {
 	setup(): ExtraResourcesInfoData
 	{
 		const iconProductName = Outline.PRODUCT;
+		const iconBtnName = Outline.EDIT_M;
 		const iconEditName = Outline.EDIT_M;
 		const iconHelpName = IconSet.HELP;
 
 		return {
 			iconProductName,
+			iconBtnName,
 			iconEditName,
 			iconHelpName,
 			AirButtonStyle,
 			ButtonColor,
 			ButtonSize,
 			ButtonStyle,
+			Outline,
 		};
 	},
 	data(): Object
@@ -87,10 +90,21 @@ export const ExtraResourcesInfo = {
 		{
 			return this.hasExtraResources ? 'rgba(0, 117, 255, 1)' : 'rgba(201, 204, 208, 1)';
 		},
+		featureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingMulti;
+		},
 	},
 	methods: {
 		toggleResourcesSelector(): void
 		{
+			if (!this.featureEnabled)
+			{
+				void limit.show(LimitFeatureId.MultiResources);
+
+				return;
+			}
+
 			this.shownResourcesSelector = true;
 			this.$emit('freeze');
 		},
@@ -132,66 +146,77 @@ export const ExtraResourcesInfo = {
 	},
 	template: `
 		<div class="booking-actions-popup__item booking--actions-popup--extra-resources-info">
-			<div class="booking--actions-popup--extra-resources-info__row">
-				<div
-					:class="[
-						'booking-actions-popup-item-icon',
-						'booking--actions-popup--extra-resources-info__icon-product-bg',
-						{
-							'--active': hasExtraResources
-						}
-					]"
-				>
-					<UiIcon
-						:name="iconProductName"
-						:color="iconProductColor"
-					/>
-				</div>
-				<div class="booking--actions-popup--extra-resources-info__content">
-					<div class="booking--actions-popup--extra-resources-info__title">
-						<span>{{ loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TITLE') }}</span>
-					</div>
-					<div class="booking--actions-popup--extra-resources-info__subtitle">
-						<span
-							ref="button"
-							data-element="amount-additional-resources"
-							:class="{ '--fill': hasExtraResources }"
-							@click="toggleResourcesInfo"
-						>
-							{{ subtitle }}
-						</span>
-						<ExtraResourcesInfoPopup
-							v-if="showDialogInfo"
-							v-model:visible="showDialogInfo"
-							:bindElement="$refs.button"
-							:booking
-							:resourceId
+			<div class="booking-actions-popup__resources-info_row">
+				<div class="booking-actions-popup__resources-info_row-wrapper">
+					<div
+						:class="[
+							'booking-actions-popup-item-icon',
+							'booking-actions-popup__resources-info_icon-product-bg',
+							{
+								'--active': hasExtraResources
+							}
+						]"
+					>
+						<UiIcon
+							:name="iconProductName"
+							:color="iconProductColor"
 						/>
 					</div>
+					<div class="booking-actions-popup__resources-info_content">
+						<div class="booking-actions-popup__resources-info_title">
+							<span>{{ loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TITLE_MSGVER_1') }}</span>
+						</div>
+						<div class="booking-actions-popup__resources-info_subtitle">
+							<span
+								ref="button"
+								data-element="amount-additional-resources"
+								:class="{ '--fill': hasExtraResources }"
+								@click="toggleResourcesInfo"
+							>
+								{{ subtitle }}
+							</span>
+							<ExtraResourcesInfoPopup
+								v-if="showDialogInfo"
+								v-model:visible="showDialogInfo"
+								:bindElement="$refs.button"
+								:booking
+								:resourceId
+							/>
+						</div>
+					</div>
 				</div>
-				<div ref="edit" class="booking--actions-popup--extra-resources-info__icon-edit">
+				<div ref="edit" class="booking-actions-popup-item-buttons">
 					<UiButton
+						class="booking-actions-popup-button-with-chevron"
+						buttonClass="ui-btn-shadow"
+						:text="loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TEXT_BTN')"
 						data-element="btn-toggle-resources-selector"
-						:icon="iconEditName"
 						:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
-						:color="ButtonColor.LIGHT_BORDER"
-						:size="ButtonSize.SMALL"
+						:color="ButtonColor.LIGHT"
+						:size="ButtonSize.EXTRA_SMALL"
+						round
 						@click="toggleResourcesSelector"
-					/>
-					<ExtraResourcesDialog
-						v-if="shownResourcesSelector"
-						:booking
-						:resourceId
-						@save="saveBookingExtraResources"
-					/>
+					>
+						<UiIcon
+							:name="featureEnabled ? Outline.EDIT_M : Outline.LOCK_L"
+							:color="featureEnabled ? '' : 'var(--ui-color-base-5)'"
+						/>
+					</UiButton>
 				</div>
 			</div>
+			<ExtraResourcesDialog
+				v-if="shownResourcesSelector && featureEnabled"
+				:booking
+				:resourceId
+				@save="saveBookingExtraResources"
+			/>
 		</div>
 	`,
 };
 
 type ExtraResourcesInfoData = {
 	iconProductName: string;
+	iconBtnName: string;
 	iconEditName: string;
 	iconHelpName: string;
 }

@@ -59,6 +59,7 @@ export class Guide extends Event.EventEmitter
 		this.helper = top.BX.Helper;
 		this.targetContainer = Type.isDomNode(options.targetContainer) ? options.targetContainer : null;
 		this.overlay = Type.isBoolean(options.overlay) ? options.overlay : true;
+		this.canShowWithoutTarget = Type.isBoolean(options.canShowWithoutTarget) ? options.canShowWithoutTarget : true;
 
 		this.finalStep = options.finalStep || false;
 		this.finalText = options.finalText || "";
@@ -149,7 +150,6 @@ export class Guide extends Event.EventEmitter
 			Dom.removeClass(this.popup.getPopupContainer(), "popup-window-ui-tour-opacity");
 		}
 
-
 		this.showStep();
 
 		Dom.addClass(this.layout.backBtn, "ui-tour-popup-btn-hidden");
@@ -158,7 +158,6 @@ export class Guide extends Event.EventEmitter
 		{
 			Dom.addClass(this.getCurrentStep().getTarget(), "ui-tour-selector");
 		}
-
 	}
 
 	/**
@@ -251,7 +250,10 @@ export class Guide extends Event.EventEmitter
 	 */
 	showNextStep()
 	{
-		if (this.currentStepIndex === this.steps.length)
+		if (
+			this.currentStepIndex === this.steps.length
+			|| (!this.canShowWithoutTarget && !this.getCurrentStep().isTargetVisible())
+		)
 		{
 			return;
 		}
@@ -853,15 +855,6 @@ export class Guide extends Event.EventEmitter
 		const url = `redirect=detail&code=${article}${anchor ? `&anchor=${anchor}` : ''}`;
 
 		this.helper.show(url);
-
-		if (this.helper.isOpen())
-		{
-			this.getPopup().setAutoHide(false);
-		}
-
-		EventEmitter.subscribe(this.helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
-			this.getPopup().setAutoHide(true);
-		});
 	}
 
 	handleInfoHelperCodeClickLink(): void
@@ -872,15 +865,6 @@ export class Guide extends Event.EventEmitter
 		{
 			const helper = top.BX.UI.InfoHelper;
 			helper.show(this.getCurrentStep().getInfoHelperCode());
-
-			if (helper.isOpen())
-			{
-				this.getPopup().setAutoHide(false);
-			}
-
-			EventEmitter.subscribe(helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
-				this.getPopup().setAutoHide(true);
-			});
 		}
 	}
 

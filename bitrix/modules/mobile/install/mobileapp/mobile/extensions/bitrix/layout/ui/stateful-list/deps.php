@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'feature',
 		'rest/run-action-executor',
 		'notify',
 		'utils',
@@ -19,6 +20,8 @@ return [
 		'loc',
 		'type',
 		'tokens',
+		'ui-system/popups/aha-moment',
+		'utils/logger',
 	],
 	'bundle' => [
 		'./src/cache',

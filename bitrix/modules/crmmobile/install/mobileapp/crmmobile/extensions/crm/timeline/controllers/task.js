@@ -89,16 +89,20 @@ jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 
 		async changeDeadline(data)
 		{
-			const { updateDeadline } = await requireLazy('tasks:statemanager/redux/slices/tasks');
-			if (updateDeadline)
+			const { Entry } = await requireLazy('tasks:entry');
+			const taskId = data?.taskId;
+
+			if (!taskId)
 			{
-				dispatch(
-					updateDeadline({
-						taskId: data.taskId,
-						deadline: data.valueTs * 1000,
-					}),
-				);
+				return;
 			}
+
+			Entry.openDeadlinePicker({
+				taskId,
+				userId: env.userId,
+				layout,
+			})
+				.catch(console.error);
 		}
 	}
 

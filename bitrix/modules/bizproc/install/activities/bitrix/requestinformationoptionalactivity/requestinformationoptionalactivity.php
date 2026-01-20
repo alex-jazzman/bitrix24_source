@@ -86,6 +86,7 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 
 	protected function closeActivity()
 	{
+		$this->outputPortId = 1;
 		if (count($this->arActivities) <= 1)
 		{
 			$this->workflow->CloseActivity($this);
@@ -143,6 +144,7 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 
 	protected function executeOnOk()
 	{
+		$this->outputPortId = 0;
 		if (count($this->arActivities) <= 0)
 		{
 			$this->workflow->CloseActivity($this);
@@ -311,10 +313,11 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 		$commentRequiredValue = $arTask['PARAMETERS']['CommentRequired'] ?? '';
 
 		$commentRequired = false;
+		$cancel = $eventParameters['CANCEL'] ?? false;
 		if (
 			$commentRequiredValue === 'Y'
-			|| ($commentRequiredValue === 'YA' && !$eventParameters['CANCEL'])
-			|| ($commentRequiredValue === 'YR' && $eventParameters['CANCEL'])
+			|| ($commentRequiredValue === 'YA' && !$cancel)
+			|| ($commentRequiredValue === 'YR' && $cancel)
 		)
 		{
 			$commentRequired = true;

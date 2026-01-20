@@ -1,0 +1,13 @@
+.tasks-history-grid-container {
+	padding: var(--ui-space-inset-lg2);
+}
+
+.tasks-history-grid-header {
+	margin-bottom: var(--ui-space-stack-xl2);
+}
+
+.tasks-history-grid-main-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

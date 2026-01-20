@@ -30,6 +30,8 @@ type SidebarPrimaryActionButton = {
 	disabled?: boolean,
 	counter?: number,
 	testIdSuffix?: string,
+	renderCustomContent?: () => {},
+	ahaMoment?: string,
 };
 
 type SidebarViewDefaultProps = {

@@ -50,6 +50,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatAdd: 'im.v2.Chat.add',
 		imV2ChatRead: 'im.v2.Chat.read',
 		imV2ChatReadAll: 'im.v2.Chat.readAll',
+		imV2ChatReadAllByType: 'im.v2.Chat.readByType',
 		imV2ChatUnread: 'im.v2.Chat.unread',
 		imV2ChatLoad: 'im.v2.Chat.load',
 		imV2ChatShallowLoad: 'im.v2.Chat.shallowLoad',
@@ -97,6 +98,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
 
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
+		imV2ChatCopilotUpdateEngine: 'im.v2.Chat.Copilot.updateEngine',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 
 		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
@@ -107,6 +109,13 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2AnchorRead: 'im.v2.Anchor.read',
 		imV2AnchorReadChat: 'im.v2.Chat.Anchor.read',
+
+		imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
+		imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
+		imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
+
+		imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
+		imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
@@ -188,6 +197,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		voteAttachedVoteGetMany: 'vote.AttachedVote.getMany',
 		voteAttachedVoteGetWithVoted: 'vote.AttachedVote.getWithVoted',
 		voteAttachedVoteGetAnswerVoted: 'vote.AttachedVote.getAnswerVoted',
+
+		mobileOnboardingGetMessagesAmountByChatId: 'mobile.Onboarding.getMessagesAmountByChatId',
 	});
 
 	module.exports = {

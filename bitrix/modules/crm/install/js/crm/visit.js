@@ -6,7 +6,6 @@
 
 	var crmSelectorLoaded = false;
 	var consentGiven = false;
-	var recognizeConsentGiven = false;
 
 	var callbacks = {
 		onVisitCreated: BX.DoNothing
@@ -41,9 +40,6 @@
 
 		this.hasFaceId = config.hasFaceId || false; //todo
 		this.hasConsent = (config.HAS_CONSENT === 'Y') || consentGiven;
-		this.hasRecognizeConsent = (config.HAS_RECOGNIZE_CONSENT === 'Y') || recognizeConsentGiven;
-		this.faceIdInstalled = config.FACEID_INSTALLED === 'Y';
-		this.faceIdEnabled = config.FACEID_ENABLED === 'Y';
 		this.hasPhoto = false;
 		this.faceId = 0;
 
@@ -144,107 +140,105 @@
 
 		self._checkConsent(function ()
 		{
-			self._checkRecognizeConsent(function (){
-				self._createAjaxPopup(params, function()
+			self._createAjaxPopup(params, function()
+			{
+				self.createTimestamp = self.getNodeValue('field-create-timestamp');
+				self.owner.type = self.getNode('field-owner-entity-type');
+				self.owner.id =self.getNode('field-owner-entity-id');
+
+				if(self.owner.type.value && self.owner.id.value)
 				{
-					self.createTimestamp = self.getNodeValue('field-create-timestamp');
-					self.owner.type = self.getNode('field-owner-entity-type');
-					self.owner.id =self.getNode('field-owner-entity-id');
-
-					if(self.owner.type.value && self.owner.id.value)
+					self.entityType = self.owner.type.value;
+					self.entityId = self.owner.id.value;
+					if(self.owner.type.value !== 'LEAD')
 					{
-						self.entityType = self.owner.type.value;
-						self.entityId = self.owner.id.value;
-						if(self.owner.type.value !== 'LEAD')
+						var linksContainer = self.getNode('entity-links');
+						BX.removeClass(linksContainer, 'crm-activity-visit-hidden');
+					}
+				}
+
+				var dealId = parseInt(self.getNode('field-owner-entity-deal').value);
+				if(dealId > 0)
+				{
+					self.createdDeals.push(dealId);
+				}
+
+				self.buttons.createContact = self.getNode('create-contact-button');
+				self.buttons.createLead = self.getNode('create-lead-button');
+				self.buttons.selectEntity = self.getNode('select-owner-button');
+				self.buttons.addDeal = self.getNode('add-deal-button');
+				self.buttons.addInvoice = self.getNode('add-invoice-button');
+
+				if(self.buttons.createContact)
+					self.buttons.createContact.addEventListener('click', self._onCreateButtonClick.bind(self));
+
+				if(self.buttons.createLead)
+					self.buttons.createLead.addEventListener('click', self._onCreateButtonClick.bind(self));
+
+				if(self.buttons.selectEntity)
+					self.buttons.selectEntity.addEventListener('click', self._onSelectorButtonClick.bind(self));
+
+				if(self.buttons.addDeal)
+					self.buttons.addDeal.addEventListener('click', self._onAddButtonClick.bind(self));
+
+				if(self.buttons.addInvoice)
+					self.buttons.addInvoice.addEventListener('click', self._onAddButtonClick.bind(self));
+
+				var recorderNode = self.getNode('activity-recorder');
+
+				var finishButton = self.getNode('button-finish');
+				BX.bind(finishButton, 'click', self._onFinishButtonClick.bind(self));
+
+				if(BX.CrmRecorder.isSupported())
+				{
+					self.recorder = new BX.CrmRecorder({
+						element: recorderNode
+					});
+
+					BX.addCustomEvent(self.recorder, 'deviceFailure', self._onRecorderDeviceFailure.bind(self));
+					BX.addCustomEvent(self.recorder, 'deviceReady', self._onRecorderDeviceReady.bind(self));
+
+					self.recorder.start();
+					self.timerInterval = setInterval(function()
+					{
+						var oldTimestamp = self.timestamp;
+						var newTimestamp = (new Date()).getTime();
+						var difference = newTimestamp - oldTimestamp;
+						self.recordLength = self.recordLength + difference;
+						self.timestamp = newTimestamp;
+						self._updateTimer();
+					}, 1000);
+				}
+				else
+				{
+					BX.addClass(self.getNode('record-timer'), 'crm-activity-visit-hidden');
+					BX.removeClass(self.getNode('recorder-error'), 'crm-activity-visit-hidden');
+					self.failed = true;
+				}
+
+				var faceidNode = self.getNode('faceid-container');
+				if(faceidNode)
+				{
+					self.faceSearch = new FaceSearch(faceidNode, {
+						visitView: self,
+						onSelect: self._onFaceSelected.bind(self),
+						onReset: self._onFaceReset.bind(self),
+						onSocialProfileSelected: self._onFaceSocialProfileSelected.bind(self)
+					});
+					self.mainNode.style.minWidth = '989px';
+					self.hasFaceId = true;
+
+					var profileNode = self.getNode('crm-card-vk-profile');
+					if(profileNode)
+					{
+						self.vkProfile = profileNode.value;
+						if(BX.type.isNotEmptyString(self.vkProfile) && self.faceSearch)
 						{
-							var linksContainer = self.getNode('entity-links');
-							BX.removeClass(linksContainer, 'crm-activity-visit-hidden');
+							self.faceSearch.setVkProfile(self.vkProfile);
 						}
 					}
-
-					var dealId = parseInt(self.getNode('field-owner-entity-deal').value);
-					if(dealId > 0)
-					{
-						self.createdDeals.push(dealId);
-					}
-
-					self.buttons.createContact = self.getNode('create-contact-button');
-					self.buttons.createLead = self.getNode('create-lead-button');
-					self.buttons.selectEntity = self.getNode('select-owner-button');
-					self.buttons.addDeal = self.getNode('add-deal-button');
-					self.buttons.addInvoice = self.getNode('add-invoice-button');
-
-					if(self.buttons.createContact)
-						self.buttons.createContact.addEventListener('click', self._onCreateButtonClick.bind(self));
-
-					if(self.buttons.createLead)
-						self.buttons.createLead.addEventListener('click', self._onCreateButtonClick.bind(self));
-
-					if(self.buttons.selectEntity)
-						self.buttons.selectEntity.addEventListener('click', self._onSelectorButtonClick.bind(self));
-
-					if(self.buttons.addDeal)
-						self.buttons.addDeal.addEventListener('click', self._onAddButtonClick.bind(self));
-
-					if(self.buttons.addInvoice)
-						self.buttons.addInvoice.addEventListener('click', self._onAddButtonClick.bind(self));
-
-					var recorderNode = self.getNode('activity-recorder');
-
-					var finishButton = self.getNode('button-finish');
-					BX.bind(finishButton, 'click', self._onFinishButtonClick.bind(self));
-
-					if(BX.CrmRecorder.isSupported())
-					{
-						self.recorder = new BX.CrmRecorder({
-							element: recorderNode
-						});
-
-						BX.addCustomEvent(self.recorder, 'deviceFailure', self._onRecorderDeviceFailure.bind(self));
-						BX.addCustomEvent(self.recorder, 'deviceReady', self._onRecorderDeviceReady.bind(self));
-
-						self.recorder.start();
-						self.timerInterval = setInterval(function()
-						{
-							var oldTimestamp = self.timestamp;
-							var newTimestamp = (new Date()).getTime();
-							var difference = newTimestamp - oldTimestamp;
-							self.recordLength = self.recordLength + difference;
-							self.timestamp = newTimestamp;
-							self._updateTimer();
-						}, 1000);
-					}
-					else
-					{
-						BX.addClass(self.getNode('record-timer'), 'crm-activity-visit-hidden');
-						BX.removeClass(self.getNode('recorder-error'), 'crm-activity-visit-hidden');
-						self.failed = true;
-					}
-
-					var faceidNode = self.getNode('faceid-container');
-					if(faceidNode)
-					{
-						self.faceSearch = new FaceSearch(faceidNode, {
-							visitView: self,
-							onSelect: self._onFaceSelected.bind(self),
-							onReset: self._onFaceReset.bind(self),
-							onSocialProfileSelected: self._onFaceSocialProfileSelected.bind(self)
-						});
-						self.mainNode.style.minWidth = '989px';
-						self.hasFaceId = true;
-
-						var profileNode = self.getNode('crm-card-vk-profile');
-						if(profileNode)
-						{
-							self.vkProfile = profileNode.value;
-							if(BX.type.isNotEmptyString(self.vkProfile) && self.faceSearch)
-							{
-								self.faceSearch.setVkProfile(self.vkProfile);
-							}
-						}
-					}
-					setTimeout(function(){self.getPopup().adjustPosition();}, 150);
-				});
+				}
+				setTimeout(function(){self.getPopup().adjustPosition();}, 150);
 			});
 		});
 	};
@@ -376,86 +370,10 @@
 		popup.show();
 	};
 
-	BX.CrmActivityVisit.prototype._checkRecognizeConsent = function(next)
-	{
-		var self = this;
-		if(!this.faceIdInstalled || !this.faceIdEnabled)
-		{
-			next();
-			return;
-		}
-
-		if(this.hasRecognizeConsent)
-		{
-			next();
-			return;
-		}
-
-		var content = BX.create('div', {style: {'max-width': '595px'}, html: BX.message('CRM_ACTIVITY_VISIT_FACEID_AGREEMENT')});
-		var popup = new BX.PopupWindow('crm_visit_recognize_consent_popup' + (new Date()).getTime(), null, {
-			titleBar: BX.message('CRM_ACTIVITY_VISIT_CONSENT_TITLE'),
-			content: content,
-			closeIcon: true,
-			closeByEsc: true,
-			events: {
-				onPopupClose: function ()
-				{
-					popup.destroy();
-				}
-			},
-			buttons: [
-				new BX.PopupWindowButton({
-					text: BX.message('CRM_ACTIVITY_VISIT_CONSENT_AGREED'),
-					className: "popup-window-button-accept",
-					events: {
-						click: function()
-						{
-							recognizeConsentGiven = true;
-							self.hasRecognizeConsent = true;
-							popup.close();
-							self._saveRecognizeConsent(next);
-						}
-					}
-				}),
-				new BX.PopupWindowButtonLink({
-					text: BX.message('CRM_ACTIVITY_VISIT_CONSENT_CLOSE'),
-					events: {
-						click: function()
-						{
-							recognizeConsentGiven = false;
-							self.hasRecognizeConsent = false;
-							popup.close();
-							next();
-						}
-					}
-				})
-			]
-		});
-		popup.show();
-	};
-
-	BX.CrmActivityVisit.prototype._saveRecognizeConsent = function(next)
-	{
-		var params = {
-			sessid: BX.bitrix_sessid(),
-			'ajax_action': 'SAVE_RECOGNIZE_CONSENT'
-		};
-		BX.ajax({
-			method: 'POST',
-			dataType: 'json',
-			url: this.ajaxUrl,
-			data: params,
-			onsuccess: function (data)
-			{
-				next();
-			}
-		})
-	};
-
 	BX.CrmActivityVisit.prototype._createAjaxPopup = function(params, next)
 	{
 		params['sessid'] = BX.bitrix_sessid();
-		params['HAS_RECOGNIZE_CONSENT'] = (this.hasRecognizeConsent ? 'Y' : 'N');
+		params['HAS_RECOGNIZE_CONSENT'] = 'N';
 
 		var self = this;
 		var wrapper = BX.create('div', {style:	{'min-width': (self.hasFaceId ? '989px' : '550px'), 'height': '650px'}});
@@ -1142,31 +1060,6 @@
 				BX.removeClass(pictureContainer, 'crm-activity-visit-hidden');
 				BX.removeClass(self.elements.social, 'crm-activity-visit-block-disable');
 				BX.hide(self.buttons.settings);
-
-				self.__showLoader();
-				self.searchFace(imageBlob, function(response)
-				{
-					self.__hideLoader();
-					if(response.ERRORS.length > 0)
-					{
-						console.log('Error received: ', response.ERRORS[0]);
-						return;
-					}
-
-					if(response.SUCCESS === true)
-					{
-						self.callbacks.onSelect({
-							entityType: response.DATA.ENTITY_TYPE,
-							entityId: response.DATA.ENTITY_ID,
-							entityTitle: response.DATA.ENTITY_TITLE,
-							faceId: response.FACE_ID
-						});
-					}
-					else if(response.ERRORS.length > 0)
-					{
-						window.alert(response.ERRORS[0]);
-					}
-				});
 			});
 		}
 		else if(self.state == 'picture')
@@ -1311,27 +1204,6 @@
 		canvas.toBlob(function(imageBlob)
 		{
 			next(imageBlob);
-		});
-	};
-
-	FaceSearch.prototype.searchFace = function(imageBlob, next)
-	{
-		var self = this;
-		var formData = new FormData();
-
-		formData.append('IMAGE', imageBlob);
-		formData.append('sessid', BX.bitrix_sessid());
-		formData.append('ajax_action', 'RECOGNIZE');
-		BX.ajax({
-			method: 'POST',
-			dataType: 'json',
-			url: self.ajaxUrl,
-			data: formData,
-			preparePost: false,
-			onsuccess: function(response)
-			{
-				next(response);
-			}
 		});
 	};
 

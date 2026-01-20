@@ -7,6 +7,7 @@ export type LastSyncFieldType = {
 	lastSync: ?number,
 	mailboxId: ?number,
 	hasError: ?boolean,
+	canEdit: ?boolean,
 }
 
 export class LastSyncField extends BaseField
@@ -14,7 +15,7 @@ export class LastSyncField extends BaseField
 	render(params: LastSyncFieldType): void
 	{
 		const lastSyncContainer = Tag.render`
-			<div class="mailbox-grid_last-sync-container"></div>
+			<div class="mailbox-grid_last-sync-container mailbox-grid_single-line_field"></div>
 		`;
 
 		if (params.hasError)
@@ -27,8 +28,12 @@ export class LastSyncField extends BaseField
 			{
 				Dom.append(this.#getLastSyncContainer(params.lastSync), lastSyncContainer);
 			}
+			else
+			{
+				Dom.append(this.#getLastSyncRightNowContainer(), lastSyncContainer);
+			}
 
-			if (params.mailboxId)
+			if (params.mailboxId && params.canEdit)
 			{
 				Dom.append(this.#getLastSyncButton(params.mailboxId), lastSyncContainer);
 			}
@@ -48,6 +53,13 @@ export class LastSyncField extends BaseField
 
 		return Tag.render`
 			<span class="mailbox-grid_last-sync-text">${Text.encode(formattedTime)}</span>
+		`;
+	}
+
+	#getLastSyncRightNowContainer(): HTMLElement
+	{
+		return Tag.render`
+			<span class="mailbox-grid_last-sync-text">${Loc.getMessage('MAIL_MAILBOX_LIST_LAST_SYNC_NEW_CONNECT')}</span>
 		`;
 	}
 

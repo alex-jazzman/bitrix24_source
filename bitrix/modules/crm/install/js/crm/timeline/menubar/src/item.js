@@ -111,7 +111,7 @@ export default class Item
 
 	getSetting(setting: String, defaultValue = null)
 	{
-		return this.#settings[setting] ?? defaultValue;
+		return this.#settings?.[setting] ?? defaultValue;
 	}
 
 	setSettings(settings: ?Object): void

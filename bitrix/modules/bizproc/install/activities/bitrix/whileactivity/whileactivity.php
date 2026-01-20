@@ -79,20 +79,17 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public function Cancel()
+	public function cancel()
 	{
-		if (count($this->arActivities) == 0)
+		$activity = $this->arActivities[0] ?? null;
+		if ($activity && $activity->executionStatus === CBPActivityExecutionStatus::Executing)
 		{
-			return CBPActivityExecutionStatus::Closed;
+			$this->workflow->cancelActivity($activity);
+
+			return CBPActivityExecutionStatus::Canceling;
 		}
 
-		$activity = $this->arActivities[0];
-		if ($activity->executionStatus == CBPActivityExecutionStatus::Executing)
-		{
-			$this->workflow->CancelActivity($activity);
-		}
-
-		return CBPActivityExecutionStatus::Canceling;
+		return CBPActivityExecutionStatus::Closed;
 	}
 
 	public function OnEvent(CBPActivity $sender, $arEventParameters = [])
@@ -112,20 +109,22 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 
 	private function TryNextIteration()
 	{
-		if (!$this->Condition instanceof CBPActivityCondition)
-		{
-			return false;
-		}
-
-		if (!$this->checkIterationsLimit())
-		{
-			return false;
-		}
+		$this->outputPortId = 1;
 
 		if (
 			$this->executionStatus == CBPActivityExecutionStatus::Canceling
 			|| $this->executionStatus == CBPActivityExecutionStatus::Faulting
 		)
+		{
+			return false;
+		}
+
+		if (!($this->Condition instanceof CBPActivityCondition))
+		{
+			return false;
+		}
+
+		if (!$this->checkIterationsLimit())
 		{
 			return false;
 		}
@@ -144,9 +143,13 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 			$activity->ReInitialize();
 			$activity->AddStatusChangeHandler(self::ClosedEvent, $this);
 			$this->workflow->ExecuteActivity($activity);
+
+			return true;
 		}
 
-		return true;
+		$this->outputPortId = 0;
+
+		return false;
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters,

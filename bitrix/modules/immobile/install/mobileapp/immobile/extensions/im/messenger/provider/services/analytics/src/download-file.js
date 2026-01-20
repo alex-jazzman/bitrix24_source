@@ -7,6 +7,7 @@ jn.define('im/messenger/provider/services/analytics/download-file', (require, ex
 	const { Analytics, DialogType } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
 	/**
 	 * @class DownloadFile
@@ -72,7 +73,7 @@ jn.define('im/messenger/provider/services/analytics/download-file', (require, ex
 				.setType(Analytics.Type[fileType])
 				.setSection(Analytics.Section.chatWindow)
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(Analytics.P1[dialogModel.type])
+				.setP1(AnalyticsHelper.getP1ByDialog(dialogModel))
 				.setP2(Analytics.P2[userModel.type])
 				.setP5(this.#getChatP5(dialogModel));
 

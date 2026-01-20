@@ -1,0 +1,25 @@
+.booking--rcw--description-field {
+	flex: 1;
+	gap: 8px;
+}
+
+.booking--rcw--resource-description {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.booking--rcw--resource-description .ui-ctl.ui-ctl-textbox .ui-ctl-element {
+	height: 78px;
+	min-height: 78px;
+	max-height: 78px;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px 12px;
+	resize: none;
+	overflow-y: auto;
+	white-space: pre-wrap;
+
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-palette-gray-40) transparent;
+}

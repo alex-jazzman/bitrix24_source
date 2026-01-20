@@ -1,21 +1,19 @@
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loc } from 'main.core';
-
 import { Messenger } from 'im.public';
 import { LocalStorageKey, ChatType } from 'im.v2.const';
-import { CallManager } from 'im.v2.lib.call';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { PromoManager } from 'im.v2.lib.promo';
+import { hint } from 'ui.vue3.directives.hint';
 import { Analytics } from 'call.lib.analytics';
-import { Util, CallAI } from 'call.core';
+import { CallAI } from 'call.core';
+import { CallManager } from 'call.lib.call-manager';
 
 import { CallMenu } from './classes/call-menu';
 import { CallTypes } from 'call.const';
 import { CallButtonTitle } from './components/call-button-title';
 import { CallButtonPromo } from './components/call-button-promo';
 import { PulseAnimation } from './components/pulse-animation/pulse-animation';
-
-import { hint } from 'ui.vue3.directives.hint';
 
 import './css/call-button.css';
 
@@ -42,6 +40,7 @@ export const CallButton = {
 			lastCallType: '',
 			copilotMinUserLimit: CallAI.recordingMinUsers,
 			isCopilotActive: CallAI.serviceEnabled,
+			isMarketSubscriptionActive: CallAI.marketSubscriptionEnabled,
 			isTariffAvailable: CallAI.tariffAvailable,
 			showPromo: false,
 			showPromoTimer: null,
@@ -119,7 +118,7 @@ export const CallButton = {
 			}
 
 			return {
-				text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
+				text: this.loc('CALL_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
 				popupOptions: {
 					bindOptions: {
 						position: 'bottom',
@@ -138,6 +137,7 @@ export const CallButton = {
 				&& this.userCount >= this.copilotMinUserLimit
 				&& !this.isConference
 				&& this.isTariffAvailable
+				&& this.isMarketSubscriptionActive
 			);
 		},
 		callButtonContainerClasses(): Array<String>

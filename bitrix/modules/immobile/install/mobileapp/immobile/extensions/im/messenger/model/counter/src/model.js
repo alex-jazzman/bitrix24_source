@@ -337,10 +337,55 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 					})
 				;
 
+				const uniqueChatIdList = unique(chatIdList);
+				if (!Type.isArrayFilled(uniqueChatIdList))
+				{
+					return;
+				}
+
 				store.commit('delete', {
 					actionName: 'clear',
 					data: {
-						chatIdList: unique(chatIdList),
+						chatIdList: uniqueChatIdList,
+					},
+				});
+			},
+
+			/** @function counterModel/clearByType */
+			clearByType: (store, payload) => {
+				const { type } = payload;
+
+				const chatIdList = [];
+				Object.values(store.state.collection)
+					.forEach((counterState) => {
+						if (counterState.type !== type)
+						{
+							return;
+						}
+
+						if (counterState.counter > 0)
+						{
+							chatIdList.push(counterState.chatId);
+
+							if (counterState.parentChatId > 0) // need to update parent chat in recent
+							{
+								chatIdList.push(counterState.parentChatId);
+							}
+						}
+					})
+				;
+
+				const uniqueChatIdList = unique(chatIdList);
+				if (!Type.isArrayFilled(uniqueChatIdList))
+				{
+					return;
+				}
+
+				store.commit('delete', {
+					actionName: 'clearByType',
+					data: {
+						type,
+						chatIdList: uniqueChatIdList,
 					},
 				});
 			},

@@ -348,7 +348,10 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          menu.push({
 	            text: itemTitle,
 	            title: itemTitle,
-	            href: params.urls.requestUser
+	            href: params.urls.requestUser,
+	            onclick: function onclick(event, menuItem) {
+	              return menuItem.getMenuWindow().close();
+	            }
 	          });
 	        }
 	        if (params.perms.canModify) {
@@ -361,12 +364,18 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          menu.push({
 	            text: itemTitle,
 	            title: itemTitle,
-	            href: params.urls.edit
+	            href: params.urls.edit,
+	            onclick: function onclick(event, menuItem) {
+	              return menuItem.getMenuWindow().close();
+	            }
 	          });
 	          if (!params.hideArchiveLinks) {
 	            var featuresItem = {
 	              text: main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_FEAT'),
-	              title: main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_FEAT')
+	              title: main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_FEAT'),
+	              onclick: function onclick(event, menuItem) {
+	                return menuItem.getMenuWindow().close();
+	              }
 	            };
 	            if (params.editFeaturesAllowed) {
 	              featuresItem.href = params.urls.features;
@@ -417,14 +426,20 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        menu.push({
 	          text: params.perms.canModerate ? main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_EDIT') : main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_VIEW'),
 	          title: params.perms.canModerate ? main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_EDIT') : main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_MEMBERS_VIEW'),
-	          href: params.urls.members
+	          href: params.urls.members,
+	          onclick: function onclick(event, menuItem) {
+	            return menuItem.getMenuWindow().close();
+	          }
 	        });
 	        if (params.perms.canInitiate) {
 	          if (params.perms.canProcessRequestsIn) {
 	            menu.push({
 	              text: main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_REQ_IN'),
 	              title: main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_REQ_IN'),
-	              href: params.urls.requests
+	              href: params.urls.requests,
+	              onclick: function onclick(event, menuItem) {
+	                return menuItem.getMenuWindow().close();
+	              }
 	            });
 	          }
 	          itemTitle = main_core.Loc.getMessage('SONET_EXT_COMMON_GROUP_MENU_REQ_OUT');
@@ -448,7 +463,10 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          }
 	          var copyGroupItem = {
 	            text: itemTitle,
-	            title: itemTitle
+	            title: itemTitle,
+	            onclick: function onclick(event, menuItem) {
+	              return menuItem.getMenuWindow().close();
+	            }
 	          };
 	          if (params.copyFeatureAllowed) {
 	            copyGroupItem.href = params.urls.copy;
@@ -678,19 +696,6 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          }, 0);
 	        }
 	      });
-	    }
-	  }, {
-	    key: "closeGroupCardMenu",
-	    value: function closeGroupCardMenu(node) {
-	      if (!node) {
-	        return;
-	      }
-	      var doc = node.ownerDocument;
-	      var win = doc.defaultView || doc.parentWindow;
-	      if (!win || main_core.Type.isUndefined(win.BX.Socialnetwork.UIGroupMenu) || !win.BX.Socialnetwork.UIGroupMenu.getInstance().menuPopup) {
-	        return;
-	      }
-	      win.BX.Socialnetwork.UIGroupMenu.getInstance().menuPopup.close();
 	    }
 	  }, {
 	    key: "openMessenger",

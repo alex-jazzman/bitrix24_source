@@ -3,7 +3,6 @@
 /** @global CUser $USER */
 
 use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
-use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Main\Composite\StaticArea;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -93,14 +92,14 @@ Loc::loadMessages(__DIR__ . '/site_template.php');
 $APPLICATION->showHead(false);
 $asset->addCss(SITE_TEMPLATE_PATH . '/dist/bitrix24.bundle.css', true);
 $asset->addJs(SITE_TEMPLATE_PATH . '/dist/bitrix24.bundle.js', true);
-ThemePicker::getInstance()->showHeadAssets();
+AirTemplate::showHeadAssets();
 
 $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapsed-mode' : '';
 ?>
 <title><? if (!$isCompositeMode) $APPLICATION->showTitle() ?></title>
 </head>
 <body class="<?= AirTemplate::getBodyClasses() ?>"><?
-	ThemePicker::getInstance()->showBodyAssets();
+	AirTemplate::showBodyAssets();
 	$frame = new StaticArea('title');
 	$frame->startDynamicArea();
 		?><script>

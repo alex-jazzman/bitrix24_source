@@ -57,6 +57,10 @@ export const Resize = {
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			overbookingMap: `${Model.Bookings}/overbookingMap`,
 		}),
+		featureOverbookingEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingOverbooking;
+		},
 		booking(): BookingModel
 		{
 			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
@@ -99,7 +103,11 @@ export const Resize = {
 		excludeBookings(): number[] | (booking: BookingModel) => boolean
 		{
 			// return when overbooking option disabled
-			// 	return [this.bookingId];
+			if (!this.featureOverbookingEnabled)
+			{
+				return [this.bookingId];
+			}
+
 			const overbookingMap: OverbookingMap = this.overbookingMap;
 
 			return (booking: BookingModel) => {

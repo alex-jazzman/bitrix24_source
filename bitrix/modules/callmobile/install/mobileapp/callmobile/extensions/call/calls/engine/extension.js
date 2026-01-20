@@ -1,10 +1,17 @@
-'use strict';
+/*
+* @module call/calls/engine
+*/
+jn.define('call/calls/engine', (require, exports, module) => {
+	const { EntityReady } = require('entity-ready');
+	const { EventType } = require('call/const');
+	const { CallSettingsManager } = require('call/settings-manager');
+	const { BitrixCallJwt } = require('call/calls/bitrix-jwt');
+	const { BitrixCallDev } = require('call/calls/bitrix-dev');
+	const { BitrixCall } = require('call/calls/bitrix');
+	const { PlainCallJwt } = require('call/calls/plain-jwt');
+	const { PlainCall } = require('call/calls/plain');
+	const { VoximplantCall } = require('call/calls/voximplant');
 
-(function()
-{
-	const { EntityReady } = jn.require('entity-ready');
-	const { EventType } = jn.require('call/const');
-	const { CallSettingsManager } = jn.require('call/settings-manager');
 
 	const blankAvatar = '/bitrix/js/im/images/blank.gif';
 	const ajaxActions = {
@@ -149,11 +156,16 @@
 		onParticipantAudioMuted: 'onParticipantAudioMuted',
 		onParticipantVideoMuted: 'onParticipantVideoMuted',
 		onParticipantScreenshareMuted: 'onParticipantScreenshareMuted',
+		onSwitchConnectionType: 'switchConnectionType',
 
 		onRoomSettingsChanged: 'onRoomSettingsChanged',
 		onUserPermissionsChanged: 'onUserPermissionsChanged',
 
 		onCallConnected: 'onCallConnected',
+
+		onActiveCallNotificationSwitchMicrophoneStatusPress: 'onActiveCallNotificationSwitchMicrophoneStatusPress',
+		onActiveCallNotificationHangupButtonPress: 'onActiveCallNotificationHangupButtonPress',
+		onRemoteTrackAdded: 'onRemoteTrackAdded',
 	};
 
 	BX.Call.Scheme = {
@@ -989,6 +1001,12 @@
 
 		_onPullEvent(command, params, extra)
 		{
+			const callScheme = params?.call?.SCHEME || params?.call?.scheme;
+			const isLegacyCall = callScheme !== BX.Call.Scheme.jwt;
+			const callId = params.call?.ID || params.call?.id || params.callId;
+			const callUuid = params.call?.UUID || params.call?.uuid;
+			const call = isLegacyCall ? this.legacyCalls[callId] : this.jwtCalls[callUuid];
+
 			const handlers = {
 				chatUserAdd: this.#onChatUserChange.bind(this),
 				chatUserLeave: this.#onChatUserChange.bind(this),
@@ -998,10 +1016,17 @@
 				'Call::callV2AvailabilityChanged': this._onCallV2AvailabilityChanged.bind(this),
 			};
 
-			if (command.startsWith('Call::') && params.publicIds)
+			if (command.startsWith('Call::'))
 			{
-				BX.PULL.setPublicIds(Object.values(params.publicIds));
-				console.warn('CallEngine._onPullEvent', command, params, extra);
+				if (call && callId && !call.id)
+				{
+					call.id = callId;
+				}
+				if (params.publicIds)
+				{
+					BX.PULL.setPublicIds(Object.values(params.publicIds));
+					console.warn('CallEngine._onPullEvent', command, params, extra);
+				}
 			}
 
 			if (handlers[command])
@@ -1010,12 +1035,6 @@
 			}
 			else if (command.startsWith('Call::') && (params.call || params.callId))
 			{
-				const callScheme = params?.call?.SCHEME || params?.call?.scheme;
-				const isLegacyCall = callScheme !== BX.Call.Scheme.jwt;
-				const callId = params.call?.ID || params.call?.id || params.callId;
-				const callUuid = params.call?.UUID || params.call?.uuid;
-				const call = isLegacyCall ? this.legacyCalls[callId] : this.jwtCalls[callUuid];
-
 				if (call)
 				{
 					call._onPullEvent(command, params, extra);
@@ -2219,7 +2238,9 @@
 
 		isAIServiceEnabled(isConference = false)
 		{
-			return BX.componentParameters.get('isAIServiceEnabled', false) && !isConference;
+			const { serviceEnabled, settingsEnabled, tariffAvailable } = BX.componentParameters.get('ai');
+
+			return serviceEnabled && settingsEnabled && tariffAvailable && !isConference;
 		}
 
 		isLegacyCall(provider, scheme = null)
@@ -2284,9 +2305,7 @@
 			}
 
 			return new Promise(async (resolve, reject) => {
-				const roomType = callOptions.provider === BX.Call.Provider.Plain && CallSettingsManager.isJwtInPlainCallsEnabled()
-					? BX.Call.RoomType.Personal
-					: BX.Call.RoomType.Small;
+				const roomType = BX.Call.RoomType.Small;
 				const clientVersion = CallUtil.getApiVersion();
 				const clientPlatform = Application.getPlatform();
 				const url = `${CallSettingsManager.callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
@@ -2369,9 +2388,54 @@
 			this.abortableRequest?.abort();
 		}
 
-		isNewMobileGridEnabled()
+		stringifyObjectValues(obj)
 		{
-			return BX.componentParameters.get('isNewMobileGridEnabled', false);
+			return Object.fromEntries(
+				Object.entries(obj).map(([key, value]) => [
+					key,
+					(typeof value === 'object' && value !== null) ? JSON.stringify(value) : String(value)
+				])
+			);
+		}
+
+		deepParseJSON(value, depth = 0)
+		{
+			if (depth > 3)
+			{
+				return value;
+			}
+
+			if (typeof value === 'string')
+			{
+				try
+				{
+					const parsed = JSON.parse(value);
+					return typeof parsed === 'object' ? this.deepParseJSON(parsed, depth + 1) : parsed;
+				}
+				catch
+				{
+					return value;
+				}
+			}
+
+			if (Array.isArray(value))
+			{
+				return value.map(item => this.deepParseJSON(item, depth + 1));
+			}
+
+			if (value && typeof value === 'object')
+			{
+				return Object.fromEntries(
+					Object.entries(value).map(([k, v]) => [k, this.deepParseJSON(v, depth + 1)])
+				);
+			}
+
+			return value;
+		}
+
+		isIos()
+		{
+			return device.platform === 'iOS';
 		}
 	}
 
@@ -2394,10 +2458,11 @@
 		}
 	}
 
-	window.DeviceAccessError = DeviceAccessError;
-	window.CallJoinedElseWhereError = CallJoinedElseWhereError;
-	window.CallEngine = CallEngine;
-	window.CCallUtil = CCallUtil;
-	window.CallStub = CallStub;
-})
-();
+	module.exports = {
+		DeviceAccessError,
+		CallJoinedElseWhereError,
+		CallEngine,
+		CCallUtil,
+		CallStub,
+	};
+});

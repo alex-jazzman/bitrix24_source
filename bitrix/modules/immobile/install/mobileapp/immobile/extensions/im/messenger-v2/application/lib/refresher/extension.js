@@ -21,6 +21,7 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
+	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 	const { Worker } = require('im/messenger/lib/helper');
 
 	const { MessageQueueRequestManager } = require('im/messenger-v2/application/lib/message-queue-request-manager');
@@ -129,6 +130,7 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 			this.refreshErrorWorker = new Worker({
 				frequency: 2000,
 				callback: notifyRefreshError.bind(this),
+				context: 'refreshErrorWorker',
 			});
 		}
 
@@ -176,16 +178,27 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 		 * @private
 		 * @param {boolean} shortMode
 		 * @param {string} mode
+		 * @param {RecentController} [activeRecent]
 		 * @return {string[]}
 		 */
-		getInitRestMethods(shortMode, mode)
+		getInitRestMethods(shortMode, mode, activeRecent)
 		{
-			return [
-				this.#recentManager.getActiveRecent().getRefreshMethod(mode),
-				...(shortMode && Feature.isLocalStorageEnabled)
-					? this.#getInitRestMethodsForRefresh()
-					: this.#getInitRestMethodsForApplicationStartup(),
-			].filter(Boolean);
+			const initMethods = [];
+			if (Type.isFunction(activeRecent?.getRefreshMethod))
+			{
+				initMethods.push(activeRecent.getRefreshMethod(mode));
+			}
+
+			if (shortMode && Feature.isLocalStorageEnabled)
+			{
+				initMethods.push(...this.#getInitRestMethodsForRefresh());
+			}
+			else
+			{
+				initMethods.push(...this.#getInitRestMethodsForApplicationStartup());
+			}
+
+			return initMethods.filter(Boolean);
 		}
 
 		/**
@@ -240,18 +253,17 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 			await MessageQueueRequestManager.getInstance().callBatch();
 
 			const recentManager = this.#recentManager;
-			this.#messengerInitService.onceOnInit(recentManager?.getActiveRecent().getRefreshHandler(mode));
-			const methods = this.getInitRestMethods(shortMode, mode);
+			const activeRecent = recentManager?.getActiveRecent();
+			if (Type.isFunction(activeRecent?.getRefreshHandler))
+			{
+				this.#messengerInitService.onceOnInit(activeRecent.getRefreshHandler(mode));
+			}
+
+			const methods = this.getInitRestMethods(shortMode, mode, activeRecent);
 
 			return this.#messengerInitService.runAction(methods)
-				.then(() => {
-					// eslint-disable-next-line promise/no-nesting
-					void this.#afterRefresh().catch((error) => this.logger.error('#afterRefresh error:', error));
-				})
-				.catch((response) => {
-					// eslint-disable-next-line promise/no-nesting
-					void this.#afterRefreshError(response).catch((error) => this.logger.error('#afterRefreshError error:', error));
-				})
+				.then(() => this.#afterRefresh())
+				.catch((response) => this.#afterRefreshError(response))
 				.finally(() => {
 					MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
 				});
@@ -284,12 +296,12 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 			}
 
 			return this.syncService?.startSync()
+				.then(() => this.prewarmFavoriteReactionsCache())
 				.then(() => this.#ready())
+				.then(() => this.syncService?.startBackgroundSync())
 				.catch((error) => {
 					this.logger.error('#afterRefresh error', error);
-				})
-				.finally(() => {
-					this.syncService?.startBackgroundSync();
+					throw error;
 				})
 			;
 		}
@@ -346,6 +358,18 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 					this.logger.error(error);
 				})
 			;
+		}
+
+		prewarmFavoriteReactionsCache()
+		{
+			try
+			{
+				ReactionAssetsManager.getInstance().prewarmFavoriteReactionsCache();
+			}
+			catch (error)
+			{
+				this.logger.error('prewarmFavoriteReactionsCache catch:', error);
+			}
 		}
 	}
 

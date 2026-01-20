@@ -5,29 +5,39 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Crm\Integration\BizProc\Document\SmartB2eDocument;
+use Bitrix\Crm\Integration\BizProc\Document\SmartDocument;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1_MSGVER_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'CrmGenerateEntityDocumentActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
+$arActivityDescription = (new ActivityDescription(
+	name: Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME_1'),
+	description: Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1_MSGVER_1'),
+	type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value ],
+))
+	->setCategory([
 		'ID' => 'document',
 		'OWN_ID' => 'crm',
 		'OWN_NAME' => 'CRM',
-	],
-	'FILTER' => [
+	])
+	->setClass('CrmGenerateEntityDocumentActivity')
+	->setJsClass('BizProcActivity')
+	->setFilter([
 		'INCLUDE' => [
-			['crm'],
+			[ 'crm' ],
 		],
 		'EXCLUDE' => [
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartB2eDocument::class],
+			[ 'crm', SmartDocument::class ],
+			[ 'crm', SmartB2eDocument::class ],
 		],
-	],
-	'RETURN' => [
+	])
+	->setReturn([
 		'DocumentId' => [
 			'NAME' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_ID'),
 			'TYPE' => 'int',
@@ -48,21 +58,23 @@ $arActivityDescription = [
 			'NAME' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NUMBER'),
 			'TYPE' => 'string',
 		],
-	],
-	'ROBOT_SETTINGS' => [
+	])
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
-		'GROUP' => ['paperwork'],
+		'GROUP' => [ 'paperwork' ],
 		'ASSOCIATED_TRIGGERS' => [
 			'DOCUMENT_VIEW' => 1,
 			'DOCUMENT_CREATE' => 2,
 		],
 		'SORT' => 1400,
-	],
-];
-if (
-	\Bitrix\Main\Loader::includeModule('crm')
-	&& !\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled()
-)
-{
-	$arActivityDescription['EXCLUDED'] = true;
-}
+	])
+	->setGroups([ ActivityGroup::DOCUMENT_FLOW->value ])
+	->setColorIndex(ActivityColorIndex::BLUE->value)
+	->setIcon(Outline::FILE->name)
+	->setExcluded(
+		Loader::includeModule('crm')
+		&& !DocumentGeneratorManager::getInstance()->isEnabled()
+	)
+	->toArray()
+;
+

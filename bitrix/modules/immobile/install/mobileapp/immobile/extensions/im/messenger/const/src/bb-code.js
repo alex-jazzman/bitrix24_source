@@ -8,5 +8,9 @@ jn.define('im/messenger/const/bb-code', (require, exports, module) => {
 		chat: 'CHAT',
 	};
 
-	module.exports = { BBCode };
+	const BBCodeEntity = {
+		all: 'all',
+	};
+
+	module.exports = { BBCode, BBCodeEntity };
 });

@@ -18,13 +18,13 @@ import { NotesContent } from '../../content/notes/notes-content';
 import { CopilotContent } from '../../content/copilot/copilot';
 import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
 import { TaskCommentsContent } from '../../content/task-comments/task-comments';
-import { BaseEmptyState as EmptyState } from './components/empty-state/base';
+import { BaseEmptyState as EmptyState } from './components/empty-state/base/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
-import { CollabEmptyState } from './components/empty-state/collab/collab';
+import { CollabEmptyState } from './components/empty-state/collab';
 import { CopilotEmptyState } from './components/empty-state/copilot/copilot';
-import { TaskEmptyState } from './components/empty-state/task/task';
+import { TaskEmptyState } from './components/empty-state/task';
 import { UserService } from './classes/user-service';
 
 import './css/default-chat-content.css';

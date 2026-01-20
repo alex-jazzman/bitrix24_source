@@ -8,6 +8,8 @@ this.BX.Call = this.BX.Call || {};
 	  constructor() {
 	    this.jwtCallsEnabled = false;
 	    this.plainCallsUseJwt = false;
+	    this.plainCallFollowUpEnabled = false;
+	    this.plainCallCloudRecordingEnabled = false;
 	    this.callBalancerUrl = '';
 	    if (main_core.Extension.getSettings('call.core').call) {
 	      this.setup(main_core.Extension.getSettings('call.core').call);
@@ -19,6 +21,12 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	    if (settings.plainCallsUseJwt !== undefined) {
 	      this.plainCallsUseJwt = settings.plainCallsUseJwt;
+	    }
+	    if (settings.plainCallFollowUpEnabled !== undefined) {
+	      this.plainCallFollowUpEnabled = settings.plainCallFollowUpEnabled;
+	    }
+	    if (settings.plainCallCloudRecordingEnabled !== undefined) {
+	      this.plainCallCloudRecordingEnabled = settings.plainCallCloudRecordingEnabled;
 	    }
 	    if (settings.callBalancerUrl !== undefined) {
 	      this.callBalancerUrl = settings.callBalancerUrl;
@@ -41,6 +49,18 @@ this.BX.Call = this.BX.Call || {};
 	  }
 	  set callBalancerUrl(value) {
 	    this._callBalancerUrl = value;
+	  }
+	  get plainCallFollowUpEnabled() {
+	    return this.isJwtInPlainCallsEnabled && this._plainCallFollowUpEnabled;
+	  }
+	  set plainCallFollowUpEnabled(value) {
+	    this._plainCallFollowUpEnabled = value;
+	  }
+	  get plainCallCloudRecordingEnabled() {
+	    return this.isJwtInPlainCallsEnabled && this._plainCallCloudRecordingEnabled;
+	  }
+	  set plainCallCloudRecordingEnabled(value) {
+	    this._plainCallCloudRecordingEnabled = value;
 	  }
 	  isJwtInPlainCallsEnabled() {
 	    return this.jwtCallsEnabled && this.plainCallsUseJwt;

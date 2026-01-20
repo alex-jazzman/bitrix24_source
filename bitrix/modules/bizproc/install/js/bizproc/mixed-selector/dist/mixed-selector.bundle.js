@@ -421,9 +421,9 @@ this.BX = this.BX || {};
 	    var activityData = (_activities$activityT = activities[activityType]) !== null && _activities$activityT !== void 0 ? _activities$activityT : {};
 	    var returnActivityData = activityData.RETURN;
 	    var additionalResult = activityData.ADDITIONAL_RESULT;
+	    var activityResult = [];
 	    if (returnActivityData) {
 	      var keys = Object.keys(returnActivityData);
-	      var activityResult = [];
 	      for (var j in keys) {
 	        activityResult.push({
 	          text: returnActivityData[keys[j]].NAME,
@@ -438,18 +438,15 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-	      if (activityResult.length > 0) {
-	        result.push(activityResult);
-	      }
-	    } else if (main_core.Type.isArray(additionalResult)) {
+	    }
+	    if (main_core.Type.isArray(additionalResult)) {
 	      var properties = template[i].Properties;
 	      additionalResult.forEach(function (addProp) {
 	        if (properties[addProp]) {
 	          var _keys = Object.keys(properties[addProp]);
-	          var _activityResult = [];
 	          for (var _j in _keys) {
 	            var field = properties[addProp][_keys[_j]];
-	            _activityResult.push({
+	            activityResult.push({
 	              text: field.Name,
 	              description: properties.Title || activityData.NAME,
 	              value: "{=".concat(template[i].Name, ":").concat(_keys[_j], "}"),
@@ -458,11 +455,11 @@ this.BX = this.BX || {};
 	              property: field
 	            });
 	          }
-	          if (_activityResult.length > 0) {
-	            result.push(_activityResult);
-	          }
 	        }
 	      });
+	    }
+	    if (activityResult.length > 0) {
+	      result.push(activityResult);
 	    }
 	    if (template[i].Children && template[i].Children.length > 0) {
 	      var subResult = _classPrivateMethodGet(_this3, _getTemplateActivitiesItems, _getTemplateActivitiesItems2).call(_this3, template[i].Children, activities);

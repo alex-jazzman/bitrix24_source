@@ -34,7 +34,7 @@ export class MarketExpiredPopup extends EventEmitter
 	olWidgetCode: string;
 	#analytic: Analytic;
 	discountEar: ?DiscountEar;
-	marketLabel: boolean;
+	isRenamedMarket: boolean;
 
 	constructor(options: MarketExpiredPopupOptions)
 	{
@@ -49,7 +49,7 @@ export class MarketExpiredPopup extends EventEmitter
 		this.type = options.type;
 		this.expireDays = options.expireDays;
 		this.discountEar = options.discountEar;
-		this.marketLabel = options.isRenamedMarket ? '' : '_MARKET_PLUS';
+		this.isRenamedMarket = options.isRenamedMarket;
 	}
 
 	getTitle(): string

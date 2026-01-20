@@ -52,7 +52,7 @@ export const Conference = {
 			controller.ExecuteCommand('center');
 			controller.SetProperty('minClientSize', { Width: 940, Height: 400 });
 			controller.SetProperty('backgroundColor', '#2B3038');
-			controller.ExecuteCommand('html.load', `<script>location.href="/desktop_app/router.php?alias=${code}&videoconf";</script>`);
+			controller.ExecuteCommand('html.load', `<script>location.href="/video/${code}/";</script>`);
 			controller.ExecuteCommand('show');
 
 			// we need the second 'center' command because we know the exact size of the window after we show it

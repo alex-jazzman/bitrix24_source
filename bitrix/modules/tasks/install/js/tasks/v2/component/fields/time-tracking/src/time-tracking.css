@@ -1,0 +1,9 @@
+.tasks-task-time-tracking {
+	max-width: max-content;
+	white-space: nowrap;
+}
+
+.tasks-task-time-tracking-icon {
+	margin-right: var(--ui-space-inline-2xs2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}

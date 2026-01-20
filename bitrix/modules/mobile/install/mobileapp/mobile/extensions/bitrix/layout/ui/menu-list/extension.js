@@ -86,8 +86,13 @@ jn.define('layout/ui/menu-list', (require, exports, module) => {
 		renderItems(items)
 		{
 			return items.map((item, index) => {
+				if (item.hidden)
+				{
+					return null;
+				}
+
 				return this.renderItem(item, index);
-			});
+			}).filter(Boolean);
 		}
 
 		renderItem(item, index)

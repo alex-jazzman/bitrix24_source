@@ -5,6 +5,7 @@
 	--border-width: var(--ui-border-width-thick);
 	--border-radius: var(--ui-border-radius-md);
 	transform-style: preserve-3d;
+	transform: translateZ(0);
 }
 
 .tasks-field-highlight:before {

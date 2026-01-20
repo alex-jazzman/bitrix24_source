@@ -241,6 +241,30 @@ export class Store
 						return !getters.accessibleDashboardIdsSet.has(dashboardId);
 					};
 				},
+				getGroupsNameForDashboardScope(state: GroupAppState): (dashboardId: number, scopeCode: string) => string[]
+				{
+					return (dashboardId: number, scopeCode: string) => {
+						const groups = [];
+
+						if (state.group.scopes.some((groupScope: Scope) => groupScope.code === scopeCode))
+						{
+							groups.push(state.group.name);
+						}
+
+						for (const otherGroup of state.otherGroups)
+						{
+							if (
+								otherGroup.dashboardIds.includes(dashboardId)
+								&& otherGroup.scopes.some((groupScope: Scope) => groupScope.code === scopeCode)
+							)
+							{
+								groups.push(otherGroup.name);
+							}
+						}
+
+						return groups;
+					};
+				},
 				isTitleEdited(state: GroupAppState): boolean
 				{
 					return state.group.name !== Store.initialGroup.name;

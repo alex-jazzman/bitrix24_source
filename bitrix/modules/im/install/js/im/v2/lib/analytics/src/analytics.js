@@ -10,6 +10,7 @@ import { getCollabId } from './helpers/get-collab-id';
 import { getUserType } from './helpers/get-user-type';
 import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
 import { getChatType } from './helpers/get-chat-type';
+import { isAiAssistant } from './helpers/is-ai-assistant';
 import { isNotes } from './helpers/is-notes';
 
 import { CollabEntities } from './classes/collab-entities';
@@ -27,12 +28,13 @@ import { AttachMenu } from './classes/attach-menu';
 import { Vote } from './classes/vote-create';
 import { MessagePins } from './classes/message-pins';
 import { MessageForward } from './classes/message-forward';
-import { DesktopUpdateBanner } from './classes/desktop-update-banner';
 import { MessageContextMenu } from './classes/message-context-menu';
 import { SliderInvite } from './classes/slider-invite';
 import { ChatPins } from './classes/chat-pins';
+import { DesktopMode } from './classes/desktop-mode';
 import { ChatInviteLink } from './classes/chat-invite-link';
-import { AudioMessage } from './classes/audiomessage';
+import { AiAssistant } from './classes/ai-assistant';
+import { Player } from './classes/player';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -63,12 +65,13 @@ export class Analytics
 	vote: Vote = new Vote();
 	messagePins: MessagePins = new MessagePins();
 	messageForward: MessageForward = new MessageForward();
-	desktopUpdateBanner: DesktopUpdateBanner = new DesktopUpdateBanner();
 	messageContextMenu: MessageContextMenu = new MessageContextMenu();
 	sliderInvite: SliderInvite = new SliderInvite();
 	chatPins: ChatPins = new ChatPins();
+	desktopMode: DesktopMode = new DesktopMode();
 	chatInviteLink: ChatInviteLink = new ChatInviteLink();
-	audioMessage: AudioMessage = new AudioMessage();
+	aiAssistant: AiAssistant = new AiAssistant();
+	player: Player = new Player();
 
 	static #instance: Analytics;
 
@@ -96,6 +99,7 @@ export class Analytics
 			Layout.notification,
 			Layout.settings,
 			Layout.openlines,
+			Layout.taskComments,
 		];
 
 		if (!trackedTabs.includes(tabName))
@@ -134,6 +138,11 @@ export class Analytics
 		if (chatType === ChatType.copilot)
 		{
 			this.copilot.onOpenChat(dialog.dialogId);
+		}
+
+		if (isAiAssistant(dialog.dialogId))
+		{
+			this.aiAssistant.onOpenChatAI(dialog);
 		}
 
 		const currentLayout = Core.getStore().getters['application/getLayout'].name;

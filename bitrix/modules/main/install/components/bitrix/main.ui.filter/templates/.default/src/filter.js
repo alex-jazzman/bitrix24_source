@@ -213,8 +213,9 @@ import { Presets } from './presets';
 		 * @param {string} id
 		 * @param {string} name
 		 * @param {boolean} [pinned = false]
+		 * @param {boolean} [prepend = false]
 		 */
-		addSidebarItem: function(id, name, pinned)
+		addSidebarItem: function(id, name, pinned, prepend = false)
 		{
 			var Presets = this.getPreset();
 			var presetsContainer = Presets.getContainer();
@@ -224,12 +225,15 @@ import { Presets } from './presets';
 			if (BX.type.isDomNode(preset))
 			{
 				BX.remove(preset);
-				presetsContainer.insertBefore(sidebarItem, Presets.getAddPresetField());
+			}
 
+			if (prepend)
+			{
+				presetsContainer.prepend(sidebarItem);
 			}
 			else
 			{
-				presetsContainer && presetsContainer.insertBefore(sidebarItem, Presets.getAddPresetField());
+				presetsContainer.insertBefore(sidebarItem, Presets.getAddPresetField());
 			}
 
 			BX.bind(sidebarItem, 'click', BX.delegate(Presets._onPresetClick, Presets));
@@ -1020,7 +1024,8 @@ import { Presets } from './presets';
 		isInsideFilterEvent: function(event)
 		{
 			event = this.prepareEvent(event);
-			return (event.path || []).some(function(current) {
+
+			const isEventNodeHasInsideClass = (event.path || []).some((current) => {
 				return (
 					BX.type.isDomNode(current) && (
 						BX.hasClass(current, this.settings.classFilterContainer) ||
@@ -1030,7 +1035,19 @@ import { Presets } from './presets';
 						BX.hasClass(current, this.settings.classSidePanelContainer)
 					)
 				);
-			}, this);
+			});
+
+			if (!isEventNodeHasInsideClass)
+			{
+				return false;
+			}
+
+			return event.path.some((current) => {
+				return (
+					BX.hasClass(current, this.settings.classDefaultPopup)
+					//&& BX.Dom.attr(current, 'id') === this.getPopup().getId()
+				);
+			});
 		},
 
 		_onDocumentClick: function(event)
@@ -3407,7 +3424,7 @@ import { Presets } from './presets';
 			if (!(this.popup instanceof BX.PopupWindow))
 			{
 				this.popup =  new BX.PopupWindow(
-					this.getParam('FILTER_ID') + this.settings.searchContainerPostfix,
+					this.getPopupId(),
 					this.getPopupBindElement(),
 					{
 						autoHide : false,
@@ -3441,6 +3458,11 @@ import { Presets } from './presets';
 			}
 
 			return this.popup;
+		},
+
+		getPopupId: function()
+		{
+			return this.getParam('FILTER_ID') + this.settings.searchContainerPostfix;
 		},
 
 		_onRestoreFieldsButtonClick: function()
@@ -3511,9 +3533,11 @@ import { Presets } from './presets';
 
 			if (BX.type.isArray(defaultPresets))
 			{
-				defaultPresets.sort(function(a, b) {
-					return a.SORT - b.SORT;
-				});
+				defaultPresets
+					.sort(function(a, b) {
+						return a.SORT - b.SORT;
+					})
+					.reverse();
 
 				defaultPresets.forEach(function(defPreset) {
 					isReplace = allPresets.some(function(current, index) {
@@ -3535,7 +3559,7 @@ import { Presets } from './presets';
 
 					if (defPreset.ID !== 'default_filter')
 					{
-						this.addSidebarItem(defPreset.ID, defPreset.TITLE, defPreset.IS_PINNED);
+						this.addSidebarItem(defPreset.ID, defPreset.TITLE, defPreset.IS_PINNED, true);
 
 						if (defPreset.IS_PINNED)
 						{

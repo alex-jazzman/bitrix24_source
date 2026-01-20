@@ -1,0 +1,9 @@
+.yandex-integration-wizard__footer {
+	position: relative;
+	padding: 13px 22px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 -2px 4px 0 #c6c9cb;
+	display: flex;
+	gap: 29px;
+	align-items: center;
+}

@@ -1,5 +1,5 @@
-import { Type } from 'main.core';
 import { ItemIdentifier } from 'crm.data-structures';
+import { Type } from 'main.core';
 import { Receiver } from '../receiver';
 
 export function ensureIsItemIdentifier(candidate: any): void
@@ -29,8 +29,11 @@ export function ensureIsValidMultifieldValue(candidate: any): void
 		Type.isPlainObject(candidate)
 		&& (Type.isNil(candidate.id) || Type.isInteger(candidate.id))
 		&& Type.isStringFilled(candidate.typeId)
+		&& (Type.isNil(candidate.typeCaption) || Type.isStringFilled(candidate.typeCaption))
 		&& Type.isStringFilled(candidate.valueType)
+		&& (Type.isNil(candidate.valueTypeCaption) || Type.isStringFilled(candidate.valueTypeCaption))
 		&& Type.isStringFilled(candidate.value)
+		&& (Type.isNil(candidate.valueFormatted) || Type.isStringFilled(candidate.valueFormatted))
 	);
 
 	if (isValidValue)

@@ -5,6 +5,9 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\V2\FormV2Feature;
+
 if (
 	isset($arParams["SET_EXPERT_MODE"])
 	&& $arParams["SET_EXPERT_MODE"] == "Y"
@@ -16,6 +19,12 @@ if (
 elseif ($USER->IsAuthorized())
 {
 	$arResult["SHOW_EXPERT_MODE_POPUP"] = CUserOptions::getOption("socialnetwork", "~log_expertmode_popup_show", "N");
+}
+
+$isTasksV2Form = Loader::includeModule('tasks') && FormV2Feature::isOn();
+if ($isTasksV2Form)
+{
+	$arResult["SHOW_EXPERT_MODE_POPUP"] = "N";
 }
 
 $arResult["SHOW_VIDEO_TRANSFORM_POPUP"] = CUserOptions::getOption("socialnetwork", "~log_videotransform_popup_show", "N");

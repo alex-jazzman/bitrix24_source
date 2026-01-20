@@ -179,6 +179,31 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			}
 		}
 
+		$req = \Bitrix\Main\Context::getCurrent()->getRequest();
+		if ($req->getPost('USE_MULTI_LANG_HELP_MESSAGE') === 'Y')
+		{
+			$newTooltips = $req->getPost('HELP_MESSAGE');
+
+			foreach($arLangs as $lid => $arLang)
+			{
+				$tooltip = trim($newTooltips[$lid] ?? '');
+				$tooltip = mb_substr($tooltip, 0, 255);
+				$arField['HELP_MESSAGE'][$lid] = $tooltip;
+			}
+		}
+		else
+		{
+			$nativeLanguageTooltip = $req->getPost('COMMON_EDIT_FORM_HELP_MESSAGE') ?? '';
+
+			$nativeLanguageTooltip = trim($nativeLanguageTooltip ?? '');
+			$nativeLanguageTooltip = mb_substr($nativeLanguageTooltip, 0, 255);
+
+			foreach($arLangs as $lid => $arLang)
+			{
+				$arField['HELP_MESSAGE'][$lid] = trim($nativeLanguageTooltip);
+			}
+		}
+
 		switch ($arField['USER_TYPE_ID'])
 		{
 			case 'string':
@@ -726,6 +751,29 @@ elseif($arResult['FIELD_ID'])
 	$arResult['FIELD']['COMMON_EDIT_FORM_LABEL'] = $commonEditFormLabel;
 	//If is only one label switch off using of multilang labels
 	$arResult['USE_MULTI_LANG_LABEL'] = count($labels) !== 1;
+
+	if (!empty($arResult['FIELD']['HELP_MESSAGE']))
+	{
+		$areTooltipsIdentical = true;
+
+		$currLid = \Bitrix\Main\Context::getCurrent()->getLanguage();
+		$nativeLanguageTooltip = $arResult['FIELD']['HELP_MESSAGE'][$currLid] ?? '';
+
+		foreach ($arLangs as $lid => $arLang)
+		{
+			$tooltip = $arResult['FIELD']['HELP_MESSAGE'][$lid] ?? '';
+
+			$arResult['FIELD']["HELP_MESSAGE[{$lid}]"] = $tooltip;
+
+			if ($tooltip !== $nativeLanguageTooltip)
+			{
+				$areTooltipsIdentical = false;
+			}
+		}
+
+		$arResult['USE_MULTI_LANG_HELP_MESSAGE'] = !$areTooltipsIdentical;
+		$arResult['FIELD']['COMMON_EDIT_FORM_HELP_MESSAGE'] = $nativeLanguageTooltip;
+	}
 }
 else
 {//New one

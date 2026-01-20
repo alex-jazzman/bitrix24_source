@@ -169,8 +169,12 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	          button.setDisabled(true);
 	          button.setState(BX.UI.Button.State.WAITING);
 	          try {
+	            var _response$errors;
 	            const api = babelHelpers.classPrivateFieldLooseBase(this, _api)[_api];
-	            await api.signersList.deleteSignersList(listId);
+	            const response = await api.signersList.deleteSignersList(listId, false);
+	            if (((_response$errors = response.errors) == null ? void 0 : _response$errors.length) > 0) {
+	              throw new Error(response.errors[0].message);
+	            }
 	            window.top.BX.UI.Notification.Center.notify({
 	              content: main_core.Loc.getMessage('SIGN_SIGNERS_GRID_DELETE_HINT_SUCCESS')
 	            });
@@ -193,7 +197,11 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  }
 	  async copyList(listId) {
 	    try {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.copySignersList(listId);
+	      var _response$errors2;
+	      const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.copySignersList(listId, false);
+	      if (((_response$errors2 = response.errors) == null ? void 0 : _response$errors2.length) > 0) {
+	        throw new Error(response.errors[0].message);
+	      }
 	      await this.reloadLists();
 	      window.top.BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('SIGN_SIGNERS_GRID_COPY_HINT_SUCCESS')
@@ -232,7 +240,11 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	          const successMsg = isSingle ? main_core.Loc.getMessage('SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_SUCCESS') : main_core.Loc.getMessage('SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_SUCCESS');
 	          const failMsg = isSingle ? main_core.Loc.getMessage('SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_FAIL') : main_core.Loc.getMessage('SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_FAIL');
 	          try {
-	            await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.deleteSignersFromList(listId, userIds);
+	            var _response$errors3;
+	            const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.deleteSignersFromList(listId, userIds, false);
+	            if (((_response$errors3 = response.errors) == null ? void 0 : _response$errors3.length) > 0) {
+	              throw new Error(response.errors[0].message);
+	            }
 	            window.top.BX.UI.Notification.Center.notify({
 	              content: successMsg
 	            });
@@ -253,9 +265,13 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  }
 	  async createList() {
 	    try {
+	      var _response$errors4;
 	      const createListPopup = new CreateListPopup();
 	      const title = await createListPopup.show();
-	      await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.createList(title);
+	      const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.createList(title, false);
+	      if (((_response$errors4 = response.errors) == null ? void 0 : _response$errors4.length) > 0) {
+	        throw new Error(response.errors[0].message);
+	      }
 	      window.top.BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS')
 	      });
@@ -268,25 +284,35 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  }
 	  async renameList(listId, title) {
 	    try {
+	      var _response$errors5;
 	      const createListPopup = new CreateListPopup();
 	      const newTitle = await createListPopup.show(title);
-	      await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.renameList(listId, newTitle);
+	      const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.renameList(listId, newTitle, false);
+	      if (((_response$errors5 = response.errors) == null ? void 0 : _response$errors5.length) > 0) {
+	        throw new Error(response.errors[0].message);
+	      }
 	      window.top.BX.UI.Notification.Center.notify({
+	        //@todo SIGN_SIGNERS_GRID_LIST_RENAME_SUCCESS
 	        content: main_core.Loc.getMessage('SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS')
 	      });
 	    } catch {
 	      window.top.BX.UI.Notification.Center.notify({
+	        //@todo SIGN_SIGNERS_GRID_LIST_RENAME_FAIL
 	        content: main_core.Loc.getMessage('SIGN_SIGNERS_GRID_LIST_CREATE_FAIL')
 	      });
 	    }
 	    await this.reloadLists();
 	  }
 	  async addSigners(listId, entities, excludeRejected = true) {
+	    var _response$errors6;
 	    const members = entities.map(entity => ({
 	      ...entity,
 	      party: 2
 	    }));
-	    await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.addSignersToList(listId, members, excludeRejected);
+	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].signersList.addSignersToList(listId, members, excludeRejected, false);
+	    if (((_response$errors6 = response.errors) == null ? void 0 : _response$errors6.length) > 0) {
+	      throw new Error(response.errors[0].message);
+	    }
 	    BX.SidePanel.Instance.close();
 	    await this.reloadSigners();
 	  }

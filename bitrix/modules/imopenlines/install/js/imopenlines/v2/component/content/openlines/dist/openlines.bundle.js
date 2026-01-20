@@ -605,26 +605,27 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		<ChatTextarea
 			:dialogId="dialogId"
 			:key="dialogId"
-			:withAudioInput="false"
 		>
 		</ChatTextarea>
 	`
 	};
 
-	const MenuSectionCode = Object.freeze({
-	  main: 'main',
-	  select: 'select'
-	});
+	const MenuSectionCode = {
+	  main: 'first',
+	  select: 'second',
+	  third: 'third'
+	};
 	class OpenLinesMessageMenu extends im_v2_lib_menu.MessageMenu {
 	  getMenuItems() {
-	    const mainGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getMarkItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getEditItem(), this.getDeleteItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode.select)];
+	    const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getMarkItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getEditItem()];
+	    const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
+	    return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(secondGroupItems, MenuSectionCode.second)];
 	  }
 	  getMenuGroups() {
 	    return [{
-	      code: MenuSectionCode.main
+	      code: MenuSectionCode.first
 	    }, {
-	      code: MenuSectionCode.select
+	      code: MenuSectionCode.second
 	    }];
 	  }
 	}

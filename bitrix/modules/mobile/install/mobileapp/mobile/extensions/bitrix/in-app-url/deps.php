@@ -10,6 +10,7 @@ return [
 		'in-app-url/routes',
 
 		'sign:in-app-url/routes',
+		'mail:in-app-url/routes',
 		'crm:in-app-url/routes',
 		'disk:in-app-url/routes',
 		'im:in-app-url/routes',

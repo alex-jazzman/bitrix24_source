@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'alert',
 		'error',
-        'analytics',
+		'analytics',
 		'asset-manager',
 		'feature',
 		'haptics',

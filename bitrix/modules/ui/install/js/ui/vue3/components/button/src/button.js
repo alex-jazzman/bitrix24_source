@@ -17,6 +17,14 @@ const iconValidator = (val): boolean => Type.isNil(val) || allIcons.has(val);
 export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 	name: 'UiButton',
 	props: {
+		id: {
+			type: String,
+			default: '',
+		},
+		idKey: {
+			type: String,
+			default: '',
+		},
 		class: {
 			type: String,
 			default: undefined,
@@ -67,10 +75,6 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		dropdown: Boolean,
 		wide: Boolean,
 		collapsed: Boolean,
-		id: {
-			type: String,
-			default: '',
-		},
 		type: {
 			type: String,
 			required: false,
@@ -127,7 +131,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			default: false,
 		},
 	},
-	emits: ['click'],
+	emits: [ 'click', 'clickSecondary' ],
 	data(): Object
 	{
 		return {
@@ -269,8 +273,9 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 	created(): void
 	{
 		const button = new UIButton({
-			id: this.id,
+			id: this.idKey || this.id,
 			className: this.class,
+			props: { id: this.id },
 			text: this.text,
 			link: this.link,
 			tag: this.tag,
@@ -278,9 +283,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			useAirDesign: true,
 			noCaps: this.noCaps,
 			collapsedIcon: this.collapsedIcon,
-			onclick: () => {
-				this.$emit('click');
-			},
+			onclick: () => { this.$emit('click'); },
 			dataset: this.dataset,
 			dropdown: this.dropdown,
 			disabled: this.disabled,

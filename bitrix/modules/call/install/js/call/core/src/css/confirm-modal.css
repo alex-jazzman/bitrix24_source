@@ -1,0 +1,64 @@
+/* record with copilot */
+.call-confirm-modal {
+
+}
+
+.call-confirm-modal__content {
+	padding: 16px 22px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.call-confirm-modal__title {
+	font-size: 16px;
+	line-height: 19px;
+	font-weight: var(--ui-font-weight-bold, 700);
+	margin-bottom: 15px;
+}
+
+.call-confirm-modal__message {
+	font-size: 15px;
+	line-height: 135%;
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+.call-confirm-modal__actions {
+	margin-top: 15px;
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
+.call-confirm-modal__button {
+	padding: 6px 22px;
+	height: 38px;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: var(--ui-font-weight-semibold, 600);
+	color: #ffffff;
+	border: none;
+	outline: none;
+	border-radius: 56px;
+	transition: background-color 200ms linear;
+	cursor: pointer;
+}
+
+.call-confirm-modal__button-yes {
+	background-color: #2FC6F6;
+}
+
+.call-confirm-modal__button-yes:hover {
+	background-color: #34bbe5;
+}
+
+.call-confirm-modal__button-no {
+	background-color: transparent;
+}
+
+.call-confirm-modal__button-no:hover {
+	background-color: rgba(255, 255, 255, .3);
+}
+
+/* record kind */
+

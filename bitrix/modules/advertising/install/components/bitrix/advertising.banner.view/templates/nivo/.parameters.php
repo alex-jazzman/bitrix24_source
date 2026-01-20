@@ -1,8 +1,13 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("advertising"))
 	return;
+
+/**
+ * @var array $arCurrentValues Defined in CComponentUtil::GetTemplateProps()
+ */
 
 $arTemplateParameters = array(
 	"PARAMETERS" => array(
@@ -39,7 +44,7 @@ $arTemplateParameters = array(
 		)
 	)
 );
-if ($arCurrentValues['EXTENDED_MODE'] == 'Y')
+if (isset($arCurrentValues['EXTENDED_MODE']) && $arCurrentValues['EXTENDED_MODE'] == 'Y')
 {
 	$arTemplateParameters["PARAMETERS"]["HEADING"] = Array(
 		"NAME" => GetMessage("ADV_NIVO_PARAMETER_HEADING"),
@@ -48,7 +53,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'Y')
 		"SORT" => 50
 	);
 }
-if ($arCurrentValues['EXTENDED_MODE'] == 'N')
+if (isset($arCurrentValues['EXTENDED_MODE']) && $arCurrentValues['EXTENDED_MODE'] == 'N')
 {
 	$arTemplateParameters["PARAMETERS"]["PRESET"] = Array(
 		"NAME" => GetMessage("ADV_NIVO_PARAMETER_PRESET"),
@@ -69,7 +74,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => 'Y',
 		"SORT" => 50
 	);
-	if ($arCurrentValues['HEADING_SHOW'] == 'Y')
+	if (isset($arCurrentValues['HEADING_SHOW']) && $arCurrentValues['HEADING_SHOW'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["HEADING"] = Array(
 			"NAME" => GetMessage("ADV_NIVO_PARAMETER_HEADING_TEXT"),
@@ -111,7 +116,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => 'Y',
 		"SORT" => 130
 	);
-	if ($arCurrentValues['ANNOUNCEMENT_SHOW'] == 'Y')
+	if (isset($arCurrentValues['ANNOUNCEMENT_SHOW']) && $arCurrentValues['ANNOUNCEMENT_SHOW'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["ANNOUNCEMENT"] = Array(
 			"NAME" => GetMessage("ADV_NIVO_PARAMETER_ANNOUNCEMENT_TEXT"),
@@ -153,7 +158,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => "Y",
 		"SORT" => 210
 	);
-	if ($arCurrentValues['BUTTON'] == 'Y')
+	if (isset($arCurrentValues['BUTTON']) && $arCurrentValues['BUTTON'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["BUTTON_TEXT"] = Array(
 			"NAME" => GetMessage("ADV_NIVO_PARAMETER_BUTTON_TEXT"),
@@ -206,7 +211,7 @@ if ($arCurrentValues['EXTENDED_MODE'] == 'N')
 		"REFRESH" => "Y",
 		"SORT" => 270
 	);
-	if ($arCurrentValues['OVERLAY'] == 'Y')
+	if (isset($arCurrentValues['OVERLAY']) && $arCurrentValues['OVERLAY'] == 'Y')
 	{
 		$arTemplateParameters["PARAMETERS"]["OVERLAY_COLOR"] = Array(
 			"NAME" => GetMessage("ADV_NIVO_PARAMETER_OVERLAY_COLOR"),

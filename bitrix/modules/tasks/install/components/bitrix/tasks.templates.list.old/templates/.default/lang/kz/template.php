@@ -29,7 +29,6 @@ $MESS["TASKS_PRIORITY_1"] = "Орташа";
 $MESS["TASKS_PRIORITY_2"] = "Жоғары";
 $MESS["TASKS_QUICK_TITLE"] = "Міндеттің атауы";
 $MESS["TASKS_REPORTS"] = "Есептер";
-$MESS["TASKS_RESPONSIBLE"] = "Жауапты";
 $MESS["TASKS_TEMPLATES"] = "Қалыптар";
 $MESS["TASKS_TEMPLATE_COPY"] = "Қалыпты көшіру";
 $MESS["TASKS_TEMPLATE_TITLE"] = "Атауы";

@@ -119,11 +119,15 @@ $arSelectFields = array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIF
 if (in_array("USER", $arVisibleColumns) && $allowAdminAccess)
 	$arSelectFields[] = "USER_ID";
 
+$navParams = [
+	'nPageSize' => CAdminResult::GetNavSize($sTableID),
+	'bShowAll'  => false,
+];
 $dbResultList = CBPTaskService::GetList(
 	array($by => $order),
 	$arFilter,
 	false,
-	false,
+	$navParams,
 	$arSelectFields
 );
 

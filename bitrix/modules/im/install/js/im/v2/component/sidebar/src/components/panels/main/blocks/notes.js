@@ -30,7 +30,6 @@ export const NotesPreview = {
 			<div class="bx-im-sidebar-notes-preview__avatar">
 				<ChatAvatar 
 					:avatarDialogId="dialogId"
-					:contextDialogId="dialogId"
 					:size="AvatarSize.XXXL"
 					:customType="ChatAvatarType.notes"
 				/>

@@ -1022,8 +1022,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (!rightBar || rightBar.dataset.lockRedraw === 'true') {
 	      return;
 	    }
-	    const scrollWidth = document.documentElement.scrollWidth - document.documentElement.clientWidth;
-	    if (scrollWidth > 0) {
+	    const hasHorizontalScroll = document.documentElement.scrollWidth > window.innerWidth;
+	    if (hasHorizontalScroll > 0) {
 	      if (!babelHelpers.classPrivateFieldLooseBase(this, _isTransparentMode)[_isTransparentMode]) {
 	        main_core.Dom.addClass(rightBar, '--transparent');
 	        babelHelpers.classPrivateFieldLooseBase(this, _isTransparentMode)[_isTransparentMode] = true;
@@ -1482,17 +1482,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _getCounterWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
 	var _getShortWorkTimeStateWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getShortWorkTimeStateWrapper");
 	var _getCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounter");
+	var _calculateCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateCounterValue");
 	var _getWorkTimeState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWorkTimeState");
-	var _setEventHandlerForUpdateCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlerForUpdateCounter");
+	var _setEventHandlersForUpdateCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlersForUpdateCounter");
 	var _setEventHandlerForChangeAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlerForChangeAvatar");
 	class AvatarButton {
 	  static init(options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper] = document.querySelector('[data-id="bx-avatar-widget"]');
 	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlerForChangeAvatar)[_setEventHandlerForChangeAvatar]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter > 0) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter > 0 || babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showCounter)[_showCounter]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlerForUpdateCounter)[_setEventHandlerForUpdateCounter]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlersForUpdateCounter)[_setEventHandlersForUpdateCounter]();
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].workTimeAvailable) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showWorkTimeState)[_showWorkTimeState]();
@@ -1604,11 +1605,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return new ui_cnt.Counter({
 	      color: ui_cnt.Counter.Color.DANGER,
 	      size: ui_cnt.Counter.Size.MEDIUM,
-	      value: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter,
+	      value: babelHelpers.classPrivateFieldLooseBase(this, _calculateCounterValue)[_calculateCounterValue](),
 	      useAirDesign: true,
 	      style: ui_cnt.CounterStyle.FILLED_ALERT
 	    });
 	  });
+	}
+	function _calculateCounterValue2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter + (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter ? 1 : 0);
 	}
 	function _getWorkTimeState2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('workTimeState', () => {
@@ -1618,21 +1622,39 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  });
 	}
-	function _setEventHandlerForUpdateCounter2() {
-	  pull_client.PULL.subscribe({
-	    moduleId: 'sign',
-	    command: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsPullEventName,
-	    callback: params => {
-	      if (!main_core.Type.isNumber(params == null ? void 0 : params.needActionCount)) {
-	        return;
+	function _setEventHandlersForUpdateCounter2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter > 0) {
+	    pull_client.PULL.subscribe({
+	      moduleId: 'sign',
+	      command: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsPullEventName,
+	      callback: params => {
+	        if (!main_core.Type.isNumber(params == null ? void 0 : params.needActionCount)) {
+	          return;
+	        }
+	        if ((params == null ? void 0 : params.needActionCount) > 0) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter = params.needActionCount;
+	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().update(babelHelpers.classPrivateFieldLooseBase(this, _calculateCounterValue)[_calculateCounterValue]());
+	        } else if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter = 0;
+	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().destroy();
+	        }
 	      }
-	      if ((params == null ? void 0 : params.needActionCount) > 0) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().update(params.needActionCount);
-	      } else {
-	        babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().destroy();
+	    });
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter) {
+	    pull_client.PULL.subscribe({
+	      moduleId: 'intranet',
+	      command: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhonePullEventName,
+	      callback: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter = false;
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter <= 0) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().destroy();
+	        } else {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().update(babelHelpers.classPrivateFieldLooseBase(this, _calculateCounterValue)[_calculateCounterValue]());
+	        }
 	      }
-	    }
-	  });
+	    });
+	  }
 	}
 	function _setEventHandlerForChangeAvatar2() {
 	  const avatar = babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile__avatar i');
@@ -1648,11 +1670,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	Object.defineProperty(AvatarButton, _setEventHandlerForChangeAvatar, {
 	  value: _setEventHandlerForChangeAvatar2
 	});
-	Object.defineProperty(AvatarButton, _setEventHandlerForUpdateCounter, {
-	  value: _setEventHandlerForUpdateCounter2
+	Object.defineProperty(AvatarButton, _setEventHandlersForUpdateCounter, {
+	  value: _setEventHandlersForUpdateCounter2
 	});
 	Object.defineProperty(AvatarButton, _getWorkTimeState, {
 	  value: _getWorkTimeState2
+	});
+	Object.defineProperty(AvatarButton, _calculateCounterValue, {
+	  value: _calculateCounterValue2
 	});
 	Object.defineProperty(AvatarButton, _getCounter, {
 	  value: _getCounter2
@@ -1720,8 +1745,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper] = document.querySelector('[data-id="licenseWidgetWrapper"]');
 	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlers)[_setEventHandlers]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].shouldShow) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersTotalCount);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount);
 	    }
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper], 'click', () => {
 	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper]);
@@ -1803,7 +1828,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper].querySelector('.air-header-button__counter');
 	  });
 	}
-	function _setCounterValue2(value) {
+	function _setCounterValue2(personalTotalCount, commonTotalCount) {
+	  const value = personalTotalCount + commonTotalCount;
 	  if (value < 1) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$1)[_getCounter$1]().destroy();
 	    babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].delete('counter');
@@ -1828,7 +1854,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }]
 	    });
 	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isAdmin) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
 	    pull_client.PULL.subscribe({
 	      moduleId: 'bitrix24',
 	      command: 'updateCountOrdersAwaitingPayment',
@@ -1843,25 +1869,34 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
 	    return;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersCount = params.orders.ordersCount;
-	  babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo = params.orders.ordersInfo;
-	  if (params.shouldShow) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](params.ordersTotalCount);
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](0);
+	  if (params.scope === 'common') {
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount = params.commonTotalCount;
+	    if (params.commonTotalCount !== 0 && !main_core.Type.isNil(params.commonTotalCount)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo = params.orders.ordersInfo;
+	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.awaitingInvoice = params.orders.awaitingInvoice;
+	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.awaitingPayment = params.orders.awaitingPayment;
+	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.failedPayment = params.orders.failedPayment;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, params.commonTotalCount);
+	  } else if (params.scope === 'personal') {
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount = params.personalTotalCount;
+	    if (params.personalTotalCount !== 0 && !main_core.Type.isNil(params.personalTotalCount)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo.checkoutPath = params.orders.checkoutPath;
+	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.inCheckout = params.orders.inCheckout;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](params.personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount);
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitOrdersUpdate)[_emitOrdersUpdate](params);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitOrdersUpdate)[_emitOrdersUpdate]();
 	}
-	function _emitOrdersUpdate2(params) {
-	  var _params$orders, _params$orders2;
+	function _emitOrdersUpdate2() {
 	  main_core_events.EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new main_core_events.BaseEvent({
 	    data: {
 	      orders: {
-	        ordersCount: (_params$orders = params.orders) == null ? void 0 : _params$orders.ordersCount,
-	        ordersInfo: (_params$orders2 = params.orders) == null ? void 0 : _params$orders2.ordersInfo
+	        counters: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters,
+	        ordersInfo: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo
 	      },
-	      shouldShow: params.shouldShow,
-	      ordersTotalCount: params.ordersTotalCount
+	      commonTotalCount: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount,
+	      personalTotalCount: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount
 	    }
 	  }));
 	}

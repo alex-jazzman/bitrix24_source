@@ -2,15 +2,9 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	height: 100vh;
-}
-
-.ui-side-panel-wrap-workarea {
-	background: none;
-}
-
-.crm-iframe-popup.crm-detail-page.template-bitrix24.crm-iframe-popup-no-scroll.task-iframe-popup {
-	padding: 0;
+	position: fixed;
+	height: calc(100% - 80px);
+	width: calc(100% - 40px);
 }
 
 .crm-entity-details-error-error-background {

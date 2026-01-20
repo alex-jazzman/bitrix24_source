@@ -41,11 +41,6 @@ jn.define('im/messenger/model/anchor/validator', (require, exports, module) => {
 			result.parentMessageId = fields.parentMessageId;
 		}
 
-		if (Type.isNumber(fields.userId))
-		{
-			result.userId = fields.userId;
-		}
-
 		if (Type.isStringFilled(fields.type))
 		{
 			result.type = fields.type;

@@ -5,6 +5,9 @@ import { GroupType, Model, TaskField } from 'tasks.v2.const';
 export const groupMeta = Object.freeze({
 	id: TaskField.Group,
 	title: Loc.getMessage('TASKS_V2_GROUP_TITLE'),
+	stageTitle: Loc.getMessage('TASKS_V2_GROUP_STAGE_TITLE'),
+	epicTitle: Loc.getMessage('TASKS_V2_GROUP_EPIC_TITLE'),
+	storyPointsTitle: Loc.getMessage('TASKS_V2_GROUP_STORY_POINTS_TITLE'),
 	getTitle: (groupId: number) => {
 		const group = Core.getStore().getters[`${Model.Groups}/getById`](groupId);
 

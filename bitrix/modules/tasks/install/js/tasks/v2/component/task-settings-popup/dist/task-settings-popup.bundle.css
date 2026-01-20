@@ -1,0 +1,169 @@
+.tasks-task-settings-popup {
+	background-color: var(--ui-color-bg-vibrant-less);
+	-webkit-backdrop-filter: blur(24px);
+	        backdrop-filter: blur(24px);
+	padding: 15px 24px 24px 24px;
+}
+
+.tasks-task-settings-popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.tasks-task-settings-popup-title-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 6px;
+}
+.tasks-task-settings-popup-title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-task-settings-popup-close-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-task-settings-popup-content {
+	margin-top: 15px;
+}
+
+.tasks-task-settings-popup-footer {
+	display: flex;
+	align-items: center;
+	justify-content: right;
+	gap: 12px;
+	margin-top: 24px;
+}
+
+.tasks-task-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-settings > div {
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md);
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-task-setting {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-setting-switcher {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.tasks-task-setting-switcher-label {
+	padding-left: 10px;
+	padding-right: 6px;
+}
+
+
+.tasks-task-setting-switcher-lock {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-size: 20px;
+	margin-left: var(--ui-space-inline-3xs);
+	opacity: var(--ui-opacity-80);
+}
+
+.tasks-task-deadline-setting {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	padding-left: 37px;
+}
+
+.tasks-task-deadline-setting .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.tasks-task-deadline-setting .ui-ctl-textbox {
+	width: 120px;
+}
+
+.tasks-task-deadline-setting .ui-ctl-dropdown {
+	width: auto;
+	max-width: 120px;
+}
+.tasks-task-deadline-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-deadline-settings-line {
+	height: 1px;
+	background: rgba(0, 0, 0, 0.04);
+	box-shadow: 0 0 1px rgba(0, 0, 0, 0.04);
+	pointer-events: none;
+}
+
+.tasks-task-deadline-settings-label {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding-left: 10px;
+	padding-right: 6px;
+}
+
+.tasks-task-deadline-settings-label-filter {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.tasks-task-deadline-settings-label-filter span {
+	-webkit-text-decoration-line: underline;
+	        text-decoration-line: underline;
+	text-decoration-thickness: var(--ui-border-width-thin);
+	-webkit-text-decoration-style: dashed;
+	        text-decoration-style: dashed;
+	-webkit-text-decoration-color: var(--ui-color-base-5);
+	        text-decoration-color: var(--ui-color-base-5);
+	text-underline-offset: 4px;
+	cursor: pointer;
+}
+
+.tasks-task-deadline-settings-label-filter span:not(.--active) {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-task-deadline-settings-content {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	padding-left: 37px;
+	min-height: 40px;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.tasks-task-deadline-settings-content .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.tasks-task-deadline-settings-content .ui-ctl-textbox {
+	width: 120px;
+}
+
+.tasks-task-deadline-settings-content.--date .ui-system-input {
+	max-width: 165px;
+	padding: 0;
+}
+
+.tasks-task-deadline-settings-content .ui-system-input.--light-grey {
+	--border-color: var(--ui-color-base-4);
+}

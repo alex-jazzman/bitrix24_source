@@ -707,7 +707,11 @@ foreach ($loadedItems as $loadedItemId)
 
 	$arEvent['EVENT_DESC'] = $this->compileEventDesc($arEvent);
 
-	$arEvent['FILES'] = $arEvent['~FILES'] = $arEvent['FILES'] !== '' ? unserialize($arEvent['FILES'], ['allowed_classes' => false]) : array();
+	$arEvent['FILES'] = $arEvent['~FILES'] =
+		is_string($arEvent['FILES']) && $arEvent['FILES'] !== ''
+			? unserialize($arEvent['FILES'], ['allowed_classes' => false])
+			: []
+	;
 	if (!empty($arEvent['FILES']))
 	{
 		$i=1;

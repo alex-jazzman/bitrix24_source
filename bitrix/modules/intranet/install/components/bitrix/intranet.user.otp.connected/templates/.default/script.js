@@ -1,151 +1,199 @@
-;(function ()
+(function()
 {
 	BX.namespace('BX.Intranet.UserOtpConnected');
 
 	BX.Intranet.UserOtpConnected = {
-		init: function(params)
+		init(params)
 		{
 			this.signedParameters = params.signedParameters;
 			this.componentName = params.componentName;
 			this.otpDays = params.otpDays;
+			this.provider = new BX.Intranet.PushOtp.EnablePushOtpProvider({
+				intent: params.intent,
+				ttl: params.ttl,
+				pullConfig: params.pullConfig,
+				phoneNumber: params.phoneNumber,
+				isPhoneNumberConfirmed: params.isPhoneNumberConfirmed,
+				signedUserId: params.signedUserId,
+				events: {
+					onPopupClose: () => {
+						BX.SidePanel.Instance.reload();
+					},
+				},
+			});
+			const popup = params.provideSmsOtp
+				? this.provider.full()
+				: this.provider.onlyPushOtp();
 
-			var changePhoneNode = document.querySelector("[data-role='intranet-otp-change-phone']");
+			const changePhoneNode = document.querySelector("[data-role='intranet-otp-change-phone']");
 			if (BX.type.isDomNode(changePhoneNode))
 			{
-				BX.bind(changePhoneNode, "click", function () {
-					if (BX.getClass("BX.Intranet.UserProfile.Security"))
+				BX.bind(changePhoneNode, 'click', () => {
+					if (BX.getClass('BX.Intranet.UserProfile.Security'))
 					{
 						BX.Intranet.UserProfile.Security.showOtpComponent();
 					}
 				});
 			}
 
-			var recoveryCodesNode = document.querySelector("[data-role='intranet-recovery-codes']");
+			const recoveryCodesNode = document.querySelector("[data-role='intranet-recovery-codes']");
 			if (BX.type.isDomNode(recoveryCodesNode))
 			{
-				BX.bind(recoveryCodesNode, "click", function () {
-					if (BX.getClass("BX.Intranet.UserProfile.Security"))
+				BX.bind(recoveryCodesNode, 'click', () => {
+					if (BX.getClass('BX.Intranet.UserProfile.Security'))
 					{
 						BX.Intranet.UserProfile.Security.showRecoveryCodesComponent();
 					}
 				});
 			}
 
-			var deferNode = document.querySelector("[data-role='intranet-otp-defer']");
+			const deferNode = document.querySelector("[data-role='intranet-otp-defer']");
 			if (BX.type.isDomNode(deferNode))
 			{
-				BX.bind(deferNode, "click", function() {
-					this.showOtpDaysPopup(deferNode, "defer");
-				}.bind(this));
+				BX.bind(deferNode, 'click', () => {
+					this.showOtpDaysPopup(deferNode, 'defer');
+				});
 			}
 
-			var deactivateNode = document.querySelector("[data-role='intranet-otp-deactivate']");
+			const deactivateNode = document.querySelector("[data-role='intranet-otp-deactivate']");
 			if (BX.type.isDomNode(deactivateNode))
 			{
-				BX.bind(deactivateNode, "click", function() {
-					this.showOtpDaysPopup(deactivateNode, "deactivate");
-				}.bind(this));
+				BX.bind(deactivateNode, 'click', () => {
+					this.showOtpDaysPopup(deactivateNode, 'deactivate');
+				});
+			}
+
+			this.bannerPushOtp = null;
+			if (params.canShowBannerPushOtp)
+			{
+				if (!params.isOtpActive)
+				{
+					this.bannerPushOtp = new BX.Intranet.NotifyBanner.PushOtp({
+						clickEnableBtn: () => {
+							popup.show();
+						},
+					});
+				}
+				else if (params.isNotPushOtp)
+				{
+					this.bannerPushOtp = new BX.Intranet.NotifyBanner.PushOtp({
+						clickEnableBtn: () => {
+							popup.show();
+						},
+						clickDisableBtn: (event) => {
+							this.showOtpDaysPopup(event.target);
+						},
+					});
+				}
 			}
 		},
 
-		deactivateUserOtp : function(numDays)
+		reload()
 		{
-			BX.ajax.runComponentAction(this.componentName, "deactivateOtp", {
+			if (BX.getClass('BX.Intranet.UserProfile.Security'))
+			{
+				BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
+			}
+		},
+
+		deactivateUserOtp(numDays)
+		{
+			BX.ajax.runComponentAction(this.componentName, 'deactivateOtp', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
 				data: {
-					numDays: numDays
-				}
-			}).then(function (result) {
-				if (BX.getClass("BX.Intranet.UserProfile.Security"))
+					numDays,
+				},
+			}).then((result) => {
+				this.reload();
+			}, (response) => {
+				if (BX.getClass('BX.Intranet.UserProfile.Security'))
 				{
-					BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
+					BX.Intranet.UserProfile.Security.showErrorPopup(response.errors[0].message);
 				}
-			}.bind(this), function (response) {
-				if (BX.getClass("BX.Intranet.UserProfile.Security"))
-				{
-					BX.Intranet.UserProfile.Security.showErrorPopup(response["errors"][0].message);
-				}
-			}.bind(this));
+			});
 		},
 
-		activateUserOtp : function()
+		activateUserOtp()
 		{
-			BX.ajax.runComponentAction(this.componentName, "activateOtp", {
+			BX.ajax.runComponentAction(this.componentName, 'activateOtp', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: {}
-			}).then(function (result) {
-				if (BX.getClass("BX.Intranet.UserProfile.Security"))
+				data: {},
+			}).then((result) => {
+				this.reload();
+			}, (response) => {
+				if (BX.getClass('BX.Intranet.UserProfile.Security'))
 				{
-					BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
+					BX.Intranet.UserProfile.Security.showErrorPopup(response.errors[0].message);
 				}
-
-			}.bind(this), function (response) {
-
-				if (BX.getClass("BX.Intranet.UserProfile.Security"))
-				{
-					BX.Intranet.UserProfile.Security.showErrorPopup(response["errors"][0].message);
-				}
-			}.bind(this));
+			});
 		},
 
-		deferUserOtp : function(numDays)
+		deferUserOtp(numDays)
 		{
-			BX.ajax.runComponentAction(this.componentName, "deferOtp", {
+			BX.ajax.runComponentAction(this.componentName, 'deferOtp', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
 				data: {
-					numDays: numDays
-				}
-			}).then(function (result) {
-				if (BX.getClass("BX.Intranet.UserProfile.Security"))
+					numDays,
+				},
+			}).then((result) => {
+				this.reload();
+			}, (response) => {
+				if (BX.getClass('BX.Intranet.UserProfile.Security'))
 				{
-					BX.Intranet.UserProfile.Security.showOtpConnectedComponent();
+					BX.Intranet.UserProfile.Security.showErrorPopup(response.errors[0].message);
 				}
-
-			}.bind(this), function (response) {
-
-				if (BX.getClass("BX.Intranet.UserProfile.Security"))
-				{
-					BX.Intranet.UserProfile.Security.showErrorPopup(response["errors"][0].message);
-				}
-			}.bind(this));
+			});
 		},
 
-		showOtpDaysPopup : function(bind, handler)
+		getPopupOtpProvider()
 		{
-			handler = (handler == "defer") ? "defer" : "deactivate";
-			var self = this;
+			return this.provider;
+		},
 
-			var daysObj = [];
-			for (var i in this.otpDays)
+		showOtpDaysPopup(bind, handler)
+		{
+			handler = (handler == 'defer') ? 'defer' : 'deactivate';
+			const self = this;
+
+			const daysObj = [];
+			for (const i in this.otpDays)
 			{
 				daysObj.push({
 					text: this.otpDays[i],
 					numDays: i,
-					onclick: function(event, item)
+					onclick(event, item)
 					{
 						this.popupWindow.close();
 
-						if (handler == "deactivate")
+						if (handler === 'deactivate')
+						{
 							self.deactivateUserOtp(item.numDays);
+						}
 						else
+						{
 							self.deferUserOtp(item.numDays);
-					}
+						}
+					},
 				});
 			}
 
-			BX.PopupMenu.show('securityOtpDaysPopup', bind, daysObj,
-				{   offsetTop:10,
-					offsetLeft:0,
+			BX.PopupMenu.show(
+				'securityOtpDaysPopup',
+				bind,
+				daysObj,
+				{
+					offsetTop: 10,
+					offsetLeft: 0,
 					events: {
-						onPopupClose: function() {
-							BX.PopupMenu.destroy("securityOtpDaysPopup");
-						}
-					}
-				}
+						onPopupClose() {
+							BX.PopupMenu.destroy('securityOtpDaysPopup');
+						},
+					},
+				},
 			);
-		}
+		},
 	};
 })();

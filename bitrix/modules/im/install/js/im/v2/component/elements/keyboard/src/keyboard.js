@@ -9,6 +9,7 @@ import { BotService } from './classes/bot-service';
 import './keyboard.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { KeyboardButtonConfig } from 'im.v2.const';
 import type { ActionEvent, CustomCommandEvent } from './types/events';
 
@@ -67,7 +68,10 @@ export const Keyboard = {
 		{
 			if (!this.actionManager)
 			{
-				this.actionManager = new ActionManager(this.dialogId);
+				this.actionManager = new ActionManager({
+					dialogId: this.dialogId,
+					context: { emitter: this.getEmitter() },
+				});
 			}
 
 			return this.actionManager;
@@ -83,6 +87,10 @@ export const Keyboard = {
 			}
 
 			return this.botService;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

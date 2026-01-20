@@ -12,7 +12,7 @@
 .resource-creation-wizard__wrapper {
 	position: relative;
 	flex: 1;
-	padding: 24px 10px 15px 21px;
+	padding: 24px 15px 15px 21px;
 	overflow-y: scroll;
 }
 
@@ -32,6 +32,12 @@
 .resource-creation-wizard__header-title {
 	font-size: var(--ui-font-size-4xl);
 	font-weight: var(--ui-font-weight-light);
+	word-break: break-word;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .resource-creation-wizard__content {
@@ -67,7 +73,6 @@
 }
 
 .resource-creation-wizard-layout .ui-form-row-inline .ui-form-row {
-	padding-right: 15px;
 	box-sizing: border-box;
 }
 
@@ -94,7 +99,7 @@
 	font: 13px var(--ui-font-family-primary,var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.85);
 	flex-shrink: 0;
-	margin-bottom: 10px;
+	margin-bottom: 5px;
 	margin-right: 0;
 }
 

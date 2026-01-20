@@ -40,9 +40,6 @@ $arJSCoreConfig = array(
 		'lang' => $pathLang.'/js_core_autosave.php',
 		'rel' => array('ajax', 'main.pageobject'),
 	),
-	'fx' => array(
-		'js' => $pathJS.'/core_fx.js',
-	),
 	'dd' => array(
 		'js' => $pathJS.'/core_dd.js',
 	),
@@ -122,9 +119,6 @@ $arJSCoreConfig = array(
 		),
 		'rel' => array('ui.design-tokens', 'main.date', 'popup'),
 	),
-	'ls' => array(
-		'js' => $pathJS.'/core_ls.js'
-	),
 	'db' => array(
 		'js' => $pathJS.'/core_db.js',
 	),
@@ -133,7 +127,7 @@ $arJSCoreConfig = array(
 	),
 	'fc' => array(
 		'js' => $pathJS . '/core_frame_cache.js',
-		'rel' => array('ui.dexie','ajax', 'ls', 'fx')
+		'rel' => array('ui.dexie','ajax', 'ls'),
 	),
 	'avatar_editor' => array(
 		'rel' => array('ui.avatar-editor'),

@@ -31,4 +31,32 @@
 
 	const { subscribeToPostEvents } = require('layout/ui/gratitude-list/subscriptions');
 	subscribeToPostEvents();
+
+	const { initOnboarding } = require('onboarding/background');
+	void initOnboarding();
+
+	const { PullListener } = require('pull-listener');
+	const { MartaAIPullEventClient, PullEventId } = require('pull-listener/aiassistant-client');
+
+	new PullListener({
+		eventClients: [
+			new MartaAIPullEventClient([
+				PullEventId.AI_OPEN_CHAT_MOBILE,
+				PullEventId.AI_SHOW_FEEDBACK_FORM_MOBILE,
+			]),
+		],
+	}).subscribeAll();
+
+	BX.PULL.subscribe({
+		moduleId: 'security',
+		command: '2FA',
+		type: BX.PullClient.SubscriptionType.Server,
+		callback: (params, extra, commandName) => {
+			params["type"] = commandName;
+			if (typeof Application["show2FAIfNeeded"] === 'function')
+			{
+				Application.show2FAIfNeeded(params)
+			}
+		}
+	});
 })();

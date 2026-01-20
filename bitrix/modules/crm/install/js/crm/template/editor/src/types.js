@@ -9,3 +9,12 @@ export type FilledPlaceholder = {
 	FIELD_VALUE?: string,
 	TEMPLATE_ID: string,
 };
+
+export type OnSelectParams = {
+	id: string,
+	parentTitle: ?string,
+	text: ?string,
+	title: ?string,
+	entityType: string,
+	value: string,
+};

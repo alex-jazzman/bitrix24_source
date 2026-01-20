@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_system_skeleton_vue,ui_iconSet_api_vue,tasks_v2_component_elements_addBackground,tasks_v2_component_elements_fieldAdd,ui_vue3_components_richLoc,ui_system_typography_vue,ui_system_menu_vue,tasks_v2_component_elements_hoverPill,tasks_v2_lib_hrefClick,main_core,tasks_v2_core,tasks_v2_provider_service_crmService,tasks_v2_provider_service_taskService,tasks_v2_lib_entitySelectorDialog,ui_system_chip_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter) {
+(function (exports,ui_system_skeleton_vue,tasks_v2_component_elements_addButton,tasks_v2_component_elements_fieldAdd,ui_vue3_components_richLoc,ui_system_typography_vue,ui_system_menu_vue,tasks_v2_component_elements_hoverPill,main_core,tasks_v2_const,tasks_v2_lib_idUtils,tasks_v2_provider_service_crmService,tasks_v2_provider_service_taskService,tasks_v2_lib_entitySelectorDialog,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit) {
 	'use strict';
 
 	// @vue/component
@@ -14,30 +14,32 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    RichLoc: ui_vue3_components_richLoc.RichLoc,
 	    BMenu: ui_system_menu_vue.BMenu
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
+	  },
 	  props: {
-	    /**
-	     * @type CrmItemModel
-	     */
+	    /** @type CrmItemModel */
 	    item: {
 	      type: Object,
-	      required: true
-	    },
-	    isEdit: {
-	      type: Boolean,
-	      required: true
-	    },
-	    readonly: {
-	      type: Boolean,
 	      required: true
 	    }
 	  },
 	  emits: ['edit', 'clear'],
+	  setup() {},
 	  data() {
 	    return {
 	      isMenuShown: false
 	    };
 	  },
 	  computed: {
+	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.crmIntegration.available;
+	    },
+	    readonly() {
+	      return !this.task.rights.edit;
+	    },
 	    menuOptions() {
 	      return {
 	        id: `tasks-crm-menu-${this.item.id}`,
@@ -50,27 +52,40 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    menuItems() {
 	      return [{
 	        title: this.loc('TASKS_V2_CRM_OPEN'),
-	        icon: ui_iconSet_api_core.Outline.GO_TO_L,
+	        icon: ui_iconSet_api_vue.Outline.GO_TO_L,
 	        dataset: {
 	          id: 'tasks-crm-menu-open'
 	        },
-	        onClick: () => tasks_v2_lib_hrefClick.hrefClick(this.item.link)
+	        onClick: () => BX.SidePanel.Instance.emulateAnchorClick(this.item.link)
 	      }, {
 	        title: this.loc('TASKS_V2_CRM_EDIT'),
-	        icon: ui_iconSet_api_core.Outline.EDIT_L,
+	        icon: ui_iconSet_api_vue.Outline.EDIT_L,
 	        dataset: {
 	          id: 'tasks-crm-menu-edit'
 	        },
+	        isLocked: this.isLocked,
 	        onClick: () => this.$emit('edit')
 	      }, {
 	        title: this.loc('TASKS_V2_CRM_UNLINK'),
-	        icon: ui_iconSet_api_core.Outline.CROSS_L,
+	        icon: ui_iconSet_api_vue.Outline.CROSS_L,
 	        dataset: {
 	          id: 'tasks-crm-menu-unlink'
 	        },
 	        onClick: this.clear
 	      }];
 	    }
+	  },
+	  async mounted() {
+	    const {
+	      EntityMiniCard
+	    } = await main_core.Runtime.loadExtension('crm.mini-card');
+	    const card = new EntityMiniCard({
+	      bindElement: this.$refs.pill.$el,
+	      entityTypeId: tasks_v2_provider_service_crmService.CrmMappers.getEntityTypeId(this.item.id),
+	      entityId: this.item.entityId
+	    });
+	    const scrollContainer = document.querySelector(`[data-task-card-scroll="${this.taskId}"]`);
+	    card.getMiniCard().popup().setTargetContainer(scrollContainer);
 	  },
 	  methods: {
 	    prepareTitle(item) {
@@ -81,7 +96,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    handleClick() {
 	      if (!this.isEdit) {
-	        tasks_v2_lib_hrefClick.hrefClick(this.item.link);
+	        BX.SidePanel.Instance.emulateAnchorClick(this.item.link);
 	        return;
 	      }
 	      if (this.readonly) {
@@ -97,8 +112,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<div class="tasks-field-crm-item-container">
 			<HoverPill
 				class="tasks-field-crm-item"
-				:withClear="!readonly && !isEdit"
-				:readonly="readonly"
+				:withClear="!isEdit"
+				textOnly
+				:readonly
+				:active="isMenuShown"
 				ref="pill"
 				@click.stop="handleClick"
 				@clear="clear"
@@ -121,30 +138,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  title: main_core.Loc.getMessage('TASKS_V2_CRM_TITLE')
 	});
 
-	const crmIntegration = main_core.Extension.getSettings('tasks.v2.component.fields.crm').crmIntegration;
-	const dynamicTypeIds = Object.entries(crmIntegration).filter(([entityId, enabled]) => enabled === 'Y' && entityId.startsWith('DYNAMIC_')).map(([entityId]) => Number(entityId.slice(8)));
-	var _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId");
-	var _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog");
-	var _onUpdateOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUpdateOnce");
-	var _onCloseOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCloseOnce");
-	var _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog");
-	var _handleItemChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemChange");
-	var _insertSelectedCrmItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertSelectedCrmItems");
-	var _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask");
-	var _mapItemToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mapItemToModel");
-	var _clearOnUpdateOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearOnUpdateOnce");
-	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
-	var _task = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("task");
-	var _insertCrmItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertCrmItems");
-	class CrmDialog {
+	var _taskId, _onClose, _dialog, _createDialog, _fillStore, _mapItemToModel, _items;
+	const dialogs = {};
+	const crmDialog = new (_taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId"), _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose"), _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _fillStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore"), _mapItemToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mapItemToModel"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), class {
 	  constructor() {
-	    Object.defineProperty(this, _insertCrmItems, {
-	      value: _insertCrmItems2
-	    });
-	    Object.defineProperty(this, _task, {
-	      get: _get_task,
-	      set: void 0
-	    });
 	    Object.defineProperty(this, _items, {
 	      get: _get_items,
 	      set: void 0
@@ -152,84 +149,55 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Object.defineProperty(this, _mapItemToModel, {
 	      value: _mapItemToModel2
 	    });
-	    Object.defineProperty(this, _updateTask, {
-	      value: _updateTask2
-	    });
-	    Object.defineProperty(this, _handleItemChange, {
-	      value: _handleItemChange2
-	    });
 	    Object.defineProperty(this, _createDialog, {
 	      value: _createDialog2
+	    });
+	    Object.defineProperty(this, _dialog, {
+	      get: _get_dialog,
+	      set: void 0
 	    });
 	    Object.defineProperty(this, _taskId, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _dialog, {
+	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _onUpdateOnce, {
+	    Object.defineProperty(this, _fillStore, {
 	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _onCloseOnce, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _insertSelectedCrmItems, {
-	      writable: true,
-	      value: async () => {
+	      value: () => {
 	        const crmItems = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getSelectedItems().map(item => babelHelpers.classPrivateFieldLooseBase(this, _mapItemToModel)[_mapItemToModel](item));
-	        await babelHelpers.classPrivateFieldLooseBase(this, _insertCrmItems)[_insertCrmItems](crmItems);
+	        void tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.CrmItems}/upsertMany`, crmItems);
 	        return crmItems;
 	      }
 	    });
-	    Object.defineProperty(this, _clearOnUpdateOnce, {
-	      writable: true,
-	      value: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = null;
-	      }
-	    });
 	  }
-	  setTaskId(taskId) {
+	  init(taskId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = taskId;
-	    return this;
+	    // eslint-disable-next-line no-unused-expressions
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog];
 	  }
-	  showTo(targetNode) {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
+	  show(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = params.taskId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = params.onClose;
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].showTo(targetNode);
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].showTo(params.targetNode);
 	  }
-	  onUpdateOnce(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = callback;
-	  }
-	  onCloseOnce(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onCloseOnce)[_onCloseOnce] = callback;
-	    return this;
-	  }
-	  get $store() {
-	    return tasks_v2_core.Core.getStore();
-	  }
+	})();
+	function _get_dialog() {
+	  var _babelHelpers$classPr, _dialogs$_babelHelper;
+	  (_dialogs$_babelHelper = dialogs[_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]]) != null ? _dialogs$_babelHelper : dialogs[_babelHelpers$classPr] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
+	  return dialogs[babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]];
 	}
 	function _createDialog2() {
-	  let changed = false;
-	  const handleChanged = () => {
-	    changed = true;
-	  };
-	  const handleClose = async () => {
-	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	    if (changed) {
-	      void babelHelpers.classPrivateFieldLooseBase(this, _handleItemChange)[_handleItemChange]();
-	      changed = false;
-	    }
-	    (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _onCloseOnce))[_onCloseOnce]) == null ? void 0 : _babelHelpers$classPr3.call(_babelHelpers$classPr4);
-	    babelHelpers.classPrivateFieldLooseBase(this, _onCloseOnce)[_onCloseOnce] = null;
-	  };
+	  const {
+	    crmIntegration
+	  } = main_core.Extension.getSettings('tasks.v2.component.fields.crm');
+	  const settings = tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]) ? crmIntegration == null ? void 0 : crmIntegration.template : crmIntegration == null ? void 0 : crmIntegration.task;
+	  const dynamicTypeIds = Object.entries(settings != null ? settings : {}).filter(([entityId, enabled]) => enabled === 'Y' && entityId.startsWith('DYNAMIC_')).map(([entityId]) => Number(entityId.slice(8)));
 	  return new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	    context: 'tasks-card',
-	    multiple: true,
 	    enableSearch: true,
 	    entities: [tasks_v2_const.EntitySelectorEntity.Deal, tasks_v2_const.EntitySelectorEntity.Contact, tasks_v2_const.EntitySelectorEntity.Company, tasks_v2_const.EntitySelectorEntity.Lead, tasks_v2_const.EntitySelectorEntity.SmartInvoice, tasks_v2_const.EntitySelectorEntity.DynamicMultiple].map(entityId => ({
 	      id: entityId,
@@ -242,38 +210,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    })),
 	    preselectedItems: babelHelpers.classPrivateFieldLooseBase(this, _items)[_items],
 	    events: {
-	      'Item:onSelect': handleChanged,
-	      'Item:onDeselect': handleChanged,
-	      onHide: babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce],
-	      onDestroy: babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce],
-	      onLoad: babelHelpers.classPrivateFieldLooseBase(this, _insertSelectedCrmItems)[_insertSelectedCrmItems]
+	      onLoad: babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]
 	    },
 	    popupOptions: {
 	      events: {
-	        onClose: handleClose
+	        onClose: () => {
+	          var _babelHelpers$classPr2, _babelHelpers$classPr3;
+	          const items = babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]();
+	          const crmItemIds = items.map(({
+	            id
+	          }) => id);
+	          void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
+	            crmItemIds
+	          });
+	          (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _onClose))[_onClose]) == null ? void 0 : _babelHelpers$classPr2.call(_babelHelpers$classPr3);
+	        }
 	      }
 	    }
 	  });
 	}
-	async function _handleItemChange2() {
-	  const crmItems = await babelHelpers.classPrivateFieldLooseBase(this, _insertSelectedCrmItems)[_insertSelectedCrmItems]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _updateTask)[_updateTask](crmItems.map(({
-	    id
-	  }) => id));
-	}
-	function _updateTask2(crmItemIds) {
-	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
-	  void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
-	    crmItemIds
-	  });
-	  (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr5.call(_babelHelpers$classPr6);
-	  babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce]();
-	}
 	function _mapItemToModel2(item) {
 	  const entityInfo = item.getCustomData().get('entityInfo');
+	  const id = item.getId();
 	  return {
 	    id: tasks_v2_provider_service_crmService.CrmMappers.mapId(entityInfo.type, item.getId()),
-	    entityId: item.getId(),
+	    entityId: Number.isInteger(id) ? id : Number(id.split(':')[1]),
 	    type: item.getEntityId(),
 	    typeName: entityInfo.typeNameTitle,
 	    title: item.getTitle(),
@@ -281,55 +242,44 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  };
 	}
 	function _get_items() {
-	  var _babelHelpers$classPr7, _babelHelpers$classPr8;
-	  return (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _task)[_task].crmItemIds) == null ? void 0 : _babelHelpers$classPr8.map(id => tasks_v2_provider_service_crmService.CrmMappers.splitId(id))) != null ? _babelHelpers$classPr7 : [];
+	  var _taskService$getStore, _taskService$getStore2;
+	  return (_taskService$getStore = (_taskService$getStore2 = tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).crmItemIds) == null ? void 0 : _taskService$getStore2.map(id => tasks_v2_provider_service_crmService.CrmMappers.splitId(id))) != null ? _taskService$getStore : [];
 	}
-	function _get_task() {
-	  return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
-	}
-	async function _insertCrmItems2(crmItems) {
-	  await this.$store.dispatch(`${tasks_v2_const.Model.CrmItems}/upsertMany`, crmItems);
-	}
-	const crmDialog = new CrmDialog();
 
 	const maxCount = 7;
 
 	// @vue/component
 	const Crm = {
 	  components: {
-	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground,
+	    AddButton: tasks_v2_component_elements_addButton.AddButton,
 	    TextSm: ui_system_typography_vue.TextSm,
 	    BLine: ui_system_skeleton_vue.BLine,
 	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
 	    CrmItem
 	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {},
+	    isEdit: {}
 	  },
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline,
-	      crmMeta
+	      crmMeta,
+	      maxCount
 	    };
 	  },
 	  data() {
 	    return {
 	      isDialogShown: false,
-	      isExpanded: false
+	      isExpanded: false,
+	      isHovered: false
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    isEdit() {
-	      return Number.isInteger(this.taskId) && this.taskId > 0;
-	    },
 	    crmItems() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CrmItems}/getByIds`](this.task.crmItemIds);
+	      const items = this.$store.getters[`${tasks_v2_const.Model.CrmItems}/getByIds`](this.task.crmItemIds);
+	      return items.sort((a, b) => tasks_v2_provider_service_crmService.CrmMappers.compareIds(a.id, b.id));
 	    },
 	    visibleItems() {
 	      return this.crmItems.slice(0, maxCount);
@@ -338,8 +288,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.crmItems.slice(maxCount);
 	    },
 	    isLoading() {
-	      var _this$task$crmItemIds, _this$crmItems;
-	      return ((_this$task$crmItemIds = this.task.crmItemIds) == null ? void 0 : _this$task$crmItemIds.length) && !((_this$crmItems = this.crmItems) != null && _this$crmItems.length);
+	      var _this$crmItems;
+	      return !this.isEmpty && !((_this$crmItems = this.crmItems) != null && _this$crmItems.length);
+	    },
+	    isEmpty() {
+	      var _this$task$crmItemIds;
+	      return !((_this$task$crmItemIds = this.task.crmItemIds) != null && _this$task$crmItemIds.length);
 	    },
 	    readonly() {
 	      return !this.task.rights.edit;
@@ -351,20 +305,42 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.loc('TASKS_V2_CRM_AND_COUNT', {
 	        '#COUNT#': this.collapsedItems.length
 	      });
+	    },
+	    isAddActive() {
+	      return !this.readonly && !this.isEmpty;
+	    },
+	    isAddVisible() {
+	      return this.isDialogShown || this.isHovered;
+	    },
+	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.crmIntegration.available;
 	    }
 	  },
 	  mounted() {
-	    void tasks_v2_provider_service_crmService.crmService.list(this.taskId, this.task.crmItemIds);
+	    if (this.isEdit) {
+	      void tasks_v2_provider_service_crmService.crmService.list(this.taskId, this.task.crmItemIds);
+	    } else {
+	      crmDialog.init(this.taskId);
+	    }
 	  },
 	  methods: {
 	    handleClick() {
-	      if (this.readonly) {
-	        return;
+	      if (!this.readonly) {
+	        this.showDialog();
 	      }
-	      this.showDialog();
 	    },
 	    showDialog() {
-	      crmDialog.setTaskId(this.taskId).onCloseOnce(this.handleClose).showTo(this.$refs.anchor);
+	      if (this.isLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: tasks_v2_core.Core.getParams().restrictions.crmIntegration.featureId
+	        });
+	        return;
+	      }
+	      crmDialog.show({
+	        targetNode: this.$refs.anchor,
+	        taskId: this.taskId,
+	        onClose: this.handleClose
+	      });
 	      this.isDialogShown = true;
 	    },
 	    handleClose() {
@@ -378,46 +354,49 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<AddBackground v-if="!readonly" :isActive="isDialogShown" @click="handleClick"/>
 		<div
-			class="tasks-field-crm"
-			:data-task-id="taskId"
-			:data-task-field-id="crmMeta.id"
-			:data-task-crm-item-ids="task.crmItemIds?.join(',')"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
-			<FieldAdd v-if="!task.crmItemIds?.length" :icon="Outline.CRM"/>
-			<div v-if="isLoading" class="tasks-field-crm-skeleton">
-				<template v-for="crmItemId in task.crmItemIds" :key="crmItemId">
-					<BLine :height="20"/>
-				</template>
-			</div>
-			<template v-for="item in visibleItems" :key="item.id">
-				<CrmItem
-					:item="item"
-					:isEdit="isEdit"
-					:readonly="readonly"
-					@edit="showDialog"
-					@clear="handleClear(item.id)"
-				/>
-			</template>
-			<template v-if="isExpanded" v-for="item in collapsedItems" :key="item.id">
-				<CrmItem
-					:item="item"
-					:isEdit="isEdit"
-					:readonly="readonly"
-					@edit="showDialog"
-					@clear="handleClear(item.id)"
-				/>
-			</template>
-			<TextSm
-				v-if="collapsedItems.length > 0"
-				class="tasks-field-crm-expand"
-				@click.capture.stop="isExpanded = !isExpanded"
+			<AddButton 
+				v-if="isAddActive"
+				:isVisible="isAddVisible"
+				:isLocked
+				@click="handleClick"
+			/>
+			<div
+				class="tasks-field-crm"
+				:data-task-id="taskId"
+				:data-task-field-id="crmMeta.id"
+				:data-task-crm-item-ids="task.crmItemIds?.join(',')"
 			>
-				{{ expandButtonText }}
-			</TextSm>
+				<FieldAdd 
+					v-if="isEmpty"
+					:icon="Outline.CRM"
+					:isLocked
+					@click="showDialog"
+				/>
+				<div v-if="isLoading" class="tasks-field-crm-skeleton">
+					<template v-for="key in task.crmItemIds.slice(0, maxCount)" :key>
+						<BLine :height="20"/>
+					</template>
+				</div>
+				<template v-for="item in visibleItems" :key="item.id">
+					<CrmItem :item @edit="showDialog" @clear="handleClear(item.id)"/>
+				</template>
+				<template v-if="isExpanded" v-for="item in collapsedItems" :key="item.id">
+					<CrmItem :item @edit="showDialog" @clear="handleClear(item.id)"/>
+				</template>
+				<TextSm
+					v-if="collapsedItems.length > 0"
+					class="tasks-field-crm-expand"
+					@click.capture.stop="isExpanded = !isExpanded"
+				>
+					{{ expandButtonText }}
+				</TextSm>
+			</div>
+			<div class="tasks-field-crm-anchor" ref="anchor"/>
 		</div>
-		<div class="tasks-field-crm-anchor" ref="anchor"></div>
 	`
 	};
 
@@ -426,30 +405,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    Chip: ui_system_chip_vue.Chip
 	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {}
 	  },
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      crmMeta
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    design() {
 	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, crmMeta.id);
+	      return this.task.filledFields[crmMeta.id];
 	    },
-	    readonly() {
-	      return !this.task.rights.edit;
+	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.crmIntegration.available;
 	    }
 	  },
 	  methods: {
@@ -458,8 +432,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.highlightField();
 	        return;
 	      }
-	      crmDialog.setTaskId(this.taskId).showTo(this.$el);
-	      crmDialog.onUpdateOnce(this.highlightField);
+	      if (this.isLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: tasks_v2_core.Core.getParams().restrictions.crmIntegration.featureId
+	        });
+	        return;
+	      }
+	      crmDialog.show({
+	        targetNode: this.$el,
+	        taskId: this.taskId,
+	        onClose: this.highlightField
+	      });
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(crmMeta.id);
@@ -467,9 +450,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			v-if="task.rights.edit || isSelected"
+			:design
 			:icon="Outline.CRM"
+			:lock="isLocked"
 			:text="loc('TASKS_V2_CRM_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="crmMeta.id"
@@ -483,5 +467,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.CrmChip = CrmChip;
 	exports.crmMeta = crmMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Skeleton.Vue,BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.UI.System.Typography.Vue,BX.UI.System.Menu,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.UI.System.Typography.Vue,BX.UI.System.Menu,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
 //# sourceMappingURL=crm.bundle.js.map

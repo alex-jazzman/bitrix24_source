@@ -1,14 +1,11 @@
 import { Extension, Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
-import { BitrixVue } from 'ui.vue3';
 
 import { Core } from 'im.v2.application.core';
 import { DesktopBxLink, Settings } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { DesktopUpdateBanner } from 'im.v2.component.desktop.update-banner';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CheckUtils } from './classes/check-utils';
@@ -24,8 +21,6 @@ export { DesktopBroadcastManager } from './classes/broadcast-manager';
 
 const DESKTOP_PROTOCOL_VERSION = 2;
 const LOCATION_RESET_TIMEOUT = 1000;
-const DESKTOP_VERSION_WITH_AIR_DESIGN_SUPPORT = 17;
-const BANNER_COMPONENT_NAME = 'update-banner';
 
 export class DesktopManager
 {
@@ -70,17 +65,7 @@ export class DesktopManager
 			return;
 		}
 
-		if (this.#shouldShowDesktopUpdateBanner())
-		{
-			this.#showDesktopUpdateBanner();
-
-			return;
-		}
-
-		if (DesktopApi.isAirDesignEnabledInDesktop())
-		{
-			DesktopBroadcastManager.init();
-		}
+		DesktopBroadcastManager.init();
 
 		if (DesktopApi.isChatWindow())
 		{
@@ -124,7 +109,7 @@ export class DesktopManager
 
 	canReloadWindow(): boolean
 	{
-		return !DesktopApi.isAirDesignEnabledInDesktop() || LayoutManager.getInstance().isEmbeddedMode();
+		return LayoutManager.getInstance().isEmbeddedMode();
 	}
 
 	redirectToChat(dialogId: string = '', messageId: number = 0): Promise
@@ -339,11 +324,6 @@ export class DesktopManager
 			return Promise.resolve(false);
 		}
 
-		if (DesktopApi.isAirDesignEnabledInDesktop())
-		{
-			return Promise.resolve(false);
-		}
-
 		return this.checkStatusInDifferentContext();
 	}
 
@@ -417,26 +397,6 @@ export class DesktopManager
 		}
 
 		return url.replace('bx://', `bx://v${DESKTOP_PROTOCOL_VERSION}/${location.hostname}/`);
-	}
-
-	#shouldShowDesktopUpdateBanner(): boolean
-	{
-		const isOldDesktopVersion = DesktopApi.getMajorVersion() < DESKTOP_VERSION_WITH_AIR_DESIGN_SUPPORT;
-
-		return isOldDesktopVersion && DesktopApi.isAirDesignEnabledInDesktop();
-	}
-
-	#showDesktopUpdateBanner()
-	{
-		const desktopUpdateBanner = BitrixVue.createApp({
-			name: BANNER_COMPONENT_NAME,
-			components: { DesktopUpdateBanner },
-			template: '<DesktopUpdateBanner />',
-		});
-
-		desktopUpdateBanner.mount(document.body);
-
-		Analytics.getInstance().desktopUpdateBanner.onShow();
 	}
 
 	#initDesktopStatus()

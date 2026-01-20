@@ -5,9 +5,9 @@
 jn.define('settings-v2/ui/items/src/cache-info', (require, exports, module) => {
 	const { SettingSelector, SettingMode } = require('ui-system/blocks/setting-selector');
 	const { createTestIdGenerator } = require('utils/test');
-	const { EventType } = require('settings-v2/const');
+	const { EventType, NativeSettingsId } = require('settings-v2/const');
 	const { formatFileSize } = require('utils/file');
-	const { Loc } = require('loc');
+	const { NativeCacheService } = require('settings-v2/services/native');
 	const { Color } = require('tokens');
 
 	class CacheInfoItem extends LayoutComponent
@@ -36,18 +36,13 @@ jn.define('settings-v2/ui/items/src/cache-info', (require, exports, module) => {
 			const GB_SIZE = 1024 * 1024 * 1024;
 			const precision = this.state.value > GB_SIZE ? 2 : 0;
 
-			return (
-				this.state.value
-					? Loc.getMessage('SETTINGS_V2_STRUCTURE_UI_ITEMS_CACHE_INFO_CLEAR_TEXT', {
-						'#SIZE#': formatFileSize(this.state.value, precision),
-					})
-					: formatFileSize(this.state.value, precision)
-			);
+			return formatFileSize(this.state.value, precision);
 		}
 
 		componentDidMount()
 		{
 			BX.addCustomEvent(EventType.changeCacheSize, this.changeInfoText);
+			this.changeInfoText();
 		}
 
 		componentWillUnmount()
@@ -56,8 +51,25 @@ jn.define('settings-v2/ui/items/src/cache-info', (require, exports, module) => {
 		}
 
 		changeInfoText = (text) => {
-			this.props.controller?.get()
+			const { controller } = this.props;
+
+			controller?.get()
 				.then((value) => {
+					// todo hack to exclude media size from file cache size
+					if (controller.settingId === NativeSettingsId.CACHE_FILES)
+					{
+						NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_MEDIA).then(
+							(mediaSize) => {
+								value -= mediaSize;
+								this.setState({
+									value,
+								});
+							},
+						);
+
+						return;
+					}
+
 					this.setState({
 						value,
 					});
@@ -69,7 +81,7 @@ jn.define('settings-v2/ui/items/src/cache-info', (require, exports, module) => {
 
 		render()
 		{
-			const { id } = this.props;
+			const { id, modeColor = Color.base4 } = this.props;
 
 			return SettingSelector({
 				...this.props,
@@ -78,7 +90,7 @@ jn.define('settings-v2/ui/items/src/cache-info', (require, exports, module) => {
 				modeParams: {
 					chevron: false,
 					text: this.getText(),
-					color: Color.accentMainLink,
+					color: modeColor,
 				},
 			});
 		}

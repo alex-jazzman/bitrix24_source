@@ -11,9 +11,9 @@ return [
 	'rel' => [
 		'im.lib.logger',
 		'main.core.events',
-		'im.lib.utils',
 		'ui.vue',
 		'ui.vue.vuex',
+		'im.lib.utils',
 		'main.core',
 		'im.const',
 	],

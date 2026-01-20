@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'asset-manager',
 		'type',
 		'tokens',
 		'require-lazy',
@@ -35,15 +36,19 @@ return [
 		'analytics',
 		'layout/ui/copilot-role-selector',
 		'ui-system/blocks/badges/counter',
+		'ui-system/blocks/banners/push-banner',
+		'ui-system/blocks/icon',
 		'ui-system/typography/text',
 		'im:messenger/provider/services/chat',
 		'im:messenger/provider/services/analytics',
 		'module',
+		'loc',
 	],
 	'bundle' => [
 		'./src/dialog-creator',
 		'./src/navigation-selector',
 		'./src/view/navigation-selector',
 		'./src/view/navigation-button',
+		'./src/view/invite-banner',
 	],
 ];

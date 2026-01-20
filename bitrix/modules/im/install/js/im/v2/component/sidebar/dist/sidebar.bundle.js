@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,ui_system_menu,im_v2_lib_layout,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_sidebar,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_audioplayer,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_chat,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,main_core_events,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,ui_system_menu,im_v2_lib_layout,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_sidebar,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_player,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_chat,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -892,8 +892,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _deleteCollab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteCollab");
 	var _isDeletionCancelled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletionCancelled");
 	class MainMenu extends im_v2_lib_menu.RecentMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    Object.defineProperty(this, _isDeletionCancelled, {
 	      value: _isDeletionCancelled2
 	    });
@@ -1081,7 +1081,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenu = new MainMenu();
+	    this.contextMenu = new MainMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.contextMenu.subscribe(MainMenu.events.onAddToChatShow, this.onAddChatShow);
 	  },
 	  beforeUnmount() {
@@ -1100,7 +1102,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.contextMenu.openMenu(context, event.target);
 	    },
 	    onSidebarCloseClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close);
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1191,10 +1196,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.isLinksAvailable) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.link,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1254,10 +1262,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return counter.toString();
 	    },
 	    onFavouriteClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.favorite,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1406,11 +1417,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    async onLinkClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.chatsWithUser,
 	        standalone: true,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1656,10 +1670,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      const panel = this.isMigrationFinished ? im_v2_const.SidebarDetailBlock.file : im_v2_const.SidebarDetailBlock.fileUnsorted;
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -1689,9 +1706,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	class SidebarMenu extends im_v2_lib_menu.BaseMenu {
-	  constructor() {
+	  constructor(applicationContext) {
 	    super();
 	    this.id = 'im-sidebar-context-menu';
+	    const {
+	      emitter
+	    } = applicationContext;
+	    this.emitter = emitter;
 	  }
 	  getMenuOptions() {
 	    return {
@@ -1706,7 +1727,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'),
 	      onClick: () => {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
+	        this.emitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	          messageId: this.context.messageId,
 	          dialogId: this.context.dialogId
 	        });
@@ -1753,8 +1774,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class TaskMenu extends SidebarMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    this.id = 'im-sidebar-context-menu';
 	    this.taskManager = new TaskManager();
 	  }
@@ -1782,10 +1803,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  props: {
 	    task: {
 	      type: Object,
-	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
 	      required: true
 	    },
 	    searchQuery: {
@@ -1860,12 +1877,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<ChatAvatar 
 						:size="AvatarSize.XS"
 						:avatarDialogId="taskAuthorDialogId"
-						:contextDialogId="contextDialogId"
 					/>
 					<div class="bx-im-sidebar-task-item__forward-small-icon bx-im-sidebar__forward-small-icon"></div>
 					<ChatAvatar 
-						:avatarDialogId="taskResponsibleDialogId" 
-						:contextDialogId="contextDialogId" 
+						:avatarDialogId="taskResponsibleDialogId"
 						:size="AvatarSize.XS" 
 					/>
 					<div class="bx-im-sidebar-task-item__status-text" :class="statusColorClass">
@@ -1917,7 +1932,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenu = new TaskMenu();
+	    this.contextMenu = new TaskMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.contextMenu.destroy();
@@ -1934,7 +1951,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.firstTask) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.task,
 	        dialogId: this.dialogId
 	      });
@@ -1945,6 +1962,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId: this.dialogId
 	      };
 	      this.contextMenu.openMenu(item, target);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1980,8 +2000,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</div>
 				<TaskItem 
 					v-if="firstTask"
-					:contextDialogId="dialogId"
-					:task="firstTask" @contextMenuClick="onContextMenuClick"
+					:task="firstTask"
+					@contextMenuClick="onContextMenuClick"
 				/>
 				<DetailEmptyState 
 					v-else 
@@ -2045,11 +2065,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    onMarketItemClick(entityId) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.market,
 	        dialogId: this.dialogId,
 	        entityId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -2097,8 +2120,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class MeetingMenu extends SidebarMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    this.id = 'im-sidebar-context-menu';
 	    this.meetingManager = new MeetingManager();
 	  }
@@ -2235,7 +2258,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenu = new MeetingMenu();
+	    this.contextMenu = new MeetingMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.contextMenu.destroy();
@@ -2252,7 +2277,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.firstMeeting) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.meeting,
 	        dialogId: this.dialogId
 	      });
@@ -2263,6 +2288,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        dialogId: this.dialogId
 	      };
 	      this.contextMenu.openMenu(item, target);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -2608,7 +2636,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    onOpenUsers() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.members,
 	        dialogId: this.dialogId
 	      });
@@ -2616,6 +2644,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onOpenInvitePopup() {
 	      im_v2_lib_analytics.Analytics.getInstance().userAdd.onChatSidebarClick(this.dialogId);
 	      this.showAddToChatPopup = true;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -2695,7 +2726,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<div class="bx-im-sidebar-main-preview-group-chat__avatar">
 					<ChatAvatar 
 						:avatarDialogId="dialogId" 
-						:contextDialogId="dialogId" 
 						:size="AvatarSize.XXXL" 
 					/>
 				</div>
@@ -2746,11 +2776,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div class="bx-im-sidebar-main-preview-post__scope">
 			<div class="bx-im-sidebar-main-preview-post__avatar-container">
 				<div class="bx-im-sidebar-main-preview-post__avatar">
-					<ChatAvatar
-						:avatarDialogId="postDialog.dialogId"
-						:contextDialogId="postDialog.dialogId"
-						:size="AvatarSize.XXXL" 
-					/>
+					<ChatAvatar :avatarDialogId="postDialog.dialogId" :size="AvatarSize.XXXL" />
 				</div>
 				<div class="bx-im-sidebar-main-preview-post__title">{{ loc('IM_SIDEBAR_COMMENTS_POST_PREVIEW_TITLE') }}</div>
 				<div class="bx-im-sidebar-main-preview-post__subtitle">{{ postDialog.name }}</div>
@@ -2889,28 +2915,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  updateRole({
 	    dialogId,
-	    role
+	    newRole
 	  }) {
 	    im_v2_lib_logger.Logger.warn('CopilotService: update role', dialogId);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('copilot/chats/add', {
+	    const currentRole = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['copilot/chats/getRole'](dialogId);
+	    if (currentRole.code === newRole.code) {
+	      return Promise.resolve();
+	    }
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('copilot/chats/set', {
 	      dialogId,
-	      role: role.code
+	      role: newRole.code
 	    });
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('copilot/roles/add', [role]);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('copilot/roles/add', [newRole]);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _sendRequest)[_sendRequest]({
 	      dialogId,
-	      role: role.code
+	      newRoleCode: newRole.code
 	    });
 	  }
 	}
 	function _sendRequest2({
 	  dialogId,
-	  role
+	  newRoleCode
 	}) {
 	  const requestParams = {
 	    data: {
 	      dialogId,
-	      role
+	      role: newRoleCode
 	    }
 	  };
 	  return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatCopilotUpdateRole, requestParams);
@@ -2946,7 +2976,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  created() {
 	    this.promoPopup = new ui_promoVideoPopup.PromoVideoPopup({
 	      videoSrc: this.videoSource,
-	      title: 'Copilot',
+	      title: this.loc('IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE'),
 	      text: this.text,
 	      targetOptions: this.bindElement,
 	      angleOptions: {
@@ -3055,7 +3085,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onCopilotDialogSelectRole(role) {
 	      void new CopilotService().updateRole({
 	        dialogId: this.dialogId,
-	        role
+	        newRole: role
 	      });
 	    }
 	  },
@@ -3154,7 +3184,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const SETTINGS_PAGE = '/settings/configs/?page=ai';
 	const MARKET_PAGE = '/market/collection/ai_provider_partner_crm/';
 
 	// @vue/component
@@ -3172,19 +3201,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  emits: ['close'],
 	  computed: {
 	    isAdmin() {
-	      const user = im_v2_application_core.Core.getStore().getters['users/get'](im_v2_application_core.Core.getUserId());
-	      return user.isAdmin;
+	      return im_v2_application_core.Core.getStore().getters['users/isCurrentUserAdmin'];
 	    },
 	    selectedAIModelCode() {
 	      return this.$store.getters['copilot/chats/getAIModel'](this.dialogId).code;
 	    },
 	    aiModelsItems() {
 	      return im_v2_application_core.Core.getStore().getters['copilot/getAIModels'];
+	    },
+	    settingsPageUrl() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
+	      return settings.get('portalSettingsUrl');
 	    }
 	  },
 	  methods: {
-	    openSettings() {
-	      BX.SidePanel.Instance.open(`${window.location.origin}${SETTINGS_PAGE}`);
+	    openAiSettings() {
+	      BX.SidePanel.Instance.open(`${window.location.origin}${this.settingsPageUrl}?page=ai`);
 	    },
 	    openMarket() {
 	      BX.SidePanel.Instance.open(`${window.location.origin}${MARKET_PAGE}`);
@@ -3220,12 +3252,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<template v-if="isAdmin">
 				<div class="bx-im-ai-model-popup-content__separator"></div>
 				<AiModelItem
-					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_MARKET')"
+					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_MARKET_MSGVER_1')"
 					@click="openMarket"
 				/>
 				<AiModelItem
 					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS')"
-					@click="openSettings"
+					@click="openAiSettings"
 				/>
 			</template>
 			<div class="bx-im-ai-model-popup-content__separator"></div>
@@ -3410,7 +3442,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div class="bx-im-sidebar-main-preview__scope">
 			<div class="bx-im-sidebar-main-preview-group-chat__avatar-container">
 				<div class="bx-im-sidebar-main-preview-group-chat__avatar">
-					<ChatAvatar :size="AvatarSize.XXXL" :avatarDialogId="dialogId" :contextDialogId="dialogId" />
+					<ChatAvatar :size="AvatarSize.XXXL" :avatarDialogId="dialogId" />
 				</div>
 				<ChatTitle :dialogId="dialogId" :twoLine="true" class="bx-im-sidebar-main-preview-group-chat__title" />
 			</div>
@@ -3444,15 +3476,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    },
 	    onOpenDetail() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.multidialog,
 	        dialogId: this.dialogId,
 	        standalone: true
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -3661,7 +3696,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-sidebar-notes-preview__avatar">
 				<ChatAvatar 
 					:avatarDialogId="dialogId"
-					:contextDialogId="dialogId"
 					:size="AvatarSize.XXXL"
 					:customType="ChatAvatarType.notes"
 				/>
@@ -3702,6 +3736,50 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	// @vue/component
+	const TaskCommentsHistory = {
+	  name: 'TaskCommentsHistory',
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId);
+	    }
+	  },
+	  methods: {
+	    async onClick() {
+	      const {
+	        id: entityId
+	      } = this.dialog.entityLink;
+	      const taskId = Number(entityId);
+	      const {
+	        HistoryGrid
+	      } = await main_core.Runtime.loadExtension('tasks.v2.application.history-grid');
+	      HistoryGrid.openHistoryGrid({
+	        taskId
+	      });
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-sidebar-task-comments-history__container" @click="onClick">
+			<div class="bx-im-sidebar-task-comments-history__title-container">
+				<div class="bx-im-sidebar-task-comments-history__icon"></div>
+				<div class="bx-im-sidebar-task-comments-history__title">
+					{{ loc('IM_SIDEBAR_TASK_COMMENTS_HISTORY_TITLE') }}
+				</div>
+			</div>
+			<div class="bx-im-sidebar-task-comments-history__open-icon"></div>
+		</div>
+	`
+	};
+
 	const ComponentMap = {
 	  [im_v2_const.SidebarMainPanelBlock.chat]: ChatPreview,
 	  [im_v2_const.SidebarMainPanelBlock.notes]: NotesPreview,
@@ -3712,6 +3790,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  [im_v2_const.SidebarMainPanelBlock.fileList]: FileListPreview,
 	  [im_v2_const.SidebarMainPanelBlock.task]: TaskPreview,
 	  [im_v2_const.SidebarMainPanelBlock.taskList]: TaskListPreview,
+	  [im_v2_const.SidebarMainPanelBlock.taskCommentsHistory]: TaskCommentsHistory,
 	  [im_v2_const.SidebarMainPanelBlock.meetingList]: MeetingListPreview,
 	  [im_v2_const.SidebarMainPanelBlock.fileUnsortedList]: FileListPreview,
 	  [im_v2_const.SidebarMainPanelBlock.marketAppList]: MarketAppListPreview,
@@ -4177,7 +4256,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  created() {
 	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new TaskMenu();
+	    this.contextMenu = new TaskMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.service = new Task({
 	      dialogId: this.dialogId
 	    });
@@ -4245,7 +4326,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.contextMenu.openMenu(item, target);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.task
 	      });
 	    },
@@ -4271,6 +4352,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onAddClick() {
 	      new im_v2_lib_entityCreator.EntityCreator(this.chatId).createTaskForChat();
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -4298,7 +4382,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						v-for="task in dateGroup.items"
 						:task="task"
 						:searchQuery="searchQuery"
-						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>
@@ -4568,10 +4651,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    fileItem: {
 	      type: Object,
 	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
-	      required: true
 	    }
 	  },
 	  emits: ['contextMenuClick'],
@@ -4741,8 +4820,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class FileMenu extends SidebarMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    this.id = 'im-sidebar-context-menu';
 	    this.mediaManager = new FileManager();
 	  }
@@ -4863,7 +4942,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new FileMenu();
+	    this.contextMenu = new FileMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
@@ -4901,8 +4982,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.isLoading = false;
 	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -4913,7 +4997,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<MediaDetailItem
 						v-for="file in dateGroup.items"
 						:fileItem="file"
-						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>
@@ -4946,7 +5029,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const AudioDetailItem = {
 	  name: 'AudioDetailItem',
 	  components: {
-	    AudioPlayer: im_v2_component_elements_audioplayer.AudioPlayer
+	    AudioPlayer: im_v2_component_elements_player.AudioPlayer
 	  },
 	  props: {
 	    id: {
@@ -4959,11 +5042,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  emits: ['contextMenuClick'],
-	  data() {
-	    return {
-	      timelineType: 0
-	    };
-	  },
 	  computed: {
 	    sidebarFileItem() {
 	      return this.fileItem;
@@ -4974,9 +5052,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    audioUrl() {
 	      return this.file.urlDownload;
 	    }
-	  },
-	  created() {
-	    this.timelineType = Math.floor(Math.random() * 5);
 	  },
 	  methods: {
 	    onContextMenuClick(event) {
@@ -4994,9 +5069,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:src="audioUrl" 
 				:file="file" 
 				:messageId="sidebarFileItem.messageId"
-				:timelineType="timelineType" 
 				:authorId="sidebarFileItem.authorId"
 				:withPlaybackRateControl="true"
+				:withTranscription="false"
 				@contextMenuClick="onContextMenuClick"
 			/>
 		</div>
@@ -5078,7 +5153,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new FileMenu();
+	    this.contextMenu = new FileMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
@@ -5116,8 +5193,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.isLoading = false;
 	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -5165,10 +5245,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  props: {
 	    brief: {
 	      type: Object,
-	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
 	      required: true
 	    },
 	    searchQuery: {
@@ -5336,7 +5412,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new FileMenu();
+	    this.contextMenu = new FileMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
@@ -5374,8 +5452,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.isLoading = false;
 	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -5385,7 +5466,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<BriefItem
 					v-for="file in dateGroup.items"
 					:brief="file"
-					:contextDialogId="dialogId"
 					:searchQuery="searchQuery"
 					@contextMenuClick="onContextMenuClick"
 				/>
@@ -5424,10 +5504,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  props: {
 	    fileItem: {
 	      type: Object,
-	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
 	      required: true
 	    },
 	    searchQuery: {
@@ -5613,7 +5689,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new FileMenu();
+	    this.contextMenu = new FileMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
@@ -5651,6 +5729,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.isLoading = false;
 	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
@@ -5663,7 +5744,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					v-for="file in dateGroup.items"
 					:fileItem="file"
 					:searchQuery="searchQuery"
-					:contextDialogId="dialogId"
 					:viewerContext="FileViewerContext.sidebarTabFiles"
 					@contextMenuClick="onContextMenuClick"
 				/>
@@ -5820,7 +5900,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.searchResult = [];
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.file
 	      });
 	    },
@@ -5836,6 +5916,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    toggleSearchPanelOpened() {
 	      this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -5928,7 +6011,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dialogId: this.dialogId
 	    });
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new FileMenu();
+	    this.contextMenu = new FileMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.collectionFormatter.destroy();
@@ -5958,9 +6043,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.contextMenu.openMenu(item, target);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.fileUnsorted
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -5977,7 +6065,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<FileDetailItem
 						v-for="file in dateGroup.items"
 						:fileItem="file"
-						:contextDialogId="dialogId"
 						:viewerContext="FileViewerContext.sidebarTabFileUnsorted"
 						@contextMenuClick="onContextMenuClick"
 					/>
@@ -6009,10 +6096,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  props: {
 	    link: {
 	      type: Object,
-	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
 	      required: true
 	    },
 	    searchQuery: {
@@ -6237,8 +6320,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class LinkMenu extends SidebarMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    this.linkManager = new LinkManager();
 	  }
 	  getMenuItems() {
@@ -6335,7 +6418,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  created() {
 	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new LinkMenu();
+	    this.contextMenu = new LinkMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.service = new Link({
 	      dialogId: this.dialogId
 	    });
@@ -6407,7 +6492,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.contextMenu.openMenu(item, event.target);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.link
 	      });
 	    },
@@ -6431,6 +6516,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.isLoading = false;
 	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
@@ -6453,7 +6541,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<DateGroup :dateText="dateGroup.dateGroupTitle" />
 					<template v-for="link in dateGroup.items">
 						<LinkItem
-							:contextDialogId="dialogId"
 							:searchQuery="searchQuery"
 							:link="link" 
 							@contextMenuClick="onContextMenuClick"
@@ -6544,9 +6631,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.market
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -6732,7 +6822,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  created() {
 	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new MeetingMenu();
+	    this.contextMenu = new MeetingMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.service = new Meeting({
 	      dialogId: this.dialogId
 	    });
@@ -6800,7 +6892,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.contextMenu.openMenu(item, target);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.meeting
 	      });
 	    },
@@ -6827,8 +6919,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onAddClick() {
 	      new im_v2_lib_entityCreator.EntityCreator(this.chatId).createMeetingForChat();
 	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -6921,7 +7016,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    position() {
 	      if (this.isCopilot) {
-	        return new im_v2_lib_copilot.CopilotManager().getAIModelName(this.dialogId);
+	        return new im_v2_lib_copilot.CopilotManager().getAIModelName(this.contextDialogId);
 	      }
 	      return this.$store.getters['users/getPosition'](this.dialogId);
 	    },
@@ -6991,8 +7086,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	class MembersMenu extends im_v2_lib_menu.UserMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    this.chatService = new im_v2_provider_service_chat.ChatService();
 	    this.callManager = im_v2_lib_call.CallManager.getInstance();
 	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
@@ -7006,8 +7101,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getManagerItem() {
 	    const isOwner = this.context.user.id === this.context.dialog.ownerId;
 	    const canChangeManagers = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.changeManagers, this.context.dialog.dialogId);
-	    const isCollabType = this.context.dialog.type === im_v2_const.ChatType.collab;
-	    if (isOwner || !canChangeManagers || isCollabType) {
+	    if (isOwner || !canChangeManagers) {
 	      return null;
 	    }
 	    const isManager = this.context.dialog.managerList.includes(this.context.user.id);
@@ -7172,7 +7266,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenu = new MembersMenu();
+	    this.contextMenu = new MembersMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.service = new MembersService({
 	      dialogId: this.dialogId
 	    });
@@ -7214,7 +7310,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      im_v2_lib_analytics.Analytics.getInstance().chatInviteLink.onCopyMembersPanel(this.dialogId);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.members
 	      });
 	    },
@@ -7236,6 +7332,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      im_v2_lib_analytics.Analytics.getInstance().userAdd.onChatSidebarClick(this.dialogId);
 	      this.showAddToChatPopup = true;
 	      this.showAddToChatTarget = event.target;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -7286,8 +7385,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	class FavoriteMenu extends SidebarMenu {
-	  constructor() {
-	    super();
+	  constructor(applicationContext) {
+	    super(applicationContext);
 	    this.id = 'im-sidebar-context-menu';
 	  }
 	  getMenuItems() {
@@ -7456,10 +7555,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    },
 	    onItemClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	        messageId: this.favorite.messageId,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -7573,7 +7675,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  created() {
 	    this.initSettings();
 	    this.collectionFormatter = new SidebarCollectionFormatter();
-	    this.contextMenu = new FavoriteMenu();
+	    this.contextMenu = new FavoriteMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.service = new Favorite({
 	      dialogId: this.dialogId
 	    });
@@ -7641,7 +7745,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.contextMenu.openMenu(item, event.target);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.favorite
 	      });
 	    },
@@ -7664,6 +7768,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        await this.serviceSearch.request();
 	      }
 	      this.isLoading = false;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -7870,7 +7977,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    onItemClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	        messageId: this.messageId,
 	        dialogId: this.dialogId
 	      });
@@ -7879,6 +7986,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (event.target.tagName === 'A') {
 	        event.stopPropagation();
 	      }
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -7892,7 +8002,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						<ChatAvatar
 							:size="AvatarSize.XS"
 							:avatarDialogId="authorDialogId"
-							:contextDialogId="dialogId"
 							class="bx-im-message-search-item__author-avatar"
 						/>
 						<ChatTitle 
@@ -8083,9 +8192,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.searchQuery = query;
 	    },
 	    onClickBack() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.messageSearch
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -8186,11 +8298,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			class="bx-im-chat-with-user-item__container bx-im-chat-with-user-item__scope"
 		>
 			<div class="bx-im-chat-with-user-item__avatar-container">
-				<ChatAvatar 
-					:avatarDialogId="dialogId" 
-					:contextDialogId="dialogId" 
-					:size="AvatarSize.XL" 
-				/>
+				<ChatAvatar :avatarDialogId="dialogId" :size="AvatarSize.XL" />
 			</div>
 			<div class="bx-im-chat-with-user-item__content-container">
 				<div class="bx-im-chat-with-user-item__content_header">
@@ -8372,9 +8480,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.isLoading = false;
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.chatsWithUser
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phrase) {
 	      return this.$Bitrix.Loc.getMessage(phrase);
@@ -8547,7 +8658,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    },
 	    onBackClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	        panel: im_v2_const.SidebarDetailBlock.multidialog
 	      });
 	    },
@@ -8586,6 +8697,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    openChat(dialogId) {
 	      void im_public.Messenger.openChat(dialogId);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -8768,12 +8882,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.restoreOpenState();
 	  },
 	  mounted() {
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.sidebar.open, this.onSidebarOpen);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.sidebar.close, this.onSidebarClose);
+	    this.getEmitter().subscribe(im_v2_const.EventType.sidebar.open, this.onSidebarOpen);
+	    this.getEmitter().subscribe(im_v2_const.EventType.sidebar.close, this.onSidebarClose);
 	  },
 	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.sidebar.open, this.onSidebarOpen);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.sidebar.close, this.onSidebarClose);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.sidebar.open, this.onSidebarOpen);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.sidebar.close, this.onSidebarClose);
 	  },
 	  methods: {
 	    onSidebarOpen(event) {
@@ -8863,6 +8977,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.$emit('changePanel', {
 	        panel: this.topLevelPanelType
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -8889,5 +9006,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

@@ -13,23 +13,7 @@
 	{
 	};
 
-	if (typeof(localStorage) !== "undefined")
-	{
-		BX.frameCache.localStorage = new BX.localStorage();
-	}
-	else
-	{
-		BX.frameCache.localStorage = {
-			set : BX.DoNothing,
-			get : function() { return null; },
-			remove : BX.DoNothing
-		};
-	}
-
-	BX.frameCache.localStorage.prefix = function()
-	{
-		return "bx-";
-	};
+	BX.frameCache.localStorage = new BX.LocalStorage({ prefix: '' });
 
 	BX.frameCache.init = function()
 	{
@@ -163,178 +147,156 @@
 		BX.frameCache.localStorage.set(localStorageKey, lsCache, lolalStorageTTL);
 	};
 
-	BX.frameCache.insertBlock = function(block, callback)
+	BX.frameCache.insertBlock = function(block)
 	{
-		if (!BX.type.isFunction(callback))
-		{
-			callback = function() {};
-		}
-
 		if (!block)
 		{
-			callback();
 			return;
 		}
 
-		var container = null;
-		var dynamicStart = null;
-		var dynamicEnd = null;
-
-		var autoContainerPrefix = "bxdynamic_";
-		if (block.ID.substr(0, autoContainerPrefix.length) === autoContainerPrefix)
+		let container = null;
+		const autoContainerPrefix = 'bxdynamic_';
+		if (block.ID.startsWith(autoContainerPrefix))
 		{
-			dynamicStart = BX(block.ID + "_start");
-			dynamicEnd = BX(block.ID + "_end");
+			const dynamicStart = BX(`${block.ID}_start`);
+			const dynamicEnd = BX(`${block.ID}_end`);
 			if (!dynamicStart || !dynamicEnd)
 			{
-				BX.debug("Dynamic area " + block.ID + " was not found");
-				callback();
+				BX.debug(`Dynamic area ${block.ID} was not found`);
+
 				return;
 			}
+
+			container = [dynamicStart, dynamicEnd];
 		}
 		else
 		{
 			container = BX(block.ID);
 			if (!container)
 			{
-				BX.debug("Container " + block.ID + " was not found");
-				callback();
+				BX.debug(`Container ${block.ID} was not found`);
+
 				return;
 			}
 		}
 
-		let htmlWasInserted = false;
-		let scriptsLoaded = false;
-		const assets = getAssets();
+		this.insertHTML(container, block);
+		this.processInlineJS(block);
+	};
 
-		processStrings();
-		processAssets(() => {
-			scriptsLoaded = true;
-			insertHTML();
-		});
-
-		function processAssets(callback)
+	BX.frameCache.insertHTML = function(container, block)
+	{
+		if (BX.Type.isArray(container))
 		{
-			let styles = assets.styles;
-			if (BX.type.isArray(block.PROPS.CSS) && block.PROPS.CSS.length > 0)
+			const [dynamicStart, dynamicEnd] = container;
+			BX.frameCache.removeNodes(dynamicStart, dynamicEnd);
+			dynamicStart.insertAdjacentHTML('afterEnd', block.CONTENT);
+		}
+		else
+		{
+			if (block.PROPS.USE_ANIMATION)
 			{
-				styles = block.PROPS.CSS.concat(styles);
-			}
-
-			let scripts = assets.externalJS;
-			if (BX.type.isArray(block.PROPS.JS) && block.PROPS.JS.length > 0)
-			{
-				scripts = scripts.concat(block.PROPS.JS);
-			}
-
-			const items = styles.concat(scripts);
-			if (items.length > 0)
-			{
-				BX.load(items, callback);
+				container.style.opacity = 0;
+				container.innerHTML = block.CONTENT;
+				(new BX.easing({
+					duration: 1500,
+					start: { opacity: 0 },
+					finish: { opacity: 100 },
+					transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+					step: (state) => {
+						container.style.opacity = state.opacity / 100;
+					},
+					complete: () => {
+						container.style.cssText = '';
+					},
+				})).animate();
 			}
 			else
 			{
-				callback();
+				container.innerHTML = block.CONTENT;
 			}
 		}
+	};
 
-		function insertHTML()
+	BX.frameCache.processInlineJS = function(block)
+	{
+		BX.ajax.processRequestData(block.CONTENT, { scriptsRunFirst: false, dataType: 'HTML' });
+
+		if (BX.Type.isArray(block.PROPS.BUNDLE_JS))
 		{
-			if (container)
-			{
-				if (block.PROPS.USE_ANIMATION)
-				{
-					container.style.opacity = 0;
-					container.innerHTML = block.CONTENT;
-					(new BX.easing({
-						duration : 1500,
-						start : { opacity: 0 },
-						finish : { opacity: 100 },
-						transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-						step : function(state){
-							container.style.opacity = state.opacity / 100;
-						},
-						complete : function() {
-							container.style.cssText = '';
-						}
-					})).animate();
-				}
-				else
-				{
-					container.innerHTML = block.CONTENT;
-				}
-			}
-			else
-			{
-				BX.frameCache.removeNodes(dynamicStart, dynamicEnd);
-				dynamicStart.insertAdjacentHTML("afterEnd", block.CONTENT);
-			}
-
-			htmlWasInserted = true;
-			if (scriptsLoaded)
-			{
-				processInlineJS();
-			}
+			BX.setJSList(block.PROPS.BUNDLE_JS);
 		}
 
-		function processStrings()
+		if (BX.Type.isArray(block.PROPS.BUNDLE_CSS))
 		{
+			BX.setCSSList(block.PROPS.BUNDLE_CSS);
+		}
+	};
+
+	BX.frameCache.loadAssets = function(blocks, callback)
+	{
+		const scripts = [];
+		const styles = [];
+		for (const block of blocks)
+		{
+			const assets = this.getStringAssets(block);
 			if (BX.Type.isStringFilled(assets.html))
 			{
-				document.head.insertAdjacentHTML("beforeend", assets.html);
+				document.head.insertAdjacentHTML('beforeend', assets.html);
 			}
 
-			BX.evalGlobal(assets.inlineJS.join(";"));
+			BX.evalGlobal(assets.inlineJS.join(';'));
+
+			styles.push(...assets.styles);
+			if (BX.Type.isArrayFilled(block.PROPS.CSS))
+			{
+				styles.push(...block.PROPS.CSS);
+			}
+
+			scripts.push(...assets.externalJS);
+			if (BX.Type.isArrayFilled(block.PROPS.JS))
+			{
+				scripts.push(...block.PROPS.JS);
+			}
 		}
 
-		function getAssets()
+		const items = [...styles, ...scripts];
+		if (items.length > 0)
 		{
-			var result = { styles: [], inlineJS: [], externalJS: [], html: "" };
-			if (!BX.type.isArray(block.PROPS.STRINGS) || block.PROPS.STRINGS.length < 1)
-			{
-				return result;
-			}
+			BX.load(items, callback);
+		}
+		else
+		{
+			callback();
+		}
+	};
 
-			var parts = BX.processHTML(block.PROPS.STRINGS.join(""), false);
-			for (var i = 0, l = parts.SCRIPT.length; i < l; i++)
-			{
-				var script = parts.SCRIPT[i];
-				if (script.isInternal)
-				{
-					result.inlineJS.push(script.JS);
-				}
-				else
-				{
-					result.externalJS.push(script.JS);
-				}
-			}
-
-			result.styles = parts.STYLE;
-			result.html = parts.HTML;
-
+	BX.frameCache.getStringAssets = function(block)
+	{
+		const result = { styles: [], inlineJS: [], externalJS: [], html: '' };
+		if (!BX.Type.isArrayFilled(block.PROPS.STRINGS))
+		{
 			return result;
 		}
 
-		function processInlineJS()
+		const parts = BX.processHTML(block.PROPS.STRINGS.join(''), false);
+		for (let i = 0, l = parts.SCRIPT.length; i < l; i++)
 		{
-			scriptsLoaded = true;
-			if (htmlWasInserted)
+			const script = parts.SCRIPT[i];
+			if (script.isInternal)
 			{
-				BX.ajax.processRequestData(block.CONTENT, {scriptsRunFirst: false, dataType: "HTML"});
-
-				if (BX.type.isArray(block.PROPS.BUNDLE_JS))
-				{
-					BX.setJSList(block.PROPS.BUNDLE_JS);
-				}
-
-				if (BX.type.isArray(block.PROPS.BUNDLE_CSS))
-				{
-					BX.setCSSList(block.PROPS.BUNDLE_CSS);
-				}
-
-				callback();
+				result.inlineJS.push(script.JS);
+			}
+			else
+			{
+				result.externalJS.push(script.JS);
 			}
 		}
+
+		result.styles = parts.STYLE;
+		result.html = parts.HTML;
+
+		return result;
 	};
 
 	BX.frameCache.removeNodes = function(fromElement, toElement)
@@ -399,7 +361,7 @@
 
 		BX.onCustomEvent("onFrameDataReceivedBefore", [json]);
 
-		if (json.dynamicBlocks && json.dynamicBlocks.length > 0)//we have dynamic blocks
+		if (BX.Type.isArray(json.dynamicBlocks))
 		{
 			this.insertBlocks(json.dynamicBlocks, false);
 			this.writeCache(json.dynamicBlocks);
@@ -572,30 +534,35 @@
 
 	BX.frameCache.insertBlocks = function(blocks, fromCache)
 	{
-		var blocksToInsert = new Set();
-		for (var i = 0; i < blocks.length; i++)
+		const blocksToInsert = new Set();
+		for (const block of blocks)
 		{
-			var block = blocks[i];
-			BX.onCustomEvent("onBeforeDynamicBlockUpdate", [block, fromCache]);
-
+			BX.onCustomEvent('onBeforeDynamicBlockUpdate', [block, fromCache]);
 			if (block.PROPS.AUTO_UPDATE === false)
 			{
 				continue;
 			}
 
+			if (block && block.HASH && block.PROPS && block.PROPS.ID)
+			{
+				this.vars.dynamicBlocks[block.PROPS.ID] = block.HASH;
+			}
+
 			blocksToInsert.add(block);
 		}
 
-		let inserted = 0;
+		this.loadAssets(blocksToInsert, () => {
+			for (const blockToInsert of blocksToInsert)
+			{
+				this.insertBlock(blockToInsert);
+			}
 
-		const finalize = () => {
 			if (window.performance)
 			{
-				var entries = performance.getEntries();
-				for (var i = 0; i < entries.length; i++)
+				const entries = performance.getEntries();
+				for (const entry of entries)
 				{
-					var entry = entries[i];
-					if (entry.initiatorType === 'xmlhttprequest' && entry.name && entry.name.match(/bxrand=[0-9]+/))
+					if (entry.initiatorType === 'xmlhttprequest' && entry.name && /bxrand=\d+/.test(entry.name))
 					{
 						// uses in ba.js
 						this.requestTiming = entry;
@@ -606,7 +573,7 @@
 				{
 					window.performance.measure('Composite:LCP');
 
-					var lcpEntries = performance.getEntriesByName('Composite:LCP');
+					const lcpEntries = performance.getEntriesByName('Composite:LCP');
 					if (lcpEntries.length > 0 && lcpEntries[0].duration)
 					{
 						// uses in ba.js
@@ -615,33 +582,9 @@
 				}
 			}
 
-			BX.onCustomEvent("onFrameDataProcessed", [blocks, fromCache]);
+			BX.onCustomEvent('onFrameDataProcessed', [blocks, fromCache]);
 			this.frameDataInserted = true;
-		};
-
-		const handleBlockInsertion = () => {
-			if (++inserted === blocksToInsert.size)
-			{
-				finalize();
-			}
-		};
-
-		if (blocksToInsert.size === 0)
-		{
-			finalize();
-		}
-		else
-		{
-			blocksToInsert.forEach(function(block) {
-
-				if (block && block.HASH && block.PROPS && block.PROPS.ID)
-				{
-					this.vars.dynamicBlocks[block.PROPS.ID] = block.HASH;
-				}
-
-				this.insertBlock(block, handleBlockInsertion);
-			}, this);
-		}
+		});
 	};
 
 	BX.frameCache.writeCache = function(blocks)
@@ -804,3 +747,4 @@
 	BX.frameCache.init();
 
 })(window);
+

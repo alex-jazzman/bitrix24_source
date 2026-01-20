@@ -2,7 +2,7 @@ import { Reflection, ajax as Ajax } from "main.core";
 import { TagSelector } from "ui.entity-selector";
 import { Planner } from "calendar.planner";
 import { Util } from "calendar.util";
-import { ConferenceFieldState } from "im.const";
+import { ConferenceFieldState } from "call.const";
 import { BaseEvent } from "main.core.events";
 
 export const FieldPlanner =

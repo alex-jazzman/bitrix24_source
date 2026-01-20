@@ -2,6 +2,7 @@
  * @module im/messenger/controller/dialog/lib/select-manager
  */
 jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
 	const { Haptics } = require('haptics');
 	const { isEqual } = require('utils/object');
@@ -13,6 +14,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { EventType, EventFilterType } = require('im/messenger/const');
 	const { showDeleteChannelPostsAlert, showDeleteMessagesAlert } = require('im/messenger/lib/ui/alert');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--select-manager');
 
@@ -334,22 +336,27 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 
 		checkDeleteButtonAvailable()
 		{
-			this.#isButtonDeleteAvailable = true;
-			for (const id of this.#selectedMessageIdList)
+			const dialogHelper = DialogHelper.createByDialogId(this.dialogId);
+			if (Type.isNull(dialogHelper))
 			{
+				return;
+			}
+
+			const dialogModel = dialogHelper.dialogModel;
+			const hasPrivilegedRole = dialogHelper.isCurrentUserOwner || dialogHelper.isCurrentUserManager;
+			const canDeleteOtherMessage = ChatPermission.canDeleteOtherMessage(dialogModel);
+			const selectedMessageIdsAllowedDelete = this.#selectedMessageIdList.filter((id) => {
 				const messageHelper = MessageHelper.createById(id);
-				if (!messageHelper.isYour)
+
+				if (messageHelper.isYour)
 				{
-					this.#isButtonDeleteAvailable = false;
-					break;
+					return (hasPrivilegedRole && canDeleteOtherMessage) || !messageHelper.isDeleted;
 				}
 
-				if (messageHelper.isDeleted)
-				{
-					this.#isButtonDeleteAvailable = false;
-					break;
-				}
-			}
+				return canDeleteOtherMessage;
+			});
+
+			this.#isButtonDeleteAvailable = selectedMessageIdsAllowedDelete.length === this.#selectedMessageIdList.length;
 		}
 
 		/**

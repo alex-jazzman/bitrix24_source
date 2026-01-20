@@ -318,13 +318,44 @@
 			}
 			else
 			{
-				if (top > 5)
+				if (editor.simpleScrollMode === true)
 				{
-					top += windowScope.pageYOffset + 66;
+					if (editor.placementType)
+					{
+						if (editor.placementType === 'top')
+						{
+							top += windowScope.pageYOffset + 66;
+						}
+
+						if (editor.placementType === 'bottom')
+						{
+							top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+						}
+					}
+					else
+					{
+						if (top > 5)
+						{
+							editor.placementType = 'top';
+							top += windowScope.pageYOffset + 66;
+						}
+						else
+						{
+							editor.placementType = 'bottom';
+							top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+						}
+					}
 				}
 				else
 				{
-					top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+					if (top > 5)
+					{
+						top += windowScope.pageYOffset + 66;
+					}
+					else
+					{
+						top = nodeRect.bottom + 4 + windowScope.pageYOffset;
+					}
 				}
 			}
 		}
@@ -475,6 +506,10 @@
 			}
 			else
 			{
+				if (!this.isShown())
+				{
+					this.sendAnalytics('open');
+				}
 				this.showBaseButtons();
 			}
 
@@ -722,6 +757,23 @@
 			BX.Landing.UI.Panel.EditorPanel.getInstance().adjustPosition(target);
 		},
 
+		enableSimpleScrollMode: function()
+		{
+			this.layout.classList.remove("landing-ui-transition");
+			this.simpleScrollMode = true;
+		},
+
+		disableSimpleScrollMode: function()
+		{
+			this.layout.classList.add("landing-ui-transition");
+			this.simpleScrollMode = false;
+		},
+
+		resetPlacementType: function()
+		{
+			this.placementType = null;
+		},
+
 		adjustButtonsState: function()
 		{
 			var getAction = function(value) {
@@ -868,6 +920,17 @@
 		isOutOfFrame: function()
 		{
 			return this.outOfFrame;
+		},
+
+		sendAnalytics:  function(event)
+		{
+			const analyticsData = {
+				tool: BX.Landing.Main.getAnalyticsCategoryByType(),
+				category: 'inline_editor',
+				event,
+			};
+
+			BX.UI.Analytics.sendData(analyticsData);
 		}
 	};
 })();

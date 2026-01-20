@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult*/
 /** @var array $arParams*/
 
-$APPLICATION->SetTitle( \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_PAGE_TITLE'));
+$APPLICATION->SetTitle( \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_PAGE_TITLE', [], 'ru'));
 include('toolbar.php');
 ?>
 
@@ -18,8 +18,11 @@ include('toolbar.php');
 	</div>
 	<div class="crm-features-list-item-name">
 		<div>
-			<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_SHOW_TOURS');?>
+			<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_SHOW_TOURS', [], 'ru');?>
 		</div>
+	</div>
+	<div class="right-buttons">
+		<span class="ui-btn ui-btn-secondary --air" data-role="tour-reset-all" ><span class="ui-btn-text"><?=htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('CRM_TOUR_LIST_RESET_TOUR_ALL', [], 'ru'))?></span></span>
 	</div>
 </div>
 
@@ -33,14 +36,14 @@ include('toolbar.php');
 					<div>
 						<?=$tour['name']?>
 						<?php if($tour['secretLink'] ?? null):?>
-							<span class="crm-features-list-item-copy" data-url="<?=htmlspecialcharsbx($tour['secretLink'])?>" title="<?=htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('CRM_TOUR_LIST_COPY_LINK'))?>"></span>
+							<span class="crm-features-list-item-copy" data-url="<?=htmlspecialcharsbx($tour['secretLink'])?>" title="<?=htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('CRM_TOUR_LIST_COPY_LINK', [], 'ru'))?>"></span>
 						<?php endif?>
 					</div>
 					<div class="crm-features-list-item-description"><?=$tour['description']?></div>
 					<div class="crm-features-list-item-id"><?=htmlspecialcharsbx($tour['id'])?></div>
 				</div>
 				<div class="crm-features-list-item-action">
-					<span class="ui-btn ui-btn-sm ui-btn-secondary-light" data-role="tour-reset" data-tour-id="<?=htmlspecialcharsbx($tour['id'])?>">Сбросить просмотры</span>
+					<span class="ui-btn ui-btn-sm ui-btn-secondary --air" data-role="tour-reset" data-tour-id="<?=htmlspecialcharsbx($tour['id'])?>"><span class="ui-btn-text"><?=htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('CRM_TOUR_LIST_RESET_TOUR', [], 'ru'))?></span></span>
 				</div>
 			</div>
 		<?php endforeach?>

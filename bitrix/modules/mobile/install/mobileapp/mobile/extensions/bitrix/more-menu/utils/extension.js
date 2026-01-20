@@ -6,6 +6,9 @@ jn.define('more-menu/utils', (require, exports, module) => {
 	const { isEmpty } = require('utils/object');
 	const { Type } = require('type');
 	const { MoreMenuAnalytics } = require('more-menu/analytics');
+	const { Tourist } = require('tourist');
+	const { selectNewCount } = require('statemanager/redux/slices/whats-new');
+	const store = require('statemanager/redux/store');
 
 	/**
 	 * @param {array} sections
@@ -129,9 +132,83 @@ jn.define('more-menu/utils', (require, exports, module) => {
 		}
 	};
 
+	const getCountersFromStorage = () => {
+		const cachedCounters = Application.sharedStorage().get('userCounters');
+		try
+		{
+			const parsed = cachedCounters ? JSON.parse(cachedCounters) : {};
+
+			return parsed[env.siteId] || {};
+		}
+		catch (e)
+		{
+			console.error(e);
+
+			return {};
+		}
+	};
+
+	const getMenuCounters = (canInvite, passedCounters = null) => {
+		const counters = isEmpty(passedCounters) ? getCountersFromStorage() : passedCounters;
+		const { total_invitation: totalInvitation } = counters;
+
+		return {
+			...counters,
+			menu_invite: totalInvitation === 0 && canInvite && Tourist.firstTime('visit_invitations') ? 1 : 0,
+			menu_tab_presets: Tourist.firstTime('visited_tab_presets') ? 1 : 0,
+		};
+	};
+
+	const updateMenuBadgeCounter = (menuList, counters, whatsNewCounter = null) => {
+		if (!Array.isArray(menuList) || !counters)
+		{
+			return;
+		}
+
+		try
+		{
+			const updatedSections = getUpdateSectionsWithCounters(menuList, counters);
+			let totalCounter = calculateTotalCounter(updatedSections, counters);
+
+			const { total_invitation, menu_invite, menu_tab_presets } = counters;
+
+			if (Type.isNumber(total_invitation))
+			{
+				totalCounter += total_invitation;
+			}
+
+			if (Type.isNumber(menu_invite))
+			{
+				totalCounter += menu_invite;
+			}
+
+			if (Type.isNumber(menu_tab_presets))
+			{
+				totalCounter += menu_tab_presets;
+			}
+
+			const whatsNewCount = Type.isNumber(whatsNewCounter)
+				? whatsNewCounter
+				: (selectNewCount(store.getState()) ?? 0);
+
+			if (whatsNewCount > 0)
+			{
+				totalCounter += whatsNewCount;
+			}
+
+			Application.setBadges({ more: totalCounter });
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
+	};
+
 	module.exports = {
 		getUpdateSectionsWithCounters,
 		calculateTotalCounter,
 		handleItemClick,
+		getMenuCounters,
+		updateMenuBadgeCounter,
 	};
 });

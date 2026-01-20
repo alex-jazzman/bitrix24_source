@@ -66,12 +66,26 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 	public function otpConnectedAction($userId)
 	{
 		$additionalParams = [
+			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_OTP_TITLE_MSGVER_1"),
+		];
+		$componentName = 'bitrix:intranet.user.profile.section.security';
+
+		$params = [
+			"USER_ID" => $userId
+		];
+
+		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
+	}
+
+	public function otpListAction($userId)
+	{
+		$additionalParams = [
 			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY_OTP_TITLE"),
 		];
 		$componentName = 'bitrix:intranet.user.otp.connected';
 
 		$params = [
-			"USER_ID" => $userId
+			"USER_ID" => $userId,
 		];
 
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
@@ -118,37 +132,6 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		];
 
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
-	}
-
-	public function authAction($userId)
-	{
-		if (ModuleManager::isModuleInstalled("bitrix24"))
-		{
-			$additionalParams = [
-				'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_AUTH_TITLE_2"),
-			];
-			$componentName = 'bitrix:bitrix24.user.network_profile';
-			$templateName = '';
-
-			$params = [
-				"USER_ID" => $userId,
-			];
-
-			return new \Bitrix\Main\Engine\Response\Component($componentName, $templateName, $params, $additionalParams);
-		}
-		else
-		{
-			$additionalParams = [
-				'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_AUTH_TITLE_2"),
-			];
-			$componentName = 'bitrix:intranet.user.profile.password';
-
-			$params = [
-				"USER_ID" => $userId
-			];
-
-			return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
-		}
 	}
 
 	public function mailingAgreementAction()

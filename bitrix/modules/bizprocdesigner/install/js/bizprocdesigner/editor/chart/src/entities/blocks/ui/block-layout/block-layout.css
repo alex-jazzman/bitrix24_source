@@ -1,0 +1,99 @@
+.editor-chart-block-layout {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	border-radius: 10px;
+	background: transparent;
+	box-sizing: border-box;
+}
+
+.editor-chart-block-layout__left-content {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -18px;
+	z-index: 0;
+	width: 17px;
+	height: 29px;
+	margin: auto;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__top-menu {
+	display: none;
+	position: absolute;
+	top: -23px;
+	right: 0;
+	left: auto;
+	align-items: center;
+	gap: 8px;
+	height: 25px;
+	width: max-content;
+	white-space: nowrap;
+	z-index: 1;
+}
+
+.editor-chart-block-layout__top-menu-title {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	flex-shrink: 2;
+	width: calc(100% - 100px);
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__top-menu-content {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	gap: 3px;
+	flex-grow: 1;
+	height: 16px;
+	padding: 0 3px;
+	background: #ECF0F2; /* token will be povided later */
+	border-radius: 4px;
+}
+
+.editor-chart-block-layout:hover .editor-chart-block-layout__top-menu {
+	display: flex;
+}
+
+.editor-chart-block-layout:hover .editor-chart-block-layout__top-menu.--hide {
+	display: none;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__top-menu.--show {
+	display: flex;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__content {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	padding: 4px;
+	z-index: 100;
+	box-sizing: border-box;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__context-menu {
+	position: absolute;
+	z-index: 101;
+	width: 150px;
+	padding: 5px;
+	border-radius: 10px;
+	background: transparent;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__context-menu.--show {
+	display: block;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__status {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -20px;
+	height: 16px;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__status.--hide {
+	display: none;
+}

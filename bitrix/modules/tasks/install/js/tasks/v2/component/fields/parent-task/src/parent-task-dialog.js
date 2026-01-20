@@ -1,99 +1,100 @@
 import { Runtime } from 'main.core';
 
-import { Core } from 'tasks.v2.core';
-import { EntitySelectorEntity, Model, TaskField } from 'tasks.v2.const';
+import { EntitySelectorEntity, TaskField } from 'tasks.v2.const';
+import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { relationError } from 'tasks.v2.lib.relation-error';
+import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
 import { subTasksService } from 'tasks.v2.provider.service.relation-service';
-import { EntitySelectorDialog } from 'tasks.v2.lib.entity-selector-dialog';
-import type { ItemId } from 'tasks.v2.lib.entity-selector-dialog';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 
-class ParentTaskDialog
+type Params = {
+	targetNode: HTMLElement,
+	taskId: TaskId,
+	onUpdate: Function,
+};
+
+const dialogs: { [isTemplate: boolean]: EntitySelectorDialog } = {};
+
+export const parentTaskDialog = new class
 {
-	#taskId: number | string;
-	#dialog: EntitySelectorDialog;
-	#onUpdateOnce: Function | null = null;
+	#taskId: TaskId;
+	#onUpdate: Function;
 
-	setTaskId(taskId: number | string): ParentTaskDialog
+	show(params: Params): void
 	{
-		this.#taskId = taskId;
+		this.#taskId = params.taskId;
+		this.#onUpdate = params.onClose;
 
-		return this;
-	}
-
-	showTo(targetNode: HTMLElement): void
-	{
-		this.#dialog ??= this.#createDialog();
 		this.#dialog.selectItemsByIds(this.#items);
-		this.#dialog.showTo(targetNode);
+		this.#dialog.showTo(params.targetNode);
 	}
 
-	onUpdateOnce(callback: Function): void
+	get #dialog(): EntitySelectorDialog
 	{
-		this.#onUpdateOnce = callback;
+		const isTemplate = idUtils.isTemplate(this.#taskId);
+		dialogs[isTemplate] ??= this.#createDialog(isTemplate);
+
+		return dialogs[isTemplate];
 	}
 
-	#createDialog(): EntitySelectorDialog
+	#createDialog(isTemplate: boolean): EntitySelectorDialog
 	{
-		const onItemChangeDebounced = Runtime.debounce(this.#onItemChange, 10, this);
+		const onItemChange = Runtime.debounce(this.#onItemChange, 10, this);
 
 		return new EntitySelectorDialog({
 			context: 'tasks-card',
 			multiple: false,
+			hideOnDeselect: true,
 			enableSearch: true,
 			width: 500,
 			entities: [
 				{
 					id: EntitySelectorEntity.Task,
+					options: {
+						withTab: true,
+					},
 				},
-			],
+				isTemplate && {
+					id: EntitySelectorEntity.Template,
+					options: {
+						withTab: true,
+						withFooter: false,
+					},
+				},
+			].filter((it) => it),
 			preselectedItems: this.#items,
 			events: {
-				'Item:onSelect': onItemChangeDebounced,
-				'Item:onDeselect': onItemChangeDebounced,
-				onHide: this.#clearOnUpdateOnce,
-				onDestroy: this.#clearOnUpdateOnce,
+				'Item:onSelect': onItemChange,
+				'Item:onDeselect': onItemChange,
 			},
 		});
 	}
 
 	async #onItemChange(): void
 	{
-		const selectedTaskId = this.#dialog.getSelectedItems()[0]?.getId() ?? 0;
+		const item = this.#dialog.getSelectedItems()[0];
+		const isTemplate = item?.getEntityId() === EntitySelectorEntity.Template;
+		const selectedTaskId = isTemplate ? idUtils.boxTemplate(item.getId()) : (item?.getId() ?? 0);
 
-		if (selectedTaskId > 0)
+		const error = await subTasksService.setParent(this.#taskId, selectedTaskId);
+
+		if (error)
 		{
-			const error = await subTasksService.setParent(this.#taskId, selectedTaskId);
+			void relationError.setTaskId(this.#taskId).showError(error, TaskField.Parent);
 
-			if (error)
-			{
-				void relationError.setTaskId(this.#taskId).showError(error, TaskField.Parent);
-
-				return;
-			}
-		}
-		else if (selectedTaskId === 0 && this.#task.parentId > 0)
-		{
-			await subTasksService.delete(this.#task.parentId, [this.#taskId]);
+			return;
 		}
 
-		this.#onUpdateOnce?.();
-		this.#clearOnUpdateOnce();
+		this.#onUpdate?.();
 	}
-
-	#clearOnUpdateOnce = (): void => {
-		this.#onUpdateOnce = null;
-	};
 
 	get #items(): ItemId[]
 	{
-		return this.#task.parentId ? [[EntitySelectorEntity.Task, this.#task.parentId]] : [];
-	}
+		const parentId = taskService.getStoreTask(this.#taskId).parentId;
+		const templateId = idUtils.unbox(parentId);
+		const isTemplate = idUtils.isTemplate(parentId);
+		const itemId = isTemplate ? [EntitySelectorEntity.Template, templateId] : [EntitySelectorEntity.Task, parentId];
 
-	get #task(): TaskModel
-	{
-		return Core.getStore().getters[`${Model.Tasks}/getById`](this.#taskId);
+		return parentId ? [itemId] : [];
 	}
-}
-
-export const parentTaskDialog = new ParentTaskDialog();
+}();

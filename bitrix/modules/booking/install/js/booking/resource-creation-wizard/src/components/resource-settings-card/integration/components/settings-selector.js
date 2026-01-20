@@ -22,9 +22,13 @@ export const SettingsSelector = {
 			type: Boolean,
 			default: false,
 		},
-		tab: {
-			type: Boolean,
-			default: false,
+		emptyTitle: {
+			type: String,
+			default: '',
+		},
+		emptySubtitle: {
+			type: String,
+			default: '',
 		},
 	},
 	emits: [
@@ -54,6 +58,31 @@ export const SettingsSelector = {
 	methods: {
 		createSelector(): TagSelector
 		{
+			const showEmptyState = this.emptyTitle && this.emptySubtitle;
+			const emptyState = showEmptyState
+				? {
+					recentTabOptions: {
+						visible: false,
+					},
+					searchTabOptions: {
+						stub: true,
+						stubOptions: {
+							title: this.emptyTitle,
+							subtitle: this.emptySubtitle,
+						},
+					},
+					tabs: [{
+						id: this.entitiesId,
+						stub: true,
+						stubOptions: {
+							title: this.emptyTitle,
+							subtitle: this.emptySubtitle,
+						},
+					}],
+				}
+				: {}
+			;
+
 			const tagSelectionOptions: TagSelectorOptions = {
 				multiple: this.multiple,
 				addButtonCaption: this.loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'),
@@ -86,14 +115,22 @@ export const SettingsSelector = {
 						'Item:onDeselect': (event: BaseEvent) => {
 							this.deselect(event.getData().item.id);
 						},
+						onLoad: () => {
+							if (!showEmptyState)
+							{
+								return;
+							}
+
+							const tab = this.selector.dialog.tabs.get(this.entitiesId);
+							if (tab?.dialog.items.size === 0)
+							{
+								tab.getStub()?.show();
+							}
+						},
 					},
+					...emptyState,
 				},
 			};
-
-			if (this.tab)
-			{
-				tagSelectionOptions.dialogOptions.tabs = [{ id: this.entitiesId }];
-			}
 
 			return new TagSelector(tagSelectionOptions);
 		},

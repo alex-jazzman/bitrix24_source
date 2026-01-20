@@ -12,7 +12,6 @@ return [
 		'ui.uploader.core',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.main',
-		'tasks.v2.const',
 		'tasks.v2.provider.service.file-service',
 	],
 	'skip_core' => false,

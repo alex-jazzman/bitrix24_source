@@ -219,7 +219,7 @@ const receivers = [
 			value: '+79992221133',
 			valueFormatted: '+7 999 222-11-33',
 			complexId: 'PHONE_WORK',
-			complexName: 'Рабочий',
+			valueTypeCaption: 'Рабочий',
 		},
 		{
 			title: 'Компания #1010',
@@ -235,7 +235,7 @@ const receivers = [
 			value: '+79221115522',
 			valueFormatted: '+7 922 111-55-22',
 			complexId: 'PHONE_MAILING',
-			complexName: 'Для рассылок',
+			valueTypeCaption: 'Для рассылок',
 		},
 		{
 			title: 'Компания #1010',
@@ -251,7 +251,7 @@ const receivers = [
 			value: '+79991112233',
 			valueFormatted: '+7 999 111-22-33',
 			complexId: 'PHONE_WORK',
-			complexName: 'Рабочий',
+			valueTypeCaption: 'Рабочий',
 		},
 		{
 			title: 'Контакт #3260',
@@ -267,7 +267,7 @@ const receivers = [
 			value: 'mail@example.com',
 			valueFormatted: 'mail@example.com',
 			complexId: 'EMAIL_WORK',
-			complexName: 'Рабочий',
+			valueTypeCaption: 'Рабочий',
 		},
 		{
 			title: 'Компания #1010',
@@ -283,7 +283,7 @@ const receivers = [
 			value: 'mail@example.com',
 			valueFormatted: 'mail@example.com',
 			complexId: 'EMAIL_WORK',
-			complexName: 'Рабочий',
+			valueTypeCaption: 'Рабочий',
 		},
 		{
 			title: 'Контакт #3260',

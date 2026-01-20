@@ -12,6 +12,8 @@ export type StageDto = {
 	id: number,
 	title: string,
 	color: string,
+	systemType: string,
+	sort: number,
 };
 
 export type GroupInfo = {

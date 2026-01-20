@@ -42,7 +42,7 @@ jn.define('im/messenger/provider/services/analytics/dialog-edit', (require, expo
 				.setEvent(Analytics.Event.clickEdit)
 				.setSection(Analytics.Section.sidebar)
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialogModelState.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialogModelState))
 				.setP5(AnalyticsHelper.getFormattedChatId(dialogModelState.chatId))
 			;
 
@@ -80,7 +80,7 @@ jn.define('im/messenger/provider/services/analytics/dialog-edit', (require, expo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialogModelState.type))
 				.setEvent(Analytics.Event.submitEdit)
 				.setSection(Analytics.Section.editor)
-				.setP1(AnalyticsHelper.getP1ByChatType(dialogModelState?.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialogModelState))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP5(AnalyticsHelper.getFormattedChatId(dialogModelState?.chatId))
 			;

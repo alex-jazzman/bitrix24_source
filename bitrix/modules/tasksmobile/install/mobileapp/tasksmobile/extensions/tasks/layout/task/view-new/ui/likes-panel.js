@@ -5,7 +5,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 	const { Color, Indent, Component } = require('tokens');
 	const { connect } = require('statemanager/redux/connect');
 	const { menu } = require('native/contextmenu');
-	const { ReactionListController } = require('layout/ui/reaction-list');
+	const { ReactionListController } = require('layout/ui/reaction/list');
 	const {
 		selectReactionsByEntity,
 		selectUsersWithReactions,
@@ -18,7 +18,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 	const { handleReactionChange } = require('statemanager/redux/slices/reactions');
 	const { Text6 } = require('ui-system/typography/text');
 	const { ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
-	const { ChipReaction } = require('ui-system/blocks/chips/chip-reaction');
+	const { ChipReaction } = require('layout/ui/reaction/chip');
 	const { ElementsStack, ElementsStackDirection } = require('elements-stack');
 	const { Line } = require('utils/skeleton');
 	const { ReactionIconView, ReactionIcon } = require('ui-system/blocks/reaction/icon');
@@ -26,6 +26,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 	const { Haptics } = require('haptics');
 	const { EntityType } = require('tasks/enum');
 	const { VotesPanel } = require('tasks/layout/task/view-new/ui/votes-panel');
+	const { Feature } = require('feature');
 
 	const LIKE = 'like';
 	const LIKE_GRAPHIC = 'like_graphic';
@@ -156,7 +157,8 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			menu.on('reactionTap', pickerHandle);
 
 			const menuData = {
-				reactionList: ReactionIcon.getDataForContextMenu(),
+				reactionVersion: Feature.isNewReactionVersionSupported() ? 2 : 1,
+				reactionList: ReactionIcon.getPackForContextMenu(),
 			};
 
 			menu.showPopupReactions(menuData, this.likeButtonRef);
@@ -206,6 +208,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 
 			return iconsToDisplay.map((reactionId) => {
 				const icon = ReactionIcon.getIconByReactionId(reactionId);
+				const type = Application.getPlatform() === 'ios' ? 'png' : 'svg'; // ios bug with render gradient in svg
 
 				return ReactionIconView({
 					id: reactionId,
@@ -213,6 +216,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 					size: 17,
 					offset: -1,
 					icon,
+					type,
 				});
 			});
 		}
@@ -271,8 +275,8 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			return ChipReaction({
 				userId: this.#userId,
 				reactionId,
-				compact: true,
-				selected: isCurrentUserReacted,
+				isCompact: true,
+				isSelected: isCurrentUserReacted,
 				mode: isCurrentUserReacted ? ChipButtonMode.SOLID : ChipButtonMode.OUTLINE,
 				testId: 'chip-reaction',
 				onClick: () => this.#setReaction(reactionId || LIKE, ACTION_TYPE.POSITIVE),

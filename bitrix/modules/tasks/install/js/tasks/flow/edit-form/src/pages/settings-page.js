@@ -303,7 +303,7 @@ export class SettingsPage extends FormPage
 			return selector
 				?.getSelector()
 				.getTags()
-				.map((tag) => [tag.entityId, tag.id])
+				.map((tag) => [tag.entityId, String(tag.id)])
 			;
 		}
 

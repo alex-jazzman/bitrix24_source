@@ -1,19 +1,20 @@
-import { Type } from 'main.core';
 import { FileStatus } from 'ui.uploader.core';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Animated, Outline } from 'ui.icon-set.api.core';
+import { BIcon, Animated, Outline } from 'ui.icon-set.api.vue';
+import { hint, type HintParams } from 'ui.vue3.directives.hint';
+import type { VueUploaderAdapter } from 'ui.uploader.vue';
+
 import 'ui.icon-set.animated';
 import 'ui.icon-set.outline';
-import type { VueUploaderAdapter } from 'ui.uploader.vue';
-import { hint, type HintParams } from 'ui.vue3.directives.hint';
 
-import { UserFieldWidgetComponent, type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
-import { Model } from 'tasks.v2.const';
-import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+
 import { tooltip } from 'tasks.v2.component.elements.hint';
+import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
+import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { filesMeta } from './files-meta';
+import { FilesSheet } from './files-sheet';
 import './files.css';
 
 // @vue/component
@@ -21,17 +22,30 @@ export const Files = {
 	name: 'TaskFiles',
 	components: {
 		BIcon,
-		UserFieldWidgetComponent,
+		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
+		FilesSheet,
 	},
 	directives: { hint },
+	inject: {
+		task: {},
+		isEdit: {},
+	},
 	props: {
+		isSheetShown: {
+			type: Boolean,
+			required: true,
+		},
 		taskId: {
 			type: [Number, String],
 			required: true,
 		},
+		sheetBindProps: {
+			type: Object,
+			required: true,
+		},
 	},
-	emits: ['open'],
-	setup(props): { uploaderAdapter: VueUploaderAdapter, fileService: FileService }
+	emits: ['update:isSheetShown'],
+	setup(props): { task: TaskModel, uploaderAdapter: VueUploaderAdapter, fileService: FileService }
 	{
 		return {
 			Animated,
@@ -50,10 +64,6 @@ export const Files = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		filesCount(): number
 		{
 			return this.files.length;
@@ -79,10 +89,6 @@ export const Files = {
 		canAttachFiles(): boolean
 		{
 			return this.task.rights.attachFile || this.task.rights.edit;
-		},
-		isEdit(): boolean
-		{
-			return Type.isNumber(this.taskId) && this.taskId > 0;
 		},
 		widgetOptions(): UserFieldWidgetOptions
 		{
@@ -156,7 +162,7 @@ export const Files = {
 			}
 			else
 			{
-				this.$emit('open');
+				this.setSheetShown(true);
 			}
 		},
 		async handleFilesScrollable(): void
@@ -175,6 +181,10 @@ export const Files = {
 		onFileBrowserClose(): void
 		{
 			this.fileService.setFileBrowserClosed(true);
+		},
+		setSheetShown(isShown: boolean): void
+		{
+			this.$emit('update:isSheetShown', isShown);
 		},
 	},
 	template: `
@@ -204,7 +214,7 @@ export const Files = {
 					<BIcon
 						class="tasks-field-files-add"
 						:name="Outline.PLUS_L"
-						:hoverable="true"
+						hoverable
 						data-task-files-plus
 						@click="handleAddClick"
 						ref="add"
@@ -216,10 +226,7 @@ export const Files = {
 				class="tasks-field-files-list --card"
 				ref="files"
 			>
-				<UserFieldWidgetComponent
-					:uploaderAdapter="uploaderAdapter"
-					:widgetOptions="widgetOptions"
-				/>
+				<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 			</div>
 			<template v-if="isFilesScrollable">
 				<div class="tasks-field-files-shadow">
@@ -227,13 +234,17 @@ export const Files = {
 				</div>
 				<div
 					class="tasks-field-files-more-button"
-					@click="$emit('open')"
+					@click="setSheetShown(true)"
 				>
-					<div class="tasks-field-files-more-button-text">
-						{{ loc('TASKS_V2_FILES_MORE') }}
-					</div>
+					<div class="tasks-field-files-more-button-text">{{ loc('TASKS_V2_FILES_MORE') }}</div>
 				</div>
 			</template>
 		</div>
+		<FilesSheet
+			v-if="isSheetShown"
+			:taskId
+			:sheetBindProps
+			@close="setSheetShown(false)"
+		/>
 	`,
 };

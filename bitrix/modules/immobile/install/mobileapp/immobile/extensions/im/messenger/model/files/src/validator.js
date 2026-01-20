@@ -217,6 +217,16 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 			result.isTranscribable = fields.isTranscribable;
 		}
 
+		if (Type.isBoolean(fields.isVoiceNote))
+		{
+			result.isVoiceNote = fields.isVoiceNote;
+		}
+
+		if (Type.isBoolean(fields.isVideoNote))
+		{
+			result.isVideoNote = fields.isVideoNote;
+		}
+
 		return result;
 	}
 

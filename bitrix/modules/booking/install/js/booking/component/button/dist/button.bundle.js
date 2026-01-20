@@ -12,6 +12,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      type: String,
 	      default: ''
 	    },
+	    rightCounter: Object,
 	    size: String,
 	    state: {
 	      type: String,
@@ -24,6 +25,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    color: String,
 	    round: Boolean,
 	    icon: String,
+	    style: String,
 	    iconPosition: {
 	      type: String,
 	      validator(position) {
@@ -38,6 +40,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    dataset: Object,
 	    buttonClass: [String, Array]
 	  },
+	  computed: {},
 	  created() {
 	    this.button = new ui_buttons.Button({
 	      id: this.id,
@@ -46,6 +49,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      color: this.color,
 	      round: this.round,
 	      icon: this.icon,
+	      style: this.style,
 	      iconPosition: this.iconPosition,
 	      useAirDesign: Boolean(this.useAirDesign),
 	      noCaps: this.noCaps,
@@ -72,60 +76,73 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  watch: {
+	    rightCounter: {
+	      handler(rightCounterNew) {
+	        var _this$button2;
+	        const rightCounterFiltered = rightCounterNew != null && rightCounterNew.value ? rightCounterNew : null;
+	        (_this$button2 = this.button) == null ? void 0 : _this$button2.setRightCounter(rightCounterFiltered);
+	      }
+	    },
 	    text: {
 	      handler(text) {
-	        var _this$button2;
-	        (_this$button2 = this.button) == null ? void 0 : _this$button2.setText(text);
+	        var _this$button3;
+	        (_this$button3 = this.button) == null ? void 0 : _this$button3.setText(text);
 	      }
 	    },
 	    size: {
 	      handler(size) {
-	        var _this$button3;
-	        (_this$button3 = this.button) == null ? void 0 : _this$button3.setSize(size);
+	        var _this$button4;
+	        (_this$button4 = this.button) == null ? void 0 : _this$button4.setSize(size);
 	      }
 	    },
 	    color: {
 	      handler(color) {
-	        var _this$button4;
-	        (_this$button4 = this.button) == null ? void 0 : _this$button4.setColor(color);
+	        var _this$button5;
+	        (_this$button5 = this.button) == null ? void 0 : _this$button5.setState(color);
 	      }
 	    },
 	    state: {
 	      handler(state) {
-	        var _this$button5;
-	        (_this$button5 = this.button) == null ? void 0 : _this$button5.setState(state);
+	        var _this$button6;
+	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setState(state);
 	      }
 	    },
 	    icon: {
 	      handler(icon) {
-	        var _this$button6;
-	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setIcon(icon, this.iconPosition);
+	        var _this$button7;
+	        (_this$button7 = this.button) == null ? void 0 : _this$button7.setIcon(icon, this.iconPosition);
 	      }
 	    },
 	    disabled: {
 	      handler(disabled) {
-	        var _this$button7;
-	        (_this$button7 = this.button) == null ? void 0 : _this$button7.setDisabled(Boolean(disabled));
+	        var _this$button8;
+	        (_this$button8 = this.button) == null ? void 0 : _this$button8.setDisabled(Boolean(disabled));
 	      },
 	      immediate: true,
 	      flush: 'sync'
 	    },
 	    waiting: {
 	      handler(waiting) {
-	        var _this$button8;
-	        if (waiting !== ((_this$button8 = this.button) == null ? void 0 : _this$button8.isWaiting())) {
-	          var _this$button9;
-	          (_this$button9 = this.button) == null ? void 0 : _this$button9.setWaiting(waiting);
+	        var _this$button9;
+	        if (waiting !== ((_this$button9 = this.button) == null ? void 0 : _this$button9.isWaiting())) {
+	          var _this$button10;
+	          (_this$button10 = this.button) == null ? void 0 : _this$button10.setWaiting(waiting);
 	        }
 	      },
 	      immediate: true
 	    },
+	    style: {
+	      handler(style) {
+	        var _this$button11;
+	        (_this$button11 = this.button) == null ? void 0 : _this$button11.setStyle(style);
+	      }
+	    },
 	    clocking: {
 	      handler(clocking) {
-	        var _this$button10;
-	        if (clocking !== ((_this$button10 = this.button) == null ? void 0 : _this$button10.isClocking())) {
-	          var _this$button11;
-	          (_this$button11 = this.button) == null ? void 0 : _this$button11.setClocking(clocking);
+	        var _this$button12;
+	        if (clocking !== ((_this$button12 = this.button) == null ? void 0 : _this$button12.isClocking())) {
+	          var _this$button13;
+	          (_this$button13 = this.button) == null ? void 0 : _this$button13.setClocking(clocking);
 	        }
 	      },
 	      immediate: true

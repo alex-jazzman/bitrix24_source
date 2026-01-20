@@ -19,5 +19,7 @@ return [
 		'layout/ui/buttons/add-button',
 		'assets/common',
 		'selector/widget/factory',
+		'layout/ui/fields/base',
+		'utils/object',
 	],
 ];

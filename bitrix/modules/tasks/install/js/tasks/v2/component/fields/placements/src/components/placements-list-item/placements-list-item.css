@@ -1,0 +1,33 @@
+.tasks-field-placement-item {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md);
+	gap: var(--ui-space-inset-xs);
+	cursor: pointer;
+
+	background: var(--ui-color-base-8);
+	border-radius: 10px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-field-placement-item-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tasks-field-placement-item-title-container {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.tasks-field-placement-item-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-placement-item-description {
+	padding-left: 30px;
+	color: var(--ui-color-base-3);
+}

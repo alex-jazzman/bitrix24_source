@@ -1,16 +1,17 @@
 import { Event, Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model, DraggedElementKind } from 'booking.const';
+import { Model, DraggedElementKind, EventName, LimitFeatureId } from 'booking.const';
 import { isRealId } from 'booking.lib.is-real-id';
 import { BookingAnalytics } from 'booking.lib.analytics';
+import { limit } from 'booking.lib.limit';
 import { bookingService } from 'booking.provider.service.booking-service';
 import type {
 	BookingModel,
 	OverbookingMapItem,
 	OverbookingResourceIntersections,
 } from 'booking.model.bookings';
-import type { Occupancy, DraggedDataTransfer } from 'booking.model.interface';
+import type { Occupancy, DraggedDataTransfer, EnabledFeatures } from 'booking.model.interface';
 
 import { Actions } from './actions/actions';
 import { BookingBase } from './booking-base';
@@ -57,11 +58,12 @@ export const Booking = {
 			default: () => [],
 		},
 	},
-	data(): { dropArea: boolean, freeSpace: ?Occupancy }
+	data(): { dropArea: boolean, freeSpace: ?Occupancy, isLockedAnimation: boolean }
 	{
 		return {
 			dropArea: false,
 			freeSpace: null,
+			isLockedAnimation: false,
 		};
 	},
 	computed: {
@@ -75,10 +77,14 @@ export const Booking = {
 			editingBookingId: `${Model.Interface}/editingBookingId`,
 			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			offHoursExpanded: `${Model.Interface}/offHoursExpanded`,
+			fromHour: `${Model.Interface}/fromHour`,
+			toHour: `${Model.Interface}/toHour`,
 			getWaitListItemById: `${Model.WaitList}/getById`,
 			getResourceById: `${Model.Resources}/getById`,
 			isDeletingResourceFilterMode: `${Model.Filter}/isDeletingResourceFilterMode`,
 			deletingResource: `${Model.Filter}/deletingResource`,
+			isMenuOpenedForBooking: `${Model.Interface}/isMenuOpenedForBooking`,
 		}),
 		booking(): BookingModel
 		{
@@ -109,6 +115,20 @@ export const Booking = {
 				&& Type.isPlainObject(this.overbookingInResource)
 				&& this.overbookingInResource.shifted
 			);
+		},
+		isOutOfWorkingHours(): boolean
+		{
+			const workingHoursStartTs = (new Date(this.selectedDateTs)).setHours(this.fromHour, 0, 0, 0);
+			const workingHoursEndTs = (new Date(this.selectedDateTs)).setHours(this.toHour, 0, 0, 0);
+
+			const bookingStartTs = this.booking.dateFromTs;
+			const bookingEndTs = this.booking.dateToTs;
+
+			return (bookingEndTs <= workingHoursStartTs) || (bookingStartTs >= workingHoursEndTs);
+		},
+		shouldBeHidden(): boolean
+		{
+			return !this.offHoursExpanded && this.isOutOfWorkingHours;
 		},
 		overlappingBookings(): OverlappingBookings
 		{
@@ -169,7 +189,9 @@ export const Booking = {
 		},
 		hasAccent(): boolean
 		{
-			return this.editingBookingId === this.bookingId || this.isBookingCreatedFromEmbed(this.bookingId);
+			return this.editingBookingId === this.bookingId
+				|| this.isBookingCreatedFromEmbed(this.bookingId)
+				|| this.isMenuOpenedForBooking(this.bookingId, this.resourceId);
 		},
 		isDeletedResource(): boolean
 		{
@@ -181,6 +203,10 @@ export const Booking = {
 				this.isDeletingResourceFilterMode
 				&& this.resourceId !== this.deletingResource.id
 			);
+		},
+		enabledFeature(): EnabledFeatures
+		{
+			return this.$store.state[Model.Interface].enabledFeature;
 		},
 	},
 	watch: {
@@ -208,6 +234,17 @@ export const Booking = {
 			},
 			deep: true,
 		},
+	},
+	beforeMount(): void
+	{
+		if (!this.enabledFeature.bookingOverbooking || !this.enabledFeature.bookingWaitlist)
+		{
+			Event.EventEmitter.subscribe(EventName.StartLockedBookingAnimation, this.startLockBookingAnimation);
+		}
+	},
+	unmounted(): void
+	{
+		Event.EventEmitter.unsubscribe(EventName.StartLockedBookingAnimation, this.startLockBookingAnimation);
 	},
 	methods: {
 		dragMouseEnter(): void
@@ -309,17 +346,27 @@ export const Booking = {
 			if (this.draggedDataTransfer.kind === DraggedElementKind.Booking)
 			{
 				await this.dropBooking(id);
-
-				return;
 			}
-
-			if (this.draggedDataTransfer.kind === DraggedElementKind.WaitListItem)
+			else if (this.draggedDataTransfer.kind === DraggedElementKind.WaitListItem)
 			{
 				await this.dropWaitListItem(id);
 			}
 		},
 		async dropBooking(id: number | string): Promise<void>
 		{
+			if (!this.enabledFeature.bookingOverbooking)
+			{
+				Event.EventEmitter.emit(
+					EventName.StartLockedBookingAnimation,
+					{
+						bookingId: this.draggedDataTransfer.id,
+						featureId: LimitFeatureId.Overbooking,
+					},
+				);
+
+				return;
+			}
+
 			const droppedBooking = this.getBookingById(id);
 			const { dateFromTs, dateToTs } = findTimeForDroppedBooking(this.freeSpace, this.booking, droppedBooking);
 			const overbooking = {
@@ -350,6 +397,13 @@ export const Booking = {
 		},
 		async dropWaitListItem(id: number): Promise<void>
 		{
+			if (!this.enabledFeature.bookingOverbooking)
+			{
+				void limit.show(LimitFeatureId.Overbooking);
+
+				return;
+			}
+
 			const droppedWaitListItem = this.getWaitListItemById(id);
 			const clients = [...droppedWaitListItem.clients];
 			const resource = this.getResourceById(this.resourceId);
@@ -389,9 +443,27 @@ export const Booking = {
 			Event.unbind(this.$el, 'mouseleave', this.dragMouseLeave, { capture: true });
 			Event.unbind(this.$el, 'mouseup', this.dropElement, { capture: true });
 		},
+		startLockBookingAnimation(event): void
+		{
+			if (this.bookingId !== event.getData()?.bookingId)
+			{
+				return;
+			}
+
+			void this.$nextTick(() => {
+				this.isLockedAnimation = true;
+
+				setTimeout(() => {
+					this.isLockedAnimation = false;
+
+					void limit.show(event.getData()?.featureId ?? '');
+				}, 800);
+			});
+		},
 	},
 	template: `
 		<BookingBase
+			v-show="!shouldBeHidden"
 			:bookingId
 			:resourceId
 			:nowTs
@@ -405,6 +477,7 @@ export const Booking = {
 				'--accent': hasAccent,
 				'--shaded': isShaded,
 				'not-transition': animationPause,
+				'--locked': isLockedAnimation,
 			}"
 			:width="bookingWidth"
 		>

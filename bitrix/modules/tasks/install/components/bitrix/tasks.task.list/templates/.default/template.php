@@ -56,6 +56,7 @@ Extension::load([
 	'ui.stepprocessing',
 	'tasks.group-actions-stepper',
 	'tasks.flow.entity-selector',
+	'socialnetwork.common',
 ]);
 
 $timeManagerData = [];
@@ -65,11 +66,6 @@ if (Loader::includeModule('intranet'))
 	CIntranetPlanner::initScripts($intranetData);
 
 	$timeManagerData = $intranetData['DATA'];
-}
-
-if ($isV2Form)
-{
-	Extension::load('tasks.v2.application.task-card');
 }
 
 /** intranet-settings-support */

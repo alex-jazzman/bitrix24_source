@@ -319,6 +319,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			dialogId,
 			commentChatId,
 			withMessageHighlight = true,
+			targetMessagePosition = AfterScrollMessagePosition.bottom,
 		})
 		{
 			this.#log(`goToMessageContextByCommentsChatId: dialogId: ${dialogId} commentChatId: ${commentChatId}`);
@@ -334,6 +335,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 					dialogId,
 					messageId,
 					withMessageHighlight: true,
+					targetMessagePosition,
 				});
 
 				return;

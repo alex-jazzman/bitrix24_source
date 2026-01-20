@@ -37,7 +37,6 @@ $MESS["TASKS_PANEL_SORTING_DIRECTION_ASC"] = "Өсу бойынша ірікте
 $MESS["TASKS_PANEL_SORTING_DIRECTION_DESC"] = "Кему бойынша іріктеу";
 $MESS["TASKS_PANEL_SWITCH_TO_ADVANCED_FILTER"] = "Кеңейтілген сүзгіге ауысу";
 $MESS["TASKS_PANEL_TAB_ALL"] = "Барлығы";
-$MESS["TASKS_PANEL_TAB_APPLICATIONS_2"] = "Битрикс24.Маркет";
 $MESS["TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"] = "Битрикс24 Маркетплейс";
 $MESS["TASKS_PANEL_TAB_BACK_TO_LIST"] = "Тізімге";
 $MESS["TASKS_PANEL_TAB_EFFECTIVE"] = "Тиімділік";

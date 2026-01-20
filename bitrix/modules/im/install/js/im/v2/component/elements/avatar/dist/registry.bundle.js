@@ -173,7 +173,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  collaber: 'collaber',
 	  collab: 'collab',
 	  copilot: 'copilot',
-	  default: 'default'
+	  default: 'default',
+	  aiAssistant: 'aiAssistant'
 	};
 
 	// @vue/component
@@ -223,6 +224,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      collaber: ui_avatar.AvatarRoundGuest,
 	      collab: ui_avatar.AvatarHexagonGuest,
 	      copilot: ui_avatar.AvatarRoundCopilot,
+	      aiAssistant: ui_avatar.AvatarRoundMarta,
 	      default: ui_avatar.AvatarBase
 	    };
 	    const AvatarClass = classMap[this.type] || classMap.default;
@@ -503,6 +505,48 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const AiAssistantAvatar = {
+	  name: 'AiAssistantAvatar',
+	  components: {
+	    BaseUiAvatar
+	  },
+	  props: {
+	    dialogId: {
+	      type: [String, Number],
+	      default: 0
+	    },
+	    size: {
+	      type: String,
+	      default: AvatarSize.M
+	    },
+	    customSource: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  computed: {
+	    AvatarType: () => AvatarType,
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    dialogName() {
+	      return this.dialog.name;
+	    },
+	    dialogAvatarUrl() {
+	      return this.dialog.avatar;
+	    }
+	  },
+	  template: `
+		<BaseUiAvatar
+			:type="AvatarType.aiAssistant"
+			:title="dialogName" 
+			:size="size" 
+			:url="dialogAvatarUrl" 
+		/>
+	`
+	};
+
+	// @vue/component
 	const CopilotAvatar = {
 	  name: 'CopilotAvatar',
 	  components: {
@@ -575,22 +619,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const ChatAvatar = {
 	  name: 'ChatAvatar',
-	  components: {
-	    Avatar,
-	    CollabAvatar: CollabChatAvatar,
-	    CollaberAvatar,
-	    ExtranetUserAvatar,
-	    NotesAvatar,
-	    CopilotAvatar
-	  },
 	  props: {
 	    avatarDialogId: {
 	      type: [String, Number],
-	      default: 0
+	      default: '0'
 	    },
 	    contextDialogId: {
-	      type: String,
-	      required: true
+	      type: [String, null],
+	      default: null
 	    },
 	    size: {
 	      type: String,
@@ -628,10 +664,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!this.isCopilot) {
 	        return '';
 	      }
-	      return this.copilotManager.getRoleAvatarUrl({
-	        avatarDialogId: this.avatarDialogId,
-	        contextDialogId: this.contextDialogId
-	      });
+	      return this.copilotRoleAvatarUrl;
 	    },
 	    avatarDialog() {
 	      return this.$store.getters['chats/get'](this.avatarDialogId, true);
@@ -650,8 +683,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _this$user2;
 	      return ((_this$user2 = this.user) == null ? void 0 : _this$user2.type) === im_v2_const.UserType.extranet;
 	    },
+	    isAiAssistant() {
+	      return this.$store.getters['users/bots/isAiAssistant'](this.avatarDialogId);
+	    },
 	    isCopilot() {
 	      return this.copilotManager.isCopilotChatOrBot(this.avatarDialogId);
+	    },
+	    copilotRoleAvatarUrl() {
+	      if (!this.contextDialogId) {
+	        return this.copilotManager.getDefaultAvatarUrl();
+	      }
+	      return this.copilotManager.getRoleAvatarUrl({
+	        avatarDialogId: this.avatarDialogId,
+	        contextDialogId: this.contextDialogId
+	      });
 	    },
 	    avatarComponent() {
 	      if (this.customType === ChatAvatarType.notes) {
@@ -668,6 +713,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      if (this.isCopilot) {
 	        return CopilotAvatar;
+	      }
+	      if (this.isAiAssistant) {
+	        return AiAssistantAvatar;
 	      }
 	      return this.isExtranetChat ? ExtranetChatAvatar : Avatar;
 	    }
@@ -692,11 +740,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const MessageAvatar = {
 	  name: 'MessageAvatar',
-	  components: {
-	    Avatar,
-	    CollaberAvatar,
-	    CopilotAvatar
-	  },
 	  props: {
 	    messageId: {
 	      type: [String, Number],
@@ -746,10 +789,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        [im_v2_const.UserType.bot]: this.getBotAvatar()
 	      };
 	      return (_avatarMap$this$user$ = avatarMap[this.user.type]) != null ? _avatarMap$this$user$ : Avatar;
+	    },
+	    isAiAssistant() {
+	      return this.$store.getters['users/bots/isAiAssistant'](this.authorId);
 	    }
 	  },
 	  methods: {
 	    getBotAvatar() {
+	      if (this.isAiAssistant) {
+	        return AiAssistantAvatar;
+	      }
 	      const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	      return copilotManager.isCopilotChatOrBot(this.authorId) ? CopilotAvatar : Avatar;
 	    }

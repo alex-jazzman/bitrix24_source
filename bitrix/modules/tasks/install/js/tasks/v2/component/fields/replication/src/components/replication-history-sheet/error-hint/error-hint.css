@@ -1,0 +1,15 @@
+.tasks-field-replication-hint {
+	display: grid;
+	font-weight: var(--ui-font-weight-light);
+}
+
+.tasks-field-replication-hint a {
+	margin-top: 12px;
+	border-bottom: 1px dashed;
+	color: inherit;
+	max-width: max-content;
+}
+
+.tasks-field-replication-hint a:not(:hover) {
+	opacity: 0.8;
+}

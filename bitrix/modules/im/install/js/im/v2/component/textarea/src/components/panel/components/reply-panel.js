@@ -65,6 +65,10 @@ export const ReplyPanel = {
 		{
 			return this.message.isDeleted;
 		},
+		isSticker(): boolean
+		{
+			return this.$store.getters['messages/stickers/isStickerMessage'](this.message.id);
+		},
 		messageText(): string
 		{
 			if (this.isFile)
@@ -80,6 +84,11 @@ export const ReplyPanel = {
 			if (this.isMessageDeleted)
 			{
 				return this.loc('IM_TEXTAREA_REPLY_DELETED_TITLE');
+			}
+
+			if (this.isSticker)
+			{
+				return this.loc('IM_TEXTAREA_REPLY_STICKER_TITLE');
 			}
 
 			return Parser.purify(this.message);

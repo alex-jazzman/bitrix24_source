@@ -14269,6 +14269,7 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 if(typeof BX.Crm.EntityEvent === "undefined")
 {
 	BX.Crm.EntityEvent = {
+		handlers: new Map(),
 		names: {
 			create: "onCrmEntityCreate",
 			update: "onCrmEntityUpdate",
@@ -14305,9 +14306,17 @@ if(typeof BX.Crm.EntityEvent === "undefined")
 
 			BX.localStorage.set(eventName, params, 10);
 		},
+		subscribeToItem: function(entityTypeId, entityId, handler) {
+			return this.subscribe((eventName, eventParams) => {
+				if (eventParams.entityTypeId === entityTypeId && eventParams.entityId === entityId)
+				{
+					handler(eventName, eventParams);
+				}
+			});
+		},
 		subscribeToEntityType: function(entityTypeId, handler)
 		{
-			this.subscribe((eventName, eventParams) => {
+			return this.subscribe((eventName, eventParams) => {
 				if (eventParams.entityTypeId === entityTypeId)
 				{
 					handler(eventName, eventParams);
@@ -14318,10 +14327,11 @@ if(typeof BX.Crm.EntityEvent === "undefined")
 		/**
 		 * Subscribe to all entity events
 		 * @param handler (eventName: string, eventParams: Object) => void
+		 * @returns { () => void } unsubscribe function
 		 */
-		subscribe: function(handler)
+		subscribe(handler)
 		{
-			BX.Event.EventEmitter.subscribe('onLocalStorageSet', (event) => {
+			const callback = (event) => {
 				const parameters = event.getData();
 				if (!BX.Type.isArray(parameters) || !parameters[0])
 				{
@@ -14347,7 +14357,23 @@ if(typeof BX.Crm.EntityEvent === "undefined")
 				}
 
 				handler(key, eventData);
-			});
+			};
+
+			BX.Crm.EntityEvent.handlers.set(handler, callback);
+			BX.Event.EventEmitter.subscribe('onLocalStorageSet', callback);
+
+			return () => {
+				BX.Crm.EntityEvent.unsubscribe(handler);
+			};
+		},
+
+			unsubscribe(handler)
+		{
+			if (BX.Crm.EntityEvent.handlers.has(handler))
+			{
+				BX.Event.EventEmitter.unsubscribe('onLocalStorageSet', BX.Crm.EntityEvent.handlers.get(handler));
+				BX.Crm.EntityEvent.handlers.delete(handler);
+			}
 		},
 	};
 }

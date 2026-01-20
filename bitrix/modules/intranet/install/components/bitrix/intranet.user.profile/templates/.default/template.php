@@ -35,6 +35,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.avatar',
 	'ui.fonts.inter',
 	'intranet.transfer-to-intranet',
+	'intranet.push-otp.menu',
 ]);
 
 CJSCore::Init("loader");
@@ -87,17 +88,6 @@ if (
 	&& $arResult["User"]["STATUS"] !== "email"
 )
 {
-	if ($arResult["Permissions"]['edit'])
-	{
-		UI\Toolbar\Facade\Toolbar::addButton([
-			'text' => Loc::getMessage("INTRANET_USER_PROFILE_PASSWORDS"),
-			'color' => UI\Buttons\Color::LIGHT_BORDER,
-			'onclick' => new UI\Buttons\JsCode(
-				'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=auth"' . ', {width: 1100});'
-			),
-		]);
-	}
-
 	if (
 		$arResult["OTP_IS_ENABLED"] === "Y"
 		&& ($arResult["IsOwnProfile"] || $USER->CanDoOperation('security_edit_user_otp'))
@@ -109,6 +99,16 @@ if (
 			'onclick' => new UI\Buttons\JsCode(
 				'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=otpConnected"' . ', {width: 1100});'
 			),
+		]);
+	}
+	elseif ($arResult["Permissions"]['edit'])
+	{
+		UI\Toolbar\Facade\Toolbar::addButton([
+				'text' => Loc::getMessage("INTRANET_USER_PROFILE_PASSWORDS"),
+				'color' => UI\Buttons\Color::LIGHT_BORDER,
+				'onclick' => new UI\Buttons\JsCode(
+					'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=otpConnected"' . ', {width: 1100});'
+				),
 		]);
 	}
 }
@@ -229,6 +229,16 @@ if (
 			}
 			?>
 			<div class="<?= implode(' ', $classList) ?>" id="intranet-user-profile-userpic-avatar"></div>
+
+			<?php if (!$arResult["IsOwnProfile"] && isset($arResult['OTP']['dateDeactivate'], $arResult['OTP']['deactivateStatus'], $arResult['OTP']['deactivateTitle']) && $arResult['OTP']['dateDeactivate'] && $arResult['OTP']['deactivateStatus']): ?>
+			<div class="intranet-user-profile-otp-deactivate-status__wrapper">
+				<div class="intranet-user-profile-otp-deactivate__status">
+					<i class="ui-icon-set --shield-2-attention intranet-user-profile-otp-deactivate-status__icon"></i>
+					<span class="intranet-user-profile-otp-deactivate-status__title"><?= $arResult['OTP']['deactivateTitle'] ?></span>
+				</div>
+			</div>
+			<div class="intranet-user-profile-otp-deactivate-status__description"><?= $arResult['OTP']['deactivateStatus'] ?></div>
+			<?php endif; ?>
 
 			<?php
 			if (!$arResult["IsOwnProfile"] && $arResult["User"]["STATUS"] !== "email")
@@ -982,6 +992,8 @@ if ($arResult["adminRightsRestricted"])
 		userpicUploadAttribute: <?= \Bitrix\Main\Web\Json::encode(UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"])) ?>,
 		actionsAvailability: <?= \Bitrix\Main\Web\Json::encode($arResult['ACTIONS_AVAILABILITY']) ?>,
 		rootDepartment: <?= \Bitrix\Main\Web\Json::encode($arResult['ROOT_DEPARTMENT']) ?>,
+		workPosition: '<?= ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit']) ? \CUtil::JSEscape($arResult["User"]["WORK_POSITION"] ?? '') : '' ?>',
+		otp: <?= \CUtil::PhpToJSObject($arResult["OTP"] ?? []) ?>,
 	});
 </script>
 

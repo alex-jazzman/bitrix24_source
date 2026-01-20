@@ -10,14 +10,11 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'ui.vue3.components.popup',
-		'tasks.v2.lib.href-click',
 		'tasks.v2.provider.service.user-service',
-		'ui.icon-set.api.vue',
-		'ui.icon-set.api.core',
-		'ui.icon-set.outline',
+		'tasks.v2.component.elements.user-avatar',
 		'ui.tooltip',
 		'tasks.v2.component.elements.hover-pill',
-		'tasks.v2.component.elements.user-avatar',
+		'tasks.v2.component.elements.user-label',
 	],
 	'skip_core' => true,
 ];

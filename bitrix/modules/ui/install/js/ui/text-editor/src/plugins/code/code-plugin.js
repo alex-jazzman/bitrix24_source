@@ -27,6 +27,7 @@ import {
 	$createTextNode,
 	$isTextNode,
 	createCommand,
+	$getPreviousSelection,
 	type RangeSelection,
 	type LexicalCommand,
 	type LineBreakNode,
@@ -39,6 +40,7 @@ import { $setBlocksType } from 'ui.lexical.selection';
 import { $findMatchingParent, $insertNodeToNearestRoot } from 'ui.lexical.utils';
 
 import { getSelectedNode } from '../../helpers/get-selected-node';
+import { TextEditorLexicalNode } from '../../types/text-editor-lexical-node';
 
 import BasePlugin from '../base-plugin';
 import Button from '../../toolbar/button';
@@ -61,7 +63,13 @@ export type InsertCodePayload = {
 	content?: string,
 };
 
+/** @memberof BX.UI.TextEditor.Plugins.Code */
 export const FORMAT_CODE_COMMAND: LexicalCommand = createCommand('FORMAT_CODE_COMMAND');
+
+/** @memberof BX.UI.TextEditor.Plugins.Code */
+export const TOGGLE_CODE_COMMAND: LexicalCommand = createCommand('TOGGLE_CODE_COMMAND');
+
+/** @memberof BX.UI.TextEditor.Plugins.Code */
 export const INSERT_CODE_COMMAND: LexicalCommand<InsertCodePayload> = createCommand('INSERT_CODE_COMMAND');
 
 export class CodePlugin extends BasePlugin
@@ -256,7 +264,15 @@ export class CodePlugin extends BasePlugin
 
 					if (codeNode)
 					{
-						$insertDataTransferForPlainText(event.clipboardData, selection);
+						event.preventDefault();
+						this.getEditor().update(
+							() => {
+								$insertDataTransferForPlainText(event.clipboardData, selection);
+							},
+							{
+								tag: 'paste',
+							},
+						);
 
 						return true;
 					}
@@ -294,7 +310,7 @@ export class CodePlugin extends BasePlugin
 			this.getEditor().registerCommand(
 				FORMAT_CODE_COMMAND,
 				(): boolean => {
-					const selection: RangeSelection = $getSelection();
+					const selection: RangeSelection = $getSelection() || $getPreviousSelection();
 					if ($isRangeSelection(selection))
 					{
 						if (selection.isCollapsed())
@@ -313,6 +329,35 @@ export class CodePlugin extends BasePlugin
 								newSelection.insertRawText(textContent);
 							}
 						}
+					}
+
+					return true;
+				},
+				COMMAND_PRIORITY_EDITOR,
+			),
+			this.getEditor().registerCommand(
+				TOGGLE_CODE_COMMAND,
+				(): boolean => {
+					const selection: RangeSelection = $getSelection() || $getPreviousSelection();
+					if (!$isRangeSelection(selection))
+					{
+						return false;
+					}
+
+					const codeParent = $findMatchingParent(
+						selection.anchor.getNode(),
+						(node: TextEditorLexicalNode) => {
+							return ($isCodeNode(node) || $isCodeTokenNode(node));
+						},
+					);
+
+					if (codeParent)
+					{
+						this.getEditor().dispatchCommand(FORMAT_PARAGRAPH_COMMAND);
+					}
+					else
+					{
+						this.getEditor().dispatchCommand(FORMAT_CODE_COMMAND);
 					}
 
 					return true;

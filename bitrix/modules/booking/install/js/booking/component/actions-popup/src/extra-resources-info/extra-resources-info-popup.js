@@ -104,8 +104,8 @@ export const ExtraResourcesInfoPopup = {
 			:config
 			@close="closePopup"
 		>
-			<div class="booking--extra-resources-info_container">
-				<div class="booking--extra-resources-info_content">
+			<div class="booking__actions-popup-info_container">
+				<div class="booking__actions-popup-info_content">
 					<template v-for="resource in resources" :key="resource.id">
 						<ExtraResourcesInfoPopupItem
 							:title="resource.name"

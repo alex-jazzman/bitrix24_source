@@ -2,9 +2,9 @@
 $MESS["CALL_OPTIONS_CALL_SERVER_ENABLED_MSGVER_1"] = "Бейне қоңыраулар үшін Битрикс24 бұлттық SFU серверлерін пайдаланыңыз (белсенді лицензия қажет)";
 $MESS["CALL_OPTIONS_ERROR_PUBLIC_CHECK"] = "Көпшілікке арналған мекен-жайды тексеру кезінде қате пайда болды: #ERROR#";
 $MESS["CALL_OPTIONS_HEADER_REGISTRATION"] = "Тіркеу";
-$MESS["CALL_OPTIONS_JWT_SCHEME_DISABLE_NOTE"] = "JWT бейне қоңырау схемасы өшірілген - қоңырауды басқару және Copilot Follow-Up мүмкіндіктері қолжетімсіз";
+$MESS["CALL_OPTIONS_JWT_SCHEME_DISABLE_NOTE"] = "JWT бейне қоңырау схемасы өшірілген - қоңырауды басқару және CoPilot Follow-Up мүмкіндіктері қолжетімсіз";
 $MESS["CALL_OPTIONS_JWT_SCHEME_ENABLE"] = "Қоңырау шалу үшін JWT схемасын пайдаланыңыз";
-$MESS["CALL_OPTIONS_JWT_SCHEME_ENABLE_NOTE"] = "JWT бейне қоңырау схемасы қосылған. Бейне қоңырауларда қоңырауды басқару және Copilot Follow-Up мүмкіндіктері қолжетімді";
+$MESS["CALL_OPTIONS_JWT_SCHEME_ENABLE_NOTE"] = "JWT бейне қоңырау схемасы қосылған. Бейне қоңырауларда қоңырауды басқару және CoPilot Follow-Up мүмкіндіктері қолжетімді";
 $MESS["CALL_OPTIONS_JWT_SCHEME_ERROR"] = "Порталды тіркеу барысында қате пайда болды: #ERROR#";
 $MESS["CALL_OPTIONS_POPUP_REGISTER_SECRET_MESSAGE"] = "Кілт жаңартылған кезде барлық белсенді бейне қоңыраулар аяқталады";
 $MESS["CALL_OPTIONS_POPUP_REGISTER_SECRET_OK_BTN"] = "Жаңарту";

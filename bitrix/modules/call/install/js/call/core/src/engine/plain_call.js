@@ -2,11 +2,12 @@ import {Browser, Type, Runtime} from 'main.core';
 
 import {AbstractCall} from './abstract_call';
 import {CallEngine, CallState, CallEvent, UserState, Provider} from './engine';
-import {View} from '../view/view';
 import {SimpleVAD} from './simple_vad'
 import {Hardware} from '../call_hardware';
 import Util from '../util'
 import {MediaStreamsKinds} from '../call_api';
+import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { CallStreamManager } from '../media-stream-manager';
 
 const ajaxActions = {
 	invite: 'im.call.invite',
@@ -30,7 +31,7 @@ const pullEvents = {
 	iceCandidate: 'Call::iceCandidate',
 	voiceStarted: 'Call::voiceStarted',
 	voiceStopped: 'Call::voiceStopped',
-	recordState: 'Call::recordState',
+	commonRecordState: 'Call::commonRecordState',
 	microphoneState: 'Call::microphoneState',
 	cameraState: 'Call::cameraState',
 	videoPaused: 'Call::videoPaused',
@@ -78,7 +79,9 @@ const reinvitePeriod = 5500;
 
 export class PlainCall extends AbstractCall
 {
-	peers: {[key: number]: Peer}
+	peers: {[key: number]: Peer};
+
+	#isCloudRecordFeaturesEnabled: false;
 
 	constructor(params)
 	{
@@ -92,15 +95,6 @@ export class PlainCall extends AbstractCall
 		this.signaling = new Signaling({
 			call: this
 		});
-
-		this.recordState = {
-			state: 'stopped',
-			userId: 0,
-			date: {
-				start: null,
-				pause: []
-			},
-		}
 
 		this.deviceList = [];
 
@@ -123,9 +117,11 @@ export class PlainCall extends AbstractCall
 
 		this._reconnectionEventCount = 0;
 
+		this.#isCloudRecordFeaturesEnabled = DesktopApi.isDesktop() || false;
+		this.isCloudRecordActive = false;
+
 		this._isCopilotActive = false;
 		this._isCopilotFeaturesEnabled = false;
-		this._isRecordWhenCopilotActivePopupAlreadyShow = null;
 		this._isBoostExpired = false;
 
 		window.addEventListener('unload', this._onUnloadHandler);
@@ -176,16 +172,16 @@ export class PlainCall extends AbstractCall
 		}
 	}
 
-	get isRecordWhenCopilotActivePopupAlreadyShow()
+	get isCloudRecordFeaturesEnabled()
 	{
-		return this._isRecordWhenCopilotActivePopupAlreadyShow;
+		return this.#isCloudRecordFeaturesEnabled;
 	}
 
-	set isRecordWhenCopilotActivePopupAlreadyShow(isRecordWhenCopilotActivePopupAlreadyShow)
+	set isCloudRecordFeaturesEnabled(isCloudRecordFeaturesEnabled)
 	{
-		if (isRecordWhenCopilotActivePopupAlreadyShow !== this._isRecordWhenCopilotActivePopupAlreadyShow)
+		if (isCloudRecordFeaturesEnabled !== this.#isCloudRecordFeaturesEnabled)
 		{
-			this._isRecordWhenCopilotActivePopupAlreadyShow = isRecordWhenCopilotActivePopupAlreadyShow;
+			this.#isCloudRecordFeaturesEnabled = isCloudRecordFeaturesEnabled;
 		}
 	}
 
@@ -282,8 +278,12 @@ export class PlainCall extends AbstractCall
 
 		if (this.ready && hasVideoTracks !== this.videoEnabled)
 		{
-			this.replaceLocalMediaStream().then(() =>
+			if (!this.videoEnabled)
 			{
+				CallStreamManager.stopStream(MediaStreamsKinds.Camera);
+			}
+
+			this.replaceLocalMediaStream().then(() => {
 				this.signaling.sendCameraState(this.users, this.videoEnabled);
 			}).catch(() =>
 			{
@@ -384,18 +384,23 @@ export class PlainCall extends AbstractCall
 		this.videoHd = (flag === true);
 	};
 
-	sendRecordState(recordState)
+	/**
+	 * @param { Object } commonRecordState
+	 * @param { string } commonRecordState.action
+	 * @param { string } commonRecordState.type
+	 * @param { Date } commonRecordState.date
+	 */
+	sendLocalRecordState(commonRecordState)
 	{
-		recordState.senderId = this.userId;
-
-		if (!this.#changeRecordState(recordState))
+		if (!this.updateCommonRecordState({ ...commonRecordState, senderId: this.userId }))
 		{
-			return false;
+			return;
 		}
 
-		const users = [this.userId].concat(this.users);
-		this.signaling.sendRecordState(users, this.recordState);
-	};
+		const users = [this.userId, ...this.users];
+
+		this.signaling.sendLocalRecordState(users, this.commonRecordState);
+	}
 
 	stopSendingStream(tag)
 	{
@@ -563,42 +568,28 @@ export class PlainCall extends AbstractCall
 	 * @param constraintsArray array of constraints objects
 	 * @returns {Promise}
 	 */
-	getUserMedia(constraintsArray)
+	async getUserMedia(constraintsArray): Promise<MediaStream>
 	{
-		return new Promise(function (resolve, reject)
+		const currentConstraints = constraintsArray[0];
+
+		try
 		{
-			const currentConstraints = constraintsArray[0];
-			Hardware.getUserMedia(currentConstraints).then(
-				function (stream)
-				{
-					resolve(stream);
-				},
-				function (error)
-				{
-					this.log("getUserMedia error: ", error);
-					this.log("Current constraints", currentConstraints);
-					if (constraintsArray.length > 1)
-					{
-						this.getUserMedia(constraintsArray.slice(1)).then(
-							function (stream)
-							{
-								resolve(stream);
-							},
-							function (error)
-							{
-								reject(error);
-							}
-						)
-					}
-					else
-					{
-						this.log("Last fallback constraints used, failing");
-						reject(error);
-					}
-				}.bind(this)
-			)
-		}.bind(this))
-	};
+			return await CallStreamManager.getUserMedia(currentConstraints);
+		}
+		catch (error)
+		{
+			this.log('getUserMedia error: ', error);
+			this.log('Current constraints', currentConstraints);
+
+			if (constraintsArray.length > 1)
+			{
+				return this.getUserMedia(constraintsArray.slice(1));
+			}
+
+			this.log('Last fallback constraints used, failing');
+			throw error;
+		}
+	}
 
 	getLocalMediaStream(tag, fallbackToAudio)
 	{
@@ -634,9 +625,9 @@ export class PlainCall extends AbstractCall
 				constraintsArray.push(this.getMediaConstraints({videoEnabled: false}));
 			}
 
-			this.getUserMedia(constraintsArray).then((stream) =>
-			{
-				this.log("Local media stream received");
+			this.getUserMedia(constraintsArray).then((mediaStream) => {
+				this.log('Local media stream received');
+				const stream = mediaStream.clone();
 				this.localStreams[tag] = stream;
 				stream.getVideoTracks().forEach((track) =>
 				{
@@ -645,10 +636,10 @@ export class PlainCall extends AbstractCall
 					track.addEventListener("unmute", () => this.onLocalVideoTrackUnmute());
 				});
 
-                stream.getAudioTracks().forEach((track) =>
-                {
-                    track.addEventListener("ended", () => this.onLocalAudioTrackEnded())
-                });
+				stream.getAudioTracks().forEach((track) =>
+				{
+					track.addEventListener("ended", () => this.onLocalAudioTrackEnded())
+				});
 
 				this.runCallback(CallEvent.onLocalMediaReceived, {
 					tag: tag,
@@ -810,63 +801,16 @@ export class PlainCall extends AbstractCall
 		}
 	};
 
-	getDisplayMedia()
+	getDisplayMedia(): Promise<MediaStream>
 	{
-		return new Promise(function (resolve, reject)
-		{
-			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
-				Hardware.getUserMedia({
-					video: {
-						mandatory: {
-							chromeMediaSource: 'screen',
-							maxWidth: 1920,
-							maxHeight: 1080,
-							maxFrameRate: 5
-						}
-					}
-				}).then(
-					function (stream)
-					{
-						resolve(stream)
-					},
-					function (error)
-					{
-						reject(error)
-					}
-				);
-			}
-			else if (navigator.mediaDevices.getDisplayMedia)
-			{
-				navigator.mediaDevices.getDisplayMedia({
-					video: {
-						cursor: 'always',
-						width: {
-							ideal: 1920
-						},
-						height: {
-							ideal: 1080
-						}
-					},
-					systemAudio: "include",
-					audio: true,
-				}).then(
-					function (stream)
-					{
-						resolve(stream)
-					},
-					function (error)
-					{
-						reject(error)
-					}
-				)
-			}
-			else
-			{
-				console.error("Screen sharing is not supported");
-				reject("Screen sharing is not supported");
-			}
-		})
-	};
+		return new Promise((resolve, reject) => {
+			CallStreamManager.getUserScreen().then((stream) => {
+				resolve(stream);
+			}).catch((error) => {
+				reject(error);
+			});
+		});
+	}
 
 	startScreenSharing(changeSource)
 	{
@@ -916,61 +860,61 @@ export class PlainCall extends AbstractCall
 		})
 	};
 
-    onLocalVideoTrackEnded()
-    {
-        if (!this.localStreams["main"])
-        {
-            return;
-        }
+	onLocalVideoTrackEnded()
+	{
+		if (!this.localStreams["main"])
+		{
+			return;
+		}
 
-        Util.stopMediaStreamVideoTracks(this.localStreams["main"])
+		Util.stopMediaStreamVideoTracks(this.localStreams["main"])
 
-        this.runCallback(CallEvent.onLocalMediaReceived, {
-            tag: 'main',
-            stream: this.localStreams["main"]
-        });
+		this.runCallback(CallEvent.onLocalMediaReceived, {
+			tag: 'main',
+			stream: this.localStreams["main"]
+		});
 
-        if (!this.localStreams["main"].getAudioTracks().length)
-        {
-            this.localStreams["main"] = null;
-        }
+		if (!this.localStreams["main"].getAudioTracks().length)
+		{
+			this.localStreams["main"] = null;
+		}
 
-        for (let userId in this.peers)
-        {
-            if (this.peers[userId].calculatedState === UserState.Connected)
-            {
-                this.peers[userId].sendMedia();
-            }
-        }
-    }
+		for (let userId in this.peers)
+		{
+			if (this.peers[userId].calculatedState === UserState.Connected)
+			{
+				this.peers[userId].sendMedia();
+			}
+		}
+	}
 
-    onLocalAudioTrackEnded()
-    {
-        if (!this.localStreams["main"])
-        {
-            return;
-        }
+	onLocalAudioTrackEnded()
+	{
+		if (!this.localStreams["main"])
+		{
+			return;
+		}
 
-        Util.stopMediaStreamAudioTracks(this.localStreams["main"])
+		Util.stopMediaStreamAudioTracks(this.localStreams["main"])
 
-        this.runCallback(CallEvent.onLocalMediaReceived, {
-            tag: 'main',
-            stream: this.localStreams["main"]
-        });
+		this.runCallback(CallEvent.onLocalMediaReceived, {
+			tag: 'main',
+			stream: this.localStreams["main"]
+		});
 
 		if (!this.localStreams["main"].getVideoTracks().length)
 		{
-            this.localStreams["main"] = null;
-        }
+			this.localStreams["main"] = null;
+		}
 
-        for (let userId in this.peers)
-        {
-            if (this.peers[userId].calculatedState === UserState.Connected)
-            {
-                this.peers[userId].sendMedia();
-            }
-        }
-    }
+		for (let userId in this.peers)
+		{
+			if (this.peers[userId].calculatedState === UserState.Connected)
+			{
+				this.peers[userId].sendMedia();
+			}
+		}
+	}
 
 	onLocalVideoTrackMute()
 	{
@@ -1020,13 +964,19 @@ export class PlainCall extends AbstractCall
 
 	stopScreenSharing()
 	{
-		if (!this.localStreams["screen"])
+		const tag = 'screen';
+		const stream = this.localStreams[tag];
+
+		if (!stream)
 		{
 			return;
 		}
 
-		Util.stopMediaStream(this.localStreams["screen"])
-		this.localStreams["screen"] = null;
+		Util.stopMediaStream(stream);
+		CallStreamManager.stopStream(MediaStreamsKinds.Screen);
+		CallStreamManager.stopStream(MediaStreamsKinds.ScreenAudio);
+
+		this.localStreams[tag] = null;
 		this.runCallback(CallEvent.onUserScreenState, {
 			userId: this.userId,
 			screenState: false,
@@ -1403,65 +1353,6 @@ export class PlainCall extends AbstractCall
 		}
 	};
 
-	#changeRecordState(params)
-	{
-		if (params.action !== View.RecordState.Started && this.recordState.userId != params.senderId)
-		{
-			return false;
-		}
-
-		if (params.action === View.RecordState.Started)
-		{
-			if (this.recordState.state !== View.RecordState.Stopped)
-			{
-				return false;
-			}
-
-			this.recordState.state = View.RecordState.Started;
-			this.recordState.userId = params.senderId;
-			this.recordState.date.start = params.date;
-			this.recordState.date.pause = [];
-		}
-		else if (params.action === View.RecordState.Paused)
-		{
-			if (this.recordState.state !== View.RecordState.Started)
-			{
-				return false;
-			}
-
-			this.recordState.state = View.RecordState.Paused;
-			this.recordState.date.pause.push(
-				{start: params.date, finish: null}
-			);
-		}
-		else if (params.action === View.RecordState.Resumed)
-		{
-			if (this.recordState.state !== View.RecordState.Paused)
-			{
-				return false;
-			}
-
-			this.recordState.state = View.RecordState.Started;
-			const pauseElement = this.recordState.date.pause.find(function (element)
-			{
-				return element.finish === null;
-			});
-			if (pauseElement)
-			{
-				pauseElement.finish = params.date;
-			}
-		}
-		else if (params.action === View.RecordState.Stopped)
-		{
-			this.recordState.state = View.RecordState.Stopped;
-			this.recordState.userId = 0;
-			this.recordState.date.start = null;
-			this.recordState.date.pause = [];
-		}
-
-		return true;
-	}
-
 	__onPullEvent(command, params, extra)
 	{
 		const handlers = {
@@ -1477,7 +1368,7 @@ export class PlainCall extends AbstractCall
 			'Call::microphoneState': this.#onPullEventMicrophoneState.bind(this),
 			'Call::cameraState': this.#onPullEventCameraState.bind(this),
 			'Call::videoPaused': this.#onPullEventVideoPaused.bind(this),
-			'Call::recordState': this.#onPullEventRecordState.bind(this),
+			'Call::commonRecordState': this.#onPullEventRecordState.bind(this),
 			'Call::usersJoined': this.#onPullEventUsersJoined.bind(this),
 			'Call::usersInvited': this.#onPullEventUsersInvited.bind(this),
 			'Call::userInviteTimeout': this.#onPullEventUserInviteTimeout.bind(this),
@@ -1774,9 +1665,9 @@ export class PlainCall extends AbstractCall
 
 	#onPullEventRecordState(params)
 	{
-		this.runCallback(CallEvent.onUserRecordState, {
+		this.runCallback(CallEvent.onUserCommonRecordState, {
 			userId: params.senderId,
-			recordState: params.recordState
+			commonRecordState: params.commonRecordState
 		})
 	};
 
@@ -2089,16 +1980,16 @@ class Signaling
 		}
 	};
 
-	sendRecordState(users, recordState)
+	sendLocalRecordState(users, commonRecordState)
 	{
 		if (CallEngine.getPullClient().isPublishingSupported())
 		{
-			return this.#sendPullEvent(pullEvents.recordState, {
+			this.#sendPullEvent(pullEvents.commonRecordState, {
 				userId: users,
-				recordState: recordState
+				commonRecordState,
 			}, 0);
 		}
-	};
+	}
 
 	sendPingToUsers(data)
 	{
@@ -3131,8 +3022,9 @@ class Peer
 		this.peerConnection = null;
 		this.peerConnectionId = null;
 		this.videoSender = null;
-		this.screenSender = null;
 		this.audioSender = null;
+		this.screenSender = null;
+		this.screenAudioSender = null;
 		this.incomingAudioTrack = null;
 		this.incomingScreenAudioTrack = null;
 		this.incomingVideoTrack = null;
@@ -3584,14 +3476,35 @@ class Peer
 			})
 			.finally(() => {
 				this.pendingRemoteSdpDelay = false;
-				if (this.pendingRemoteSdp) {
+				if (this.pendingRemoteSdp)
+				{
 					this.applyOfferAndSendAnswer(this.pendingRemoteSdp);
 					this.pendingRemoteSdp = null;
 				}
 
-			})
-		;
-	};
+				const activeTransceivers = this.peerConnection?.getTransceivers()
+					.reduce((sum, transceiver) => {
+						return transceiver.mid === null ? sum : sum + 1;
+					}, 0);
+
+				let activeTracks = 0;
+				Object.values(this.call.localStreams).forEach((stream) => {
+					stream?.getTracks().forEach((track) => {
+						if (track.readyState === 'live')
+						{
+							activeTracks++;
+						}
+					});
+				});
+
+				if (activeTransceivers < activeTracks)
+				{
+					Object.values(this.call.peers).forEach((peer) => {
+						peer.sendMedia();
+					});
+				}
+			});
+	}
 
 	setConnectionAnswer(connectionId, sdp, trackList)
 	{

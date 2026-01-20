@@ -24,3 +24,5 @@ $MESS["BIZPROC_OPT_TIME_LIMIT_H"] = "часов";
 $MESS["BIZPROC_OPT_TIME_LIMIT_D"] = "дней";
 $MESS["BIZPROC_AUTOMATION_NO_FORCED_TRACKING"] = "Не сохранять в лог статусы роботов";
 $MESS["BIZPROC_OPT_ENABLE_GETDOCUMENT_SELECT"] = "Оптимизировать загрузку полей документа";
+$MESS["BIZPROC_OPT_STORAGE_ITEMS_CLEANUP_DAYS"] = "Время хранения данных в хранилище (дней)";
+$MESS["BIZPROC_OPT_STORAGE_ITEM_DATA_LIMIT"] = "Лимит на количество данных в одной записи хранилища (МБ)";

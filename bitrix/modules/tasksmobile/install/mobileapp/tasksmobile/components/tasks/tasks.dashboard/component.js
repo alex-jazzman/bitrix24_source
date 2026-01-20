@@ -60,6 +60,7 @@
 	const { Alert, makeButton, makeDestructiveButton } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
 	const { Link4, LinkMode, LinkDesign } = require('ui-system/blocks/link');
+	const { Onboarding, CaseName } = require('tasks/onboarding');
 
 	class TasksDashboard extends LayoutComponent
 	{
@@ -698,6 +699,11 @@
 
 			if (items.length > 0)
 			{
+				void Onboarding.tryToShowCasesBatch([
+					{ id: CaseName.MORE_THAN_THREE_TASKS },
+					{ id: CaseName.MORE_THAN_SIX_TASKS },
+				]);
+
 				const payload = {
 					tasks: items,
 					ownerId: this.props.ownerId,
@@ -869,7 +875,7 @@
 			}
 		}
 
-		onItemLongClick(itemId, itemData, params)
+		async onItemLongClick(itemId, itemData, params)
 		{
 			const task = selectByTaskIdOrGuid(store.getState(), itemId, this.props.ownerId);
 			if (task.isCreationErrorExist)
@@ -902,8 +908,22 @@
 				delete actions[ActionMenu.action.unpin];
 			}
 
-			const isCurrentUser = this.props.ownerId === this.props.currentUserId;
+			const { RunActionExecutor } = require('rest/run-action-executor');
+			const actionResponse = await new Promise((resolve) => {
+				void new RunActionExecutor('tasksmobile.Settings.isChatFeatureEnabled')
+					.setSkipRequestIfCacheExists()
+					.setCacheTtl(1800)
+					.setCacheHandler((response) => resolve(response))
+					.setHandler((response) => resolve(response))
+					.call(true)
+				;
+			});
+			if (actionResponse?.status === 'success' && actionResponse.data)
+			{
+				delete actions[ActionMenu.action.openChat];
+			}
 
+			const isCurrentUser = this.props.ownerId === this.props.currentUserId;
 			const actionMenu = new ActionMenu({
 				task,
 				actions: Object.keys(actions),

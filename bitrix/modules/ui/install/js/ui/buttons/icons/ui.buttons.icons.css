@@ -1823,3 +1823,9 @@
 	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-workflow-stop-dark.svg);
 }
 /* endregion */
+
+.ui-btn.ui-btn-icon-key.--air,
+.ui-btn-split.ui-btn-icon-key.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-key {
+	--ui-btn-icon: var(--o-ui-icon-set__path_key);
+}

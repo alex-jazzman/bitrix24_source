@@ -8,6 +8,7 @@ return [
 		'call:calls/engine',
 		'call:calls-card',
 		'in-app-url',
+		'call:calls/voximplant'
 	],
 	'components' => [],
 ];

@@ -1,16 +1,24 @@
-import { Event, Runtime } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { mapGetters } from 'ui.vue3.vuex';
-import { BMenu, MenuItemDesign, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
+import { BMenu, MenuItemDesign, type MenuOptions, type MenuItemOptions } from 'ui.system.menu.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { EventName, Model, TaskStatus } from 'tasks.v2.const';
-import { responsibleMeta } from 'tasks.v2.component.fields.responsible';
-import { EntitySelectorDialog } from 'tasks.v2.lib.entity-selector-dialog';
+import { TaskCard } from 'tasks.v2.application.task-card';
+import { EventName, GroupType, Model, TaskStatus } from 'tasks.v2.const';
+import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
+import { showLimit } from 'tasks.v2.lib.show-limit';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { templateService } from 'tasks.v2.provider.service.template-service';
 import { statusService } from 'tasks.v2.provider.service.status-service';
+import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel } from 'tasks.v2.model.tasks';
+import type { CoreParams } from 'tasks.v2.core';
+
+import { ButtonId } from '../footer-edit-const';
+import type { ButtonOptions } from '../footer-edit';
 
 import './more.css';
 
@@ -18,38 +26,53 @@ import './more.css';
 export const More = {
 	name: 'TaskFullCardMoreActionsStatus',
 	components: {
-		BIcon,
+		UiButton,
 		BMenu,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+		isTemplate: {},
+		settings: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
+		selectedButtons: {
+			type: Array,
+			default: () => ([]),
 		},
 	},
-	setup(): Object
+	setup(): {
+		Outline: typeof Outline,
+		AirButtonStyle: typeof AirButtonStyle,
+		ButtonSize: typeof ButtonSize,
+		task: TaskModel,
+		settings: CoreParams,
+		}
 	{
 		return {
 			Outline,
+			AirButtonStyle,
+			ButtonSize,
 		};
 	},
-	data(): Object
+	data(): { isMenuShown: boolean, loading: boolean }
 	{
 		return {
 			isMenuShown: false,
+			loading: false,
 		};
 	},
 	computed: {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
 		}),
-		task(): TaskModel
+		group(): ?GroupModel
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
 		},
-		preselected(): [string, number][]
+		isScrum(): boolean
 		{
-			return [['user', this.task.responsibleId || this.currentUserId]];
+			return this.group?.type === GroupType.Scrum;
 		},
 		isCreator(): boolean
 		{
@@ -57,97 +80,97 @@ export const More = {
 		},
 		isResponsible(): boolean
 		{
-			return this.currentUserId === this.task.responsibleId;
+			return (
+				this.task.responsibleIds.includes(this.currentUserId)
+				|| this.task.accomplicesIds?.includes(this.currentUserId)
+			);
 		},
 		menuOptions(): Function
 		{
 			return (): MenuOptions => ({
 				id: 'tasks-full-card-footer-more-menu',
-				bindElement: this.$refs.button.$el,
+				bindElement: this.$refs.button,
 				items: this.menuItems,
 			});
 		},
 		menuItems(): MenuItemOptions[]
 		{
+			if (this.isTemplate)
+			{
+				return [
+					this.getCreateSubtaskForTemplate(),
+					// todo: Uncomment after creating template copy V2 API
+					// this.getCopyTemplate(),
+					this.getDeleteTemplate(),
+				];
+			}
+
 			const statuses = {
-				[TaskStatus.Pending]: {
-					[this.isResponsible]: [
-						this.getCompleteItem(),
-						this.getDefferItem(),
-						this.getDelegateItem(),
-					],
-					[this.isCreator]: [
-						this.getDefferItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-					[this.isResponsible && this.isCreator]: [
-						this.getCompleteItem(),
-						this.getDefferItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-				},
-				[TaskStatus.InProgress]: {
-					[this.isResponsible]: [
-						this.getPauseItem(),
-						this.getDefferItem(),
-						this.getDelegateItem(),
-					],
-					[this.isCreator]: [
-						this.getDefferItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-					[this.isResponsible && this.isCreator]: [
-						this.getPauseItem(),
-						this.getDefferItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-				},
-				[TaskStatus.Deferred]: {
-					[this.isResponsible]: [
-						this.getCompleteItem(),
-						this.getDelegateItem(),
-					],
-					[this.isCreator]: [
-						this.getCompleteItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-				},
-				[TaskStatus.SupposedlyCompleted]: {
-					[this.isResponsible]: [
-						this.getFixItem(),
-						this.getDelegateItem(),
-					],
-					[this.isCreator]: [
-						this.getDisapproveItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-					[this.isResponsible && this.isCreator]: [
-						this.getCompleteItem(),
-						this.getDelegateItem(),
-						this.getDeleteItem(),
-					],
-				},
-				[TaskStatus.Completed]: {
-					[this.isCreator]: [
-						this.getRenewItem(),
-						this.getDeleteItem(),
-					],
-				},
+				[TaskStatus.Pending]: [
+					this.getCompleteItem(),
+					this.getDefferItem(),
+					this.getDelegateItem(),
+					this.getDeleteItem(),
+					this.getStartItem(),
+				],
+				[TaskStatus.InProgress]: [
+					this.getPauseItem(),
+					this.getDefferItem(),
+					this.getDelegateItem(),
+					this.getDeleteItem(),
+				],
+				[TaskStatus.Deferred]: [
+					this.getDelegateItem(),
+					this.getDeleteItem(),
+					this.getCompleteItem(),
+				],
+				[TaskStatus.SupposedlyCompleted]: [
+					this.getFixItem(),
+					this.getDelegateItem(),
+					this.getDisapproveItem(),
+					this.getDeleteItem(),
+				],
+				[TaskStatus.Completed]: [
+					this.getRenewItem(),
+					this.getDeleteItem(),
+				],
 			};
 
-			return statuses[this.task.status].true;
+			const items = statuses[this.task.status] || [];
+
+			return items.filter((item) => item !== null);
+		},
+		selectedButtonIds(): Set
+		{
+			return new Set(this.selectedButtons.map((button: ButtonOptions) => button?.id));
+		},
+		isDelegateLocked(): boolean
+		{
+			return !this.settings.restrictions.delegating.available;
 		},
 	},
 	methods: {
 		handleClick(): void
 		{
 			this.isMenuShown = true;
+		},
+		getStartItem(): MenuItemOptions
+		{
+			if (!this.task.rights.start)
+			{
+				return null;
+			}
+
+			if (this.selectedButtonIds.has(ButtonId.Start))
+			{
+				return null;
+			}
+
+			return {
+				title: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
+				icon: Outline.PLAY_L,
+				onClick: (): void => this.waitStatus(statusService.start(this.taskId)),
+			};
 		},
 		getDefferItem(): MenuItemOptions
 		{
@@ -159,7 +182,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_DEFER'),
 				icon: Outline.PAUSE_L,
-				onClick: (): void => statusService.defer(this.taskId),
+				onClick: (): void => this.waitStatus(statusService.defer(this.taskId)),
 			};
 		},
 		getPauseItem(): MenuItemOptions
@@ -169,10 +192,15 @@ export const More = {
 				return null;
 			}
 
+			if (this.selectedButtonIds.has(ButtonId.Pause))
+			{
+				return null;
+			}
+
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_PAUSE'),
-				icon: Outline.STOP_L,
-				onClick: (): void => statusService.pause(this.taskId),
+				icon: Outline.HOURGLASS,
+				onClick: (): void => this.waitStatus(statusService.pause(this.taskId)),
 			};
 		},
 		getRenewItem(): MenuItemOptions
@@ -182,10 +210,15 @@ export const More = {
 				return null;
 			}
 
+			if (this.selectedButtonIds.has(ButtonId.Renew))
+			{
+				return null;
+			}
+
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_RENEW'),
 				icon: Outline.UNDO,
-				onClick: (): void => statusService.renew(this.taskId),
+				onClick: (): void => this.waitStatus(statusService.renew(this.taskId)),
 			};
 		},
 		getFixItem(): MenuItemOptions
@@ -198,7 +231,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_FIX'),
 				icon: Outline.UNDO,
-				onClick: (): void => statusService.renew(this.taskId),
+				onClick: (): void => this.waitStatus(statusService.renew(this.taskId)),
 			};
 		},
 		getDisapproveItem(): MenuItemOptions
@@ -211,7 +244,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE'),
 				icon: Outline.UNDO,
-				onClick: (): void => statusService.disapprove(this.taskId),
+				onClick: (): void => this.waitStatus(statusService.disapprove(this.taskId)),
 			};
 		},
 		getCompleteItem(): MenuItemOptions
@@ -221,10 +254,15 @@ export const More = {
 				return null;
 			}
 
+			if (this.selectedButtonIds.has(ButtonId.Complete))
+			{
+				return null;
+			}
+
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 				icon: Outline.SENDED,
-				onClick: (): void => statusService.complete(this.taskId),
+				onClick: (): void => this.handleCompleteSelect(),
 			};
 		},
 		getDelegateItem(): MenuItemOptions
@@ -235,32 +273,37 @@ export const More = {
 			}
 
 			return {
-				title: this.loc('TASKS_V2_TASK_FULL_CARD_DELEGATE'),
 				icon: Outline.DELEGATE,
-				onClick: (): void => {
-					const onItemChangeDebounced = Runtime.debounce(this.handleDelegateSelect, 10, this);
-
-					this.dialog ??= new EntitySelectorDialog({
-						...responsibleMeta.dialogOptions(this.$options.name),
-						preselectedItems: this.preselected,
-						events: {
-							'Item:onSelect': onItemChangeDebounced,
-							'Item:onDeselect': onItemChangeDebounced,
-						},
-					});
-					this.dialog.selectItemsByIds(this.preselected);
-					this.dialog.showTo(this.$refs.button.$el);
-				},
+				title: this.loc('TASKS_V2_TASK_FULL_CARD_DELEGATE'),
+				isLocked: this.isDelegateLocked,
+				onClick: (): void => this.handleDelegateSelect(),
 			};
 		},
-		handleDelegateSelect(): void
+		handleClose(usersIds: number[]): void
 		{
-			const responsibleId = this.dialog.getSelectedItems()[0]?.getId() ?? 0;
+			void taskService.update(this.taskId, { responsibleIds: [usersIds[0] ?? 0] });
+		},
+		async handleCompleteSelect(): void
+		{
+			await this.waitStatus(statusService.complete(this.taskId));
+		},
+		async handleDelegateSelect(): void
+		{
+			if (this.isDelegateLocked)
+			{
+				void showLimit({
+					featureId: this.settings.restrictions.delegating.featureId,
+				});
 
-			void taskService.update(
-				this.taskId,
-				{ responsibleId },
-			);
+				return;
+			}
+
+			void usersDialog.show({
+				targetNode: this.$refs.button,
+				ids: this.task.responsibleIds,
+				isMultiple: false,
+				onClose: this.handleClose,
+			});
 		},
 		getDeleteItem(): MenuItemOptions
 		{
@@ -275,20 +318,93 @@ export const More = {
 				icon: Outline.TRASHCAN,
 				onClick: (): void => {
 					void taskService.delete(this.taskId);
-					Event.EventEmitter.emit(EventName.CloseFullCard, { taskId: this.taskId });
+					EventEmitter.emit(EventName.CloseFullCard, { taskId: this.taskId });
+				},
+			};
+		},
+		async waitStatus(statusPromise: Promise): Promise<void>
+		{
+			this.loading = true;
+			await statusPromise;
+			this.loading = false;
+		},
+		getCreateSubtaskForTemplate(): MenuItemOptions | null
+		{
+			if (!this.settings.rights.templates.create)
+			{
+				return null;
+			}
+
+			const isLocked = !this.settings.restrictions.templatesSubtasks.available;
+
+			return {
+				isLocked,
+				title: this.loc('TASKS_V2_TASK_TEMPLATE_CREATE_SUBTASK'),
+				icon: Outline.RELATED_TASKS,
+				onClick: (): void => {
+					if (isLocked)
+					{
+						void showLimit({
+							featureId: this.settings.restrictions.templatesSubtasks.featureId,
+						});
+
+						return;
+					}
+
+					TaskCard.showCompactCard({
+						taskId: 'template0',
+						groupId: this.task.groupId,
+						parentId: this.taskId,
+					});
+				},
+			};
+		},
+		getCopyTemplate(): MenuItemOptions | null
+		{
+			if (!this.settings.rights.templates.create)
+			{
+				return null;
+			}
+
+			return {
+				title: this.loc('TASKS_V2_TASK_TEMPLATE_COPY'),
+				icon: Outline.COPY,
+				onClick: (): void => TaskCard.showFullCard({ taskId: 'template0', copiedFromId: idUtils.unbox(this.taskId) }),
+			};
+		},
+		getDeleteTemplate(): MenuItemOptions | null
+		{
+			if (!this.task.rights.remove)
+			{
+				return null;
+			}
+
+			return {
+				design: MenuItemDesign.Alert,
+				title: this.loc('TASKS_V2_TASK_TEMPLATE_DELETE'),
+				icon: Outline.TRASHCAN,
+				onClick: async (): Promise<void> => {
+					await templateService.delete(this.taskId);
+					EventEmitter.emit(EventName.CloseFullCard, {
+						taskId: this.taskId,
+					});
 				},
 			};
 		},
 	},
 	template: `
-		<BIcon
-			v-if="menuItems"
-			class="tasks-full-card-footer-more"
-			:name="Outline.MORE_L"
-			data-task-more-button
-			ref="button"
-			@click="handleClick"
-		/>
+		<div ref="button">
+			<UiButton
+				v-if="menuItems.length > 0"
+				:size="ButtonSize.LARGE"
+				:style="AirButtonStyle.PLAIN"
+				:leftIcon="Outline.MORE_L"
+				:loading
+				:dataset="{ taskButtonId: 'more' }"
+				ref="button"
+				@click="handleClick"
+			/>
+		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
 	`,
 };

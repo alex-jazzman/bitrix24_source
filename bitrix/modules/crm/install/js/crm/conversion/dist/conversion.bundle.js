@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_integration_analytics,ui_analytics,ui_dialogs_messagebox,ui_forms,crm_categoryModel,ui_buttons,ui_entitySelector,main_core,main_core_events,main_popup) {
+(function (exports,crm_integration_analytics,ui_analytics,ui_dialogs_messagebox,ui_forms,crm_categoryModel,ui_entitySelector,main_core,main_core_events,main_popup,ui_buttons) {
 	'use strict';
 
 	var _active = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("active");
@@ -579,14 +579,14 @@ this.BX = this.BX || {};
 	    const schemeItem = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getScheme().getCurrentItem();
 	    if (!schemeItem) {
 	      console.error('Scheme is not found', this);
-	      return;
+	      return Promise.reject();
 	    }
 	    if (main_core.Type.isStringFilled(schemeItem.getAvailabilityLock())) {
 	      // eslint-disable-next-line no-eval
 	      eval(schemeItem.getAvailabilityLock());
-	      return;
+	      return Promise.reject();
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _collectAdditionalData)[_collectAdditionalData](schemeItem).then(result => {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _collectAdditionalData)[_collectAdditionalData](schemeItem).then(result => {
 	      if (result.isCanceled) {
 	        // pass it to next 'then' handler
 	        return result;
@@ -1230,10 +1230,12 @@ this.BX = this.BX || {};
 	var _menuId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuId");
 	var _isAutoConversionEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAutoConversionEnabled");
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _waiting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("waiting");
 	var _initUI = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initUI");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
 	var _handleContainerClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleContainerClick");
+	var _getButtonContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonContainer");
 	var _handleMenuButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleMenuButtonClick");
 	var _showMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showMenu");
 	var _closeMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeMenu");
@@ -1259,6 +1261,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _handleMenuButtonClick, {
 	      value: _handleMenuButtonClick2
+	    });
+	    Object.defineProperty(this, _getButtonContainer, {
+	      value: _getButtonContainer2
 	    });
 	    Object.defineProperty(this, _handleContainerClick, {
 	      value: _handleContainerClick2
@@ -1304,6 +1309,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: {}
 	    });
+	    Object.defineProperty(this, _waiting, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1] = converter;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2] = Number(params.entityId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = document.getElementById(params.containerId);
@@ -1340,6 +1349,18 @@ this.BX = this.BX || {};
 	  disableAutoConversion() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] = false;
 	  }
+	  setWaiting(waiting = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _waiting)[_waiting] = waiting;
+	    const button = babelHelpers.classPrivateFieldLooseBase(this, _getButtonContainer)[_getButtonContainer]();
+	    if (!button) {
+	      return;
+	    }
+	    if (waiting) {
+	      main_core.Dom.addClass(button, ui_buttons.ButtonState.WAITING);
+	    } else {
+	      main_core.Dom.removeClass(button, ui_buttons.ButtonState.WAITING);
+	    }
+	  }
 	}
 	function _initUI2() {
 	  const currentSchemeItem = babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getConfig().getScheme().getCurrentItem();
@@ -1356,6 +1377,9 @@ this.BX = this.BX || {};
 	  main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _menuButton)[_menuButton], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleMenuButtonClick)[_handleMenuButtonClick].bind(this));
 	}
 	function _handleContainerClick2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _waiting)[_waiting]) {
+	    return;
+	  }
 	  const event = new main_core_events.BaseEvent({
 	    data: {
 	      isCanceled: false
@@ -1365,11 +1389,23 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getConfig().updateFromSchemeItem();
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] && !event.getData().isCanceled) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].setAnalyticsElement(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].c_element);
-	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].convert(babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2]);
+	    this.setWaiting();
+	    void babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].convert(babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2]).finally(() => this.setWaiting(false));
 	  }
 	}
+	function _getButtonContainer2() {
+	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], ui_buttons.Button.BASE_CLASS) || main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], ui_buttons.SplitButton.BASE_CLASS)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
+	  }
+	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].parentNode, ui_buttons.Button.BASE_CLASS) || main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].parentNode, ui_buttons.SplitButton.BASE_CLASS)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].parentNode;
+	  }
+	  return null;
+	}
 	function _handleMenuButtonClick2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _showMenu)[_showMenu]();
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _waiting)[_waiting]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showMenu)[_showMenu]();
+	  }
 	}
 	function _showMenu2() {
 	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
@@ -1456,5 +1492,5 @@ this.BX = this.BX || {};
 
 	exports.Conversion = Conversion;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.Dialogs,BX,BX.Crm.Models,BX.UI,BX.UI.EntitySelector,BX,BX.Event,BX.Main));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.Dialogs,BX,BX.Crm.Models,BX.UI.EntitySelector,BX,BX.Event,BX.Main,BX.UI));
 //# sourceMappingURL=conversion.bundle.js.map

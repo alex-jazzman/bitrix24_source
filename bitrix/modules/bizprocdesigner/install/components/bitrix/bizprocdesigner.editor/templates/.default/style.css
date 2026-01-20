@@ -1,0 +1,37 @@
+body {
+	margin: 0;
+}
+
+.bizprocdesigner-editor-container-wrapper {
+	color: #000;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
+	font-size: 14px !important;
+	-webkit-font-smoothing: antialiased !important;
+	-moz-osx-font-smoothing: grayscale !important;
+	height: auto !important;
+	width: auto !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	min-width: auto !important;
+	min-height: 100% !important;
+	box-sizing: border-box !important;
+}
+
+#bizprocdesigner-editor-container {
+	height: 100vh;
+}
+
+#bizprocdesigner-editor {
+	height: 100%;
+}
+
+.bizprocdesigner-editor__popup .bizprocdesigner-editor-access-setting-popup-icon-box {
+	display: flex;
+	align-items: center;
+	color: var(--ui-color-base-90);
+}
+
+.bizprocdesigner-editor__popup .bizprocdesigner-editor-access-setting-popup-icon-box .ui-icon-set {
+	margin-right: 9px;
+	--ui-icon-set__icon-color: var(--ui-color-base-90);
+}

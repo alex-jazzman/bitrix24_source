@@ -23,7 +23,7 @@
 
 
 .crm-entity-stream-content-new-detail.crm-entity-stream-content-new-detail-gotochat{
-	padding: 16px 25px;
+	padding: 0 25px 16px 25px;
 }
 
 .crm-entity-stream-content-new-detail-gotochat.--skeleton
@@ -33,6 +33,7 @@
 
 .crm-entity-stream-content-new-detail-gotochat-container.hidden{
 	opacity: 0;
+	pointer-events: none;
 }
 
 .crm-entity-stream-content-gotochat-settings-container{
@@ -398,7 +399,7 @@
 }
 
 .crm-entity-stream-content-whatsapp-container {
-	padding: 18px 18px 10px 18px;
+	padding: 0 18px 10px 18px;
 }
 
 .crm-entity-stream-content-whatsapp-header {

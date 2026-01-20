@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_SETTINGS_ALL_WEEKDAY_SELECTED_ERROR"] = "Кестеде кем дегенде бір жұмыс күні болуы керек";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_HOLIDAYS"] = "Сіз кез келген мереке мен демалыс күндерін қоса аласыз";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEKEND"] = "Демалыс күндері";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEK_START"] = "Күнтізбеде аптаның бірінші күні қандай екенін көрсету";

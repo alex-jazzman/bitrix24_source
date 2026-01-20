@@ -330,6 +330,7 @@ jn.define('project/member', (require, exports, module) => {
 			void UserProfile.open({
 				ownerId: this.id,
 				parentWidget: widget,
+				analyticsSection: 'project_member',
 			});
 		}
 

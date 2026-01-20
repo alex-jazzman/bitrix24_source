@@ -12,7 +12,7 @@ var { Theme } = jn.require('im/lib/theme');
 var { Feature } = jn.require('im/messenger/lib/feature');
 var { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
 
-var REVISION = 21; // api revision - sync with im/lib/revision.php
+var REVISION = 22; // api revision - sync with im/lib/revision.php
 
 /* Clean session variables after page restart */
 BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
@@ -3899,16 +3899,16 @@ RecentList.event.init = function()
 	this.lastSearchList = [];
 
 	this.handlersList =	{
-		onItemSelected: this.onItemSelected,
-		onItemAction: this.onItemAction,
-		onRefresh: this.onRefresh,
-		onScrollAtTheTop: this.onScrollAtTheTop,
-		onSearchShow: this.search.onSearchShow,
-		onSearchHide: this.search.onSearchHide,
-		onScopeSelected: this.search.ui.onScopeSelected,
-		onUserTypeText: this.search.ui.onUserTypeText,
-		onSearchItemSelected: this.search.ui.onSearchItemSelected,
-		onScroll: ChatUtils.throttle(this.onScroll, 50, this),
+		onItemSelected: this.onItemSelected.bind(this),
+		onItemAction: this.onItemAction.bind(this),
+		onRefresh: this.onRefresh.bind(this),
+		onScrollAtTheTop: this.onScrollAtTheTop.bind(this),
+		onSearchShow: this.search.onSearchShow.bind(this),
+		onSearchHide: this.search.onSearchHide.bind(this),
+		onScopeSelected: this.search.ui.onScopeSelected.bind(this.search.ui),
+		onUserTypeText: this.search.ui.onUserTypeText.bind(this.search.ui),
+		onSearchItemSelected: this.search.ui.onSearchItemSelected.bind(this.search.ui),
+		onScroll: ChatUtils.throttle(this.onScroll, 50, this).bind(this),
 	};
 
 	this.handlersCustomEventList =	{
@@ -3924,35 +3924,14 @@ RecentList.event.init = function()
 		'CallEvents::inactive': this.callInactive,
 	};
 
-	dialogList.setListener(this.router.bind(this));
+	for (const eventName in this.handlersList)
+	{
+		dialogList.on(eventName, this.handlersList[eventName]);
+	}
 
 	for (const eventName in this.handlersCustomEventList)
 	{
 		BX.addCustomEvent(eventName, this.handlersCustomEventList[eventName].bind(this));
-	}
-};
-
-RecentList.event.router = function(eventName, listElement)
-{
-	if (this.handlersList[eventName])
-	{
-		if (eventName != 'onUserTypeText' && eventName != 'onScroll')
-		{
-			console.log(`RecentList.event.router: catch event - ${eventName}`, listElement);
-		}
-
-		if (eventName === 'onScopeSelected' || eventName === 'onUserTypeText' || eventName === 'onSearchItemSelected')
-		{
-			this.handlersList[eventName].apply(this.search.ui, [listElement]);
-		}
-		else
-		{
-			this.handlersList[eventName].apply(this, [listElement]);
-		}
-	}
-	else if (this.debug)
-	{
-		console.info(`RecentList.event.router: skipped event - ${eventName}`, listElement);
 	}
 };
 
@@ -4168,6 +4147,7 @@ RecentList.event.onScrollAtTheTop = function()
 
 RecentList.event.onScroll = function(event)
 {
+	console.warn('onScroll', event, this);
 	if (this.base.isReadyToLoadMore(event))
 	{
 		this.base.isLoadingNextElements = true;

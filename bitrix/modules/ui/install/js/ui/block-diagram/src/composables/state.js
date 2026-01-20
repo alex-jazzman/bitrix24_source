@@ -20,6 +20,7 @@ export function useState(): State
 		portsRectMap: {},
 
 		newConnection: null,
+		isValidNewConnection: true,
 
 		movingBlock: null,
 		movingConnections: [],

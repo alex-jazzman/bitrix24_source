@@ -39,6 +39,7 @@ Extension::load([
 	'ui.analytics',
 	'main.loader',
 	'intranet.theme-picker.dialog',
+	'intranet.notify-banner.push-otp',
 ]);
 $APPLICATION->SetPageProperty('BodyClass', 'intranet-settings-iframe-popup');
 // TODO delete after release train 30.08.2023
@@ -66,7 +67,6 @@ $this->EndViewTarget();
 ?>
 
 <div id="intranet-settings-page" class="intranet-settings-page-wrapper">
-
 
 
 	<?php
@@ -200,7 +200,7 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 			mainPageSection.onclick = function()
 			{
 				BX.UI.Analytics.sendData({
-					tool: 'landing',
+					tool: 'vibe',
 					category: 'vibe',
 					event: 'open_settings_main',
 					c_sub_section: 'from_settings',

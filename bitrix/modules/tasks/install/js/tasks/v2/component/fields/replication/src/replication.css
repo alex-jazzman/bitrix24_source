@@ -1,0 +1,18 @@
+.tasks-full-card-field-container-replication {
+	background-color: rgba(255, 255, 255, 0.44) !important;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.tasks-field-replication-history {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	box-sizing: border-box;
+	min-height: 40px;
+	padding: 8px 16px;
+	cursor: pointer;
+}
+
+.tasks-field-replication-history-title {
+	color: var(--ui-color-base-4);
+}

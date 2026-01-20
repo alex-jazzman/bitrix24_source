@@ -87,6 +87,8 @@
 					if (this.requestConfigDataLoaded)
 					{
 						console.info('SettingsNotify.loadCache: cache file "notifyConfig" has been ignored because it was loaded a very late');
+						promise.fulfill(false);
+
 						return false;
 					}
 

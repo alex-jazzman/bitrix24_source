@@ -1,5 +1,9 @@
 <?php
 
+use Bitrix\Crm\AutomatedSolution\CapabilityAccessChecker;
+use Bitrix\Crm\Tour\AutomatedSolution\CustomSectionMenu;
+use Bitrix\Crm\Tour\AutomatedSolution\LeftMenu;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -48,8 +52,12 @@ $headerSections = [
 		'name' => $arResult['entityTypeDescription'],
 		'default' => true,
 		'selected' => true,
-	]
+	],
 ];
+
+$isImportedAutomatedSolution = $arResult['isImportedAutomatedSolution'] ?? false;
+$entityTypeId = CCrmOwnerType::ResolveID($arResult['entityTypeName']);
+$isLocked = $isImportedAutomatedSolution && CapabilityAccessChecker::getInstance()->isLockedEntityType($entityTypeId);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.kanban',
@@ -65,6 +73,7 @@ $APPLICATION->IncludeComponent(
 		'HEADERS_SECTIONS' => $headerSections,
 		'PERFORMANCE' => $arResult['performance'],
 		'PATH_TO_MERGE' => $arResult['pathToMerge'],
+		'IS_LOCKED_ENTITY' => $isLocked ? 'Y' : 'N',
 	],
 	$component
 );
@@ -72,4 +81,21 @@ $APPLICATION->IncludeComponent(
 if ($arResult['customSectionId'] > 0)
 {
 	echo (\Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection::getInstance()->setCustomSection($arResult['customSectionId'])->build());
+
+	if (($arResult['isImportedAutomatedSolution'] ?? false) === true)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.automated_solution.notify',
+			'',
+		);
+
+		$targetId = $arResult['automatedSolutionCode'] ?? null;
+		if ($targetId)
+		{
+			$targetId = 'menu_custom_section_' . $targetId;
+
+			print CustomSectionMenu::getInstance()->setTargetId($targetId)->build();
+			print LeftMenu::getInstance()->setTargetId('bx_left_menu_' . $targetId)->build();
+		}
+	}
 }

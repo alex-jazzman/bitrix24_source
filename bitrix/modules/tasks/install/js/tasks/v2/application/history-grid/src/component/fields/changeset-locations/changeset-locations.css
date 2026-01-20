@@ -1,0 +1,8 @@
+.tasks-history-grid-comment-link {
+	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+}
+
+.tasks-history-grid-comment-link:hover {
+	text-decoration: underline;
+}

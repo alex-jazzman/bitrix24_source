@@ -1,7 +1,8 @@
-'use strict';
-
-(function() {
+jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 	include('Calls');
+
+	const { CallLogger } = require('call/calls/logger');
+	const { ActiveCallNotification } = require('call/calls/active-call-notification');
 
 	BX.DoNothing = function() {};
 
@@ -31,6 +32,12 @@
 		recordState: 'Call::recordState',
 	};
 
+	const RecordStatus = {
+		2: 'started',
+		3: 'stopped',
+		4: 'paused',
+	};
+
 	const BitrixCallDevEvent = {
 		onCallConference: 'BitrixCallDev::onCallConference',
 	};
@@ -52,6 +59,7 @@
 			this.type = params.type || BX.Call.Type.Instant; // @see {BX.Call.Type}
 			this.users = [];
 			this.scheme = params.scheme;
+			this.isTransitioningToGroupCall = false;
 
 			this.ready = false;
 			this.userId = env.userId;
@@ -127,6 +135,7 @@
 			this.__onCallReconnectedHandler = this.__onCallReconnected.bind(this);
 			this.__onUsersLimitExceededHandler = this.__onUsersLimitExceeded.bind(this);
 			this.__onSignalingResponseReceivedHandler = this.__onSignalingResponseReceived.bind(this);
+			this.__onRemoteMediaAvailableHandler = this.__onRemoteMediaAvailable.bind(this);
 
 			this.__onSDKLogMessageHandler = this.__onSDKLogMessage.bind(this);
 
@@ -134,6 +143,10 @@
 
 			this._reconnectionEventCount = 0;
 			this._maxReconnectionAttempts = 5;
+			this.activeCallNotification = new ActiveCallNotification({
+				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
+				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
+			});
 		}
 
 		get provider()
@@ -355,6 +368,30 @@
 			}
 		}
 
+		sendAudio(value)
+		{
+			if (this.bitrixCallDev)
+			{
+				this.bitrixCallDev.sendAudio = value;
+			}
+		}
+
+		receiveVideo(value)
+		{
+			if (this.bitrixCallDev)
+			{
+				this.bitrixCallDev.receiveVideo = value;
+			}
+		}
+
+		receiveAudio(value)
+		{
+			if (this.bitrixCallDev)
+			{
+				this.bitrixCallDev.receiveAudio = value;
+			}
+		}
+
 		toggleRecorderState()
 		{
 			if (!this.bitrixCallDev)
@@ -419,6 +456,13 @@
 				this.signaling.sendCameraState(this.videoEnabled);
 			}
 		}
+
+		setSendVideo()
+		{
+			this.bitrixCallDev.setSendVideo(this.videoEnabled && !this.videoPaused);
+		}
+
+
 
 		setVideoPaused(videoPaused)
 		{
@@ -607,6 +651,7 @@
 
 			if (this.bitrixCallDev)
 			{
+				this.dismissActiveCallNotification();
 				this.bitrixCallDev._replaceVideoSharing = false;
 				try
 				{
@@ -666,7 +711,7 @@
 							signalingUrl: signalingUrl,
 							callId: `${this.uuid}`,
 							roomType: this.getRoomType(),
-							sendVideo: this.videoEnabled,
+							sendVideo: this.isTransitioningToGroupCall ? false : this.videoEnabled,
 							receiveVideo: true,
 							enableSimulcast: true,
 							userName: this.userData,
@@ -716,6 +761,11 @@
 
 						this.eventEmitter.emit(BX.Call.Event.onCallConnected, []);
 
+						if (this.isTransitioningToGroupCall)
+						{
+							this.bitrixCallDev.setSendVideo(this.videoEnabled && !this.videoPaused);
+						}
+
 						resolve();
 					};
 
@@ -760,6 +810,10 @@
 			this.bitrixCallDev.on(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.SignalingResponseReceived, this.__onSignalingResponseReceivedHandler);
+			if (JNBXCall.Events.RemoteMediaAvailable)
+			{
+				this.bitrixCallDev.on(JNBXCall.Events.RemoteMediaAvailable, this.__onRemoteMediaAvailableHandler);
+			}
 		}
 
 		removeCallEvents()
@@ -776,6 +830,10 @@
 				this.bitrixCallDev.off(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.SignalingResponseReceived, this.__onSignalingResponseReceivedHandler);
+				if (JNBXCall.Events.RemoteMediaAvailable)
+				{
+					this.bitrixCallDev.off(JNBXCall.Events.RemoteMediaAvailable, this.__onRemoteMediaAvailableHandler);
+				}
 			}
 		}
 
@@ -1048,6 +1106,7 @@
 			}
 
 			this.log('__onCallDisconnected', (Object.keys(logData).length ? logData : null));
+			this.removeCallEvents();
 
 			if (this.ready && headers.leaveInformation && headers.leaveInformation.reason !== BX.Call.CallError.SecurityKeyChanged)
 			{
@@ -1068,7 +1127,6 @@
 			}
 			else
 			{
-				this.removeCallEvents();
 				this.bitrixCallDev = null;
 				this.joinStatus = BX.Call.JoinStatus.None;
 			}
@@ -1190,6 +1248,38 @@
 			}
 		}
 
+		showActiveCallNotification(notificationParams)
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.show(notificationParams);
+			}
+		}
+
+		updateActiveCallNotificationMicrophoneStatus(notificationParams)
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.update(notificationParams);
+			}
+		}
+
+		dismissActiveCallNotification()
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.dismiss();
+			}
+		}
+
+		destroyActiveCallNotification()
+		{
+			if (this.activeCallNotification)
+			{
+				this.activeCallNotification.destroy();
+			}
+		}
+
 		__onNoAnswer()
 		{
 			if (this.ready && !this.isAnyoneParticipating())
@@ -1209,6 +1299,7 @@
 			{
 				this.peers[endpoint.endpointId] = this.createPeer(endpoint.endpointId);
 			}
+
 			this.eventEmitter.emit(BX.Call.Event.onUserJoined, [{
 				userId: endpoint.endpointId,
 				userData: {
@@ -1219,6 +1310,7 @@
 					},
 				}
 			}]);
+
 			const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
 			this.log(`__onCallEndpointAdded (${userName})`);
 
@@ -1429,7 +1521,6 @@
 
 		__onSignalingResponseReceived(response)
 		{
-
 			if (response && response.response)
 			{
 				if (typeof response.response !== 'string') return;
@@ -1464,7 +1555,28 @@
 						CallUtil.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 					}
 				}
+
+				if (data?.trackCreated)
+				{
+					this.eventEmitter.emit(BX.Call.Event.onRemoteTrackAdded);
+				}
+
+				if (data?.videoRecorderStatus)
+				{
+
+					if (data.videoRecorderStatus.code)
+					{
+						this.eventEmitter.emit(BX.Call.Event.onRecordState, [
+							RecordStatus[data.videoRecorderStatus.code]
+						]);
+					}
+				}
 			}
+		}
+
+		__onRemoteMediaAvailable(data)
+		{
+			console.log(`[RemoteMediaAvailable]: participant: ${data.participant}, remoteTrack: ${data.remoteTrack}`);
 		}
 
 		__setUserPermissions(_permissionsJSON)
@@ -1542,6 +1654,12 @@
 			{
 				case 'audio':
 					options.track.type = 0;
+
+					if (newRoomSettings.AudioEnabled === data.roomState.AudioEnabled)
+					{
+						data.notShowNotify = true;
+					}
+
 					newRoomSettings.AudioEnabled = data.roomState.AudioEnabled;
 					break
 				case 'video':
@@ -1606,6 +1724,7 @@
 		{
 			this.ready = false;
 			this._joinStatus = BX.Call.JoinStatus.None;
+			this.destroyActiveCallNotification();
 			if (this.bitrixCallDev)
 			{
 				this.removeCallEvents();
@@ -2103,7 +2222,7 @@
 			{
 				this.callbacks.onStreamReceived({
 					userId: this.userId,
-					stream: CallUtil.isNewMobileGridEnabled() ? this.getStreams() : this.getPriorityStream(),
+					stream: this.getStreams(),
 				});
 			}
 
@@ -2280,7 +2399,7 @@
 			this.log('RemoteMediaAdded', e);
 			this.callbacks.onStreamReceived({
 				userId: this.userId,
-				stream: CallUtil.isNewMobileGridEnabled() ? this.getStreams() : this.getPriorityStream(),
+				stream: this.getStreams(),
 			});
 
 			this.updateCalculatedState();
@@ -2291,7 +2410,7 @@
 			this.log('Remote media removed', e);
 			this.callbacks.onStreamReceived({
 				userId: this.userId,
-				stream: CallUtil.isNewMobileGridEnabled() ? this.getStreams() : this.getPriorityStream(),
+				stream: this.getStreams(),
 			});
 
 			this.updateCalculatedState();
@@ -2397,6 +2516,7 @@
 		}
 	}
 
-	window.BitrixCallJwt = BitrixCallJwt;
-})
-();
+	module.exports = {
+		BitrixCallJwt,
+	};
+});

@@ -11,7 +11,7 @@ export default class Backend
 		}
 
 		const siteDir = Loc.getMessage('SITE_DIR') || '/';
-		const context = window.location.pathname.toString().startsWith(`${siteDir}online/`) ? 'online' : '';
+		const context = Options.isMessengerEmbedded ? 'online' : '';
 
 		return ajax.runAction(`intranet.leftmenu.${collapse ? "collapseMenu" : "expandMenu"}`, {
 			data: {

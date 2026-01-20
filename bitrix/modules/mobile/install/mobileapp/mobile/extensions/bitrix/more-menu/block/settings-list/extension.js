@@ -8,45 +8,22 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 		handleItemClick,
 		getUpdateSectionsWithCounters,
 	} = require('more-menu/utils');
-	const { Tourist } = require('tourist');
+	const { Icon } = require('assets/icons');
+	const { PureComponent } = require('layout/pure-component');
 
-	const SETTINGS_LIST = [
+	const SETTINGS_SECTIONS = [
 		{
 			id: 'settings',
 			code: 'settings',
 			sort: 800,
 			hidden: false,
+			title: Loc.getMessage('MENU_SETTINGS_SETTINGS_SECTION_TITLE'),
 			items: [
 				{
-					id: 'bottom_menu',
-					imageName: 'bottom_menu',
-					title: Loc.getMessage('MENU_SETTINGS_SECTION_BOTTOM_MENU'),
-					sort: 100,
-					path: '/settings/tab.presets',
-					params: {
-						counter: 'menu_tab_presets',
-					},
-				},
-				{
-					id: 'notifications',
-					imageName: 'notification',
-					title: Loc.getMessage('MENU_SETTINGS_SECTION_NOTIFICATIONS'),
-					sort: 200,
-					path: '/settings/notifications',
-					params: {
-						analytics: {
-							tool: 'settings',
-							category: 'notification_settings',
-							event: 'start_page',
-							c_section: 'ava_menu',
-						},
-					},
-				},
-				{
 					id: 'settings',
-					imageName: 'settings',
+					imageName: Icon.SETTINGS.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_SETTINGS_MSGVER_1'),
-					sort: 300,
+					sort: 100,
 					path: '/settings/general',
 					params: {
 						analytics: {
@@ -58,10 +35,73 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					},
 				},
 				{
+					id: 'bottom_menu',
+					imageName: Icon.BOTTOM_MENU.getName(),
+					title: Loc.getMessage('MENU_SETTINGS_SECTION_BOTTOM_MENU'),
+					sort: 200,
+					path: '/settings/tab.presets',
+					params: {
+						counter: 'menu_tab_presets',
+					},
+				},
+				{
+					id: 'security',
+					imageName: Icon.SHIELD.getName(),
+					title: Loc.getMessage('MENU_SETTINGS_SECTION_SECURITY'),
+					sort: 150,
+					path: '/settings/security',
+					params: {
+						analytics: {
+							tool: 'settings',
+							category: 'security_settings',
+							event: 'start_page',
+							c_section: 'ava_menu',
+						},
+					},
+				},
+				{
+					id: 'notifications',
+					imageName: Icon.NOTIFICATION.getName(),
+					title: Loc.getMessage('MENU_SETTINGS_SECTION_NOTIFICATIONS'),
+					sort: 300,
+					path: '/settings/notifications',
+					params: {
+						analytics: {
+							tool: 'settings',
+							category: 'notification_settings',
+							event: 'start_page',
+							c_section: 'ava_menu',
+						},
+					},
+				},
+			],
+		},
+		{
+			id: 'additional',
+			code: 'additional',
+			sort: 900,
+			hidden: false,
+			items: [
+				{
+					id: 'change_portal',
+					imageName: 'change_order',
+					title: Loc.getMessage('MENU_BITRIX24_SECTION_CHANGE_PORTAL'),
+					sort: 100,
+					path: '/change-portal/',
+					params: {
+						analytics: {
+							tool: 'intranet',
+							category: 'activation',
+							event: 'switch_account',
+							c_section: 'ava_menu',
+						},
+					},
+				},
+				{
 					id: 'go_to_web',
-					imageName: 'go_to',
+					imageName: Icon.GO_TO.getName(),
 					title: Loc.getMessage('MENU_SETTINGS_SECTION_GO_TO_WEB'),
-					sort: 500,
+					sort: 200,
 					path: '/settings/go-to-web',
 					params: {
 						title: Loc.getMessage('MENU_SETTINGS_SECTION_GO_TO_WEB_COMPONENT_TITLE'),
@@ -70,11 +110,12 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					},
 				},
 				{
-					id: 'change_portal',
-					imageName: 'change_order',
-					title: Loc.getMessage('MENU_BITRIX24_SECTION_CHANGE_PORTAL'),
-					sort: 600,
+					id: 'exit',
+					imageName: 'log_out',
+					title: Loc.getMessage('MENU_BITRIX24_SECTION_EXIT'),
+					sort: 300,
 					path: '/change-portal/',
+					mode: 'alert',
 					params: {
 						analytics: {
 							tool: 'intranet',
@@ -91,68 +132,38 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 	/**
 	 * @class SettingsList
 	 */
-	class SettingsList extends LayoutComponent
+	class SettingsList extends PureComponent
 	{
-		/**
-		 * @param props
-		 * @param {string} props.testId
-		 */
-		constructor(props)
-		{
-			super(props);
-
-			this.currentCounters = this.initCounters();
-
-			this.state = {
-				sections: getUpdateSectionsWithCounters(SETTINGS_LIST, this.currentCounters),
-			};
-
-			this.subscribeToUserCounters = this.subscribeToUserCounters.bind(this);
-		}
-
-		componentDidMount()
-		{
-			BX.addCustomEvent('onSetUserCounters', this.subscribeToUserCounters);
-		}
-
-		subscribeToUserCounters(counters)
-		{
-			if (counters[env.siteId])
-			{
-				this.updateCounters(counters[env.siteId]);
-			}
-		}
-
-		updateCounters(newCounters)
-		{
-			this.currentCounters = {
-				...this.currentCounters,
-				...newCounters,
-			};
-
-			const updatedSections = getUpdateSectionsWithCounters(this.state.sections, this.currentCounters);
-
-			this.setState({
-				sections: updatedSections,
-			});
-		}
-
 		render()
 		{
+			const { counters, testId } = this.props;
+
 			return new List({
-				testId: this.props.testId || 'more-menu-settings-list',
-				structure: this.state.sections,
+				testId: testId || 'more-menu-settings-list',
+				structure: getUpdateSectionsWithCounters(this.prepareSettingsList(), counters),
 				onItemClick: handleItemClick,
+				shouldShowSectionTitle: false,
 			});
 		}
 
-		initCounters()
+		prepareSettingsList()
 		{
-			return {
-				menu_tab_presets: Tourist.firstTime('visited_tab_presets') ? 1 : 0,
-			};
+			const canUseSecuritySettings = this.props.canUseSecuritySettings ?? false;
+			const preparedSections = SETTINGS_SECTIONS;
+
+			if (!canUseSecuritySettings)
+			{
+				const settingsSection = preparedSections.find((section) => section.id === 'settings');
+				const securityItem = settingsSection?.items?.find((item) => item.id === 'security');
+				if (securityItem)
+				{
+					securityItem.hidden = true;
+				}
+			}
+
+			return preparedSections;
 		}
 	}
 
-	module.exports = { SettingsList };
+	module.exports = { SettingsList, SETTINGS_SECTIONS };
 });

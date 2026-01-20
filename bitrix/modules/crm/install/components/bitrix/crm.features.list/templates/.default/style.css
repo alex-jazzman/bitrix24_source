@@ -61,3 +61,7 @@
 	opacity: 1;
 	transition: opacity ease 2s;
 }
+
+.crm-features-list-item .right-buttons{
+	margin-left: auto;
+}

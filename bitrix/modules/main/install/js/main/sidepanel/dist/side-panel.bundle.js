@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_cache,main_core_zIndexManager,main_core,main_core_events,main_popup,main_pageobject) {
+(function (exports,main_core_cache,main_core_zIndexManager,ui_system_skeleton,main_core,main_core_events,main_popup,main_pageobject) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -473,7 +473,8 @@ this.BX = this.BX || {};
 
 	let _ = t => t,
 	  _t,
-	  _t2;
+	  _t2,
+	  _t3;
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -587,6 +588,7 @@ this.BX = this.BX || {};
 	      loader: null,
 	      content: null
 	    };
+	    this.skeleton = options.skeleton;
 	    this.loader = main_core.Type.isStringFilled(options.loader) || main_core.Type.isElementNode(options.loader) ? options.loader : main_core.Type.isStringFilled(options.typeLoader) ? options.typeLoader : 'default-loader';
 	    this.animation = null;
 	    this.animationDuration = main_core.Type.isNumber(options.animationDuration) ? options.animationDuration : 200;
@@ -730,7 +732,7 @@ this.BX = this.BX || {};
 	        babelHelpers.classPrivateFieldSet(this, _currentAnimationState, babelHelpers.classPrivateFieldGet(this, _startAnimationState));
 	        this.completeAnimation(callback);
 	      } else {
-	        this.animation = new BX.easing({
+	        this.animation = new main_core.Easing({
 	          duration: this.animationDuration,
 	          start: babelHelpers.classPrivateFieldGet(this, _currentAnimationState),
 	          finish: babelHelpers.classPrivateFieldGet(this, _startAnimationState),
@@ -1061,9 +1063,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showLoader",
 	    value: function showLoader() {
-	      const loader = this.getLoader();
 	      if (!this.layout.loader) {
-	        this.createLoader(loader);
+	        this.createLoader(this.loader, this.skeleton);
 	      }
 	      main_core.Dom.style(this.layout.loader, {
 	        opacity: 1,
@@ -1563,7 +1564,7 @@ this.BX = this.BX || {};
 	          props: {
 	            className: 'side-panel-extra-labels'
 	          },
-	          children: [this.minimizeLabel.getContainer(), this.newWindowLabel ? this.newWindowLabel.getContainer() : null, this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null, this.printLabel ? this.printLabel.getContainer() : null]
+	          children: [this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null, this.minimizeLabel.getContainer(), this.newWindowLabel ? this.newWindowLabel.getContainer() : null, this.printLabel ? this.printLabel.getContainer() : null]
 	        });
 	      });
 	    }
@@ -1676,11 +1677,14 @@ this.BX = this.BX || {};
 	     */
 	  }, {
 	    key: "createLoader",
-	    value: function createLoader(sliderLoader) {
+	    value: function createLoader(sliderLoader, skeleton) {
 	      main_core.Dom.remove(this.layout.loader);
 	      const loader = main_core.Type.isStringFilled(sliderLoader) || main_core.Type.isElementNode(sliderLoader) ? sliderLoader : 'default-loader';
 	      const oldLoaders = ['task-new-loader', 'task-edit-loader', 'task-view-loader', 'crm-entity-details-loader', 'crm-button-view-loader', 'crm-webform-view-loader', 'create-mail-loader', 'view-mail-loader'];
-	      if (main_core.Type.isElementNode(loader)) {
+	      if (main_core.Type.isStringFilled(skeleton)) {
+	        this.layout.loader = main_core.Tag.render(_t3 || (_t3 = _`<div style="height: 100%;"></div>`));
+	        void ui_system_skeleton.renderSkeleton(skeleton, this.layout.loader);
+	      } else if (main_core.Type.isElementNode(loader)) {
 	        this.layout.loader = this.createHTMLLoader(loader);
 	      } else if (oldLoaders.includes(loader) && this.loaderExists(loader)) {
 	        this.layout.loader = this.createOldLoader(loader);
@@ -1862,7 +1866,10 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      babelHelpers.classPrivateFieldSet(this, _currentAnimationState, babelHelpers.classPrivateFieldGet(this, _currentAnimationState) === null ? babelHelpers.classPrivateFieldGet(this, _startAnimationState) : babelHelpers.classPrivateFieldGet(this, _currentAnimationState));
-	      this.animation = new BX.easing({
+	      if (this.skeleton) {
+	        this.showLoader();
+	      }
+	      this.animation = new main_core.Easing({
 	        duration: this.animationDuration,
 	        start: babelHelpers.classPrivateFieldGet(this, _currentAnimationState),
 	        finish: babelHelpers.classPrivateFieldGet(this, _endAnimationState),
@@ -2454,7 +2461,7 @@ this.BX = this.BX || {};
 	let _$1 = t => t,
 	  _t$1,
 	  _t2$1,
-	  _t3;
+	  _t3$1;
 	let ToolbarItem = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ToolbarItem, _EventEmitter);
 	  function ToolbarItem(itemOptions) {
@@ -2639,7 +2646,7 @@ this.BX = this.BX || {};
 	          position: 'top'
 	        },
 	        width: popupWidth,
-	        content: main_core.Tag.render(_t3 || (_t3 = _$1`
+	        content: main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
 				<div class="sidepanel-toolbar-item-hint">
 					<div class="sidepanel-toolbar-item-hint-title">${0}</div>
 					<div class="sidepanel-toolbar-item-hint-content">${0}</div>
@@ -2718,7 +2725,7 @@ this.BX = this.BX || {};
 	let _$2 = t => t,
 	  _t$2,
 	  _t2$2,
-	  _t3$1,
+	  _t3$2,
 	  _t4,
 	  _t5,
 	  _t6,
@@ -3272,7 +3279,7 @@ this.BX = this.BX || {};
 	    key: "getItemsContainer",
 	    value: function getItemsContainer() {
 	      return this.refs.remember('items-container', () => {
-	        const container = main_core.Tag.render(_t3$1 || (_t3$1 = _$2`<div class="side-panel-toolbar-items"></div>`));
+	        const container = main_core.Tag.render(_t3$2 || (_t3$2 = _$2`<div class="side-panel-toolbar-items"></div>`));
 	        [...this.items].slice(0, this.maxVisibleItems).forEach(item => {
 	          item.appendTo(container);
 	        });
@@ -4850,5 +4857,5 @@ this.BX = this.BX || {};
 	exports.Label = Label;
 	exports.Dictionary = Dictionary;
 
-}((this.BX.SidePanel = this.BX.SidePanel || {}),BX.Cache,BX,BX,BX.Event,BX.Main,BX));
+}((this.BX.SidePanel = this.BX.SidePanel || {}),BX.Cache,BX,BX.UI.System,BX,BX.Event,BX.Main,BX));
 //# sourceMappingURL=side-panel.bundle.js.map

@@ -19,6 +19,8 @@
 	list-style: none;
 	outline: none;
 	user-select: contain;
+	min-height: 32px;
+	box-sizing: border-box;
 }
 
 .ui-typography-spoiler-title:empty:after {

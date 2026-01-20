@@ -127,6 +127,7 @@ export class Copilot extends EventEmitter
 	#useText: boolean;
 	#useImage: boolean;
 	#showResultInCopilot: ?boolean;
+	#menuForceTop: boolean = true;
 	#windowResizeHandler: Function;
 
 	static #staticEulaRestrictCallback: Function | false = null;
@@ -212,6 +213,7 @@ export class Copilot extends EventEmitter
 
 		this.#autoHide = options.autoHide ?? false;
 		this.#preventAutoHide = Type.isFunction(options.preventAutoHide) ? options.preventAutoHide : () => false;
+		this.#menuForceTop = options.menuForceTop ?? true;
 	}
 
 	render(): HTMLElement
@@ -601,6 +603,7 @@ export class Copilot extends EventEmitter
 			copilotMenuEvents: CopilotMenuEvents,
 			analytics: this.#getAnalytics(),
 			showResultInCopilot: this.#showResultInCopilot,
+			menuForceTop: this.#menuForceTop,
 		});
 
 		this.#copilotTextController.subscribe('aiResult', (event: BaseEvent) => {
@@ -668,16 +671,17 @@ export class Copilot extends EventEmitter
 
 	#autoHideHandler(event): boolean
 	{
+		const copilotZIndex = this.#copilotPopup.getZindex();
 		const target = event.target;
 
 		const isSelf = this.#copilotPopup.getPopupContainer().contains(target);
 		const isWarningFieldInfoSlider = this.#warningField.getInfoSliderContainer()?.contains(target);
 		const preventAutoHide = this.#preventAutoHide(event);
-		const isClickOnSlider = Boolean(event.target.closest('.side-panel'));
+		const isClickOnOverlaySlider = Dom.style(event.target.closest('.side-panel-overlay'), 'z-index') > copilotZIndex;
 		const isClickOnRolesDialog = Boolean(event.target.closest('.ai_roles-dialog_popup'));
 		const isClickOnPromptMasterPopup = Boolean(event.target.closest('.ai__prompt-master-popup'));
 		const isClickOnOverlay = Boolean(event.target.closest('.popup-window-overlay'));
-		const isClickOnAnotherPopup = Boolean(event.target.closest('.popup-window'));
+		const isClickOnOverlayPopup = Dom.style(event.target.closest('.popup-window'), 'z-index') > copilotZIndex;
 		const isClickOnBaasPopup = Boolean(this.#getBaasPopup()?.getPopupContainer().contains(target));
 		const isClickOnNotificationBalloon = Boolean(event.target.closest('.ui-notification-balloon'));
 
@@ -687,10 +691,10 @@ export class Copilot extends EventEmitter
 			&& !preventAutoHide
 			&& !this.wasMouseDownOnSelf
 			&& !isWarningFieldInfoSlider
-			&& !isClickOnSlider
+			&& !isClickOnOverlaySlider
 			&& !isClickOnRolesDialog
 			&& !isClickOnPromptMasterPopup
-			&& !isClickOnAnotherPopup
+			&& !isClickOnOverlayPopup
 			&& !isClickOnBaasPopup
 			&& !isClickOnOverlay
 			&& !isClickOnNotificationBalloon

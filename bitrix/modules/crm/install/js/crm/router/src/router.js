@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-classes-per-file
 import { Reflection, Text, Type, Uri } from 'main.core';
 import { MenuItem } from 'main.popup';
 
@@ -402,6 +403,72 @@ class Router
 		normalizedId = normalizedId > 0 ? normalizedId : 0;
 
 		return new Uri(`/crm/deal/kanban/category/${normalizedId}/`);
+	}
+
+	getItemDetailUrl(entityTypeId: number, entityId: number, categoryId: ?number = null): ?Uri
+	{
+		const normalizedEntityTypeId = Text.toInteger(entityTypeId);
+		const normalizedEntityId = Text.toInteger(entityId);
+		const normalizedCategoryId = Type.isNil(categoryId) ? null : Text.toInteger(categoryId);
+
+		if (!BX.CrmEntityType.isDefined(normalizedEntityTypeId) || normalizedEntityId < 0)
+		{
+			return null;
+		}
+
+		let template = this.#getItemDetailUrlTemplate(normalizedEntityTypeId);
+		if (template === null && BX.CrmEntityType.isDynamicTypeByTypeId(normalizedEntityTypeId))
+		{
+			template = this.getTemplate('bitrix:crm.item.details');
+		}
+
+		if (!template)
+		{
+			return null;
+		}
+
+		const uri = new Uri(template.replace('#entityId#', normalizedEntityId));
+
+		if (!Type.isNil(normalizedCategoryId))
+		{
+			uri.setQueryParam('category_id', normalizedCategoryId);
+		}
+
+		return uri;
+	}
+
+	#getItemDetailUrlTemplate(entityTypeId: number): ?string
+	{
+		return this.#getItemDetailUrlTemplateMap()[entityTypeId] ?? null;
+	}
+
+	#getItemDetailUrlTemplateMap(): Object
+	{
+		/**
+		 * Because BX.Crm.Router is not initialized in every component, we can lose URL templates
+		 * todo: get URL templates from the backend
+		 */
+		return {
+			[BX.CrmEntityType.enumeration.lead]: '/crm/lead/details/#entityId#/',
+			[BX.CrmEntityType.enumeration.deal]: '/crm/deal/details/#entityId#/',
+			[BX.CrmEntityType.enumeration.contact]: '/crm/contact/details/#entityId#/',
+			[BX.CrmEntityType.enumeration.company]: '/crm/company/details/#entityId#/',
+			[BX.CrmEntityType.enumeration.quote]: `/crm/type/${BX.CrmEntityType.enumeration.quote}/details/#entityId#/`,
+			[BX.CrmEntityType.enumeration.smartinvoice]: `/crm/type/${BX.CrmEntityType.enumeration.smartinvoice}/details/#entityId#/`,
+		};
+	}
+
+	openMessageSenderConnectionsSlider(analytics: Object = {}): Promise<?BX.SidePanel.Slider>
+	{
+		const url = new Uri('/crm/messagesender/connections/').setQueryParams({ analytics }).toString();
+
+		return Router.openSlider(
+			url,
+			{
+				width: 920,
+				cacheable: false,
+			},
+		);
 	}
 }
 

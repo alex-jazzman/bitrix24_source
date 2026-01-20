@@ -9,6 +9,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 	const { withPressed } = require('utils/color');
 	const { capitalize } = require('utils/string');
 	const { NotifyManager } = require('notify-manager');
+	const { Notify } = require('notify');
 	const store = require('statemanager/redux/store');
 	const { fetchCrmKanbanList } = require('crm/statemanager/redux/slices/kanban-settings');
 	const { BackdropWizard } = require('layout/ui/wizard/backdrop');

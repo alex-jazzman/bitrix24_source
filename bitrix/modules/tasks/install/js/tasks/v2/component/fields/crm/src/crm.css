@@ -8,7 +8,6 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
-	margin-left: var(--ui-space-inline-xs2-neg);
 }
 
 .tasks-field-crm-item {
@@ -16,7 +15,6 @@
 }
 
 .tasks-field-crm-item-text {
-	padding: var(--ui-space-inline-3xs) 0 var(--ui-space-inline-3xs) var(--ui-space-inline-xs);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

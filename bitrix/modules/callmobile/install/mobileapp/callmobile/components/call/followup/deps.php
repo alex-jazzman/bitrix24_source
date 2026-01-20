@@ -15,5 +15,6 @@ return [
 		'call:followup/util',
 		'bottom-sheet',
 		'im/messenger/api/dialog-opener',
+		'call:const',
 	],
 ];

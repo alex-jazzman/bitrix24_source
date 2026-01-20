@@ -1,16 +1,14 @@
-import {Dom, Tag, Type} from 'main.core';
-import {BaseEvent} from "main.core.events";
+import { Dom, Tag, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 
 import BaseControl from '../base_control/base_control';
-import ColorValue from "../../color_value";
-import Colorpicker from "../colorpicker/colorpicker";
+import ColorValue from '../../color_value';
+import Colorpicker from '../colorpicker/colorpicker';
 import Preset from '../../layout/preset/preset';
 import PresetCollection from '../../layout/preset/preset_collection';
-import Reset from '../../layout/reset/reset';
 import hexToHsl from '../../internal/hex-to-hsl';
 import hslStringToHsl from '../../internal/hsl-string-to-hsl';
 
-import Generator from '../../layout/preset/generator';
 import './css/color_set.css';
 
 export default class ColorSet extends BaseControl
@@ -21,31 +19,14 @@ export default class ColorSet extends BaseControl
 		this.options = options;
 		this.setEventNamespace('BX.Landing.UI.Field.Color.ColorSet');
 
-		this.reset = new Reset(options);
-		this.reset.subscribe('onReset', () => {
-			this.emit('onReset');
-		});
-
-		this.blackAndWhitePreset = new Preset(Generator.getBlackAndWhitePreset());
-		this.blackAndWhitePreset.subscribe('onChange', (event) => {
-			this.preset.unsetActive();
-			this.onPresetItemChange(event);
-		});
-
 		this.colorpicker = new Colorpicker(options);
 		this.colorpicker.subscribe('onChange', (event) => {
 			this.preset.unsetActive();
-			this.blackAndWhitePreset.unsetActive();
 
 			const color = event.getData().color;
 			if (this.preset.isPresetValue(color))
 			{
 				this.preset.setActiveValue(color);
-				this.colorpicker.unsetActive();
-			}
-			else if (this.blackAndWhitePreset.isPresetValue(color))
-			{
-				this.blackAndWhitePreset.setActiveValue(color);
 				this.colorpicker.unsetActive();
 			}
 
@@ -66,16 +47,9 @@ export default class ColorSet extends BaseControl
 
 	buildLayout(): HTMLDivElement
 	{
-		Dom.append(this.reset.getLayout(), this.presets.getTitleContainer());
-
 		return Tag.render`
 			<div class="landing-ui-field-color-colorset">
-				<div class="landing-ui-field-color-colorset-top">
-					${this.presets.getLayout()}
-				</div>
-				${this.getPresetContainer()}
 				<div class="landing-ui-field-color-colorset-bottom">
-					${this.blackAndWhitePreset.getLayout()}
 					${this.colorpicker.getLayout()}
 				</div>
 			</div>
@@ -117,14 +91,13 @@ export default class ColorSet extends BaseControl
 		}
 
 		this.preset.subscribe('onChange', (event) => {
-			this.blackAndWhitePreset.unsetActive();
 			this.onPresetItemChange(event);
 		});
 
 		Dom.clean(this.getPresetContainer());
 		Dom.append(preset.getLayout(), this.getPresetContainer());
 
-		this.emit('onPresetChange', {preset: preset});
+		this.emit('onPresetChange', { preset });
 	}
 
 	getPreset(): ?Preset
@@ -164,20 +137,13 @@ export default class ColorSet extends BaseControl
 			super.setValue(value);
 			this.colorpicker.setValue(value);
 
-			const activePreset =
-				this.presets.getGlobalActiveId()
-					? this.presets.getPresetById(this.presets.getGlobalActiveId())
-					: this.presets.getPresetByItemValue(value);
+			const activePreset = this.presets.getGlobalActiveId()
+				? this.presets.getPresetById(this.presets.getGlobalActiveId())
+				: this.presets.getPresetByItemValue(value);
 			if (activePreset !== null)
 			{
 				this.setPreset(activePreset);
 				this.presets.setActiveItem(activePreset.getId());
-			}
-
-			if (value !== null && this.blackAndWhitePreset.isPresetValue(value))
-			{
-				this.unsetActive();
-				this.blackAndWhitePreset.setActiveValue(value);
 			}
 		}
 	}
@@ -185,13 +151,12 @@ export default class ColorSet extends BaseControl
 	unsetActive(): void
 	{
 		this.preset.unsetActive();
-		this.blackAndWhitePreset.unsetActive();
 		this.colorpicker.unsetActive();
 	}
 
 	isActive(): boolean
 	{
-		return this.preset.isActive() || this.blackAndWhitePreset.isActive() || this.colorpicker.isActive();
+		return this.preset.isActive() || this.colorpicker.isActive();
 	}
 
 	setColorFromContent(): void

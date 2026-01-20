@@ -36,6 +36,11 @@ jn.define('im/messenger-v2/controller/recent/recent-ui-getter', (require, export
 			return this.#nestedWidgets[recentName] ?? null;
 		}
 
+		getRecentLists()
+		{
+			return Object.values(this.#nestedWidgets);
+		}
+
 		get chatRecentList()
 		{
 			return this.getRecentList(NavigationTabId.chats);

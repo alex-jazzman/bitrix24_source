@@ -14,6 +14,7 @@ global $APPLICATION, $USER;
 
 use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
 use Bitrix\Main\ModuleManager;
@@ -23,6 +24,8 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
 use Bitrix\Security\Mfa\Otp;
+use Bitrix\Security\Mfa\OtpType;
+use Bitrix\Security\Controller\PushOtp;
 use Bitrix\Socialservices\Network;
 use Bitrix\SignMobile\Service\Container;
 use Bitrix\SignMobile\Service\EventService;
@@ -30,7 +33,6 @@ use Bitrix\Voximplant\Security\Helper;
 use Bitrix\Call\Settings;
 use Bitrix\Intranet\Service\MobileAppSettings;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
-use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
 use Bitrix\Pull\Config;
 use Bitrix\Mobile;
 use Bitrix\Mobile\Auth;
@@ -93,9 +95,9 @@ if (array_key_exists("servercheck", $_REQUEST))
 	return $data;
 }
 
-$userData = CHTTP::ParseAuthRequest();
-$login = $userData["basic"]["username"];
+
 $isAlreadyAuthorized = $USER->IsAuthorized();
+
 if (!$isAlreadyAuthorized)
 {
 	if (IsModuleInstalled('bitrix24'))
@@ -103,23 +105,8 @@ if (!$isAlreadyAuthorized)
 		header('Access-Control-Allow-Origin: *');
 	}
 
-	if ($login)
-	{
-		if (Loader::includeModule('bitrix24') && ($captchaInfo = CBitrix24::getStoredCaptcha()))
-		{
-			$data["captchaCode"] = $captchaInfo["captchaCode"];
-			$data["captchaURL"] = $captchaInfo["captchaURL"];
-		}
-		elseif ($APPLICATION->NeedCAPTHAForLogin($login))
-		{
-			$data["captchaCode"] = $APPLICATION->CaptchaGetCode();
-		}
-
-		if (Loader::includeModule("security") && Otp::isOtpRequired())
-		{
-			$data["needOtp"] = true;
-		}
-	}
+	$securityData = Bitrix\Mobile\Helpers\Auth::handleSecurityData();
+	$data = array_merge($data, $securityData);
 
 	if (Loader::includeModule('socialservices'))
 	{
@@ -153,7 +140,7 @@ else
 		{
 			$currentUserId = (int)CurrentUser::get()->getId();
 
-			Main\Application::getInstance()->addBackgroundJob(function () use ($service, $currentUserId)
+			Application::getInstance()->addBackgroundJob(function () use ($service, $currentUserId)
 			{
 				$service->sendPriorityDocumentNotificationToSign($currentUserId);
 			});
@@ -172,6 +159,7 @@ else
 	$isExtranetModuleInstalled = Loader::includeModule("extranet");
 	$extranetSiteId = null;
 	$intent = $_REQUEST['intent'] ?? null;
+
 
 	if ($isExtranetModuleInstalled)
 	{
@@ -291,22 +279,21 @@ else
 			}
 		}
 	}
-	elseif (Loader::includeModule('intranet') && Loader::includeModule('crm'))
+	else if (
+		Loader::includeModule('intranet')
+		&& !$manager->isPresetManuallySet()
+		&& $manager->canSyncWithWebPresetForUser()
+	)
 	{
-		$lastInstalledPreset = CUserOptions::GetOption('mobile', 'last_installed_preset_by_left_menu');
-		if ($lastInstalledPreset !== 'crm')
+		$presetIdToSet = $manager->getPresetIdByWebPreset($siteId);
+		if ($presetIdToSet && $manager->getPresetName() !== $presetIdToSet)
 		{
-			$preset = Manager::getPreset(null, $siteId);
-			if ($preset->getCode() === 'crm' && $manager->getPresetName() !== 'crm')
-			{
-				$manager->setPresetName('crm');
-				CUserOptions::SetOption('mobile', 'last_installed_preset_by_left_menu', 'crm');
-			}
+			$manager->setPresetName($presetIdToSet);
 		}
 	}
 
 	// Activate Marta AI trigger for mobile app (every time)
-	if (Loader::includeModule('aiassistant') && ServiceLocator::getInstance()->has(\Bitrix\AiAssistant\Trigger\Service\RunnerService::class))
+	if (Loader::includeModule('aiassistant'))
 	{
 		$runnerService = ServiceLocator::getInstance()->get(\Bitrix\AiAssistant\Trigger\Service\RunnerService::class);
 		$runnerService->registerBackgroundTriggerActivation('/mobile/');
@@ -375,7 +362,7 @@ else
 		"LAST_NAME" => $USER->GetLastName(),
 		"SECOND_NAME" => $USER->GetSecondName(),
 		"LOGIN" => $USER->GetLogin(),
-	]);
+		], true, false, false);
 
 	$canCopyText = true;
 	$canTakeScreenshot = true;
@@ -419,6 +406,7 @@ else
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
 		"newStyleSupported" => true,
+		"whiteList" => ["/disk/api/v1/"],
 		"tabs" => $menuTabs,
 		"user" => [
 			"type" => $userRole?->value ?? 'employee',
@@ -496,6 +484,25 @@ else
 		if ($forceGenerate)
 		{
 			setSessionExpired(false);
+			$request = Context::getCurrent()->getRequest();
+			// we've found and deleted auth token, so this is a one-time operation
+			$request = Context::getCurrent()->getRequest();
+			$intent = $request['intent'] ?? '';
+			if (str_starts_with($intent, 'pushOtpInit/') && Loader::includeModule('security'))
+			{
+				$otp = (Otp::getByUser($USER->GetID()))
+					->setType(OtpType::Push)
+					->regenerate();
+
+				[, $channelTag] = explode('/', $intent);
+
+				$data['pushOtpInit'] = [
+					'appSecret' => $otp->getAppSecret(),
+					'provisionUri' => $otp->getProvisioningUri(),
+					'uniqueId' => PushOtp::getUniqueId(),
+					'channelTag' => $channelTag,
+				];
+			}
 		}
 
 		if ($appUUID <> '')

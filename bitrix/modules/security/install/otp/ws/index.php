@@ -55,16 +55,14 @@ $isUpdated = CSecurityUser::update(array(
 	"USER_ID" => $USER->GetID(),
 	"SECRET" => $_POST['secret'],
 	"ACTIVE" => "Y",
-	"TYPE" => \Bitrix\Security\Mfa\Otp::TYPE_HOTP // Bitrix.OTP use HOTP
+	"TYPE" => \Bitrix\Security\Mfa\OtpType::Hotp->value // Bitrix.OTP use HOTP
 ));
 
 if(!$isUpdated)
 {
-	//print_r($APPLICATION->GetException());
 	CHTTP::SetStatus("403 Forbidden");
 	$USER->Logout();
 	die();
 }
 
 $USER->Logout();
-?>

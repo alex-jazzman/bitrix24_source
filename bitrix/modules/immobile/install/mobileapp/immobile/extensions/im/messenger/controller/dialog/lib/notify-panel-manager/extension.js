@@ -123,11 +123,11 @@ jn.define('im/messenger/controller/dialog/lib/notify-panel-manager', (require, e
 					return;
 				}
 
-				const { statusTitle, statusInfo } = status;
+				const { statusTitle, statusInfoClear } = status;
 
 				const props = this.buildErrorNotifyPanelProps({
 					title: statusTitle,
-					text: statusInfo,
+					text: statusInfoClear,
 				});
 
 				logger.log(`${this.constructor.name}.checkServiceHealthStatus props: `, props);

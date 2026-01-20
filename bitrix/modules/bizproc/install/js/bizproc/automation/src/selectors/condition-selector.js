@@ -40,6 +40,7 @@ export class ConditionSelector extends EventEmitter
 	popup: Popup;
 	fieldDialog: ?InlineSelectorCondition;
 	#selectedField;
+	#customSelectorFn: ?Function = null;
 
 	constructor(condition, options: ?ConditionSelectorOptions)
 	{
@@ -76,6 +77,7 @@ export class ConditionSelector extends EventEmitter
 			this.#onOpenFieldMenu = options.onOpenFieldMenu;
 			this.#onOpenMenu = options.onOpenMenu;
 			this.#showValuesSelector = options.showValuesSelector ?? true;
+			this.#customSelectorFn = options.customSelectorFn;
 		}
 	}
 
@@ -245,7 +247,7 @@ export class ConditionSelector extends EventEmitter
 		else
 		{
 			const field = this.getField(this.#condition.object, this.#condition.field) || '?';
-			const valueLabel = this.#getValueLabel(field);
+			const valueLabel = this.#getValueLabel(field, this.labelNode);
 
 			Dom.append(
 				Tag.render`<span class="bizproc-automation-popup-settings__condition-text">${Text.encode(field.Name)}</span>`,
@@ -263,14 +265,14 @@ export class ConditionSelector extends EventEmitter
 			if (valueLabel)
 			{
 				Dom.append(
-					Tag.render`<span class="bizproc-automation-popup-settings__condition-text">${Text.encode(valueLabel)}</span>`,
+					Tag.render`<span data-role="value-label" class="bizproc-automation-popup-settings__condition-text">${Text.encode(valueLabel)}</span>`,
 					this.labelNode,
 				);
 			}
 		}
 	}
 
-	#getValueLabel(field): ?string
+	#getValueLabel(field, labelNode): ?string
 	{
 		const operator = this.#condition.operator;
 		const value = this.#condition.value;
@@ -296,7 +298,7 @@ export class ConditionSelector extends EventEmitter
 
 		if (!operator.includes('empty'))
 		{
-			return BX.Bizproc.FieldType.formatValuePrintable(field, value);
+			return BX.Bizproc.FieldType.formatValuePrintable(field, value, labelNode);
 		}
 
 		return null;
@@ -676,6 +678,7 @@ export class ConditionSelector extends EventEmitter
 				};
 				break;
 			case 'bool':
+			case 'entityselector':
 			case 'select':
 				if (multiple)
 				{
@@ -766,13 +769,27 @@ export class ConditionSelector extends EventEmitter
 		const field = Runtime.clone(docField);
 		field.Multiple = false;
 
-		const valueNodes = BX.Bizproc.FieldType.renderControlPublic(
-			docType,
-			field,
-			`${this.#fieldPrefix}value`,
-			value,
-			false,
-		);
+		let valueNodes;
+		if (this.#customSelectorFn && field.Type === 'user')
+		{
+			valueNodes = BX.Bizproc.FieldType.renderControlDesigner(
+				docType,
+				field,
+				`${this.#fieldPrefix}value`,
+				value,
+				false,
+			);
+		}
+		else
+		{
+			valueNodes = BX.Bizproc.FieldType.renderControlPublic(
+				docType,
+				field,
+				`${this.#fieldPrefix}value`,
+				value,
+				false,
+			);
+		}
 
 		valueNodes.querySelectorAll('[data-role]').forEach((node) => {
 			const selector = SelectorManager.createSelectorByRole(node.dataset.role, {
@@ -781,6 +798,7 @@ export class ConditionSelector extends EventEmitter
 					useSwitcherMenu: false,
 					rootGroupTitle: this.#rootGroupTitle ?? getGlobalContext().document.title,
 				}),
+				customSelectorFn: this.#customSelectorFn,
 			});
 
 			if (selector)

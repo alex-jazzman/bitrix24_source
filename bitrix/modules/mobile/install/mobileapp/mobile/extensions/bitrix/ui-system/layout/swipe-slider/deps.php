@@ -2,12 +2,15 @@
 
 return [
 	'extensions' => [
+		'animation/animated',
 		'tokens',
-		'utils/test',
 		'ui-system/blocks/icon',
-		'type',
+		'utils/enums/base',
+		'utils/object',
+		'utils/test',
+		'utils/validation',
 	],
 	'bundle' => [
-		'./src/enum',
+		'./src/navigation-mode-enum',
 	],
 ];

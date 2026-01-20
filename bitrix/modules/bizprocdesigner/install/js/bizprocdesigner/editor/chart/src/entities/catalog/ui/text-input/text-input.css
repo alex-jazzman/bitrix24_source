@@ -1,0 +1,25 @@
+.editor-chart-catalog-input {
+	display: inline-flex;
+	width: 100%;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+}
+
+.editor-chart-catalog-input__input {
+	width: 100%;
+	padding: 0 14px;
+	border: solid 1px var(--ui-color-palette-gray-30);
+	border-radius: 8px;
+	font-size: var(--ui-font-size-md);
+	outline: none;
+}
+
+.editor-chart-catalog-input__input:focus {
+	border-color: var(--ui-color-g-content-blue-2);
+}
+
+.editor-chart-catalog-input__input--has-text {
+	border-color: var(--ui-color-g-content-blue-2);
+	padding-right: 36px;
+}

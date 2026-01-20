@@ -1562,7 +1562,8 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      }
 	    }), new BBCodeTagScheme({
 	      name: ['*'],
-	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
+	      group: ['#shadowRoot'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
 	      stringify: (node, scheme, toStringOptions) => {
 	        const openingTag = node.getOpeningTag();
 	        const content = node.getContent(toStringOptions).trim();

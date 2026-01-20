@@ -12,6 +12,7 @@ use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Main\Config\Option;
 
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -28,6 +29,7 @@ Extension::load([
 ]);
 
 $taskId = (int)$arResult['TASK_ID'];
+$isChatFeatureDisabled = Option::get('tasksmobile', 'feature_chat_enabled', 'off') !== 'on';
 ?>
 
 <script>
@@ -115,8 +117,10 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			'CACHE_TIME' => 3600,
 			'IMAGE_HTML_SIZE' => 400,
 			'DATE_TIME_FORMAT' => $arResult['DATE_TIME_FORMAT'],
-			'SHOW_RATING' => 'Y',
+			'SHOW_RATING' => $isChatFeatureDisabled ? 'Y' : 'N',
 			'RATING_TYPE' => 'like',
+			'SHOW_POST_FORM' => $isChatFeatureDisabled ? 'Y' : 'N',
+			'PUBLIC_MODE' => !$isChatFeatureDisabled,
 			'PREORDER' => 'N',
 			'PERMISSION' => 'M',
 			'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'],
@@ -179,6 +183,7 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 				'logId' => $arResult['LOG_ID'],
 				'currentTs' => time(),
 				'resultComments' => $arResult['RESULT_COMMENTS'],
+				'shouldRenderTextField' => $isChatFeatureDisabled,
 				'isClosed' => in_array(
 					(int)$arResult['TASK']['STATUS'],
 					[Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED],

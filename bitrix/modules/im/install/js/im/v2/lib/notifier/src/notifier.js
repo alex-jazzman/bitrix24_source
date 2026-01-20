@@ -10,6 +10,7 @@ import { SupportNotifier } from './functions/support';
 import { SpeechNotifier } from './functions/speech';
 import { CallNotifier } from './functions/call';
 import { RecentNotifier } from './functions/recent';
+import { NotificationNotifier } from './functions/notification';
 
 import { showNotification } from './utils/notification';
 
@@ -24,6 +25,7 @@ export const Notifier = {
 	speech: SpeechNotifier,
 	call: CallNotifier,
 	recent: RecentNotifier,
+	notification: NotificationNotifier,
 
 	onCopyTextComplete(): void
 	{

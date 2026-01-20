@@ -59,7 +59,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 					this.renderDownloadButton(),
 				),
 				this.renderActionButton(),
-				this.renderBadge()
+				this.renderBadge(),
 			);
 		}
 
@@ -142,7 +142,6 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			{
 				const { secondSideText, SecondSideDesign, secondSideMemberId } = this.prepareSecondSideData();
 
-
 				return View(
 					{
 						style: {
@@ -217,7 +216,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 						right: Indent.S.toNumber(),
 					},
 				},
-				BadgeCounter({value: 1, design: BadgeCounterDesign.ALERT, testId: `documentAction-${this.getMemberId(0)}-badge`}),
+				BadgeCounter({ value: 1, design: BadgeCounterDesign.ALERT, testId: `documentAction-${this.getMemberId(0)}-badge` }),
 			);
 		}
 
@@ -304,6 +303,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 						secondSideMemberId: this.getInitiatorUserId(),
 					};
 				}
+
 				if (InitiatedByType.isInitiatedByEmployee(this.getDocumentInitiatedType())
 					&& ((this.isInitiatorCurrentUser() && !this.isMemberCurrentUser()) || this.isSecondSideStopped(0))
 				)
@@ -399,7 +399,8 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			{
 				return true;
 			}
-			else if (this.isMyMemberCurrentUser() && MemberStatus.isCanceledStatus(this.getMyMemberStatus()))
+
+			if (this.isMyMemberCurrentUser() && MemberStatus.isCanceledStatus(this.getMyMemberStatus()))
 			{
 				return true;
 			}
@@ -432,6 +433,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		#onSecondSideButtonClickHandler = (userId) => {
 			void UserProfile.open({
 				ownerId: userId,
+				analyticsSection: 'sign_document_grid',
 			});
 		};
 
@@ -548,7 +550,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 		getInitiatorUserId()
 		{
-			return this.props.item?.document?.initiator?.userId
+			return this.props.item?.document?.initiator?.userId;
 		}
 	}
 

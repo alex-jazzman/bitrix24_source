@@ -332,6 +332,10 @@ export class RecentModel extends BuilderModel
 			clearChannelCollection: (store: RecentStore) => {
 				store.commit('clearChannelCollection');
 			},
+			/** @function recent/clearUnreadCollection */
+			clearUnreadCollection: (store: RecentStore) => {
+				store.commit('clearUnreadCollection');
+			},
 			/** @function recent/store */
 			store: (store: RecentStore, payload: Array | Object) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -434,7 +438,7 @@ export class RecentModel extends BuilderModel
 				const isRemovingDraft = !Type.isStringFilled(text);
 				if (isRemovingDraft && this.#shouldDeleteItemWithDraft(payload))
 				{
-					void Core.getStore().dispatch('recent/delete', { id });
+					void Core.getStore().dispatch('recent/hide', { id });
 
 					return;
 				}
@@ -459,19 +463,16 @@ export class RecentModel extends BuilderModel
 					},
 				});
 			},
-			/** @function recent/delete */
-			delete: (store: RecentStore, payload: { id: string | number }) => {
+			/** @function recent/hide */
+			hide: (store: RecentStore, payload: { id: string | number }) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
 				{
 					return;
 				}
 
-				store.commit('deleteFromRecentCollection', existingItem.dialogId);
-				store.commit('deleteFromCopilotCollection', existingItem.dialogId);
-				store.commit('deleteFromChannelCollection', existingItem.dialogId);
-				store.commit('deleteFromCollabCollection', existingItem.dialogId);
-				store.commit('deleteFromTaskCollection', existingItem.dialogId);
+				store.commit('deleteCollections', existingItem.dialogId);
+
 				const canDelete = this.#canDelete(existingItem.dialogId);
 
 				if (!canDelete)
@@ -483,9 +484,35 @@ export class RecentModel extends BuilderModel
 					id: existingItem.dialogId,
 				});
 			},
-			/** @function recent/clearUnread */
-			clearUnread: (store: RecentStore) => {
-				store.commit('clearUnread');
+			/** @function recent/delete */
+			delete: (store: RecentStore, payload: { id: string | number }) => {
+				const existingItem = store.state.collection[payload.id];
+				if (!existingItem)
+				{
+					return;
+				}
+
+				store.commit('deleteCollections', existingItem.dialogId);
+				store.commit('deleteFromChannelCollection', existingItem.dialogId);
+
+				const canDelete = this.#canDelete(existingItem.dialogId);
+
+				if (!canDelete)
+				{
+					return;
+				}
+
+				store.commit('delete', {
+					id: existingItem.dialogId,
+				});
+			},
+			/** @function recent/resetTasksUnreadStatus */
+			resetTasksUnreadStatus: (store: RecentStore) => {
+				store.commit('resetTasksUnreadStatus');
+			},
+			/** @function recent/resetUnreadStatus */
+			resetUnreadStatus: (store: RecentStore) => {
+				store.commit('resetUnreadStatus');
 			},
 		};
 	}
@@ -498,9 +525,6 @@ export class RecentModel extends BuilderModel
 					state.recentCollection.add(dialogId);
 				});
 			},
-			deleteFromRecentCollection: (state: RecentState, payload: string) => {
-				state.recentCollection.delete(payload);
-			},
 			setUnreadCollection: (state: RecentState, payload: string[]) => {
 				payload.forEach((dialogId) => {
 					state.unreadCollection.add(dialogId);
@@ -510,9 +534,6 @@ export class RecentModel extends BuilderModel
 				payload.forEach((dialogId) => {
 					state.copilotCollection.add(dialogId);
 				});
-			},
-			deleteFromCopilotCollection: (state: RecentState, payload: string) => {
-				state.copilotCollection.delete(payload);
 			},
 			deleteFromChannelCollection: (state: RecentState, payload: string) => {
 				state.channelCollection.delete(payload);
@@ -525,21 +546,18 @@ export class RecentModel extends BuilderModel
 			clearChannelCollection: (state: RecentState) => {
 				state.channelCollection = new Set();
 			},
+			clearUnreadCollection: (state: RecentState) => {
+				state.unreadCollection = new Set();
+			},
 			setCollabCollection: (state: RecentState, payload: string[]) => {
 				payload.forEach((dialogId) => {
 					state.collabCollection.add(dialogId);
 				});
 			},
-			deleteFromCollabCollection: (state: RecentState, payload: string) => {
-				state.collabCollection.delete(payload);
-			},
 			setTaskCollection: (state: RecentState, payload: string[]) => {
 				payload.forEach((dialogId) => {
 					state.taskCollection.add(dialogId);
 				});
-			},
-			deleteFromTaskCollection: (state: RecentState, payload: string) => {
-				state.taskCollection.delete(payload);
 			},
 			add: (state: RecentState, payload: Object[] | Object) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -550,7 +568,6 @@ export class RecentModel extends BuilderModel
 					state.collection[item.dialogId] = item;
 				});
 			},
-
 			update: (state: RecentState, payload: Object[] | Object) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
 				{
@@ -570,15 +587,24 @@ export class RecentModel extends BuilderModel
 					state.collection[dialogId] = { ...currentElement, ...fields };
 				});
 			},
-
 			delete: (state: RecentState, payload: {id: string}) => {
 				delete state.collection[payload.id];
 			},
-
-			clearUnread: (state: RecentState) => {
+			resetTasksUnreadStatus: (state: RecentState) => {
+				[...state.taskCollection].forEach((key) => {
+					state.collection[key].unread = false;
+				});
+			},
+			resetUnreadStatus: (state: RecentState) => {
 				Object.keys(state.collection).forEach((key) => {
 					state.collection[key].unread = false;
 				});
+			},
+			deleteCollections: (state: RecentState, payload: string) => {
+				state.recentCollection.delete(payload);
+				state.copilotCollection.delete(payload);
+				state.collabCollection.delete(payload);
+				state.taskCollection.delete(payload);
 			},
 		};
 	}

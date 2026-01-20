@@ -19,10 +19,6 @@ export const LinkItem = {
 			type: Object,
 			required: true,
 		},
-		contextDialogId: {
-			type: String,
-			required: true,
-		},
 		searchQuery: {
 			type: String,
 			default: '',

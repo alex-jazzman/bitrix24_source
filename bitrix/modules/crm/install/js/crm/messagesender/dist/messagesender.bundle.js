@@ -191,6 +191,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  async getLineId() {
 	    return new Promise(resolve => {
+	      const connectorId = this.getOpenLineCode();
 	      const ajaxParameters = {
 	        connectorId: this.getOpenLineCode(),
 	        withConnector: true
@@ -201,9 +202,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        data
 	      }) => {
 	        if (main_core.Type.isArrayFilled(data)) {
-	          const {
-	            lineId
-	          } = data[data.length - 1];
+	          var _this$openLineItems$c, _this$openLineItems$c2;
+	          let lineId = data[data.length - 1].lineId;
+	          const openLineItemsList = (_this$openLineItems$c = (_this$openLineItems$c2 = this.openLineItems[connectorId]) == null ? void 0 : _this$openLineItems$c2.list) != null ? _this$openLineItems$c : null;
+	          if (openLineItemsList) {
+	            var _openLineItemsList$fi;
+	            const selectedItem = (_openLineItemsList$fi = openLineItemsList.find(item => item.selected)) != null ? _openLineItemsList$fi : null;
+	            if (selectedItem) {
+	              lineId = selectedItem.id;
+	            }
+	          }
 	          resolve(lineId);
 	          return;
 	        }
@@ -710,7 +718,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function ensureIsValidMultifieldValue(candidate) {
 	  // noinspection OverlyComplexBooleanExpressionJS
-	  const isValidValue = main_core.Type.isPlainObject(candidate) && (main_core.Type.isNil(candidate.id) || main_core.Type.isInteger(candidate.id)) && main_core.Type.isStringFilled(candidate.typeId) && main_core.Type.isStringFilled(candidate.valueType) && main_core.Type.isStringFilled(candidate.value);
+	  const isValidValue = main_core.Type.isPlainObject(candidate) && (main_core.Type.isNil(candidate.id) || main_core.Type.isInteger(candidate.id)) && main_core.Type.isStringFilled(candidate.typeId) && (main_core.Type.isNil(candidate.typeCaption) || main_core.Type.isStringFilled(candidate.typeCaption)) && main_core.Type.isStringFilled(candidate.valueType) && (main_core.Type.isNil(candidate.valueTypeCaption) || main_core.Type.isStringFilled(candidate.valueTypeCaption)) && main_core.Type.isStringFilled(candidate.value) && (main_core.Type.isNil(candidate.valueFormatted) || main_core.Type.isStringFilled(candidate.valueFormatted));
 	  if (isValidValue) {
 	    return;
 	  }
@@ -755,6 +763,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      id: address.id,
 	      typeId: address.typeId,
 	      valueType: address.valueType,
+	      valueTypeCaption: address.valueTypeCaption,
+	      complexId: address.complexId,
 	      value: address.value,
 	      valueFormatted: address.valueFormatted
 	    });
@@ -800,6 +810,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    // noinspection OverlyComplexBooleanExpressionJS
 	    return this.rootSource.isEqualTo(another.rootSource) && this.addressSource.isEqualTo(another.addressSource) && String(this.address.typeId) === String(another.address.typeId) && String(this.address.valueType) === String(another.address.valueType) && String(this.address.value) === String(another.address.value);
 	  }
+	  toJSON() {
+	    return {
+	      rootSource: this.rootSource,
+	      addressSource: this.addressSource,
+	      addressSourceData: this.addressSourceData,
+	      address: this.address
+	    };
+	  }
 	}
 
 	function extractReceivers(item, entityData) {
@@ -840,7 +858,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            value: stringOrUndefined(singleMultifield.VALUE),
 	            valueFormatted: stringOrUndefined(singleMultifield.VALUE_FORMATTED),
 	            complexId: stringOrUndefined(singleMultifield.COMPLEX_ID),
-	            complexName: stringOrUndefined(singleMultifield.COMPLEX_NAME)
+	            valueTypeCaption: stringOrUndefined(singleMultifield.COMPLEX_NAME)
 	          }, {
 	            title: addressSourceTitle
 	          }));

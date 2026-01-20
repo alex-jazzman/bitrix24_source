@@ -14,7 +14,7 @@ Extension::load('crm.integration.ui.banner-dispatcher');
 
 <script>
 	BX.ready(function() {
-		var options = <?= Json::encode([
+		const options = <?= Json::encode([
 			'slides' => $arParams['SLIDES'] ?? [],
 			'steps' => $arParams['STEPS'] ?? [],
 			'options' => $arParams['OPTIONS'] ?? [],
@@ -22,7 +22,7 @@ Extension::load('crm.integration.ui.banner-dispatcher');
 			'closeOptionName' => $arParams['CLOSE_OPTION_NAME'] ?? '',
 		]) ?>;
 
-		var whatsNew = new BX.Crm.WhatsNew.ActionViewMode(options);
+		const whatsNew = new BX.Crm.WhatsNew.ActionViewMode(options);
 		whatsNew.show();
 	});
 </script>

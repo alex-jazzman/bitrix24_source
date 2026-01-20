@@ -19,7 +19,7 @@ jn.define('crm/timeline/controllers/email', (require, exports, module) => {
 		openMessage({ threadId, componentTitle })
 		{
 			ComponentHelper.openLayout({
-				name: 'crm:mail.messageview',
+				name: 'mail:mail.message.view',
 				object: 'layout',
 				widgetParams: {
 					title: componentTitle,

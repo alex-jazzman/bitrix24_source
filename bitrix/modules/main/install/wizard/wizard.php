@@ -2222,6 +2222,7 @@ class CreateDBStep extends CWizardStep
 		$ar["messenger"] = [
 			"value" => [
 				"run_mode" => \Bitrix\Main\Messenger\Config\WorkerRunMode::BackgroundInWeb->value,
+				"shuffle" => true,
 				"brokers" => [
 					"default" => [
 						"type" => \Bitrix\Main\Messenger\Internals\Broker\DbBroker::TYPE_CODE,

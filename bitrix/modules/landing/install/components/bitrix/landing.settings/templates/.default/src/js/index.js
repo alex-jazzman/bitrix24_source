@@ -40,12 +40,15 @@ export class LandingSettings
 		menuId: string,
 		containerId: string,
 		saveButtonId: string,
+		cancelButtonId: string,
 		type: string,
+		tool: string,
 	})
 	{
 		this.siteId = options.siteId;
 		this.landingId = options.landingId;
 		this.type = options.type;
+		this.tool = options.tool;
 
 		// pages
 		this.pages = options.pages;
@@ -80,13 +83,18 @@ export class LandingSettings
 		});
 		if (currentLink)
 		{
-			this.onMenuLinkClick(currentLink);
+			this.onMenuLinkClick(currentLink, false);
 		}
 
 		// save
 		this.saveButton = document.getElementById(options.saveButtonId);
+		this.cancelButton = document.getElementById(options.cancelButtonId);
 		this.onSave = this.onSave.bind(this);
+		this.onCancel = this.onCancel.bind(this);
 		Event.bind(this.saveButton, 'click', this.onSave);
+		BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
+			this.onCancel();
+		});
 	}
 
 	showLoader()
@@ -126,11 +134,24 @@ export class LandingSettings
 		}
 	}
 
-	onMenuLinkClick(link: HTMLAnchorElement)
+	onMenuLinkClick(link: HTMLAnchorElement, isUserCLick: boolean = true)
 	{
+		this.currentLink = link;
+
 		if (link.dataset.page)
 		{
 			this.onPageChange(link.dataset.page);
+
+			if (isUserCLick)
+			{
+				BX.UI.Analytics.sendData({
+					tool: this.tool,
+					category: 'settings',
+					event: 'click_on_section',
+					p1: this.getTypePageForMetrika(link.dataset.page),
+					p3: `siteID_${this.siteId}`,
+				});
+			}
 		}
 		else if (link.dataset.placement)
 		{
@@ -207,6 +228,14 @@ export class LandingSettings
 
 	onSave()
 	{
+		BX.UI.Analytics.sendData({
+			tool: this.tool,
+			category: 'settings',
+			event: 'save',
+			p1: this.getTypePageForMetrika(this.currentLink.dataset.page),
+			p3: `siteID_${this.siteId}`,
+		});
+
 		this.showLoader();
 
 		const submits = [];
@@ -256,5 +285,44 @@ export class LandingSettings
 			.catch(err => {
 				console.error(err);
 			});
+	}
+
+	onCancel()
+	{
+		BX.UI.Analytics.sendData({
+			tool: this.tool,
+			category: 'settings',
+			event: 'close',
+			p1: this.getTypePageForMetrika(this.currentLink.dataset.page),
+			p3: `siteID_${this.siteId}`,
+		});
+	}
+
+	getTypePageForMetrika(typePage: string): string
+	{
+		let type = '';
+		switch (typePage)
+		{
+			case 'SITE_EDIT':
+				type = 'site_settings';
+				break;
+			case 'SITE_DESIGN':
+				type = 'site_design';
+				break;
+			case 'LANDING_EDIT':
+				type = 'page_settings';
+				break;
+			case 'LANDING_DESIGN':
+				type = 'page_design';
+				break;
+			case 'CATALOG_EDIT':
+				type = 'catalog_settings';
+				break;
+			default:
+				type = typePage;
+				break;
+		}
+
+		return type;
 	}
 }

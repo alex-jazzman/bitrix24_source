@@ -10,6 +10,7 @@ import { ChannelRecentMenu } from './classes/context-menu-manager';
 import './css/channel-list.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem, ImModelMessage } from 'im.v2.model';
 
 // @vue/component
@@ -47,7 +48,7 @@ export const ChannelList = {
 	},
 	created()
 	{
-		this.contextMenuManager = new ChannelRecentMenu();
+		this.contextMenuManager = new ChannelRecentMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -109,6 +110,10 @@ export const ChannelList = {
 			}
 
 			return this.pullWatchManager;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

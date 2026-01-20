@@ -1,4 +1,5 @@
-(function() {
+jn.define('call/calls/users', (require, exports, module) => {
+
 	let UserModel = function(config) {
 		this.data = {
 			id: BX.prop.getInteger(config, 'id', 0),
@@ -201,6 +202,8 @@
 		});
 	};
 
-	window.UserModel = UserModel;
-	window.UserRegistry = UserRegistry;
-})();
+	module.exports = {
+		UserModel,
+		UserRegistry,
+	};
+});

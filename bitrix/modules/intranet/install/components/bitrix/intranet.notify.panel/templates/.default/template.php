@@ -24,3 +24,17 @@ if (isset($arResult['config']['notify']) && !empty($arResult['config']['notify']
 	</script>
 	<?php
 }
+if (isset($arResult['annualSummary'])):
+	Extension::load(['ui.banner-dispatcher', 'intranet.notify-banner.annual-summary']);
+?>
+	<script>
+		const features = <?= Web\Json::encode($arResult['annualSummary']['features'])?>;
+		const options = <?= Web\Json::encode($arResult['annualSummary']['options'])?>;
+		const annualSummary = new BX.Intranet.NotifyBanner.AnnualSummary(features, options);
+		BX.UI.BannerDispatcher.high.toQueue(async (onDone) => {
+			annualSummary.subscribe('onClose', onDone);
+			annualSummary.subscribe('onShow', () => BX.userOptions.save('intranet', 'annual_summary_25_last_show', null, Math.floor(Date.now() / 1000)));
+			annualSummary.show();
+		});
+	</script>
+<?php endif; ?>

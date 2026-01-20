@@ -17,6 +17,7 @@ return [
 		'crm:type',
 		'crm:crm-mode',
 		'layout/ui/plan-restriction',
+		'utils/object',
 	],
 	'components' => [
 		'crm:crm.entity.details',

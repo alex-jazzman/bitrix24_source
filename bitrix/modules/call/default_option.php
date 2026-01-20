@@ -7,6 +7,7 @@ $call_default_option = [
 	'turn_server_login' => 'bitrix',
 	'turn_server_password' => 'bitrix',
 	'turn_server_max_users' => 4,
+	'call_ai_enabled' => true,
 ];
 
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/call_options.php"))

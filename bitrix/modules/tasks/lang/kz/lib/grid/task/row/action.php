@@ -18,6 +18,7 @@ $MESS["TASKS_GRID_TASK_ROW_ACTION_REMOVE_FROM_FAVORITES"] = "Таңдаулыд�
 $MESS["TASKS_GRID_TASK_ROW_ACTION_RENEW"] = "Қайта бастау";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_START"] = "Орындауды бастау";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_TAKE"] = "Жұмысқа алу";
+$MESS["TASKS_GRID_TASK_ROW_ACTION_UNLINK"] = "Байланысты жою";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_UNMUTE"] = "Дыбысты қосу";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_UNPIN"] = "Бекітуден шығару";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_VIEW"] = "Қарау";

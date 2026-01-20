@@ -78,11 +78,15 @@ jn.define('im/messenger/db/update/version', (require, exports, module) => {
 			}
 
 			const versionExtension = this.versionExtensionPrefix + version;
-			if (jn.define.moduleMap[versionExtension])
+			if (!jn.define.moduleMap[versionExtension])
 			{
-				const executeVersion = require(versionExtension);
-				await executeVersion(this.getUpdater());
+				logger.error('[DATABASE-UPDATE] file not found:', versionExtension);
+
+				return true;
 			}
+
+			const executeVersion = require(versionExtension);
+			await executeVersion(this.getUpdater());
 
 			logger.warn('[DATABASE-UPDATE] Version executed:', version);
 

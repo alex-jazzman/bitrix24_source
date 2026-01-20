@@ -8,6 +8,7 @@ export default class Release
 {
 	#deactivated = false;
 	#id: string = '';
+	#autoLaunch: boolean = false;
 
 	constructor(releaseOptions: JsonObject)
 	{
@@ -72,6 +73,7 @@ export default class Release
 				this.getSlider().show();
 			}
 
+			this.#autoLaunch = true;
 			void this.#runAction('show', { context: 'auto' });
 		}
 		else
@@ -107,6 +109,17 @@ export default class Release
 		});
 	}
 
+	#deactivate(): void
+	{
+		if (this.#deactivated === false)
+		{
+			this.#deactivated = true;
+			void this.#runAction('deactivate').catch(() => {
+				this.#deactivated = false;
+			});
+		}
+	}
+
 	#handleSliderClose(): void
 	{
 		if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
@@ -122,7 +135,14 @@ export default class Release
 			}, 1000);
 		}
 
-		void this.#runAction('close');
+		if (this.#autoLaunch)
+		{
+			void this.#runAction('close');
+		}
+		else
+		{
+			this.#deactivate();
+		}
 	}
 
 	#handleEarClick(): void
@@ -142,10 +162,7 @@ export default class Release
 
 		if (message.command === 'endOfScroll' && this.#deactivated === false)
 		{
-			this.#deactivated = true;
-			this.#runAction('deactivate').catch(() => {
-				this.#deactivated = false;
-			});
+			this.#deactivate();
 		}
 
 		if (message.command === 'openHelper' && BX.Helper)

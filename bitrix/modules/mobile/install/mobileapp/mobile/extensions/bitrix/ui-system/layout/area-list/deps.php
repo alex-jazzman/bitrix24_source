@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
+		'layout/ui/scroll-view',
 		'tokens',
 		'utils/object',
-		'layout/ui/scroll-view',
+		'utils/validation',
 	],
 ];

@@ -1,3 +1,4 @@
+/* eslint-disable */
 if (typeof(BX.FilterEntitySelector) === "undefined")
 {
 	BX.FilterEntitySelector = function() {
@@ -110,6 +111,13 @@ function DeleteTemplate(templateId)
 	instance.deleteTemplate(templateId);
 }
 
+function UnlinkTemplate(templateId, relationToId)
+{
+	const instance = BX.Tasks.Component.TasksTemplatesList.getInstance();
+
+	instance.unlinkTemplate(templateId, relationToId);
+}
+
 (function() {
 
 	if (typeof BX.Tasks.Component.TasksTemplatesList != 'undefined')
@@ -138,6 +146,27 @@ function DeleteTemplate(templateId)
 				BX.Tasks.Component.TasksTemplatesList.addInstance(this);
 
 				this.option('grid', BX.Main.gridManager.getById(this.option('gridId')));
+
+				const url = new BX.Uri(location.toString());
+				const relationToId = Number(url.getQueryParam('relationToId'));
+				if (relationToId > 0)
+				{
+					const clearParam = url
+						.removeQueryParam('relationToId')
+						.removeQueryParam('relationType')
+						.toString()
+					;
+					history.replaceState(null, '', clearParam)
+
+					BX.Event.EventEmitter.subscribe('Grid::beforeRequest', (event) => {
+						const [, eventArgs] = event.getCompatData();
+
+						eventArgs.url = new BX.Uri(eventArgs.url)
+							.setQueryParam('relationToId', relationToId)
+							.toString()
+						;
+					});
+				}
 			},
 
 			bindEvents: function() {
@@ -200,6 +229,20 @@ function DeleteTemplate(templateId)
 
 					}.bind(this)
 				);
+			},
+			unlinkTemplate: function(templateId, relationToId) {
+				top.BX.Runtime.loadExtension('tasks.v2.provider.service.relation-service').then((exports) => {
+					exports.subTasksService.delete(`template${relationToId}`, [`template${templateId}`]).then(() => {
+						this.reloadGrid();
+					}).catch((error) => {
+						console.error(error);
+						if (error.errors)
+						{
+							const content = error.errors[0].message || error.errors[0].MESSAGE;
+							BX.UI.Notification.Center.notify({ content });
+						}
+					});
+				});
 			},
 			reloadGrid: function() {
 				var grid = this.getGrid();

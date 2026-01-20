@@ -81,9 +81,9 @@
 	position: relative;
 	box-sizing: border-box;
 	margin-bottom: 15px;
-	border-radius: var(--ui-entity-editor-section-border-radius, var(--ui-border-radius-md, 1px));
+	border-radius: var(--ui-border-radius-lg);
 	padding: 0 20px;
-	background-color: #f9fafb;
+	background-color: var(--ui-color-bg-content-secondary);
 	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
 	transition: background-color 250ms linear, opacity 250ms linear;
 }

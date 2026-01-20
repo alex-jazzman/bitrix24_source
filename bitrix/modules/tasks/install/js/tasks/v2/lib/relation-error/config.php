@@ -8,9 +8,9 @@ return [
 	'js' => 'dist/relation-error.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'main.popup',
 		'tasks.v2.core',
 		'tasks.v2.const',
+		'tasks.v2.lib.hint',
 	],
 	'skip_core' => true,
 ];

@@ -20,12 +20,6 @@ export const MiniFormButton = {
 			Outline,
 		};
 	},
-	computed: {
-		iconSize(): number
-		{
-			return 20;
-		},
-	},
 	template: `
 		<div class="tasks-card-change-description-mini-btn">
 			<div class="tasks-full-card-field-container --small-vertical-padding">
@@ -33,7 +27,7 @@ export const MiniFormButton = {
 					<template v-if="filesCount">
 						<BIcon
 							:name="Outline.ATTACH"
-							:size=iconSize
+							:size="20"
 							class="tasks-card-description-field-icon-link"
 						/>
 						<div class="tasks-card-change-description-mini-text-files">
@@ -46,8 +40,8 @@ export const MiniFormButton = {
 						</div>
 						<BIcon
 							:name="Outline.CREATE_CHAT"
-							:size=iconSize
-							:hoverable="true"
+							:size="20"
+							hoverable
 							class="tasks-card-description-field-icon"
 						/>
 					</template>

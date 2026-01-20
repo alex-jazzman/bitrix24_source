@@ -14,6 +14,7 @@ use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
@@ -302,7 +303,9 @@ if (CModule::IncludeModule("sender") && \Bitrix\Sender\Security\User::current()-
 $arMenu[] = [
 	Loc::getMessage('MENU_IM_MESSENGER_NEW'),
 	'/online/',
-	[],
+	[
+		'/desktop_app/',
+	],
 	[
 		'counter_id' => 'im-message',
 		'menu_item_id' => 'menu_im_messenger',
@@ -320,7 +323,9 @@ if (
 	$arMenu[] = [
 		Loc::getMessage('MENU_IM_MESSENGER_COLLAB'),
 		'/online/?IM_COLLAB',
-		[],
+		[
+			'/desktop_app/?IM_COLLAB'
+		],
 		[
 			'menu_item_id' => 'menu_im_collab',
 			'can_be_first_item' => false
@@ -402,6 +407,10 @@ if (CModule::IncludeModule("intranet") && CIntranetUtils::IsExternalMailAvailabl
 {
 	$warningLink = $mailLink = \Bitrix\Main\Config\Option::get('intranet', 'path_mail_client', '/mail/');
 
+	$mailUri = new Uri($mailLink);
+	$mailUri->addParams(['source' => 'left_menu']);
+	$mailLink = $mailUri->getUri();
+
 	$arMenu[] = array(
 		GetMessage("MENU_MAIL"),
 		$mailLink,
@@ -480,6 +489,27 @@ if (Loader::includeModule('intranet') && AutomationSection::isAvailable())
 	$arMenu[] = $automationItem;
 }
 
+if (
+	Loader::includeModule('bizproc')
+	&& \Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'Y'
+)
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_AI_AGENTS'),
+		'/bizproc/ai/agents/',
+		[],
+		[
+			'real_link' => getLeftMenuItemLink(
+				'menu_ai_agents',
+				'/bizproc/ai/agents/'
+			),
+			'menu_item_id' => 'menu_ai_agents',
+			'top_menu_id' => 'top_menu_menu_ai_agents',
+		],
+		'',
+	];
+}
+
 //marketplace
 if (\Bitrix\Intranet\Integration\Market\Label::isRenamedMarket())
 {
@@ -520,6 +550,19 @@ $arMenu[] = [
 	],
 	"",
 ];
+
+if ((new \Bitrix\Intranet\Internal\Integration\AiAssistant\RemoteMcp())->isLeftMenuItemAvailable())
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_MCP_INTEGRATIONS'),
+		'/mcp/',
+		[],
+		[
+			'menu_item_id' => 'menu_mcp_integrations',
+		],
+		'',
+	];
+}
 
 $arMenu[] = [
 	GetMessage('MENU_EMPLOYEE'),

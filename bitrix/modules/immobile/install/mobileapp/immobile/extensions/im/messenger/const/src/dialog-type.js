@@ -28,6 +28,7 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		generalChannel: 'generalChannel',
 		collab: 'collab',
 		tasksTask: 'tasksTask', // task comment chat
+		aiAssistant: 'aiAssistant',
 	});
 
 	const DialogWidgetType = Object.freeze({

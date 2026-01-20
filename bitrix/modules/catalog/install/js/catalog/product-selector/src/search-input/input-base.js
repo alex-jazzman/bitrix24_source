@@ -47,10 +47,10 @@ export class ProductSearchInputBase
 			}
 
 			this.toggleIcon(
-				this.#getSearchIcon(),
+				this.getSearchIcon(),
 				Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block',
 			);
-			Dom.append(this.#getSearchIcon(), block);
+			Dom.append(this.getSearchIcon(), block);
 
 			Event.bind(this.getNameInput(), 'click', this.handleClickNameInput.bind(this));
 			Event.bind(this.getNameInput(), 'input', this.handleSearchInput);
@@ -66,7 +66,7 @@ export class ProductSearchInputBase
 		if (this.showDetailLink() && Type.isStringFilled(this.getValue()))
 		{
 			this.toggleIcon(this.getClearIcon(), 'none');
-			this.toggleIcon(this.#getSearchIcon(), 'none');
+			this.toggleIcon(this.getSearchIcon(), 'none');
 			this.toggleIcon(this.#getArrowIcon(), 'block');
 			Dom.append(this.#getArrowIcon(), block);
 		}
@@ -340,7 +340,7 @@ export class ProductSearchInputBase
 		const item = event.getData().item;
 
 		item.getDialog().getTargetNode().value = item.getTitle();
-		this.toggleIcon(this.#getSearchIcon(), 'none');
+		this.toggleIcon(this.getSearchIcon(), 'none');
 		this.clearErrors();
 		if (this.selector)
 		{
@@ -408,14 +408,14 @@ export class ProductSearchInputBase
 		if (Type.isStringFilled(event.target.value))
 		{
 			this.toggleIcon(this.getClearIcon(), 'block');
-			this.toggleIcon(this.#getSearchIcon(), 'none');
+			this.toggleIcon(this.getSearchIcon(), 'none');
 		}
 		else
 		{
 			this.toggleIcon(this.getClearIcon(), 'none');
 			if (this.isSearchEnabled())
 			{
-				this.toggleIcon(this.#getSearchIcon(), 'block');
+				this.toggleIcon(this.getSearchIcon(), 'block');
 			}
 		}
 	}
@@ -574,7 +574,7 @@ export class ProductSearchInputBase
 			{
 				if (this.isSearchEnabled())
 				{
-					this.toggleIcon(this.#getSearchIcon(), 'none');
+					this.toggleIcon(this.getSearchIcon(), 'none');
 				}
 				this.toggleIcon(this.#getArrowIcon(), 'block');
 			}
@@ -584,7 +584,7 @@ export class ProductSearchInputBase
 				if (this.isSearchEnabled())
 				{
 					this.toggleIcon(
-						this.#getSearchIcon(),
+						this.getSearchIcon(),
 						Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block',
 					);
 				}
@@ -639,7 +639,7 @@ export class ProductSearchInputBase
 		});
 	}
 
-	#getSearchIcon(): HTMLElement
+	getSearchIcon(): HTMLElement
 	{
 		return this.cache.remember('searchIcon', () => {
 			return Tag.render`

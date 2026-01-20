@@ -20,6 +20,7 @@ declare type TranscriptMessengerModel = MessengerModel<TranscriptModelCollection
 
 declare type TranscriptModelActions = 'filesModel/transcriptModel/set'
 	| 'filesModel/transcriptModel/toggleText'
+	| 'filesModel/transcriptModel/setReadyStatus'
 	| 'filesModel/transcriptModel/setFromLocalDatabase'
 	| 'filesModel/transcriptModel/delete'
 	| 'filesModel/transcriptModel/deleteByChatId';

@@ -1,4 +1,5 @@
-import {Dom, Event, Type} from 'main.core';
+import { Dom, Event, Type } from 'main.core';
+import { sendData } from 'ui.analytics';
 
 export class Security
 {
@@ -16,7 +17,7 @@ export class Security
 
 		if (Type.isDomNode(this.menuContainer))
 		{
-			this.menuItems = this.menuContainer.querySelectorAll("a");
+			this.menuItems = this.menuContainer.querySelectorAll('a');
 
 			(this.menuItems || []).forEach((item) => {
 				Event.bind(item, 'click', () => {
@@ -25,9 +26,9 @@ export class Security
 			});
 		}
 
-		BX.addCustomEvent('BX.Security.UserOtpInit:afterOtpSetup', function(event) {
+		BX.addCustomEvent('BX.Security.UserOtpInit:afterOtpSetup', (event) => {
 			this.showOtpConnectedComponent();
-		}.bind(this));
+		});
 	}
 
 	changeContent(action)
@@ -39,28 +40,29 @@ export class Security
 
 		switch (action)
 		{
-			case "auth":
-			case "otpConnected":
-			case "socnetEmail":
+			case 'otpConnected':
+			case 'otpList':
+			case 'changePassword':
+			case 'socnetEmail':
 				const requestData = {
-					userId: this.userId
+					userId: this.userId,
 				};
 				this.sendAction(action, requestData);
 				break;
 
-			case "otp":
-			case "appPasswords":
-			case "synchronize":
-			case "mailingAgreement":
-			case "sso":
+			case 'otp':
+			case 'appPasswords':
+			case 'synchronize':
+			case 'mailingAgreement':
+			case 'sso':
 				this.sendAction(action, {});
 				break;
 
-			case "recoveryCodes":
+			case 'recoveryCodes':
 				this.showRecoveryCodesComponent();
 				break;
 
-			case "socserv":
+			case 'socserv':
 				this.showSocservComponent();
 				break;
 		}
@@ -68,8 +70,8 @@ export class Security
 
 	clearHtml()
 	{
-		BX.html(this.container, "");
-		const uiButtons = document.getElementsByClassName("ui-entity-wrap");
+		BX.html(this.container, '');
+		const uiButtons = document.getElementsByClassName('ui-entity-wrap');
 		if (uiButtons && uiButtons[0])
 		{
 			Dom.remove(uiButtons[0]);
@@ -79,38 +81,38 @@ export class Security
 	sendAction(action, requestData)
 	{
 		this.clearHtml();
-		this.loader = this.showLoader({node: this.container, loader: null, size: 100});
+		this.loader = this.showLoader({ node: this.container, loader: null, size: 100 });
 
 		BX.ajax.runComponentAction(this.componentName, action, {
 			signedParameters: this.signedParameters,
 			mode: 'ajax',
-			data: requestData
-		}).then(function (response) {
+			data: requestData,
+		}).then((response) => {
 			this.showComponentData(response, action);
-		}.bind(this), function (response) {
-			this.showErrorPopup(response["errors"][0].message);
-			this.hideLoader({loader: this.loader});
-		}.bind(this));
+		}, (response) => {
+			this.showErrorPopup(response.errors[0].message);
+			this.hideLoader({ loader: this.loader });
+		});
 	}
 
 	showOtpComponent()
 	{
-		this.changeContent("otp");
+		this.changeContent('otp');
 	}
 
 	showOtpConnectedComponent()
 	{
-		this.changeContent("otpConnected");
+		this.changeContent('otpList');
 	}
 
 	showRecoveryCodesComponent(componentMode)
 	{
 		if (!componentMode)
 		{
-			componentMode = "";
+			componentMode = '';
 		}
 
-		this.sendAction("recoveryCodes", {componentMode: componentMode});
+		this.sendAction('recoveryCodes', { componentMode });
 	}
 
 	showSocservComponent()
@@ -121,12 +123,12 @@ export class Security
 		{
 			const url = BX.data(socServNode, 'url');
 			if (top.BX.SidePanel.Instance.open(url, {
-				'cacheable': false,
-				'width': 840
+				cacheable: false,
+				width: 840,
 			}))
 			{
-				top.BX.addCustomEvent(top.BX.SidePanel.Instance.getSlider(url), "SidePanel.Slider:onClose", BX.proxy(function () {
-					const authNode = document.querySelector("[data-action='auth']");
+				top.BX.addCustomEvent(top.BX.SidePanel.Instance.getSlider(url), 'SidePanel.Slider:onClose', BX.proxy(() => {
+					const authNode = document.querySelector("[data-action='otpConnected']");
 					if (BX.type.isDomNode(authNode))
 					{
 						authNode.click();
@@ -138,32 +140,34 @@ export class Security
 
 	showComponentData(result, pageName)
 	{
-		const errors = BX.prop.getArray(result, "errors", []);
+		const errors = BX.prop.getArray(result, 'errors', []);
 		if (errors.length > 0)
 		{
-			this.showErrorPopup(result["errors"][0].message);
+			this.showErrorPopup(result.errors[0].message);
+
 			return;
 		}
 
 		if (!result.data)
 		{
-			this.showErrorPopup("Unknown error");
-			this.hideLoader({loader: this.loader});
+			this.showErrorPopup('Unknown error');
+			this.hideLoader({ loader: this.loader });
+
 			return;
 		}
 
-		const promise = new Promise(BX.delegate(function(resolve, reject) {
-			if (result.data.hasOwnProperty("assets") && result.data.assets['css'].length)
+		const promise = new Promise(BX.delegate((resolve, reject) => {
+			if (result.data.hasOwnProperty('assets') && result.data.assets.css.length > 0)
 			{
-				BX.load(result.data.assets['css'], function () {
-					if (result.data.assets['js'].length)
+				BX.load(result.data.assets.css, () => {
+					if (result.data.assets.js.length > 0)
 					{
-						BX.load(result.data.assets['js'], function () {
-							if (result.data.assets['string'].length)
+						BX.load(result.data.assets.js, () => {
+							if (result.data.assets.string.length > 0)
 							{
-								for (var i = 0; i < result.data.assets['string'].length; i++)
+								for (let i = 0; i < result.data.assets.string.length; i++)
 								{
-									BX.html(null, result.data.assets['string'][i]);
+									BX.html(null, result.data.assets.string[i]);
 								}
 							}
 
@@ -175,16 +179,25 @@ export class Security
 		}, this));
 
 		promise.then(
-			BX.delegate(function(){
-				const html = BX.prop.getString(result.data, "html", '');
+			BX.delegate(function() {
+				const html = BX.prop.getString(result.data, 'html', '');
 				BX.html(this.container, html);
 
-				const pageTitle = BX.prop.getString(BX.prop.getObject(result.data, "additionalParams", ''), "pageTitle", "");
-				BX.html(BX("pagetitle"), pageTitle);
+				const pageTitle = BX.prop.getString(BX.prop.getObject(result.data, 'additionalParams', ''), 'pageTitle', '');
+				BX.html(BX('pagetitle'), pageTitle);
 
-				top.history.pushState(null, "", "?page=" + pageName);
-			},this)
+				top.history.pushState(null, '', `?page=${pageName}`);
+			}, this),
 		);
+
+		if (pageName === 'otpConnected')
+		{
+			sendData({
+				tool: 'user_settings',
+				category: 'security_user',
+				event: 'show',
+			});
+		}
 	}
 
 	showLoader(params)
@@ -197,7 +210,7 @@ export class Security
 			{
 				loader = new BX.Loader({
 					target: params.node,
-					size: params.hasOwnProperty("size") ? params.size : 40
+					size: params.hasOwnProperty('size') ? params.size : 40,
 				});
 			}
 			else
@@ -237,19 +250,19 @@ export class Security
 		}
 
 		BX.PopupWindowManager.create({
-			id: "intranet-user-profile-error-popup",
+			id: 'intranet-user-profile-error-popup',
 			content:
-				BX.create("div", {
-					props : {
-						style : "max-width: 450px"
+				BX.create('div', {
+					props: {
+						style: 'max-width: 450px',
 					},
-					html: BX.util.htmlspecialchars(error)
+					html: BX.util.htmlspecialchars(error),
 				}),
-			closeIcon : true,
-			lightShadow : true,
-			offsetLeft : 100,
-			overlay : false,
-			contentPadding: 10
+			closeIcon: true,
+			lightShadow: true,
+			offsetLeft: 100,
+			overlay: false,
+			contentPadding: 10,
 		}).show();
 	}
 }

@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tour\AutomatedSolution\CustomSectionMenu;
+use Bitrix\Crm\Tour\AutomatedSolution\LeftMenu;
+use Bitrix\Crm\Tour\Grid\GridImprovements;
 use Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection;
 use Bitrix\Crm\Tour\Permissions\AutomatedSolution;
 use Bitrix\Main\Localization\Loc;
@@ -32,17 +35,40 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.tooltip',
 	'crm.entity-list.binder',
+	'crm.grid.field.clickable-user',
 ]);
 
-$isRecurring = ($arParams['isRecurring'] ?? false);
+$isRecurring = (bool)($arParams['isRecurring'] ?? false);
 
-if (!$isRecurring && $arResult['customSectionId'] > 0)
+if ($arResult['customSectionId'] > 0)
 {
-	echo MobilePromoterCustomSection::getInstance()
-		->setCustomSection($arResult['customSectionId'])
-		->build()
-	;
+	if (!$isRecurring)
+	{
+		echo MobilePromoterCustomSection::getInstance()
+			->setCustomSection($arResult['customSectionId'])
+			->build()
+		;
+	}
+
+	if (($arResult['isImportedAutomatedSolution'] ?? false) === true)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.automated_solution.notify',
+			'',
+		);
+
+		$targetId = $arResult['automatedSolutionCode'] ?? null;
+		if ($targetId)
+		{
+			$targetId = 'menu_custom_section_' . $targetId;
+
+			print CustomSectionMenu::getInstance()->setTargetId($targetId)->build();
+			print LeftMenu::getInstance()->setTargetId('bx_left_menu_' . $targetId)->build();
+		}
+	}
 }
+
+echo GridImprovements::getInstance()->build();
 
 $assets = Asset::getInstance();
 $assets->addJs('/bitrix/js/crm/progress_control.js');

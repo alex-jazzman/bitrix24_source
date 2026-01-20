@@ -22,9 +22,7 @@ export class AnchorService
 			},
 		})
 			.then(() => {
-				const userId = Core.getUserId();
-
-				this.#store.dispatch('messages/anchors/removeChatAnchors', { userId, chatId });
+				this.#store.dispatch('messages/anchors/removeChatAnchors', chatId);
 			})
 			.catch((error) => {
 				console.error('AnchorService: read chat anchors error', error);
@@ -34,10 +32,8 @@ export class AnchorService
 
 	debouncedReadMessageAnchors(messageId: number): void
 	{
-		const userId = Core.getUserId();
-
 		this.messagesToRead.add(messageId);
-		this.#store.dispatch('messages/anchors/removeUserAnchorsFromMessage', { userId, messageId });
+		this.#store.dispatch('messages/anchors/removeUserAnchorsFromMessage', messageId);
 
 		if (this.#timerBeforeSendRequest)
 		{

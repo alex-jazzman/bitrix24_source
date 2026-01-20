@@ -24,4 +24,4 @@ $MESS["SIGN_B2E_SIGNERS_LIST_READ"] = "Право на просмотр груп
 $MESS["SIGN_B2E_SIGNERS_LIST_ADD"] = "Право на создание групп сотрудников";
 $MESS["SIGN_B2E_SIGNERS_LIST_EDIT"] = "Право на изменение групп сотрудников";
 $MESS["SIGN_B2E_SIGNERS_LIST_DELETE"] = "Право на удаление групп сотрудников";
-$MESS["SIGN_B2E_SIGNERS_LIST_REFUSED"] = "Доступ к группе сотрудников отказавшихся от КЭДО";
+$MESS["SIGN_B2E_SIGNERS_LIST_REFUSED"] = "Доступ к группе сотрудников, отказавшихся от КЭДО";

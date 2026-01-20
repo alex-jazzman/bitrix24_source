@@ -9,6 +9,7 @@ import {
 	DashboardGroupsField,
 	DeleteSupersetField,
 	ClearCacheField,
+	DashboardLanguageField,
 } from './entities/index';
 
 export class FieldFactory
@@ -39,6 +40,8 @@ export class FieldFactory
 				return DeleteSupersetField.create(controlId, settings);
 			case 'clearCache':
 				return ClearCacheField.create(controlId, settings);
+			case 'dashboardLanguage':
+				return DashboardLanguageField.create(controlId, settings);
 			default:
 				return null;
 		}

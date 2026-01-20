@@ -4,7 +4,7 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Intranet\Internal\Entity\Portal\Template;
+use Bitrix\Intranet\Internal\Service\TemplateService;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -24,7 +24,7 @@ Loader::includeModule('intranet');
 	'ui.icon-set.actions',
 ]);
 
-$currentSeasonName = (new Template\CurrentSeason())->getSeasonFromCurrentDate()->value;
+['cssClassName' => $cssClassName, 'urlSubCut' => $urlSubCut] = ((new TemplateService())->getCurrentSeasonData());
 ?>
 <!DOCTYPE html>
 <html <?php if (LANGUAGE_ID === 'tr'): ?>lang="<?= LANGUAGE_ID ?>"<?php endif ?>>
@@ -32,16 +32,16 @@ $currentSeasonName = (new Template\CurrentSeason())->getSeasonFromCurrentDate()-
 	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=320">
 	<meta http-equiv="Content-Type" content="text/html;charset=<?= SITE_CHARSET ?>"/>
 	<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $currentSeasonName ?>/horizontal-1920-preview.webp" as="image">
-	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $currentSeasonName ?>/horizontal-1024-preview.webp" as="image">
-	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $currentSeasonName ?>/vert-1024-preview.webp" as="image">
+	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $urlSubCut ?>/horizontal-1920-preview.webp" as="image">
+	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $urlSubCut ?>/horizontal-1024-preview.webp" as="image">
+	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $urlSubCut ?>/vert-1024-preview.webp" as="image">
 	<?php $APPLICATION->ShowCSS(true, true); ?>
 	<?php $APPLICATION->ShowHeadStrings(); ?>
 	<title><?php $APPLICATION->ShowTitle() ?></title>
 </head>
 
 <?php
-$seasonCssClassName = "intranet-bg intranet-bg--{$currentSeasonName}";
+$seasonCssClassName = $cssClassName;
 $logoUrl = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDefaultLogo()->getWhite();
 ?>
 

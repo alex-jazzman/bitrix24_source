@@ -1,10 +1,10 @@
-import { Call } from 'crm.ai.call';
+import { ActivityProvider, Call } from 'crm.ai.call';
 import { Slider } from 'crm.ai.slider';
 import { addCustomEvent, Loc, removeAllCustomEvents, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { AiFormFillApplication } from './app';
 import SliderButtonsAdapter from './services/slider-buttons-adapter';
-import { Settings, Setting } from 'crm.integration.ui.settings';
+import { Setting, Settings } from 'crm.integration.ui.settings';
 
 export let sliderButtonsAdapter: ?SliderButtonsAdapter = null;
 
@@ -16,6 +16,8 @@ interface CreateOptions
 	label: string;
 	activityId: number;
 	activityDirection: string;
+	activityProvider: string;
+	summarizeJobId: number;
 	ownerId: number;
 	ownerTypeId: number;
 	languageTitle?: string;
@@ -105,6 +107,8 @@ class ConflictFieldsliderCreator
 						ownerTypeId: this.#options.ownerTypeId,
 						ownerId: this.#options.ownerId,
 						languageTitle: this.#options.languageTitle,
+						activityProvider: this.#options.activityProvider,
+						jobId: this.#options.summarizeJobId,
 					});
 
 					resume.open();
@@ -112,11 +116,17 @@ class ConflictFieldsliderCreator
 			},
 		});
 
-		return [
-			transcriptButton,
+		let result = [
 			resumeButton,
 			...toolbarButtons,
 		];
+
+		if (this.#options.activityProvider === ActivityProvider.call)
+		{
+			result = [transcriptButton, ...result];
+		}
+
+		return result;
 	}
 
 	#createSliderWrapper(): Slider
@@ -156,6 +166,8 @@ class ConflictFieldsliderCreator
 				mergeUuid: this.#options.mergeUuid,
 				activityId: this.#options.activityId,
 				activityDirection: this.#options.activityDirection,
+				activityProvider: this.#options.activityProvider,
+				summarizeJobId: this.#options.summarizeJobId,
 			},
 		);
 		this.#app.start();

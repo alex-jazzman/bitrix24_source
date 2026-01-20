@@ -1,8 +1,11 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Main\Web\Json;
+use Bitrix\Security\Mfa\OtpType;
 
 \Bitrix\Main\UI\Extension::load([
 	"ui.design-tokens",
@@ -16,12 +19,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /**
  * @var array $arParams
  * @var array $arResult
- * @var CBitrixComponent $component
- * @global CMain $APPLICATION
- * @global CUser $USER
  */
 ?>
-<?if ($arResult["MESSAGE"]):?>
+<?if (!empty($arResult["MESSAGE"])):?>
 	<?ShowMessage($arResult["MESSAGE"]);?>
 <?else:?>
 
@@ -44,9 +44,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 		<ul class="bx-otp-section-market-list">
 			<li class="bx-otp-section-market-icon-Apple"><a href="https://apps.apple.com<?=(LANGUAGE_ID == "ru" || LANGUAGE_ID == "ua" ? "/ru" : "")?>/app/bitrix24-otp/id929604673?mt=8" target="_blank"></a></li>
 			<li class="bx-otp-section-market-icon-Google"><a href="https://play.google.com/store/apps/details?id=com.bitrixsoft.otp" target="_blank"></a></li>
-			<?/*if (in_array(LANGUAGE_ID, array("ru", "ua"))):?>
-			<li class="bx-otp-section-market-icon-Yandex"><a href=""></a></li>
-			<?endif*/?>
 		</ul>
 		<div class="clb"></div>
 	</div>
@@ -73,9 +70,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 						<span class="bx-otp-section-desc">
 							<?=GetMessage("SECURITY_OTP_HAND_DESCR")?>
 							<b><?
-							if ($arResult['TYPE'] === \Bitrix\Security\Mfa\Otp::TYPE_TOTP):
+							if ($arResult['TYPE'] === OtpType::Totp->value):
 								echo getMessage('SECURITY_OTP_CODE_INFO_TOTP');
-							elseif ($arResult['TYPE'] === \Bitrix\Security\Mfa\Otp::TYPE_HOTP):
+							elseif ($arResult['TYPE'] === OtpType::Hotp->value):
 								echo getMessage('SECURITY_OTP_CODE_INFO_HOTP');
 							endif;
 							?></b>.
@@ -153,8 +150,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	<script>
 		BX.ready(function createOtp()
 		{
-			BX.message(<?=\CUtil::PhpToJSObject($jsMessages)?>);
-			new BX.Security.UserOtp.Init(<?=\CUtil::PhpToJSObject($jsParams)?>);
+			BX.message(<?= Json::encode($jsMessages) ?>);
+			new BX.Security.UserOtp.Init(<?= Json::encode($jsParams) ?>);
 		});
 	</script>
 <?endif?>

@@ -15,6 +15,7 @@
 
 .tasks-field-group-title {
 	line-height: 18px;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	color: var(--ui-color-base-2);

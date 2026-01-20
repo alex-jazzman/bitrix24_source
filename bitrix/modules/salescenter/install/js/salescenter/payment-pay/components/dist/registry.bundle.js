@@ -18,13 +18,22 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	      stage: this.setStageType(),
 	      loading: false,
 	      paymentProcess: this.prepareParamsPaymentProcess(settings),
-	      consent: this.prepareUserConsentSettings(settings)
+	      consent: this.prepareUserConsentSettings(settings),
+	      isNeedPaymentViewerViewAction: settings.get('isNeedPaymentViewerViewAction')
 	    };
 	  },
 	  created: function created() {
 	    this.initPayment();
 	    this.initUserConsent();
 	    this.subscribeToGlobalEvents();
+	    if (this.isNeedPaymentViewerViewAction) {
+	      main_core.ajax.runComponentAction('bitrix:salescenter.payment.pay', 'paymentViewerView', {
+	        mode: 'class',
+	        data: {
+	          fields: this.paymentProcess.backendProvider.options
+	        }
+	      });
+	    }
 	  },
 	  methods: {
 	    initUserConsent: function initUserConsent() {

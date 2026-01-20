@@ -2,103 +2,43 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_popup,main_core,ui_system_skeleton) {
+(function (exports,main_core,main_popup,ui_system_skeleton,tasks_v2_lib_idUtils) {
 	'use strict';
 
 	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3;
-	const Skeleton = () => main_core.Tag.render(_t || (_t = _`
-	<div class="task-skeleton" style="padding: 24px">
-		<div class="--title --row">
-			${0}
-			<div class="--fire">${0}</div>
-			${0}
-		</div>
-		<div class="--description">${0}</div>
-		<div style="margin-bottom: 17px">${0}</div>
-		${0}
-		<div class="--chips">${0}</div>
-		<div class="--buttons --row">
-			${0}
-			<div class="--cancel">${0}</div>
-			${0}
-		</div>
-	</div>
-`), line(240, 18, 99), circle(), circle(), line(80, 12, 99), FieldRow(), FieldRow(), line(null, 32), line(84, 34), line(84, 34), line(97, 12, 99));
-	const FieldRow = () => main_core.Tag.render(_t2 || (_t2 = _`
-	<div class="--row">
-		${0}
-		<div style="margin: 0 8px 0 41px">${0}</div>
-		${0}
-	</div>
-`), line(100, 12, 99), circle(22), line(130, 12, 99));
-	const FullSkeleton = () => main_core.Tag.render(_t3 || (_t3 = _`
-	<div class="task-skeleton --full">
-		<div class="--main">
-			<div style="padding: 28px 24px">
-				<div class="--full-title --row">
-					${0}
-					${0}
-				</div>
-				<div class="--full-description">${0}</div>
-				${0}
-				<div style="margin: 12px 0">${0}</div>
-				${0}
-				<div class="--full-chips --row">
-					${0}
-					${0}
-					${0}
-				</div>
-			</div>
-			<div class="--row --footer">
-				${0}
-				<div class="--more">${0}</div>
-				${0}
-			</div>
-		</div>
-		<div class="--chat">
-			<div class="--chat-title --row">
-				${0}
-				<div class="--chat-info">
-					${0}
-					${0}
-				</div>
-				${0}
-				<div style="margin-left: 8px">${0}</div>
-			</div>
-			<div class="--chat-bg">
-				<div class="--textarea --row">
-					${0}
-					${0}
-				</div>
-			</div>
-		</div>
-	</div>
-`), line(350, 18), circle(), line(260, 18), line(null, 84), line(null, 84), line(null, 84), line(88, 32), line(88, 32), line(88, 32), line(85, 38), line(38, 38), line(131, 22), circle(40), line(110, 12), line(75, 10), circle(), circle(), line(null, 47), circle(44));
-	const line = ui_system_skeleton.Line;
-	const circle = ui_system_skeleton.Circle;
-
+	  _t;
+	const settings = main_core.Extension.getSettings('tasks.v2.application.task-card');
+	const load = top.BX.Runtime.loadExtension;
 	class TaskCard {
 	  static showCompactCard(params = {}) {
+	    var _params$taskId;
+	    if (window !== top) {
+	      void load('tasks.v2.application.task-card').then(exports => exports.TaskCard.showCompactCard(params));
+	      return;
+	    }
+	    const hasMandatoryUserFields = tasks_v2_lib_idUtils.idUtils.isTemplate((_params$taskId = params.taskId) != null ? _params$taskId : 0) ? settings.hasMandatoryTemplateUserFields : settings.hasMandatoryTaskUserFields;
+	    if (hasMandatoryUserFields && settings.formV2Enabled) {
+	      this.showFullCard(params);
+	      return;
+	    }
 	    const id = `tasks-compact-card-${params.taskId}`;
 	    if (main_popup.PopupManager.getPopupById(id)) {
 	      return;
 	    }
-
-	    // eslint-disable-next-line init-declarations
-	    let card;
+	    const content = main_core.Tag.render(_t || (_t = _`<div/>`));
+	    void ui_system_skeleton.renderSkeleton('/bitrix/js/tasks/v2/application/task-card/src/skeleton.html?v=1', content);
+	    let card = null;
 	    const popup = new main_popup.Popup({
 	      id,
 	      className: 'tasks-compact-card-popup',
 	      width: 580,
+	      minHeight: 324,
 	      borderRadius: '16px',
 	      noAllPaddings: true,
-	      content: Skeleton(),
+	      content,
 	      cacheable: false,
 	      events: {
-	        onAfterClose: () => card.unmountCard()
+	        onAfterClose: () => card.unmount()
 	      },
 	      overlay: {
 	        opacity: 100,
@@ -106,49 +46,50 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        blur: 'blur(2px)'
 	      }
 	    });
-	    void BX.Runtime.loadExtension('tasks.v2.application.task-compact-card').then(({
-	      TaskCompactCard
-	    }) => {
-	      card = new TaskCompactCard({
-	        analytics: {},
-	        ...params
-	      });
-	      card.mountCard(popup);
+	    void load('tasks.v2.application.task-compact-card').then(exports => {
+	      card = new exports.TaskCompactCard(params);
+	      card.mount(popup);
 	    });
 	    popup.show();
 	  }
 	  static showFullCard(params = {}) {
-	    // eslint-disable-next-line init-declarations
-	    let card;
-	    BX.SidePanel.Instance.open(`tasks-full-card-${params.taskId}`, {
-	      contentClassName: 'tasks-full-card-slider-content',
-	      width: 1510 - (params.widthOffset || 0),
-	      customLeftBoundary: 0,
-	      cacheable: false,
-	      contentCallback: slider => {
-	        void top.BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then(({
-	          TaskFullCard
-	        }) => {
-	          card = new TaskFullCard({
-	            analytics: {},
-	            ...params
-	          });
-	          card.mountCard(slider);
-	        });
-	        return FullSkeleton();
+	    var _params$url;
+	    let card = null;
+	    const options = {
+	      contentCallback: async slider => {
+	        const exports = await load('tasks.v2.application.task-full-card');
+	        card = new exports.TaskFullCard(params);
+	        return card.mount(slider);
 	      },
 	      events: {
-	        onClose: () => {
+	        onClose: event => {
 	          var _card;
-	          return (_card = card) == null ? void 0 : _card.unmountCard();
+	          return (_card = card) == null ? void 0 : _card.onClose(event);
+	        },
+	        onCloseComplete: () => {
+	          if (card) {
+	            card.onCloseComplete();
+	          } else if (params.closeCompleteUrl) {
+	            location.href = params.closeCompleteUrl;
+	          }
 	        }
 	      }
-	    });
+	    };
+	    BX.SidePanel.Instance.open((_params$url = params.url) != null ? _params$url : this.getUrl(params.taskId), options);
+	  }
+	  static getUrl(entityId, groupId) {
+	    const template = String(entityId).split('template')[1];
+	    const id = Number(template) || template || entityId;
+	    const isReal = Number.isInteger(id);
+	    const path = (entityId != null && entityId.startsWith != null && entityId.startsWith('template') ? settings.templatePath : groupId ? settings.groupTaskPath : settings.userTaskPath).replace('#user_id#', settings.userId).replace('#group_id#', groupId).replace('#task_id#', isReal ? id : 0).replace('#template_id#', isReal ? id : 0).replace('#action#', isReal ? 'view' : 'edit');
+	    if (isReal) {
+	      return path;
+	    }
+	    return new main_core.Uri(path).setQueryParam('id', id).toString();
 	  }
 	}
 
-	exports.FullSkeleton = FullSkeleton;
 	exports.TaskCard = TaskCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Main,BX,BX.UI.System));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX,BX.Main,BX.UI.System,BX.Tasks.V2.Lib));
 //# sourceMappingURL=task-card.bundle.js.map

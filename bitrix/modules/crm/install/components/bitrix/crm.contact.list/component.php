@@ -8,6 +8,7 @@ use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -474,11 +475,12 @@ if (!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS'];
 
-	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
-	if(empty($effectiveFilterFieldIDs))
-	{
-		$effectiveFilterFieldIDs = $entityFilter->getDefaultFieldIDs();
-	}
+	$effectiveFilterFieldIDs = array_unique(
+		array_merge(
+			$filterOptions->getUsedFields(),
+			$entityFilter->getDefaultFieldIDs(),
+		),
+	);
 
 	//region HACK: Preload fields for filter of user activities & webforms
 	if(!in_array('ASSIGNED_BY_ID', $effectiveFilterFieldIDs, true))
@@ -837,6 +839,10 @@ else
 }
 //endregion
 
+$arFilter = Crm\Filter\FieldsTransform\UserBasedField::breakDepartmentsToUsers(
+	$arFilter,
+	$entityFilter?->getFields() ?? [],
+);
 Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
 
 //region Activity Counter Filter
@@ -1074,6 +1080,8 @@ if ($isInExportMode && $isStExport && $isStExportAllFields)
 // Fill in default values if empty
 if (empty($arSelectMap))
 {
+	GridHeaders::removeExcessUfFromGridParams($arResult['HEADERS']);
+
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
 		if ($arHeader['default'] ?? false)

@@ -61,7 +61,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				}
 				else if(this._entityTypeId === BX.CrmEntityType.enumeration.dealrecurring)
 				{
-					this._manager = BX.CrmDealRecurringStageManager.current;
+					this._manager = BX.CrmDealStageManager.current;
 				}
 				if(this._entityTypeId === BX.CrmEntityType.enumeration.quote)
 				{

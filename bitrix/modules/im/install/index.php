@@ -176,6 +176,7 @@ class im extends \CModule
 		\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/im/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
+		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/im", true, true);
 
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
@@ -240,13 +241,6 @@ class im extends \CModule
 		$default_site_id = \CSite::GetDefSite();
 		if ($default_site_id)
 		{
-			$desktopAppFound = false;
-			$arAppTempalate = [
-				"SORT" => 1,
-				"CONDITION" => "CSite::InDir('/desktop_app/')",
-				"TEMPLATE" => "desktop_app"
-			];
-
 			$callAppFound = false;
 			$arCallTempalate = [
 				"SORT" => 50,
@@ -279,12 +273,7 @@ class im extends \CModule
 			$dbTemplates = \CSite::GetTemplateList($default_site_id);
 			while ($template = $dbTemplates->Fetch())
 			{
-				if ($template["CONDITION"] == "CSite::InDir('/desktop_app/')")
-				{
-					$desktopAppFound = true;
-					$template = $arAppTempalate;
-				}
-				elseif ($template["CONDITION"] == 'preg_match("#^/video/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))')
+				if ($template["CONDITION"] == 'preg_match("#^/video/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))')
 				{
 					$callAppFound = true;
 					$template = $arCallTempalate;
@@ -309,10 +298,6 @@ class im extends \CModule
 					"CONDITION" => $template['CONDITION'],
 					"TEMPLATE" => $template['TEMPLATE'],
 				];
-			}
-			if (!$desktopAppFound)
-			{
-				$arFields["TEMPLATE"][] = $arAppTempalate;
 			}
 			if (!$pubAppFound)
 			{
@@ -548,6 +533,7 @@ class im extends \CModule
 		\DeleteDirFilesEx('/desktop_app/');
 		\DeleteDirFilesEx('/bitrix/templates/desktop_app/');
 		\DeleteDirFilesEx('/bitrix/templates/call_app/');
+		\DeleteDirFilesEx('/bitrix/images/im/');
 
 		$APPLICATION->SetFileAccessPermission('/desktop_app/', array("*" => "D"));
 

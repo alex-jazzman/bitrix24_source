@@ -1,5 +1,6 @@
 import { ExpandAnimation } from 'im.v2.component.animation';
 import { TranscriptionStatus } from 'im.v2.const';
+import { Parser } from 'im.v2.lib.parser';
 
 import '../../css/items/transcription.css';
 
@@ -31,9 +32,12 @@ export const TranscriptionItem = {
 		},
 		text(): string
 		{
-			return this.isError
-				? this.loc('IM_MESSAGE_FILE_AUDIO_TRANSCRIPTION_ERROR')
-				: this.transcription.transcriptText;
+			if (this.isError)
+			{
+				return this.loc('IM_MESSAGE_FILE_AUDIO_TRANSCRIPTION_ERROR');
+			}
+
+			return Parser.decode({ text: this.transcription.transcriptText });
 		},
 		isError(): boolean
 		{
@@ -62,9 +66,7 @@ export const TranscriptionItem = {
 					v-if="isOpened"
 					:class="{'--error': isError}"
 				>
-					<div class="bx-im-audio-player__transcription-content">
-						{{ text }}
-					</div>
+					<div class="bx-im-audio-player__transcription-content" v-html="text"></div>
 				</div>
 			</ExpandAnimation>
 			<div v-if="showDivider" class="bx-im-audio-player__transcription-divider"></div>

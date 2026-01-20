@@ -8,13 +8,14 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 	const { withCurrentDomain } = require('utils/url');
 
 	const { BaseSelectorProvider } = require('selector/providers/base');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-
 	const { RecentProvider: SearchProvider } = require('im/messenger/controller/search/experimental');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogType } = require('im/messenger/const');
 	const { UserHelper } = require('im/messenger/lib/helper');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const ASSET_PATH = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png/';
 
@@ -49,15 +50,31 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 				loadSearchProcessed: this.#onLocalSearchComplete,
 				loadSearchComplete: this.#onServerSearchComplete,
 			});
+
+			this.logger = getLoggerWithContext('dialog-selector-provider', this);
 		}
 
 		loadRecent()
 		{
-			const recentDialogs = this.#getRecentDialogs();
+			try
+			{
+				const recentDialogs = this.#getRecentDialogs();
 
-			const preparedItems = this.prepareItemsForDrawing(recentDialogs);
-			this.items = this.withFavorite ? this.#withFavoriteItem(preparedItems) : preparedItems;
-			this.listener.onRecentResult(this.items, true);
+				const preparedItems = this.prepareItemsForDrawing(recentDialogs);
+				this.items = this.withFavorite ? this.#withFavoriteItem(preparedItems) : preparedItems;
+				this.listener.onRecentResult(this.items, true);
+			}
+			catch (error)
+			{
+				// TODO: remove after solving local search error
+				const errorText = `loadRecent() error 🚨: ${error.name}: ${error.message}`;
+				this.logger.error(errorText);
+
+				window.messengerDebug.localSearchDebugInfo.localSearchErrorText = errorText;
+				window.messengerDebug.localSearchDebugInfo.localSearchError = error;
+
+				this.listener.onRecentResult([], true);
+			}
 		}
 
 		prepareItemsForDrawing(items)
@@ -118,7 +135,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 		#getDialogsByIds(itemIdList)
 		{
 			const getDialogById = this.store.getters['dialoguesModel/getById'];
-			let dialogs = itemIdList.map((id) => getDialogById(id));
+			let dialogs = itemIdList.map((id) => getDialogById(id)).filter(Boolean);
 
 			if (this.onlyUsers)
 			{
@@ -144,7 +161,12 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 		#getRecentDialogs()
 		{
-			const recentDialogIds = this.store.getters['recentModel/getSortedCollection']()
+			const getSortedCollectionGetterName = Feature.isMessengerV2Enabled
+				? 'recentModel/getChatCollection'
+				: 'recentModel/getSortedCollection'
+			;
+
+			const recentDialogIds = this.store.getters[getSortedCollectionGetterName]()
 				.map(({ id }) => id)
 			;
 

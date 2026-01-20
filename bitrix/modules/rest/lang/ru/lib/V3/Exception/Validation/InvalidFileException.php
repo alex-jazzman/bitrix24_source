@@ -1,0 +1,2 @@
+<?php
+$MESS["REST_V3_EXCEPTIONS_VALIDATION_INVALIDFILEEXCEPTION"] = "Файл не прошёл валидацию";

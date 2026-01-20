@@ -1,4 +1,5 @@
-<?
+<?php
+
 $arCheckListStructure=Array(
 	"CATEGORIES" =>Array(
 		"QDESIGN" => Array(
@@ -394,4 +395,3 @@ if ($bIntranet)
 }
 
 return $arCheckListStructure;
-?>

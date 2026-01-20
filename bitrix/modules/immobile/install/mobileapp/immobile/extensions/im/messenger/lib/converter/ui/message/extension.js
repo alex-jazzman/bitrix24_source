@@ -30,9 +30,14 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		CallMessageFactory,
 		VoteMessageFactory,
 		AiAssistantMessage,
+		VideoNoteMessage,
+		VideoNoteTextMessage,
+		StickerMessage,
+		DeletedStickerMessage,
 	} = require('im/messenger/lib/element/dialog');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageHelper } = require('im/messenger/lib/helper');
+	const { parser } = require('im/messenger/lib/parser');
 
 	/**
 	 * @class MessageUiConverter
@@ -96,6 +101,16 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			if (messageHelper.isAiAssistant && Feature.isAiAssistantMessageSupported)
 			{
 				return new AiAssistantMessage(modelMessage, options);
+			}
+
+			if (messageHelper.isSticker)
+			{
+				return new StickerMessage(modelMessage, options);
+			}
+
+			if (messageHelper.isDeletedSticker)
+			{
+				return new DeletedStickerMessage(modelMessage, options);
 			}
 
 			if (messageHelper.isSystem)
@@ -169,6 +184,16 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				return new VideoMessage(modelMessage, options, file);
 			}
 
+			if (messageHelper.isVideoNoteText)
+			{
+				return new VideoNoteTextMessage(modelMessage, options, file);
+			}
+
+			if (messageHelper.isVideoNote && Feature.isVideoNoteAvailable)
+			{
+				return new VideoNoteMessage(modelMessage, options, file);
+			}
+
 			if (messageHelper.isFile)
 			{
 				return new FileMessage(modelMessage, options, file);
@@ -195,12 +220,11 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		createMessageFromRecent()
 		{
 			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](this.dialogId);
-			if (!recentItem || !recentItem.message || !recentItem.message.text)
+			const recentMessage = recentItem?.message;
+			if (!recentMessage?.id || !recentMessage?.text)
 			{
 				return null;
 			}
-
-			const recentMessage = recentItem.message;
 
 			const defaultOptions = {
 				showUsername: false,
@@ -224,9 +248,17 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				error: false,
 				errorReason: 0,
 				retry: false,
-				audioPlaying: false,
+				isPlaying: false,
 				playingTime: 0,
 			};
+
+			if (recentItem.message.sticker)
+			{
+				defaultModelMessage.text = parser.simplify({
+					text: '',
+					sticker: true,
+				});
+			}
 
 			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](this.dialogId);
 
@@ -265,7 +297,6 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			if (dialog.type === DialogType.copilot)
 			{
 				options.canBeQuoted = false;
-				options.canBeChecked = false;
 			}
 
 			if ([DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(dialog.type))

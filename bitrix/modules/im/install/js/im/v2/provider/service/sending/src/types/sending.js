@@ -1,10 +1,5 @@
 import type { JsonObject, JsonValue } from 'main.core';
 
-export type ForwardedEntityConfig = {
-	id: number,
-	title: string,
-};
-
 export type PanelContext = {
 	messageId: number,
 	[prop: string]: JsonValue,
@@ -39,7 +34,14 @@ export type PreparedMessage = {
 	forwardIds: {[string]: number},
 	text: string,
 	params: JsonObject,
-	copilot: JsonObject,
+	copilot: {
+		reasoning: boolean,
+		promptCode: string,
+	},
+	stickerParams: Sticker,
+	aiAssistant?: {
+		mcpAuthId: number
+	},
 	unread: boolean,
 	sending: boolean,
 	viewedByOthers: boolean,
@@ -49,4 +51,15 @@ type BaseMessageParams = {
 	dialogId: string,
 	text: string,
 	tempMessageId?: string,
+};
+
+type Sticker = {
+	id: string,
+	packId: string,
+	packType: string,
+}
+
+export type StickerMessageParams = {
+	dialogId: string,
+	stickerParams: Sticker,
 };

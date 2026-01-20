@@ -1,0 +1,26 @@
+<?php
+
+$MESS['MAILMOBILE_ACTIONS_REMOVE_TOAST_MESSAGE'] = 'Письмо удаляется';
+$MESS['MAILMOBILE_ACTIONS_REMOVE'] = 'Удалить';
+$MESS['MAILMOBILE_ACTIONS_READ'] = 'Прочитать';
+$MESS['MAILMOBILE_ACTIONS_UNREAD'] = 'Не прочитано';
+$MESS['MAILMOBILE_ACTIONS_SELECT'] = 'Выбрать';
+
+$MESS['MAILMOBILE_ACTIONS_IN_FOLDER'] = 'В папку';
+$MESS['MAILMOBILE_ACTIONS_IN_SPAM'] = 'В спам';
+$MESS['MAILMOBILE_ACTIONS_CREATE'] = 'Создать';
+$MESS['MAILMOBILE_ACTIONS_CREATE_TASK'] = 'Создать задачу';
+$MESS['MAILMOBILE_ACTIONS_OPEN_TASK'] = 'Открыть задачу';
+$MESS['MAILMOBILE_ACTIONS_MENU_BACK'] = 'Назад';
+$MESS['MAILMOBILE_ACTIONS_CREATE_CHAT'] = 'Создать чат';
+$MESS['MAILMOBILE_ACTIONS_CREATE_POST'] = 'Создать новость';
+$MESS['MAILMOBILE_ACTIONS_OPEN_POST'] = 'Открыть новость';
+$MESS['MAILMOBILE_ACTIONS_CREATE_EVENT'] = 'Создать событие';
+$MESS['MAILMOBILE_ACTIONS_OPEN_EVENT'] = 'Открыть событие';
+$MESS['MAILMOBILE_ACTIONS_CREATE_CRM'] = 'Добавить в CRM';
+$MESS['MAILMOBILE_ACTIONS_OPEN_CRM'] = 'Открыть в CRM';
+$MESS['MAILMOBILE_ACTIONS_OPEN_CHAT'] = 'Открыть чат';
+
+$MESS['MAILMOBILE_ACTIONS_FOLDERS_TRASH_BANNER_TITLE'] = 'Удаление письма';
+$MESS['MAILMOBILE_ACTIONS_FOLDERS_SPAM_BANNER_TITLE'] = 'Перемещение в спам';
+$MESS['MAILMOBILE_ACTIONS_FOLDERS_SETTINGS_BANNER_DESCRIPTION'] = 'Настройте папки в веб-версии Битрикс24, чтобы удалять и перемещать письма в мобильном приложении';

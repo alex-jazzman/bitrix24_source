@@ -51,15 +51,12 @@ class advertising extends CModule
 
 	function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/public", $_SERVER["DOCUMENT_ROOT"]."/bitrix");
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/public/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/advertising/", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/", True, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/", True, True);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/public", $_SERVER["DOCUMENT_ROOT"]."/bitrix");
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/public/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/advertising/", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/", True, True);
 		return true;
 	}
 
@@ -133,7 +130,7 @@ class advertising extends CModule
 	{
 		global $DB;
 		$sIn = "'ADV_BANNER_STATUS_CHANGE', 'ADV_CONTRACT_INFO'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
 		{

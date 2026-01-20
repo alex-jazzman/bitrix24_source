@@ -1,11 +1,12 @@
 import { BaseChatContent } from 'im.v2.component.content.elements';
 import { ChatTextarea } from 'im.v2.component.textarea';
 
-import { ServiceHealthPanel } from './service-health-panel/service-health-panel';
+import { McpIntegration } from './components/mcp-integration';
+import { ServiceHealthPanel } from './components/service-health-panel';
 
 export const AiAssistantBotContent = {
 	name: 'AiAssistantBotContent',
-	components: { BaseChatContent, ChatTextarea, ServiceHealthPanel },
+	components: { BaseChatContent, ChatTextarea, ServiceHealthPanel, McpIntegration },
 	props: {
 		dialogId: {
 			type: String,
@@ -41,7 +42,11 @@ export const AiAssistantBotContent = {
 					:withUploadMenu="false"
 					:withSmileSelector="false"
 					@mounted="onTextareaMount"
-				/>
+				>
+					<template #bottom-panel-buttons>
+						<McpIntegration />
+					</template>
+				</ChatTextarea>
 			</template>
 		</BaseChatContent>
 	`,

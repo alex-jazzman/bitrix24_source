@@ -6,10 +6,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const Router = {
-	  init() {
-	    Router.checkGetParams();
-	  },
-	  checkGetParams() {
+	  handleGetParams() {
 	    const urlParams = new URLSearchParams(window.location.search);
 	    if (urlParams.has(im_v2_const.GetParameter.openNotifications)) {
 	      void im_public.Messenger.openNotifications();
@@ -36,10 +33,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      void im_public.Messenger.openCopilot(dialogId);
 	    } else if (urlParams.has(im_v2_const.GetParameter.openChannel)) {
 	      const dialogId = urlParams.get(im_v2_const.GetParameter.openChannel);
-	      void im_public.Messenger.openNavigationItem({
-	        id: im_v2_const.NavigationMenuItem.channel,
-	        entityId: dialogId
-	      });
+	      void im_public.Messenger.openChannel(dialogId);
 	    } else if (urlParams.has(im_v2_const.GetParameter.openCollab)) {
 	      const dialogId = urlParams.get(im_v2_const.GetParameter.openCollab);
 	      void im_public.Messenger.openCollab(dialogId != null ? dialogId : '');

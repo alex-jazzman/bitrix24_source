@@ -1,6 +1,8 @@
 import { DefaultFooter, Dialog } from 'ui.entity-selector';
 import { Loc, Tag } from 'main.core';
 
+import './footer.css';
+
 export default class Footer extends DefaultFooter
 {
 	constructor(dialog: Dialog, options: { [option: string]: any })

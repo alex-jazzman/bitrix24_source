@@ -2,12 +2,16 @@
 	const require = (ext) => jn.require(ext);
 	const { MoreMenu } = require('more-menu');
 	const {
-		getUpdateSectionsWithCounters,
-		calculateTotalCounter,
+		getMenuCounters,
+		updateMenuBadgeCounter,
 	} = require('more-menu/utils');
 	const { MenuNavigator } = require('more-menu/navigator');
 	const { Type } = require('type');
+	const { showAhaMoment } = require('more-menu/aha-moment');
+	const ACTIVE_INIT_STORAGE_KEY = 'moreMenu.activeInitToken';
 	const { qrauth } = require('qrauth/utils');
+
+	const MORE_MENU_TEST_ID = 'more-menu';
 
 	/**
 	 * @class MenuService
@@ -17,32 +21,63 @@
 		constructor()
 		{
 			this.menuNavigator = new MenuNavigator({});
+			this.activeInitToken = null;
+			this.sharedStorage = Application.sharedStorage();
+			this.bindEvents();
+			this.menuCounters = {};
+			this.menuList = [];
 		}
 
-		updateBadges(menuList)
+		bindEvents()
 		{
-			const cached = Application.sharedStorage().get('userCounters');
-			let counters = {};
-			try
+			BX.addCustomEvent('BackgroundUIManager::openComponentInAnotherContext', this.showAhaMoment);
+			BX.addCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
+			BX.addCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
+		}
+
+		showAhaMoment = (componentName) => {
+			if (componentName === MORE_MENU_TEST_ID && this.menu)
 			{
-				counters = cached ? JSON.parse(cached) : {};
+				showAhaMoment(this.menu?.ahaMoment, this.menuNavigator);
 			}
-			catch (error)
+		};
+
+		handleUserCountersUpdate = (newCounters) => {
+			const siteCounters = newCounters?.[env.siteId];
+			if (!siteCounters)
 			{
-				console.error('Invalid counters JSON', error);
+				return;
 			}
 
-			const current = counters[env.siteId] || {};
-			this.currentCounters = current;
-			if (Object.keys(current).length > 0)
+			this.menuCounters = { ...this.menuCounters, ...siteCounters };
+			updateMenuBadgeCounter(this.menuList, this.menuCounters);
+		};
+
+		startInitSession()
+		{
+			const token = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+			this.activeInitToken = token;
+			try
 			{
-				const sections = getUpdateSectionsWithCounters(menuList, current);
-				const total = calculateTotalCounter(sections, current);
-				Application.setBadges({ more: total });
+				this.sharedStorage.set(ACTIVE_INIT_STORAGE_KEY, token);
 			}
-			else
+			catch (e)
 			{
-				Application.setBadges({ more: 0 });
+				console.error('MenuService: failed to set active init token', e);
+			}
+
+			return token;
+		}
+
+		isCurrentSessionActive()
+		{
+			try
+			{
+				return this.sharedStorage.get(ACTIVE_INIT_STORAGE_KEY) === this.activeInitToken;
+			}
+			catch
+			{
+				return true;
 			}
 		}
 
@@ -51,17 +86,38 @@
 			const defaultMenuList = MoreMenu.getDefaultMenuList();
 			this.menuNavigator.subscribeToEvents();
 
+			this.startInitSession();
+
 			return new Promise((resolve, reject) => {
-				MoreMenu.subscribeMenuData(
-					(cachedData) => this.updateMenuData(defaultMenuList, cachedData),
-					(responseData) => {
-						this.updateMenuData(defaultMenuList, responseData);
+				BX.ajax.runAction('mobile.Menu.getInitialMenuData', {})
+					.then(({ data }) => {
+						if (!this.isCurrentSessionActive())
+						{
+							console.warn('MenuService init: stale session result ignored');
+							resolve();
+
+							return;
+						}
+
+						this.updateMenuData(defaultMenuList, data);
+						this.menu = data;
+						if (data?.ahaMoment)
+						{
+							this.tryToShowAhaMoment();
+						}
 						resolve();
-					},
-					(error) => {
+					})
+					.catch((error) => {
+						if (!this.isCurrentSessionActive())
+						{
+							console.warn('MenuService init error ignored due to newer session', error);
+							resolve();
+
+							return;
+						}
+
 						reject(error);
-					},
-				);
+					});
 			});
 		}
 
@@ -73,8 +129,30 @@
 				? MoreMenu.prepareMenuList(defaultMenuList, menuList)
 				: defaultMenuList;
 
-			this.menuNavigator.updateMenuList(list);
-			this.updateBadges(list);
+			const restrictions = menu?.restrictions;
+
+			this.menuNavigator.update(list, restrictions);
+
+			const canInvite = menu?.restrictions?.canInvite;
+
+			this.menuCounters = getMenuCounters(canInvite, this.menuCounters);
+
+			this.menuList = list;
+
+			updateMenuBadgeCounter(list, this.menuCounters);
+		}
+
+		tryToShowAhaMoment()
+		{
+			BX.postComponentEvent(
+				'BackgroundUIManagerEvents::tryToOpenComponentFromAnotherContext',
+				[
+					{
+						componentName: MORE_MENU_TEST_ID,
+						priority: 500,
+					},
+				],
+			);
 		}
 	}
 
@@ -91,7 +169,9 @@
 		layout.showComponent(new MoreMenu({
 			layout,
 			menuNavigator: menuService.menuNavigator,
-			counters: menuService.currentCounters,
 		}));
+
+		BX.removeCustomEvent('onUpdateUserCounters', menuService.handleUserCountersUpdate);
+		BX.removeCustomEvent('onSetUserCounters', menuService.handleUserCountersUpdate);
 	});
 })();

@@ -17,7 +17,11 @@ export class MarketTrialPopup extends MarketExpiredPopup
 		return Tag.render`
 			<div class="rest-market-expired-popup__description">
 				<p class="rest-market-expired-popup__description-text">
-					${Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL${this.marketLabel}`)}
+					${
+						this.isRenamedMarket
+							? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_BITRIX_GPT')
+							: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_MARKET_PLUS')
+					}
 				</p>
 			</div>
 		`;
@@ -25,9 +29,18 @@ export class MarketTrialPopup extends MarketExpiredPopup
 
 	getTitle(): string
 	{
-		return Loc.getMessage(`REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_${this.type}${this.marketLabel}`, {
-			'#DAYS#': this.expireDays,
-		});
+		const replacements = { '#DAYS#': this.expireDays };
+
+		if (this.type === PopupType.FINAL)
+		{
+			return this.isRenamedMarket
+				? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_FINAL_BITRIX_GPT', replacements)
+				: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_FINAL_MARKET_PLUS', replacements);
+		}
+
+		return this.isRenamedMarket
+			? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_BITRIX_GPT', replacements)
+			: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_TITLE_TRIAL_WARNING_MARKET_PLUS', replacements);
 	}
 
 	renderButtons(): HTMLElement

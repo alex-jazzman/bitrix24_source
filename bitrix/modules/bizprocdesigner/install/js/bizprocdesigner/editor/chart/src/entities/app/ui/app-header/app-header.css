@@ -1,0 +1,28 @@
+.editor-chart-app-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ui-space-inline-sm);
+    width: 100%;
+    height: 56px;
+    padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm) var(--ui-space-inset-2xs2) var(--ui-space-inset-sm2);
+    border-bottom: 1px;
+    background: var(--ui-color-background-primary);
+    box-sizing: border-box;
+}
+
+.editor-chart-app-header__left-column {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--ui-space-inline-sm);
+}
+
+.editor-chart-app-header__right-column {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-inline-sm);
+    justify-content: flex-end;
+    flex-grow: 1;
+}

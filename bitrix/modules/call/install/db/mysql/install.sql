@@ -75,3 +75,36 @@ CREATE TABLE IF NOT EXISTS b_call_outcome_property
 	KEY IX_CALL_OUTCOME_PROP_TYPE (OUTCOME_ID, CODE)
 );
 
+CREATE TABLE IF NOT EXISTS b_call_userlog
+(
+	ID int not null auto_increment,
+	SOURCE_TYPE varchar(64) not null,
+	SOURCE_CALL_ID int not null,
+	USER_ID int not null,
+	STATUS varchar(64) not null,
+	STATUS_TIME datetime not null,
+	PRIMARY KEY (ID),
+	UNIQUE KEY UX_SOURCE_USER (SOURCE_TYPE, SOURCE_CALL_ID, USER_ID),
+	KEY IX_USER_STATUS_TIME (USER_ID, STATUS_TIME, ID),
+	KEY IX_USER_STATUS (USER_ID, STATUS)
+);
+
+CREATE TABLE IF NOT EXISTS b_call_userlog_counters
+(
+	ID int not null auto_increment,
+	USERLOG_ID int not null,
+	USER_ID int not null,
+	PRIMARY KEY (ID),
+	UNIQUE KEY UX_USERLOG_USER (USERLOG_ID, USER_ID),
+	KEY IX_USER_ID (USER_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_call_userlog_index
+(
+	USERLOG_ID int not null,
+	SEARCH_CONTENT mediumtext null,
+	SEARCH_TITLE varchar(511) null,
+	PRIMARY KEY (USERLOG_ID),
+	KEY IX_CALL_USERLOG_INDEX_1 (SEARCH_TITLE(128))
+);
+

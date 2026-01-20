@@ -1,0 +1,126 @@
+import { Messenger } from 'im.public';
+import { UserType } from 'im.v2.const';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
+
+import '../../elements/css/item-header.css';
+
+import type { ImModelUser, ImModelNotification } from 'im.v2.model';
+import type { JsonObject } from 'main.core';
+
+// @vue/component
+export const CompatibilityNotificationItemHeader = {
+	name: 'CompatibilityNotificationItemHeader',
+	components: { ChatTitle },
+	props: {
+		notification: {
+			type: Object,
+			required: true,
+		},
+	},
+	emits: [
+		'moreUsersClick',
+	],
+	computed: {
+		notificationItem(): ImModelNotification
+		{
+			return this.notification;
+		},
+		user(): ImModelUser
+		{
+			return this.$store.getters['users/get'](this.notificationItem.authorId, true);
+		},
+		hasName(): boolean
+		{
+			return this.notificationItem.authorId > 0 && this.user.name.length > 0;
+		},
+		title(): string
+		{
+			if (this.notificationItem.title.length > 0)
+			{
+				return this.notificationItem.title;
+			}
+
+			return this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_ITEM_SYSTEM');
+		},
+		isSystem(): boolean
+		{
+			return this.notification.authorId === 0;
+		},
+		userDialogId(): string
+		{
+			return this.notification.authorId.toString();
+		},
+		titleClasses(): JsonObject
+		{
+			return {
+				'bx-im-content-notification-item-header__title-text': true,
+				'bx-im-content-notification-item-header__title-user-text': !this.isSystem,
+				'--extranet': this.user.type === UserType.extranet,
+				'--short': !this.hasMoreUsers,
+			};
+		},
+		hasMoreUsers(): boolean
+		{
+			if (this.isSystem)
+			{
+				return false;
+			}
+
+			return Boolean(this.notificationItem.params?.users) && this.notificationItem.params.users.length > 0;
+		},
+		moreUsers(): string
+		{
+			const phrase = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_MORE_USERS').split('#COUNT#');
+
+			return {
+				start: phrase[0],
+				end: this.notificationItem.params.users.length + phrase[1],
+			};
+		},
+	},
+	methods:
+	{
+		onUserTitleClick()
+		{
+			if (this.isSystem)
+			{
+				return;
+			}
+
+			Messenger.openChat(this.userDialogId);
+		},
+		onMoreUsersClick(event)
+		{
+			if (event.users)
+			{
+				this.$emit('moreUsersClick', {
+					event: event.event,
+					users: event.users,
+				});
+			}
+		},
+	},
+	template: `
+		<div class="bx-im-content-notification-item-header__container">
+			<div class="bx-im-content-notification-item-header__title-container">
+				<ChatTitle
+					v-if="hasName"
+					:dialogId="userDialogId"
+					:showItsYou="false"
+					:class="titleClasses"
+					@click.prevent="onUserTitleClick"
+				/>
+				<span v-else @click.prevent="onUserTitleClick" :class="titleClasses">{{ title }}</span>
+				<span v-if="hasMoreUsers" class="bx-im-content-notification-item-header__more-users">
+					<span class="bx-im-content-notification-item-header__more-users-start">{{ moreUsers.start }}</span>
+					<span
+						class="bx-im-content-notification-item-header__more-users-dropdown"
+						@click="onMoreUsersClick({users: notificationItem.params.users, event: $event})"
+					>
+						{{ moreUsers.end }}
+					</span>
+				</span>
+			</div>
+		</div>
+	`,
+};

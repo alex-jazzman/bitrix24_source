@@ -3,6 +3,7 @@
 use Bitrix\Crm;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
@@ -233,11 +234,12 @@ if (!$bInternal || $isExtendedInternal === true)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 
-	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
-	if(empty($effectiveFilterFieldIDs))
-	{
-		$effectiveFilterFieldIDs = $entityFilter->getDefaultFieldIDs();
-	}
+	$effectiveFilterFieldIDs = array_unique(
+		array_merge(
+			$filterOptions->getUsedFields(),
+			$entityFilter->getDefaultFieldIDs(),
+		),
+	);
 
 	//region HACK: Preload fields for filter of webforms
 	if(!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
@@ -467,6 +469,10 @@ else
 	);
 }
 
+$arFilter = Crm\Filter\FieldsTransform\UserBasedField::breakDepartmentsToUsers(
+	$arFilter,
+	$entityFilter?->getFields() ?? [],
+);
 Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
 
 //region Activity Counter Filter
@@ -493,6 +499,7 @@ $arImmutableFilters = array(
 	'SEARCH_CONTENT',
 	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID'
 );
+
 foreach ($arFilter as $k => $v)
 {
 	if(in_array($k, $arImmutableFilters, true))
@@ -684,6 +691,8 @@ if ($isInExportMode && $isStExport && $isStExportAllFields)
 // Fill in default values if empty
 if (empty($arSelect))
 {
+	GridHeaders::removeExcessUfFromGridParams($arResult['HEADERS']);
+
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
 		if (isset($arHeader['default']) && $arHeader['default'])

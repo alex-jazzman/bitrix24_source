@@ -7,26 +7,51 @@
 
 .booking--crm-forms--time-selector-block-resource {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	flex-grow: 1;
+	gap: 8px;
 }
 
-.booking--crm-forms--time-selector-block-resource-name {
+.booking--crm-forms--resource-avatar {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	border-radius: var(--ui-border-radius-circle);
 	overflow: hidden;
-	color: var(--booking--crm-forms--title-color);
+}
+
+.booking--crm-forms--resource-avatar-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	user-select: none;
+	-webkit-user-select: none;
+	pointer-events: none;
+}
+
+.booking--crm-forms--resource-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.booking--crm-forms--resource-name {
+	overflow: hidden;
+	color: var(--booking--crm-forms--resource-name-color);
 	text-overflow: ellipsis;
 	font-size: 17px;
 	font-style: normal;
-	font-weight: 400;
+	font-weight: 500;
 	line-height: normal;
 }
 
-.booking--crm-forms--time-selector-block-resource-type-name {
+.booking--crm-forms--resource-type-name {
 	overflow: hidden;
 	color: var(--booking--crm-forms--resource-type-name-color);
-	opacity: var(--booking--crm-forms--resource-type-name-opacity);
 	text-overflow: ellipsis;
-	font-size: 12px;
+	font-size: 13px;
 	font-style: normal;
 	font-weight: 400;
 	line-height: normal;

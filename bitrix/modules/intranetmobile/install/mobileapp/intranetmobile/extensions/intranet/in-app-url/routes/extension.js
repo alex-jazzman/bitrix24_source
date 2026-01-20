@@ -2,14 +2,18 @@
  * @module intranet/in-app-url/routes
  */
 jn.define('intranet/in-app-url/routes', (require, exports, module) => {
+	const { Loc } = require('loc');
+
 	module.exports = (inAppUrl) => {
 		inAppUrl.register('/intranetmobile/users', (params, { context }) => {
 			const {
 				canInvite = false,
 				canUseTelephony = false,
-				title = '',
+				title = null,
 				openInviteOnMount = false,
 			} = context;
+
+			const defaultTitle = Loc.getMessage('IN_APP_URL_INTRANET_USER_LIST_TITLE');
 
 			PageManager.openComponent('JSStackComponent', {
 				// eslint-disable-next-line no-undef
@@ -26,7 +30,7 @@ jn.define('intranet/in-app-url/routes', (require, exports, module) => {
 					settings: {
 						objectName: 'layout',
 						titleParams: {
-							text: title,
+							text: title || defaultTitle,
 							type: 'section',
 						},
 					},

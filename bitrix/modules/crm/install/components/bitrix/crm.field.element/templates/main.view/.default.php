@@ -64,12 +64,6 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 							}
 							else
 							{
-								$entityTypeLower = mb_strtolower($entityType);
-
-								$crmBalloonClass = (
-								$entityType === 'LEAD' || $entityType === 'DEAL'
-									? '_no_photo' : '_' . $entityTypeLower
-								);
 								?>
 								<span class="field-item" data-id="<?= $entity['SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?>">
 									<?=

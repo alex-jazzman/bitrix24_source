@@ -11,6 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var string $templateFolder
  */
 
+use Bitrix\BIConnector\Manager;
+use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -64,7 +66,6 @@ Extension::load([
 	'biconnector.apache-superset-dashboard-selector',
 	'biconnector.apache-superset-feedback-form',
 	'biconnector.dashboard-export-master',
-	'ui.buttons',
 	'ui.entity-selector',
 	'ui.feedback.form',
 	'ui.icons',
@@ -74,6 +75,8 @@ Extension::load([
 	'loc',
 	'sidepanel',
 	'main.date',
+	'main.core',
+	'ui.buttons',
 ]);
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
@@ -82,16 +85,19 @@ $APPLICATION->SetTitle($dashboardTitle);
 $supersetServiceLocation = $arResult['SUPERSET_SERVICE_LOCATION'];
 if ($supersetServiceLocation === ServiceLocation::DATACENTER_LOCATION_REGION_EN)
 {
-	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-en.svg';
+	$portalLogo = $templateFolder . '/images/portal-logo-en.svg';
+	$biBuilderLogo = $templateFolder . '/images/bibuilder-logo-en.svg';
 }
 else
 {
-	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-ru.svg';
+	$portalLogo = $templateFolder . '/images/portal-logo-ru.svg';
+	$biBuilderLogo = $templateFolder . '/images/bibuilder-logo-ru.svg';
 }
 
 $limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
-$limitManager->setIsSuperset();
-if (!$limitManager->checkLimitWarning())
+$limitManager->setService(Manager::getInstance()->createService(ApacheSuperset::getServiceId()));
+
+if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 {
 	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '', [
 		'SUPERSET_LIMIT' => 'Y',
@@ -104,10 +110,6 @@ if (!$limitManager->checkLimitWarning())
 	.dashboard-header {
 		--forward-icon: url("<?= $templateFolder . '/images/forward.svg' ?>");
 		--more-icon: url("<?= $templateFolder . '/images/more.svg' ?>");
-	}
-
-	.dashboard-header-logo-svg-url {
-		background-image: url("<?= $biBuilderLogo ?>");
 	}
 
 	.icon-forward i {
@@ -123,7 +125,8 @@ if (!$limitManager->checkLimitWarning())
 	<div class="dashboard-header">
 		<div class="dashboard-header-title-section">
 			<div class="dashboard-header-logo">
-				<div class="dashboard-header-logo-svg dashboard-header-logo-svg-url"></div>
+				<a style="height: 22px; cursor: pointer;" href="/bi/dashboard/"><img src="<?= $portalLogo ?>" alt=""></a>
+				<img src="<?= $biBuilderLogo ?>" alt="">
 			</div>
 			<div class="dashboard-header-selector-container" id="dashboard-selector">
 				<div class="dashboard-header-selector-text" id="dashboard-selector-text" title="<?= $dashboardTitle ?>"><?= $dashboardTitle ?></div>
@@ -131,10 +134,19 @@ if (!$limitManager->checkLimitWarning())
 			</div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
-			<button id="download-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-download"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
-			<button id="share-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-share"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?></button>
-			<div id="more-btn" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more"><i></i></div>
+			<button id="edit-btn" class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps --with-left-icon dashboard-header-buttons-edit">
+				<div class="ui-icon-set --edit-l"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?>
+			</button>
+			<button id="download-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download">
+				<div class="ui-icon-set --o-download"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?>
+			</button>
+			<button id="share-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share">
+				<div class="ui-icon-set --o-forward"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?>
+			</button>
+			<div id="more-btn" class="ui-icon-set --more-l dashboard-header-buttons-more"></div>
 		</div>
 	</div>
 	<div class='dashboard-iframe'></div>
@@ -173,6 +185,7 @@ if (!$limitManager->checkLimitWarning())
 					'type' => $arResult['DASHBOARD_TYPE'],
 					'appId' => $arResult['DASHBOARD_APP_ID'],
 					'isUseExternalDatasets' => $arResult['IS_USE_EXTERNAL_DATASETS'],
+					'filters' => $arResult['FILTERS'],
 				],
 				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
 			]) ?>

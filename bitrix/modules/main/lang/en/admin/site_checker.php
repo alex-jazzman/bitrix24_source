@@ -296,8 +296,6 @@ The test attempts to increase the value of <b>memory_limit</b> using the code:
 
 If the current value is less than that, add this line of code to <i>/bitrix/php_interface/dbconn.php</i>.
 ";
-$MESS["SC_HELP_CHECK_METHOD_EXISTS"] = "The script fails when calling <i>method_exists</I> on some PHP versions. Please refer to this discussion for more information: <a href='http://bugs.php.net/bug.php?id=51425' target=_blank>http://bugs.php.net/bug.php?id=51425</a>
-Install a different PHP version to resolve the issue.";
 $MESS["SC_HELP_CHECK_MYSQL_BUG_VERSION"] = "There are known MySQL versions containing errors which may cause website malfunction.
 <b>4.1.21</b> - sort functions work incorrectly in certain conditions;
 <b>5.0.41</b> - the EXISTS function works incorrectly; the search functions return incorrect results;

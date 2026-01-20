@@ -11,7 +11,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    RecentList: im_v2_component_list_items_recentCompact.RecentList
 	  },
 	  created() {
-	    im_v2_lib_init.InitManager.start();
+	    im_v2_lib_init.InitManager.init();
 	    im_v2_lib_logger.Logger.warn('Quick access created');
 	  },
 	  template: `

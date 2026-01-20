@@ -4,6 +4,7 @@ import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
 
 import { AnalyticsEvent, AnalyticsTool, AnalyticsSection } from '../const';
+import { getChatType } from '../helpers/get-chat-type';
 import { getCollabId } from '../helpers/get-collab-id';
 import { getUserType } from '../helpers/get-user-type';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
@@ -106,6 +107,7 @@ export class UserAdd
 			category: getCategoryByChatType(chat.type),
 			event: AnalyticsEvent.clickAddUser,
 			c_section: element,
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 			p5: `chatId_${chat.chatId}`,
 		};

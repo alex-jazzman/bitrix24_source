@@ -1,0 +1,21 @@
+<?php
+$MESS["NOTIFY_BANNER_INFO_ALL_EMPLOYEE_BLOCK"] = "All data in your Bitrix24 are at risk if even a single person in your company doesn't use two-factor authentication. Your company may face:";
+$MESS["NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE"] = "Enable <span class=\"intranet-otp-motivating-popup__title--accent\">new two-factor authentication</span> to confirm your login without entering a code.";
+$MESS["NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1"] = "Enable [SPAN]new two-factor authentication[/SPAN] to confirm your login without having to enter a code.";
+$MESS["NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE"] = "Enable <span class=\"intranet-otp-motivating-popup__title--accent\">two-factor authentication</span> to protect your company's data.";
+$MESS["NOTIFY_BANNER_INFO_DEF_TITLE"] = "Protect your data. Enable <span class=\"intranet-otp-motivating-popup__title--accent\">two-factor authentication</span> for everyone.";
+$MESS["NOTIFY_BANNER_INFO_DESC_BLOCK"] = "Two-factor authentication prevents attackers from accessing your account even if your password got leaked. This will keep your personal and business data secure.";
+$MESS["NOTIFY_BANNER_INFO_ENABLE_ALL_BTN"] = "Enable for everyone";
+$MESS["NOTIFY_BANNER_INFO_ENABLE_BTN"] = "Enable";
+$MESS["NOTIFY_BANNER_INFO_EXIST_BLOCK"] = "Your account is already protected.";
+$MESS["NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1"] = "Protecting your Bitrix24 is now even easier. You don't have to enter the code anymore. Confirm your login in the mobile app instead.";
+$MESS["NOTIFY_BANNER_INFO_FIN_OPT"] = "Financial and reputational damage";
+$MESS["NOTIFY_BANNER_INFO_IS_PROJECT_BLOCK"] = "Two-factor authentication is a part of the <b>Personal data security</b> initiative which implements a full range of information protection solutions.";
+$MESS["NOTIFY_BANNER_INFO_LATER_BTN"] = "Remind me later";
+$MESS["NOTIFY_BANNER_INFO_LEAK_OPT"] = "Confidential information leaks";
+$MESS["NOTIFY_BANNER_INFO_LEGAL_OPT"] = "Legal consequences";
+$MESS["NOTIFY_BANNER_INFO_MORE_BTN"] = "Learn more";
+$MESS["NOTIFY_BANNER_INFO_NEW_OTP_BLOCK"] = "Protecting your Bitrix24 is now even easier. You don't have to enter the code anymore. Confirm your login in the mobile app instead.";
+$MESS["NOTIFY_BANNER_INFO_REQ_BLOCK"] = "Your Bitrix24 administrator has changed security parameters. As of <b>#END_DATE#</b>, logging in to your account will require extra verification in the mobile app.";
+$MESS["NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE"] = "As of <b>#END_DATE#</b>, you can only sign in to your account by confirming login in the mobile app.";
+$MESS["NOTIFY_BANNER_INFO_WARNING_BLOCK"] = "Cyberattacks on companies are on the rise. Information leaks inevitably result in financial and reputational damage.";

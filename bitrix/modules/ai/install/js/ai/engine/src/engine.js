@@ -507,6 +507,7 @@ export class Engine
 
 	getFeedbackData(): Promise<GetFeedbackContextDataResponse>
 	{
+		this.#addSystemParameters();
 		const data = {
 			parameters: this.#parameters,
 		};

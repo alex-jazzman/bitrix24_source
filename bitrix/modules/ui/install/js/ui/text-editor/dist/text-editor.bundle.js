@@ -805,6 +805,9 @@ this.BX.UI = this.BX.UI || {};
 
 	/** @memberof BX.UI.TextEditor.Plugins.Quote */
 	const REMOVE_QUOTE_COMMAND = ui_lexical_core.createCommand('REMOVE_QUOTE_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Quote */
+	const TOGGLE_QUOTE_COMMAND = ui_lexical_core.createCommand('TOGGLE_QUOTE_COMMAND');
 	var _registerCommands = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _registerComponents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	class QuotePlugin extends BasePlugin {
@@ -895,7 +898,7 @@ this.BX.UI = this.BX.UI || {};
 	    quoteNode.selectStart();
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(FORMAT_QUOTE_COMMAND, () => {
-	    const selection = ui_lexical_core.$getSelection();
+	    const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
 	    if (ui_lexical_core.$isRangeSelection(selection)) {
 	      const quoteNode = $createQuoteNode();
 	      $wrapNodes(selection, () => quoteNode);
@@ -906,7 +909,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(REMOVE_QUOTE_COMMAND, () => {
-	    const selection = ui_lexical_core.$getSelection();
+	    const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
 	    if (!ui_lexical_core.$isRangeSelection(selection)) {
 	      return false;
 	    }
@@ -915,6 +918,23 @@ this.BX.UI = this.BX.UI || {};
 	      quoteNode = ui_lexical_utils.$findMatchingParent(selection.focus.getNode(), $isQuoteNode);
 	    }
 	    $removeQuote(quoteNode);
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(TOGGLE_QUOTE_COMMAND, () => {
+	    const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
+	    if (!ui_lexical_core.$isRangeSelection(selection)) {
+	      return false;
+	    }
+	    let quoteNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isQuoteNode);
+	    if (!quoteNode) {
+	      quoteNode = ui_lexical_utils.$findMatchingParent(selection.focus.getNode(), $isQuoteNode);
+	    }
+	    if (quoteNode) {
+	      this.getEditor().dispatchCommand(REMOVE_QUOTE_COMMAND);
+	    } else if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK) {
+	      this.getEditor().dispatchCommand(INSERT_QUOTE_COMMAND);
+	    } else {
+	      this.getEditor().dispatchCommand(FORMAT_QUOTE_COMMAND);
+	    }
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
@@ -950,6 +970,7 @@ this.BX.UI = this.BX.UI || {};
 		INSERT_QUOTE_COMMAND: INSERT_QUOTE_COMMAND,
 		FORMAT_QUOTE_COMMAND: FORMAT_QUOTE_COMMAND,
 		REMOVE_QUOTE_COMMAND: REMOVE_QUOTE_COMMAND,
+		TOGGLE_QUOTE_COMMAND: TOGGLE_QUOTE_COMMAND,
 		QuotePlugin: QuotePlugin
 	});
 
@@ -1035,7 +1056,7 @@ this.BX.UI = this.BX.UI || {};
 	    const nodeToInsert = ui_lexical_core.$isElementNode(node) || ui_lexical_core.$isDecoratorNode(node) ? node : ui_lexical_core.$createParagraphNode().append(node);
 	    if (firstChild === null) {
 	      this.append(nodeToInsert);
-	    } else {
+	    } else if (firstChild !== nodeToInsert) {
 	      firstChild.insertBefore(nodeToInsert);
 	    }
 	    return nodeToInsert;
@@ -1082,8 +1103,15 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	/* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
+
+	/** @memberof BX.UI.TextEditor.Plugins.Spoiler */
 	const INSERT_SPOILER_COMMAND = ui_lexical_core.createCommand('INSERT_SPOILER_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Spoiler */
 	const REMOVE_SPOILER_COMMAND = ui_lexical_core.createCommand('REMOVE_SPOILER_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Spoiler */
+	const TOGGLE_SPOILER_COMMAND = ui_lexical_core.createCommand('TOGGLE_SPOILER_COMMAND');
 	var _registerComponents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
 	var _registerCommands$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _registerNodeTransforms = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerNodeTransforms");
@@ -1230,9 +1258,15 @@ this.BX.UI = this.BX.UI || {};
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.PASTE_COMMAND, babelHelpers.classPrivateFieldLooseBase(this, _handlePaste)[_handlePaste].bind(this), ui_lexical_core.COMMAND_PRIORITY_NORMAL), this.getEditor().registerCommand(INSERT_SPOILER_COMMAND, payload => {
 	    this.getEditor().update(() => {
 	      const title = main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.title) ? payload.title : undefined;
-	      const selection = ui_lexical_core.$getSelection();
+	      let selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
+	      if (selection === null) {
+	        selection = ui_lexical_core.$getRoot().selectEnd();
+	      }
 	      const spoiler = insertSpoiler(selection, title);
-	      spoiler.getTitleNode().select();
+	      if (spoiler !== null) {
+	        var _spoiler$getContentNo, _spoiler$getContentNo2;
+	        (_spoiler$getContentNo = spoiler.getContentNode()) == null ? void 0 : (_spoiler$getContentNo2 = _spoiler$getContentNo.getChildren()[0]) == null ? void 0 : _spoiler$getContentNo2.select();
+	      }
 	    });
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(REMOVE_SPOILER_COMMAND, () => {
@@ -1247,6 +1281,21 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      $removeSpoiler(spoilerNode);
 	    });
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(TOGGLE_SPOILER_COMMAND, () => {
+	    const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
+	    if (!ui_lexical_core.$isRangeSelection(selection)) {
+	      return false;
+	    }
+	    let spoilerNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), $isSpoilerNode);
+	    if (!spoilerNode) {
+	      spoilerNode = ui_lexical_utils.$findMatchingParent(selection.focus.getNode(), $isSpoilerNode);
+	    }
+	    if (spoilerNode) {
+	      this.getEditor().dispatchCommand(REMOVE_SPOILER_COMMAND);
+	    } else {
+	      this.getEditor().dispatchCommand(INSERT_SPOILER_COMMAND);
+	    }
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
@@ -1340,7 +1389,12 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  const spoilerTitleNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => $isSpoilerTitleNode(node));
 	  if (spoilerTitleNode) {
-	    ui_lexical_clipboard.$insertDataTransferForPlainText(event.clipboardData, selection);
+	    event.preventDefault();
+	    this.getEditor().update(() => {
+	      ui_lexical_clipboard.$insertDataTransferForPlainText(event.clipboardData, selection);
+	    }, {
+	      tag: 'paste'
+	    });
 	    return true;
 	  }
 	  return false;
@@ -1437,6 +1491,7 @@ this.BX.UI = this.BX.UI || {};
 	  createDOM(config, editor) {
 	    var _config$theme, _config$theme$spoiler;
 	    const dom = document.createElement('summary');
+	    dom.tabIndex = -1;
 	    if (main_core.Type.isStringFilled(config == null ? void 0 : (_config$theme = config.theme) == null ? void 0 : (_config$theme$spoiler = _config$theme.spoiler) == null ? void 0 : _config$theme$spoiler.title)) {
 	      main_core.Dom.addClass(dom, config.theme.spoiler.title);
 	    }
@@ -1610,9 +1665,12 @@ this.BX.UI = this.BX.UI || {};
 	      version: 1
 	    };
 	  }
-	  isShadowRoot() {
-	    return true;
-	  }
+
+	  // isShadowRoot(): boolean
+	  // {
+	  // 	return true;
+	  // }
+
 	  canBeEmpty() {
 	    return false;
 	  }
@@ -1686,6 +1744,7 @@ this.BX.UI = this.BX.UI || {};
 		$isSpoilerContentNode: $isSpoilerContentNode,
 		INSERT_SPOILER_COMMAND: INSERT_SPOILER_COMMAND,
 		REMOVE_SPOILER_COMMAND: REMOVE_SPOILER_COMMAND,
+		TOGGLE_SPOILER_COMMAND: TOGGLE_SPOILER_COMMAND,
 		SpoilerPlugin: SpoilerPlugin,
 		insertSpoiler: insertSpoiler,
 		trimSpoilerTitle: trimSpoilerTitle
@@ -1931,6 +1990,16 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _registerListeners2() {
 	  this.cleanUpRegister(this.getEditor().registerNodeTransform(ui_lexical_core.RootNode, root => {
+	    const selection = ui_lexical_core.$getSelection();
+	    if (ui_lexical_core.$isRangeSelection(selection)) {
+	      const anchorNode = selection.anchor.getNode();
+	      const focusNode = selection.focus.getNode();
+	      if (!anchorNode.isAttached() || !focusNode.isAttached()) {
+	        root.selectEnd();
+	        // eslint-disable-next-line no-console
+	        console.warn('TextEditor: selection has been moved to the end of the editor because the previously ' + 'selected nodes have been removed and selection wasn\'t moved to another node. ' + 'Ensure selection changes after removing/replacing a selected node.');
+	      }
+	    }
 	    const lastChild = root.getLastChild();
 	    if (!ui_lexical_core.$isParagraphNode(lastChild)) {
 	      root.append(ui_lexical_core.$createParagraphNode());
@@ -1951,10 +2020,12 @@ this.BX.UI = this.BX.UI || {};
 	  return $isQuoteNode(node) || $isCodeNode(node) || $isSpoilerNode(node);
 	}
 	function _handlePaste2$1(event) {
-	  if (this.getEditor().getNewLineMode() === NewLineMode.PARAGRAPH) {
-	    // use a build-in algorithm (Rich Text Plugin)
-	    return false;
-	  }
+	  // if (this.getEditor().getNewLineMode() === NewLineMode.PARAGRAPH)
+	  // {
+	  // 	// use a build-in algorithm (Rich Text Plugin)
+	  // 	return false;
+	  // }
+
 	  if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK) {
 	    event.preventDefault();
 	    this.getEditor().update(() => {
@@ -2412,7 +2483,13 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	/* eslint-disable no-underscore-dangle */
+	/** @memberof BX.UI.TextEditor.Plugins.Code */
 	const FORMAT_CODE_COMMAND = ui_lexical_core.createCommand('FORMAT_CODE_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Code */
+	const TOGGLE_CODE_COMMAND = ui_lexical_core.createCommand('TOGGLE_CODE_COMMAND');
+
+	/** @memberof BX.UI.TextEditor.Plugins.Code */
 	const INSERT_CODE_COMMAND = ui_lexical_core.createCommand('INSERT_CODE_COMMAND');
 	var _nodesCurrentlyHighlighting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nodesCurrentlyHighlighting");
 	var _codeParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("codeParser");
@@ -2570,7 +2647,12 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    const codeNode = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => $isCodeNode(node));
 	    if (codeNode) {
-	      ui_lexical_clipboard.$insertDataTransferForPlainText(event.clipboardData, selection);
+	      event.preventDefault();
+	      this.getEditor().update(() => {
+	        ui_lexical_clipboard.$insertDataTransferForPlainText(event.clipboardData, selection);
+	      }, {
+	        tag: 'paste'
+	      });
 	      return true;
 	    }
 	    return false;
@@ -2589,7 +2671,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR), this.getEditor().registerCommand(FORMAT_CODE_COMMAND, () => {
-	    const selection = ui_lexical_core.$getSelection();
+	    const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
 	    if (ui_lexical_core.$isRangeSelection(selection)) {
 	      if (selection.isCollapsed()) {
 	        ui_lexical_selection.$setBlocksType(selection, () => $createCodeNode());
@@ -2602,6 +2684,20 @@ this.BX.UI = this.BX.UI || {};
 	          newSelection.insertRawText(textContent);
 	        }
 	      }
+	    }
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR), this.getEditor().registerCommand(TOGGLE_CODE_COMMAND, () => {
+	    const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
+	    if (!ui_lexical_core.$isRangeSelection(selection)) {
+	      return false;
+	    }
+	    const codeParent = ui_lexical_utils.$findMatchingParent(selection.anchor.getNode(), node => {
+	      return $isCodeNode(node) || $isCodeTokenNode(node);
+	    });
+	    if (codeParent) {
+	      this.getEditor().dispatchCommand(FORMAT_PARAGRAPH_COMMAND);
+	    } else {
+	      this.getEditor().dispatchCommand(FORMAT_CODE_COMMAND);
 	    }
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR));
@@ -2910,6 +3006,7 @@ this.BX.UI = this.BX.UI || {};
 
 	var Code = /*#__PURE__*/Object.freeze({
 		FORMAT_CODE_COMMAND: FORMAT_CODE_COMMAND,
+		TOGGLE_CODE_COMMAND: TOGGLE_CODE_COMMAND,
 		INSERT_CODE_COMMAND: INSERT_CODE_COMMAND,
 		CodePlugin: CodePlugin,
 		getFirstCodeNodeOfLine: getFirstCodeNodeOfLine,
@@ -2937,12 +3034,17 @@ this.BX.UI = this.BX.UI || {};
 	  const onSelect = fn => {
 	    subscribers.add(fn);
 	  };
-	  const unregisterListener = editor.registerUpdateListener(() => {
+	  const unregisterListener = ui_lexical_utils.mergeRegister(editor.registerUpdateListener(() => {
 	    isSelected = isNodeSelected(editor, key);
 	    for (const subscribeFunc of subscribers) {
 	      subscribeFunc(isSelected);
 	    }
-	  });
+	  }), editor.registerEditableListener(isEditable => {
+	    isSelected = isNodeSelected(editor, key);
+	    for (const subscribeFunc of subscribers) {
+	      subscribeFunc(isSelected && isEditable);
+	    }
+	  }));
 	  const setSelected = selected => {
 	    editor.update(() => {
 	      let selection = ui_lexical_core.$getSelection();
@@ -3078,6 +3180,9 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _registerCommands2$4() {
 	  return ui_lexical_utils.mergeRegister(this.getEditor().registerCommand(ui_lexical_core.CLICK_COMMAND, event => {
+	    if (!this.getEditor().isEditable()) {
+	      return false;
+	    }
 	    if (this.getTarget().contains(event.target)) {
 	      if (event.shiftKey) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _nodeSelection)[_nodeSelection].setSelected(!babelHelpers.classPrivateFieldLooseBase(this, _nodeSelection)[_nodeSelection].isSelected());
@@ -4442,57 +4547,38 @@ this.BX.UI = this.BX.UI || {};
 	    } else {
 	      node = $createFileNode(payload.serverFileId, payload.info);
 	    }
-
-	    // const selection: RangeSelection = $getSelection();
-	    // if ($isRangeSelection(selection) && fileType !== FileType.FILE && payload.inline !== true)
-	    // {
-	    // 	const focus: PointType = selection.focus;
-	    // 	const focusNode: TextNode | ElementNode = focus.getNode();
-	    // 	if (!selection.isCollapsed())
-	    // 	{
-	    // 		focusNode.selectEnd();
-	    // 	}
-	    //
-	    // 	const parentNode: ParagraphNode = $findMatchingParent(
-	    // 		focusNode,
-	    // 		(parent: ElementNode) => $isParagraphNode(parent),
-	    // 	);
-	    //
-	    // 	if (parentNode === null)
-	    // 	{
-	    // 		$insertNodes([node]);
-	    // 		if ($isRootOrShadowRoot(node.getParentOrThrow()))
-	    // 		{
-	    // 			$wrapNodeInElement(node, $createParagraphNode).selectEnd();
-	    // 		}
-	    // 	}
-	    // 	else if (parentNode.isEmpty())
-	    // 	{
-	    // 		parentNode.append(node);
-	    // 		node.selectEnd();
-	    // 	}
-	    // 	else
-	    // 	{
-	    // 		// const paragraph = $createParagraphNode();
-	    // 		// paragraph.append(node);
-	    // 		// parentNode.insertAfter(paragraph);
-	    // 		parentNode.append($createLineBreakNode());
-	    // 		parentNode.append(node);
-	    // 		node.selectEnd();
-	    // 	}
-	    // }
-	    // else
-	    // {
-	    // 	$insertNodes([node]);
-	    // 	if ($isRootOrShadowRoot(node.getParentOrThrow()))
-	    // 	{
-	    // 		$wrapNodeInElement(node, $createParagraphNode).selectEnd();
-	    // 	}
-	    // }
-
-	    ui_lexical_core.$insertNodes([node]);
-	    if (ui_lexical_core.$isRootOrShadowRoot(node.getParentOrThrow())) {
-	      ui_lexical_utils.$wrapNodeInElement(node, ui_lexical_core.$createParagraphNode).selectEnd();
+	    const selection = ui_lexical_core.$getSelection();
+	    if (ui_lexical_core.$isRangeSelection(selection) && fileType !== FileType.FILE && payload.inline !== true) {
+	      const focus = selection.focus;
+	      const focusNode = focus.getNode();
+	      if (!selection.isCollapsed()) {
+	        focusNode.selectEnd();
+	      }
+	      const parentNode = ui_lexical_utils.$findMatchingParent(focusNode, parent => ui_lexical_core.$isParagraphNode(parent));
+	      if (parentNode === null) {
+	        ui_lexical_core.$insertNodes([node]);
+	        if (ui_lexical_core.$isRootOrShadowRoot(node.getParentOrThrow())) {
+	          ui_lexical_utils.$wrapNodeInElement(node, ui_lexical_core.$createParagraphNode).selectEnd();
+	        }
+	      } else if (parentNode.isEmpty()) {
+	        parentNode.append(node);
+	        node.selectEnd();
+	      } else {
+	        if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK) {
+	          parentNode.append(ui_lexical_core.$createLineBreakNode());
+	          parentNode.append(node);
+	        } else {
+	          const paragraph = ui_lexical_core.$createParagraphNode();
+	          paragraph.append(node);
+	          parentNode.insertAfter(paragraph);
+	        }
+	        node.selectEnd();
+	      }
+	    } else {
+	      ui_lexical_core.$insertNodes([node]);
+	      if (ui_lexical_core.$isRootOrShadowRoot(node.getParentOrThrow())) {
+	        ui_lexical_utils.$wrapNodeInElement(node, ui_lexical_core.$createParagraphNode).selectEnd();
+	      }
 	    }
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR), this.getEditor().registerCommand(REMOVE_FILE_COMMAND, payload => {
@@ -5051,6 +5137,19 @@ this.BX.UI = this.BX.UI || {};
 	  lastPositionMap.delete(popup);
 	}
 
+	function $restoreSelection(lastSelection) {
+	  const selection = ui_lexical_core.$getSelection();
+	  if (!ui_lexical_core.$isRangeSelection(selection) && lastSelection !== null) {
+	    const isSelectionAlive = ui_lexical_core.$getNodeByKey(lastSelection.anchor.key) !== null && ui_lexical_core.$getNodeByKey(lastSelection.focus.key) !== null;
+	    if (isSelectionAlive) {
+	      ui_lexical_core.$setSelection(lastSelection);
+	      return true;
+	    }
+	    return false;
+	  }
+	  return false;
+	}
+
 	// eslint-disable-next-line no-control-regex
 	const ATTRIBUTE_WHITESPACES = /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g;
 	const SAFE_URL = /^(?:(?:https?|ftps?|mailto):|[^a-z]|[+.a-z-]+(?:[^+.:a-z-]|$))/i;
@@ -5371,7 +5470,9 @@ this.BX.UI = this.BX.UI || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog] !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog].destroy();
 	    }
-	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
+	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND, {
+	      sender: 'image-dialog'
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog] = new ImageDialog({
 	      // for an embedded popup: document.body -> this.getEditor().getScrollerContainer()
 	      targetContainer: document.body,
@@ -5409,7 +5510,11 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog].show();
 	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, () => {
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, payload => {
+	    if ((payload == null ? void 0 : payload.sender) === 'image-dialog') {
+	      return false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection)[_lastSelection] = null;
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog] !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog].destroy();
 	    }
@@ -5419,22 +5524,20 @@ this.BX.UI = this.BX.UI || {};
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
 	function _restoreSelection2() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (!ui_lexical_core.$isRangeSelection(selection) && babelHelpers.classPrivateFieldLooseBase(this, _lastSelection)[_lastSelection] !== null) {
-	    ui_lexical_core.$setSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection)[_lastSelection]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection)[_lastSelection] = null;
-	    return true;
-	  }
-	  return false;
+	  const success = $restoreSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection)[_lastSelection]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _lastSelection)[_lastSelection] = null;
+	  return success;
 	}
 	function _handleDialogDestroy2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog] === null) {
+	    return;
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _imageDialog)[_imageDialog] = null;
 	  main_core.Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', babelHelpers.classPrivateFieldLooseBase(this, _onEditorScroll)[_onEditorScroll]);
 	  this.getEditor().resetHighlightSelection();
 	  this.getEditor().update(() => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection)[_restoreSelection]()) {
-	      this.getEditor().focus();
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection)[_restoreSelection]();
+	    // this.getEditor().focus();
 	  });
 	}
 	function _handleEditorScroll2() {
@@ -6736,7 +6839,7 @@ this.BX.UI = this.BX.UI || {};
 	    let video = null;
 	    const src = this.getOption('src');
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _trusted)[_trusted]) {
-	      video = main_core.Tag.render(_t2$4 || (_t2$4 = _$7`<iframe frameborder="0" src="about:blank" draggable="false"></iframe>`));
+	      video = main_core.Tag.render(_t2$4 || (_t2$4 = _$7`<iframe frameborder="0" src="about:blank" draggable="false" tabindex="-1"></iframe>`));
 	      video.src = src;
 	    } else {
 	      video = main_core.Dom.create({
@@ -6745,6 +6848,7 @@ this.BX.UI = this.BX.UI || {};
 	          controls: true,
 	          preload: 'metadata',
 	          playsinline: true,
+	          tabIndex: -1,
 	          src
 	        },
 	        events: {
@@ -7253,7 +7357,9 @@ this.BX.UI = this.BX.UI || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog] !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog].destroy();
 	    }
-	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
+	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND, {
+	      sender: 'video-dialog'
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog] = new VideoDialog({
 	      // for an embedded popup: document.body -> this.getEditor().getScrollerContainer()
 	      targetContainer: document.body,
@@ -7295,7 +7401,11 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog].show();
 	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, () => {
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, payload => {
+	    if ((payload == null ? void 0 : payload.sender) === 'video-dialog') {
+	      return false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$1)[_lastSelection$1] = null;
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog] !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog].hide();
 	    }
@@ -7305,22 +7415,20 @@ this.BX.UI = this.BX.UI || {};
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
 	function _restoreSelection2$1() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (!ui_lexical_core.$isRangeSelection(selection) && babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$1)[_lastSelection$1] !== null) {
-	    ui_lexical_core.$setSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$1)[_lastSelection$1]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$1)[_lastSelection$1] = null;
-	    return true;
-	  }
-	  return false;
+	  const success = $restoreSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$1)[_lastSelection$1]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$1)[_lastSelection$1] = null;
+	  return success;
 	}
 	function _handleDialogDestroy2$1() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog] === null) {
+	    return;
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _videoDialog)[_videoDialog] = null;
 	  main_core.Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', babelHelpers.classPrivateFieldLooseBase(this, _onEditorScroll$2)[_onEditorScroll$2]);
 	  this.getEditor().resetHighlightSelection();
 	  this.getEditor().update(() => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$1)[_restoreSelection$1]()) {
-	      this.getEditor().focus();
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$1)[_restoreSelection$1]();
+	    // this.getEditor().focus();
 	  });
 	}
 	function _handleEditorScroll2$2() {
@@ -8704,6 +8812,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  return /^(http:|https:|mailto:|tel:|sms:)/i.test(url);
 	}
+	const URL_REGEX = /^((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])$/;
 
 	/* eslint-disable no-underscore-dangle */
 	const INSERT_LINK_DIALOG_COMMAND = ui_lexical_core.createCommand('INSERT_LINK_DIALOG_COMMAND');
@@ -8937,7 +9046,9 @@ this.BX.UI = this.BX.UI || {};
 	        lineNode.select();
 	      }
 	    }
-	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
+	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND, {
+	      sender: 'link-dialog'
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _linkEditor)[_linkEditor] = new LinkEditor({
 	      linkUrl,
 	      autoLinkMode: ui_lexical_link.$isAutoLinkNode(lineNode),
@@ -9021,7 +9132,11 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _linkEditor)[_linkEditor].show();
 	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, () => {
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, payload => {
+	    if ((payload == null ? void 0 : payload.sender) === 'link-dialog') {
+	      return false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$2)[_lastSelection$2] = null;
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _linkEditor)[_linkEditor] !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _linkEditor)[_linkEditor].destroy();
 	    }
@@ -9031,22 +9146,19 @@ this.BX.UI = this.BX.UI || {};
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
 	function _restoreSelection2$2() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (!ui_lexical_core.$isRangeSelection(selection) && babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$2)[_lastSelection$2] !== null) {
-	    ui_lexical_core.$setSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$2)[_lastSelection$2]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$2)[_lastSelection$2] = null;
-	    return true;
-	  }
-	  return false;
+	  $restoreSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$2)[_lastSelection$2]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$2)[_lastSelection$2] = null;
 	}
 	function _handleDialogDestroy2$2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _linkEditor)[_linkEditor] === null) {
+	    return;
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _linkEditor)[_linkEditor] = null;
 	  main_core.Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', babelHelpers.classPrivateFieldLooseBase(this, _onEditorScroll$3)[_onEditorScroll$3]);
 	  this.getEditor().resetHighlightSelection();
 	  this.getEditor().update(() => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$2)[_restoreSelection$2]()) {
-	      this.getEditor().focus();
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$2)[_restoreSelection$2]();
+	    // this.getEditor().focus();
 	  });
 	}
 	function _handleEditorScroll2$3() {
@@ -9077,19 +9189,20 @@ this.BX.UI = this.BX.UI || {};
 	      return false;
 	    }
 	    const clipboardText = event.clipboardData.getData('text');
-	    if (!validateUrl(clipboardText, false)) {
+	    if (!URL_REGEX.test(clipboardText)) {
 	      return false;
 	    }
+	    const url = clipboardText.startsWith('http') ? clipboardText : `https://${clipboardText}`;
 	    if (selection.isCollapsed()) {
 	      const success = this.getEditor().dispatchCommand(ui_lexical_link.TOGGLE_LINK_COMMAND, {
-	        url: clipboardText
+	        url
 	      });
 	      if (success) {
 	        event.preventDefault();
 	        return true;
 	      }
 	    } else if (!selection.getNodes().some(node => ui_lexical_core.$isElementNode(node))) {
-	      ui_lexical_link.$toggleLink(clipboardText);
+	      ui_lexical_link.$toggleLink(url);
 	      event.preventDefault();
 	      return true;
 	    }
@@ -9226,11 +9339,11 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	/* eslint-disable no-underscore-dangle */
-	const URL_REGEX = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])/;
-	const EMAIL_REGEX = /(([^\s"(),.:;<>@[\\\]]+(\.[^\s"(),.:;<>@[\\\]]+)*)|(".+"))@((\[(?:\d{1,3}\.){3}\d{1,3}])|(([\dA-Za-z-]+\.)+[A-Za-z]{2,}))/;
-	const MATCHERS = [createLinkMatcherWithRegExp(URL_REGEX, text => {
+	const URL_REGEX$1 = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])/;
+	const EMAIL_REGEX$1 = /(([^\s"(),.:;<>@[\\\]]+(\.[^\s"(),.:;<>@[\\\]]+)*)|(".+"))@((\[(?:\d{1,3}\.){3}\d{1,3}])|(([\dA-Za-z-]+\.)+[A-Za-z]{2,}))/;
+	const MATCHERS = [createLinkMatcherWithRegExp(URL_REGEX$1, text => {
 	  return text.startsWith('http') ? text : `https://${text}`;
-	}), createLinkMatcherWithRegExp(EMAIL_REGEX, text => {
+	}), createLinkMatcherWithRegExp(EMAIL_REGEX$1, text => {
 	  return `mailto:${text}`;
 	})];
 	var _registerListeners$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
@@ -9500,12 +9613,20 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR),
 	  // Turn off RichText built-in indents
-	  this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, () => {
+	  this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, payload => {
 	    const selection = ui_lexical_core.$getSelection();
-	    return !$isSelectionInList(selection);
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.OUTDENT_CONTENT_COMMAND, () => {
+	    if ($isSelectionInList(selection)) {
+	      payload == null ? void 0 : payload.event.preventDefault();
+	      return false;
+	    }
+	    return true;
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.OUTDENT_CONTENT_COMMAND, payload => {
 	    const selection = ui_lexical_core.$getSelection();
-	    return !$isSelectionInList(selection);
+	    if ($isSelectionInList(selection)) {
+	      payload == null ? void 0 : payload.event.preventDefault();
+	      return false;
+	    }
+	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW));
 	}
 	function $isSelectionInList(selection) {
@@ -9515,11 +9636,11 @@ this.BX.UI = this.BX.UI || {};
 	  const isBackward = selection.isBackward();
 	  const firstPoint = isBackward ? selection.focus : selection.anchor;
 	  const firstNode = firstPoint.getNode();
-	  if (ui_lexical_list.$isListItemNode(firstNode) && firstPoint.offset === 0) {
+	  if (ui_lexical_list.$isListItemNode(firstNode)) {
 	    return true;
 	  }
 	  const parentNode = ui_lexical_utils.$findMatchingParent(firstNode, node => ui_lexical_core.$isElementNode(node) && !node.isInline());
-	  return ui_lexical_list.$isListItemNode(parentNode) && firstPoint.offset === 0;
+	  return ui_lexical_list.$isListItemNode(parentNode);
 	}
 
 
@@ -9528,9 +9649,10 @@ this.BX.UI = this.BX.UI || {};
 		TabIndentPlugin: TabIndentPlugin
 	});
 
+	var _maxIndent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("maxIndent");
 	var _registerListeners$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	var _registerComponents$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerComponents");
-	var _isIndentPermitted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isIndentPermitted");
+	var _getTotalListDepth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTotalListDepth");
 	var _getElementNodesInSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getElementNodesInSelection");
 	class ListPlugin extends BasePlugin {
 	  constructor(editor) {
@@ -9538,8 +9660,8 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _getElementNodesInSelection, {
 	      value: _getElementNodesInSelection2
 	    });
-	    Object.defineProperty(this, _isIndentPermitted, {
-	      value: _isIndentPermitted2
+	    Object.defineProperty(this, _getTotalListDepth, {
+	      value: _getTotalListDepth2
 	    });
 	    Object.defineProperty(this, _registerComponents$d, {
 	      value: _registerComponents2$d
@@ -9547,6 +9669,11 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _registerListeners$7, {
 	      value: _registerListeners2$7
 	    });
+	    Object.defineProperty(this, _maxIndent, {
+	      writable: true,
+	      value: 5
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _maxIndent)[_maxIndent] = editor.getOption('list.maxIndent', babelHelpers.classPrivateFieldLooseBase(this, _maxIndent)[_maxIndent]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$7)[_registerListeners$7]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$d)[_registerComponents$d]();
 	  }
@@ -9658,7 +9785,14 @@ this.BX.UI = this.BX.UI || {};
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.INSERT_PARAGRAPH_COMMAND, () => {
 	    return ui_lexical_list.$handleListInsertParagraph();
-	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, () => !babelHelpers.classPrivateFieldLooseBase(this, _isIndentPermitted)[_isIndentPermitted](1), ui_lexical_core.COMMAND_PRIORITY_CRITICAL));
+	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(ui_lexical_core.INDENT_CONTENT_COMMAND, payload => {
+	    const totalDepth = babelHelpers.classPrivateFieldLooseBase(this, _getTotalListDepth)[_getTotalListDepth]();
+	    if (totalDepth > 0) {
+	      payload == null ? void 0 : payload.event.preventDefault();
+	      return totalDepth > babelHelpers.classPrivateFieldLooseBase(this, _maxIndent)[_maxIndent];
+	    }
+	    return false;
+	  }, ui_lexical_core.COMMAND_PRIORITY_CRITICAL));
 	}
 	function _registerComponents2$d() {
 	  this.getEditor().getComponentRegistry().register('bulleted-list', () => {
@@ -9696,10 +9830,10 @@ this.BX.UI = this.BX.UI || {};
 	    return button;
 	  });
 	}
-	function _isIndentPermitted2(maxDepth) {
+	function _getTotalListDepth2() {
 	  const selection = ui_lexical_core.$getSelection();
 	  if (!ui_lexical_core.$isRangeSelection(selection)) {
-	    return false;
+	    return 0;
 	  }
 	  const elementNodesInSelection = babelHelpers.classPrivateFieldLooseBase(this, _getElementNodesInSelection)[_getElementNodesInSelection](selection);
 	  let totalDepth = 0;
@@ -9714,7 +9848,7 @@ this.BX.UI = this.BX.UI || {};
 	      totalDepth = Math.max(ui_lexical_list.$getListDepth(parent) + 1, totalDepth);
 	    }
 	  }
-	  return totalDepth <= maxDepth;
+	  return totalDepth;
 	}
 	function _getElementNodesInSelection2(selection) {
 	  const nodesInSelection = selection.getNodes();
@@ -10430,7 +10564,11 @@ this.BX.UI = this.BX.UI || {};
 	    const options = main_core.Type.isPlainObject(payload) ? payload : {};
 	    this.show(options);
 	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, () => {
+	  }, ui_lexical_core.COMMAND_PRIORITY_EDITOR), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, payload => {
+	    if ((payload == null ? void 0 : payload.sender) === 'copilot') {
+	      return false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _hide)[_hide]();
 	    return false;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(DIALOG_VISIBILITY_COMMAND, () => {
@@ -10514,7 +10652,9 @@ this.BX.UI = this.BX.UI || {};
 	    if (!ui_lexical_core.$isRangeSelection(selection) || !this.getEditor().isEditable()) {
 	      return;
 	    }
-	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND);
+	    this.getEditor().dispatchCommand(HIDE_DIALOG_COMMAND, {
+	      sender: 'copilot'
+	    });
 	    const selectionText = selection.getTextContent();
 	    const editorPosition = main_core.Dom.getPosition(this.getEditor().getScrollerContainer());
 	    const width = Math.min(editorPosition.width, 600);
@@ -10590,10 +10730,12 @@ this.BX.UI = this.BX.UI || {};
 	function _adjustDialogPosition2$1() {
 	  this.getEditor().update(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$3)[_restoreSelection$3]();
-	    const selectionPosition = $getSelectionPosition(this.getEditor(), ui_lexical_core.$getSelection(), document.body);
+	    const selection = ui_lexical_core.$getSelection();
+	    const selectionPosition = $getSelectionPosition(this.getEditor(), selection, document.body);
 	    if (selectionPosition === null) {
 	      return;
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3] = selection.clone();
 	    const {
 	      top,
 	      left,
@@ -10630,13 +10772,9 @@ this.BX.UI = this.BX.UI || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _adjustDialogPosition$1)[_adjustDialogPosition$1]();
 	}
 	function _restoreSelection2$3() {
-	  const selection = ui_lexical_core.$getSelection();
-	  if (!ui_lexical_core.$isRangeSelection(selection) && babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3] !== null) {
-	    ui_lexical_core.$setSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3] = null;
-	    return true;
-	  }
-	  return false;
+	  const success = $restoreSelection(babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _lastSelection$3)[_lastSelection$3] = null;
+	  return success;
 	}
 	function _handleCopilotSave2(event) {
 	  const {
@@ -10681,9 +10819,8 @@ this.BX.UI = this.BX.UI || {};
 	  main_core.Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', babelHelpers.classPrivateFieldLooseBase(this, _onEditorScroll$4)[_onEditorScroll$4]);
 	  this.getEditor().resetHighlightSelection();
 	  this.getEditor().update(() => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$3)[_restoreSelection$3]()) {
-	      this.getEditor().focus();
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _restoreSelection$3)[_restoreSelection$3]();
+	    // this.getEditor().focus();
 	  });
 	}
 

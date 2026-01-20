@@ -10,6 +10,10 @@ jn.define('layout/ui/reaction-list/src/controller', (require, exports, module) =
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
+	/**
+	 * @deprecated
+	 * @see layout/ui/reaction/list
+	 */
 	class ReactionListController
 	{
 		/**

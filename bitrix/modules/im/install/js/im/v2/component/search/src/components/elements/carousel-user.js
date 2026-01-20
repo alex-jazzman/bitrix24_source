@@ -5,6 +5,7 @@ import { SearchContextMenu } from '../../classes/search-context-menu';
 
 import '../css/carousel-user.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelUser } from 'im.v2.model';
 
 // @vue/component
@@ -40,7 +41,7 @@ export const CarouselUser = {
 	},
 	created()
 	{
-		this.contextMenuManager = new SearchContextMenu();
+		this.contextMenuManager = new SearchContextMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -64,6 +65,10 @@ export const CarouselUser = {
 
 			this.$emit('openContextMenu', { dialogId: this.userDialogId, nativeEvent: event });
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 	},
 	template: `
 		<div 
@@ -73,11 +78,7 @@ export const CarouselUser = {
 			@click.right.prevent="onRightClick"
 		>
 			<div v-if="selected" class="bx-im-carousel-user__selected-mark"></div>
-			<ChatAvatar 
-				:avatarDialogId="userDialogId" 
-				:contextDialogId="userDialogId" 
-				:size="AvatarSize.XL" 
-			/>
+			<ChatAvatar :avatarDialogId="userDialogId" :size="AvatarSize.XL" />
 			<div class="bx-im-carousel-user__title" :title="name">
 				{{ name }}
 			</div>

@@ -8,8 +8,8 @@ return [
 		'ui-system/layout/card',
 		'utils/validation',
 		'utils/test',
+		'layout/ui/user/card',
 
-		'more-menu/block/header/person-info',
 		'more-menu/block/header/worktime',
 		'more-menu/block/header/check-in',
 	],

@@ -7,8 +7,9 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 	const { MentionConfig } = require('im/messenger/controller/dialog/lib/mention/config');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, UserType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	class MentionProvider extends RecentProvider
 	{
@@ -41,7 +42,19 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 		 */
 		filterRecentItem(item)
 		{
-			return Number(item.id) !== MessengerParams.getUserId();
+			if (!DialogHelper.isChatId(item.id))
+			{
+				return false;
+			}
+
+			const userItem = this.store.getters['usersModel/getById'](item.id);
+
+			if (Type.isNil(userItem))
+			{
+				return false;
+			}
+
+			return userItem.type === UserType.user && Number(item.id) !== MessengerParams.getUserId();
 		}
 
 		/**

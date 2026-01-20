@@ -169,12 +169,24 @@
 	--outline-accent-color: rgba(15, 145, 186, 1);
 }
 
+.booking-booking-booking.--expired {
+	--outline-accent-color: rgba(15, 145, 186, 0.8);
+}
+
 .booking-booking-booking.--confirmed.--accent {
 	--outline-accent-color: rgba(138, 178, 16, 1);
 }
 
 .booking-booking-booking.--confirmed.--expired {
 	--outline-accent-color: rgba(138, 178, 16, .8);
+}
+
+.booking-booking-booking.--not-visited.--accent {
+	--outline-accent-color: rgba(223, 149, 0, 1);
+}
+
+.booking-booking-booking.--not-visited.--expired {
+	--outline-accent-color: rgba(223, 149, 0, 0.8);
 }
 
 .booking-booking-booking.--overbooking-bg.--accent {
@@ -357,4 +369,24 @@
 .booking-booking-booking-actions .ui-icon-set {
 	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
 	--ui-icon-set__icon-size: 16px;
+}
+
+.booking-booking-booking.--locked {
+	animation-name: bookingFeatureLocked;
+	animation-duration: 300ms;
+	animation-iteration-count: 1;
+	animation-delay: 200ms;
+	animation-timing-function: ease-in-out;
+}
+
+@keyframes bookingFeatureLocked {
+	0% {
+		transform: translateX(0);
+	}
+	50% {
+		transform: translateX(15px);
+	}
+	100% {
+		transform: translateX(0);
+	}
 }

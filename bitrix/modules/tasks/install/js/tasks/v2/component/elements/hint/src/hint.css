@@ -2,3 +2,9 @@
 	color: var(--ui-color-base-8);
 	font-size: var(--ui-font-size-lg);
 }
+
+.tasks-hint-popup .popup-window-close-icon:after {
+	width: 18px;
+	height: 18px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none'%3E%3Cpath fill='%23FFFFFF' fill-rule='evenodd' d='M4.879 4.879a.525.525 0 01.742 0l3.38 3.379 3.378-3.379a.525.525 0 11.742.743L9.743 9l3.378 3.378a.525.525 0 11-.742.743L9 9.742l-3.379 3.38a.525.525 0 01-.742-.743L8.258 9l-3.38-3.379a.525.525 0 010-.742z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}

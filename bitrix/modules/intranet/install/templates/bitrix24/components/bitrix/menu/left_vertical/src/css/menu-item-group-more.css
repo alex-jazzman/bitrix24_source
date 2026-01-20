@@ -9,6 +9,7 @@
 
 li.menu-item-group-more {
 	margin-left: 0;
+	list-style-type: none;
 }
 
 [data-collapse-mode="collapsed"] + [class="menu-item-group-more"] {

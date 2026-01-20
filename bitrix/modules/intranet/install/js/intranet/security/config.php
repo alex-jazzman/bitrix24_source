@@ -11,6 +11,7 @@ return array(
 	),
 	'rel' => [
 		'main.core',
+		'ui.analytics',
 	],
 	'skip_core' => false,
 );

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,im_v2_application_core,im_v2_provider_pull,im_v2_css_classes,im_v2_css_icons,im_v2_css_tokens,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_lib_theme,main_core_events,im_v2_component_textarea,im_v2_component_dialog_chat,im_v2_lib_messageNotifier,im_v2_component_elements_loader,im_v2_component_animation,im_v2_component_content_elements,im_v2_const,im_v2_lib_demo) {
+(function (exports,main_core,im_v2_application_core,im_v2_css_classes,im_v2_css_icons,im_v2_css_tokens,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_lib_theme,main_core_events,im_v2_component_textarea,im_v2_component_dialog_chat,im_v2_lib_messageNotifier,im_v2_component_elements_loader,im_v2_component_animation,im_v2_component_content_elements,im_v2_const,im_v2_lib_demo) {
 	'use strict';
 
 	// @vue/component
@@ -240,7 +240,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-messenger__scope bx-im-task-chat-opener__container">
+		<div class="bx-im-messenger__scope bx-im-task-chat-opener__container --ui-context-content-light">
 			<TaskChatContent :dialogId="dialogId" />
 		</div>
 	`
@@ -250,12 +250,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const PLACEHOLDER_APP_NAME = 'TaskChatPlaceholderApplication';
 	var _initPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPromise");
 	var _init = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
-	var _initPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPull");
 	class TaskApplication {
 	  constructor() {
-	    Object.defineProperty(this, _initPull, {
-	      value: _initPull2
-	    });
 	    Object.defineProperty(this, _init, {
 	      value: _init2
 	    });
@@ -264,7 +260,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _initPromise)[_initPromise] = babelHelpers.classPrivateFieldLooseBase(this, _init)[_init]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initPull)[_initPull]();
 	  }
 	  ready() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _initPromise)[_initPromise];
@@ -317,12 +312,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  await im_v2_application_core.Core.ready();
 	  return this;
 	}
-	async function _initPull2() {
-	  await this.ready();
-	  im_v2_application_core.Core.getPullClient().subscribe(new im_v2_provider_pull.SidebarPullHandler());
-	}
 
 	exports.TaskApplication = TaskApplication;
 
-}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Provider.Pull,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=task.bundle.js.map

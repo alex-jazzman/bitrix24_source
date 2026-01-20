@@ -1,38 +1,48 @@
-import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
-import { UserManager } from 'im.v2.lib.user';
-import { Logger } from 'im.v2.lib.logger';
+import { BaseUserService } from 'im.v2.provider.service.user';
 
-import type { RestClient } from 'rest.client';
+type ReactionItem = {
+	id: number,
+	messageId: number,
+	userId: number,
+	reaction: string,
+	dateReaction: string,
+}
 
-export class UserService
+export class UserService extends BaseUserService<{ reactions: ReactionItem[] }>
 {
-	#restClient: RestClient;
-	#userManager: UserManager;
+	#reaction: string;
 
-	constructor()
+	constructor(reaction: string)
 	{
-		this.#restClient = Core.getRestClient();
-		this.#userManager = new UserManager();
+		super();
+		this.#reaction = reaction;
 	}
 
-	async loadReactionUsers(messageId: number, reaction: string): Promise<number[]>
+	getRequestFilter(firstPage = false): Record
 	{
-		Logger.warn('Reactions: UserService: loadReactionUsers', messageId, reaction);
-		const queryParams = {
-			messageId,
-			filter: { reaction },
+		return {
+			...super.getRequestFilter(firstPage),
+			reaction: this.#reaction,
 		};
+	}
 
-		const response = await this.#restClient.callMethod(RestMethod.imV2ChatMessageReactionTail, queryParams)
-			.catch((result: RestResult) => {
-				console.error('Reactions: UserService: loadReactionUsers error', result.error());
-				throw result.error();
-			});
+	getRestMethodName(): string
+	{
+		return RestMethod.imV2ChatMessageReactionTail;
+	}
 
-		const users = response.data().users;
-		await this.#userManager.setUsersToModel(Object.values(users));
+	getLastId(result): number
+	{
+		const { reactions } = result;
 
-		return users.map((user) => user.id);
+		if (!reactions || reactions.length === 0)
+		{
+			return 0;
+		}
+
+		const sortedReactions = [...reactions].sort((a, b) => b.id - a.id);
+
+		return sortedReactions[sortedReactions.length - 1].id;
 	}
 }

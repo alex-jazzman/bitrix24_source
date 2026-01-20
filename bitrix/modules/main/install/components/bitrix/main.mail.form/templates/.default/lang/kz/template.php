@@ -1,10 +1,6 @@
 <?php
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_SUBTITLE"] = "Электрондық поштаны жіберу үшін байланысты сақтаңыз";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_SUBTITLE_MSGVER_1"] = "Сұрауда қате бар-жоғын тексеріңіз немесе мекенжайды сақтаңыз";
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_TITLE"] = "Мұндай байланыс мекенжай кітабында жоқ";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_TITLE_MSGVER_1"] = "Мұндай мекенжай мекенжай кітабында жоқ";
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON"] = "Жаңа байланыс";
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON_ALLOW_CREATE_ITEM"] = "Жаңа байланыс:";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON_ALLOW_CREATE_ITEM_MSGVER_1"] = "Жаңа мекенжай қосу:";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON_MSGVER_1"] = "Жаңа мекенжай қосу";
 $MESS["MAIN_MAIL_FORM_CRM_EMPTY_SEARCH_SUBTITLE"] = "Іздеу шарттарын өзгертіңіз";

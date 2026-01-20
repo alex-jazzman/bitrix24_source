@@ -23,6 +23,17 @@ if (empty($_POST['document_type']))
 	CMain::FinalActions();
 }
 
+$document_type = $_POST['document_type'];
+
+if (!defined('MODULE_ID') && isset($_POST['module_id']))
+{
+	define('MODULE_ID', $_POST['module_id']);
+}
+if (!defined('ENTITY') && isset($_POST['entity']))
+{
+	define('ENTITY', $_POST['entity']);
+}
+
 if (!defined('MODULE_ID') && !defined('ENTITY') && isset($_REQUEST['dts']))
 {
 	$dts = \CBPDocument::unSignDocumentType($_REQUEST['dts']);
@@ -30,6 +41,7 @@ if (!defined('MODULE_ID') && !defined('ENTITY') && isset($_REQUEST['dts']))
 	{
 		define('MODULE_ID', $dts[0]);
 		define('ENTITY', $dts[1]);
+		$document_type = $dts[2];
 	}
 }
 
@@ -41,8 +53,7 @@ CBPHelper::decodeTemplatePostData($_POST);
 
 $activityName = $_REQUEST['id'];
 $activityType = $_REQUEST['activity'];
-$document_type = $_POST['document_type'];
-$documentType = [MODULE_ID, ENTITY, $_POST['document_type']];
+$documentType = [MODULE_ID, ENTITY, $document_type];
 
 $currentSiteId = $_REQUEST['current_site_id'];
 
@@ -92,10 +103,6 @@ $arWorkflowTemplate = $_POST['arWorkflowTemplate'];
 $arWorkflowParameters = $_POST['arWorkflowParameters'];
 $arWorkflowVariables = $_POST['arWorkflowVariables'];
 $arWorkflowConstants = $_POST['arWorkflowConstants'];
-
-$wfGlobalConstants = \Bitrix\Bizproc\Workflow\Type\GlobalConst::getAll($documentType);
-$wfGlobalVariables = \Bitrix\Bizproc\Workflow\Type\GlobalVar::getAll($documentType);
-$documentFields = \Bitrix\Bizproc\Automation\Helper::getDocumentFields($documentType);
 
 $arErrors = [];
 $bShowId = false;
@@ -189,7 +196,7 @@ echo PHPToHiddens($arWorkflowParameters, 'arWorkflowParameters');
 echo PHPToHiddens($arWorkflowVariables, 'arWorkflowVariables');
 echo PHPToHiddens($arWorkflowConstants, 'arWorkflowConstants');
 
-CBPDocument::AddShowParameterInit(MODULE_ID, "all", $_POST['document_type'], ENTITY);
+CBPDocument::AddShowParameterInit(MODULE_ID, "all", $document_type, ENTITY);
 $arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
 ?>
 <?= bitrix_sessid_post() ?>
@@ -197,7 +204,7 @@ $arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowT
 <input type="hidden" name="document_type" value="<?= htmlspecialcharsbx($document_type) ?>">
 <input type="hidden" name="id" value="<?= htmlspecialcharsbx($activityName) ?>">
 <input type="hidden" name="current_site_id" value="<?= htmlspecialcharsbx($currentSiteId) ?>">
-<input type="hidden" name="activated" value="<?= htmlspecialcharsbx($arCurrentActivity['Activated']) ?>">
+<input type="hidden" name="activated" value="<?= htmlspecialcharsbx($arCurrentActivity['Activated'] ?? 'Y') ?>">
 <?php
 	if(count($arErrors)>0)
 	{
@@ -219,89 +226,20 @@ if (!empty($_POST["postback"]))
 }
 else
 {
-	$activityTitle = $arCurrentActivity["Properties"]["Title"];
+	$activityTitle = $arCurrentActivity["Properties"]["Title"] ?? '';
 	$editorComment = $arCurrentActivity["Properties"]["EditorComment"] ?? '';
 	$activity_id = $activityName;
 
-	$usages = [];
-	try
-	{
-		// todo: think about how to take it to another place
-		CBPActivity::IncludeActivityFile('SequentialWorkflowActivity');
-		$rootActivity = CBPActivity::createInstance('SequentialWorkflowActivity', 'Template');
-
-		$activityInstance = CBPActivity::createInstance($arCurrentActivity['Type'], $arCurrentActivity['Name']);
-		if ($activityInstance)
-		{
-			$activityInstance->initializeFromArray($arCurrentActivity['Properties']);
-
-			$rootActivity->FixUpParentChildRelationship($activityInstance);
-			$rootActivity->SetProperties($arWorkflowParameters);
-			$rootActivity->SetVariablesTypes($arWorkflowVariables);
-
-			$children = $rootActivity->CollectNestedActivities();
-			if (is_array($children))
-			{
-				$usages = $children[0]->collectUsages();
-			}
-		}
-	}
-	catch (Exception $e)
-	{
-		// relevant only for whileactivity
-		$usages = [];
-	}
-
-	$checkMap = [
-		\Bitrix\Bizproc\Workflow\Template\SourceType::DocumentField => $documentFields,
-		\Bitrix\Bizproc\Workflow\Template\SourceType::GlobalConstant => $wfGlobalConstants,
-		\Bitrix\Bizproc\Workflow\Template\SourceType::GlobalVariable => $wfGlobalVariables,
-		\Bitrix\Bizproc\Workflow\Template\SourceType::Variable => $arWorkflowVariables,
-		\Bitrix\Bizproc\Workflow\Template\SourceType::Constant => $arWorkflowConstants,
-		\Bitrix\Bizproc\Workflow\Template\SourceType::Parameter => $arWorkflowParameters
-	];
-	// {=Template:TargetUser}
-	$checkMap[\Bitrix\Bizproc\Workflow\Template\SourceType::Parameter]['TargetUser'] = [];
-
-	foreach ($usages as $usage)
-	{
-		$object = $usage[0];
-		$field = $usage[1];
-		$returnField = $usage[2] ?? null;
-
-		if (array_key_exists($object, $checkMap))
-		{
-			// usages excludes _printable from field key (ASSIGNED_BY_PRINTABLE -> ASSIGNED_BY)
-			if (
-				!array_key_exists($field, $checkMap[$object])
-				&& !array_key_exists($field . '_printable', $checkMap[$object])
-				&& !array_key_exists($field . '_PRINTABLE', $checkMap[$object])
-			)
-			{
-				if ($object === \Bitrix\Bizproc\Workflow\Template\SourceType::Parameter)
-				{
-					$object = 'Template';
-				}
-
-				$link = '{=' . $object . ':' . $field . '}';
-				$brokenLinks[$link] = htmlspecialcharsbx($link);
-			}
-		}
-		elseif ($object === \Bitrix\Bizproc\Workflow\Template\SourceType::Activity)
-		{
-			$activityUsage = CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $field);
-			$returnProperties = $runtime->getActivityReturnProperties($activityUsage);
-			if (
-				!array_key_exists($returnField, $returnProperties)
-				&& !array_key_exists($returnField . '_printable', $returnProperties)
-				&& !array_key_exists($returnField . '_PRINTABLE', $returnProperties)
-			)
-			{
-				$link = '{=' . $field . ':' . $returnField . '}';
-				$brokenLinks[$link] = htmlspecialcharsbx($link);
-			}
-		}
-	}
+	$analyzer =
+		(new \Bitrix\Bizproc\Public\Service\Template\ActivityUsageAnalyzer($arWorkflowTemplate))
+			->setParameters($arWorkflowParameters ?? [])
+			->setVariables($arWorkflowVariables ?? [])
+			->setConstants($arWorkflowConstants ?? [])
+			->setGlobalConstants(\Bitrix\Bizproc\Workflow\Type\GlobalConst::getAll($documentType))
+			->setGlobalVariables(\Bitrix\Bizproc\Workflow\Type\GlobalVar::getAll($documentType))
+			->setDocumentFields(\Bitrix\Bizproc\Automation\Helper::getDocumentFields($documentType))
+	;
+	$brokenLinks = $analyzer->analyzeUsages($activityName);
 }
 ?>
 <script>
@@ -335,7 +273,7 @@ function ShowBrokenLinkDetail(element)
 					</span>
 				</div>
 				<div class="bizprocdesigner-activity-broken-link-detail" id="bp_act_set_broken_link_detail">
-					<?= (implode('<br>', $brokenLinks)) ?>
+					<?= implode('<br>', array_map('htmlspecialcharsbx', $brokenLinks)) ?>
 				</div>
 			</div>
 			<span class="ui-alert-close-btn" onclick="HideShowId('bp_act_set_broken_link')"></span>
@@ -465,6 +403,7 @@ setTimeout("document.getElementById('bpastitle').focus();", 100);
 		margin-top: 10px;
 		overflow: hidden;
 		transition: height 0.3s linear;
+		word-break: break-word;
 	}
 
 	.bizprocdesigner-activity-btn-more {
@@ -498,7 +437,7 @@ setTimeout("document.getElementById('bpastitle').focus();", 100);
 		const button = document.querySelector('[data-role="activity-settings-more"]');
 		if (button)
 		{
-			let isActivityActivated = '<?= CUtil::JSEscape($arCurrentActivity['Activated']) ?>';
+			let isActivityActivated = '<?= CUtil::JSEscape($arCurrentActivity['Activated'] ?? 'Y') ?>';
 			const canActivate = '<?= (isset($_POST['can_be_activated']) && $_POST['can_be_activated'] === 'Y') ? 'Y' : 'N' ?>';
 
 			BX.Event.bind(button, 'click', () => {

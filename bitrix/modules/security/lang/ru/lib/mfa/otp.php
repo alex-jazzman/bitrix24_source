@@ -6,3 +6,4 @@ $MESS ['SECURITY_OTP_ERROR_PASS2_INVALID'] = "Второе значение па
 $MESS ['SECURITY_OTP_ERROR_SYNC_ERROR'] = "Не удалось синхронизировать данный секретный ключ с введенными значениями пароля.";
 $MESS['SECURITY_HOTP_TITLE'] = 'По счетчику (HOTP)';
 $MESS['SECURITY_TOTP_TITLE'] = 'По времени (TOTP)';
+$MESS['SECURITY_PUSH_TITLE'] = 'Мобильный push';

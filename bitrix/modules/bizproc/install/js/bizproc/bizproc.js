@@ -324,6 +324,7 @@ BizProcActivity = function()
 		}
 
 		this.Activated = activityInfo.Activated === 'N' ? 'N' : 'Y';
+		this.Node = activityInfo.Node || null;
 
 		this.height = 0;
 		this.width = 0;
@@ -393,6 +394,7 @@ BizProcActivity = function()
 			Type: ob.Type,
 			Name: ob.Name,
 			Activated: ob.Activated,
+			Node: ob.Node,
 			Properties: ob.Properties,
 			Children: [],
 		};

@@ -67,14 +67,14 @@ export class WakeUpHandler
 				return;
 			}
 
-			Logger.desktop('StatusHandler: onWakeUp event, reload window');
-
 			if (!DesktopManager.getInstance().canReloadWindow())
 			{
 				await DesktopDataUpdater.reloadChatInfo();
 
 				return;
 			}
+
+			Logger.desktop('StatusHandler: onWakeUp event, reload window');
 
 			DesktopApi.reloadWindow();
 		}

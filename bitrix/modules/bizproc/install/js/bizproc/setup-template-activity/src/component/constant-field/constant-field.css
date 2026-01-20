@@ -1,0 +1,47 @@
+.bizproc-setuptemplateactivity-constant-edit {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 5px;
+	padding: 0 6px;
+}
+
+.bizproc-setuptemplateactivity-constant-edit__label {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-setuptemplateactivity-constant-edit__input-wrap {
+	position: relative;
+	flex-grow: 1;
+}
+
+.bizproc-setuptemplateactivity-constant-edit__wrap {
+	display: flex;
+	justify-content: space-between;
+	align-items: stretch;
+	gap: 5px;
+}
+
+.bizproc-setuptemplateactivity-constant-edit__input-control {
+	flex-grow: 1;
+}
+
+.bizproc-setuptemplateactivity-constant-edit__btn-control {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 5px;
+	padding-top: 21px;
+	box-sizing: border-box;
+}
+
+.bizproc-setuptemplateactivity-constant-edit__control-icon {
+	cursor: pointer;
+}
+
+.bizproc-setuptemplateactivity-constant-edit__control-icon:hover {
+	background-color: var(--ui-color-accent-main-primary-alt);
+}

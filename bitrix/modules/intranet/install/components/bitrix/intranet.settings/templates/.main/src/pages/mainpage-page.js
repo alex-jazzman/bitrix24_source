@@ -523,7 +523,7 @@ export class MainpagePage extends BaseSettingsPage
 
 							this.#popupShare.close();
 							BX.UI.Analytics.sendData({
-								tool: 'landing',
+								tool: 'vibe',
 								category: 'vibe',
 								event: 'publish_page',
 								c_sub_section: 'from_settings',
@@ -595,7 +595,7 @@ export class MainpagePage extends BaseSettingsPage
 
 							this.#popupWithdraw.close();
 							BX.UI.Analytics.sendData({
-								tool: 'landing',
+								tool: 'vibe',
 								category: 'vibe',
 								event: 'unpublish_page',
 								c_sub_section: 'from_settings',
@@ -758,7 +758,7 @@ export class MainpagePage extends BaseSettingsPage
 				}
 
 				BX.UI.Analytics.sendData({
-					tool: 'landing',
+					tool: 'vibe',
 					category: 'vibe',
 					event: 'open_market',
 					status: this.#canEdit ? 'success' : 'error_limit',
@@ -790,12 +790,6 @@ export class MainpagePage extends BaseSettingsPage
 				{
 					BX.UI.InfoHelper.show("limit_office_vibe");
 				}
-				BX.UI.Analytics.sendData({
-					tool: 'landing',
-					category: 'vibe',
-					event: 'open_editor',
-					status: this.#canEdit ? 'success' : 'error_limit',
-				});
 			});
 		}
 
@@ -828,7 +822,7 @@ export class MainpagePage extends BaseSettingsPage
 			{
 				BX.UI.InfoHelper.show("limit_office_vibe");
 				BX.UI.Analytics.sendData({
-					tool: 'landing',
+					tool: 'vibe',
 					category: 'vibe',
 					event: 'publish_page',
 					c_sub_section: 'from_settings',

@@ -1,0 +1,74 @@
+.yandex-wizard__title {
+	color: var(--ui-color-base-black-fixed);
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xl);
+}
+
+.yandex-wizard__info {
+	display: flex;
+	border-radius: var(--ui-border-radius-3xl);
+	overflow: hidden;
+	flex-shrink: 0;
+}
+
+.yandex-wizard__info-text_block {
+	padding-top: 3px;
+}
+
+.yandex-wizard__info-text {
+	display: flex;
+	flex: 1;
+	gap: var(--ui-space-stack-sm);
+	padding: 22px 22px 27px 22px;
+	background: var(--ui-color-accent-main-primary-alt);
+}
+
+.yandex-wizard__info_icon {
+	--yandex-wizard__info-text_icon-size: 26px;
+
+	display: flex;
+	width: var(--yandex-wizard__info-text_icon-size);
+	height: var(--yandex-wizard__info-text_icon-size);
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-base-8) url("../images/yandex-integration-wizard.png") no-repeat center center;
+	background-size: 16px;
+}
+
+.yandex-wizard__info-text_title {
+	margin-bottom: 7px;
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var(--ui-letter-spacing-m);
+	color: var(--ui-color-base-8);
+}
+
+.yandex-wizard__info-text_points {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+}
+
+.yandex-wizard__info-text_point {
+	display: flex;
+	gap: var(--ui-space-stack-2xs2);
+}
+
+.yandex-wizard__info-text_point-icon-text {
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: rgba(var(--ui-color-on-primary-alt-rgb), var(--ui-opacity-80));
+}
+
+.yandex-wizard__info-map {
+	flex-shrink: 0;
+	position: relative;
+	width: 191px;
+	height: 168px;
+	object-fit: cover;
+	object-position: center;
+}

@@ -1,16 +1,22 @@
 import 'main.polyfill.intersectionobserver';
-import { EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
+
+import type { EventEmitter } from 'main.core.events';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class ObserverManager
 {
 	#dialogId: string;
+	#emitter: EventEmitter;
 	#observer: IntersectionObserver;
 
-	constructor(dialogId: string): ObserverManager
+	constructor(payload: { dialogId: string, context: ApplicationContext }): ObserverManager
 	{
+		const { dialogId, context: { emitter } } = payload;
 		this.#dialogId = dialogId;
+		this.#emitter = emitter;
+
 		this.#initObserver();
 	}
 
@@ -63,7 +69,7 @@ export class ObserverManager
 
 	#sendVisibleEvent(messageId: number): void
 	{
-		EventEmitter.emit(EventType.dialog.onMessageIsVisible, {
+		this.#emitter.emit(EventType.dialog.onMessageIsVisible, {
 			messageId,
 			dialogId: this.#dialogId,
 		});
@@ -71,7 +77,7 @@ export class ObserverManager
 
 	#sendNotVisibleEvent(messageId: number): void
 	{
-		EventEmitter.emit(EventType.dialog.onMessageIsNotVisible, {
+		this.#emitter.emit(EventType.dialog.onMessageIsNotVisible, {
 			messageId,
 			dialogId: this.#dialogId,
 		});

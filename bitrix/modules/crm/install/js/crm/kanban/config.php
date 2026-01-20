@@ -34,6 +34,7 @@ return [
 		'main.date',
 		'main.popup',
 		'pull.queuemanager',
+		'ui.analytics',
 		'ui.buttons',
 		'ui.design-tokens',
 		'ui.entity-selector',

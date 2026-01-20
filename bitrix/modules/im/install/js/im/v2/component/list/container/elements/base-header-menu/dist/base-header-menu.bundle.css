@@ -1,0 +1,19 @@
+.bx-im-list-container-base-header-menu__icon {
+	width: 30px;
+	height: 30px;
+	margin-right: 8px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='31' height='30' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.215 14.746a3.4 3.4 0 003.248-2.396h1.94a1.19 1.19 0 000-2.381h-2.081a3.4 3.4 0 00-6.214 0h-7.89a1.19 1.19 0 100 2.381h7.748a3.4 3.4 0 003.249 2.396zm0-2.062a1.336 1.336 0 100-2.672 1.336 1.336 0 000 2.672zm-5.813 4.033a3.4 3.4 0 00-3.248 2.396h-1.94a1.19 1.19 0 000 2.381h2.081a3.4 3.4 0 006.214 0h7.89a1.19 1.19 0 100-2.381H15.65a3.4 3.4 0 00-3.248-2.396zM12.4 18.8a1.315 1.315 0 100 2.63 1.315 1.315 0 000-2.63z' fill='%23525C69'/%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+	opacity: 0.5;
+}
+
+.bx-im-list-container-base-header-menu__icon:hover {
+	opacity: 0.6;
+}
+
+.bx-im-list-container-base-header-menu__icon.--active {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='31' height='30' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.215 14.746a3.4 3.4 0 003.248-2.396h1.94a1.19 1.19 0 000-2.381h-2.081a3.4 3.4 0 00-6.214 0h-7.89a1.19 1.19 0 100 2.381h7.748a3.4 3.4 0 003.249 2.396zm0-2.062a1.336 1.336 0 100-2.672 1.336 1.336 0 000 2.672zm-5.813 4.033a3.4 3.4 0 00-3.248 2.396h-1.94a1.19 1.19 0 000 2.381h2.081a3.4 3.4 0 006.214 0h7.89a1.19 1.19 0 100-2.381H15.65a3.4 3.4 0 00-3.248-2.396zM12.4 18.8a1.315 1.315 0 100 2.63 1.315 1.315 0 000-2.63z' fill='%2300ACE3'/%3E%3C/svg%3E");
+	opacity: 1;
+}

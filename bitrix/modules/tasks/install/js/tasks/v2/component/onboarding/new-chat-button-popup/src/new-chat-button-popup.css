@@ -1,0 +1,44 @@
+.tasks-onboarding-new-chat-button-popup-wrapper .popup-window-close-icon:after {
+	width: 18px;
+	height: 18px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none'%3E%3Cpath fill='%23FFFFFF' fill-rule='evenodd' d='M4.879 4.879a.525.525 0 01.742 0l3.38 3.379 3.378-3.379a.525.525 0 11.742.743L9.743 9l3.378 3.378a.525.525 0 11-.742.743L9 9.742l-3.379 3.38a.525.525 0 01-.742-.743L8.258 9l-3.38-3.379a.525.525 0 010-.742z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.tasks-onboarding-new-chat-button-popup {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: var(--ui-space-inset-md2);
+}
+
+.tasks-onboarding-new-chat-button-popup-icon {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tasks-onboarding-new-chat-button-popup-icon img {
+	display: block;
+	width: 78px;
+	height: 74px;
+}
+
+.tasks-onboarding-new-chat-button-popup-content {
+	flex-grow: 1;
+}
+
+.tasks-onboarding-new-chat-button-popup-title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-white-fixed);
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.tasks-onboarding-new-chat-button-popup-text {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-white-fixed);
+}

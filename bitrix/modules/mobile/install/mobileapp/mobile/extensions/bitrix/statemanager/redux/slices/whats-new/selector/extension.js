@@ -26,7 +26,7 @@ jn.define('statemanager/redux/slices/whats-new/selector', (require, exports, mod
 	const selectIsLast = (state) => state[sliceName].isLast;
 	const selectNewCheckTime = (state) => state[sliceName].newCheckTime;
 	const selectUrlParams = (state) => state[sliceName].urlParams;
-	const selectNewCount = (state) => state[sliceName].newCount;
+	const selectNewCount = (state) => state[sliceName]?.newCount;
 	const selectEventService = (state) => state[sliceName].eventService;
 	const selectReactionByItemIdAndReactionName = createDraftSafeSelector(
 		[

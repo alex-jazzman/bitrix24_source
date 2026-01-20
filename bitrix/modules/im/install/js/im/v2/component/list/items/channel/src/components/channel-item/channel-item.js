@@ -124,11 +124,7 @@ export const ChannelItem = {
 			<div class="bx-im-list-channel-item__container">
 				<div class="bx-im-list-channel-item__avatar_container">
 					<div class="bx-im-list-channel-item__avatar_content">
-						<ChatAvatar 
-							:avatarDialogId="recentItem.dialogId" 
-							:contextDialogId="recentItem.dialogId"
-							:size="AvatarSize.XL" 
-						/>
+						<ChatAvatar :avatarDialogId="recentItem.dialogId" :size="AvatarSize.XL" />
 					</div>
 				</div>
 				<div class="bx-im-list-channel-item__content_container">

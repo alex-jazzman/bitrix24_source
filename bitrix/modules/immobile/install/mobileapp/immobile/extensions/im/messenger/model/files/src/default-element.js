@@ -26,6 +26,7 @@ jn.define('im/messenger/model/files/default-element', (require, exports, module)
 		urlDownload: '',
 		localUrl: '',
 		viewerAttrs: null,
+		isVideoNote: false,
 		uploadData: {
 			byteSent: 0,
 			byteTotal: 0,

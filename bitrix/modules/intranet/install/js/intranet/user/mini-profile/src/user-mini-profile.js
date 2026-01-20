@@ -1,4 +1,4 @@
-import { Tag } from 'main.core';
+import { Tag, Dom } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
@@ -12,7 +12,7 @@ import 'ui.design-tokens';
 import './style.css';
 
 export const PopupPrefixId = 'intranet-user-mini-profile-';
-const AngleWidth = 33;
+const FixedAngleOffset = 23;
 
 export class UserMiniProfile
 {
@@ -99,12 +99,13 @@ export class UserMiniProfile
 				padding: 0,
 				contentNoPaddings: true,
 				angle: {
-					offset: this.#options.bindElement.offsetWidth / 2 + AngleWidth / 2,
+					offset: Dom.getPosition(this.#options.bindElement).width / 2 + FixedAngleOffset,
 				},
 				animation: 'fading',
 				bindOptions: {
 					forceBindPosition: true,
 					forceTop: true,
+					position: 'top',
 				},
 			});
 		});

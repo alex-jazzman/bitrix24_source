@@ -39,5 +39,7 @@ return [
 		'im:messenger-v2/application/lib/event-handler/messenger',
 		'im:messenger-v2/application/lib/event-handler/store',
 		'im:messenger-v2/application/lib/update-notifier',
+		'im:messenger-v2/application/lib/message-queue-request-manager',
+		'im:messenger/lib/copilot',
 	],
 ];

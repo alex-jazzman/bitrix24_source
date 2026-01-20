@@ -11,3 +11,4 @@ $MESS['SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_BTN'] = 'Скачать';
 $MESS['SIGN_V2_B2E_LINK_EMPLOYEE_BUTTON_ALLDOCS'] = 'Все подписанные документы';
 $MESS['SIGN_V2_B2E_LINK_EMPLOYEE_DOCUMENT_DATE'] = 'Подписано #DATE#';
 $MESS['SIGN_V2_B2E_LINK_SLIDER_TITLE'] = 'Подпись';
+$MESS['SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY'] = 'Документ ещё в обработке. Вы сможете скачать его через несколько минут';

@@ -116,7 +116,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 	<div class="intranet__desktop-menu_wrapper">
 		<div class="intranet__desktop-menu_inner">
 			<div class="intranet__desktop-menu_header">
-				<a href="<?=$siteUrl?>" title="<?=GetMessage("BITRIX24_LOGO_TOOLTIP")?>" class="intranet__desktop-menu_logo-link">
+				<a href="<?=$siteUrl?>" class="intranet__desktop-menu_logo-link">
 					<?
 					if (isset($siteLogo['src']))
 					{

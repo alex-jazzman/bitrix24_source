@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,ui_vue3_vuex,ui_notificationManager,im_v2_lib_soundNotification,im_v2_application_core,im_v2_lib_desktop,im_v2_lib_desktopApi,im_public,im_v2_provider_service_notification,im_v2_const,im_v2_lib_parser) {
+(function (exports,main_core,main_core_events,ui_vue3_vuex,ui_notificationManager,im_public,im_v2_lib_soundNotification,im_v2_application_core,im_v2_lib_desktop,im_v2_lib_desktopApi,im_v2_provider_service_notification,im_v2_const,im_v2_lib_parser) {
 	'use strict';
 
 	const NotificationIdPrefix = {
@@ -332,8 +332,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _subscribeToNotifierEvents2() {
 	  ui_notificationManager.Notifier.subscribe('click', async event => {
-	    if (!im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      im_v2_lib_desktopApi.DesktopApi.activateWindow();
+	    if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	      this.onNotifierClick(event.getData());
 	      return;
 	    }
@@ -442,5 +441,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.NotifierShowMessageAction = NotifierShowMessageAction;
 	exports.MessageNotifierManager = MessageNotifierManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=message-notifier.bundle.js.map

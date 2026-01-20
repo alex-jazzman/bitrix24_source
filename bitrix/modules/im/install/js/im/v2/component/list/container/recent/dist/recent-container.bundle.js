@@ -3,72 +3,72 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,im_v2_component_list_items_recent,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_lib_helpdesk,main_core,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const) {
+(function (exports,main_core_events,im_v2_component_list_items_recent,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_lib_confirm,im_v2_component_list_container_elements_baseHeaderMenu,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_lib_helpdesk,main_core,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const) {
 	'use strict';
 
 	// @vue/component
 	const HeaderMenu = {
 	  components: {
-	    MessengerMenu: im_v2_component_elements_menu.MessengerMenu,
+	    BaseHeaderMenu: im_v2_component_list_container_elements_baseHeaderMenu.BaseHeaderMenu,
 	    MenuItem: im_v2_component_elements_menu.MenuItem
 	  },
-	  emits: ['showUnread'],
-	  data() {
-	    return {
-	      showPopup: false
-	    };
+	  props: {
+	    unreadOnlyMode: {
+	      type: Boolean,
+	      default: false
+	    }
 	  },
+	  emits: ['toggleUnreadMode'],
 	  computed: {
-	    menuConfig() {
-	      return {
-	        id: 'im-recent-header-menu',
-	        width: 284,
-	        bindElement: this.$refs.icon || {},
-	        offsetTop: 4,
-	        padding: 0
-	      };
-	    },
 	    unreadCounter() {
-	      return this.$store.getters['counters/getTotalChatCounter'];
+	      const counter = this.$store.getters['counters/getTotalChatCounter'];
+	      return this.unreadOnlyMode ? 0 : counter;
+	    },
+	    unreadToggleTitle() {
+	      return this.unreadOnlyMode ? this.loc('IM_RECENT_HEADER_MENU_SHOW_ALL') : this.loc('IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY_MSGVER_1');
+	    },
+	    isUnreadRecentModeAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.unreadRecentModeAvailable);
 	    }
 	  },
 	  methods: {
-	    onIconClick() {
-	      this.showPopup = true;
-	    },
-	    onReadAllClick() {
+	    async onReadAllClick(closeCallback) {
+	      const confirmResult = await im_v2_lib_confirm.showReadMessagesConfirm(this.loc('IM_RECENT_HEADER_MENU_READ_ALL_CONFIRM_TEXT'));
+	      if (!confirmResult) {
+	        return;
+	      }
 	      new im_v2_provider_service_chat.ChatService().readAll();
-	      this.showPopup = false;
+	      closeCallback();
+	    },
+	    onToggleUnreadMode(closeCallback) {
+	      this.$emit('toggleUnreadMode');
+	      closeCallback();
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div
-			class="bx-im-list-container-recent__header-menu_icon"
-			:class="{'--active': showPopup}"
-			@click="onIconClick"
-			ref="icon"
-		></div>
-		<MessengerMenu v-if="showPopup" :config="menuConfig" @close="showPopup = false">
-			<MenuItem
-				:title="loc('IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1')"
-				@click="onReadAllClick"
-			/>
-			<MenuItem
-				v-if="false"
-				:title="loc('IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY')"
-				:counter="unreadCounter"
-				:disabled="true"
-			/>
-			<MenuItem
-				v-if="false"
-				:title="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE')"
-				:subtitle="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE')"
-				:disabled="true"
-			/>
-		</MessengerMenu>
+		<BaseHeaderMenu>
+			<template #menu-items="{ closeCallback }">
+				<MenuItem
+					:title="loc('IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1')"
+					@click="onReadAllClick(closeCallback)"
+				/>
+				<MenuItem
+					v-if="isUnreadRecentModeAvailable"
+					:title="unreadToggleTitle"
+					:counter="unreadCounter"
+					@click="onToggleUnreadMode(closeCallback)"
+				/>
+				<MenuItem
+					v-if="false"
+					:title="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE')"
+					:subtitle="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE')"
+					:disabled="true"
+				/>
+			</template>
+		</BaseHeaderMenu>
 	`
 	};
 
@@ -444,7 +444,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    CreateChatMenu,
 	    ChatSearchInput: im_v2_component_search.ChatSearchInput,
 	    RecentList: im_v2_component_list_items_recent.RecentList,
-	    ChatSearch: im_v2_component_search.ChatSearch
+	    ChatSearch: im_v2_component_search.ChatSearch,
+	    RecentUnreadList: im_v2_component_list_items_recent.RecentUnreadList
 	  },
 	  emits: ['selectEntity'],
 	  data() {
@@ -491,17 +492,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onDocumentClick(event) {
 	      const clickOnRecentContainer = event.composedPath().includes(this.$refs['recent-container']);
 	      if (this.searchMode && !clickOnRecentContainer) {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.search.close);
+	        this.onCloseSearch();
 	      }
 	    },
 	    onLoading(value) {
 	      this.isSearchLoading = value;
+	    },
+	    onToggleUnreadMode() {
+	      this.$store.dispatch('recent/clearUnreadCollection');
+	      this.unreadOnlyMode = !this.unreadOnlyMode;
 	    }
 	  },
 	  template: `
 		<div class="bx-im-list-container-recent__scope bx-im-list-container-recent__container" ref="recent-container">
 			<div class="bx-im-list-container-recent__header_container">
-				<HeaderMenu @showUnread="unreadOnlyMode = true" />
+				<HeaderMenu :unreadOnlyMode="unreadOnlyMode" @toggleUnreadMode="onToggleUnreadMode" />
 				<div class="bx-im-list-container-recent__search-input_container">
 					<ChatSearchInput 
 						:searchMode="searchMode" 
@@ -520,8 +525,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:searchMode="searchMode"
 						:query="searchQuery"
 						@loading="onLoading"
+						@closeSearch="onCloseSearch"
 					/>
 					<RecentList v-show="!searchMode && !unreadOnlyMode" @chatClick="onChatClick" />
+					<RecentUnreadList v-if="unreadOnlyMode" @chatClick="onChatClick" />
 				</div>
 			</div>
 		</div>
@@ -530,5 +537,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=recent-container.bundle.js.map

@@ -1,7 +1,6 @@
 import { Text } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { SidebarPullHandler } from 'im.v2.provider.pull';
 
 import { TaskChatOpener } from './components/task-chat-opener';
 import { TaskChatPlaceholder } from './components/placeholder/placeholder';
@@ -30,10 +29,9 @@ export class TaskApplication
 	constructor()
 	{
 		this.#initPromise = this.#init();
-		this.#initPull();
 	}
 
-	ready(): Promise
+	ready(): Promise<TaskApplication>
 	{
 		return this.#initPromise;
 	}
@@ -87,12 +85,5 @@ export class TaskApplication
 		await Core.ready();
 
 		return this;
-	}
-
-	async #initPull(): void
-	{
-		await this.ready();
-
-		Core.getPullClient().subscribe(new SidebarPullHandler());
 	}
 }

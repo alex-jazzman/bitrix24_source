@@ -1,6 +1,8 @@
 .bx-im-list-container-task__container {
 	--im-list-container-task__background-color: var(--im-color-palette-white-base);
 	--im-list-container-task__background-color_separator: rgba(var(--im-color-palette-gray-90-rgb), 0.08);
+	--im-list-container-task__background-color_create-button: rgba(var(--im-color-palette-blue-60-rgb), 0.12);;
+	--im-list-container-task__background-color_create-button-hover: rgba(var(--im-color-palette-blue-60-rgb), 0.22);
 	--im-list-container-task__font-color_header-title: var(--im-color-palette-black-base);
 
 	width: 100%;
@@ -25,6 +27,22 @@
 	font: var(--im-font-size-2xl) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	color: var(--im-list-container-task__font-color_header-title);
+}
+
+.bx-im-list-container-task__header_create-task {
+	width: 44px;
+	height: 34px;
+	border-radius: 80px;
+	background-color: var(--im-list-container-task__background-color_create-button);
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='26' height='26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 12h5v2h-5v5h-2v-5H7v-2h5V7h2v5z' fill='%2300ACE3'/%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+	transition: background-color 0.2ms ease;
+}
+
+.bx-im-list-container-task__header_create-task:hover {
+	background-color: var(--im-list-container-task__background-color_create-button-hover);
 }
 
 .bx-im-list-container-task__elements_container {

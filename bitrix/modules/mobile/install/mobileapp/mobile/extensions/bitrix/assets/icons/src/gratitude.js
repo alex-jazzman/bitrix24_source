@@ -213,6 +213,28 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {string} feedId
+		 * @returns {string|null}
+		 */
+		static getSvgUriByFeedId(feedId)
+		{
+			const badge = this.getEnums().find((item) => item.getValue().feedId === feedId);
+
+			return badge ? badge.getPath() : null;
+		}
+
+		/**
+		 * @param {string} feedId
+		 * @returns {string|null}
+		 */
+		static getTestIdByFeedId(feedId)
+		{
+			const badge = this.getEnums().find((item) => item.getValue().feedId === feedId);
+
+			return badge ? badge.getValue().testId : null;
+		}
+
+		/**
 		 * @param {string} name
 		 * @returns {GratitudeIcon|null}
 		 */

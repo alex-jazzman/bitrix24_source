@@ -1237,6 +1237,7 @@ this.BX = this.BX || {};
 	var _currentRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentRole");
 	var _rolesDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rolesDialog");
 	var _showResultInCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResultInCopilot");
+	var _menuForceTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuForceTop");
 	var _inputFieldContainerClickEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldContainerClickEventHandler");
 	var _inputFieldSubmitEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldSubmitEventHandler");
 	var _inputFieldInputEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldInputEventHandler");
@@ -1280,6 +1281,7 @@ this.BX = this.BX || {};
 	var _getResultMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResultMenuItems");
 	class CopilotTextController extends main_core_events.EventEmitter {
 	  constructor(_options) {
+	    var _options$menuForceTop;
 	    super();
 	    Object.defineProperty(this, _getResultMenuItems, {
 	      value: _getResultMenuItems2
@@ -1481,6 +1483,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _menuForceTop, {
+	      writable: true,
+	      value: true
+	    });
 	    Object.defineProperty(this, _inputFieldContainerClickEventHandler, {
 	      writable: true,
 	      value: void 0
@@ -1527,6 +1533,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotMenuEvents)[_copilotMenuEvents] = _options.copilotMenuEvents;
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = _options.analytics;
 	    babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot] = _options.showResultInCopilot;
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop] = (_options$menuForceTop = _options.menuForceTop) != null ? _options$menuForceTop : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputFieldContainerClickEventHandler)[_inputFieldContainerClickEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleInputContainerClickEvent)[_handleInputContainerClickEvent].bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputFieldSubmitEventHandler)[_inputFieldSubmitEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleInputFieldSubmitEvent)[_handleInputFieldSubmitEvent].bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputFieldInputEventHandler)[_inputFieldInputEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleInputFieldInputEvent)[_handleInputFieldInputEvent].bind(this);
@@ -2030,7 +2037,7 @@ this.BX = this.BX || {};
 	      canGoOutFromTop: babelHelpers.classPrivateFieldLooseBase(this, _readonly)[_readonly] === false,
 	      highlightFirstItemAfterShow: babelHelpers.classPrivateFieldLooseBase(this, _readonly)[_readonly] === true
 	    },
-	    forceTop: true,
+	    forceTop: babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop],
 	    cacheable: false
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu].subscribe('set-favourite', async e => {
@@ -2321,7 +2328,8 @@ this.BX = this.BX || {};
 	      canGoOutFromTop: false,
 	      highlightFirstItemAfterShow: true,
 	      clearHighlightAfterType: false
-	    }
+	    },
+	    forceTop: babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop]
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu].setBindElement(babelHelpers.classPrivateFieldLooseBase(this, _copilotContainer$2)[_copilotContainer$2], {
 	    top: 8
@@ -2349,7 +2357,8 @@ this.BX = this.BX || {};
 	      canGoOutFromTop: false,
 	      highlightFirstItemAfterShow: true
 	    },
-	    cacheable: false
+	    cacheable: false,
+	    forceTop: babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop]
 	  });
 	}
 	function _getRoleInfoForMenu2(params) {

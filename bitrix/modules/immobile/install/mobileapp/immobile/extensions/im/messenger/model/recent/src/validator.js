@@ -236,6 +236,11 @@ jn.define('im/messenger/model/recent/validator', (require, exports, module) => {
 			message.sending = fields.message.sending;
 		}
 
+		if (Type.isBoolean(fields.message.sticker))
+		{
+			message.sticker = fields.message.sticker;
+		}
+
 		if (Object.keys(params).length > 0)
 		{
 			message.params = params;

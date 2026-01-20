@@ -4,7 +4,7 @@ import {EventEmitter} from "main.core.events";
 import {ErrorCollection} from "./error-collection";
 import {FieldCollection} from "./field-collection";
 
-class TaskModel
+class TaskModelOld
 {
 	#fieldCollection = null;
 	#errorCollection = null;
@@ -37,7 +37,7 @@ class TaskModel
 		return this.#fieldCollection.getField(fieldName);
 	}
 
-	setField(fieldName: string, value: any): TaskModel
+	setField(fieldName: string, value: any): TaskModelOld
 	{
 		this.#fieldCollection.setField(fieldName, value);
 
@@ -53,14 +53,14 @@ class TaskModel
 		return this;
 	}
 
-	initFields(fields: {}): TaskModel
+	initFields(fields: {}): TaskModelOld
 	{
 		this.#fieldCollection.initFields(fields);
 
 		return this;
 	}
 
-	removeField(fieldName): TaskModel
+	removeField(fieldName): TaskModelOld
 	{
 		this.#fieldCollection.removeField(fieldName);
 
@@ -80,5 +80,5 @@ class TaskModel
 
 export
 {
-	TaskModel
+	TaskModelOld as TaskModel
 }

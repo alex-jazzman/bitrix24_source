@@ -14,6 +14,7 @@ import { ChatManager } from 'im.v2.lib.chat';
 import { CopilotManager } from 'im.v2.lib.copilot';
 
 import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class MainMenu extends RecentMenu
 {
@@ -23,9 +24,10 @@ export class MainMenu extends RecentMenu
 		onAddToChatShow: 'onAddToChatShow',
 	};
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
+
 		this.id = 'im-sidebar-context-menu';
 		this.permissionManager = PermissionManager.getInstance();
 	}

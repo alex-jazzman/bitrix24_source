@@ -19,6 +19,7 @@ return [
 		'ui.uploader.core',
 		'im.v2.lib.role-manager',
 		'im.v2.lib.uuid',
+		'im.v2.lib.counter',
 		'ui.vue3.vuex',
 		'rest.client',
 		'im.v2.lib.utils',

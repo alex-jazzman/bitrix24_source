@@ -56,7 +56,8 @@ if (!empty($arParams['relationToId']))
 {
 	$title = $shortTitle = match ($arParams['relationType'] ?? null) {
 		default => Loc::getMessage('TASKS_TITLE_SUBTASKS'),
-		'relatedTasks' => Loc::getMessage('TASKS_TITLE_RELATED_TASKS'),
+		'relatedTasks', 'relatedTemplateTasks' => Loc::getMessage('TASKS_TITLE_RELATED_TASKS'),
+		'gantt' => Loc::getMessage('TASKS_TITLE_GANTT_V2'),
 	};
 }
 else if ($arParams['PROJECT_VIEW'] === 'Y')

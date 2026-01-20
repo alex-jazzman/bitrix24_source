@@ -299,12 +299,22 @@ BX.JCCalendar = function()
 
 	this._create = function(params)
 	{
-		this.popup = new BX.PopupWindow('calendar_popup_' + Math.random(), params.node, {
+		const paramsForPopupWindow = {
 			closeByEsc: true,
 			autoHide: false,
 			content: this._get_content(),
-			bindOptions: {forceBindPosition: true}
-		});
+			bindOptions: { forceBindPosition: true },
+		};
+		if (Boolean(params.fixed) && params.fixed)
+		{
+			paramsForPopupWindow.fixed = params.fixed;
+		}
+
+		this.popup = new BX.PopupWindow(
+			'calendar_popup_' + Math.random(),
+			params.node,
+			paramsForPopupWindow,
+		);
 
 		BX.bind(this.popup.popupContainer, 'click', function(event) {
 			event.stopPropagation();
@@ -1440,3 +1450,4 @@ BX.CClockSelector.prototype.onPopupClose = function()
 };
 
 })();
+

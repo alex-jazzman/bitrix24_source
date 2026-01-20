@@ -6,6 +6,7 @@ $MESS["SETTINGS_WEEKDAY_TH"] = "Чт";
 $MESS["SETTINGS_WEEKDAY_FR"] = "Пт";
 $MESS["SETTINGS_WEEKDAY_SA"] = "Сб";
 $MESS["SETTINGS_WEEKDAY_SU"] = "Вс";
+$MESS["INTRANET_SETTINGS_ALL_WEEKDAY_SELECTED_ERROR"] = "В расписании должен быть хотя бы один рабочий день";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEKEND"] = 'Выходные';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEK_START"] = 'Какой первый день недели показывать в календаре';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WORK_TIME_END"] = 'Конец рабочего дня';

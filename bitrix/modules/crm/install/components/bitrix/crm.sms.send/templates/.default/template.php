@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Feature;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -10,10 +11,62 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load([
 	"ui.buttons",
 	"ui.buttons.icons",
+	'crm.messagesender.editor',
 ]);
 \CJSCore::init(["loader", "popup", "sidepanel"]);
 $this->IncludeLangFile();
-?>
+
+
+if (Feature::enabled(Feature\MessageSenderEditor::class))
+{
+	$entityTypeId = $arResult['ownerTypeId'];
+	$entityId = $arResult['ownerId'];
+	$scene = \Bitrix\Crm\MessageSender\UI\Factory::getInstance()->getScene($arResult['messageSenderSceneId'])
+		?? new \Bitrix\Crm\MessageSender\UI\Editor\Scene\NullScene();
+	$editor = \Bitrix\Crm\MessageSender\UI\Factory::getInstance()->createEditor(
+		$scene,
+		new \Bitrix\Crm\MessageSender\UI\Editor\Context($entityTypeId, $entityId),
+	);
+	$editor
+		->setRenderTo('#' . \CUtil::JSEscape($arResult['containerId']))
+		->setDynamicLoad(false)
+		->setMessageText($arResult['text'])
+		->setAnalytics($arResult['analytics']);
+
+	if (isset($arResult['templateCode']))
+	{
+		$notificationTemplate = new \Bitrix\Crm\MessageSender\UI\Editor\NotificationTemplate($arResult['templateCode']);
+
+		foreach ($arResult['templatePlaceholders'] as $placeholder)
+		{
+			$notificationTemplate->setPlaceholder(
+				(new \Bitrix\Crm\MessageSender\UI\Editor\NotificationTemplate\Placeholder($placeholder['name']))
+					->setValue($placeholder['value']),
+			);
+		}
+
+		$editor->setNotificationTemplate($notificationTemplate);
+	}
+
+	?>
+	<div id='<?=\CUtil::JSEscape($arResult['containerId']);?>'></div>
+	<script>
+		BX.ready(() => {
+			const editor = new BX.Crm.MessageSender.Editor(<?= \Bitrix\Main\Web\Json::encode($editor) ?>);
+			editor.render();
+
+			const slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
+			if(slider)
+			{
+				BX.Event.EventEmitter.subscribe('BX.Crm.MessageSender.Editor:onCancel', () => slider.close())
+				BX.Event.EventEmitter.subscribe('BX.Crm.MessageSender.Editor:onSendSuccess', () => slider.close())
+			}
+		});
+	</script>
+	<?php
+}
+else
+{?>
 	<div class="crm-sms-send" id="<?=\CUtil::JSEscape($arResult['containerId']);?>">
 		<?php if(!$arResult['canSendMessage']): ?>
 			<div class="sms-conditions-container">
@@ -73,8 +126,9 @@ $this->IncludeLangFile();
 	<script>
 		BX.ready(function()
 		{
-			<?='BX.message('.\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)).');'?>
+			<?='BX.message(' . \CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)) . ');'?>
 			var smsEditor = new BX.Crm.Component.CrmSmsSend(BX('<?=CUtil::JSEscape($arResult['containerId']);?>'));
 			smsEditor.init(<?=CUtil::PhpToJSObject($arResult);?>);
 		});
 	</script>
+<?php }

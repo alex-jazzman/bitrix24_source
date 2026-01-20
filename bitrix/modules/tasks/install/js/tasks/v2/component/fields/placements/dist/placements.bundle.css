@@ -1,0 +1,78 @@
+.tasks-field-placements {
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-full-card-field-container.tasks-field-highlight .tasks-field-placements {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.tasks-field-placements-empty-container {
+	display: flex;
+	align-items: center;
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm2);
+	cursor: pointer;
+}
+
+.tasks-field-placements-empty-container .ui-icon-set {
+	margin-right: 6px;
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-placements-list-container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+
+	border-radius: 10px;
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+}
+
+.tasks-field-placements-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-placements-list > div:not(:last-child) {
+	margin-bottom: 6px;
+}
+
+.tasks-field-placement-item {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md);
+	gap: var(--ui-space-inset-xs);
+	cursor: pointer;
+
+	background: var(--ui-color-base-8);
+	border-radius: 10px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-field-placement-item-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tasks-field-placement-item-title-container {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.tasks-field-placement-item-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-placement-item-description {
+	padding-left: 30px;
+	color: var(--ui-color-base-3);
+}

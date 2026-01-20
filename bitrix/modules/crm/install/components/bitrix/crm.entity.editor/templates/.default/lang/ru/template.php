@@ -21,7 +21,6 @@ $MESS["CRM_ENTITY_ED_COLLAPSE_COMMENT"] = "Свернуть";
 $MESS["CRM_ENTITY_ED_DELETE_SECTION_CONFIRM"] = "Вы действительно хотите удалить этот раздел?";
 $MESS["CRM_ENTITY_ED_NEW_SECTION_TITLE"] = "Новый раздел";
 $MESS["CRM_ENTITY_ED_TELEPHONY_NOT_SUPPORTED"] = "Телефонные звонки не поддерживаются в данном контексте";
-$MESS["CRM_ENTITY_ED_RECURRING_UNTIL"] = " до ";
 $MESS["CRM_ENTITY_ED_RECURRING_NOT_REPEAT"] = "Не повторять";
 $MESS["CRM_ENTITY_ED_RECURRING_MODE_TITLE"] = "Повторяемость";
 $MESS["CRM_ENTITY_ED_HIDE_BUTTON_HINT"] = "Скрыть поле";

@@ -1,5 +1,7 @@
 import { Browser } from 'main.core';
+
 import { DesktopFeature } from '../features';
+import { accountFunctions } from './account';
 
 type DesktopFeatureItem = $Keys<typeof DesktopFeature>;
 
@@ -26,6 +28,16 @@ export const versionFunctions = {
 		const [majorVersion, minorVersion, buildVersion, apiVersion] = window.BXDesktopSystem.GetProperty('versionParts');
 
 		return apiVersion;
+	},
+	getBackendRevision(): number
+	{
+		const rawRevision = BXDesktopSystem.GetBackendRevision(location.hostname, accountFunctions.getLogin());
+
+		return Number(rawRevision);
+	},
+	setBackendRevision(revision: number): void
+	{
+		BXDesktopSystem.SetBackendRevision(location.hostname, accountFunctions.getLogin(), revision);
 	},
 	isFeatureEnabled(code: string): boolean
 	{

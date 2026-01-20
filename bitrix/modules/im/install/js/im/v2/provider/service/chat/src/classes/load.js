@@ -324,5 +324,4 @@ export class LoadService
 			FeatureManager.collab.openFeatureSlider();
 		}
 	}
-
 }

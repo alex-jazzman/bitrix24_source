@@ -27,7 +27,6 @@ export class ChatDelete
 			c_section: AnalyticsSection.sidebar,
 			c_sub_section: AnalyticsSubSection.contextMenu,
 			p1: `chatType_${chat.type}`,
-			p5: `chatId_${chat.chatId}`,
 		});
 	}
 
@@ -42,7 +41,6 @@ export class ChatDelete
 			type: getChatType(chat),
 			c_section: AnalyticsSection.popup,
 			p1: `chatType_${chat.type}`,
-			p5: `chatId_${chat.chatId}`,
 		});
 	}
 
@@ -73,7 +71,6 @@ export class ChatDelete
 			type: `deleted_${category}`,
 			c_section: AnalyticsSection.activeChat,
 			p1: `chatType_${chat.type}`,
-			p5: `chatId_${chat.chatId}`,
 		});
 	}
 }

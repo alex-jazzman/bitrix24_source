@@ -23,21 +23,21 @@ if(!defined('NOT_CHECK_PERMISSIONS') || NOT_CHECK_PERMISSIONS !== true)
 		$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/checklist.php");
 include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/lang/".LANG."/admin/checklist.php");
 
 $APPLICATION->AddHeadString('<link type="text/css" rel="stylesheet" href="/bitrix/themes/.default/check-list-style.css">');
 CUtil::InitJSCore(Array('ajax','window',"popup"));
 $APPLICATION->SetTitle(GetMessage("CL_TITLE_CHECKLIST"));
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");?>
-<?
+
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+
 $arReportID = intval($_REQUEST["ID"]);
 $checklist = new CCheckList($arReportID);
 $arPoints = $checklist->GetPoints();
 $arStates = array();
 
-if($_REQUEST["ACTION"] == "INFO" && $_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]){?>
-	<?
+if (isset($_REQUEST["ACTION"]) && $_REQUEST["ACTION"] == "INFO" && !empty($_REQUEST["TEST_ID"]) && $arPoints[$_REQUEST["TEST_ID"]])
+{
 	$arTestID = $_REQUEST["TEST_ID"];
 	$arPosition = 0;
 	foreach($arPoints as $k=>$v)
@@ -47,7 +47,7 @@ if($_REQUEST["ACTION"] == "INFO" && $_REQUEST["TEST_ID"] && $arPoints[$_REQUEST[
 			break;
 	}
 	$arTotal = count($arPoints);
-	if($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"] <> '')
+	if(!empty($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"]))
 		$display="inline-block";
 	else
 		$display="none";
@@ -72,14 +72,14 @@ if($_REQUEST["ACTION"] == "INFO" && $_REQUEST["TEST_ID"] && $arPoints[$_REQUEST[
 						</span>
 					</div>
 				</div>
-				<?if ($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["PREVIEW"]):?>
+				<?if (!empty($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["PREVIEW"])):?>
 					<div class="checklist-popup-test">
 						<div class="checklist-popup-name-test"><?=GetMessage("CL_RESULT_TEST");?>:</div>
 							<div class="checklist-popup-test-text">
 							<span id="system_comment"><?=$arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["PREVIEW"];?></span>
 							<a style="display:<?=$display?>" id="show_detail_link" onclick="ShowDetailComment('<?=htmlspecialcharsbx(CUtil::JSEscape($arTestID))?>')" class="checklist-popup-test-link"><?=GetMessage("CL_MORE_DETAILS");?></a>
 							<div style="display:none">
-							<div id="detail_system_comment_<?=htmlspecialcharsbx($arTestID)?>" class="checklist-system-textarea"><?=preg_replace("/\r\n|\r|\n/",'<br>',$arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"]);?></div>
+							<div id="detail_system_comment_<?=htmlspecialcharsbx($arTestID)?>" class="checklist-system-textarea"><?=preg_replace("/\r\n|\r|\n/",'<br>',$arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"] ?? '');?></div>
 							</div>
 							</div>
 					</div>
@@ -89,7 +89,7 @@ if($_REQUEST["ACTION"] == "INFO" && $_REQUEST["TEST_ID"] && $arPoints[$_REQUEST[
 						<div class="checklist-form-textar-block">
 							<div class="checklist-form-textar-status"><?=GetMessage("CL_STATUS_COMMENT");?></div>
 							<div class="checklist-dot-line"></div>
-							<div id="performer_comment_area" class="checklist-form-textar-comment" ><?=preg_replace("/\r\n|\r|\n/",'<br>', htmlspecialcharsbx($arPoints[$arTestID]["STATE"]["COMMENTS"]["PERFOMER"]));?></div>
+							<div id="performer_comment_area" class="checklist-form-textar-comment" ><?=preg_replace("/\r\n|\r|\n/",'<br>', htmlspecialcharsbx($arPoints[$arTestID]["STATE"]["COMMENTS"]["PERFOMER"] ?? ''));?></div>
 						</div>
 					</div>
 				</div>
@@ -197,8 +197,8 @@ else:
 			"NAME"=>$arFields["NAME"],
 			"TEST_ID" => $key,
 			"STATUS" => $arFields["STATE"]["STATUS"],
-			"IS_REQUIRE" => $arFields["REQUIRE"],
-			"AUTO" => $arFields["AUTO"],
+			"IS_REQUIRE" => $arFields["REQUIRE"] ?? null,
+			"AUTO" => $arFields["AUTO"] ?? null,
 			"COMMENTS_COUNT" => count($arFields["STATE"]["COMMENTS"] ?? []),
 		);
 	}
@@ -210,7 +210,7 @@ else:
 			"ID" => $key,
 			"CHECKED" => $arStats["CHECKED"],
 			"TOTAL" => $arStats["TOTAL"],
-			"PARENT" => $arFields["PARENT"],
+			"PARENT" => $arFields["PARENT"] ?? null,
 			"CHECK" => $arStats["CHECK"],
 		);
 	}
@@ -264,7 +264,7 @@ else:
 										<span class="checklist-testlist-level3-cont-border" onclick="ShowPopupWindow('<?=$pkey;?>','<?=addslashes($pFields["NAME"])?>');">
 												<?=$pFields["NAME"];?>
 										</span>
-										<span id="comments_<?=$pkey;?>" class="checklist-testlist-comments" onclick='ShowPopupWindow("<?=$pkey;?>","<?=addslashes($pFields["NAME"]);?>");'><?=count($pFields["STATE"]["COMMENTS"]);?></span>
+										<span id="comments_<?=$pkey;?>" class="checklist-testlist-comments" onclick='ShowPopupWindow("<?=$pkey;?>","<?=addslashes($pFields["NAME"]);?>");'><?=count($pFields["STATE"]["COMMENTS"] ?? []);?></span>
 									</span>
 								</span>
 								<span id="mark_<?=$pkey;?>"></span>
@@ -285,7 +285,7 @@ else:
 													<span class="checklist-testlist-level3-cont-border" onclick='ShowPopupWindow("<?=$pkey;?>","<?=addslashes($pFields["NAME"]);?>");'>
 															<?=$pFields["NAME"];?>
 													</span>
-													<span id="comments_<?=$pkey;?>" class="checklist-testlist-comments" onclick='ShowPopupWindow("<?=$pkey;?>","<?=addslashes($pFields["NAME"]);?>");'><?=count($pFields["STATE"]["COMMENTS"]);?></span>
+													<span id="comments_<?=$pkey;?>" class="checklist-testlist-comments" onclick='ShowPopupWindow("<?=$pkey;?>","<?=addslashes($pFields["NAME"]);?>");'><?=count($pFields["STATE"]["COMMENTS"] ?? []);?></span>
 												</span>
 											</span>
 											<span id="mark_<?=$pkey;?>"></span>

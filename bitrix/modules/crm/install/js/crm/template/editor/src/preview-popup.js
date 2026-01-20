@@ -1,7 +1,7 @@
 import { Dom, Loc, Tag, Text } from 'main.core';
 import { Popup, PopupWindowManager } from 'main.popup';
-import { ProgressBar } from 'ui.progressbar';
 import { UI } from 'ui.notification';
+import { ProgressBar } from 'ui.progressbar';
 
 export const PREVIEW_POPUP_CONTENT_STATUS = {
 	LOADING: 1,
@@ -32,7 +32,7 @@ export default class PreviewPopup
 
 	isShown(): boolean
 	{
-		this.#getPopup()?.isShown();
+		return this.#getPopup()?.isShown() ?? false;
 	}
 
 	show(): void

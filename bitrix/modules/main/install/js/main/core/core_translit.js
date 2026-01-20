@@ -384,3 +384,4 @@ function __getChar(chr, change_case, replace_way, replace_dict, replace_separato
 };
 
 })(window);
+

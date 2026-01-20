@@ -1,0 +1,13 @@
+<?php
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_CODE"] = "Field ID:";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_CODE_EXIST"] = "Field code must not be a system field name.";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_DESCRIPTION"] = "Description:";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_LIMIT_EXCEEDED"] = "Maximum number of storage fields (#LIMIT#) exceeded.";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_MANDATORY"] = "Required";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_MULTIPLE"] = "Multiple";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_NAME"] = "Name:";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_SETTINGS"] = "Other parameters";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_SORT"] = "Sort order:";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_STORAGE_ID"] = "Storage";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_TYPE"] = "Data type:";
+$MESS["BIZPROC_STORAGE_FIELD_MODEL_FIELD_WRONG_CODE"] = "Field code can only include lower Latin characters, numbers and underscores. Field code has to begin with a Latin character.";

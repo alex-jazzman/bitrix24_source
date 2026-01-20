@@ -28,5 +28,7 @@ jn.define('ui-system/blocks/avatar/src/enums/shape', (require, exports, module) 
 		}
 	}
 
-	module.exports = { AvatarShape };
+	module.exports = {
+		AvatarShape: AvatarShape.export(),
+	};
 });

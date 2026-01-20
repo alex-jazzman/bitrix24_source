@@ -502,8 +502,8 @@ BX.ready(function()
 		warningFailElementId: '<?= CUtil::JSescape($warningFailElementId) ?>',
 		bxMailMessage: message,
 		fileRefreshButtonId: '<?= CUtil::JSescape($fileRefreshButtonId) ?>',
+		analyticsSource: '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE'] ?? 'mail') ?>',
 	});
-
 });
 
 </script>

@@ -1,0 +1,101 @@
+.node-settings-form {
+	padding: 0 18px 10px 18px;
+	flex: 1;
+	overflow-y: auto;
+}
+
+.node-settings-form::-webkit-scrollbar,
+.node-settings-form::-webkit-scrollbar {
+	background-color: transparent;
+}
+
+.node-settings-form__node-brief {
+	font-size: 14px;
+	font-weight: var( --ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-palette-black-solid);
+	margin: 8px 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.node-settings-form__node-brief_icon {
+	background-color: var(--ui-color-palette-blue-25);
+	border-radius: 7px;
+	padding: 5px;
+	width: 38px;
+	height: 38px;
+	box-sizing: border-box;
+	margin-right: 13px;
+}
+
+.node-settings-form__node-brief_controls {
+	margin-left: auto;
+}
+
+.node-settings-form__node-brief_controls > .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-60);
+	--ui-icon-set__icon-size: 20px;
+	cursor: pointer;
+	margin-left: 3px;
+}
+
+.node-settings-form__section-delimeter {
+	height: 1px;
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.node-settings-form__section {
+	margin-top: 12px;
+}
+
+.node-settings-form__section.--data {
+	position: relative;
+}
+
+.node-settings-form__label {
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
+	margin-bottom: 5px;
+	display: block;
+}
+
+.node-settings-form__node-name-input.ui-ctl {
+	--ui-field-size: 38px;
+	width: 100%;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.node-settings-form__node-description {
+	margin-top: 14px;
+}
+
+.node-settings-form__node-description_textarea.ui-ctl,
+.node-settings-form__node-description_textarea.ui-ctl > .ui-ctl-element {
+	min-height: 44px;
+	height: auto;
+}
+
+.node-settings-form__node-description_textarea.ui-ctl > .ui-ctl-element {
+	padding-top: 10px;
+	border-radius: var(--ui-border-radius-sm);
+	resize: vertical;
+}
+
+.node-settings-form__node-description_text {
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-palette-gray-50);
+	margin-top: 6px;
+}
+
+.node-settings-form__section-title {
+	font-size: 15px;
+	line-height: 20px;
+	font-weight: var( --ui-font-weight-medium);
+	color: var( --ui-color-palette-gray-90);
+	margin-bottom: 12px;
+	margin-top: 0;
+}

@@ -154,11 +154,17 @@ $APPLICATION->includeComponent('bitrix:intranet.mobile.popup', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.invitation.notification', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.placement', '', []);
 $APPLICATION->includeComponent('bitrix:bizproc.debugger', '', []);
-$APPLICATION->includeComponent('bitrix:timeman.report.status', '', []);
+
+if (ModuleManager::isModuleInstalled('timeman'))
+{
+	$APPLICATION->includeComponent('bitrix:timeman.report.status', '', []);
+}
+
 $APPLICATION->includeComponent($isBitrix24Cloud ? 'bitrix:bitrix24.notify.panel' : 'bitrix:intranet.notify.panel', '');
 $APPLICATION->includeComponent('bitrix:intranet.mail.check', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.otp.info', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.connection.status', '', ['rootContainer' => '#connection-status']);
+$APPLICATION->includeComponent('bitrix:intranet.bitrix24.release', '', []);
 
 $dynamicArea->finishDynamicArea();
 ?>

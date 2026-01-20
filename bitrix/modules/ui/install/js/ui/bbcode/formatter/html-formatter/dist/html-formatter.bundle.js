@@ -317,6 +317,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  }
 	}
 
+	let _$1 = t => t,
+	  _t$1;
 	class TableNodeFormatter extends ui_bbcode_formatter.NodeFormatter {
 	  constructor(options = {}) {
 	    super({
@@ -328,6 +330,13 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	            classname: 'ui-typography-table'
 	          }
 	        });
+	      },
+	      after({
+	        element
+	      }) {
+	        const container = main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="ui-typography-table-scroll"></div>`));
+	        container.appendChild(element);
+	        return container;
 	      },
 	      ...options
 	    });
@@ -525,12 +534,6 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  constructor(options = {}) {
 	    super({
 	      name: 'url',
-	      validate({
-	        node
-	      }) {
-	        const nodeValue = LinkNodeFormatter.fetchNodeValue(node);
-	        return validateUrl(nodeValue);
-	      },
 	      before({
 	        node,
 	        formatter
@@ -582,21 +585,24 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          }
 	          return node.getContent();
 	        })();
-	        const nodeAttributes = node.getAttributes();
-	        const {
-	          defaultTarget = '_blank',
-	          attributes
-	        } = formatter.getLinkSettings();
-	        return main_core.Dom.create({
-	          tag: 'a',
-	          attrs: {
-	            ...nodeAttributes,
-	            ...attributes,
-	            href: sourceHref,
-	            target: defaultTarget,
-	            className: 'ui-typography-link'
-	          }
-	        });
+	        if (validateUrl(sourceHref)) {
+	          const nodeAttributes = node.getAttributes();
+	          const {
+	            defaultTarget = '_blank',
+	            attributes
+	          } = formatter.getLinkSettings();
+	          return main_core.Dom.create({
+	            tag: 'a',
+	            attrs: {
+	              ...nodeAttributes,
+	              ...attributes,
+	              href: sourceHref,
+	              target: defaultTarget,
+	              className: 'ui-typography-link'
+	            }
+	          });
+	        }
+	        return document.createDocumentFragment();
 	      },
 	      ...options
 	    });

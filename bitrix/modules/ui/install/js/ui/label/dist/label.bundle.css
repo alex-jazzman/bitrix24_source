@@ -63,8 +63,8 @@ a.ui-label:hover .ui-label-inner,
 }
 
 .ui-label:not(.ui-label-fill) {
-	--ui-label-color: #757c87;
 	--ui-label-link-dashed-color: rgba(51, 51, 51, 0.4);
+	--ui-label-color: var(--ui-color-base-90-rgb);
 }
 
 a.ui-label:not(.ui-label-fill):hover,

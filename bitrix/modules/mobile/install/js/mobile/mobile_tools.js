@@ -300,6 +300,20 @@
 					},
 				},
 				{
+					resolveFunction: BX.MobileTools.threadIdFromMailMessage,
+					openFunction(threadId) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('mailbackground::router', [threadId, 0]);
+					},
+				},
+				{
+					resolveFunction: BX.MobileTools.threadIdFromMailMailbox,
+					openFunction(mailboxId) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('mailbackground::router', [0, mailboxId]);
+					},
+				},
+				{
 					resolveFunction: BX.MobileTools.actionFromTaskActionUrl,
 					openFunction(data) {
 						// eslint-disable-next-line no-undef
@@ -748,6 +762,26 @@
 
 			return null;
 		},
+		threadIdFromMailMessage(url)
+		{
+			var result = url.match(/\/mail\/message\/(\d+)\/?/i);
+			if (result)
+			{
+				return result[1];
+			}
+
+			return null;
+		},
+		threadIdFromMailMailbox(url)
+		{
+			var result = url.match(/\/mail\/list\/(\d+)\/?/i);
+			if (result)
+			{
+				return result[1];
+			}
+
+			return null;
+		},
 		diskFromUrl(url)
 		{
 			const regExpMap = [
@@ -897,6 +931,7 @@
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)/i,
 				/\/online\/\?IM_LINES=(chat\d+)&IM_MESSAGE=(\d+)/i,
 				/\/online\/\?IM_LINES=(chat\d+)/i,
+				/\/online\/\?IM_TASK=(chat\d+)/i,
 			];
 
 			const openlinesPrefix = 'imol|';

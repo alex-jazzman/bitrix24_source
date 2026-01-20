@@ -4615,3 +4615,4 @@ CanvasMapMaster.prototype = {
 var frameMaster = new FrameMaster();
 
 })();
+

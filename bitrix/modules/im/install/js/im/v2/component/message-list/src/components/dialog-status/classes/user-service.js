@@ -1,24 +1,31 @@
-import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
-import { UserManager } from 'im.v2.lib.user';
-import { Logger } from 'im.v2.lib.logger';
+import { BaseUserService } from 'im.v2.provider.service.user';
 
-export class UserService
+type ViewItem = {
+	id: number,
+	userId: number,
+	messageId: number,
+	dateView: string,
+}
+
+export class UserService extends BaseUserService<{ views: ViewItem[] }>
 {
-	async loadReadUsers(messageId): Promise<number[]>
+	getRestMethodName(): string
 	{
-		Logger.warn('Dialog-status: UserService: loadReadUsers', messageId);
-		const response = await Core.getRestClient().callMethod(RestMethod.imV2ChatMessageTailViewers, {
-			id: messageId,
-		})
-			.catch((result: RestResult) => {
-				console.error('Dialog-status: UserService: loadReadUsers error', result.error());
-				throw result.error();
-			});
-		const users = response.data().users;
-		const userManager = new UserManager();
-		await userManager.setUsersToModel(Object.values(users));
+		return RestMethod.imV2ChatMessageTailViewers;
+	}
 
-		return users.map((user) => user.id);
+	getLastId(result): number
+	{
+		const { views } = result;
+
+		if (!views || views.length === 0)
+		{
+			return 0;
+		}
+
+		const sortedViews = [...views].sort((a, b) => b.id - a.id);
+
+		return sortedViews[sortedViews.length - 1].id;
 	}
 }

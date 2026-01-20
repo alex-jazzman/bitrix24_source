@@ -1,0 +1,5 @@
+.tasks-replication-sheet-replication-settings-week {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}

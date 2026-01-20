@@ -26,6 +26,7 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');
 
 $searchContainerId = 'crm-config-perms-v2-search-container';
+echo (\Bitrix\Crm\Tour\ConfigPermsUserSelector::getInstance())->build();
 
 ?>
 <div class="crm-config-perms-v2-header"">
@@ -43,6 +44,8 @@ $controllerData = $arResult['controllerData'];
 $maxVisibleUserGroups = $arResult['maxVisibleUserGroups'];
 /** @var array|null $analytics */
 $analytics = $arResult['analytics'];
+$userSortConfig = $arResult['userSortConfig'];
+$userSortConfigName = $arResult['userSortConfigName'];
 
 if ($arResult['isSharedCrmPermissionsSlider'])
 {
@@ -73,6 +76,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 	const accessRights = <?= Json::encode($rolesData->accessRights) ?>;
 	const additionalSaveParams = <?= Json::encode($controllerData) ?>;
 	const AccessRightsOption = {
+		moduleId: 'crm',
 		component: 'bitrix:crm.config.perms.v2',
 		actionSave: 'save',
 		bodyType: 'json',
@@ -84,6 +88,8 @@ $messages = Loc::loadLanguageFile(__FILE__);
 		maxVisibleUserGroups: <?= is_int($maxVisibleUserGroups) ? $maxVisibleUserGroups : 'null' ?>,
 		searchContainerSelector: '#<?= $searchContainerId ?>',
 		analytics: <?= Json::encode($analytics) ?>,
+		sortConfigForAllUserGroups: <?= Json::encode($userSortConfig) ?>,
+		userSortConfigName: '<?= CUtil::JSEscape($userSortConfigName) ?>',
 	}
 	const AccessRights = new BX.UI.AccessRights.V2.App(AccessRightsOption)
 	const ConfigPerms = new BX.Crm.ConfigPermsComponent({

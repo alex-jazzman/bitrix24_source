@@ -12,7 +12,8 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 	const { RecentItem } = require('im/messenger/lib/element/recent');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 	const { BaseUiRecentService } = require('im/messenger-v2/controller/recent/service/base');
-	const { RenderQueue, QueueOperation } = require('im/messenger-v2/controller/recent/service/render/lib/queue');
+	const { RenderQueue, QueueOperation, optimizeQueue } = require('im/messenger-v2/controller/recent/service/render/lib/queue');
+	const { RecentEventType } = require('im/messenger-v2/controller/recent/const');
 	const { RecentSection } = require('im/messenger-v2/controller/recent/service/render/lib/section');
 
 	const LOADER_ITEM_TYPE = 'loading';
@@ -47,6 +48,9 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 			};
 			/** @type {Map<string, RecentItem>} */
 			this.itemCollection = new Map();
+			/** @type {Array<Function>} */
+			this.afterRenderCallbackList = [];
+			this.lastEmittedItemCollectionSize = null;
 		}
 
 		async onUiReady(ui)
@@ -55,10 +59,11 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 			this.worker = new Worker({
 				frequency: 1000,
 				callback: this.#renderItemsFromQueue,
+				context: `CommonRenderService.${this.recentLocator.get('id')}`,
 			});
 
 			await this.#setSections();
-			this.renderInstant();
+			void this.renderInstant();
 		}
 		// region public interface
 
@@ -66,12 +71,17 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 		{
 			await this.uiReadyPromise;
 
-			this.#renderItemsFromQueue();
+			return this.#renderItemsFromQueue().catch((error) => this.logger.error(`renderInstant error: ${error}`));
 		}
 
 		hasItemRendered(id)
 		{
 			return this.itemCollection.has(id);
+		}
+
+		getItemCollectionSize()
+		{
+			return this.itemCollection.size;
 		}
 
 		deleteItems(itemList, options)
@@ -175,15 +185,22 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 
 		#renderItemsFromQueue = async () => {
 			this.worker.stop();
-			const queue = this.queue.getValues();
+			const queue = optimizeQueue(this.queue.getValues());
 			this.queue.reset();
+
+			const afterRenderCallbackList = this.afterRenderCallbackList;
+			this.afterRenderCallbackList = [];
 
 			if (!Type.isArrayFilled(queue))
 			{
+				this.#executeCallbackList(afterRenderCallbackList);
+				this.#emitItemCollectionSizeIfChanged();
+
 				this.startWorker();
 
 				return;
 			}
+
 			this.logger.log('renderItemsFromQueue: current queue', [...queue]);
 
 			for (const queueItem of queue)
@@ -206,6 +223,10 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 					this.logger.error('renderItemsFromQueue error', error);
 				}
 			}
+
+			this.#executeCallbackList(afterRenderCallbackList);
+			this.#emitItemCollectionSizeIfChanged();
+
 			this.#updateQuickRecent();
 			this.startWorker();
 		};
@@ -218,10 +239,33 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 			}
 		}
 
+		executeAfterRender(callback)
+		{
+			if (!Type.isFunction(callback))
+			{
+				return;
+			}
+
+			this.afterRenderCallbackList.push(callback);
+		}
+
 		// region methods of interaction with itemCollection
 		#resetCollection()
 		{
 			this.itemCollection.clear();
+		}
+
+		#emitItemCollectionSizeIfChanged()
+		{
+			const size = this.itemCollection.size;
+			if (size !== this.lastEmittedItemCollectionSize)
+			{
+				this.logger.log('#emitItemCollectionSizeIfChanged emit: ', size);
+
+				this.recentLocator.get('emitter').emit(RecentEventType.render.itemCollectionSizeChanged, [size]);
+
+				this.lastEmittedItemCollectionSize = size;
+			}
 		}
 
 		/**
@@ -616,6 +660,32 @@ jn.define('im/messenger-v2/controller/recent/service/render/common', (require, e
 			{
 				this.logger.error('updateQuickRecent catch:', error);
 			}
+		}
+
+		/**
+		 * @param {Array<Function>} callbackList
+		 */
+		#executeCallbackList(callbackList)
+		{
+			if (!Type.isArrayFilled(callbackList))
+			{
+				return;
+			}
+
+			this.logger.log('#executeCallbackList start: ', callbackList);
+
+			callbackList.forEach((callback) => {
+				try
+				{
+					callback();
+				}
+				catch (error)
+				{
+					this.logger.error(`#executeCallbackList error: ${error}`);
+				}
+			});
+
+			this.logger.log('#executeCallbackList complete');
 		}
 		// endregion system methods
 	}

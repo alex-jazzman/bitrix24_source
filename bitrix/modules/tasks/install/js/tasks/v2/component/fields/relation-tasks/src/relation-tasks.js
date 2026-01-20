@@ -1,15 +1,17 @@
-import { EventEmitter } from 'main.core.events';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { TextMd } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.actions';
 
-import { EventName, Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
+import { TaskField } from 'tasks.v2.const';
 import { TaskList } from 'tasks.v2.component.task-list';
 import { tooltip } from 'tasks.v2.component.elements.hint';
+import { showLimit } from 'tasks.v2.lib.show-limit';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { RelationMeta } from './types';
+import { RelationFieldMeta } from './types';
 import './relation-tasks.css';
 
 // @vue/component
@@ -21,61 +23,78 @@ export const RelationTasks = {
 		TextMd,
 	},
 	directives: { hint },
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
+		isTemplate: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
-		/** @type RelationMeta */
+		/** @type RelationFieldMeta */
 		meta: {
 			type: Object,
 			required: true,
 		},
+		fields: {
+			type: Set,
+			default: undefined,
+		},
+		isLocked: {
+			type: Boolean,
+			default: false,
+		},
+		featureId: {
+			type: String,
+			default: '',
+		},
 	},
-	setup(): { meta: RelationMeta }
+	emits: ['add'],
+	setup(): { task: TaskModel, meta: RelationFieldMeta }
 	{
 		return {
 			Outline,
 		};
 	},
+	data(): Object
+	{
+		return {
+			idsLoaded: false,
+		};
+	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
-		},
 		ids(): number[]
 		{
-			return [...this.task[this.meta.idsField]].sort((a, b) => b - a);
+			return this.meta.service.getSortedIds(this.task[this.meta.idsField]);
+		},
+		loadingIds(): number[]
+		{
+			return this.ids.filter((id: number | string) => !this.meta.service.hasStoreTask(id));
 		},
 		text(): string
 		{
 			if (this.ids.length > 0)
 			{
-				return this.loc(this.meta.countLoc, {
+				return this.loc(this.meta.getCountLoc(this.isTemplate), {
 					'#COUNT#': this.ids.length,
 				});
 			}
 
-			return this.meta.title;
+			return this.meta.getTitle(this.isTemplate);
 		},
-		context(): string
+		canOpenMore(): boolean
 		{
-			return this.meta.id;
+			return this.isEdit && (this.readonly || this.task[this.meta.containsField]);
 		},
 		readonly(): boolean
 		{
-			return !this.task.rights.edit;
+			return !this.task.rights[this.meta.right];
 		},
 		tooltip(): Function
 		{
 			return (): HintParams => tooltip({
-				text: this.meta.hint,
+				text: this.meta.getHint(this.isTemplate),
 				popupOptions: {
-					offsetLeft: this.$refs.add.$el.offsetWidth / 2,
+					offsetLeft: this.$refs.add.offsetWidth / 2,
 				},
 			});
 		},
@@ -94,35 +113,63 @@ export const RelationTasks = {
 			}
 		},
 	},
-	created(): void
+	async created(): Promise<void>
 	{
-		if (!this.meta.service.areIdsLoaded(this.taskId) || this.meta.service.hasUnloadedIds(this.taskId))
+		this.idsLoaded = this.meta.service.areIdsLoaded(this.taskId);
+
+		if (!this.idsLoaded || this.meta.service.hasUnloadedIds(this.taskId))
 		{
-			void this.meta.service.list(this.taskId, true);
+			await this.meta.service.list(this.taskId, true);
 		}
+
+		this.idsLoaded = true;
 	},
 	methods: {
-		handleTitleClick(): void
+		openMore(): void
 		{
-			if (this.isEdit && (this.readonly || this.task[this.meta.containsField]))
+			if (!this.canOpenMore)
 			{
-				this.openGrid();
+				return;
+			}
+
+			if (this.isLocked)
+			{
+				this.showLimit();
 
 				return;
 			}
 
-			this.showDialog();
-		},
-		openGrid(): void
-		{
-			EventEmitter.emit(EventName.OpenGrid, {
-				taskId: this.taskId,
-				type: this.meta.id,
+			const userId = Core.getParams().currentUser.id;
+			const isTemplate = idUtils.isTemplate(this.taskId);
+
+			const tasksGridType = {
+				[this.meta.id === TaskField.SubTasks]: 'subTasks',
+				[this.meta.id === TaskField.RelatedTasks]: 'relatedTasks',
+				[this.meta.id === TaskField.RelatedTasks && isTemplate]: 'relatedTemplateTasks',
+				[this.meta.id === TaskField.Gantt]: 'gantt',
+			}.true;
+
+			const templateGridType = {
+				[this.meta.id === TaskField.SubTasks && isTemplate]: 'subTemplates',
+			}.true;
+
+			const gridPath = {
+				[Boolean(tasksGridType)]: `/company/personal/user/${userId}/tasks/`,
+				[Boolean(templateGridType)]: `/company/personal/user/${userId}/tasks/templates/`,
+			}.true;
+
+			const relationType = tasksGridType ?? templateGridType;
+			const relationToId = idUtils.unbox(this.taskId);
+			const urlParams = new URLSearchParams({ relationToId, relationType });
+
+			BX.SidePanel.Instance.open(`${gridPath}?${urlParams}`, {
+				newWindowLabel: false,
+				copyLinkLabel: false,
 			});
 		},
-		showDialog(): void
+		showLimit(): void
 		{
-			this.meta.dialog.setTaskId(this.taskId).showTo(this.$refs.add.$el);
+			void showLimit({ featureId: this.featureId });
 		},
 		async handleRemove(id: number): void
 		{
@@ -138,33 +185,45 @@ export const RelationTasks = {
 			<div class="tasks-field-relation-tasks-title">
 				<div
 					class="tasks-field-relation-tasks-main"
+					:class="{ '--readonly': !canOpenMore }"
 					data-task-relation-open
-					@click="handleTitleClick"
+					@click="openMore"
 				>
 					<BIcon :name="meta.icon"/>
-					<TextMd :accent="true">{{ text }}</TextMd>
+					<TextMd accent>{{ text }}</TextMd>
 				</div>
-				<div
-					v-if="!readonly"
-					v-hint="tooltip"
-					class="tasks-field-relation-tasks-add-container"
+				<div 
+					v-if="!readonly && idsLoaded && !isLocked" 
+					v-hint="tooltip" 
+					class="tasks-field-relation-tasks-icon --add" 
+					ref="add"
 				>
 					<BIcon
-						class="tasks-field-relation-tasks-icon"
 						:name="Outline.PLUS_L"
-						:hoverable="true"
+						hoverable
 						:data-task-relation-add="meta.id"
-						ref="add"
-						@click="showDialog"
+						@click="$emit('add', $refs.add)"
+					/>
+				</div>
+				<div 
+					v-else-if="isLocked"
+					class="tasks-field-relation-tasks-icon --lock"
+				>
+					<BIcon
+						:name="Outline.LOCK_L"
+						hoverable
+						:data-task-relation-locked="meta.id"
+						@click="showLimit"
 					/>
 				</div>
 			</div>
 			<TaskList
 				v-if="task[meta.containsField]"
-				:taskIds="ids"
-				:context="context"
-				:readonly="readonly"
-				@openMore="openGrid"
+				:ids
+				:loadingIds
+				:fields
+				:canOpenMore
+				@openMore="openMore"
 				@removeTask="handleRemove"
 			/>
 		</div>

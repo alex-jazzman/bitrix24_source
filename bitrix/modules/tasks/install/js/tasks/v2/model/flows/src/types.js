@@ -5,5 +5,6 @@ export type FlowsModelState = {
 export type FlowModel = {
 	id: number,
 	name: string,
-	efficiency: number,
+	groupId: number,
+	templateId: number,
 };

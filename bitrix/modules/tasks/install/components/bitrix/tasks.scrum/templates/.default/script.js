@@ -9295,9 +9295,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return PullEpic;
 	}();
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _getItem = /*#__PURE__*/new WeakSet();
+	var _updateCurrentState = /*#__PURE__*/new WeakSet();
 	var PullCounters = /*#__PURE__*/function () {
 	  function PullCounters(params) {
 	    babelHelpers.classCallCheck(this, PullCounters);
+	    _classPrivateMethodInitSpec(this, _updateCurrentState);
+	    _classPrivateMethodInitSpec(this, _getItem);
 	    this.requestSender = params.requestSender;
 	    this.entityStorage = params.entityStorage;
 	    this.filterService = params.filterService;
@@ -9313,32 +9320,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getMap",
 	    value: function getMap() {
 	      return {
+	        comment_add: this.onCommentAdd.bind(this),
 	        task_view: this.onTaskView.bind(this),
 	        scrum_read_all: this.onCommentsReadAll.bind(this)
 	      };
 	    }
 	  }, {
+	    key: "onCommentAdd",
+	    value: function onCommentAdd(data) {
+	      var inputTaskId = parseInt(data.taskId, 10);
+	      var ownerUserId = parseInt(data.ownerId, 10);
+	      if (ownerUserId === this.userId) {
+	        return;
+	      }
+	      _classPrivateMethodGet(this, _updateCurrentState, _updateCurrentState2).call(this, _classPrivateMethodGet(this, _getItem, _getItem2).call(this, inputTaskId));
+	    }
+	  }, {
 	    key: "onTaskView",
 	    value: function onTaskView(data) {
-	      var _this = this;
 	      var inputTaskId = parseInt(data.TASK_ID, 10);
 	      var inputUserId = parseInt(data.USER_ID, 10);
 	      if (inputUserId !== this.userId) {
 	        return;
 	      }
-	      var item = this.entityStorage.findItemBySourceId(inputTaskId);
-	      if (!item) {
-	        item = this.entityStorage.findItemBySourceInFilteredCompletedSprints(inputTaskId);
-	      }
-	      if (item) {
-	        this.requestSender.getCurrentState({
-	          taskId: item.getSourceId()
-	        }).then(function (response) {
-	          item.updateYourself(Item.buildItem(response.data.itemData));
-	        })["catch"](function (response) {
-	          _this.requestSender.showErrorAlert(response);
-	        });
-	      }
+	      _classPrivateMethodGet(this, _updateCurrentState, _updateCurrentState2).call(this, _classPrivateMethodGet(this, _getItem, _getItem2).call(this, inputTaskId));
 	    }
 	  }, {
 	    key: "onCommentsReadAll",
@@ -9351,6 +9356,26 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }]);
 	  return PullCounters;
 	}();
+	function _getItem2(inputTaskId) {
+	  var item = this.entityStorage.findItemBySourceId(inputTaskId);
+	  if (!item) {
+	    item = this.entityStorage.findItemBySourceInFilteredCompletedSprints(inputTaskId);
+	  }
+	  return item;
+	}
+	function _updateCurrentState2(item) {
+	  var _this = this;
+	  if (!item) {
+	    return;
+	  }
+	  this.requestSender.getCurrentState({
+	    taskId: item.getSourceId()
+	  }).then(function (response) {
+	    item.updateYourself(Item.buildItem(response.data.itemData));
+	  })["catch"](function (response) {
+	    _this.requestSender.showErrorAlert(response);
+	  });
+	}
 
 	var TaskCounters = /*#__PURE__*/function () {
 	  function TaskCounters(params) {

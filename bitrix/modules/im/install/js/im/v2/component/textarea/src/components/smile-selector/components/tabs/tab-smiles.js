@@ -1,5 +1,4 @@
 import {Loc} from 'main.core';
-import {EventEmitter} from 'main.core.events';
 
 import {EventType} from 'im.v2.const';
 import {SmileManager, type Set, type Smile} from 'im.v2.lib.smile-manager';
@@ -8,6 +7,8 @@ import {Utils} from 'im.v2.lib.utils';
 import {emoji, defaultEmojiIcon} from '../../emoji';
 
 import '../../../../css/smile-selector/tabs/tab-smiles.css';
+
+import type {EventEmitter} from 'main.core.events';
 
 export type SmilesConfig = {
 	smiles: Array<Smile>;
@@ -119,7 +120,7 @@ export const TabSmiles = {
 		},
 		onSmileClick(smileCode: string, event: PointerEvent)
 		{
-			EventEmitter.emit(EventType.textarea.insertText, {
+			this.getEmitter().emit(EventType.textarea.insertText, {
 				text: smileCode,
 				dialogId: this.dialogId,
 			});
@@ -136,7 +137,11 @@ export const TabSmiles = {
 		addEmojiToRecent(symbol: string)
 		{
 			this.recentEmoji.add(symbol);
-		}
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 	},
 	template: `
 		<div class="bx-im-smiles-content__scope">

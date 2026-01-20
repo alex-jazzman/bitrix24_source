@@ -25,6 +25,8 @@ if (\Bitrix\Main\Loader::includeModule('tasks'))
 		'TITLE' => Loc::getMessage('CRM_ENTITY_LIST_PANEL_CREATE_TASK_PREFIX'),
 		'TAGS' => Loc::getMessage('CRM_ENTITY_LIST_PANEL_CREATE_TASK_TAG'),
 	]);
+
+	$maxBindingsCount = Option::get('crm', 'max_bindings_count', 100);
 }
 else
 {
@@ -62,5 +64,6 @@ return [
 	'settings' => [
 		'taskCreateUrl' => $createTaskUri?->getUri(),
 		'sender' => $sender,
+		'maxBindingsCount' => $maxBindingsCount ?? null,
 	],
 ];

@@ -1,4 +1,4 @@
-import { Loc, Text } from 'main.core';
+import { Loc, Runtime, Text } from 'main.core';
 import { Menu, MenuItemOptions, MenuManager } from 'main.popup';
 
 export default class MenuPopup
@@ -20,6 +20,14 @@ export default class MenuPopup
 	show(): void
 	{
 		this.#getMenuPopup().show();
+	}
+
+	destroy(): void
+	{
+		this.#menu?.destroy();
+		this.#menu = null;
+
+		Runtime.destroy(this);
 	}
 
 	#getMenuPopup(): Menu

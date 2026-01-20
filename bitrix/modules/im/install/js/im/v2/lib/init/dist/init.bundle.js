@@ -5,27 +5,66 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports,im_v2_application_core,im_v2_lib_call,im_v2_lib_phone,im_v2_lib_smileManager,im_v2_lib_user,im_v2_lib_counter,im_v2_lib_logger,im_v2_lib_messageNotifier,im_v2_lib_market,im_v2_lib_desktop,im_v2_lib_promo,im_v2_lib_permission,im_v2_lib_updateState_manager,im_v2_lib_router) {
 	'use strict';
 
-	var _started = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("started");
-	var _initCurrentUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCurrentUser");
+	const PreloadedEntity = {
+	  users: 'users'
+	};
+
+	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
+	var _inited = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inited");
 	var _initLogger = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initLogger");
 	var _initSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initSettings");
 	var _initTariffRestrictions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTariffRestrictions");
 	var _initCallManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCallManager");
 	var _initAnchors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAnchors");
 	var _initAvailableAIModelsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAvailableAIModelsList");
+	var _initPreloadedEntities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPreloadedEntities");
+	var _initCurrentUserAdminStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCurrentUserAdminStatus");
 	class InitManager {
-	  static start() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _started)[_started]) {
+	  static getInstance() {
+	    var _babelHelpers$classPr;
+	    babelHelpers.classPrivateFieldLooseBase(InitManager, _instance)[_instance] = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(InitManager, _instance)[_instance]) != null ? _babelHelpers$classPr : new InitManager();
+	    return babelHelpers.classPrivateFieldLooseBase(InitManager, _instance)[_instance];
+	  }
+	  static init() {
+	    InitManager.getInstance();
+	  }
+	  constructor() {
+	    Object.defineProperty(this, _initCurrentUserAdminStatus, {
+	      value: _initCurrentUserAdminStatus2
+	    });
+	    Object.defineProperty(this, _initPreloadedEntities, {
+	      value: _initPreloadedEntities2
+	    });
+	    Object.defineProperty(this, _initAvailableAIModelsList, {
+	      value: _initAvailableAIModelsList2
+	    });
+	    Object.defineProperty(this, _initAnchors, {
+	      value: _initAnchors2
+	    });
+	    Object.defineProperty(this, _initCallManager, {
+	      value: _initCallManager2
+	    });
+	    Object.defineProperty(this, _initTariffRestrictions, {
+	      value: _initTariffRestrictions2
+	    });
+	    Object.defineProperty(this, _initSettings, {
+	      value: _initSettings2
+	    });
+	    Object.defineProperty(this, _initLogger, {
+	      value: _initLogger2
+	    });
+	    if (babelHelpers.classPrivateFieldLooseBase(InitManager, _inited)[_inited]) {
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _initLogger)[_initLogger]();
 	    im_v2_lib_logger.Logger.warn('InitManager: start');
-	    babelHelpers.classPrivateFieldLooseBase(this, _initCurrentUser)[_initCurrentUser]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initSettings)[_initSettings]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initTariffRestrictions)[_initTariffRestrictions]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initAnchors)[_initAnchors]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initCallManager)[_initCallManager]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initAvailableAIModelsList)[_initAvailableAIModelsList]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initPreloadedEntities)[_initPreloadedEntities]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initCurrentUserAdminStatus)[_initCurrentUserAdminStatus]();
 	    im_v2_lib_counter.CounterManager.init();
 	    im_v2_lib_permission.PermissionManager.init();
 	    im_v2_lib_promo.PromoManager.init();
@@ -35,18 +74,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    im_v2_lib_messageNotifier.MessageNotifierManager.init();
 	    im_v2_lib_desktop.DesktopManager.init();
 	    im_v2_lib_updateState_manager.UpdateStateManager.init();
-	    im_v2_lib_router.Router.init();
-	    babelHelpers.classPrivateFieldLooseBase(this, _started)[_started] = true;
+	    im_v2_lib_router.Router.handleGetParams();
+	    babelHelpers.classPrivateFieldLooseBase(InitManager, _inited)[_inited] = true;
 	  }
-	}
-	function _initCurrentUser2() {
-	  const {
-	    currentUser
-	  } = im_v2_application_core.Core.getApplicationData();
-	  if (!currentUser) {
-	    return;
-	  }
-	  void new im_v2_lib_user.UserManager().setUsersToModel([currentUser]);
 	}
 	function _initLogger2() {
 	  const {
@@ -103,28 +133,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  void im_v2_application_core.Core.getStore().dispatch('copilot/setAvailableAIModels', copilot.availableEngines);
 	}
-	Object.defineProperty(InitManager, _initAvailableAIModelsList, {
-	  value: _initAvailableAIModelsList2
+	function _initPreloadedEntities2() {
+	  const {
+	    preloadedEntities
+	  } = im_v2_application_core.Core.getApplicationData();
+	  if (!preloadedEntities) {
+	    return;
+	  }
+	  const preloadedEntitiesHandler = {
+	    [PreloadedEntity.users]: users => new im_v2_lib_user.UserManager().setUsersToModel(users)
+	  };
+	  Object.entries(preloadedEntities).forEach(([entityType, items]) => {
+	    if (preloadedEntitiesHandler[entityType]) {
+	      preloadedEntitiesHandler[entityType](items);
+	    }
+	  });
+	}
+	function _initCurrentUserAdminStatus2() {
+	  const {
+	    isCurrentUserAdmin
+	  } = im_v2_application_core.Core.getApplicationData();
+	  void im_v2_application_core.Core.getStore().dispatch('users/setCurrentUserAdminStatus', isCurrentUserAdmin);
+	}
+	Object.defineProperty(InitManager, _instance, {
+	  writable: true,
+	  value: void 0
 	});
-	Object.defineProperty(InitManager, _initAnchors, {
-	  value: _initAnchors2
-	});
-	Object.defineProperty(InitManager, _initCallManager, {
-	  value: _initCallManager2
-	});
-	Object.defineProperty(InitManager, _initTariffRestrictions, {
-	  value: _initTariffRestrictions2
-	});
-	Object.defineProperty(InitManager, _initSettings, {
-	  value: _initSettings2
-	});
-	Object.defineProperty(InitManager, _initLogger, {
-	  value: _initLogger2
-	});
-	Object.defineProperty(InitManager, _initCurrentUser, {
-	  value: _initCurrentUser2
-	});
-	Object.defineProperty(InitManager, _started, {
+	Object.defineProperty(InitManager, _inited, {
 	  writable: true,
 	  value: false
 	});

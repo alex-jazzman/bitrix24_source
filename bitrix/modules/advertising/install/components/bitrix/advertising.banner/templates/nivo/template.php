@@ -34,7 +34,7 @@
 </div>
 
 <script>
-	$(window).load(function() {
+	$(window).ready(function() {
 		$('#slider-<?=$arResult['ID']?>').nivoSlider({
 			effect: '<?=$arParams['EFFECT']?>',
 			slices: 15, // For slice animations

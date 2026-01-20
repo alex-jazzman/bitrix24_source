@@ -147,7 +147,7 @@ jn.define('layout/ui/context-menu/section', (require, exports, module) => {
 
 			const { actions } = this.props;
 
-			return actions.map((action, i) => renderAction(action, { divider: actions.length - 1 !== i }));
+			return actions.map((action, i) => renderAction(action, { divider: action.divider ?? actions.length - 1 !== i }));
 		}
 
 		static getDefaultSectionName()

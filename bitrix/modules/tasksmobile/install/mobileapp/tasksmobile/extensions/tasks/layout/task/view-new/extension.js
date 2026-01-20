@@ -5,7 +5,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { Color } = require('tokens');
 	const { Loc } = require('tasks/loc');
-	const { isEqual } = require('utils/object');
+	const { isEqual, isEmpty } = require('utils/object');
 	const { Icon } = require('assets/icons');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { getDiskFolderId } = require('tasks/disk');
@@ -23,17 +23,18 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { ActionButtons } = require('tasks/layout/task/view-new/ui/action-buttons');
 	const { StatusBadge } = require('tasks/layout/task/view-new/ui/status-badge');
 	const { CommentsButton } = require('tasks/layout/task/view-new/ui/comments-button');
+	const { ChatButton } = require('tasks/layout/task/view-new/ui/chat-button');
 	const { TaskEditForm } = require('tasks/layout/task/view-new/ui/task-edit-form');
 	const { AccessToast } = require('tasks/layout/task/view-new/services/access-toast');
 	const { LayoutButtons } = require('tasks/layout/task/view-new/services/layout-buttons');
 	const { StickyTitle } = require('tasks/layout/task/view-new/services/sticky-title');
 	const { PullListener } = require('tasks/layout/task/view-new/services/pull-listener');
-	const { CommentsOpener } = require('tasks/layout/task/view-new/services/comments-opener');
+	const { CommentsOpener } = require('tasks/layout/task/comments-opener');
 	const { ActionMenu, TopMenuEngine } = require('tasks/layout/action-menu');
 	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 	const { executeIfOnline } = require('tasks/layout/online');
 	const { isOnline } = require('device/connection');
-	const { showOfflineToast, showToast } = require('toast');
+	const { showOfflineToast, showToast, showErrorToast } = require('toast');
 	const { ChecklistController } = require('tasks/checklist');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
@@ -47,6 +48,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const {
 		updateUploadingFiles,
 		update,
+		attachFiles,
+		detachFiles,
 		delegate,
 		tasksUpserted,
 		taskRemoved,
@@ -71,6 +74,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { reactionsVoteSignTokenUpserted } = require('statemanager/redux/slices/reactions-vote-key');
 	const { settingsUpserted } = require('statemanager/redux/slices/settings');
 	const { fetch, setFromServer } = require('tasks/statemanager/redux/slices/tasks-results');
+	const { tail } = require('tasks/statemanager/redux/slices/tasks-results-v2');
 	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
 	const { AnalyticsEvent } = require('analytics');
 
@@ -80,6 +84,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { selectTaskStageByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { AppRatingClient } = require('tasks/app-rating-client');
+	const { EventType } = require('im/messenger/const');
 
 	/**
 	 * @class TaskView
@@ -148,6 +153,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.onChangeRelatedTaskField = this.onChangeRelatedTaskField.bind(this);
 			this.onBlurField = this.onBlurField.bind(this);
 			this.openComments = this.openComments.bind(this);
+			this.openChat = this.openChat.bind(this);
 			this.renderLikes = this.renderLikes.bind(this);
 			this.renderBeforeCompactFields = this.renderBeforeCompactFields.bind(this);
 			this.renderStatus = this.renderStatus.bind(this);
@@ -193,10 +199,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				defaultTitle: Loc.getMessage('M_TASK_DETAILS_WIDGET_TITLE_MSGVER_1'),
 			});
 
-			this.accessToast = new AccessToast(this.layout);
+			this.accessToast = new AccessToast({
+				layout: this.layout,
+			});
 
 			this.pullListener = new PullListener({
 				taskId: this.#taskId,
+				isChatFeatureEnabled: this.props.isChatFeatureEnabled,
 				callbacks: {
 					[PullCommand.TASK_UPDATE]: () => this.#getTaskData(),
 					[PullCommand.COMMENT_ADD]: () => this.#getTaskData(),
@@ -371,6 +380,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				new AnalyticsEvent(this.analyticsLabel).setStatus('success').send();
 				this.layout.setTitle({ useProgress: false }, true);
 
+				if (Type.isArrayFilled(results[0].value?.ahaMoments))
+				{
+					this.setState({ ahaMoments: results[0].value?.ahaMoments });
+				}
+
 				if (this.state.loading || this.state.checklistLoading || this.state.reactionsLoading)
 				{
 					this.setState({
@@ -395,6 +409,16 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.layout.setRightButtons([]);
 
 			this.commentsOpener.closeCommentsWidget(this.#taskId);
+			BX.postComponentEvent(
+				EventType.dialog.external.delete,
+				[
+					{
+						dialogId: `chat${this.chatId}`,
+						shouldSendDeleteAnalytics: false,
+						shouldShowAlert: false,
+					},
+				],
+			);
 		}
 
 		/**
@@ -411,14 +435,14 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				new RunActionExecutor('tasksmobile.Task.get', {
 					taskId: this.#taskId,
 					params: {
-						WITH_RESULT_DATA: (withResultData ? 'Y' : 'N'),
+						WITH_RESULT_DATA: this.props.isChatFeatureEnabled ? 'N' : (withResultData ? 'Y' : 'N'),
 						WITH_CHECKLIST_DATA: (withChecklistData ? 'Y' : 'N'),
 						WORK_MODE: WorkModeByViewMode[this.view],
 						KANBAN_OWNER_ID: this.kanbanOwnerId,
 						MARKED_AS_VIEWED: this.markedAsViewed ? 'Y' : 'N',
 					},
 				})
-					.setHandler((response) => {
+					.setHandler(async (response) => {
 						if (Type.isArray(response.data) && !Type.isArrayFilled(response.data))
 						{
 							dispatch(
@@ -430,6 +454,20 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						}
 
 						this.#updateReduxStore(response.data);
+						this.chatId = this.#task.chatId;
+
+						if (this.props.isChatFeatureEnabled && withResultData)
+						{
+							await dispatch(
+								tail({
+									taskId: this.#taskId,
+									navigation: {
+										page: 1,
+										size: 3,
+									},
+								}),
+							);
+						}
 
 						if (withChecklistData)
 						{
@@ -439,7 +477,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 						this.#onAfterGetTaskData(response);
 
-						return resolve(true);
+						return resolve(response.data);
 					})
 					.call(false)
 				;
@@ -574,6 +612,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			if (
 				Number(taskId) !== Number(this.#taskId)
 				|| Number(userId) !== Number(this.props.userId)
+				|| this.props.isChatFeatureEnabled
 			)
 			{
 				return;
@@ -645,7 +684,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				return;
 			}
 
-			const actions = [
+			let actions = [
 				ActionMenu.action.pin,
 				ActionMenu.action.unpin,
 				ActionMenu.action.mute,
@@ -669,6 +708,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				ActionMenu.action.share,
 				ActionMenu.action.remove,
 			];
+
+			if (this.props.isChatFeatureEnabled)
+			{
+				actions = actions.filter((action) => action !== ActionMenu.action.openChat);
+			}
 
 			(new ActionMenu({
 				actions,
@@ -732,7 +776,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			return this.scrollViewRef;
 		}
 
-		onChangeField(data)
+		async onChangeField(data)
 		{
 			switch (data.fieldId)
 			{
@@ -744,67 +788,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 				case Field.FILES:
 				{
-					/**
-					 - uploaded files from disk - need to be uploaded through the  "update" action
-					 - files that exist in this.task.files and are deleted - they need to be deleted via "update" action
-					 - new uploaded files that are not from disk  - do nothing, just store them in uploadedFiles
-					 (background process will attach it)
-					 */
-
-					const newObjectIds = new Set(data.value.map((file) => file.objectId).filter(Boolean));
-					const removedFiles = this.#task.files.filter(({ objectId }) => !newObjectIds.has(objectId));
-					const hasRemovedFiles = removedFiles.length > 0;
-					const hasAddedFilesFromDisk = data.value.some((file) => file.isDiskFile);
-					const newAttachedFiles = data.value.filter((file) => newObjectIds.has(file.objectId) && !file.hasError);
-
-					if (hasRemovedFiles || hasAddedFilesFromDisk)
-					{
-						const reduxFields = this.prepareReduxFields(data.fieldId, data.value, data.extendedValue);
-						const serverFields = this.prepareServerFields(data.fieldId, data.value, data.extendedValue);
-
-						dispatch(
-							update({
-								taskId: this.#taskId,
-								reduxFields,
-								serverFields,
-							}),
-						);
-					}
-					else if (!isEqual(this.#task.files, newAttachedFiles))
-					{
-						dispatch(
-							setAttachedFiles({
-								taskId: this.#taskId,
-								files: newAttachedFiles,
-							}),
-						);
-					}
-
-					const notAttachedFiles = data.value.filter((file) => {
-						if (file.isDiskFile)
-						{
-							return false;
-						}
-
-						if (!Number.isInteger(file.objectId))
-						{
-							return true;
-						}
-
-						return !newObjectIds.has(file.objectId);
-					});
-
-					if (!isEqual(this.#task.uploadedFiles, notAttachedFiles))
-					{
-						dispatch(
-							updateUploadingFiles({
-								taskId: this.#taskId,
-								uploadedFiles: notAttachedFiles,
-							}),
-						);
-					}
-
-					break;
+					return this.onChangeFiles(data);
 				}
 
 				case Field.USER_FIELDS:
@@ -827,7 +811,139 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				}
 
 				default:
-					this.updateTask(data.fieldId, data.value, data.extendedValue);
+					void this.updateTask(data.fieldId, data.value, data.extendedValue);
+			}
+
+			return null;
+		}
+
+		async onChangeFiles(data)
+		{
+			/**
+				 - uploaded files from disk - need to be uploaded through the  "update" action
+				 - files that exist in this.task.files and are deleted - they need to be deleted via "update" action
+				 - new uploaded files that are not from disk  - do nothing, just store them in uploadedFiles
+				 (background process will attach it)
+			 */
+
+			if (isEmpty(data))
+			{
+				return false;
+			}
+
+			const { fieldId, value, extendedValue } = data;
+			const fileObjectIds = new Set(value.map((file) => file.objectId).filter(Boolean));
+			const diskFileIds = value.filter((file) => file.isDiskFile).map((file) => file.id);
+			const validAttachedFiles = value.filter((file) => fileObjectIds.has(file.objectId) && !file.hasError);
+			const removedFiles = this.#task.files.filter(({ objectId }) => !fileObjectIds.has(objectId));
+			const hasDeletedFiles = !isEmpty(removedFiles);
+			const hasDiskFiles = !isEmpty(diskFileIds);
+
+			if (hasDeletedFiles || hasDiskFiles)
+			{
+				if (hasDeletedFiles)
+				{
+					await this.#detachFiles(removedFiles);
+				}
+				else if (hasDiskFiles)
+				{
+					await this.#attachFiles(diskFileIds);
+				}
+				else
+				{
+					const reduxFields = this.prepareReduxFields(fieldId, value, extendedValue);
+					const serverFields = this.prepareServerFields(fieldId, value, extendedValue);
+
+					dispatch(
+						update({
+							taskId: this.#taskId,
+							reduxFields,
+							serverFields,
+						}),
+					);
+				}
+			}
+			else if (!isEqual(this.#task.files, validAttachedFiles))
+			{
+				dispatch(
+					setAttachedFiles({
+						taskId: this.#taskId,
+						files: validAttachedFiles,
+					}),
+				);
+			}
+
+			return this.#updateUploadingFiles(value, fileObjectIds);
+		}
+
+		#updateUploadingFiles(value, newObjectIds)
+		{
+			const notAttachedFiles = value.filter((file) => {
+				if (file.isDiskFile)
+				{
+					return false;
+				}
+
+				if (!Number.isInteger(file.objectId))
+				{
+					return true;
+				}
+
+				return !newObjectIds.has(file.objectId);
+			});
+
+			if (!isEqual(this.#task.uploadedFiles, notAttachedFiles))
+			{
+				dispatch(
+					updateUploadingFiles({
+						taskId: this.#taskId,
+						uploadedFiles: notAttachedFiles,
+					}),
+				);
+			}
+
+			return true;
+		}
+
+		#attachFiles(addedIds)
+		{
+			try
+			{
+				return dispatch(
+					attachFiles({
+						addedIds,
+						taskId: this.#taskId,
+					}),
+				);
+			}
+			catch (err)
+			{
+				showErrorToast();
+
+				console.error(err);
+
+				return false;
+			}
+		}
+
+		#detachFiles(removedFiles)
+		{
+			try
+			{
+				return dispatch(detachFiles({
+					taskId: this.#taskId,
+					removedIds: removedFiles.map((file) => file.id),
+				})).unwrap();
+			}
+			catch (err)
+			{
+				showErrorToast({
+					message: Loc.getMessage('M_TASK_TOAST_FILES_DELETE_DENIED'),
+				});
+
+				console.error(err);
+
+				return false;
 			}
 		}
 
@@ -1101,6 +1217,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						testId: this.getTestId('Form'),
 						parentWidget: this.layout,
 						onChange: this.onChangeField,
+						updateDeadline: this.#actions.updateDeadline,
 						onBlur: this.onBlurField,
 						scrollableProvider: this.scrollableProvider,
 						renderAfterCompactBar: this.renderLikes.bind(this),
@@ -1120,6 +1237,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						isStageSelectorInitiallyHidden: this.#isStageSelectorInitiallyHidden(),
 						kanbanOwnerId: this.kanbanOwnerId,
 						isFlowToolDisabled: this.props.isFlowToolDisabled,
+						maxDeadlineChangeDate: this.#task.maxDeadlineChangeDate,
+						deadlineChangesLeft: this.#task.deadlineChangesLeft,
+						isChatFeatureEnabled: this.props.isChatFeatureEnabled,
 					}),
 				),
 			);
@@ -1146,7 +1266,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				return;
 			}
 
-			if (field.isReadOnly() && !field.getCustomContentClickHandler())
+			if (field.isReadOnly() && !field.getCustomContentClickHandler({ layout: this.layout }))
 			{
 				this.accessToast.showByFieldId(field.getId());
 			}
@@ -1194,6 +1314,20 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#renderCommentsButton()
 		{
+			const { loading, ahaMoments = [] } = this.state;
+
+			const shouldShowAhaMoment = loading ? false : (Type.isArrayFilled(ahaMoments) && ahaMoments.includes('chat_button_moment_enabled'));
+
+			if (this.props.isChatFeatureEnabled)
+			{
+				return ChatButton({
+					taskId: this.#taskId,
+					testId: this.getTestId('ChatButton'),
+					onClick: this.openChat,
+					shouldShowAhaMoment,
+				});
+			}
+
 			return CommentsButton({
 				taskId: this.#taskId,
 				testId: this.getTestId('CommentsButton'),
@@ -1209,36 +1343,24 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 		}
 
+		openChat()
+		{
+			if (!this.shouldBlockUI())
+			{
+				executeIfOnline(() => {
+					void requireLazy('im:messenger/lib/integration/tasksmobile/comments/opener')
+						.then(({ openTaskComments }) => openTaskComments?.(this.#task.chatId, this.#taskId))
+					;
+				}, this.layout);
+			}
+		}
+
 		// endregion
 
-		updateTask(field, value, extendedValue)
+		async updateTask(field, value, extendedValue)
 		{
-			if (field === Field.STAGE)
-			{
-				dispatch(
-					updateTaskStage({
-						taskId: this.#taskId,
-						stageId: value,
-						projectId: this.#task.groupId,
-						view: this.view,
-						userId: this.props.userId,
-					}),
-				);
-			}
-			else if (field === Field.DEADLINE)
-			{
-				dispatch(
-					updateDeadline({
-						taskId: this.#taskId,
-						deadline: value * 1000,
-						userId: this.props.userId,
-					}),
-				);
-			}
-			else
-			{
+			const dispatchTaskUpdater = () => {
 				const reduxFields = this.prepareReduxFields(field, value, extendedValue);
-
 				if (!this.isAnyReduxFieldChanged(reduxFields))
 				{
 					return;
@@ -1261,7 +1383,6 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				}
 
 				const serverFields = this.prepareServerFields(field, value, extendedValue);
-
 				dispatch(
 					update({
 						taskId: this.#taskId,
@@ -1270,12 +1391,43 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						withStageData: field === Field.PROJECT ? 'Y' : 'N',
 						userId: this.kanbanOwnerId,
 					}),
-				)
-					.then((response) => {
-						this.#onAfterFieldUpdate(field, value, response);
-					})
-					.catch(console.error)
-				;
+				).then((response) => {
+					this.#onAfterFieldUpdate(field, value, response);
+				}).catch(console.error);
+			};
+
+			switch (field)
+			{
+				case Field.STAGE:
+					dispatch(
+						updateTaskStage({
+							taskId: this.#taskId,
+							stageId: value,
+							projectId: this.#task.groupId,
+							view: this.view,
+							userId: this.props.userId,
+						}),
+					);
+
+					break;
+
+				case Field.DEADLINE: {
+					const deadline = Type.isObject(value) ? value.deadline : value;
+					const reason = Type.isObject(value) ? value.reason : null;
+
+					dispatch(
+						updateDeadline({
+							taskId: this.#taskId,
+							deadline: deadline * 1000,
+							reason,
+						}),
+					);
+
+					break;
+				}
+
+				default:
+					dispatchTaskUpdater();
 			}
 		}
 
@@ -1349,7 +1501,10 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					return { name: value };
 
 				case Field.DESCRIPTION:
-					return { description: value };
+					return {
+						description: value,
+						files: extendedValue,
+					};
 
 				case Field.PROJECT:
 					return { groupId: value || 0 };
@@ -1438,7 +1593,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					return { TITLE: value };
 
 				case Field.DESCRIPTION:
-					return { DESCRIPTION: value };
+					return {
+						DESCRIPTION: value,
+						UPLOADED_FILES: Array.isArray(extendedValue)
+							? extendedValue.map((file) => file.token).filter(Boolean)
+							: [],
+						UF_TASK_WEBDAV_FILES: this.getUploadedFiles(extendedValue),
+					};
 
 				case Field.PROJECT:
 					return { GROUP_ID: (value || 0) };
@@ -1517,6 +1678,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		getUploadedFiles(files)
 		{
+			if (!Array.isArray(files))
+			{
+				return '';
+			}
+
 			const uploadedFiles = (
 				files
 					.filter((file) => Number.isInteger(file.id) || file.isDiskFile)

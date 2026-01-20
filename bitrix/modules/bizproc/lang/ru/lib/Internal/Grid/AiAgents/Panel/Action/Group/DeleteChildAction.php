@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIZPROC_AI_AGENTS_GRID_GROUP_ACTION_DELETE'] = 'Удалить';

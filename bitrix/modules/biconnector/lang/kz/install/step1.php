@@ -40,8 +40,8 @@ $MESS["BICONNECTOR_CONNECTION_NOTE"] = "
 </pre>
 <p>after_connect_bi.php файлының шамамен мазмұны:</p>
 <pre>
-\$this->queryExecute(\"SET NAMES 'cp1251'\");
-\$this->queryExecute(\"SET NAMES 'cp1251'\");
+\$this->queryExecute(\"SET NAMES 'utf-8'\");
+\$this->queryExecute(\"SET sql_mode=''\");
 </pre>
 <p>Қосылымды аяқтап баптау үшін '\$this' пайдалануға назар аударыңыз.</p>
 <p>Маңызды! Өте мұқият болыңыз, өйткені қате өңдеу сайттың толық жұмыс істемеуіне әкелуі мүмкін.<p>

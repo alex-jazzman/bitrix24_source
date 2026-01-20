@@ -16,7 +16,7 @@ jn.define('settings-v2/ui/items/src/video-banner', (require, exports, module) =>
 			super(props);
 
 			this.getTestId = createTestIdGenerator({
-				testId: props.testId || 'settings-video-banner-item',
+				prefix: 'settings-video-banner-item',
 				context: this,
 			});
 
@@ -64,6 +64,7 @@ jn.define('settings-v2/ui/items/src/video-banner', (require, exports, module) =>
 						alignSelf: 'center',
 					},
 					uri: imageUri,
+					testId: this.getTestId(this.state.qualityType),
 				}),
 			);
 		}

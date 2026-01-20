@@ -19,6 +19,7 @@ export class SiteTile
 		this.$container = null;
 		this.scroller = null;
 		let videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/en/siteWithCopilot.webm';
+		this.zone = options.zone || null;
 		if (options.lang === 'ru')
 		{
 			videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/ru/siteWithCopilot.webm';
@@ -40,6 +41,7 @@ export class SiteTile
 						this.popupCopilot = new PopupCopilot({
 							id: 'popupCopilot',
 							videoSrc,
+							zone: this.zone,
 						});
 						this.popupCopilot.showPopup(1000);
 						this.popupCopilot.getPopup().subscribe('onAfterClose', () => {

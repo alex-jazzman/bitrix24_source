@@ -585,8 +585,7 @@
 	          return;
 	        }
 	        this.isAddingToCrmInProgress[id] = true;
-	        BX.ajax.runComponentAction('bitrix:mail.client', 'createCrmActivity', {
-	          mode: 'ajax',
+	        BX.ajax.runAction('bitrix:mail.message.createCrmActivity', {
 	          data: {
 	            messageId: messageIdNode.dataset.messageId
 	          },
@@ -751,7 +750,7 @@
 	        keepRows: true,
 	        ids: idsForMoving,
 	        params: {
-	          folder: toFolderByPath
+	          folderPath: toFolderByPath
 	        },
 	        analyticsLabel: {
 	          'groupCount': selected.length,
@@ -1041,8 +1040,7 @@
 	          }
 	        }
 	      }
-	      BX.ajax.runComponentAction('bitrix:mail.client', actionName, {
-	        mode: 'ajax',
+	      BX.ajax.runAction('mail.message.' + actionName, {
 	        data: data,
 	        analyticsLabel: options.analyticsLabel
 	      }).then(function () {
@@ -1293,6 +1291,15 @@
 	namespaceMailHome.LeftMenu = LeftMenu;
 	var namespaceClientMessage = main_core.Reflection.namespace('BX.Mail.Client.Message');
 	namespaceClientMessage.List = List;
+	var LimitHelpers = {
+	  showLimitSlider: function showLimitSlider(code) {
+	    var activeFeaturePromoter = BX.UI.FeaturePromotersRegistry.getPromoter({
+	      code: code
+	    });
+	    activeFeaturePromoter.show();
+	  }
+	};
+	namespaceClientMessage.LimitHelpers = LimitHelpers;
 
 }((this.window = this.window || {}),BX.Mail,BX.Mail,BX.Mail,BX.Event,BX,BX.UI));
 //# sourceMappingURL=script.js.map

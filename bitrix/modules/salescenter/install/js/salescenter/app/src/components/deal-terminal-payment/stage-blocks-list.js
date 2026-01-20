@@ -52,9 +52,7 @@ export default {
 				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
 					? Status.complete
 					: Status.current,
-				title: this.$root.$app.options.templateMode === 'view'
-					? Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW')
-					: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+				title: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 				hintTitle: '',
 			},
 			paysystem: {
@@ -276,6 +274,14 @@ export default {
 	// language=Vue
 	template: `
 		<div class="salescenter-app-terminal-wrapper">
+			<product-block
+				v-if="hasProducts"
+				:counter="counter++"
+				:status="stages.product.status"
+				:title="stages.product.title"
+				:hintTitle="stages.product.hintTitle"
+				:additionalContainerClasses="{ 'salescenter-app-teminal-products-item': true }"
+			/>
 			<responsible-block
 				:counter="counter++"
 				:status="stages.responsible.status"
@@ -288,16 +294,8 @@ export default {
 				:hintTitle="stages.responsible.hintTitle"
 				@on-responsible-changed="onResponsibleChanged"
 			/>
-			<product-block
-				v-if="hasProducts"
-				:counter="counter++"
-				:status="stages.product.status"
-				:title="stages.product.title"
-				:hintTitle="stages.product.hintTitle"
-				:additionalContainerClasses="{ 'salescenter-app-teminal-products-item': true }"
-			/>
 			<amount-block
-				v-else
+				v-if="!hasProducts"
 				:counter="counter++"
 				:status="stages.product.status"
 				:title="stages.product.title"

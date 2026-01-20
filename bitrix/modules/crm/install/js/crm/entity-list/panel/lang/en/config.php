@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_ENTITY_LIST_PANEL_ANOTHER_PROCESS_IN_PROGRESS"] = "Another group action is in progress.";
+$MESS["CRM_ENTITY_LIST_PANEL_CREATE_TASK_MAX_BINDINGS_ERROR"] = "Cannot add more than #MAX_BINDINGS_COUNT# CRM items to the task.";
 $MESS["CRM_ENTITY_LIST_PANEL_CREATE_TASK_PREFIX"] = "CRM: ";
 $MESS["CRM_ENTITY_LIST_PANEL_CREATE_TASK_TAG"] = "crm";
 $MESS["CRM_ENTITY_LIST_PANEL_DELETION_ANALYTICS_WARNING"] = "Note that deleting data may cause incorrect analytics.";

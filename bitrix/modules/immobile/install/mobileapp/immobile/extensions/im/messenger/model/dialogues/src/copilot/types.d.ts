@@ -4,9 +4,25 @@ import { MessengerModel, PayloadData } from '../../../base';
 declare type CopilotModelState = {
 	dialogId: DialogId,
 	roles: CopilotRoleData,
+	/** @deprecated Property aiProvider - is deprecated and will be removed in future versions. */
 	aiProvider: string,
+	engine: CopilotEngine,
 	messages: Array<MessageCopilotDataItem>,
 	chats: Array<ChatsCopilotDataItem>,
+	changeEngine: boolean,
+}
+
+declare type AvailableCopilotEngine = {
+	code: string,
+	name: string,
+	recommended: boolean,
+	default: boolean,
+}
+
+declare type CopilotEngine = {
+	code: string,
+	name: string,
+	supportsReasoning: boolean
 }
 
 declare type CopilotRoleData = {
@@ -79,6 +95,7 @@ export interface ChatsCopilotDataItem
 {
 	dialogId: DialogId;
 	role: string;
+	engine: string;
 }
 
 export interface CopilotPayloadDataItem

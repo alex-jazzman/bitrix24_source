@@ -81,7 +81,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenuManager = new CollabRecentMenu();
+	    this.contextMenuManager = new CollabRecentMenu({
+	      emitter: this.getEmitter()
+	    });
 	    void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
 	  },
 	  beforeUnmount() {
@@ -119,6 +121,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.service = new CollabService();
 	      }
 	      return this.service;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);

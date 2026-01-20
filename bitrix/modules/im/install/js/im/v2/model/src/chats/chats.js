@@ -202,6 +202,12 @@ export class ChatsModel extends BuilderModel
 
 				return state.collection[dialogId].backgroundId;
 			},
+			/** @function chats/getCollectionByChatType */
+			getCollectionByChatType: (state: ChatState) => (type: $Values<typeof ChatType>): ImModelChat[] => {
+				return Object.values(state.collection).filter((item) => {
+					return item.type === type;
+				});
+			},
 		};
 	}
 
@@ -280,6 +286,10 @@ export class ChatsModel extends BuilderModel
 				}
 
 				store.commit('delete', { dialogId: payload.dialogId });
+			},
+			/** @function chats/clearCountersByChatType */
+			clearCountersByChatType: (store, payload: { type: $Values<typeof ChatType> }) => {
+				store.commit('clearCountersByChatType', payload);
 			},
 			/** @function chats/clearCounters */
 			clearCounters: (store) => {
@@ -400,6 +410,15 @@ export class ChatsModel extends BuilderModel
 			},
 			delete: (state: ChatState, payload) => {
 				delete state.collection[payload.dialogId];
+			},
+			clearCountersByChatType: (state: ChatState, payload: { type: $Values<typeof ChatType> }) => {
+				const { type } = payload;
+				const items = this.store.getters['chats/getCollectionByChatType'](type);
+
+				items.forEach((item) => {
+					state.collection[item.dialogId].counter = 0;
+					state.collection[item.dialogId].markedId = 0;
+				});
 			},
 			clearCounters: (state: ChatState) => {
 				Object.keys(state.collection).forEach((key) => {

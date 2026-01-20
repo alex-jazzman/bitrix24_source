@@ -5,7 +5,9 @@ jn.define('more-menu/search-list', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { List } = require('more-menu/ui/list');
 	const { PropTypes } = require('utils/validation');
-	const { Indent } = require('tokens');
+	const { Color, Indent } = require('tokens');
+	const { Text3 } = require('ui-system/typography/text');
+	const { Loc } = require('loc');
 	const {
 		handleItemClick,
 	} = require('more-menu/utils');
@@ -40,12 +42,12 @@ jn.define('more-menu/search-list', (require, exports, module) => {
 			return this.props.layout;
 		}
 
-		static setListeners({ layout, getMenuList, testId })
+		static setListeners({ layout, getMenuList, testId, rightButtons = [] })
 		{
 			// eslint-disable-next-line no-param-reassign
 			layout.search.mode = 'layout';
 
-			layout.setRightButtons([
+			const buttons = [
 				{
 					type: 'search',
 					id: 'search',
@@ -63,7 +65,10 @@ jn.define('more-menu/search-list', (require, exports, module) => {
 						});
 					},
 				},
-			]);
+				...rightButtons,
+			];
+
+			layout.setRightButtons(buttons);
 		}
 
 		/**
@@ -125,6 +130,23 @@ jn.define('more-menu/search-list', (require, exports, module) => {
 			const menuList = this.props.getMenuList();
 
 			const dataToRender = searchActive ? filteredSections : menuList;
+			if (Array.isArray(dataToRender) && dataToRender.length === 0)
+			{
+				return View(
+					{
+						style: {
+							alignItems: 'center',
+						},
+					},
+					Text3({
+						color: Color.base3.toHex(),
+						text: Loc.getMessage('MENU_SEARCH_EMPTY_SEARCH_TEXT'),
+						style: {
+							height: 60,
+						},
+					}),
+				);
+			}
 
 			return ScrollView(
 				{},
@@ -165,6 +187,7 @@ jn.define('more-menu/search-list', (require, exports, module) => {
 		layout: PropTypes.object.isRequired,
 		getMenuList: PropTypes.func.isRequired,
 		testId: PropTypes.string.isRequired,
+		rightButtons: PropTypes.array,
 	};
 
 	module.exports = {

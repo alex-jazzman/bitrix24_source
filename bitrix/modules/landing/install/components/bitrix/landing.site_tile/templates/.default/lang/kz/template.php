@@ -40,6 +40,7 @@ $MESS["LANDING_SITE_TILE_NOT_PUBLISHED_TITLE_STORE"] = "Дүкенді қара�
 $MESS["LANDING_SITE_TILE_OPEN"] = "Ашу";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_BUTTON"] = "AI көмегімен сайт жасаңыз";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION"] = "Демо режимі автоматты түрде қосылады ↓";
+$MESS["LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION_2"] = "<p>BitrixGPT + Маркетплейс демо тарифі</p><p>және жазылымның сынақ мерзімі автоматты түрде қосылады↓</p>";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1"] = "Сізге не қажет екенін қысқаша сипаттаңыз";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2"] = "AI дизайнды өзі таңдайды, суреттер жасайды, мәтін жазады";
 $MESS["LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3"] = "Сіз дайын сайтты бірнеше минут ішінде аласыз";

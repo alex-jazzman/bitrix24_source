@@ -1,8 +1,7 @@
-import { Outline } from 'ui.icon-set.api.core';
+import { Chip, ChipDesign } from 'ui.system.chip.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
-import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -14,13 +13,11 @@ export const TagsChip = {
 	components: {
 		Chip,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -28,21 +25,13 @@ export const TagsChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		design(): string
 		{
 			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, tagsMeta.id);
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
+			return this.task.filledFields[tagsMeta.id];
 		},
 	},
 	methods: {
@@ -55,8 +44,11 @@ export const TagsChip = {
 				return;
 			}
 
-			tagsDialog.setTaskId(this.taskId).showTo(this.$el);
-			tagsDialog.onUpdateOnce(this.highlightField);
+			tagsDialog.show({
+				targetNode: this.$el,
+				taskId: this.taskId,
+				onClose: this.highlightField,
+			});
 		},
 		highlightField(): void
 		{
@@ -65,8 +57,7 @@ export const TagsChip = {
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			:design
 			:icon="Outline.TAG"
 			:text="loc('TASKS_V2_TAGS_TITLE_CHIP')"
 			:data-task-id="taskId"

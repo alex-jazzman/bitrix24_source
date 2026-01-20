@@ -214,6 +214,8 @@ export class MainContent extends Content
 			`;
 			const tools = this.#getTools();
 
+			Dom.style(container, 'grid-template-columns', `repeat(${tools.length}, 1fr)`);
+
 			tools.forEach((tool) => {
 				Dom.append(tool.getLayout(), container);
 			});

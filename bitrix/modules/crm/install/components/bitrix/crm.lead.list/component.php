@@ -24,6 +24,7 @@ use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
 use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Context\GridContext;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\EntityAddress;
@@ -521,11 +522,12 @@ if(!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = array('TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS', 'COMPANY_TITLE');
 
-	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
-	if(empty($effectiveFilterFieldIDs))
-	{
-		$effectiveFilterFieldIDs = $entityFilter->getDefaultFieldIDs();
-	}
+	$effectiveFilterFieldIDs = array_unique(
+		array_merge(
+			$filterOptions->getUsedFields(),
+			$entityFilter->getDefaultFieldIDs(),
+		),
+	);
 
 	//region HACK: Preload fields for filter of user activities & webforms
 	if(!in_array('ASSIGNED_BY_ID', $effectiveFilterFieldIDs, true))
@@ -903,6 +905,10 @@ else
 }
 //endregion
 
+$arFilter = Crm\Filter\FieldsTransform\UserBasedField::breakDepartmentsToUsers(
+	$arFilter,
+	$entityFilter?->getFields() ?? [],
+);
 Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
 
 //region Activity Counter Filter
@@ -918,7 +924,7 @@ CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 $arImmutableFilters = array(
 	'FM', 'ID', 'CURRENCY_ID',
-	'ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID',
+	'ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'MOVED_BY_ID',
 	'PRODUCT_ROW_PRODUCT_ID',
 	'HAS_PHONE', 'HAS_EMAIL',
 	'STATUS_SEMANTIC_ID',
@@ -1159,6 +1165,8 @@ if ($isInExportMode && $isStExport && $isStExportAllFields)
 // Fill in default values if empty
 if (empty($arSelectMap))
 {
+	GridHeaders::removeExcessUfFromGridParams($arResult['HEADERS']);
+
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
 		if ($arHeader['default'] ?? false)

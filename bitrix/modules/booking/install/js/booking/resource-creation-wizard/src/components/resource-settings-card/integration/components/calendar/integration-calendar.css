@@ -1,0 +1,7 @@
+.booking--rcw--integration-calendar.--disabled .resource-creation-wizard__integration-block-title {
+	color: var(--ui-color-gray-50);
+}
+
+.booking--rcw--integration-calendar.--disabled .resource-creation-wizard__integration-block-description {
+	color: var(--ui-color-gray-40);
+}

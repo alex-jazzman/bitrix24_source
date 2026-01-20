@@ -2,7 +2,7 @@
  * @module ui-system/blocks/chips/chip-button/src/size-enum
  */
 jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports, module) => {
-	const { Indent, Corner } = require('tokens');
+	const { Indent, Component } = require('tokens');
 	const { BaseEnum } = require('utils/enums/base');
 	const { Text4, Text5 } = require('ui-system/typography/text');
 
@@ -13,46 +13,68 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 	 */
 	class ChipButtonSize extends BaseEnum
 	{
-		static NORMAL = new ChipButtonSize('NORMAL', {
-			text: Text4,
-			radius: Corner.M,
-			height: 32,
-			icon: Indent.M,
+		static S = new ChipButtonSize('S', {
+			text: Text5,
+			radius: Component.chipsSCorner,
+			height: 24,
 			avatar: {
 				size: 20,
 			},
 			indent: {
 				left: {
-					text: Indent.XL.toNumber(),
-					icon: Indent.S.toNumber(),
-					avatar: Indent.M.toNumber(),
+					text: Indent.L,
+					icon: Indent.XS,
+					avatar: Indent.S,
 				},
 				right: {
-					text: Indent.XL.toNumber(),
-					dropdown: Indent.XS.toNumber(),
-					icon: Indent.S.toNumber(),
+					text: Indent.L,
+					dropdown: Indent.XS,
+					icon: Indent.XS,
+					avatar: Indent.S,
 				},
 			},
 		});
 
-		static SMALL = new ChipButtonSize('SMALL', {
-			text: Text5,
-			radius: Corner.S,
-			height: 24,
-			icon: Indent.S,
+		static M = new ChipButtonSize('M', {
+			text: Text4,
+			radius: Component.chipsMCorner,
+			height: 32,
 			avatar: {
 				size: 20,
 			},
 			indent: {
 				left: {
-					text: Indent.L.toNumber(),
-					icon: Indent.XS.toNumber(),
-					avatar: Indent.S.toNumber(),
+					text: Indent.XL,
+					icon: Indent.M,
+					avatar: Indent.M,
 				},
 				right: {
-					text: Indent.L.toNumber(),
-					dropdown: Indent.XS.toNumber(),
-					icon: Indent.XS.toNumber(),
+					text: Indent.XL,
+					dropdown: Indent.XS,
+					icon: Indent.M,
+					avatar: Indent.M,
+				},
+			},
+		});
+
+		static L = new ChipButtonSize('L', {
+			text: Text4,
+			radius: Component.chipsLCorner,
+			height: 38,
+			avatar: {
+				size: 20,
+			},
+			indent: {
+				left: {
+					text: Indent.XL2,
+					icon: Indent.L,
+					avatar: Indent.L,
+				},
+				right: {
+					text: Indent.XL2,
+					dropdown: Indent.S,
+					icon: Indent.L,
+					avatar: Indent.L,
 				},
 			},
 		});
@@ -81,12 +103,9 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 		{
 			return this.getValue().avatar;
 		}
-
-		getIconIndents()
-		{
-			return this.getValue().icon;
-		}
 	}
 
-	module.exports = { ChipButtonSize };
+	module.exports = {
+		ChipButtonSize: ChipButtonSize.export(),
+	};
 });

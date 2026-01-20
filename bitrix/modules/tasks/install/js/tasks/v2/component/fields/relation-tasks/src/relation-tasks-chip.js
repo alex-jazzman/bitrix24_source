@@ -1,5 +1,6 @@
-import { Model } from 'tasks.v2.const';
-import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
+import { Chip, ChipDesign } from 'ui.system.chip.vue';
+
+import { showLimit } from 'tasks.v2.lib.show-limit';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -8,12 +9,13 @@ export const RelationTasksChip = {
 	components: {
 		Chip,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+		isTemplate: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
-		/** @type RelationMeta */
+		/** @type RelationFieldMeta */
 		meta: {
 			type: Object,
 			required: true,
@@ -22,12 +24,18 @@ export const RelationTasksChip = {
 			type: Boolean,
 			default: false,
 		},
-	},
-	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+		isLocked: {
+			type: Boolean,
+			default: false,
 		},
+		featureId: {
+			type: String,
+			default: '',
+		},
+	},
+	emits: ['add'],
+	setup(): { task: TaskModel } {},
+	computed: {
 		count(): number
 		{
 			return this.task[this.meta.idsField].length;
@@ -43,11 +51,7 @@ export const RelationTasksChip = {
 		},
 		isSelected(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, this.meta.id);
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
+			return this.task.filledFields[this.meta.id];
 		},
 	},
 	methods: {
@@ -65,7 +69,14 @@ export const RelationTasksChip = {
 				return;
 			}
 
-			this.meta.dialog.setTaskId(this.taskId).onUpdateOnce(this.highlightField).showTo(this.$el);
+			if (this.isLocked)
+			{
+				void showLimit({ featureId: this.featureId });
+
+				return;
+			}
+
+			this.$emit('add', this.$el);
 		},
 		highlightField(): void
 		{
@@ -74,13 +85,12 @@ export const RelationTasksChip = {
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
-			:text="meta.chipTitle"
+			:design
+			:text="meta.getChipTitle(isTemplate)"
 			:icon="meta.icon"
+			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="meta.id"
-			ref="chip"
 			@click="handleClick"
 		/>
 	`,

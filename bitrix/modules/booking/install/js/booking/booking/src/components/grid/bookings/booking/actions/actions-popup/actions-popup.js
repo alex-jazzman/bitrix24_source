@@ -9,6 +9,7 @@ import { BookingDocument } from './document/document';
 import { BookingExtraResourcesInfo } from './extra-resources-info/booking-extra-resources-info';
 import { BookingMessage } from './message/message';
 import { BookingConfirmation } from './confirmation/confirmation';
+import { BookingSkusInfo } from './skus-info/skus-info';
 import { BookingVisit } from './visit/visit';
 import { Overbooking } from './overbooking/overbooking';
 import { Waitlist } from './waitlist/waitlist';
@@ -29,6 +30,7 @@ export const BookingActionsPopup = {
 		ActionsPopup,
 		Overbooking,
 		Waitlist,
+		BookingSkusInfo,
 		BookingRemoveBtn,
 	},
 	props: {
@@ -77,14 +79,24 @@ export const BookingActionsPopup = {
 					},
 					component: BookingClient,
 				},
-				{
-					id: ActionsPopupActionEnum.extraResourcesInfo,
-					props: {
-						bookingId: this.bookingId,
-						resourceId: this.resourceId,
+				[
+					{
+						id: ActionsPopupActionEnum.extraResourcesInfo,
+						props: {
+							bookingId: this.bookingId,
+							resourceId: this.resourceId,
+						},
+						component: BookingExtraResourcesInfo,
 					},
-					component: BookingExtraResourcesInfo,
-				},
+					{
+						id: ActionsPopupActionEnum.skus,
+						props: {
+							bookingId: this.bookingId,
+							resourceId: this.resourceId,
+						},
+						component: BookingSkusInfo,
+					},
+				],
 				[
 					{
 						id: ActionsPopupActionEnum.deal,

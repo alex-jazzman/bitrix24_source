@@ -23,11 +23,14 @@ export const ReactionEvent = Object.freeze({
 
 export class Reaction extends EventEmitter
 {
+	static #LottieInstance = null;
+
 	#name: string;
 	#size: ?number;
 	#animate: boolean;
 	#infiniteAnimate: boolean;
 
+	#id: number;
 	#lottieAnimation: ?any = null;
 	#wrapper: HTMLElement;
 	#animatedReaction: ?HTMLElement;
@@ -38,12 +41,13 @@ export class Reaction extends EventEmitter
 	{
 		super(options);
 		this.setEventNamespace('UI.Reaction.Item');
+
 		this.#name = options.name;
 		this.#size = Type.isNumber(options.size) ? options.size : null;
-
 		this.#animate = options.animation?.animate === true;
 		this.#infiniteAnimate = options.animation?.infinite === true;
 
+		this.#id = `${this.#name}_${Math.round((Math.random() * 1_000_000_000))}`;
 		this.#lottieAnimation = null;
 		this.#wrapper = null;
 		this.#animatedReaction = null;
@@ -126,6 +130,8 @@ export class Reaction extends EventEmitter
 		return new Promise((resolve, reject) => {
 			Runtime.loadExtension(['ui.lottie'])
 				.then(({ Lottie }) => {
+					Reaction.#LottieInstance = Lottie;
+
 					if (!this.#lottieAnimation)
 					{
 						const wrapper = Tag.render`<span class="ui-reaction__animation-wrapper"></span>`;
@@ -134,6 +140,7 @@ export class Reaction extends EventEmitter
 							container: wrapper,
 							path: LottieAnimation[this.#name],
 							loop: true,
+							name: this.#id,
 							autoplay: true,
 							renderer: 'svg',
 							rendererSettings: {
@@ -158,6 +165,7 @@ export class Reaction extends EventEmitter
 								this.#lottieAnimation.pause();
 								this.#switchAnimatedToStatic();
 								this.emit(ReactionEvent.animationFinish);
+								this.#destroyAnimation();
 							}
 						});
 					}
@@ -223,8 +231,16 @@ export class Reaction extends EventEmitter
 
 	destroy(): void
 	{
-		this.#lottieAnimation?.destroy();
+		this.#destroyAnimation();
 		Dom.remove(this.#wrapper);
 		this.#wrapper = null;
+	}
+
+	#destroyAnimation(): void
+	{
+		Reaction.#LottieInstance?.destroy(this.#id);
+		this.#lottieAnimation = null;
+		Dom.remove(this.#animatedReaction);
+		this.#animatedReaction = null;
 	}
 }

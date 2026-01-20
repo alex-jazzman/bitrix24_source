@@ -39,6 +39,7 @@ if ($arResult['VARS']['landing_edit'] > 0)
 				'PAGES' => $pages,
 			],
 			'USE_PADDING' => false,
+			'HIDE_TOOLBAR' => 'Y',
 		]
 	);
 }

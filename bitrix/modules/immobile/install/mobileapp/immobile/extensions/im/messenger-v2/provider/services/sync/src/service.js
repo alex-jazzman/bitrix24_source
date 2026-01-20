@@ -13,6 +13,8 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 	const { SyncFiller } = require('im/messenger-v2/provider/services/sync/filler');
 
 	const BACKGROUND_SYNC_INTERVAL = 120_000;
+	const CRITICAL_AWAIT_TIMEOUT_COMMON = 3000;
+	const CRITICAL_AWAIT_TIMEOUT_REQUEST_SERVER = 15000;
 
 	/**
 	 * @class SyncServiceV2
@@ -43,7 +45,7 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 
 			this.syncStartDate = null;
 			this.syncFinishDate = null;
-			this.syncDuration = null;
+			this.lastSyncDuration = null;
 
 			this.logList = [];
 
@@ -68,6 +70,39 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 		}
 
 		/**
+		 * @desc Wraps a promise with a timeout; If the timeout is exceeded, logs a warning and rejects with an error.
+		 *
+		 * @param {Promise} promise
+		 * @param {number} timeoutMs
+		 * @param {string} context
+		 * @returns {Promise<*>}
+		 */
+		async #withTimeout(promise, timeoutMs, context)
+		{
+			if (!Feature.isChatBetaEnabled)
+			{
+				return promise;
+			}
+
+			let timeoutId = null;
+			const timeoutPromise = new Promise((_resolve, reject) => {
+				timeoutId = setTimeout(() => {
+					this.#processWarning(`Timeout exceeded (${timeoutMs}ms) in: ${context}`);
+					reject(new Error(`Timeout exceeded (${timeoutMs}ms) in: ${context}`));
+				}, timeoutMs);
+			});
+
+			try
+			{
+				return await Promise.race([promise, timeoutPromise]);
+			}
+			finally
+			{
+				clearTimeout(timeoutId);
+			}
+		}
+
+		/**
 		 * @param {AppStatusType} appStatus
 		 * @return {Promise<*>}
 		 */
@@ -89,7 +124,7 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 
 			if (this.syncInProgress)
 			{
-				this.#processWarning('synchronization is already in progress, startSync is stopped');
+				this.#processWarning('synchronization is already in progress, startSync is stopped', appStatus);
 
 				return this.currentSyncPromise;
 			}
@@ -114,8 +149,8 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 				this.logger.warn(`performSync: ${this.#isBackgroundSync() ? 'background synchronization' : 'synchronization'} started`);
 				await this.#setAppStatus(appStatus, true);
 
-				const lastSyncServerDate = await this.dateService.getLastSyncServerDate();
-				const lastSyncDate = await this.dateService.getLastSyncDate();
+				const lastSyncServerDate = await this.#getLastSyncServerDate();
+				const lastSyncDate = await this.#getLastSyncDate();
 
 				await this.#loadChangelog({ fromDate: lastSyncDate, fromServerDate: lastSyncServerDate });
 
@@ -153,9 +188,16 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 					catch (error)
 					{
 						this.#processError('background sync catch:', error);
+						if (this.#isNetworkWaiting())
+						{
+							this.stopBackgroundSync();
+						}
+
+						throw error;
 					}
+
+					this.backgroundTimerId = setTimeout(handler, BACKGROUND_SYNC_INTERVAL);
 				}
-				this.backgroundTimerId = setTimeout(handler, BACKGROUND_SYNC_INTERVAL);
 			};
 			this.backgroundTimerId = setTimeout(handler, BACKGROUND_SYNC_INTERVAL);
 		}
@@ -188,6 +230,8 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 
 		convertBackgroundSyncToSync()
 		{
+			this.#processWarning('backgroundSync start converting to sync, current status -', this.appStatus);
+
 			return this.#setAppStatus(this.appStatus, false)
 				.then(() => {
 					return this.#setAppStatus(AppStatus.sync, true);
@@ -197,6 +241,24 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 				});
 		}
 
+		#getLastSyncServerDate()
+		{
+			return this.#withTimeout(
+				this.dateService.getLastSyncServerDate(),
+				CRITICAL_AWAIT_TIMEOUT_COMMON,
+				'dateService.getLastSyncServerDate',
+			);
+		}
+
+		#getLastSyncDate()
+		{
+			return this.#withTimeout(
+				this.dateService.getLastSyncDate(),
+				CRITICAL_AWAIT_TIMEOUT_COMMON,
+				'dateService.getLastSyncDate',
+			);
+		}
+
 		/**
 		 * @param {string} fromDate
 		 * @param {string} fromServerDate
@@ -204,14 +266,11 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 		 */
 		async #loadChangelog({ fromDate, fromServerDate, lastId })
 		{
-			const result = await this.syncLoader.loadPage({
-				lastId,
-				fromDate,
-				fromServerDate,
-			});
-			const { navigationData } = result;
+			const result = await this.#loadPage(fromDate, fromServerDate, lastId);
 
-			await this.syncFiller.applyData(result, this.#isBackgroundSync());
+			await this.#applyData(result);
+
+			const { navigationData } = result;
 			await this.#updateServerDate(navigationData.lastServerDate);
 
 			const hasMore = navigationData.hasMore === true
@@ -229,22 +288,69 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 		}
 
 		/**
+		 * @param {string} fromDate
+		 * @param {string} fromServerDate
+		 * @param {?number} lastId
+		 */
+		async #loadPage(fromDate, fromServerDate, lastId)
+		{
+			return this.#withTimeout(
+				this.syncLoader.loadPage({
+					lastId,
+					fromDate,
+					fromServerDate,
+				}),
+				CRITICAL_AWAIT_TIMEOUT_REQUEST_SERVER,
+				'syncLoader.loadPage',
+			);
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 */
+		async #applyData(result)
+		{
+			await this.#withTimeout(
+				this.syncFiller.applyData(result, this.#isBackgroundSync()),
+				CRITICAL_AWAIT_TIMEOUT_COMMON,
+				'syncFiller.applyData',
+			);
+		}
+
+		/**
 		 * @param {string} lastServerDate
 		 */
 		async #updateServerDate(lastServerDate)
 		{
 			if (Type.isStringFilled(lastServerDate))
 			{
-				await this.dateService.setLastSyncServerDate(lastServerDate);
+				await this.#withTimeout(
+					this.dateService.setLastSyncServerDate(lastServerDate),
+					CRITICAL_AWAIT_TIMEOUT_COMMON,
+					'dateService.setLastSyncServerDate',
+				);
 			}
 		}
 
 		async #syncComplete()
 		{
-			await this.dateService.updateLastSyncDate();
-			await this.#messageRepository.clearPushMessages();
+			await this.#withTimeout(
+				this.dateService.updateLastSyncDate(),
+				CRITICAL_AWAIT_TIMEOUT_COMMON,
+				'dateService.updateLastSyncDate',
+			);
 
-			await this.#setAppStatus(this.appStatus, false);
+			await this.#withTimeout(
+				this.#messageRepository.clearPushMessages(),
+				CRITICAL_AWAIT_TIMEOUT_COMMON,
+				'messageRepository.clearPushMessages',
+			);
+
+			await this.#withTimeout(
+				this.#setAppStatus(this.appStatus, false),
+				CRITICAL_AWAIT_TIMEOUT_COMMON,
+				'syncComplete.setAppStatus',
+			);
 
 			this.syncInProgress = false;
 			this.appStatus = null;
@@ -272,6 +378,14 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 			}
 
 			return this.syncInProgress || serviceLocator.get('core').getAppStatus() === AppStatus.connection;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isNetworkWaiting()
+		{
+			return serviceLocator.get('core').getAppStatus() === AppStatus.networkWaiting;
 		}
 
 		/**
@@ -331,9 +445,9 @@ jn.define('im/messenger-v2/provider/services/sync/service', (require, exports, m
 		#logSyncDuration()
 		{
 			this.syncFinishDate = Date.now();
-			this.syncDuration = this.syncFinishDate - this.syncStartDate;
+			this.lastSyncDuration = this.syncFinishDate - this.syncStartDate;
 
-			this.logger.warn(`syncComplete: synchronization completed in ${this.syncDuration / 1000} seconds.`);
+			this.logger.warn(`syncComplete: synchronization completed in ${this.lastSyncDuration / 1000} seconds.`);
 
 			this.syncStartDate = null;
 			this.syncFinishDate = null;

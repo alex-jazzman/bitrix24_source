@@ -2,6 +2,7 @@ import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 import { BuilderModel, Store } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
+import type { CatalogSkuEntityOptions } from 'booking.resources-creation-wizard';
 
 import { dateToTsRange, createOverbookingMap } from './lib';
 import type { BookingModel, BookingsState } from './types';
@@ -17,6 +18,7 @@ export class Bookings extends BuilderModel
 	{
 		return {
 			collection: {},
+			catalogSkuEntityOptions: {},
 		};
 	}
 
@@ -144,6 +146,11 @@ export class Bookings extends BuilderModel
 			deleteMany: (store: Store, bookingIds: number[]): void => {
 				store.commit('deleteMany', bookingIds);
 			},
+			/** @function resource-creation-wizard/setCatalogSkuEntityOptions */
+			setCatalogSkuEntityOptions({ commit }, options: CatalogSkuEntityOptions): void
+			{
+				commit('setCatalogSkuEntityOptions', options);
+			},
 		};
 	}
 
@@ -173,6 +180,10 @@ export class Bookings extends BuilderModel
 				{
 					delete state.collection[id];
 				}
+			},
+			setCatalogSkuEntityOptions(state, options: CatalogSkuEntityOptions): void
+			{
+				state.catalogSkuEntityOptions = options;
 			},
 		};
 	}

@@ -1024,7 +1024,7 @@ export class Manager
 
 	static openHowToSell(event)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=17615318', 'crmstore_connect');
+		Manager.openHelper(event, 'redirect=detail&code=18213518', 'crmstore_connect');
 	}
 
 	static openHowToWork(event)

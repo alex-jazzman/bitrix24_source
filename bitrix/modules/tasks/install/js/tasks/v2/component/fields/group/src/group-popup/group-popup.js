@@ -5,7 +5,6 @@ import { Popup } from 'ui.vue3.components.popup';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 
 import { GroupType, Model } from 'tasks.v2.const';
-import { openGroup } from 'tasks.v2.lib.open-group';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { userService } from 'tasks.v2.provider.service.user-service';
 import type { GroupModel } from 'tasks.v2.model.groups';
@@ -17,18 +16,17 @@ export const GroupPopup = {
 		Popup,
 		UiButton,
 	},
+	inject: {
+		task: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		getBindElement: {
 			type: Function,
 			required: true,
 		},
 	},
 	emits: ['close'],
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			AirButtonStyle,
@@ -44,10 +42,6 @@ export const GroupPopup = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		group(): ?GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
@@ -56,13 +50,10 @@ export const GroupPopup = {
 		{
 			return this.getBindElement();
 		},
-		popupId(): string
-		{
-			return 'tasks-field-group-popup';
-		},
-		popupOptions(): PopupOptions
+		options(): PopupOptions
 		{
 			return {
+				id: 'tasks-field-group-popup',
 				bindElement: this.bindElement,
 				padding: 24,
 				minWidth: 260,
@@ -96,9 +87,11 @@ export const GroupPopup = {
 		Event.bind(this.bindElement, 'mouseleave', this.handleMouseLeave);
 	},
 	methods: {
-		openGroup(): void
+		async openGroup(): Promise<void>
 		{
-			void openGroup(this.group.id, this.group.type);
+			const href = await groupService.getUrl(this.group.id, this.group.type);
+
+			BX.SidePanel.Instance.emulateAnchorClick(href);
 		},
 		handleClick(): void
 		{
@@ -140,7 +133,7 @@ export const GroupPopup = {
 				this.groupInfo = await this.groupInfoPromise;
 			}
 
-			if (!this.group)
+			if (!this.group || Object.keys(this.groupInfo).length === 0)
 			{
 				return;
 			}
@@ -164,16 +157,10 @@ export const GroupPopup = {
 		},
 	},
 	template: `
-		<Popup
-			v-if="isPopupShown"
-			:id="popupId"
-			:options="popupOptions"
-			ref="popup"
-			@close="closePopup"
-		>
+		<Popup v-if="isPopupShown" :options ref="popup" @close="closePopup">
 			<div class="tasks-field-group-popup" ref="container">
 				<div class="tasks-field-group-popup-header">
-					<img class="tasks-field-group-popup-image" :src="group?.image" :alt="group?.name">
+					<img class="tasks-field-group-popup-image" :src="encodeURI(group?.image)" :alt="group?.name">
 					<div class="tasks-field-group-popup-title-container">
 						<div class="tasks-field-group-popup-title" :title="group?.name">{{ group?.name }}</div>
 						<div class="tasks-field-group-popup-subtitle">{{ groupMembersCountFormatted }}</div>
@@ -184,7 +171,7 @@ export const GroupPopup = {
 						:text="groupAboutFormatted"
 						:style="AirButtonStyle.OUTLINE_ACCENT_2"
 						:size="ButtonSize.SMALL"
-						:wide="true"
+						wide
 						@click="openGroup"
 					/>
 				</div>

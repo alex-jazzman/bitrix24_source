@@ -12,11 +12,11 @@ return [
 		'im.v2.lib.layout',
 		'main.core',
 		'im.v2.const',
-		'im.v2.application.core',
 		'im.v2.lib.copilot',
 		'im.v2.lib.logger',
 		'im.v2.lib.rest',
 		'im.v2.lib.user',
+		'im.v2.application.core',
 	],
 	'skip_core' => false,
 ];

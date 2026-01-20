@@ -19,6 +19,7 @@ export function mapDtoToResource(resourcesDto: ResourceDto[]): Resource[]
 type ResourceDto = {
 	id: number,
 	name: string,
+	description: string,
 	typeName: string,
 	slotRanges: {
 		id: number,

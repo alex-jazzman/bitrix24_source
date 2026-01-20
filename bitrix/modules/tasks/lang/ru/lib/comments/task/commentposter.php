@@ -101,7 +101,8 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION'] = "#RE
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION'] = "#RESPONSIBLE_LIST#, возьмите задачу в работу.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_WITH_MORE'] = "#RESPONSIBLE_LIST# и #SHOW_FLOW_ATTENDEES_START# ещё #COUNT_USERS##SHOW_FLOW_ATTENDEES_END#, возьмите задачу в работу";
 
+$MESS['COMMENT_POSTER_COMMENT_TASK_ADD_AI_FAILED_TO_RESOLVE_RESPONSIBLE'] = '#RESPONSIBLE#, BitrixGPT не смог определить, кого нужно назначить исполнителем, поэтому назначил вас';
+
 $MESS['COMMENT_POSTER_ONBOARDING_COMMENT_RESPONSIBLE_INVITATION_NOT_ACCEPTED_ONE_DAY_V2'] = '#CREATED_BY#, исполнитель пока не принял приглашение в ваш Битрикс24. Напомните ему о приглашении — это поможет быстрее завершить задачу и не терять время';
 $MESS['COMMENT_POSTER_ONBOARDING_COMMENT_RESPONSIBLE_INVITATION_ACCEPTED_V2'] = "#RESPONSIBLE_ID#, задача ждёт вашего внимания.\n#CREATED_BY#, исполнитель присоединился к Битрикс24, напомните ему о задаче, чтобы уложиться в сроки";
 $MESS['COMMENT_POSTER_ONBOARDING_COMMENT_INVITED_RESPONSIBLE_NOT_VIEW_TASK_TWO_DAYS_V2'] = "#RESPONSIBLE_ID#, задача ждёт выполнения.\n#CREATED_BY#, исполнитель пока не открыл её — напомните ему о задаче, чтобы уложиться в сроки";
-

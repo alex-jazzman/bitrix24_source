@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'asset-manager',
 		'loc',
 		'tokens',
 		'in-app-url',
@@ -16,6 +17,7 @@ return [
 		'utils/date/formats',
 		'utils/string',
 		'utils/test',
+		'utils/object',
 
 		'stafftrack:model/shift',
 	],

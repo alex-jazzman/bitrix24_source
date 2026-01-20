@@ -256,6 +256,8 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 			this._enableFieldsContextMenu = BX.prop.getBoolean(this._settings, "enableFieldsContextMenu", true);
 
+			this.uploadersInProgress = new Set();
+
 			this.initializeDragDrop();
 
 			this.layout();
@@ -452,6 +454,15 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				this._toolbar.subscribe(BX.UI.ToolbarEvents.beforeStartEditing, this._toolbarBeforeStartEditingHandler);
 				this._toolbar.subscribe(BX.UI.ToolbarEvents.finishEditing, this._toolbarFinishEditingHandler);
 			}
+
+			BX.Event.EventEmitter.subscribe(
+				'BX.UI.EntityEditor:onUserFieldFileUploadStart',
+				this.onUploaderUploadStart.bind(this),
+			);
+			BX.Event.EventEmitter.subscribe(
+				'BX.UI.EntityEditor:onUserFieldFileUploadComplete',
+				this.onUploaderUploadComplete.bind(this),
+			);
 		},
 		deattachFromEvents: function()
 		{
@@ -465,6 +476,15 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				this._toolbar.unsubscribe(BX.UI.ToolbarEvents.beforeStartEditing, this._toolbarBeforeStartEditingHandler);
 				this._toolbar.unsubscribe(BX.UI.ToolbarEvents.finishEditing, this._toolbarFinishEditingHandler);
 			}
+
+			BX.Event.EventEmitter.unsubscribe(
+				'BX.UI.EntityEditor:onUserFieldFileUploadStart',
+				this.onUploaderUploadStart,
+			);
+			BX.Event.EventEmitter.unsubscribe(
+				'BX.UI.EntityEditor:onUserFieldFileUploadComplete',
+				this.onUploaderUploadComplete,
+			);
 		},
 		initPull: function()
 		{
@@ -2190,6 +2210,11 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		performSaveChangedAction: function(action)
 		{
+			if (this.uploadersInProgress.size > 0)
+			{
+				return;
+			}
+
 			if(!this._isNew && !this.hasChangedControls() && !this.hasChangedControllers() && !this.isWaitingForInput())
 			{
 				this._modeSwitch.reset();
@@ -2235,6 +2260,11 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		performSaveAction: function (action)
 		{
+			if (this.uploadersInProgress.size > 0)
+			{
+				return;
+			}
+
 			if(this._toolPanel)
 			{
 				this._toolPanel.setLocked(true);
@@ -2698,6 +2728,13 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				this._availableSchemeElements = this._scheme.getAvailableElements();
 				this._areAvailableSchemeElementsChanged = false;
 			}
+
+			this.uploadersInProgress.clear();
+			this.enableSaveButton();
+		},
+		enableSaveButton: function()
+		{
+			this?._toolPanel?.enableSaveButton();
 		},
 		addSchemeElementAt: function(schemeElement, index)
 		{
@@ -3864,7 +3901,36 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		getRestriction: function(id)
 		{
 			return BX.prop.getObject(this._restrictions, id, null);
-		}
+		},
+		onUploaderUploadStart: function(event)
+		{
+			const fieldName = event.getData()?.fieldName ?? '';
+
+			if (!BX.Type.isStringFilled(fieldName))
+			{
+				return;
+			}
+
+			this.uploadersInProgress.add(fieldName);
+
+			this?._toolPanel?.disableSaveButton();
+		},
+		onUploaderUploadComplete: function(event)
+		{
+			const fieldName = event.getData()?.fieldName ?? '';
+
+			if (!BX.Type.isStringFilled(fieldName))
+			{
+				return;
+			}
+
+			this.uploadersInProgress.delete(fieldName);
+
+			if (this.uploadersInProgress.size === 0 && !this.isRequestRunning())
+			{
+				this?._toolPanel?.enableSaveButton();
+			}
+		},
 	};
 	BX.UI.EntityEditor.defaultInstance = null;
 	BX.UI.EntityEditor.items = {};

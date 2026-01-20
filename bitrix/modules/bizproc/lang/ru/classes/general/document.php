@@ -25,7 +25,11 @@ $MESS["BPCGDOC_ERROR_TASK_IS_NOT_INLINE_MSGVER_1"] = "Задание \"#NAME#\" 
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_TITLE_MSGVER_1"] = "Помощник портала";
 $MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE"] = "Некоторые бизнес-процессы(#CNT#), которые вы запустили, некорректно завершились.
 [URL=#PATH#]Перейдите в список, чтобы ознакомиться с ними[/URL].";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE_DEFAULT_TITLE"] = "Бизнес-процессы";
+$MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE_DEFAULT"] = "Некоторые бизнес-процессы (#CNT#), которые вы запустили, завершились некорректно. [URL=#PATH#]Перейдите в список, чтобы просмотреть их[/URL]";
 $MESS["BPCGDOC_DELEGATE_LOG_TITLE"] = "Делегирование";
 $MESS["BPCGDOC_DELEGATE_LOG_MSGVER_1"] = "Пользователь #FROM# делегировал задание \"#NAME#\" пользователю #TO#";
 $MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_MSGVER_1"] = "Вам делегировано задание бизнес-процесса [URL=#TASK_URL#]#TASK_NAME#[/URL]";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_DEFAULT"] = "#AUTHOR# делегировал вам задание бизнес-процесса";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_SIMPLE"] = "Делегировал вам задание бизнес-процесса #PROCESS_NAME#: #TASK_NAME#";
 $MESS["BPCGDOC_WI_B24_LIMITS_MESSAGE"] = "На вашем портале на некоторых документах выполняется более двух бизнес-процессов одновременно. Через некоторое время будет введено ограничение в максимум два одновременно запущенных бизнес-процесса на один документ. Рекомендуем вам в ближайшее время скорректировать логику работы ваших бизнес-процессов. [URL=https://helpdesk.bitrix24.ru/open/4662427/]Подробнее[/URL]";

@@ -3,11 +3,13 @@
 return [
 	'extensions' => [
 		'alert',
-		'asset-manager',
 		'layout/ui/context-menu',
 		'loc',
-		'tasks:task/calendar',
 		'utils/date',
 		'utils/date/formats',
+		'tasks:task/calendar',
+		'assets/icons',
+		'tasks:deadline-picker/reason-widget',
+		'tasks:deadline-picker/deadline-restrictions',
 	],
 ];

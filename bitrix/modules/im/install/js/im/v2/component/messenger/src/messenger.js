@@ -8,28 +8,30 @@ import 'im.v2.css.icons';
 import 'im.v2.css.classes';
 
 import { OpenlinesContent } from 'im.v2.component.content.openlines';
+import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 import { CounterManager } from 'im.v2.lib.counter';
 import { EscManager } from 'im.v2.lib.esc-manager';
 import { Logger } from 'im.v2.lib.logger';
 import { InitManager } from 'im.v2.lib.init';
 import { Layout, type LayoutType } from 'im.v2.const';
-import { CallManager } from 'im.v2.lib.call';
 import { ThemeManager } from 'im.v2.lib.theme';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { LayoutManager } from 'im.v2.lib.layout';
 
 import { LayoutComponentMap } from './config/component-map';
+import { DesktopOverlay } from './components/desktop-overlay';
 
 import './css/messenger.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelLayout } from 'im.v2.model';
 
 // @vue/component
 export const Messenger = {
 	name: 'MessengerRoot',
-	components: { OpenlinesContent },
+	components: { OpenlinesContent, DesktopOverlay },
 	data(): JsonObject
 	{
 		return {
@@ -93,10 +95,12 @@ export const Messenger = {
 	},
 	created()
 	{
-		InitManager.start();
+		InitManager.init();
 		// emit again because external code expects to receive it after the messenger is opened (not via quick-access).
 		CounterManager.getInstance().emitCounters();
-		LayoutManager.init();
+
+		LayoutManager.getInstance().bindEvents({ emitter: this.getEmitter() });
+		BulkActionsManager.getInstance().bindEvents({ emitter: this.getEmitter() });
 
 		Logger.warn('MessengerRoot created');
 
@@ -104,7 +108,10 @@ export const Messenger = {
 	},
 	mounted()
 	{
-		EscManager.getInstance().register();
+		EscManager.getInstance().register({
+			messengerContainer: this.$refs.container,
+			context: { emitter: this.getEmitter() },
+		});
 	},
 	beforeUnmount()
 	{
@@ -121,10 +128,13 @@ export const Messenger = {
 		{
 			return LayoutManager.getInstance();
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 	},
-	// Do not remove tabindex, we need it to handle ESC.
 	template: `
-		<div class="bx-im-messenger__scope bx-im-messenger__container" :class="containerClasses">
+		<div class="bx-im-messenger__scope bx-im-messenger__container --ui-context-content-light" :class="containerClasses" ref="container">
 			<div class="bx-im-messenger__layout_container">
 				<div class="bx-im-messenger__layout_content">
 					<div v-if="hasListComponent" class="bx-im-messenger__list_container">
@@ -141,5 +151,6 @@ export const Messenger = {
 				</div>
 			</div>
 		</div>
+		<DesktopOverlay />
 	`,
 };

@@ -4,15 +4,12 @@ import type { ImModelUser } from 'im.v2.model';
 
 // @vue/component
 export const ReactionUser = {
+	name: 'ReactionUser',
 	components: { ChatAvatar },
 	props:
 	{
 		userId: {
 			type: Number,
-			required: true,
-		},
-		contextDialogId: {
-			type: String,
 			required: true,
 		},
 	},
@@ -39,7 +36,6 @@ export const ReactionUser = {
 		<div class="bx-im-reaction-list__user_avatar">
 			<ChatAvatar 
 				:avatarDialogId="userId" 
-				:contextDialogId="contextDialogId" 
 				:size="AvatarSize.XS" 
 				:withAvatarLetters="false"
 				:withTooltip="false"

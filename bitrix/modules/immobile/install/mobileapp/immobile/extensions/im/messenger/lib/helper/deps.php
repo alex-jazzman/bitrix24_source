@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'utils/url',
 		'assets/icons',
 		'device/connection',
 		'im:messenger/const',
@@ -27,5 +28,6 @@ return [
 		'./src/url',
 		'./src/entity-selector',
 		'./src/counter',
+		'./src/sticker',
 	],
 ];

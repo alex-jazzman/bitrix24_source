@@ -22,5 +22,6 @@ return [
 		'./src/user',
 		'./src/openlines',
 		'./src/copilot',
+		'./src/onboarding',
 	],
 ];

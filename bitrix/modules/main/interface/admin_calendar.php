@@ -79,33 +79,28 @@ class CAdminCalendar
 	{
 		\Bitrix\Main\UI\Extension::load('ui.date-picker');
 
+		$onclick = '
+			if (!this.picker)
+			{
+				const input = this.previousElementSibling;
+				this.picker = new BX.UI.DatePicker.DatePicker({
+					targetNode: input,
+					inputField: input,
+					enableTime: '.($bTime ? "true" : "false").',
+					useInputEvents: false,
+				});
+			}
+
+			this.picker.show();
+		';
+
+		$onclick = str_replace(["\n", "\t"], '', $onclick);
+
 		// component can't set 'size' param
 		return '
 	<div class="adm-input-wrap adm-input-wrap-calendar">
 		<input class="adm-input adm-input-calendar" type="text" name="'.$sFieldName.'" size="'.(intval($size)+3).'" value="'.htmlspecialcharsbx($sValue).'">
-		<button type="button" class="adm-calendar-icon" title="'.GetMessage("admin_lib_calend_title").'"></button>
-		<script>
-			(function() {
-				const input = document.querySelector(`input[name="' . $sFieldName . '"]`);
-				const button = input.nextElementSibling;
-				let picker = null;
-				const getPicker = () => {
-					if (picker === null)
-					{
-						picker = new BX.UI.DatePicker.DatePicker({
-							targetNode: input,
-							inputField: input,
-							enableTime: '.($bTime ? "true" : "false").',
-							useInputEvents: false,
-						});
-					}
-
-					return picker;
-				};
-
-				BX.Event.bind(button, "click", () => getPicker().show());
-			})();
-		</script>
+		<button type="button" class="adm-calendar-icon" onclick="' . $onclick . '" title="'.GetMessage("admin_lib_calend_title").'"></button>
 	</div>';
 
 	}
@@ -207,57 +202,34 @@ class CAdminCalendar
 			$s .='</select></span>';
 		}
 
+		$onclick = '
+			if (!this.picker)
+			{
+				const input = this.previousElementSibling;
+				this.picker = new BX.UI.DatePicker.DatePicker({
+					targetNode: input,
+					inputField: input,
+					enableTime: '.($bTime ? "true" : "false").',
+					useInputEvents: false,
+				});
+			}
+
+			this.picker.show();
+		';
+
+		$onclick = str_replace(["\n", "\t"], '', $onclick);
+
 		$s .=
 			'<div class="adm-input-wrap adm-calendar-inp adm-calendar-first" style="display: ' .($bSelectShow ? 'none' : 'inline-block').';">'.
 			'<input type="text" class="adm-input adm-calendar-from" id="'.$sFromName.'_calendar_from" name="'.$sFromName.'" size="'.($size+5).'" value="'.htmlspecialcharsbx($sFromVal).'">'.
-			'<button type="button" class="adm-calendar-icon" title="'.GetMessage("admin_lib_calend_title").'"></button>'.
+			'<button type="button" class="adm-calendar-icon" onclick="' . $onclick . '" title="'.GetMessage("admin_lib_calend_title").'"></button>'.
 		'</div>
 		<span class="adm-calendar-separate" style="display: '.($bSelectShow ? 'none' : 'inline-block').'"></span>'.
 		'<div class="adm-input-wrap adm-calendar-second" style="display: '.($bSelectShow ? 'none' : 'inline-block').';">'.
 			'<input type="text" class="adm-input adm-calendar-to" id="'.$sToName.'_calendar_to" name="'.$sToName.'" size="'.($size+5).'" value="'.htmlspecialcharsbx($sToVal).'">'.
-			'<button type="button" class="adm-calendar-icon" title="'.GetMessage("admin_lib_calend_title").'"></button>'.
+			'<button type="button" class="adm-calendar-icon" onclick="' . $onclick . '" title="'.GetMessage("admin_lib_calend_title").'"></button>'.
 		'</div>'.
 		'<script>
-			(function() {
-				const inputFrom = document.getElementById("' . $sFromName . '_calendar_from");
-				const buttonFrom = inputFrom.nextElementSibling;
-				const inputTo = document.getElementById("' . $sToName . '_calendar_to");
-				const buttonTo = inputTo.nextElementSibling;
-
-				let pickerFrom = null;
-				let pickerTo = null;
-				const getPickerFrom = () => {
-					if (pickerFrom === null)
-					{
-						pickerFrom = new BX.UI.DatePicker.DatePicker({
-							targetNode: inputFrom,
-							inputField: inputFrom,
-							useInputEvents: false,
-							enableTime: '.($bTime ? "true" : "false").',
-						});
-					}
-
-					return pickerFrom;
-				};
-
-				const getPickerTo = () => {
-					if (pickerTo === null)
-					{
-						pickerTo = new BX.UI.DatePicker.DatePicker({
-							targetNode: inputTo,
-							inputField: inputTo,
-							useInputEvents: false,
-							enableTime: '.($bTime ? "true" : "false").',
-						});
-					}
-
-					return pickerTo;
-				};
-
-				BX.Event.bind(buttonFrom, "click", () => getPickerFrom().show());
-				BX.Event.bind(buttonTo, "click", () => getPickerTo().show());
-			})();
-
 			window["'.$sFromName.'_bTime"] = '.($bTime ? "true" : "false").';';
 
 		if($bSelectShow)

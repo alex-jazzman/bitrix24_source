@@ -3,7 +3,8 @@
  */
 jn.define('settings-v2/controller/push-config', (require, exports, module) => {
 	const { BaseSettingController } = require('settings-v2/controller/base');
-	const { PushConfigKeys } = require('settings-v2/const');
+	const { NotificationsCacheKey } = require('settings-v2/const');
+	const { MessengerDBService } = require('settings-v2/services/db/messenger');
 
 	class PushConfigSettingController extends BaseSettingController
 	{
@@ -27,7 +28,7 @@ jn.define('settings-v2/controller/push-config', (require, exports, module) => {
 
 		async get()
 		{
-			const pushConfig = Application.storage.get(PushConfigKeys.CONFIG);
+			const pushConfig = Application.storage.get(NotificationsCacheKey.pushConfig);
 			const pushConfigItem = pushConfig.find((item) => item.module_id === this.moduleId && item.type === this.pushType);
 
 			return pushConfigItem?.active ?? false;
@@ -66,11 +67,12 @@ jn.define('settings-v2/controller/push-config', (require, exports, module) => {
 
 		setToCache(value)
 		{
-			const pushConfig = Application.storage.get(PushConfigKeys.CONFIG);
+			const pushConfig = Application.storage.get(NotificationsCacheKey.pushConfig);
 			const itemIndex = pushConfig.findIndex((item) => item.module_id === this.moduleId && item.type === this.pushType);
 
 			pushConfig[itemIndex].active = value;
-			Application.storage.set(PushConfigKeys.CONFIG, pushConfig);
+			Application.storage.set(NotificationsCacheKey.pushConfig, pushConfig);
+			(new MessengerDBService()).setNotifyConfig({ pushConfig });
 		}
 	}
 

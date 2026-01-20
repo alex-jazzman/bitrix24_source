@@ -7,7 +7,7 @@ export const QuickAccess = {
 	components: { RecentList },
 	created()
 	{
-		InitManager.start();
+		InitManager.init();
 		Logger.warn('Quick access created');
 	},
 	template: `

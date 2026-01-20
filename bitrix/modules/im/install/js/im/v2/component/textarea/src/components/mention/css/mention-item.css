@@ -2,7 +2,7 @@
 	--im-mention-item__background-color_container: var(--im-color-palette-white-base);
 	--im-mention-item__background-color_hover-container: var(--ui-color-palette-gray-04, #f1f4f6);
 	--im-mention-item__color_name: var(--im-color-palette-black-base);
-	--im-mention-item__color_position: var(--im-color-palette-gray-60);
+	--im-mention-item__color_subtitle: var(--im-color-palette-gray-60);
 	--im-mention-item__color_highlight: var(--im-color-palette-black-solid);
 	--im-mention-item__background-color_highlight: #faf16d;
 }
@@ -45,10 +45,10 @@
 	--im-chat-title__font: var(--im-font-size-md)/17px var(--im-font-family-system);
 }
 
-.bx-im-mention-item__position {
+.bx-im-mention-item__subtitle {
 	font: var(--im-font-size-xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-normal);
-	color: var(--im-mention-item__color_position);
+	color: var(--im-mention-item__color_subtitle);
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
@@ -57,4 +57,13 @@
 .bx-im-mention-item__content-container .--highlight {
 	color: var(--im-mention-item__color_highlight);
 	background-color: var(--im-mention-item__background-color_highlight);
+}
+
+.bx-im-mention-item__all-avatar-container {
+	display: flex;
+	position: relative;
+	background-image: url('./images/all-item-avatar.svg');
+	background-repeat: no-repeat;
+	width: 32px;
+	height: 32px;
 }

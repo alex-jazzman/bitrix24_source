@@ -1,0 +1,10 @@
+.node-settings-rules-dropdown {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	cursor: pointer;
+}
+
+.node-settings-rules-dropdown__value {
+	border-bottom: 1px solid var(--ui-color-palette-gray-70);
+}

@@ -121,11 +121,6 @@ export class Chip
 			classes.push('--trimmable');
 		}
 
-		if (this.#lock)
-		{
-			classes.push('--lock');
-		}
-
 		if (this.#withClear || this.#dropdown)
 		{
 			classes.push('--with-right-icon');

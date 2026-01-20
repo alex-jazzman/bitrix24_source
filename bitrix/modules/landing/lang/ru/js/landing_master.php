@@ -122,8 +122,7 @@ $MESS["LANDING_BLOCKS_ACTIONS_DESIGN_BLOCK_NEW"] = "Новое";
 $MESS["LANDING_PANEL_FEEDBACK_TITLE"] = "Обратная связь";
 $MESS["LANDING_IMAGE_LIBRARY_PANEL_TITLE"] = "Вставить изображение";
 $MESS["LANDING_IMAGE_UNSPLASH_DESCRIPTION"] = "<a href=\"https://unsplash.com/\" rel=\"nofollow\" target=\"_blank\">Unsplash</a> - это сайт для поиска изображений. Перед использованием найденных фото или картинок для вашего сайта, рекомендуем ознакомиться с <a href=\"https://unsplash.com/terms\" rel=\"nofollow\" target=\"_blank\">лицензией и правилами</a> сервиса. ";
-$MESS["LANDING_IMAGE_GOOGLE_DESCRIPTION"] = "Google Images - инструмент для поиска фото и изображений в интернете. При использовании найденных фото или изображений для вашего сайта, вам необходимо указать имя автора и ссылку на источник.
-Битрикс24.Сайты предоставляют только доступ к поиску фото и изображений с помощью Google Images. Мы не имеем никаких прав на сами фото и изображения и не можем гарантировать отсутствие претензий от правообладателя.";
+$MESS["LANDING_IMAGE_GOOGLE_DESCRIPTION"] = "Google Images - инструмент для поиска фото и изображений в интернете. При использовании найденных фото или изображений для вашего сайта, вам необходимо указать имя автора и ссылку на источник. Битрикс24.Сайты предоставляют только доступ к поиску фото и изображений с помощью Google Images. Мы не имеем никаких прав на сами фото и изображения и не можем гарантировать отсутствие претензий от правообладателя.";
 $MESS["LANDING_TITLE_OF_TEXT_NODE"] = "Нажмите, чтобы отредактировать текст";
 $MESS["LANDING_TITLE_OF_IMAGE_NODE"] = "Нажмите, чтобы отредактировать изображение";
 $MESS["LANDING_TITLE_OF_LINK_NODE"] = "Нажмите, чтобы отредактировать кнопку";
@@ -197,9 +196,6 @@ $MESS["LANDING_ICONS_FIELD_BUTTON_REPLACE"] = "Заменить";
 $MESS["LANDING_CONTENT_IMAGE_RECOMMENDED_SIZE"] = "Минимальный размер изображения";
 $MESS["LANDING_CONTENT_IMAGE_RECOMMENDED_WIDTH"] = "Минимальная ширина изображения";
 $MESS["LANDING_CONTENT_IMAGE_RECOMMENDED_HEIGHT"] = "Минимальная высота изображения";
-$MESS["LANDING_CONTENT_URL_LINK"] = "Ссылка";
-$MESS["LANDING_CONTENT_URL_MEDIA_BUTTON"] = "Медиа";
-$MESS["LANDING_CONTENT_URL_MEDIA_FORM_TITLE"] = "Медиа настройки";
 $MESS["LANDING_CONTENT_URL_MEDIA_CAPTIONED"] = "Показывать описание";
 $MESS["LANDING_CONTENT_URL_MEDIA_QUALITY"] = "Качество";
 $MESS["LANDING_CONTENT_URL_MEDIA_QUALITY_AUTO"] = "Автоматически";
@@ -222,24 +218,17 @@ $MESS["LANDING_CONTENT_URL_MEDIA_FB_PAGE_TABS_TIMELINE"] = "Таймлайн";
 $MESS["LANDING_CONTENT_URL_MEDIA_FB_PAGE_TABS_MESSAGES"] = "Сообщения";
 $MESS["LANDING_CONTENT_URL_MEDIA_FB_PAGE_TABS_EVENTS"] = "События";
 $MESS["LANDING_CONTENT_URL_MEDIA_FB_POST_FULL"] = "Показать весь пост";
-
-
 $MESS["LANDING_CONTENT_MEDIA_SECONDS_SHORT"] = "Сек.";
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_DESIGN"] = "Дизайн";
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_AI_TEXT"] = "Создать";
 $MESS["LANDING_BLOCK_DISABLED_ON_DESKTOP_NAME_2"] = "Настроена видимость блока";
-
 $MESS["LANDING_BLOCK_HIDDEN_ON_DESKTOP"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана более чем 1120px";
 $MESS["LANDING_BLOCK_HIDDEN_ON_TABLET"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана менее чем 1120px но&nbsp;более чем 575px";
 $MESS["LANDING_BLOCK_HIDDEN_ON_MOBILE"] = "Скрыт на&nbsp;устройствах с&nbsp;шириной экрана менее чем 575px";
-
 // Don't translate it. For RU only
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_GLAVRED"] = "Главред";
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_GLAVRED_TITLE"] = "Главред помогает очистить текст от словесного мусора, проверяет на соответствие информационному стилю.";
 // ~~~~
-
-$MESS["LANDING_CONTENT_URL_MEDIA_HELP_2"] = "<p>Укажите ссылку на видео с Youtube, RuTube, VK видео или Vimeo, и клик по этой ссылке откроет видео во всплывающем окне.</p>";
-$MESS["LANDING_CONTENT_URL_MEDIA_HELP_TITLE"] = "Медиа-ссылки";
 $MESS["LANDING_BLOCKS_LIST_PREVIEW_NEW"] = "Новый";
 $MESS["LANDING_BLOCKS_LIST_PREVIEW_EXPIRED"] = "Подписка истекла";
 $MESS["LANDING_BLOCKS_LIST_PREVIEW_MARKET_MSGVER_1"] = "Маркетплейс";
@@ -247,23 +236,16 @@ $MESS["LANDING_BLOCKS_LIST_PREVIEW_MARKET_HINT_MSGVER_1"] = "Блок досту
 $MESS["LANDING_BLOCKS_LIST_PREVIEW_DELETE_MSG"] = "Вы уверены, что хотите удалить этот блок?";
 $MESS["LANDING_BLOCKS_LIST_PREVIEW_MY_NEW"] = "Мой";
 $MESS["LANDING_BLOCKS_LIST_PREVIEW_FAVORITE"] = "Сохранённый блок";
-
 $MESS["LANDING_ALERT_ACTION_CLOSE"] = "Закрыть";
 $MESS["LANDING_ALERT_ACTION_SUPPORT_LINK"] = "Написать в поддержку";
 $MESS["LANDING_BLOCK_REQUIRES_UPDATE_MESSAGE"] = "Для добавления блока требуется последняя версия модуля &laquo;Сайты 24&raquo;. Проверьте его актуальность в разделе &laquo;<a href='/bitrix/admin/update_system.php' target='_blank'>Marketplace &rarr; Обновление платформы</a>&raquo;.";
-
-
 // Block error messages
 $MESS["LANDING_ACTION_ERROR__ADD_BLOCK"] = "<strong>Не&nbsp;удалось добавить блок</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;добавить блок заново. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
 $MESS["LANDING_ACTION_ERROR__DELETE_BLOCK"] = "<strong>Не&nbsp;удалось удалить блок</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;удалить блок заново. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
-
 $MESS["LANDING_ACTION_ERROR__CLONE_CARD"] = "<strong>Не&nbsp;удалось добавить карточку</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;добавить карточку заново. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
 $MESS["LANDING_ACTION_ERROR__DELETE_CARD"] = "<strong>Не&nbsp;удалось удалить карточку</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;удалить карточку заново. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
-
-
 // Save changes error messages
 $MESS["LANDING_ACTION_ERROR__SAVE_CHANGES"] = "<strong>Не&nbsp;удалось сохранить изменения</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;повторить действие. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
-
 // Get data error messages
 $MESS["LANDING_ACTION_ERROR__SITE_GET_LIST"] = "<strong>Не&nbsp;удалось получить список сайтов</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;повторить действие. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
 $MESS["LANDING_ACTION_ERROR__SITE_GET_LIST__KNOWLEDGE"] = "<strong>Не&nbsp;удалось получить список баз знаний</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;повторить действие. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
@@ -271,7 +253,6 @@ $MESS["LANDING_ACTION_ERROR__BLOCK_GET_LIST"] = "<strong>Не&nbsp;удалос�
 $MESS["LANDING_ACTION_ERROR__UPLOAD_FILE"] = "<strong>Не&nbsp;удалось загрузить изображение</strong>. Обновите страницу и&nbsp;попробуйте загрузить заново. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
 $MESS["LANDING_ACTION_ERROR__UNKNOWN_ACTION"] = "<strong>Не&nbsp;удалось выполнить действие</strong>, так как произошла внутренняя ошибка. Попробуйте обновить страницу и&nbsp;повторить действие. Если это не&nbsp;решит проблему&nbsp;&mdash; обратитесь в&nbsp;поддержку.";
 $MESS["LANDING_ACTION_ERROR__BAD_IMAGE"] = "<strong>Не&nbsp;удалось загрузить изображение.</strong> <br>Возможно изображение сейчас недоступно для загрузки. Попробуйте загрузить другое изображение.";
-
 $MESS["LANDING_FIELD_CATALOG_CONSTRUCTOR_PLACEHOLDER_TEXT"] = "Перетащите сюда блоки из&nbsp;которых будет состоять каталог";
 $MESS["LANDING_ENTITIES_MENU_EDIT"] = "Настроить";
 $MESS["LANDING_ENTITIES_MENU_PAGES_LIST"] = "Список страниц";
@@ -280,7 +261,6 @@ $MESS["LANDING_MENU_ITEM_FILTER_EMPTY"] = "Ничего не найдено";
 $MESS["LANDING_MENU_ITEM_FILTER"] = "Найти";
 $MESS["LANDING_ENTITIES_MENU_PAGES_EDIT"] = "Редактировать";
 $MESS["LANDING_ENTITIES_MENU_PAGES_SETTINGS"] = "Настроить";
-
 $MESS["ACTION_BUTTON_CONTENT_MORE"] = "Еще";
 $MESS["LANDING_GOOGLE_FONT_PANEL_TITLE"] = "Выбрать шрифт";
 $MESS["LANDING_GOOGLE_FONT_PANEL_LANGUAGE_FORM_TITLE"] = "Язык";
@@ -289,23 +269,19 @@ $MESS["LANDING_GOOGLE_FONT_PANEL_LANGUAGE_LATIN"] = "Латиница";
 $MESS["LANDING_GOOGLE_FONT_PANEL_LANGUAGE_ARABIC"] = "Арабский";
 $MESS["LANDING_GOOGLE_FONT_PANEL_LANGUAGE_HEBREW"] = "Иврит";
 $MESS["LANDING_GOOGLE_FONT_PANEL_LANGUAGE_KOREAN"] = "Корейский";
-
 $MESS["LANDING_GOOGLE_FONT_SEARCH_TITLE"] = "Поиск";
 $MESS["LANDING_GOOGLE_FONT_SEARCH_PLACEHOLDER"] = "название шрифта";
-
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_FORM_TITLE"] = "Категория";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_SANS_SERIF_2"] = "Без засечек";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_SERIF_2"] = "С засечками";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_DISPLAY"] = "Декоративный";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_HANDWRITING"] = "Рукописный";
 $MESS["LANDING_GOOGLE_FONT_PANEL_CATEGORY_MONOSPACE"] = "Моноширный";
-
 $MESS["LANDING_GOOGLE_FONT_SELECT_BUTTON"] = "Выбрать";
 $MESS["LANDING_GOOGLE_IMAGES_KEY_PANEL_TITLE"] = "Укажите ключ для Google Images";
 $MESS["LANDING_GOOGLE_IMAGES_KEY_FIELD_TITLE"] = "Ключ Google Custom Search API";
 $MESS["LANDING_GOOGLE_IMAGES_CHANGE_KEY_BUTTON"] = "Изменить ключ";
 $MESS["LANDING_GOOGLE_IMAGES_GET_KEY_GUIDE"] = "Для получения ключа перейдите по <a href=\"https://developers.google.com/custom-search/json-api/v1/introduction\" target='_blank'>ссылке</a>, нажмите кнопку &laquo;Get&nbsp;a&nbsp;key&raquo; и следуйте инструкциям.";
-
 $MESS["LANDING_BLOCK_RESTRICTED_TEXT2"] = "Сейчас вы видите только внешний вид блока. Оценить все его функции можно будет после публикации страницы";
 $MESS["LANDING_BLOCK_RESTRICTED_TEXT_MAINPAGE"] = "Сейчас вы видите только внешний вид виджета. Оценить все его функции можно будет после публикации страницы";
 $MESS["LANDING_LINK_FIELD_URL_TYPE_LINK"] = "Ссылка";
@@ -349,7 +325,6 @@ $MESS["LANDING_NODE_MAP_FORM_DESCRIPTION"] = "Описание";
 $MESS["LANDING_NODE_MAP_FORM_SHOW_BY_DEFAULT"] = "Открывать по умолчанию";
 $MESS["LANDING_NODE_MAP_FORM_SHOW_BUTTON_APPLY"] = "Готово";
 $MESS["LANDING_NODE_MAP_FORM_SHOW_BUTTON_REMOVE"] = "Удалить";
-
 $MESS["LANDING_IMAGE_EDITOR_RECOMMENDED_RATIOS"] = "Рекомендуемые размеры";
 $MESS["LANDING_IMAGE_EDITOR_TRANSFORM_DEFAULT"] = "По умолч.";
 $MESS["LANDING_IMAGE_EDITOR_TRANSFORM_DEFAULT_RETINA"] = "По умолч. 2x";
@@ -360,16 +335,12 @@ $MESS["LANDING_LINK_FILED__EDIT_PAGE_LINK_LABEL"] = "Редактировать 
 $MESS["LANDING_LINK_FILED__EDIT_BLOCK_LINK_LABEL"] = "Редактировать блок";
 $MESS["LANDING_LINK_FILED__EDIT_LINK_LABEL"] = "Редактировать страницу";
 $MESS["LANDING_LINK_FILED__EDIT_LINK_TITLE"] = "Откроется в новой вкладке";
-
 $MESS["LANDING_PAGE_STATUS_UPDATED"] = "Обновлено";
 $MESS["LANDING_PAGE_STATUS_UPDATED_NOW"] = "Обновлено сейчас";
-
 $MESS['LANDING_DOMAIN_LIMIT_LENGTH'] = 'Превышена длина имени домена';
-
 $MESS['LANDING_DOMAIN_EXIST'] = 'Такой домен уже существует';
 $MESS['LANDING_DOMAIN_EXIST2'] = 'Домен уже существует и привязан к сайту, который находится в корзине. Отвяжите сайт от домена и повторите попытку.';
 $MESS['LANDING_DOMAIN_EXIST2__KNOWLEDGE'] = 'Домен уже существует и привязан к базе знаний, который находится в корзине. Отвяжите базу знаний от домена и повторите попытку.';
-
 $MESS['LANDING_DOMAIN_INCORRECT'] = 'Адрес сайта введен неверно. Вы можете использовать только следующие символы "a-z", "A-Z", "0-9" и "_"';
 $MESS['LANDING_DOMAIN_INCORRECT__KNOWLEDGE'] = 'Адрес базы знаний введен неверно. Вы можете использовать только следующие символы "a-z", "A-Z", "0-9" и "_"';
 $MESS['LANDING_CARDS__MAKE_A_DYNAMIC'] = 'Динамические';
@@ -398,7 +369,6 @@ $MESS['LANDING_CREATE_PAGE_PANEL_FIELD_PAGE_TITLE'] = 'Заголовок стр
 $MESS['LANDING_CREATE_PAGE_PANEL_FIELD_PAGE_CODE'] = 'Код страницы';
 $MESS['LANDING_CREATE_PAGE_PANEL_SUCCESS_MESSAGE_TITLE'] = 'Страница создана';
 $MESS['LANDING_CREATE_PAGE_PANEL_FAIL_MESSAGE_TITLE'] = 'Не удалось создать страницу';
-
 $MESS['LANDING_SAVE_BLOCK_PANEL_TITLE_MSGVER_1'] = 'Сохранить в список блоков';
 $MESS['LANDING_SAVE_BLOCK_PANEL_FAIL_MESSAGE_TITLE'] = 'Не удалось сохранить блок';
 $MESS['LANDING_SAVE_BLOCK_PANEL_SUCCESS_MESSAGE_TITLE'] = 'Блок успешно сохранен';
@@ -409,8 +379,6 @@ $MESS['LANDING_SAVE_BLOCK_PANEL_FIELD_SECTIONS'] = 'Разделы для бло
 $MESS['LANDING_SAVE_BLOCK_PANEL_FIELD_TEMPLATE_REF'] = 'Привязать к текущему стилю';
 $MESS['LANDING_SAVE_BLOCK_PANEL_FIELD_PREVIEW'] = 'Превью блока';
 $MESS['LANDING_SAVE_BLOCK_PANEL_SUCCESS'] = 'Блок успешно сохранен.';
-
-
 $MESS['LANDING_BLOCK__DETAIL_PAGE_PANEL_TITLE'] = 'Детальная страница';
 $MESS['LANDING_BLOCK__DETAIL_PAGE_PANEL_TEMPLATES'] = 'Готовые решения';
 $MESS['LANDING_BLOCK__DETAIL_PAGE_PANEL_ADD_PAGE_BUTTON'] = 'Создать страницу';
@@ -420,29 +388,22 @@ $MESS['LANDING_LINK_PLACEHOLDER_NEW_PAGE'] = 'Новая страница';
 $MESS['LANDING_LINK_NEW_PAGE_LABEL'] = 'НОВАЯ';
 $MESS['LANDING_LINK_NEW_PAGE_SAVE_BUTTON_LABEL'] = 'Создать';
 $MESS['LANDING_LINK_NEW_PAGE_CANCEL_BUTTON_LABEL'] = 'Отменить';
-
-$MESS['LANDING_EMBED_BG_FIELD_DESCRIPTION'] = 'Допускаются только полные или короткие ссылки на видео с&nbsp;сервисов Youtube и VK видео';
-$MESS['LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION'] = 'Допускаются только полные или короткие ссылки на видео с&nbsp;сервисов Youtube, VK видео, RuTube или Vimeo';
+$MESS['LANDING_EMBED_BG_FIELD_DESCRIPTION_MSGVER_1'] = 'Используйте только полные или короткие ссылки на видео с&nbsp;сервисов Youtube и VK видео';
+$MESS['LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_MSGVER_1'] = 'Используйте только полные или короткие ссылки на видео с&nbsp;сервисов Youtube, VK видео, RuTube или Vimeo';
 $MESS['LANDING_EMBED_FIELD_PLACEHOLDER'] = 'Ссылка на видео';
 $MESS['LANDING_EMBED_ERROR_TEXT'] = 'Укажите ссылку на страницу с видео. Код и другие способы вставки не поддерживаются.';
 $MESS['LANDING_EMBED_ERROR_WRONG_SOURCE_TEXT_ALL'] = 'Некорректная ссылка';
-
 $MESS['LANDING_SHOW_FORM_EDITOR'] = 'Настроить форму';
-
 $MESS['LANDING_DESIGN_BLOCK_REPO_BUTTON'] = 'Добавить элемент';
 $MESS['LANDING_DESIGN_BLOCK_REPO_TITLE'] = 'Добавить элемент';
-
 $MESS['LANDING_EDIT_BLOCK_DEFAULT_FONT'] = 'Вернуть шрифт по умолчанию';
-
 $MESS['LANDING_EDIT_NEED_PUBLICATION'] = 'Изменения в настройке вступят в силу сразу после публикации сайта';
-
 $MESS['LANDING_DROPDOWN_NOT_FILLED'] = 'Не выбрано';
 $MESS['LANDING_FORM_EDITOR_ADD_BLOCK_TOUR_STEP_1_TITLE'] = 'Добавление блоков';
 $MESS['LANDING_FORM_EDITOR_ADD_BLOCK_TOUR_STEP_1_TEXT'] = 'Сохраните изменения и закройте редактор, чтобы добавить блоки';
 $MESS['LANDING_FORM_EDITOR_FORM_DESIGN_TOUR_STEP_1_TITLE'] = 'Настройка дизайна';
 $MESS['LANDING_FORM_EDITOR_FORM_DESIGN_TOUR_STEP_1_TEXT'] = 'Сохраните изменения и закройте редактор, чтобы настроить дизайн';
 $MESS['LANDING_FORM_DESIGN_BUTTON'] = 'Настроить дизайн';
-
 // Table editor
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_CREATE_TABLE"] = "Создать таблицу";
 $MESS["LANDING_TITLE_OF_EDITOR_ACTION_PASTE_TABLE"] = "Вставить таблицу";
@@ -473,7 +434,6 @@ $MESS["LANDING_TABLE_RESIZE_COLS"] = "Потяните для изменения
 $MESS["LANDING_TABLE_SELECT_TABLE"] = "Выбрать всю таблицу";
 $MESS['LANDING_FONTS_PANEL_MORE_BUTTON_LABEL'] = 'Загрузить еще';
 $MESS['LANDING_FONTS_PANEL_EMPTY_STUB'] = 'Шрифты не найдены...';
-
 //link control phrases
 //actions
 $MESS["LANDING_LINK_URL_ACTION_SELECT"] = "Выберите действие";
@@ -491,7 +451,6 @@ $MESS["LANDING_LINK_URL_ACTION_USER"] = "Открыть профиль в Бит
 $MESS["LANDING_LINK_URL_DELETE_ACTION"] = "Не указывать ссылку";
 $MESS["LANDING_LINK_URL_ACTION_SELECT_CATALOG"] = "Выбрать папку";
 $MESS["LANDING_LINK_URL_ACTION_SELECT_PAGE"] = "Выбрать страницу";
-
 $MESS["LANDING_LINK_URL_TITLE_PAGE"] = "Клиент откроет страницу";
 $MESS["LANDING_LINK_URL_TITLE_BLOCK"] = "Клиент откроет блок";
 $MESS["LANDING_LINK_URL_TITLE_CRM_FORM"] = "Клиент откроет CRM-форму";
@@ -503,7 +462,6 @@ $MESS["LANDING_LINK_URL_TITLE_MAILTO"] = "Клиент отправит пись
 $MESS["LANDING_LINK_URL_TITLE_LINK"] = "Клиент откроет страницу";
 $MESS["LANDING_LINK_URL_TITLE_FILE"] = "Пользователь скачает файл";
 $MESS["LANDING_LINK_URL_TITLE_USER"] = "Откроется профиль пользователя Битрикс24";
-
 $MESS["LANDING_LINK_URL_BUTTON_PAGE"] = "Выберите страницу для перехода";
 $MESS["LANDING_LINK_URL_BUTTON_PAGE_SHORT"] = "Страницы сайта";
 $MESS["LANDING_LINK_URL_BUTTON_BLOCK"] = "Выберите блок для перехода";
@@ -512,20 +470,16 @@ $MESS["LANDING_LINK_URL_BUTTON_FILE"] = "Выберите файл";
 $MESS["LANDING_LINK_URL_BUTTON_USER"] = "Выберите пользователя";
 $MESS["LANDING_LINK_URL_BUTTON_PRODUCT"] = "Выберите товар";
 $MESS["LANDING_LINK_URL_BUTTON_CATALOG"] = "Каталог товаров";
-
 //placeholder
 $MESS["LANDING_LINK_URL_PLACEHOLDER_PHONE"] = "Выберите или введите номер телефона";
 $MESS["LANDING_LINK_URL_PLACEHOLDER_EMAIL"] = "Введите e-mail";
 $MESS["LANDING_LINK_URL_PLACEHOLDER_SKYPE"] = "Введите логин Skype";
 $MESS["LANDING_LINK_URL_PLACEHOLDER_URL"] = "Введите url";
-
 $MESS["LANDING_TITLE_WIDGET_EDIT_BUTTON_DISABLE_HINT_EMPTY"] = "В этом виджете нет данных, которые можно отредактировать";
 $MESS["LANDING_TITLE_BLOCK_EDIT_BUTTON_DISABLE_HINT_EMPTY"] = "В этом блоке нет данных, которые можно отредактировать";
 $MESS["LANDING_TITLE_WIDGET_EDIT_BUTTON_DISABLE_HINT_DEMO_DATA"] = "Отключите режим показа демо-данных, чтобы отредактировать виджет";
 $MESS["LANDING_TITLE_BLOCK_EDIT_BUTTON_DISABLE_HINT_DEMO_DATA"] = "Отключите режим показа демо-данных, чтобы отредактировать блок";
-
 $MESS["LANDING_SOURCEFIELD_LINK_TEXT"] = "Открыть группу";
-
 //section favourite empty state
 $MESS["LANDING_SECTION_FAVOURITE_EMPTY_STATE_TITLE"] = "Избранных блоков пока нет";
 $MESS["LANDING_SECTION_FAVOURITE_EMPTY_STATE_TEXT"] = "Добавьте блоки в избранное, чтобы они появились в этом разделе";

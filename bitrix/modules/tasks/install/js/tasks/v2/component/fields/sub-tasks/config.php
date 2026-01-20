@@ -9,14 +9,16 @@ return [
 	'js' => 'dist/sub-tasks.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.icon-set.api.core',
+		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
 		'tasks.v2.const',
-		'tasks.v2.lib.relation-tasks-dialog',
 		'tasks.v2.provider.service.relation-service',
+		'tasks.v2.core',
 		'ui.vue3.directives.hint',
 		'tasks.v2.component.elements.hint',
 		'tasks.v2.component.fields.relation-tasks',
+		'tasks.v2.lib.field-highlighter',
+		'tasks.v2.lib.relation-tasks-dialog',
 	],
 	'skip_core' => false,
 ];

@@ -38,6 +38,5 @@ $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR"] = "бақыламау";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM"] = "Бақылаушылар қатарынан шыққанда міндетті қарау құқығынан айрылуыңыз мүмкін. Бақылаушылар қатарынан шығу керек пе?";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1"] = "бақыламау";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR"] = "Қоюшы";
-$MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE"] = "Жауапты";
 $MESS["TASK_RESULT_SIDEBAR_HINT"] = "Жұмыс туралы есеп қажет";
 $MESS["TASK_RESULT_SIDEBAR_HINT_MSGVER_1"] = "Жұмыс туралы есеп қажет";

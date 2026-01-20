@@ -8,9 +8,12 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/helper',
+		'im:messenger/lib/feature',
 		'im:messenger/const',
 		'im:messenger/lib/params',
+		'im:messenger/lib/reaction-assets-manager',
 		'im:messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter',
+		'utils/url',
 	],
 	'bundle' => [
 		'./src/model',

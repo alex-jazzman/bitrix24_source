@@ -222,8 +222,13 @@ ServiceLocator::getInstance()->addInstanceLazy('disk.scopeTokenService', [
 	'constructor' => static function() {
 		$quickAccessConfiguration = new QuickAccess\Configuration();
 		$storageFactory = QuickAccess\Storage\StorageFactory::create($quickAccessConfiguration->getTokenStorage());
+		$fileInfoProviderFactory = new QuickAccess\FileInfo\ProviderFactory();
+		$fileInfoProviderFactory->register(QuickAccess\FileInfo\DiskProvider::class);
+		$fileInfoProviderFactory->register(QuickAccess\FileInfo\MainProvider::class);
+
 		return new QuickAccess\ScopeTokenService(
 			$storageFactory,
+			$fileInfoProviderFactory,
 			Bitrix\Main\Context::getCurrent()?->getRequest(),
 			Bitrix\Main\Context::getCurrent()?->getResponse(),
 			$quickAccessConfiguration->getKey(),

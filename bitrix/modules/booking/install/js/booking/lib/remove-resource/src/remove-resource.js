@@ -7,8 +7,6 @@ import { resourceService } from 'booking.provider.service.resources-service';
 
 import { RemoveConfirmation } from './remove-confirmation';
 
-import './remove-resource.css';
-
 const secondsToDelete = 5;
 
 export class RemoveResource
@@ -35,7 +33,7 @@ export class RemoveResource
 
 		if (hasFutureBookings)
 		{
-			const shouldMoveFutureBookings = await RemoveConfirmation.confirmMoveFutureBooking();
+			const shouldMoveFutureBookings = await RemoveConfirmation.confirmMoveFutureBooking(this.#resourceId);
 			if (shouldMoveFutureBookings)
 			{
 				await Core.getStore().dispatch(`${Model.Filter}/setDeletingResourceFilter`, {
@@ -51,7 +49,7 @@ export class RemoveResource
 			return;
 		}
 
-		const isDeletionConfirmed = await RemoveConfirmation.confirmDelete();
+		const isDeletionConfirmed = await RemoveConfirmation.confirmDelete(this.#resourceId);
 		if (isDeletionConfirmed)
 		{
 			this.#runCancellableDeletion();

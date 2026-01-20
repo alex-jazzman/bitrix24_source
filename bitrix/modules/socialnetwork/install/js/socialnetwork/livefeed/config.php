@@ -11,6 +11,11 @@ use Bitrix\Main\Localization\Loc;
 
 Loader::includeModule('socialnetwork');
 
+$isV2Form = \Bitrix\Main\Loader::includeModule('tasks')
+	&& class_exists(\Bitrix\Tasks\V2\FormV2Feature::class)
+	&& \Bitrix\Tasks\V2\FormV2Feature::isOn()
+;
+
 $langAdditional = [
 	'SONET_EXT_LIVEFEED_MENU_TITLE_FAVORITES_Y' => Loc::getMessage('SONET_EXT_LIVEFEED_MENU_TITLE_FAVORITES_Y'),
 	'SONET_EXT_LIVEFEED_MENU_TITLE_FAVORITES_N' => Loc::getMessage('SONET_EXT_LIVEFEED_MENU_TITLE_FAVORITES_N'),
@@ -20,6 +25,7 @@ $langAdditional = [
 	'SONET_EXT_LIVEFEED_INTRANET_INSTALLED' => (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet') ? 'Y' : 'N'),
 	'SONET_EXT_LIVEFEED_AJAX_ENTITY_HEADER_NAME' => Token::getEntityHeader(),
 	'SONET_EXT_LIVEFEED_AJAX_TOKEN_HEADER_NAME' => Token::getTokenHeader(),
+	'SONET_EXT_LIVEFEED_isV2Form' => $isV2Form ? 'Y' : 'N',
 ];
 
 return [

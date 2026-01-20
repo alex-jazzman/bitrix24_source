@@ -50,3 +50,4 @@ $MESS["TOP_MENU_SIGN_MSGVER_1"] = "Подпись";
 $MESS["TOP_MENU_SPACES"] = "Пространства";
 $MESS["TOP_MENU_BICONNECTOR_CONSTRUCTOR"] = "BI Конструктор";
 $MESS["TOP_MENU_BOOKING"] = "Онлайн-запись";
+$MESS["TOP_MENU_AI_AGENTS"] = "AI-агенты";

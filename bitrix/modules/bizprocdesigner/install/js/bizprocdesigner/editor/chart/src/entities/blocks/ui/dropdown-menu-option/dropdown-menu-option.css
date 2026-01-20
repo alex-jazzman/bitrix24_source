@@ -1,0 +1,79 @@
+.editor-chart-dropdown-menu-option {
+	position: relative;
+	padding: 10px 10px 10px 10px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background 0.2s;
+	border: 1px solid transparent;
+	display: flex;
+	align-items: center;
+	margin-bottom: 4px;
+}
+
+.editor-chart-dropdown-menu-option.--selected {
+	border: 1px solid var(--ui-color-accent-main-primary-alt);
+}
+
+.editor-chart-dropdown-menu-option:hover {
+	background: rgba(0, 0, 0, 0.03);
+}
+
+.editor-chart-dropdown-menu-option__content {
+	display: flex;
+	justify-content: space-between;
+	flex: 0 0 82%;
+	flex-direction: column;
+	width: 100%;
+}
+
+.editor-chart-dropdown-menu-option__title {
+	display: -webkit-box;
+	margin-bottom: 9px;
+	font-size: 14px;
+	letter-spacing: .3px;
+	color: var(--ui-color-base-1);
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-dropdown-menu-option__description {
+	display: -webkit-box;
+	max-width: 280px;
+	font-size: 12px;
+	color: var(--ui-color-base-4);
+	letter-spacing: .3px;
+	line-height: 15px;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-dropdown-menu-option__icon {
+	position: relative;
+	flex: 0 0 18%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.editor-chart-dropdown-menu-option__not-released-badge {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	display: inline-block;
+	height: 18px;
+	padding: 1px 8px;
+	margin: auto;
+	border: 1px solid var(--ui-color-palette-white-base);
+	border-radius: 18px;
+	background-color: var(--ui-color-accent-soft-blue-2, rgba(230, 244, 255, 1));
+	font-size: var(--ui-font-size-sm);
+	line-height: 13px;
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-accent-extra-darkblue);
+	text-align: center;
+	box-sizing: border-box;
+}

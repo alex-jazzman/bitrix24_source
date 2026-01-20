@@ -1,0 +1,56 @@
+.tasks-template-history-grid-container {
+	padding: var(--ui-space-inset-lg2);
+}
+
+.tasks-template-history-grid-header {
+	margin-bottom: var(--ui-space-stack-xl2);
+}
+
+.tasks-template-history-grid-main-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tasks-field-replication-message {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tasks-field-replication-sheet__error-hint-container {
+	display: grid;
+	font-weight: var(--ui-font-weight-light);
+}
+
+.tasks-field-replication-message .ui-icon-set {
+	margin-top: -4px;
+}
+
+.tasks-field-replication-sheet__error-hint__error-link-container {
+	margin-top: 12px;
+}
+
+.tasks-field-replication-sheet__error-hint__error-link-container a {
+	border-bottom: 1px dashed;
+	color: inherit;
+}
+
+.tasks-template-history-grid-loader-spinner {
+	width: var(--ui-size-8xl);
+	height: var(--ui-size-8xl);
+	border: 3px solid var(--ui-color-base-5);
+	border-bottom-color: transparent;
+	border-radius: 50%;
+	display: inline-block;
+	box-sizing: border-box;
+	animation: template-history-grid-spinner-loader-animation 1s linear infinite;
+}
+
+@keyframes template-history-grid-spinner-loader-animation {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}

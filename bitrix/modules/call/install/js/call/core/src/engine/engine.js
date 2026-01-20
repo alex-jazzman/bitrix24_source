@@ -10,6 +10,7 @@ import {AbstractCall} from './abstract_call';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import {CallAI} from '../call_ai';
 import { CallMultiChannel } from '../call_multi_channel';
+import { CallCloudRecord } from '../call_common_record';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 
 export const CallState = {
@@ -118,7 +119,7 @@ export const CallEvent = {
 	onNeedResetMediaDevicesState: 'onNeedResetMediaDevicesState',
 	onUserVideoPaused: 'onUserVideoPaused',
 	onUserScreenState: 'onUserScreenState',
-	onUserRecordState: 'onUserRecordState',
+	onUserCommonRecordState: 'onUserCommonRecordState',
 	onUserVoiceStarted: 'onUserVoiceStarted',
 	onUserVoiceStopped: 'onUserVoiceStopped',
 	onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak
@@ -164,6 +165,7 @@ export const CallEvent = {
 	onToggleRemoteParticipantVideo: 'onToggleRemoteParticipantVideo',
 	onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
 	onRecorderStatusChanged: 'onRecorderStatusChanged',
+	onCloudRecordStatusChanged: 'onCloudRecordStatusChanged',
 };
 
 const ajaxActions = {
@@ -369,6 +371,7 @@ class Engine
 				connectionData: {
 					mediaServerUrl: data.result.mediaServerUrl,
 					roomData: data.result.roomData,
+					roomType: data.result.roomType,
 				},
 				scheme: data.result.scheme,
 			});
@@ -432,6 +435,7 @@ class Engine
 								connectionData: {
 									mediaServerUrl: data.result.mediaServerUrl,
 									roomData: data.result.roomData,
+									roomType: data.result.roomType,
 								},
 								debug: config.debug,
 								scheme: data.result.scheme,
@@ -578,13 +582,14 @@ class Engine
 				return;
 			}
 
-			if (!this.finishedCalls.has(callUuid) && command === 'Call::usersInvited')
+			if (call && !this.#callHasAssociatedEntity(call) && command === 'Call::usersInvited' && !this.finishedCalls.has(callUuid))
 			{
-				call.addDialogInfo({
-					userCounter: Object.keys(params.userData).length,
-					...params.call.ASSOCIATED_ENTITY,
-				});
+				call.addDialogInfo(params.call.ASSOCIATED_ENTITY);
 				this.onCallCreated(call);
+			}
+			else if (!call && command === 'Call::usersInvited' && !this.finishedCalls.has(callUuid))
+			{
+				call = this.instantiateCall(params.call, params.callToken, params.logToken, params.userData);
 			}
 
 			if (call)
@@ -592,7 +597,7 @@ class Engine
 				call.__onPullEvent(command, params, extra);
 			}
 		}
-	};
+	}
 
 	async #onPullIncomingCall(params, extra)
 	{
@@ -625,7 +630,7 @@ class Engine
 		{
 			call = this.calls[callUuid];
 
-			if (!Object.keys(call.associatedEntity).length)
+			if (!this.#callHasAssociatedEntity(call))
 			{
 				call.addDialogInfo(callFields.associatedEntity);
 
@@ -751,6 +756,11 @@ class Engine
 
 		throw new Error("Unknown call provider type " + providerType);
 	};
+
+	#callHasAssociatedEntity(call: AbstractCall): boolean
+	{
+		return Type.isObject(call?.associatedEntity) && Object.keys(call.associatedEntity).length > 0;
+	}
 
 	debug(debugFlag: boolean = true): boolean
 	{

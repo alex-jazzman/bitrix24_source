@@ -105,17 +105,18 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 
 			item.setTitle(title);
 			item.setIsNew(false);
+			const skipSaving = isFocused && !title;
 
-			this.handleOnChange();
+			this.handleOnChange(!skipSaving);
 		}
 
-		handleOnChange()
+		handleOnChange(shouldSave)
 		{
 			const { onChange } = this.props;
 
 			if (onChange)
 			{
-				onChange();
+				onChange(shouldSave);
 			}
 		}
 

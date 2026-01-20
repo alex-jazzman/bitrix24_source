@@ -16,7 +16,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
 	const {
 		Path,
 		MessageStatus,
@@ -33,8 +33,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
 	const {
+		CounterPrefix,
 		CounterValue,
 		CounterPostfix,
+		CounterSuffix,
 	} = require('im/messenger/lib/element/recent/const/test-id');
 	const { parser } = require('im/messenger/lib/parser');
 
@@ -244,12 +246,13 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				return this;
 			}
 
-			const { text: draftText } = this.getDraftModel();
+			let { text: draftText } = this.getDraftModel();
 			const draftPrefix = (text) => {
 				return Feature.isChatDialogListSupportsSubtitleBbCodes
 					? `[COLOR=${Color.accentMainAlert.toHex()}]${text}[/COLOR]`
 					: text;
 			};
+			draftText = parser.simplify({ text: draftText });
 
 			this.subtitle = `${draftPrefix(Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DRAFT_SUBTITLE_PREFIX'))} ${draftText}`.trim();
 			this.styles.subtitle = {
@@ -724,9 +727,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				return this;
 			}
 
-			const prefix = 'chatListElement';
+			const prefix = CounterPrefix.listItemCounter;
 			const dialogId = this.getModelItem().id;
-			const suffix = 'messages';
+			const suffix = CounterSuffix.messages;
 			const value = this.messageCount > 0 ? this.messageCount : CounterValue.unread;
 			const postfix = this.isMute ? CounterPostfix.muted : CounterPostfix.unmuted;
 
@@ -835,12 +838,12 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			if (id)
 			{
 				const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
-
 				messageText = parser.simplify({
 					text: modelMessage.text,
 					attach: modelMessage?.params?.ATTACH ?? false,
 					files: messageFiles,
 					showFilePrefix: false,
+					sticker: MessageHelper.createByModel(modelMessage, messageFiles)?.isSticker ?? false,
 				});
 			}
 			else
@@ -850,6 +853,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					attach: message?.params?.withAttach ?? false,
 					files: message?.params?.withFile ?? false,
 					showFilePrefix: false,
+					sticker: item.message.sticker ?? false,
 				});
 			}
 

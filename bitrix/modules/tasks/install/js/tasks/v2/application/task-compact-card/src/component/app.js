@@ -1,13 +1,13 @@
-import { Event, Text, Type } from 'main.core';
+import { Event, Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
-import { Popup } from 'main.popup';
+import type { Popup } from 'main.popup';
 
+import { computed } from 'ui.vue3';
 import { mapActions, mapGetters } from 'ui.vue3.vuex';
 import { Notifier } from 'ui.notification-manager';
 import { DragOverMixin } from 'ui.uploader.tile-widget';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
@@ -23,13 +23,14 @@ import { Deadline, deadlineMeta } from 'tasks.v2.component.fields.deadline';
 import { CheckListChip, CheckList } from 'tasks.v2.component.fields.check-list';
 import { FilesChip } from 'tasks.v2.component.fields.files';
 import { GroupChip } from 'tasks.v2.component.fields.group';
+
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { analytics } from 'tasks.v2.lib.analytics';
-import { fileService } from 'tasks.v2.provider.service.file-service';
+import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { GroupModel } from 'tasks.v2.model.groups';
-import type { CheckListModel } from 'tasks.v2.model.check-list';
+import type { AppField, AppChip } from 'tasks.v2.application.task-card';
 
 import { FullCardButton } from './full-card-button/full-card-button';
 import './app.css';
@@ -55,46 +56,29 @@ export const App = {
 		return {
 			analytics: this.analytics,
 			cardType: CardType.Compact,
+			/** @type { TaskModel } */
+			task: computed((): TaskModel => taskService.getStoreTask(this.taskId)),
+			/** @type { number | string } */
+			taskId: computed((): number | string => this.taskId),
+			/** @type { boolean } */
+			isEdit: computed((): boolean => false),
+			/** @type { boolean } */
+			isTemplate: computed((): boolean => idUtils.isTemplate(this.taskId)),
 		};
 	},
 	props: {
-		taskId: {
+		id: {
 			type: [Number, String],
-			default: () => Text.getRandom(),
+			required: true,
 		},
-		groupId: {
-			type: [Number],
-			default: null,
-		},
-		parentId: {
-			type: [Number],
-			default: null,
-		},
-		relatedToTaskId: {
-			type: [Number],
-			default: null,
-		},
-		deadlineTs: {
-			type: [Number, null],
-			default: null,
-		},
-		title: {
-			type: [String, null],
-			default: '',
-		},
-		description: {
-			type: [String, null],
-			default: '',
-		},
-		auditorsIds: {
-			type: Array,
-			default: () => [],
+		initialTask: {
+			/**
+			 * @type TaskModel
+			 */
+			type: Object,
+			required: true,
 		},
 		analytics: {
-			type: Object,
-			default: () => ({}),
-		},
-		source: {
 			type: Object,
 			default: () => ({}),
 		},
@@ -105,61 +89,48 @@ export const App = {
 			ButtonSize,
 			AirButtonStyle,
 			Outline,
+			EntityTypes,
 		};
 	},
 	data(): Object
 	{
 		return {
+			taskId: this.id,
 			openingFullCard: false,
 			isCheckListPopupShown: false,
-			chipsEventHandlers: {
-				showCheckList: this.showCheckListPopup,
-			},
 			creationError: false,
 			popupCount: 0,
+			isHovered: false,
 		};
 	},
 	computed: {
 		...mapGetters({
 			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
 			currentUserId: `${Model.Interface}/currentUserId`,
-			defaultDeadline: `${Model.Interface}/defaultDeadline`,
+			defaultDeadlineTs: `${Model.Interface}/defaultDeadlineTs`,
+			stateFlags: `${Model.Interface}/stateFlags`,
 		}),
-		hasDefaultDeadline(): boolean
-		{
-			return this.defaultDeadline.defaultDeadlineDate !== '';
-		},
-		defaultDeadlineTs(): number
-		{
-			return new Date(this.defaultDeadline.defaultDeadlineDate).getTime();
-		},
 		task(): TaskModel
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+			return taskService.getStoreTask(this.taskId);
+		},
+		isTemplate(): boolean
+		{
+			return idUtils.isTemplate(this.taskId);
 		},
 		group(): GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
 		},
-		checkLists(): CheckListModel[]
-		{
-			return this.task?.checklist
-				? this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist)
-				: [];
-		},
-		isEdit(): boolean
-		{
-			return Type.isNumber(this.taskId) && this.taskId > 0;
-		},
-		primaryFields(): Object[]
+		fields(): AppField[]
 		{
 			return [
 				{
-					title: responsibleMeta.title,
+					title: responsibleMeta.getTitle(false),
 					component: Responsible,
 					props: {
 						taskId: this.taskId,
-						context: this.$options.name,
+						isSingle: true,
 					},
 				},
 				{
@@ -167,60 +138,67 @@ export const App = {
 					component: Deadline,
 					props: {
 						taskId: this.taskId,
+						isTemplate: this.isTemplate,
+						isAutonomous: true,
+						isHovered: this.isHovered,
 					},
 				},
-			];
+				Core.getParams().features.disk && {
+					chip: {
+						component: FilesChip,
+						props: {
+							taskId: this.taskId,
+						},
+					},
+				},
+				{
+					chip: {
+						component: CheckListChip,
+						events: {
+							showCheckList: this.showCheckListPopup,
+						},
+					},
+				},
+				Core.getParams().features.isProjectsEnabled && {
+					chip: {
+						component: GroupChip,
+					},
+				},
+			].filter((field) => field);
 		},
-		chips(): Object[]
+		primaryFields(): AppField[]
 		{
-			return [
-				FilesChip,
-				CheckListChip,
-				...(Core.getParams().features.isProjectsEnabled ? [GroupChip] : []),
-			];
+			return this.getFields(new WeakMap([
+				[Responsible, true],
+				[Deadline, true],
+			]));
+		},
+		chips(): AppChip[]
+		{
+			return this.fields.filter(({ chip }) => chip).map(({ chip }) => chip);
+		},
+		isDiskModuleInstalled(): boolean
+		{
+			return Core.getParams().features.disk;
 		},
 	},
 	created(): void
 	{
-		if (!this.isEdit)
+		this.insert({
+			...this.initialTask,
+			id: this.taskId,
+			creatorId: this.currentUserId,
+			responsibleIds: [this.currentUserId],
+			deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
+			needsControl: this.stateFlags.needsControl ?? null,
+			matchesWorkTime: this.stateFlags.matchesWorkTime ?? null,
+			requireResult: this.stateFlags.defaultRequireResult ?? false,
+		});
+
+		if (this.task.fileIds?.length > 0)
 		{
-			this.destroy();
-
-			const payload = {
-				id: this.taskId,
-				creatorId: this.currentUserId,
-				responsibleId: this.currentUserId,
-				...(this.groupId ? { groupId: this.groupId } : {}),
-				...(this.title ? { title: this.title } : ''),
-				...(this.description ? { description: this.description } : ''),
-				...(this.auditorsIds ? { auditorsIds: this.auditorsIds } : []),
-				...(this.parentId ? { parentId: this.parentId } : {}),
-				...(this.relatedToTaskId ? { relatedToTaskId: this.relatedToTaskId } : {}),
-				...(this.source ? { source: this.source } : {}),
-			};
-
-			if (this.deadlineTs !== null)
-			{
-				payload.deadlineTs = this.deadlineTs;
-			}
-			else if (this.hasDefaultDeadline)
-			{
-				payload.deadlineTs = this.defaultDeadlineTs;
-			}
-
-			if (this.auditorsIds !== null && this.auditorsIds.length > 0)
-			{
-				this.auditorsIds.forEach((auditorId) => {
-					this.insertUser({
-						id: auditorId,
-					});
-				});
-			}
-
-			this.insert(payload);
+			void fileService.get(this.taskId).list(this.task.fileIds);
 		}
-
-		this.fileService = fileService.get(this.taskId);
 
 		analytics.sendOpenCard(this.analytics, {
 			collabId: this.group?.type === GroupType.Collab ? this.group.id : null,
@@ -241,15 +219,12 @@ export const App = {
 	},
 	beforeUnmount(): void
 	{
-		if (this.resizeObserver)
-		{
-			this.resizeObserver.disconnect();
-		}
+		this.resizeObserver?.disconnect();
 		this.unsubscribeEvents();
 	},
 	unmounted(): void
 	{
-		if (!this.isEdit && this.openingFullCard === false)
+		if (this.openingFullCard === false)
 		{
 			this.destroy();
 		}
@@ -262,12 +237,13 @@ export const App = {
 		...mapActions(Model.Interface, [
 			'updateTitleFieldOffsetHeight',
 		]),
-		...mapActions(Model.Users, {
-			insertUser: 'insert',
-		}),
+		getFields(map: WeakMap): boolean
+		{
+			return this.fields.filter(({ component }) => map.get(component));
+		},
 		close(): void
 		{
-			Event.EventEmitter.emit(`${EventName.CloseCard}:${this.taskId}`);
+			EventEmitter.emit(`${EventName.CloseCard}:${this.id}`);
 		},
 		async addTask(): void
 		{
@@ -287,6 +263,8 @@ export const App = {
 				return;
 			}
 
+			this.taskId = id;
+
 			this.sendAddTaskAnalytics(true);
 
 			analytics.sendDescription(this.analytics, {
@@ -294,14 +272,9 @@ export const App = {
 				hasScroll: this.$refs?.description?.hasScroll(),
 			});
 
-			if (this.checkLists.length > 0)
-			{
-				await checkListService.save(id, this.checkLists);
-			}
+			fileService.replace(this.id, id);
 
-			fileService.replace(this.taskId, id);
-
-			const baseEvent = new BaseEvent({
+			EventEmitter.emit(EventName.NotifyGrid, new BaseEvent({
 				data: id,
 				compatData: [
 					'ADD',
@@ -310,33 +283,24 @@ export const App = {
 						options: {},
 					},
 				],
-			});
-
-			Event.EventEmitter.emit(EventName.NotifyGrid, baseEvent);
-
-			const features = Core.getParams().features;
-			if (features.isMiniformEnabled && !features.isV2Enabled)
-			{
-				this.close();
-
-				return;
-			}
+			}));
 
 			this.close();
 		},
 		sendAddTaskAnalytics(isSuccess: boolean): void
 		{
 			const collabId = this.group?.type === GroupType.Collab ? this.group.id : null;
-			if (this.checkLists.length > 0)
+			const checkLists = this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
+			if (checkLists.length > 0)
 			{
-				const checkLists = this.checkLists.filter(({ parentId }) => parentId === 0);
-				const checkListsItems = this.checkLists.filter(({ parentId }) => parentId !== 0);
+				const checklistCount = checkLists.filter(({ parentId }) => parentId === 0).length;
+				const checklistItemsCount = checkLists.filter(({ parentId }) => parentId !== 0).length;
 				analytics.sendAddTaskWithCheckList(this.analytics, {
 					isSuccess,
 					collabId,
 					viewersCount: this.task.auditorsIds.length,
-					checklistCount: checkLists.length,
-					checklistItemsCount: checkListsItems.length,
+					checklistCount,
+					checklistItemsCount,
 				});
 			}
 			else
@@ -351,15 +315,15 @@ export const App = {
 		},
 		handleShowingPopup(event: BaseEvent): void
 		{
-			Event.EventEmitter.emit(`${EventName.ShowOverlay}:${this.taskId}`);
-			Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
+			EventEmitter.emit(`${EventName.ShowOverlay}:${this.taskId}`);
+			EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
 			this.externalPopup = event.popupInstance;
 			this.adjustCardPopup(true);
 		},
 		handleHidingPopup(): void
 		{
-			Event.EventEmitter.emit(`${EventName.HideOverlay}:${this.taskId}`);
-			Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
+			EventEmitter.emit(`${EventName.HideOverlay}:${this.taskId}`);
+			EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
 			this.externalPopup = null;
 		},
 		handleResizingPopup(): void
@@ -370,12 +334,12 @@ export const App = {
 		{
 			if (!this.externalPopup)
 			{
-				Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
+				EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
 
 				return;
 			}
 
-			Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`, {
+			EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`, {
 				titleFieldHeight: this.titleFieldOffsetHeight,
 				innerPopup: this.externalPopup,
 				animate,
@@ -388,22 +352,6 @@ export const App = {
 		closeCheckListPopup(): void
 		{
 			this.isCheckListPopupShown = false;
-		},
-		getEventListeners(chip, handlers): Object
-		{
-			const listeners = {};
-
-			if (chip.emits)
-			{
-				Object.keys(handlers).forEach((event: string) => {
-					if (chip.emits.includes(event))
-					{
-						listeners[event] = handlers[event];
-					}
-				});
-			}
-
-			return listeners;
 		},
 		subscribeEvents(): void
 		{
@@ -444,17 +392,17 @@ export const App = {
 			}
 			else if (event.key === 'Escape')
 			{
-				this.close();
+				setTimeout(() => this.close());
 			}
 		},
 		destroy(): void
 		{
-			this.delete(this.taskId);
-			fileService.delete(this.taskId);
+			this.delete(this.id);
+			fileService.delete(this.id);
 		},
 	},
 	template: `
-		<div v-drop class="tasks-compact-card-container">
+		<div v-drop class="tasks-compact-card-container" ref="main">
 			<div v-if="task" class="tasks-compact-card" :data-task-id="taskId" data-task-compact>
 				<div class="tasks-compact-card-fields">
 					<div
@@ -462,8 +410,8 @@ export const App = {
 						:class="{'--no-gap': task.description.length > 0}"
 						ref="title"
 					>
-						<FieldTitle :taskId="taskId" :disabled="isCheckListPopupShown"/>
-						<Importance :taskId="taskId"/>
+						<FieldTitle :disabled="isCheckListPopupShown"/>
+						<Importance/>
 						<BIcon
 							class="tasks-compact-card-fields-close"
 							:name="Outline.CROSS_L"
@@ -471,14 +419,17 @@ export const App = {
 							@click="close"
 						/>
 					</div>
-					<DescriptionInline ref="description" :taskId="taskId"/>
-					<div class="tasks-compact-card-fields-list">
+					<DescriptionInline ref="description"/>
+					<div
+						class="tasks-compact-card-fields-list"
+						@mouseover="isHovered = true"
+						@mouseleave="isHovered = false"
+					>
 						<FieldList :fields="primaryFields"/>
 					</div>
 					<CheckList
 						v-if="isCheckListPopupShown"
-						:taskId="taskId"
-						:isAutonomous="true"
+						isAutonomous
 						@show="handleShowingPopup"
 						@close="handleHidingPopup(); closeCheckListPopup();"
 						@resize="handleResizingPopup"
@@ -486,11 +437,11 @@ export const App = {
 				</div>
 				<div class="tasks-compact-card-footer">
 					<div class="tasks-compact-card-chips">
-						<template v-for="(chip, index) of chips" :key="index">
+						<template v-for="(chip, key) of chips" :key>
 							<component
-								:is="chip"
-								v-bind="{ taskId, isAutonomous: true }"
-								v-on="getEventListeners(chip, chipsEventHandlers)"
+								:is="chip.component"
+								v-bind="{ isAutonomous: true, ...chip.props }"
+								v-on="chip.events ?? {}"
 							/>
 						</template>
 					</div>
@@ -498,14 +449,13 @@ export const App = {
 						<div class="tasks-compact-card-main-buttons">
 							<AddTaskButton
 								ref="addTaskButton"
-								:taskId="taskId"
-								:size="ButtonSize.MEDIUM"
+								:size="ButtonSize.LARGE"
 								v-model:hasError="creationError"
 								@addTask="addTask"
 							/>
 							<UiButton
 								:text="loc('TASKS_V2_TCC_CANCEL_BTN')"
-								:size="ButtonSize.MEDIUM"
+								:size="ButtonSize.LARGE"
 								:style="AirButtonStyle.PLAIN"
 								:dataset="{
 									taskButtonId: 'cancel',
@@ -513,11 +463,17 @@ export const App = {
 								@click="close"
 							/>
 						</div>
-						<FullCardButton v-model:isOpening="openingFullCard" :taskId="taskId"/>
+						<FullCardButton v-model:isOpening="openingFullCard"/>
 					</div>
 				</div>
 			</div>
-			<DropZone v-if="!isCheckListPopupShown" :taskId="taskId" :bottom="18"/>
+			<DropZone
+				v-if="isDiskModuleInstalled && !isCheckListPopupShown"
+				:container="$refs.main || {}"
+				:entityId="taskId"
+				:entityType="EntityTypes.Task"
+				:bottom="18"
+			/>
 		</div>
 	`,
 };

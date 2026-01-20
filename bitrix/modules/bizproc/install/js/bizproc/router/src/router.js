@@ -45,6 +45,16 @@ export class Router
 							width: this.#detectSliderWidth(),
 						},
 					},
+					{
+						condition: [
+							'/bitrix/components/bitrix/bizproc.storage.item.list/'
+						],
+						options: {
+							width: this.#detectSliderWidth(),
+							cacheable: false,
+							allowChangeHistory: false,
+						},
+					},
 				],
 		});
 	}
@@ -172,5 +182,73 @@ export class Router
 		}
 
 		return url;
+	}
+
+	static openStorageEdit(options: Object): void
+	{
+		const sliderOptions = {
+			width: this.#startSliderWidth,
+			cacheable: false,
+			...options,
+		};
+
+		let url = '/bitrix/components/bitrix/bizproc.storage.edit/';
+		if (options && options.requestMethod === 'get' && options.requestParams)
+		{
+			url = BX.Uri.addParam(url, options.requestParams);
+		}
+
+		this.#openSlider(url, sliderOptions);
+	}
+
+	static openStorageFieldList(options: Object): void
+	{
+		const sliderOptions = {
+			width: this.#detectSliderWidth(),
+			cacheable: false,
+			...options,
+		};
+
+		let url = '/bitrix/components/bitrix/bizproc.storage.field.list/';
+		if (options && options.requestMethod === 'get' && options.requestParams)
+		{
+			url = BX.Uri.addParam(url, options.requestParams);
+		}
+
+		this.#openSlider(url, sliderOptions);
+	}
+
+	static openStorageFieldEdit(options: Object): void
+	{
+		const sliderOptions = {
+			width: this.#startSliderWidth,
+			cacheable: false,
+			...options,
+		};
+
+		let url = '/bitrix/components/bitrix/bizproc.storage.field.edit/';
+		if (options && options.requestMethod === 'get' && options.requestParams)
+		{
+			url = BX.Uri.addParam(url, options.requestParams);
+		}
+
+		this.#openSlider(url, sliderOptions);
+	}
+
+	static openStorageItemList(options: Object): void
+	{
+		const sliderOptions = {
+			width: this.#startSliderWidth,
+			cacheable: false,
+			...options,
+		};
+
+		let url = '/bitrix/components/bitrix/bizproc.storage.item.list/';
+		if (options && options.requestMethod === 'get' && options.requestParams)
+		{
+			url = BX.Uri.addParam(url, options.requestParams);
+		}
+
+		this.#openSlider(url, sliderOptions);
 	}
 }

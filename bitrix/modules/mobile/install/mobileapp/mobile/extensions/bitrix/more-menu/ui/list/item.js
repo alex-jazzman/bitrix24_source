@@ -3,13 +3,38 @@
  */
 jn.define('more-menu/ui/list/item', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
+	const { Loc } = require('loc');
 	const { Color, Corner, Indent } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Text2 } = require('ui-system/typography/text');
+	const { Text2, Text6 } = require('ui-system/typography/text');
 	const { Ellipsize } = require('utils/enums/style');
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
 	const { createTestIdGenerator } = require('utils/test');
 	const { PropTypes } = require('utils/validation');
+	const { RefRegistry } = require('more-menu/ref-registry');
+
+	const MODE = {
+		ALERT: 'alert',
+	};
+
+	/**
+	 * @enum {string}
+	 */
+	const TagType = {
+		NEW: 'new',
+	};
+
+	/**
+	 * @typedef {Object} TagConfig
+	 * @property {string} text - Text to display
+	 * @property {Color} color - Text color
+	 */
+	const TAG_CONFIG = {
+		[TagType.NEW]: {
+			text: Loc.getMessage('MENU_UI_LIST_ITEM_TAG_NEW'),
+			color: Color.accentMainSuccess,
+		},
+	};
 
 	/**
 	 * @class ListItem
@@ -24,12 +49,28 @@ jn.define('more-menu/ui/list/item', (require, exports, module) => {
 			});
 		}
 
+		componentDidMount()
+		{
+			if (this.props.id === 'call_list')
+			{
+				RefRegistry.register('call_list_menu_settings_button', this.itemRef);
+			}
+
+			if (this.props.id === 'mail_list')
+			{
+				RefRegistry.register('mail_list_menu_settings_button', this.itemRef);
+			}
+		}
+
 		render()
 		{
-			const { style = {}, title } = this.props;
+			const { style = {}, title, mode } = this.props;
 
 			return View(
 				{
+					ref: (ref) => {
+						this.itemRef = ref;
+					},
 					testId: this.getTestId('wrapper'),
 					style: {
 						flexDirection: 'row',
@@ -42,16 +83,27 @@ jn.define('more-menu/ui/list/item', (require, exports, module) => {
 					onClick: this.#handleOnClick,
 				},
 				this.renderLeftContent(),
-				Text2({
-					text: title,
-					testId: this.getTestId('title'),
-					color: Color.base1,
-					style: {
-						flex: 2,
+				View(
+					{
+						style: {
+							flex: 2,
+							flexDirection: 'row',
+							height: 49,
+							alignItems: 'center',
+						},
 					},
-					numberOfLines: 1,
-					ellipsize: Ellipsize.MIDDLE.toString(),
-				}),
+					Text2({
+						text: title,
+						testId: this.getTestId('title'),
+						color: mode === MODE.ALERT ? Color.accentMainAlert : Color.base1,
+						numberOfLines: 1,
+						ellipsize: Ellipsize.MIDDLE.toString(),
+						style: {
+							flexShrink: 2,
+						},
+					}),
+					this.renderTag(),
+				),
 				this.renderBadge(),
 				IconView({
 					testId: this.getTestId('right-icon'),
@@ -73,7 +125,7 @@ jn.define('more-menu/ui/list/item', (require, exports, module) => {
 
 		renderLeftContent()
 		{
-			const { icon } = this.props;
+			const { icon, mode } = this.props;
 
 			const iconValue = typeof icon === 'string'
 				? Icon[icon.toUpperCase()]
@@ -84,7 +136,7 @@ jn.define('more-menu/ui/list/item', (require, exports, module) => {
 				return IconView({
 					testId: this.getTestId('icon-left'),
 					icon: iconValue,
-					color: Color.accentMainPrimary,
+					color: mode === MODE.ALERT ? Color.accentMainAlert : Color.accentMainPrimary,
 					size: 26,
 					style: {
 						marginRight: Indent.XL.toNumber(),
@@ -115,6 +167,34 @@ jn.define('more-menu/ui/list/item', (require, exports, module) => {
 				},
 			});
 		}
+
+		renderTag()
+		{
+			const { tag } = this.props;
+
+			if (!tag)
+			{
+				return null;
+			}
+
+			const tagConfig = TAG_CONFIG[tag];
+
+			if (!tagConfig)
+			{
+				return null;
+			}
+
+			return Text6({
+				text: tagConfig.text,
+				color: tagConfig.color,
+				testId: this.getTestId('tag'),
+				style: {
+					alignSelf: 'flex-start',
+					marginTop: Indent.L.toNumber(),
+					marginLeft: Indent.XS.toNumber(),
+				},
+			});
+		}
 	}
 
 	ListItem.propTypes = {
@@ -126,9 +206,11 @@ jn.define('more-menu/ui/list/item', (require, exports, module) => {
 		onClick: PropTypes.func.isRequired,
 		divider: PropTypes.bool,
 		style: PropTypes.object,
+		tag: PropTypes.oneOf(Object.values(TagType)),
 	};
 
 	module.exports = {
 		ListItem,
+		TagType,
 	};
 });

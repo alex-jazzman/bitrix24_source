@@ -21,3 +21,4 @@ $MESS["TELEMETRY_ALL_OK"] = "Во время последней проверки
 $MESS["TELEMETRY_ALL_FAIL_PLURAL_0"] = "Во время последней проверки системы #DATE# обнаружена #FAILS_COUNT# критическая ошибка.";
 $MESS["TELEMETRY_ALL_FAIL_PLURAL_1"] = "Во время последней проверки системы #DATE# обнаружены #FAILS_COUNT# критические ошибки.";
 $MESS["TELEMETRY_ALL_FAIL_PLURAL_2"] = "Во время последней проверки системы #DATE# обнаружено #FAILS_COUNT# критических ошибок.";
+$MESS['SUPPORT_BOX_NOTIFY_TITLE'] = 'Открытые линии';

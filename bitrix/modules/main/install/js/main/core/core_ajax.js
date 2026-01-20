@@ -2177,3 +2177,4 @@ BX.ajax.FormData.prototype.send = function(url, callbackOk, callbackProgress, ca
 
 BX.addCustomEvent('onAjaxFailure', BX.debug);
 })(window);
+

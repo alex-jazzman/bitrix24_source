@@ -31,11 +31,13 @@ export type File = {
 	urlPreview: string,
 	urlDownload: string,
 	urlShow: string,
-	viewerAttrs: ?ViewerAttributes
+	viewerAttrs: ?ViewerAttributes,
+	isVideoNote: boolean,
 };
 
 export type Transcription = {
 	fileId: number,
 	status: 'Success' | 'Pending' | 'Error',
 	transcriptText: string | null,
+	errorCode?: string,
 }

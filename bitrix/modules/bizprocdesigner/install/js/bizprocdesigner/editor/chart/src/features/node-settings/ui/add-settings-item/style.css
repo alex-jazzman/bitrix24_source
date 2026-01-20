@@ -1,0 +1,13 @@
+.node-settings-add-item-button {
+	cursor: pointer;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-palette-gray-70);
+	display: flex;
+	align-items: center;
+	margin-top: 16px;
+}
+
+.node-settings-add-item-button__plus {
+	margin-right: 5px;
+}

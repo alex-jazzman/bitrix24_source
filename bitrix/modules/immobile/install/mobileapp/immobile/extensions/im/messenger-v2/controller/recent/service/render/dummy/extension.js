@@ -68,6 +68,11 @@ jn.define('im/messenger-v2/controller/recent/service/render/dummy', (require, ex
 		{
 			this.logger.log('renderInstant');
 		}
+
+		executeAfterRender(callback)
+		{
+			this.logger.log('executeAfterRender', callback);
+		}
 	}
 
 	module.exports = DummyRenderService;

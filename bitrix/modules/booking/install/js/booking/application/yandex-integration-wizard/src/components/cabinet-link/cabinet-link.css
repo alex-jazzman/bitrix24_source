@@ -1,0 +1,91 @@
+.booking-yiw-cabinet-link__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs2);
+}
+
+.booking-yiw-cabinet-link__input-container {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 8px;
+}
+
+.booking-yiw-cabinet-link__input-container .ui-ctl-element {
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.booking-yiw-cabinet-link__input-label {
+	color: var(--ui-color-base-70);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	margin-bottom: 5px;
+}
+
+.booking-yiw-cabinet-link__guide-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	gap: var(--ui-space-stack-md2);
+	border-radius: var(--ui-border-radius-2xl);
+	overflow: hidden;
+	background-color: var(--ui-color-background-info);
+}
+
+.booking-yiw-cabinet-link__guide-content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm2);
+	padding: 22px 0 22px 22px;
+}
+
+.booking-yiw-cabinet-link__guide-title {
+	color: var(--ui-color-base-default);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.booking-yiw-cabinet-link__guide-steps {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs2);
+	margin-bottom: 10px;
+}
+
+.booking-yiw-cabinet-link__guide-step {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-stack-xs2);
+}
+
+.booking-yiw-cabinet-link__guide-step-number {
+	background-color: var(--ui-color-primary);
+	border-radius: var(--ui-border-radius-circle);
+	width: 14px;
+	height: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	color: var(--ui-color-on-primary);
+	text-align: center;
+	font-size: var(--ui-font-size-5xs);
+	font-weight: var(--ui-font-weight-normal);
+
+	flex-shrink: 0;
+}
+
+.booking-yiw-cabinet-link__guide-step-text {
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.booking-yiw-cabinet-link__guide-image {
+	width: 232px;
+	height: 228px;
+	object-fit: cover;
+	object-position: center;
+}

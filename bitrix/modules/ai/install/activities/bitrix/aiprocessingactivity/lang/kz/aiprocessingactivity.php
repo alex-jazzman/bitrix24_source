@@ -1,0 +1,26 @@
+<?php
+$MESS["AI_PROCESSING_ACTIVITY_EMPTY_ENGINE"] = "AI моделі таңдалмаған";
+$MESS["AI_PROCESSING_ACTIVITY_EMPTY_PROMPT"] = "AI-өңдеу үшін промпт берілмеген";
+$MESS["AI_PROCESSING_ACTIVITY_EMPTY_RETURN_TYPE"] = "Жауап пішімі көрсетілмеген";
+$MESS["AI_PROCESSING_ACTIVITY_ENGINE_NOT_FOUND"] = "Таңдалған AI моделі қолжетімсіз";
+$MESS["AI_PROCESSING_ACTIVITY_EXECUTION_TIMEOUT_ERROR"] = "AI-агентінің жауабын күту уақытынан асып кетті. Кейінірек көріңіз";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_ENGINE_NAME"] = "AI моделі";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_JSON_SCHEMA_DESC"] = "Күтілетін JSON құрылымын сипаттаңыз. Егер жауап пішімі «Қатаң JSON схемасы» таңдалса, өріс міндетті болып табылады";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_JSON_SCHEMA_NAME"] = "Нәтиже JSON-схемасы";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_PROMPT_NAME"] = "Промпт";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_RETURN_TYPE"] = "Жауап пішімі";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_INVALID"] = "Қате JSON-схемасы (синтаксис қатесі немесе Қолдау көрсетілмейтін пішім)";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_PREVIEW_TITLE"] = "Алдын ала қарау";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_REQUIRED"] = "Таңдалған жауап пішімі үшін JSON-схемасы көрсетілмеген";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_INVALID"] = "Қате: жарамсыз JSON";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_VALID"] = "Схема жарамды";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_BTN"] = "Қалыпты қолдану";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_CONFIRM_OVERWRITE"] = "Ағымдағы схеманы қалыпқа ауыстырасыз ба?";
+$MESS["AI_PROCESSING_ACTIVITY_MODULE_NOT_INSTALLED"] = "AI модулі орнатылмаған";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_ERROR"] = "Міндетті кезекке жіберу мүмкін болмады: #ERROR#";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_FAIL"] = "Кезектегі міндетті өңдеу мүмкін болмады: #MESSAGE# (#CODE#)";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_RESULT"] = "АІ-өңдеу нәтижесі дайын: #RESULT#";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_UNEXPECTED_FAIL"] = "Кезектегі міндетті өңдеу мүмкін болмады. Бірдеңе дұрыс емес";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_UNEXPECTED_RESULT"] = "АІ-өңдеу нәтижесін қажетті форматта көрсету мүмкін болмады";
+$MESS["AI_PROCESSING_ACTIVITY_RETURN_TYPE_JSON"] = "Қатаң JSON схемасы";
+$MESS["AI_PROCESSING_ACTIVITY_RETURN_TYPE_STRING"] = "Мәтін";

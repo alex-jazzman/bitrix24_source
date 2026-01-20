@@ -2,7 +2,6 @@
 $MESS["SE_CHAT_AUTOPLAY_TITLE_V2"] = "Автоматты түрде жаңғырту";
 $MESS["SE_CHAT_AUTOPLAY_VIDEO_TITLE_V2"] = "Видео";
 $MESS["SE_CHAT_BETA_CALL_ENABLE_TITLE_V2"] = "Қоңырауларды тестілеу";
-$MESS["SE_CHAT_BETA_COPILOT_ENABLE_TITLE_V2"] = "CoPilot";
 $MESS["SE_CHAT_BETA_ENABLE_TITLE_V2"] = "Чатты тестілеу";
 $MESS["SE_CHAT_BETA_TITLE_V2"] = "Бета-нұсқа";
 $MESS["SE_CHAT_DESC"] = "Осы санаттағы баптаулар диалогты қайта ашқаннан кейін қолданылады.";

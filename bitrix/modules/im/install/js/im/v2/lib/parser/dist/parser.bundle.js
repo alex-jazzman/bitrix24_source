@@ -100,7 +100,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return dialogId;
 	  },
 	  getDialogIdByChatId(chatId) {
-	    const dialog = getCore().store.getters['chats/getByChatId'](chatId);
+	    const dialog = getCore().getStore().getters['chats/getByChatId'](chatId);
 	    if (!dialog) {
 	      return '';
 	    }
@@ -136,12 +136,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } = config;
 	    const {
 	      attach,
-	      files
+	      files,
+	      isSticker
 	    } = config;
 	    if (main_core.Type.isArrayFilled(files) || files === true) {
 	      text = this.getTextForFile(text, files);
 	    } else if (attach === true || main_core.Type.isArrayFilled(attach) || main_core.Type.isStringFilled(attach)) {
 	      text = this.getTextForAttach(text, attach);
+	    } else if (isSticker) {
+	      text = this.getTextForSticker();
 	    }
 	    return text.trim();
 	  },
@@ -207,6 +210,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	    }
 	    return `${text} ${attachDescription}`.trim();
+	  },
+	  getTextForSticker() {
+	    return `[${main_core.Loc.getMessage('IM_PARSER_ICON_TYPE_STICKER')}]`;
 	  },
 	  getIconTextForFileType(text, type = FileIconType.file) {
 	    let result = text;
@@ -327,7 +333,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  purifyCode(text, spaceLetter = ' ') {
 	    return text.replace(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis, ParserIcon.getCodeBlock() + spaceLetter);
 	  },
-	  executeClickEvent(event) {
+	  executeClickEvent(event, context) {
 	    if (!event.target.className.startsWith('bx-im-message-quote') && !(event.target.parentNode && event.target.parentNode.className.startsWith('bx-im-message-quote'))) {
 	      return;
 	    }
@@ -336,7 +342,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return;
 	    }
 	    const [dialogId, messageId] = target.dataset.context.split('/');
-	    main_core_events.EventEmitter.emit(EventType.dialog.goToMessageContext, {
+	    const {
+	      emitter
+	    } = context;
+	    emitter.emit(EventType.dialog.goToMessageContext, {
 	      messageId: Number.parseInt(messageId, 10),
 	      dialogId: dialogId.toString()
 	    });
@@ -554,11 +563,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!isValidSize || isInvalidUrl || !isSafeUrl || !isImage || hasNestedItems) {
 	        return whole.replaceAll(/\[url]([\S\s]*?)\[\/url]/gi, '$1');
 	      }
-	      const classModifier = `bx-im-message-image--${size}`;
+	      const classModifier = `--${size}`;
 	      const {
 	        file
 	      } = getUtils();
-	      const dialog = getCore().store.getters['chats/get'](contextDialogId, true);
+	      const dialog = getCore().getStore().getters['chats/get'](contextDialogId, true);
 	      const viewerGroupBy = dialog.chatId;
 	      const viewerAttributes = file.getViewerDataForImageSrc({
 	        src: url,
@@ -709,10 +718,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const {
+	  DataAttribute
+	} = getConst();
 	const ParserUrl = {
 	  decode(text, config = {}) {
 	    const {
-	      urlTarget = "_blank",
+	      urlTarget = '_blank',
 	      removeLinks = false
 	    } = config;
 
@@ -722,14 +734,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!getUtils().text.checkUrl(url)) {
 	        return text;
 	      }
-	      return main_core.Dom.create({
-	        tag: 'a',
-	        attrs: {
-	          href: url,
-	          target: urlTarget
-	        },
-	        html: text
-	      }).outerHTML;
+	      return this.getLinkHtml(url, urlTarget, text);
 	    });
 
 	    // url like https://bitrix24.com/?params[1]="test"
@@ -748,14 +753,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          text = text.slice(text.lastIndexOf(']') + 1);
 	        }
 	      }
-	      return main_core.Dom.create({
-	        tag: 'a',
-	        attrs: {
-	          href: url,
-	          target: urlTarget
-	        },
-	        html: text
-	      }).outerHTML;
+	      return this.getLinkHtml(url, urlTarget, text);
 	    });
 	    if (removeLinks) {
 	      text = text.replace(/<a.*?href="([^"]*)".*?>(.*?)<\/a>/gi, '$2');
@@ -774,6 +772,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  removeSimpleUrlTag(text) {
 	    text = text.replace(/\[url](.*?)\[\/url]/gis, (whole, link) => link);
 	    return text;
+	  },
+	  getLinkHtml(url, urlTarget, text) {
+	    return main_core.Dom.create({
+	      tag: 'a',
+	      attrs: {
+	        href: url,
+	        target: urlTarget,
+	        [DataAttribute.useNativeContextMenu]: true
+	      },
+	      html: text
+	    }).outerHTML;
 	  }
 	};
 
@@ -932,11 +941,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      })]
 	    }).outerHTML;
 	  },
-	  executeClickEvent(event) {
+	  executeClickEvent(event, context) {
 	    var _getDialogIdByMessage;
 	    if (!main_core.Dom.hasClass(event.target, 'bx-im-message-command')) {
 	      return;
 	    }
+	    const {
+	      emitter
+	    } = context;
 	    const element = event.target;
 	    const messageId = getMessageIdForClickElement(element);
 	    const dialogId = (_getDialogIdByMessage = getDialogIdByMessageId(messageId)) != null ? _getDialogIdByMessage : '';
@@ -947,7 +959,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!textToInsert) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(EventType$1.textarea.insertText, {
+	      emitter.emit(EventType$1.textarea.insertText, {
 	        text: textToInsert,
 	        dialogId
 	      });
@@ -958,7 +970,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!textToSend) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(EventType$1.textarea.sendMessage, {
+	      emitter.emit(EventType$1.textarea.sendMessage, {
 	        text: textToSend,
 	        dialogId
 	      });
@@ -1026,13 +1038,147 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const {
-	  UserType,
 	  EventType: EventType$2,
-	  MessageMentionType: MessageMentionType$1
+	  MessageMentionType: MessageMentionType$1,
+	  SidebarDetailBlock,
+	  SpecialMentionDialogId,
+	  ChatType
 	} = getConst();
+	const MENTION_CSS_CLASS = 'bx-im-mention';
+	var _handlersByMentionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlersByMentionType");
+	var _handlersByDialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlersByDialogId");
+	var _getCopilotBotDialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCopilotBotDialogId");
+	var _handleCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCopilot");
+	var _handleChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleChat");
+	var _handleLines = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLines");
+	var _handleContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleContext");
+	var _handleCall = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCall");
+	var _handleAllParticipants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAllParticipants");
+	class MentionHandler {
+	  constructor(context) {
+	    Object.defineProperty(this, _handleAllParticipants, {
+	      value: _handleAllParticipants2
+	    });
+	    Object.defineProperty(this, _handleCall, {
+	      value: _handleCall2
+	    });
+	    Object.defineProperty(this, _handleContext, {
+	      value: _handleContext2
+	    });
+	    Object.defineProperty(this, _handleLines, {
+	      value: _handleLines2
+	    });
+	    Object.defineProperty(this, _handleChat, {
+	      value: _handleChat2
+	    });
+	    Object.defineProperty(this, _handleCopilot, {
+	      value: _handleCopilot2
+	    });
+	    Object.defineProperty(this, _getCopilotBotDialogId, {
+	      value: _getCopilotBotDialogId2
+	    });
+	    Object.defineProperty(this, _handlersByMentionType, {
+	      writable: true,
+	      value: {
+	        [MessageMentionType$1.user]: dataset => babelHelpers.classPrivateFieldLooseBase(this, _handleChat)[_handleChat](dataset),
+	        [MessageMentionType$1.chat]: dataset => babelHelpers.classPrivateFieldLooseBase(this, _handleChat)[_handleChat](dataset),
+	        [MessageMentionType$1.lines]: dataset => babelHelpers.classPrivateFieldLooseBase(this, _handleLines)[_handleLines](dataset),
+	        [MessageMentionType$1.context]: dataset => babelHelpers.classPrivateFieldLooseBase(this, _handleContext)[_handleContext](dataset),
+	        [MessageMentionType$1.call]: dataset => babelHelpers.classPrivateFieldLooseBase(this, _handleCall)[_handleCall](dataset)
+	      }
+	    });
+	    Object.defineProperty(this, _handlersByDialogId, {
+	      writable: true,
+	      value: {
+	        [babelHelpers.classPrivateFieldLooseBase(this, _getCopilotBotDialogId)[_getCopilotBotDialogId]()]: () => babelHelpers.classPrivateFieldLooseBase(this, _handleCopilot)[_handleCopilot](),
+	        [SpecialMentionDialogId.allParticipants]: () => babelHelpers.classPrivateFieldLooseBase(this, _handleAllParticipants)[_handleAllParticipants]()
+	      }
+	    });
+	    const {
+	      emitter
+	    } = context;
+	    this.emitter = emitter;
+	  }
+	  handleClick(event) {
+	    if (!main_core.Dom.hasClass(event.target, MENTION_CSS_CLASS)) {
+	      return;
+	    }
+	    const dataset = event.target.dataset;
+	    const handlerByDialogId = babelHelpers.classPrivateFieldLooseBase(this, _handlersByDialogId)[_handlersByDialogId][dataset.value];
+	    if (handlerByDialogId) {
+	      handlerByDialogId();
+	      return;
+	    }
+	    const handlerByMentionType = babelHelpers.classPrivateFieldLooseBase(this, _handlersByMentionType)[_handlersByMentionType][dataset.type];
+	    if (!handlerByMentionType) {
+	      return;
+	    }
+	    handlerByMentionType(dataset);
+	  }
+	}
+	function _getCopilotBotDialogId2() {
+	  return getCore().getStore().getters['users/bots/getCopilotBotDialogId'];
+	}
+	function _handleCopilot2() {
+	  void im_public.Messenger.openCopilot();
+	}
+	function _handleChat2(dataset) {
+	  void im_public.Messenger.openChat(dataset.value);
+	}
+	function _handleLines2(dataset) {
+	  const dialogId = dataset.value;
+	  if (getUtils().dialog.isLinesHistoryId(dialogId)) {
+	    void im_public.Messenger.openLinesHistory(dialogId);
+	  } else if (getUtils().dialog.isLinesExternalId(dialogId)) {
+	    void im_public.Messenger.openLines(dialogId);
+	  }
+	}
+	function _handleContext2(dataset) {
+	  const messageId = Number.parseInt(dataset.messageId, 10);
+	  this.emitter.emit(EventType$2.dialog.goToMessageContext, {
+	    messageId,
+	    dialogId: dataset.dialogId
+	  });
+	}
+	function _handleCall2(dataset) {
+	  const destination = dataset.destination;
+	  if (getUtils().call.isNumber(destination)) {
+	    void im_public.Messenger.startPhoneCall(destination);
+	  }
+	}
+	function _handleAllParticipants2() {
+	  const {
+	    entityId
+	  } = getCore().getStore().getters['application/getLayout'];
+	  const {
+	    type
+	  } = getCore().getStore().getters['chats/get'](entityId, true);
+	  if (!entityId) {
+	    return;
+	  }
+	  if (type === ChatType.user) {
+	    return;
+	  }
+	  this.emitter.emit(EventType$2.sidebar.open, {
+	    panel: SidebarDetailBlock.members,
+	    dialogId: entityId
+	  });
+	}
+
+	const {
+	  UserType,
+	  MessageMentionType: MessageMentionType$2,
+	  SpecialMentionDialogId: SpecialMentionDialogId$1 = {}
+	} = getConst();
+	const SpecialMentionHandlers = {
+	  [SpecialMentionDialogId$1.allParticipants]: userName => ParserMention.renderAllParticipantsMention(userName)
+	};
 	const ParserMention = {
 	  decode(text) {
-	    text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
+	    text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
+	      if (SpecialMentionHandlers[userId]) {
+	        return SpecialMentionHandlers[userId](userName);
+	      }
 	      userId = Number.parseInt(userId, 10);
 	      if (!main_core.Type.isNumber(userId) || userId === 0) {
 	        return userName;
@@ -1059,7 +1205,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        tag: 'span',
 	        attrs: {
 	          className,
-	          'data-type': MessageMentionType$1.user,
+	          'data-type': MessageMentionType$2.user,
 	          'data-value': userId
 	        },
 	        text: userName
@@ -1073,14 +1219,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (chatName) {
 	        chatName = main_core.Text.decode(chatName);
 	      } else {
-	        const dialog = getCore().store.getters['chats/get'](`chat${chatId}`);
+	        const dialog = getCore().getStore().getters['chats/get'](`chat${chatId}`);
 	        chatName = dialog ? dialog.name : `Chat ${chatId}`;
 	      }
 	      return main_core.Dom.create({
 	        tag: 'span',
 	        attrs: {
 	          className: 'bx-im-mention',
-	          'data-type': isLines ? MessageMentionType$1.lines : MessageMentionType$1.chat,
+	          'data-type': isLines ? MessageMentionType$2.lines : MessageMentionType$2.chat,
 	          'data-value': isLines ? `imol|${chatId}` : `chat${chatId}`
 	        },
 	        text: chatName
@@ -1099,10 +1245,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      let title = '';
 	      messageId = Number.parseInt(messageId, 10);
 	      if (main_core.Type.isNumber(messageId) && messageId > 0) {
-	        const message = getCore().store.getters['messages/getById'](messageId);
+	        const message = getCore().getStore().getters['messages/getById'](messageId);
 	        if (message) {
 	          title = Parser.purifyMessage(message);
-	          const user = getCore().store.getters['users/get'](message.authorId);
+	          const user = getCore().getStore().getters['users/get'](message.authorId);
 	          if (user) {
 	            title = `${user.name}: ${title}`;
 	          }
@@ -1115,7 +1261,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        tag: 'span',
 	        attrs: {
 	          className: 'bx-im-mention',
-	          'data-type': MessageMentionType$1.context,
+	          'data-type': MessageMentionType$2.context,
 	          'data-dialog-id': dialogId,
 	          'data-message-id': messageId,
 	          title
@@ -1126,7 +1272,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return text;
 	  },
 	  purify(text) {
-	    text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
+	    text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
 	      userId = Number.parseInt(userId, 10);
 	      if (!main_core.Type.isNumber(userId) || userId === 0) {
 	        return userName;
@@ -1147,43 +1293,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    text = text.replace(/\[CHAT=(imol\|)?(\d+)](.*?)\[\/CHAT]/gi, (whole, openlines, chatId, chatName) => {
 	      chatId = Number.parseInt(chatId, 10);
 	      if (!chatName) {
-	        const dialog = getCore().store.getters['chats/get']('chat' + chatId);
+	        const dialog = getCore().getStore().getters['chats/get']('chat' + chatId);
 	        chatName = dialog ? dialog.name : 'Chat ' + chatId;
 	      }
 	      return chatName;
 	    });
 	    text = text.replace(/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gis, (whole, dialogId, messageId, text) => {
 	      if (!text) {
-	        const dialog = getCore().store.getters['chats/get'](dialogId);
+	        const dialog = getCore().getStore().getters['chats/get'](dialogId);
 	        text = dialog ? dialog.name : 'Dialog ' + dialogId;
 	      }
 	      return text;
 	    });
 	    return text;
 	  },
-	  executeClickEvent(event) {
-	    if (!main_core.Dom.hasClass(event.target, 'bx-im-mention')) {
-	      return;
-	    }
-	    if (event.target.dataset.type === MessageMentionType$1.user || event.target.dataset.type === MessageMentionType$1.chat) {
-	      void im_public.Messenger.openChat(event.target.dataset.value);
-	    } else if (event.target.dataset.type === MessageMentionType$1.lines) {
-	      const dialogId = event.target.dataset.value;
-	      if (getUtils().dialog.isLinesHistoryId(dialogId)) {
-	        void im_public.Messenger.openLinesHistory(dialogId);
-	      } else if (getUtils().dialog.isLinesExternalId(dialogId)) {
-	        void im_public.Messenger.openLines(dialogId);
-	      }
-	    } else if (event.target.dataset.type === MessageMentionType$1.context) {
-	      main_core_events.EventEmitter.emit(EventType$2.dialog.goToMessageContext, {
-	        messageId: Number.parseInt(event.target.dataset.messageId, 10),
-	        dialogId: event.target.dataset.dialogId.toString()
-	      });
-	    } else if (event.target.dataset.type === MessageMentionType$1.call) {
-	      if (getUtils().call.isNumber(event.target.dataset.destination)) {
-	        void im_public.Messenger.startPhoneCall(event.target.dataset.destination);
-	      }
-	    }
+	  executeClickEvent(event, context) {
+	    const mentionHandler = new MentionHandler(context);
+	    mentionHandler.handleClick(event);
+	  },
+	  renderAllParticipantsMention(userName) {
+	    const className = 'bx-im-mention';
+	    return main_core.Dom.create({
+	      tag: 'span',
+	      attrs: {
+	        className,
+	        'data-type': MessageMentionType$2.user,
+	        'data-value': SpecialMentionDialogId$1.allParticipants
+	      },
+	      text: userName
+	    }).outerHTML;
 	  }
 	};
 
@@ -1350,7 +1488,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const Parser = {
 	  decodeMessage(message) {
-	    const messageFiles = getCore().store.getters['messages/getMessageFiles'](message.id);
+	    const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
 	    const contextDialogId = ParserUtils.getDialogIdByChatId(message.chatId);
 	    return this.decode({
 	      text: message.text,
@@ -1367,6 +1505,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      attach: (_notification$params$ = notification.params.attach) != null ? _notification$params$ : false,
 	      showIconIfEmptyText: false,
 	      showImageFromLink: false,
+	      urlTarget: im_v2_lib_desktopApi.DesktopApi.isDesktop() ? '_blank' : '_self'
+	    });
+	  },
+	  decodeNotificationParam(text) {
+	    return this.decode({
+	      text,
 	      urlTarget: im_v2_lib_desktopApi.DesktopApi.isDesktop() ? '_blank' : '_self'
 	    });
 	  },
@@ -1467,16 +1611,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return text;
 	  },
 	  purifyMessage(message) {
-	    const messageFiles = getCore().store.getters['messages/getMessageFiles'](message.id);
+	    const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
+	    const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](message.id);
 	    return this.purify({
 	      text: message.text,
 	      attach: message.attach,
-	      files: messageFiles
+	      files: messageFiles,
+	      isSticker
 	    });
 	  },
 	  purifyNotification(notification) {
 	    var _notification$params$2;
-	    const messageFiles = getCore().store.getters['messages/getMessageFiles'](notification.id);
+	    const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](notification.id);
 	    return this.purify({
 	      text: notification.text,
 	      attach: (_notification$params$2 = notification.params.attach) != null ? _notification$params$2 : false,
@@ -1502,13 +1648,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      files,
 	      attach,
-	      text
+	      text,
+	      isSticker
 	    } = this.prepareConfigForRecent(recentMessage);
 	    return this.purify({
 	      text,
 	      attach,
 	      files,
-	      showPhraseMessageWasDeleted: recentMessage.messageId !== 0
+	      showPhraseMessageWasDeleted: recentMessage.messageId !== 0,
+	      isSticker
 	    });
 	  },
 	  purifyText(text) {
@@ -1527,16 +1675,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      attach = false,
 	      files = false,
+	      isSticker = false,
 	      showPhraseMessageWasDeleted = true
 	    } = config;
 	    if (!main_core.Type.isString(text)) {
 	      text = main_core.Type.isNumber(text) ? text.toString() : '';
 	    }
-	    if (!text) {
+	    if (!text || isSticker) {
 	      text = ParserIcon.addIconToShortText({
 	        text,
 	        attach,
-	        files
+	        files,
+	        isSticker
 	      });
 	      return text.trim();
 	    }
@@ -1577,7 +1727,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      attach
 	    } = message;
 	    let text = quoteText === '' ? message.text : quoteText;
-	    const files = getCore().store.getters['messages/getMessageFiles'](id);
+	    const files = getCore().getStore().getters['messages/getMessageFiles'](id);
+	    const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](id);
 	    text = main_core.Text.encode(text.trim());
 	    text = ParserMention.purify(text);
 	    text = ParserCall.purify(text);
@@ -1593,6 +1744,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        text,
 	        attach,
 	        files
+	      });
+	    }
+	    if (isSticker) {
+	      text = ParserIcon.addIconToShortText({
+	        isSticker
 	      });
 	    }
 	    text = text.length > 0 ? main_core.Text.decode(text) : main_core.Loc.getMessage('IM_PARSER_MESSAGE_DELETED');
@@ -1617,27 +1773,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      id
 	    } = message;
-	    const files = getCore().store.getters['messages/getMessageFiles'](id).map(file => {
+	    const files = getCore().getStore().getters['messages/getMessageFiles'](id).map(file => {
 	      return `[DISK=${file.id}]\n`;
 	    });
 	    return files.join('\n').trim();
 	  },
 	  prepareConfigForRecent(recentMessage) {
-	    let files = getCore().store.getters['messages/getMessageFiles'](recentMessage.messageId);
+	    let files = getCore().getStore().getters['messages/getMessageFiles'](recentMessage.messageId);
 	    if (files.length === 0) {
 	      files = false;
 	    }
-	    const message = getCore().store.getters['messages/getById'](recentMessage.messageId);
+	    const message = getCore().getStore().getters['messages/getById'](recentMessage.messageId);
 	    let attach = false;
 	    if (main_core.Type.isBoolean(message == null ? void 0 : message.attach) || main_core.Type.isStringFilled(message == null ? void 0 : message.attach) || main_core.Type.isArray(message == null ? void 0 : message.attach)) {
 	      attach = message.attach;
 	    } else if (main_core.Type.isPlainObject(message == null ? void 0 : message.attach)) {
 	      attach = [message.attach];
 	    }
+	    const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](recentMessage.messageId);
 	    return {
 	      files,
 	      attach,
-	      text: message.text
+	      text: message.text,
+	      isSticker
 	    };
 	  },
 	  prepareLegacyConfigForRecent(recentMessage) {
@@ -1661,10 +1819,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      text: recentMessage.message.text
 	    };
 	  },
-	  executeClickEvent(event) {
-	    ParserMention.executeClickEvent(event);
-	    ParserQuote.executeClickEvent(event);
-	    ParserAction.executeClickEvent(event);
+	  executeClickEvent(event, context) {
+	    ParserMention.executeClickEvent(event, context);
+	    ParserQuote.executeClickEvent(event, context);
+	    ParserAction.executeClickEvent(event, context);
 	  },
 	  getContextCodeFromForwardId(forwardId) {
 	    return ParserUtils.getFinalContextTag(forwardId);

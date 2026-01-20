@@ -142,7 +142,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 
 		hasPhone()
 		{
-			return Type.isStringFilled(this.props.toPhoneId);
+			return this.props.toPhoneId > 0;
 		}
 
 		showClientSelector()

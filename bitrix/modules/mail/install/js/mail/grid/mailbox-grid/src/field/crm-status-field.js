@@ -1,6 +1,6 @@
 import { BaseField } from './base-field';
 import { Tag, Loc } from 'main.core';
-import { Label, LabelColor, LabelSize } from 'ui.label';
+import { Chip, ChipDesign, ChipSize } from 'ui.system.chip';
 
 export type CRMStatusFieldType = {
 	enabled: boolean,
@@ -21,20 +21,21 @@ export class CRMStatusField extends BaseField
 
 	#getStatusLabel(active: boolean): HTMLElement
 	{
-		const labelText = active
+		const text = active
 			? Loc.getMessage('MAIL_MAILBOX_LIST_FIELD_CRM_STATUS_ENABLED')
 			: Loc.getMessage('MAIL_MAILBOX_LIST_FIELD_CRM_STATUS_DISABLED')
 		;
 
-		const labelClass = active
-			? 'mailbox-grid_crm-status-label-success'
-			: 'mailbox-grid_crm-status-label-danger'
+		const design = active
+			? ChipDesign.OutlineSuccess
+			: ChipDesign.Outline
 		;
 
-		return new Label({
-			text: labelText,
-			size: LabelSize.LG,
-			customClass: labelClass,
+		return new Chip({
+			size: ChipSize.Sm,
+			rounded: true,
+			text,
+			design,
 		}).render();
 	}
 }

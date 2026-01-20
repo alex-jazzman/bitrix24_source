@@ -265,11 +265,9 @@ export class List
 			}
 			this.isAddingToCrmInProgress[id] = true;
 
-			BX.ajax.runComponentAction(
-				'bitrix:mail.client',
-				'createCrmActivity',
+			BX.ajax.runAction(
+				'bitrix:mail.message.createCrmActivity',
 				{
-					mode: 'ajax',
 					data: {
 						messageId: messageIdNode.dataset.messageId,
 					},
@@ -494,7 +492,7 @@ export class List
 				keepRows: true,
 				ids: idsForMoving,
 				params: {
-					folder: toFolderByPath,
+					folderPath: toFolderByPath,
 				},
 				analyticsLabel: {
 					'groupCount': selected.length,
@@ -875,8 +873,7 @@ export class List
 			}
 		}
 
-		BX.ajax.runComponentAction('bitrix:mail.client', actionName, {
-			mode: 'ajax',
+		BX.ajax.runAction('mail.message.' + actionName, {
 			data: data,
 			analyticsLabel: options.analyticsLabel,
 		}).then(

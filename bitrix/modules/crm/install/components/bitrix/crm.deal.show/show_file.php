@@ -1,44 +1,48 @@
 <?php
 define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
+define('NO_AGENT_STATISTIC', 'Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
-$authToken = isset($_REQUEST['auth']) ? $_REQUEST['auth'] : '';
-if($authToken !== '')
+$authToken = $_REQUEST['auth'] ?? '';
+if ($authToken !== '')
 {
 	define('NOT_CHECK_PERMISSIONS', true);
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/services/quickway.php');
+require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/include/prolog_before.php');
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 $errors = array();
-if(CModule::IncludeModule('crm'))
+if (CModule::IncludeModule('crm'))
 {
-	$options = array();
-	if($authToken !== '')
+	$options = [];
+	if ($authToken !== '')
 	{
 		$options['oauth_token'] = $authToken;
 	}
 
 	//By default treat field as dynamic (for backward compatibility)
 	$options['is_dynamic'] = !isset($_REQUEST['dynamic']) || mb_strtoupper($_REQUEST['dynamic']) !== 'N';
-	if(isset($_REQUEST['owner_token']))
+	if (isset($_REQUEST['owner_token']))
 	{
 		$options['owner_token'] = $_REQUEST['owner_token'];
 	}
 
 	$entityTypeId = CCrmOwnerType::Deal;
 	$ownerId = isset($_REQUEST['ownerId']) ? intval($_REQUEST['ownerId']) : 0;
-	$fieldName = isset($_REQUEST['fieldName']) ? $_REQUEST['fieldName'] : '';
+	$fieldName = $_REQUEST['fieldName'] ?? '';
 
 	if ($ownerId > 0)
 	{
 		foreach (['CONTACT', 'COMPANY'] as $clientEntityTypeName)
 		{
-			if (mb_strpos($fieldName, $clientEntityTypeName . '_') === 0) // if starts from CONTACT_ or COMPANY_
+			if (str_starts_with($fieldName, $clientEntityTypeName . '_')) // if starts from CONTACT_ or COMPANY_
 			{
 				$deal = \Bitrix\Crm\DealTable::getList([
 					'filter' => ['=ID' => $ownerId],
@@ -62,13 +66,13 @@ if(CModule::IncludeModule('crm'))
 		$options
 	);
 }
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_after.php");
-if(!empty($errors))
+require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_after.php");
+if (!empty($errors))
 {
-	foreach($errors as $error)
+	foreach ($errors as $error)
 	{
 		echo $error;
 	}
 }
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog.php");
+require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog.php");
 ?>

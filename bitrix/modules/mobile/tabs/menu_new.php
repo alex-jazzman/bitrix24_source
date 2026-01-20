@@ -118,6 +118,6 @@ class MenuNew implements Tabable
 			['width' => 64, 'height' => 64],
 		);
 
-		return $resizedAvatar;
+		return $resizedAvatar ?? '';
 	}
 }

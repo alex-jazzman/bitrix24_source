@@ -1,5 +1,4 @@
 <?php
-
 use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
@@ -7,6 +6,7 @@ use Bitrix\Mobile\AppTabs\Calendar;
 use Bitrix\Mobile\AppTabs\CatalogStore;
 use Bitrix\Mobile\AppTabs\Chat;
 use Bitrix\Mobile\AppTabs\Crm;
+use Bitrix\Mobile\AppTabs\Mail;
 use Bitrix\Mobile\AppTabs\CrmCustomSectionFactory;
 use Bitrix\Mobile\AppTabs\Disk;
 use Bitrix\Mobile\AppTabs\Menu;
@@ -15,6 +15,7 @@ use Bitrix\Mobile\AppTabs\Projects;
 use Bitrix\Mobile\AppTabs\Stream;
 use Bitrix\Mobile\AppTabs\Task;
 use Bitrix\Mobile\AppTabs\Terminal;
+use Bitrix\Mobile\AppTabs\CallList;
 use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Mobile;
 use Bitrix\Mobile\Feature\MenuFeature;
@@ -28,6 +29,7 @@ $config = [
 		['code' => 'chat', 'class' => Chat::class],
 		['code' => 'stream', 'class' => Stream::class],
 		['code' => 'task', 'class' => Task::class],
+		['code' => 'call_list', 'class' => CallList::class],
 		['code' => 'menu', 'class' => Feature::isEnabled(MenuFeature::class) ? MenuNew::class : Menu::class],
 		['code' => 'crm', 'class' => Crm::class],
 		['code' => 'terminal', 'class' => Terminal::class],
@@ -36,6 +38,7 @@ $config = [
 		['code' => 'calendar', 'class' => Calendar::class],
 		['code' => 'crmCustomSectionFactory', 'class' => CrmCustomSectionFactory::class],
 		['code' => 'disk', 'class' => Disk::class],
+		['code' => 'mail' , 'class' => Mail::class],
 	],
 	'required' => [
 		'chat' => 100,
@@ -53,12 +56,12 @@ $config = [
 		'stream' => ['crm'],
 		'crm' => ['stream'],
 	],
-	'defaultUserPreset' => [
+	'defaultUserPreset' => array_filter([
 		'chat' => 100,
-		'stream' => 200,
+		'call_list' => 200,
 		'task' => 300,
 		'menu' => 1000,
-	],
+	]),
 	'defaultCollaberPreset' => [
 		'chat' => 100,
 		'disk' => 200,
@@ -66,14 +69,39 @@ $config = [
 		'task' => 400,
 		'menu' => 1000,
 	],
-	'presets' => [
+	/** @see Bitrix\Mobile\Tab\Manager::migratePresetsByVersion */
+	'presetLegacy' => [
+		'currentVersion' => 1, // up version if you change legacy preset
 		'task' => [
 			'task' => 100,
 			'chat' => 200,
-			'stream' => 250,
-			'calendar' => 300,
+			'stream' => 300,
+			'calendar' => 400,
 			'menu' => 1000,
 		],
+		'collaboration' => [
+			'chat' => 100,
+			'stream' => 200,
+			'task' => 300,
+			'calendar' => 400,
+			'menu' => 1000,
+		],
+		'bizproc' => [
+			'chat' => 100,
+			'bizproc' => 200,
+			'stream' => 300,
+			'task' => 400,
+			'menu' => 1000,
+		]
+	],
+	'presets' => [ // if you change presets you must add old version to legacy preset
+		'task' => array_filter([
+			'task' => 100,
+			'chat' => 200,
+			'call_list' => 250,
+			'mail' => 300,
+			'menu' => 1000,
+		]),
 		'stream' => array_filter([
 			'stream' => 100,
 			'chat' => 150,
@@ -82,20 +110,20 @@ $config = [
 			'disk' => ($isDiskAvailable ? 250 : false),
 			'menu' => 1000,
 		], 'intval'),
-		'crm' => array_filter([
+		'crm' => [
 			'crm' => 100,
 			'chat' => 200,
 			'task' => 300,
-			'calendar' => 350,
+			'calendar' => 400,
 			'menu' => 1000,
-		], 'intval'),
-		'collaboration' => [
+		],
+		'collaboration' => array_filter([
 			'chat' => 100,
-			'stream' => 150,
+			'call_list' => 150,
 			'task' => 200,
 			'calendar' => 250,
 			'menu' => 1000,
-		],
+		]),
 		'terminal' => [
 			'terminal' => 100,
 			'chat' => 120,
@@ -140,13 +168,13 @@ $config = [
 
 if (Loader::includeModule('bizproc'))
 {
-	$config['presets']['bizproc'] = [
+	$config['presets']['bizproc'] = array_filter([
 		'chat' => 100,
 		'bizproc' => 150,
-		'stream' => 200,
+		'calendar' =>  250,
 		'task' => 250,
 		'menu' => 1000,
-	];
+	]);
 }
 
 if (

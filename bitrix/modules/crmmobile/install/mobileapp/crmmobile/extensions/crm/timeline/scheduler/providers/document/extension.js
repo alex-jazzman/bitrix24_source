@@ -132,14 +132,13 @@ jn.define('crm/timeline/scheduler/providers/document', (require, exports, module
 		 */
 		static askAboutUsingPreviousDocumentNumber(provider, templateId, entityId, onSuccess, onDecline)
 		{
-			provider = provider.replaceAll('\\', '\\\\');
 			BX.ajax.runAction('documentgenerator.api.document.list', {
 				data: {
 					select: ['id', 'number'],
 					filter: {
-						provider,
-						templateId,
-						value: entityId,
+						'=provider': provider.toLowerCase(),
+						'=templateId': templateId,
+						'=value': entityId,
 					},
 					order: { id: 'desc' },
 				},

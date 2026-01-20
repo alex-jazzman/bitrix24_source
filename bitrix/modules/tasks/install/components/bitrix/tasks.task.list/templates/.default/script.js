@@ -583,38 +583,22 @@ BX.Tasks.GridActions = {
 			}
 
 			case 'unlinkSubTask':
-				top.BX.Runtime.loadExtension('tasks.v2.provider.service.relation-service').then(({ subTasksService }) => {
-					subTasksService.delete(args.parentId, [taskId]).then(() => {
-						if (!this.checkCanMove())
-						{
-							this.reloadRow(taskId);
-						}
-					}).catch((error) => {
-						if (error.errors)
-						{
-							const content = error.errors[0].message || error.errors[0].MESSAGE;
-							BX.UI.Notification.Center.notify({ content });
-						}
-					});
-				});
+				this.unlinkTask(taskId, args.parentId, 'subTasksService');
 
 				break;
 
 			case 'unlinkRelatedTask':
-				top.BX.Runtime.loadExtension('tasks.v2.provider.service.relation-service').then(({ relatedTasksService }) => {
-					relatedTasksService.delete(args.relatedToTaskId, [taskId]).then(() => {
-						if (!this.checkCanMove())
-						{
-							this.reloadRow(taskId);
-						}
-					}).catch((error) => {
-						if (error.errors)
-						{
-							const content = error.errors[0].message || error.errors[0].MESSAGE;
-							BX.UI.Notification.Center.notify({ content });
-						}
-					});
-				});
+				this.unlinkTask(taskId, args.relatedToTaskId, 'relatedTasksService');
+
+				break;
+
+			case 'unlinkRelatedTemplateTask':
+				this.unlinkTask(taskId, `template${args.relatedToTaskId}`, 'relatedTasksService');
+
+				break;
+
+			case 'unlinkGantt':
+				this.unlinkTask(taskId, args.ganttParentId, 'ganttService');
 
 				break;
 
@@ -632,6 +616,25 @@ BX.Tasks.GridActions = {
 				break;
 			}
 		}
+	},
+
+	unlinkTask: function(taskId, relationToId, serviceName)
+	{
+		top.BX.Runtime.loadExtension('tasks.v2.provider.service.relation-service').then((exports) => {
+			exports[serviceName].delete(relationToId, [taskId]).then(() => {
+				if (!this.checkCanMove())
+				{
+					this.reloadRow(taskId);
+				}
+			}).catch((error) => {
+				console.error(error);
+				if (error.errors)
+				{
+					const content = error.errors[0].message || error.errors[0].MESSAGE;
+					BX.UI.Notification.Center.notify({ content });
+				}
+			});
+		});
 	},
 
 	doAction: function(action, taskId, args) {
@@ -1027,6 +1030,15 @@ BX.Tasks.GridActions = {
 
 								};
 							})(node, taskId, value),
+							callbackOnFailure: (response) => {
+								const data = response.rawReply;
+								if (data.message)
+								{
+									BX.loadExt('ui.notification').then(() => {
+										BX.UI.Notification.Center.notify({ content: data.message });
+									});
+								}
+							},
 						},
 					);
 					BX.CJSTask.ajaxUrl = path;
@@ -1680,15 +1692,28 @@ BX(function() {
 			const relationType = this.arParams.relationType;
 			if (relationToId)
 			{
+				const buttonRelationAdd = document.getElementById('tasks-buttonRelationAdd');
 				const reload = () => this.getGrid().reload();
 				const meta = {
 					subTasks: {
 						relationToField: 'parentId',
 						relationDialog: 'subTasksDialog',
+						relationToId,
 					},
 					relatedTasks: {
 						relationToField: 'relatedToTaskId',
 						relationDialog: 'relatedTasksDialog',
+						relationToId,
+					},
+					relatedTemplateTasks: {
+						relationToField: 'relatedToTaskId',
+						relationDialog: 'relatedTasksDialog',
+						relationToId: `template${relationToId}`,
+					},
+					gantt: {
+						relationToField: 'ganttParentId',
+						relationDialog: 'ganttDialog',
+						relationToId,
 					},
 				}[relationType];
 
@@ -1696,21 +1721,42 @@ BX(function() {
 					/** @type RelationTasksDialog */
 					const dialog = exports[meta.relationDialog];
 					BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
-						dialog.setTaskId(relationToId).getDialog()?.getPopup()?.setTargetContainer(top.document.body);
-					});
-
-					BX.Event.bind(document, 'click', ({ target }) => {
-						if (!dialog.setTaskId(relationToId).getDialog()?.getPopup()?.getPopupContainer()?.contains(target))
-						{
-							top.document.body.click();
-						}
-					}, true);
-
-					const buttonRelationAdd = document.getElementById('tasks-buttonRelationAdd');
-					BX.Event.bind(buttonRelationAdd, 'click', () => {
-						dialog.setTaskId(relationToId).onUpdateOnce(reload).showTo(buttonRelationAdd, document.body);
+						const popup = dialog.dialog.getPopup();
+						popup.setTargetContainer(top.document.body); // avoid destroying by SliderIntegration
+						popup.close();
 					});
 				});
+
+				if (relationType === 'gantt')
+				{
+					top.BX.Runtime.loadExtension('tasks.v2.application.gantt-popup').then(({ GanttPopupApi }) => {
+						/** @type GanttPopupApi */
+						const ganttPopup = new GanttPopupApi({ taskId: meta.relationToId });
+						ganttPopup.onUpdate(reload);
+
+						BX.Event.bind(buttonRelationAdd, 'click', () => {
+							void ganttPopup.showTo(buttonRelationAdd, document.body);
+						});
+
+						BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
+							ganttPopup.destroy();
+						});
+					});
+				}
+				else
+				{
+					top.BX.Runtime.loadExtension('tasks.v2.lib.relation-tasks-dialog').then((exports) => {
+						/** @type RelationTasksDialog */
+						const dialog = exports[meta.relationDialog];
+
+						BX.Event.bind(buttonRelationAdd, 'click', () => dialog.show({
+							targetNode: buttonRelationAdd,
+							targetContainer: document.body,
+							taskId: meta.relationToId,
+							onUpdate: reload,
+						}));
+					});
+				}
 
 				BX.Event.EventEmitter.subscribe('Grid::beforeRequest', (event) => {
 					const [, eventArgs] = event.getCompatData();
@@ -1722,8 +1768,8 @@ BX(function() {
 					;
 				});
 
-				top.BX.Event.EventEmitter.subscribe('tasks:card:taskAdd', (event) => {
-					if (event.getData()?.[meta.relationToField] === relationToId)
+				top.BX.Event.EventEmitter.subscribe('tasks:card:taskAdded', (event) => {
+					if (event.getData()?.initialTask[meta.relationToField] === meta.relationToId)
 					{
 						reload();
 					}
@@ -1841,13 +1887,9 @@ BX(function() {
 
 			var item = repository.collectionGrid.get(BX.Text.toNumber(taskId));
 
-			if (item[taskId])
+			if (item && item[taskId])
 			{
 				this.updateActivityDateCellForTasksHandler({data: item}, rowData, parameters);
-			}
-			else
-			{
-				BX.Tasks.alert('grid.id is empty' + taskId);
 			}
 		},
 
@@ -2428,15 +2470,6 @@ BX(function() {
 			BX.Tasks.GridActions.reloadGrid();
 		}
 	}, this));
-
-	BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', function(event) {
-		var reg = /tasks\/task\/edit/;
-		var str = event.getSlider().getUrl();
-		if (reg.test(str) && !confirm(BX.message('TASKS_CLOSE_PAGE_CONFIRM')))
-		{
-			event.denyAction();
-		}
-	});
 
 	BX.addCustomEvent('BX.Main.Filter:apply', function(filterId, data, ctx) {
 		var stringUrl = window.location.href;

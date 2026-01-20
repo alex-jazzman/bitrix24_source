@@ -1,6 +1,6 @@
-import { EventEmitter } from 'main.core.events';
-
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const SearchButton = {
@@ -26,15 +26,19 @@ export const SearchButton = {
 		{
 			if (this.isMessageSearchActive)
 			{
-				EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.messageSearch });
+				this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.messageSearch });
 
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.messageSearch,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

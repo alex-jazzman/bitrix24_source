@@ -2,6 +2,7 @@
  * @module im/messenger/provider/pull/lib/file/utils
  */
 jn.define('im/messenger/provider/pull/lib/file/utils', (require, exports, module) => {
+	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Type } = require('type');
@@ -133,6 +134,7 @@ jn.define('im/messenger/provider/pull/lib/file/utils', (require, exports, module
 				await this.#store.dispatch('filesModel/transcriptModel/set', {
 					...transcriptModel,
 					status: TranscriptStatus.error,
+					text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR'),
 				});
 
 				return;

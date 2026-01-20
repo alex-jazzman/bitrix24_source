@@ -284,6 +284,10 @@
 	height: inherit;
 }
 
+.catalog-footers-label-container {
+	margin-left: 3px;
+}
+
 .catalog-product-view.--short-format .ui-image-input-img-block-inner {
 	width: 27px;
 }

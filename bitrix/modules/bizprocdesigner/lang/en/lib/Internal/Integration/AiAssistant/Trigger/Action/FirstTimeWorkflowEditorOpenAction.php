@@ -1,0 +1,4 @@
+<?php
+$MESS["BIZPROC_DESIGNER_INTERNAL_INTEGRATION_AI_ASSISTANT_TRIGGER_ACTION_FIRST_TIME_WORKFLOW_EDITOR_OPEN_ACTION_NAME_CONTENT"] = "Hello, #FIRST_NAME#! I'm Marta, the AI assistant in the workflow editor. I'll help you set up automation: build a process from scratch, explain how nodes work, or assist in refining existing automation.";
+$MESS["BIZPROC_DESIGNER_INTERNAL_INTEGRATION_AI_ASSISTANT_TRIGGER_ACTION_FIRST_TIME_WORKFLOW_EDITOR_OPEN_ACTION_NAME_CONTENT_EMPTY_USER"] = "Hello! I'm Marta, the AI assistant in the workflow editor. I'll help you set up automation: build a process from scratch, explain how nodes work, or assist in refining existing automation.";
+$MESS["BIZPROC_DESIGNER_INTERNAL_INTEGRATION_AI_ASSISTANT_TRIGGER_ACTION_FIRST_TIME_WORKFLOW_EDITOR_OPEN_ACTION_NAME_MESSAGE"] = "Let's build your first workflow. Write what you want to automate.";

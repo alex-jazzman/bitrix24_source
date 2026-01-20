@@ -1,3 +1,5 @@
+import { ActivityProvider } from 'crm.ai.call';
+
 import type { ConflictField } from './types';
 import { EntityInfo } from './types';
 
@@ -16,6 +18,12 @@ export default {
 	},
 	activityDirection(state): string {
 		return state.activityDirection;
+	},
+	activityProvider(state): string {
+		return state.activityProvider;
+	},
+	summarizeJobId(state): string {
+		return state.summarizeJobId;
 	},
 	getEntityInfo(state): ?EntityInfo {
 		return state.entityInfo;
@@ -91,7 +99,7 @@ export default {
 		return state.aiFeedback.isMessageComponentShown;
 	},
 	isAiFeedbackShowBeforeClose(state): boolean {
-		return state.aiFeedback.showBeforeClose;
+		return state.aiFeedback.showBeforeClose && state.activityProvider === ActivityProvider.call;
 	},
 	aiFeedback(state) {
 		return state.aiFeedback;

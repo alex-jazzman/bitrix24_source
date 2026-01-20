@@ -22,7 +22,7 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			}, options);
 
 			this.setMessage(date);
-			this.setShowReaction(false);
+			this.setShowReaction(null, false);
 			this.setCanBeQuoted(false);
 			this.setCanBeChecked(false);
 			this.setMessageAlign(MessageAlign.center);

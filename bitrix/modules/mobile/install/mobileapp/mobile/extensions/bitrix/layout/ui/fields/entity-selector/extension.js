@@ -426,6 +426,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						canUseRecent,
 						createOptions: {
 							enableCreation,
+							useCustomCreationElement: selectorType === EntitySelectorFactoryType.USER,
 							closeAfterCreation,
 							analytics,
 							getParentLayout: () => this.layout,

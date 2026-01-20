@@ -1,74 +1,135 @@
-import { Type } from 'main.core';
+import { Type, Event } from 'main.core';
+import { FileStatus, UploaderEvent } from 'ui.uploader.core';
 import { TileWidgetComponent } from 'ui.uploader.tile-widget';
-import { InputManager } from './inputmanager';
 
-export {Main, AppContext};
+export { Main, AppContext };
 
 declare type AppContext = {
 	id: number,
 	entityId: string,
+	entityValueId: string,
 	fieldName: string,
 	multiple: boolean,
+	sessionId: string,
+	controllerOptions: Object
 };
 
 const Main = {
-	data()
+	components: {
+		TileWidgetComponent,
+	},
+	data(): Object
 	{
-		const data =  {
-			fileTokens: [],
+		return {
+			deletedValues: [],
+			uploadedValues: [],
+			uploadInProgress: false,
 		};
-
-		return this.getPreparedData(data);
 	},
 	props: {
-		controlId: {
+		fieldName: {
 			type: String,
 			required: true,
 		},
-		container: {
-			type: HTMLElement,
+		controlId: {
+			type: String,
 			required: true,
 		},
 		context: {
 			type: Object,
 			required: true,
 		},
-		filledValues: {
+		values: {
 			type: Object,
 		},
 	},
-	components: {
-		InputManager,
-		TileWidgetComponent,
-	},
+
 	computed: {
-		uploaderOptions()
+		sessionInputName(): string
+		{
+			return `${this.context.fieldName}_session_id`;
+		},
+		valueInputName(): string
+		{
+			return this.context.fieldName + (this.context.multiple ? '[]' : '');
+		},
+		deletedValueInputName(): string
+		{
+			return `${this.context.fieldName}_del${this.context.multiple ? '[]' : ''}`;
+		},
+		sessionId(): string
+		{
+			return this.context.sessionId;
+		},
+		currentValues(): Array
+		{
+			const values = [
+				...this.values,
+				...this.uploadedValues,
+			];
+
+			return this.context.multiple ? values : values.slice(-1);
+		},
+		uploaderOptions(): Object
 		{
 			return {
 				controller: 'main.fileUploader.fieldFileUploaderController',
-				controllerOptions: this.context,
-				files: this.fileTokens,
+				controllerOptions: this.context.controllerOptions,
+				files: this.values,
 				events: {
-					onUploadComplete: () => {
-						void this.$nextTick(() => {
-							this.fileTokens = this.getFileIdList();
-						});
-					},
-					"File:onRemove": (event) => {
-						const eventData = event.getData();
-						if (Type.isObject(eventData) && Type.isObject(eventData["file"]))
+					[UploaderEvent.FILE_UPLOAD_COMPLETE]: (event) => {
+						const newFileId = event.getData()?.file?.getCustomData()?.realFileId;
+						if (newFileId)
 						{
-							const file = eventData["file"];
-							if (Type.isObject(file))
+							this.uploadedValues.push(newFileId);
+						}
+
+						this.emitChangeEvent();
+					},
+					[UploaderEvent.FILE_REMOVE]: (event) => {
+						const justUploadedDeletedFileId = event.getData()?.file?.getCustomData()?.realFileId;
+						if (
+							justUploadedDeletedFileId
+							&& this.uploadedValues.includes(justUploadedDeletedFileId)
+						) // just uploaded file was deleted
+						{
+							this.uploadedValues = this.uploadedValues.filter((id) => id !== justUploadedDeletedFileId);
+						}
+
+						const deletedFileId = event.getData()?.file?.getServerFileId();
+
+						if (deletedFileId && Type.isInteger(deletedFileId)) // existed file was deleted
+						{
+							this.deletedValues.push(deletedFileId);
+						}
+
+						this.emitChangeEvent();
+					},
+					[UploaderEvent.FILE_STATUS_CHANGE]: (event) => {
+						const files = event.getTarget()?.getFiles();
+						if (!files)
+						{
+							return;
+						}
+						const inProgress = files.some((file) => {
+							const status = file.getStatus();
+
+							return status === FileStatus.UPLOADING
+								|| status === FileStatus.PREPARING
+								|| status === FileStatus.PENDING
+								|| status === FileStatus.UPLOADING
+							;
+						});
+						if (this.uploadInProgress !== inProgress)
+						{
+							this.uploadInProgress = inProgress;
+							if (inProgress)
 							{
-								const fileId = file.getServerFileId();
-								if (Type.isNumber(fileId))
-								{
-									this.$refs.inputManager.addDeleted(fileId);
-								}
-								else {
-									this.$refs.inputManager.addDeleted(this.getRealFileId(file));
-								}
+								this.emitUploadStartEvent();
+							}
+							else
+							{
+								this.emitUploadCompleteEvent();
 							}
 						}
 					},
@@ -84,71 +145,33 @@ const Main = {
 		},
 	},
 	methods: {
-		getPreparedData(data: Object): Object
+		emitChangeEvent(): void
 		{
-			const { filledValues } = this;
-
-			if (Type.isArrayFilled(filledValues))
-			{
-				data.fileTokens = filledValues;
-			}
-
-			return data;
+			BX.onCustomEvent(window, 'onUIEntityEditorUserFieldExternalChanged', [this.fieldName]);
+			BX.onCustomEvent(window, 'onCrmEntityEditorUserFieldExternalChanged', [this.fieldName]);
 		},
-		getFileIdList(): number[]
+		emitUploadStartEvent(): void
 		{
-			const ids = [];
-
-			this.$refs.uploader.uploader.getFiles().forEach((file) => {
-				if (file.isComplete())
-				{
-					const realFileId = this.getRealFileId(file);
-					if (Type.isNumber(realFileId))
-					{
-						ids.push(realFileId);
-					}
-					else
-					{
-						ids.push(file.getServerFileId());
-					}
-				}
-			});
-
-			return ids;
+			Event.EventEmitter.emit('BX.UI.EntityEditor:onUserFieldFileUploadStart', { fieldName: this.fieldName });
 		},
-		getRealFileId(file: Object) {
-			const { realFileId } = file.getCustomData();
-
-			return Type.isNumber(realFileId) ? realFileId : null;
-		},
-		updateInputManagerValues(): void
+		emitUploadCompleteEvent(): void
 		{
-			this.$refs.inputManager.setValues(this.fileTokens);
+			Event.EventEmitter.emit('BX.UI.EntityEditor:onUserFieldFileUploadComplete', { fieldName: this.fieldName });
 		},
 	},
 	template: `
-	<div class="main-field-file-wrapper">
-		<InputManager
-			ref="inputManager"
-			:controlId="controlId"
-			:controlName="context.fieldName"
-			:multiple="context.multiple"
-			:filledValues="filledValues"
-		/>
-		<TileWidgetComponent
-			ref="uploader"
-			:uploaderOptions="uploaderOptions"
-			:widgetOptions="widgetOptions"
-		/>
-	</div>`,
-	created()
-	{
-		this.$watch(
-			'fileTokens',
-			this.updateInputManagerValues,
-			{
-				deep: true,
-			},
-		);
-	},
+		<div class="main-field-file-wrapper">
+			<input type="hidden" :name="sessionInputName" :value="sessionId" />
+			<input v-if="currentValues.length" v-for="(value, index) in currentValues" :key="index" type="hidden" :name="valueInputName" :value="value"/>
+			<input v-else type="hidden" :name="valueInputName" />
+
+			<input v-for="(value, index) in deletedValues" :key="index" type="hidden" :name="deletedValueInputName" :value="value"/>
+
+			<TileWidgetComponent
+				ref="uploader"
+				:uploaderOptions="uploaderOptions"
+				:widgetOptions="widgetOptions"
+			/>
+		</div>
+	`,
 };

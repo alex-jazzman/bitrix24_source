@@ -2,10 +2,16 @@ import { Reflection, Tag, Event, Dom } from 'main.core';
 
 export const CopilotChatWarningMessage = {
 	name: 'CopilotWarningMessage',
+	props: {
+		articleCode: {
+			type: String,
+			required: true,
+		},
+	},
 	methods: {
 		showArticle(): void {
 			const Helper = Reflection.getClass('top.BX.Helper');
-			const articleCode: string = '20412666';
+			const articleCode: string = this.articleCode;
 
 			Helper?.show(`redirect=detail&code=${articleCode}`);
 		},

@@ -43,6 +43,7 @@ $arResult['JS_DATA'] = [
 		'paid' => ($arResult['PAYMENT']['PAID'] === 'Y'),
 		'checks' => [],
 	],
+	'isNeedPaymentViewerViewAction' => $arResult['IS_NEED_PAYMENT_VIEWER_VIEW_ACTION'],
 ];
 
 if ($arResult['PAYMENT']['PAID'] === 'Y' || $arParams['ALLOW_SELECT_PAY_SYSTEM'] !== 'Y')

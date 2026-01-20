@@ -1,8 +1,8 @@
 import { ClientSelector } from 'crm.client-selector';
+import { type Receiver } from 'crm.messagesender';
 import { type JsonObject, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, type MenuItemOptions } from 'main.popup';
-import { type Receiver } from 'crm.messagesender';
 import { type BaseButton } from 'ui.buttons';
 
 /**
@@ -234,7 +234,7 @@ export class CommunicationButton
 				VALUE: receiver.address.value,
 				VALUE_FORMATTED: receiver.address.valueFormatted,
 				COMPLEX_ID: receiver.address.complexId,
-				COMPLEX_NAME: receiver.address.complexName,
+				COMPLEX_NAME: receiver.address.valueTypeCaption,
 				OWNER: {
 					ID: receiver.addressSource.entityId,
 					TYPE_ID: receiver.addressSource.entityTypeId,

@@ -47,9 +47,7 @@ const Cashbox = {
 		},
 		title()
 		{
-			return this.installed === true
-				? Loc.getMessage('SALESCENTER_CASHBOX_SET_BLOCK_TITLE')
-				: Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_TITLE');
+			return Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_TITLE_MSGVER_1');
 		},
 		configForBlock()
 		{

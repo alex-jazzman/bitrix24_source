@@ -5,39 +5,56 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Crm\Integration\BizProc\Document\Dynamic;
+use Bitrix\Crm\Integration\BizProc\Document\Order;
+use Bitrix\Crm\Integration\BizProc\Document\Quote;
+use Bitrix\Crm\Integration\BizProc\Document\SmartInvoice;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_ACTIVITY_SET_COMPANY_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_ACTIVITY_SET_COMPANY_DESC_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'CrmSetCompanyField',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
-		'ID' => 'document',
-		'OWN_ID' => 'crm',
-		'OWN_NAME' => 'CRM',
-	],
-	'RETURN' => [
-		'ErrorMessage' => [
-			'NAME' => GetMessage('CRM_ACTIVITY_SET_COMPANY_ERROR_MESSAGE'),
-			'TYPE' => 'string',
+$arActivityDescription =
+	(new ActivityDescription(
+		name: Loc::getMessage('CRM_ACTIVITY_SET_COMPANY_NAME_1'),
+		description: Loc::getMessage('CRM_ACTIVITY_SET_COMPANY_DESC_1'),
+		type: [
+			ActivityType::ACTIVITY->value,
+			ActivityType::ROBOT->value,
+			ActivityType::NODE_ACTION->value,
 		],
-	],
-	'FILTER' => [
-		'INCLUDE' => [
-			['crm', 'CCrmDocumentLead'],
-			['crm', 'CCrmDocumentDeal'],
-			['crm', 'CCrmDocumentContact'],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
-		],
-	],
-	'ROBOT_SETTINGS' => [
-		'CATEGORY' => 'employee',
-		'GROUP' => ['clientData'],
-		'SORT' => 4600,
-	],
-];
+	))
+		->setClass('CrmSetCompanyField')
+		->setJsClass('BizProcActivity')
+		->setCategory([
+			'ID' => 'document',
+			'OWN_ID' => 'crm',
+			'OWN_NAME' => 'CRM',
+		])
+		->setReturn([
+			'ErrorMessage' => [
+				'NAME' => Loc::getMessage('CRM_ACTIVITY_SET_COMPANY_ERROR_MESSAGE'),
+				'TYPE' => 'string',
+			],
+		])
+		->setFilter([
+			'INCLUDE' => [
+				['crm', 'CCrmDocumentLead'],
+				['crm', 'CCrmDocumentDeal'],
+				['crm', 'CCrmDocumentContact'],
+				['crm', Dynamic::class],
+				['crm', Quote::class],
+				['crm', SmartInvoice::class],
+				['crm', Order::class],
+			],
+		])
+		->setRobotSettings([
+			'CATEGORY' => 'employee',
+			'GROUP' => ['clientData'],
+			'SORT' => 4600,
+		])
+		->setNodeActionSettings([
+			'INCLUDE' => ['crmdealcomplexactivity'],
+			'HANDLES_DOCUMENT' => true,
+		])
+		->toArray()
+;

@@ -398,7 +398,7 @@ export class ProductSearchInputBarcode extends ProductSearchInputDefault
 	#getProductIdByBarcode(barcode: string): Promise
 	{
 		return ajax.runAction(
-			'catalog.ProductSelector.#getProductIdByBarcode',
+			'catalog.ProductSelector.getProductIdByBarcode',
 			{
 				json: {
 					barcode,

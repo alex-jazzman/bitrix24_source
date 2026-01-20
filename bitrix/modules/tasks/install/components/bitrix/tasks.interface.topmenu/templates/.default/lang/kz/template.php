@@ -1,6 +1,5 @@
 <?php
 $MESS["TASKS_PANEL_TAB_ALL"] = "Барлығы";
-$MESS["TASKS_PANEL_TAB_APPLICATIONS_2"] = "Маркет";
 $MESS["TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"] = "Маркетплейс";
 $MESS["TASKS_PANEL_TAB_CONFIG_PERMISSIONS"] = "Қолжетімділік құқығы";
 $MESS["TASKS_PANEL_TAB_EFFECTIVE"] = "Тиімділік";

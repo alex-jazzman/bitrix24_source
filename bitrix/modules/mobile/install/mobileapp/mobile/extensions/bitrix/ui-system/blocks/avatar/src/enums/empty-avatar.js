@@ -26,5 +26,7 @@ jn.define('ui-system/blocks/avatar/src/enums/empty-avatar', (require, exports, m
 		}
 	}
 
-	module.exports = { EmptyAvatar };
+	module.exports = {
+		EmptyAvatar: EmptyAvatar.export(),
+	};
 });

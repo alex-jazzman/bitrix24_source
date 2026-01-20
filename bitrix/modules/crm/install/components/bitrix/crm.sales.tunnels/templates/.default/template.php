@@ -20,6 +20,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.buttons.icons',
+	'ui.analytics',
 	'main.d3js',
 	'main.kanban',
 	'sidepanel',
@@ -75,6 +76,7 @@ $APPLICATION->includeComponent(
 		helpButton: document.querySelector('.crm-st-help-button'),
 		categories: <?=CUtil::phpToJsObject($arResult['categories'])?>,
 		tunnelScheme: <?=CUtil::phpToJsObject($arResult['tunnelScheme'])?>,
+		analyticsLabels: <?= \Bitrix\Main\Web\Json::encode($arResult['analyticsLabels'])?>,
 
 		isAutomationEnabled: <?=($arResult['isAutomationEnabled'] ? 'true' : 'false')?>,
 		isStagesEnabled: <?=($arResult['isStagesEnabled'] ? 'true' : 'false')?>,

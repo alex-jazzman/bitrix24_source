@@ -1,12 +1,11 @@
-<?
-/*
-##############################################
-# Bitrix: SiteManager                        #
-# Copyright (c) 2004 Bitrix                  #
-# https://www.bitrixsoft.com          #
-# mailto:admin@bitrix.ru                     #
-##############################################
-*/
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage advertising
+ * @copyright 2001-2025 Bitrix
+ */
 
 use Bitrix\Main\Loader;
 
@@ -41,7 +40,7 @@ $SID = preg_replace("~[^A-Za-z_0-9]~", "", $SID);
 $OLD_SID = preg_replace("~[^A-Za-z_0-9]~", "", $OLD_SID);
 $strError = '';
 
-if (($save <> '' || $apply <> '') && $REQUEST_METHOD=="POST" && check_bitrix_sessid())
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD']=="POST" && check_bitrix_sessid())
 {
 	if ($ACTIVE != "Y") $ACTIVE = "N";
 	$arFields = array(
@@ -138,7 +137,7 @@ if($SID <> '')
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
-<?=CAdminMessage::ShowMessage($strError)?>
+<? CAdminMessage::ShowMessage($strError) ?>
 <form name="form1" method="POST" action="<?echo $APPLICATION->GetCurPage()?>">
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">

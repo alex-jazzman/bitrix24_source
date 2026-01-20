@@ -1,0 +1,54 @@
+.edit-action-expression-form__dropdown.ui-ctl {
+	--ui-field-size: 34px;
+	width: 100%;
+}
+
+.edit-action-expression-form__dropdown.ui-ctl .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.edit-action-expression-form__dropdown.ui-ctl .ui-ctl-icon-angle.ui-ctl-after {
+	display: block !important;
+}
+
+.edit-action-expression-form__label {
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
+	margin-bottom: 5px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.edit-action-expression-form__label .ui-icon-set {
+	cursor: pointer;
+}
+
+.edit-action-expression-form__item {
+	margin-bottom: 9px;
+}
+
+.edit-action-expression-form__item:last-of-type {
+	margin-bottom: 0;
+}
+
+.edit-action-expression-form__settings {
+	position: relative;
+	margin-top: 10px;
+}
+
+.edit-action-expression-form__settings .node-settings-form {
+	background: none;
+	padding: 0;
+}
+
+.edit-action-expression-form__settings .node-settings-form .adm-detail-content-cell-l {
+	padding: 0;
+	text-align: left;
+	margin-bottom: 3px;
+}
+
+.edit-action-expression-form__settings .node-settings-form .adm-detail-content-cell-r {
+	padding: 0;
+}

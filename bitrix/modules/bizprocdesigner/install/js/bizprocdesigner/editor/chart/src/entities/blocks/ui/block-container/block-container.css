@@ -1,0 +1,72 @@
+.editor-chart-block-container {
+    position: relative;
+    width: 100%;
+    min-width: 200px;
+    height: 100%;
+    border: 1px solid var(--ui-color-white-base);
+    border-radius: 10px;
+    background-color: var(--ui-color-white-base);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    user-select: none;
+    cursor: pointer;
+}
+
+.editor-chart-block-container.--highlighted,
+.editor-chart-block-container.--highlighted.--white,
+.editor-chart-block-container.--highlighted.--orange,
+.editor-chart-block-container.--highlighted.--blue,
+.editor-chart-block-container.--highlighted .ui-block-diagram-port {
+	border: solid 1px var(--pallete-blue-blue-57, #4A9DFF);
+}
+
+.editor-chart-block-container.--white {
+    border: 1px solid var(--ui-color-white-base);
+    background-color: var(--ui-color-white-base);
+}
+
+.editor-chart-block-container.--orange {
+    border: 1px solid #ffeccc;
+    background-color: #fef2de;
+}
+
+.editor-chart-block-container.--blue {
+    border: 1px solid #c8e2fd;
+    background-color: #e5f4ff;
+}
+
+.editor-chart-block-container.--deactivated {
+	border: 1px solid var(--ui-color-bg-content-secondary);
+	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.editor-chart-block-container.--deactivated .editor-chart-block-icon {
+	background-color: var(--designer-bp-grey-bg);
+}
+
+.editor-chart-block-container.--deactivated .editor-chart-block-icon__icon {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50) !important;
+}
+
+.editor-chart-block-container.--deactivated .editor-chart-block-header__title {
+	color: var(--ui-color-palette-gray-70);
+}
+
+.editor-chart-block-container.--deactivated .ui-selector-item-avatar {
+	position: relative;
+}
+
+.editor-chart-block-container.--deactivated .ui-selector-item-avatar::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(var(--ui-color-base-60-rgb), 0.5);
+	z-index: 1;
+}
+
+.editor-chart-block-container.--deactivated .block-complex__content{
+	background: var(--ui-color-gray-05);
+}

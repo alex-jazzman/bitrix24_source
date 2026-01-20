@@ -47,7 +47,8 @@ export type RecentModelState = {
 	uploadingState?: {
 		message: RecentMessage,
 		lastActivityDate: Date,
-	}
+	},
+	sticker: boolean,
 };
 
 export type RecentModelActions =

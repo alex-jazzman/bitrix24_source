@@ -1,8 +1,6 @@
 <?php
 $MESS["MAIL_CLIENT_CONFIG_ACCESS"] = "Mailbox access";
-$MESS["MAIL_CLIENT_CONFIG_ACCESS_ADD"] = "Add";
 $MESS["MAIL_CLIENT_CONFIG_ACCESS_HINT_MSGVER_1"] = "Give the employees access permission to this mailbox so they could receive and reply to email messages. It's a simple, effortless way to set up a collaboration environment for your sales department or helpdesk service.";
-$MESS["MAIL_CLIENT_CONFIG_ACCESS_MORE"] = "details";
 $MESS["MAIL_CLIENT_CONFIG_BTN_CANCEL"] = "Cancel";
 $MESS["MAIL_CLIENT_CONFIG_BTN_CONNECT"] = "Connect";
 $MESS["MAIL_CLIENT_CONFIG_BTN_DISCONNECT"] = "Disable";
@@ -25,6 +23,7 @@ $MESS["MAIL_CLIENT_CONFIG_CRM_PUBLIC"] = "Route emails from existing clients to 
 $MESS["MAIL_CLIENT_CONFIG_CRM_QUEUE"] = "Lead and contact distribution queue:";
 $MESS["MAIL_CLIENT_CONFIG_CRM_QUEUE_ADD"] = "Add";
 $MESS["MAIL_CLIENT_CONFIG_CRM_VCF"] = "Create contacts using attached vCard";
+$MESS["MAIL_CLIENT_CONFIG_DENIED_SHARE_ACCESS_HINT"] = "Only the mailbox owner can manage the mailbox permissions. Please ask them to grant you access to the mailbox.";
 $MESS["MAIL_CLIENT_CONFIG_EDIT_TITLE"] = "Manage Mailbox";
 $MESS["MAIL_CLIENT_CONFIG_EMAIL_BAD"] = "Enter a correct email address";
 $MESS["MAIL_CLIENT_CONFIG_EMAIL_EMPTY"] = "Enter email address";
@@ -105,6 +104,8 @@ $MESS["MAIL_CLIENT_CONFIG_SMTP_UPLOAD_HINT"] = "Try to disable this option when 
 $MESS["MAIL_CLIENT_CONFIG_SMTP_USE_LIMIT_MSGVER_1"] = "Set daily email limit";
 $MESS["MAIL_CLIENT_CONFIG_SMTP_WARNING"] = "Important! Make sure the SMTP server details you provided are correct. Otherwise, mail will not be delivered.";
 $MESS["MAIL_CLIENT_CONFIG_TITLE"] = "Mailbox Integration";
+$MESS["MAIL_CLIENT_CONFIG_TOOLBAR_MAILBOXES_LIST"] = "Manage user mailboxes";
+$MESS["MAIL_CLIENT_CONFIG_TOOLBAR_MAILBOXES_MASS_CONNECT"] = "Connect multiple mailboxes";
 $MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT"] = "Your mailbox could not be accessed when attempting to sync. Please authenticate again to continue using the mailbox.";
 $MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE"] = "Authenticate again";
 $MESS["MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT"] = "Your mailbox could not be accessed when attempting to sync. Please create a new password in your mail service to continue using the mailbox.";

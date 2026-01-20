@@ -4,6 +4,7 @@ declare interface SingleSelectorProps
 {
 	itemList: Array<MessengerItemProps>;
 	buttons: Array<object>;
+	additionalButtons: Array<object>;
 	onItemSelected: (params: MessengerItemOnClickParams) => any;
 	searchMode: 'inline' | 'overlay';
 	onSearchItemSelected: SingleSelectorProps['searchMode'] extends 'overlay'

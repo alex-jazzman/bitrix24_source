@@ -2,12 +2,15 @@ import type { PopupOptions } from 'main.popup';
 
 import { Popup } from 'ui.vue3.components.popup';
 import { Button as UiButton, AirButtonStyle, ButtonSize, ButtonIcon } from 'ui.vue3.components.button';
-import { Outline } from 'ui.icon-set.api.core';
-import 'ui.icon-set.outline';
+import { Outline } from 'ui.icon-set.api.vue';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
+import 'ui.icon-set.outline';
 
-import { UserFieldWidgetComponent, type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+
 import { fileService } from 'tasks.v2.provider.service.file-service';
+import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
+
 import './files-popup.css';
 
 // @vue/component
@@ -15,7 +18,7 @@ export const FilesPopup = {
 	components: {
 		Popup,
 		UiButton,
-		UserFieldWidgetComponent,
+		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 	},
 	props: {
 		taskId: {
@@ -49,7 +52,7 @@ export const FilesPopup = {
 		{
 			return this.getBindElement();
 		},
-		popupOptions(): PopupOptions
+		options(): PopupOptions
 		{
 			return {
 				id: 'tasks-field-files-popup',
@@ -119,14 +122,10 @@ export const FilesPopup = {
 		},
 	},
 	template: `
-		<Popup
-			:options="popupOptions"
-			ref="popup"
-			@close="closePopup"
-		>
+		<Popup :options ref="popup" @close="closePopup">
 			<div class="tasks-field-files-popup">
 				<div class="tasks-field-files-popup-files">
-					<UserFieldWidgetComponent :uploaderAdapter="uploaderAdapter" :widgetOptions="widgetOptions"/>
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 				</div>
 				<div class="tasks-field-files-popup-footer">
 					<div class="tasks-field-files-popup-add-buttons">

@@ -1,71 +1,8 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
-(function (exports,call_lib_analytics,call_lib_callTokenManager,call_lib_settingsManager,im_debug,im_application_launch,im_component_conference_conferencePublic,im_model,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_logger,im_lib_clipboard,im_lib_desktop,im_const,ui_notificationManager,ui_notification,ui_buttons,ui_progressround,ui_viewer,ui_vue,ui_vue_vuex,main_core,promise,main_date,main_core_events,pull_client,im_provider_pull,im_v2_lib_desktopApi,Call,rest_client,im_lib_utils) {
+(function (exports,Call,call_lib_analytics,call_lib_callTokenManager,call_lib_settingsManager,call_application_conferenceChannel,im_debug,im_application_launch,im_component_conference_conferencePublic,im_v2_lib_desktopApi,call_model,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_logger,im_lib_clipboard,im_lib_desktop,im_const,call_const,ui_notificationManager,ui_notification,ui_buttons,ui_progressround,ui_viewer,ui_vue,ui_vue_vuex,main_core,promise,main_date,main_core_events,pull_client,im_provider_pull,rest_client,im_lib_utils) {
 	'use strict';
-
-	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
-	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-	var ConferenceChannel = /*#__PURE__*/function () {
-	  function ConferenceChannel() {
-	    babelHelpers.classCallCheck(this, ConferenceChannel);
-	    this.callMultiBroadcastClient = new Call.CallMultiChannel('call_conf_controller_multi_channel');
-	  }
-	  babelHelpers.createClass(ConferenceChannel, [{
-	    key: "sendRequest",
-	    value: function () {
-	      var _sendRequest = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(conferenceCode) {
-	        return _regeneratorRuntime().wrap(function _callee$(_context) {
-	          while (1) switch (_context.prev = _context.next) {
-	            case 0:
-	              if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	                _context.next = 2;
-	                break;
-	              }
-	              return _context.abrupt("return", Promise.resolve([]));
-	            case 2:
-	              _context.next = 4;
-	              return this.callMultiBroadcastClient.broadcastRequest(conferenceCode, {
-	                timeout: 100
-	              });
-	            case 4:
-	              return _context.abrupt("return", _context.sent);
-	            case 5:
-	            case "end":
-	              return _context.stop();
-	          }
-	        }, _callee, this);
-	      }));
-	      function sendRequest(_x) {
-	        return _sendRequest.apply(this, arguments);
-	      }
-	      return sendRequest;
-	    }()
-	  }, {
-	    key: "setExecuter",
-	    value: function setExecuter(handle) {
-	      this.callMultiBroadcastClient.executer(handle);
-	    }
-	  }], [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      if (!_classStaticPrivateFieldSpecGet(this, ConferenceChannel, _instance)) {
-	        _classStaticPrivateFieldSpecSet(this, ConferenceChannel, _instance, new this());
-	      }
-	      return _classStaticPrivateFieldSpecGet(this, ConferenceChannel, _instance);
-	    }
-	  }]);
-	  return ConferenceChannel;
-	}();
-	var _instance = {
-	  writable: true,
-	  value: void 0
-	};
 
 	var RestAuth = Object.freeze({
 	  guest: 'guest'
@@ -203,11 +140,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return CallRestClient;
 	}();
 
+	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
-	var _stopRecordCall = /*#__PURE__*/new WeakSet();
+	var _onCallUserCommonRecordStateHandler = /*#__PURE__*/new WeakMap();
+	var _onCloudRecordStatusChangedHandler = /*#__PURE__*/new WeakMap();
+	var _canLocalRecord = /*#__PURE__*/new WeakSet();
+	var _canCloudRecord = /*#__PURE__*/new WeakSet();
+	var _canCommonRecord = /*#__PURE__*/new WeakSet();
+	var _isLocalRecordStarted = /*#__PURE__*/new WeakSet();
+	var _isCommonRecordStarted = /*#__PURE__*/new WeakSet();
+	var _startCommonRecord = /*#__PURE__*/new WeakSet();
+	var _stopCommonRecord = /*#__PURE__*/new WeakSet();
+	var _onCommonRecordMenu = /*#__PURE__*/new WeakSet();
+	var _onCallViewRecordButtonClick = /*#__PURE__*/new WeakSet();
+	var _onCloudRecordStatusChanged = /*#__PURE__*/new WeakSet();
+	var _onCallUserCommonRecordState = /*#__PURE__*/new WeakSet();
+	var _getDefaultCommonRecord = /*#__PURE__*/new WeakSet();
+	var _showCloudRecordPromo = /*#__PURE__*/new WeakSet();
 	var ConferenceApplication = /*#__PURE__*/function () {
 	  /* region 01. Initialize */
 	  function ConferenceApplication() {
@@ -215,7 +168,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      _this = this;
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ConferenceApplication);
-	    _classPrivateMethodInitSpec(this, _stopRecordCall);
+	    _classPrivateMethodInitSpec(this, _showCloudRecordPromo);
+	    _classPrivateMethodInitSpec(this, _getDefaultCommonRecord);
+	    _classPrivateMethodInitSpec(this, _onCallUserCommonRecordState);
+	    _classPrivateMethodInitSpec(this, _onCloudRecordStatusChanged);
+	    _classPrivateMethodInitSpec(this, _onCallViewRecordButtonClick);
+	    _classPrivateMethodInitSpec(this, _onCommonRecordMenu);
+	    _classPrivateMethodInitSpec(this, _stopCommonRecord);
+	    _classPrivateMethodInitSpec(this, _startCommonRecord);
+	    _classPrivateMethodInitSpec(this, _isCommonRecordStarted);
+	    _classPrivateMethodInitSpec(this, _isLocalRecordStarted);
+	    _classPrivateMethodInitSpec(this, _canCommonRecord);
+	    _classPrivateMethodInitSpec(this, _canCloudRecord);
+	    _classPrivateMethodInitSpec(this, _canLocalRecord);
+	    _classPrivateFieldInitSpec(this, _onCallUserCommonRecordStateHandler, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _onCloudRecordStatusChangedHandler, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.inited = false;
 	    this.hardwareInited = false;
 	    this.dialogInited = false;
@@ -261,13 +234,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.onNeedResetMediaDevicesStateHandler = this.onNeedResetMediaDevicesState.bind(this);
 	    this.onCallUserVideoPausedHandler = this.onCallUserVideoPaused.bind(this);
 	    this.onCallLocalMediaReceivedHandler = BX.debounce(this.onCallLocalMediaReceived.bind(this), 1000);
+	    this.onCallLocalMediaStoppedHandler = this.onCallLocalMediaStopped.bind(this);
 	    this.onCallRemoteMediaReceivedHandler = this.onCallRemoteMediaReceived.bind(this);
 	    this.onCallRemoteMediaStoppedHandler = this.onCallRemoteMediaStopped.bind(this);
 	    this.onCallUserVoiceStartedHandler = this.onCallUserVoiceStarted.bind(this);
 	    this.onCallUserVoiceStoppedHandler = this.onCallUserVoiceStopped.bind(this);
 	    this.onUserStatsReceivedHandler = this.onUserStatsReceived.bind(this);
 	    this.onCallUserScreenStateHandler = this.onCallUserScreenState.bind(this);
-	    this.onCallUserRecordStateHandler = this.onCallUserRecordState.bind(this);
+	    babelHelpers.classPrivateFieldSet(this, _onCallUserCommonRecordStateHandler, _classPrivateMethodGet(this, _onCallUserCommonRecordState, _onCallUserCommonRecordState2).bind(this));
+	    babelHelpers.classPrivateFieldSet(this, _onCloudRecordStatusChangedHandler, _classPrivateMethodGet(this, _onCloudRecordStatusChanged, _onCloudRecordStatusChanged2).bind(this));
 	    this.onCallUserFloorRequestHandler = this.onCallUserFloorRequest.bind(this);
 	    this.onMicrophoneLevelHandler = this.onMicrophoneLevel.bind(this);
 	    this._onCallJoinHandler = this.onCallJoin.bind(this);
@@ -299,9 +274,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.waitingForCallStatus = false;
 	    this.waitingForCallStatusTimeout = null;
 	    this.callEventReceived = false;
-	    this.callRecordState = Call.View.RecordState.Stopped;
-	    this.callRecordInitiatorId = null;
-	    this.callRecordInfo = null;
+	    this.commonRecord = _classPrivateMethodGet(this, _getDefaultCommonRecord, _getDefaultCommonRecord2).call(this);
 	    this.floatingScreenShareWindow = null;
 	    this.webScreenSharePopup = null;
 	    this.screenShareStartTime = null;
@@ -313,7 +286,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.pictureInPictureDebounceForOpen = null;
 	    this.isWindowFocus = true;
 	    if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	      ConferenceChannel.getInstance().setExecuter(function (callUuid) {
+	      call_application_conferenceChannel.ConferenceChannel.getInstance().setExecuter(function (callUuid) {
 	        var currentCallUuid = _this.params.alias;
 	        var hasView = Boolean(_this.callView);
 	        var hasActiveCall = currentCallUuid === callUuid && hasView;
@@ -388,6 +361,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          messageCount: counter
 	        });
 	      });
+	      if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	        im_v2_lib_desktopApi.DesktopApi.subscribe('BXVpnStatusChange', function (status) {
+	          if (status) {
+	            _this2.showVpnIsActiveNotification();
+	          }
+	        });
+	      }
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.textarea.focus, this.onInputFocusHandler);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.textarea.blur, this.onInputBlurHandler);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.conference.userRenameFocus, this.onInputFocusHandler);
@@ -486,7 +466,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          database: !im_lib_utils.Utils.browser.isIe(),
 	          databaseName: 'imol/call',
 	          databaseType: ui_vue_vuex.VuexBuilder.DatabaseType.localStorage,
-	          models: [im_model.ConferenceModel.create(), im_model.CallModel.create()]
+	          models: [call_model.ConferenceModel.create(), call_model.CallModel.create()]
 	        }
 	      });
 	      window.BX.Messenger.Application.Core = {
@@ -577,9 +557,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return new Promise(function (resolve, reject) {
 	        try {
 	          _this8.callContainer = document.getElementById('bx-im-component-call-container');
-	          var hiddenButtons = ['document'];
+	          var hiddenButtons = ['camera', 'microphone', 'document'];
 	          if (_this8.isViewerMode()) {
-	            hiddenButtons = ['camera', 'microphone', 'screen', 'record', 'floorRequest', 'document'];
+	            hiddenButtons = ['screen', 'record', 'floorRequest', 'document'];
 	          }
 	          if (!_this8.params.isIntranetOrExtranet) {
 	            hiddenButtons.push('record');
@@ -598,7 +578,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            language: _this8.params.language,
 	            layout: im_lib_utils.Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
 	            uiState: Call.View.UiState.Preparing,
-	            blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record', 'copilot'],
+	            blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'copilot'],
 	            localUserState: Call.UserState.Idle,
 	            hiddenTopButtons: !_this8.isBroadcast() || _this8.getBroadcastPresenters().length > 1 ? [] : ['grid'],
 	            hiddenButtons: hiddenButtons,
@@ -620,6 +600,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this8.callView.subscribe(Call.View.Event.onUserRename, _this8.onCallViewUserRename.bind(_this8));
 	          _this8.callView.subscribe(Call.View.Event.onUserPinned, _this8.onCallViewUserPinned.bind(_this8));
 	          _this8.callView.subscribe(Call.View.Event.onToggleSubscribe, _this8.onCallToggleSubscribe.bind(_this8));
+	          _this8.callView.subscribe(Call.View.Event.onCommonRecordMenu, _classPrivateMethodGet(_this8, _onCommonRecordMenu, _onCommonRecordMenu2).bind(_this8));
 	          _this8.callView.setCallback(Call.View.Event.onTurnOffParticipantMic, _this8._onCallViewTurnOffParticipantMic.bind(_this8));
 	          _this8.callView.setCallback(Call.View.Event.onTurnOffParticipantCam, _this8._onCallViewTurnOffParticipantCam.bind(_this8));
 	          _this8.callView.setCallback(Call.View.Event.onTurnOffParticipantScreenshare, _this8._onCallViewTurnOffParticipantScreenshare.bind(_this8));
@@ -851,6 +832,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            return false;
 	          }
 	          if (!im_lib_utils.Utils.platform.isBitrixDesktop()) {
+	            if (Number.isNaN(parseInt(payload[0].counter, 10))) {
+	              Call.Util.sendLog("[conf] setButtonCounter chat: payload[0].counter = ".concat(payload[0].counter, " (NaN)"));
+	            }
 	            _this14.callView.setButtonCounter('chat', payload[0].counter);
 	          }
 	        } else if (type === 'dialogues/update') {
@@ -867,9 +851,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                    counter = 0;
 	                  }
 	                }
+	                if (Number.isNaN(parseInt(counter, 10))) {
+	                  Call.Util.sendLog("[conf] setButtonCounter chat: counter = ".concat(counter, " (NaN)"));
+	                }
 	                _this14.callView.setButtonCounter('chat', counter);
 	              }
 	            } else {
+	              if (Number.isNaN(parseInt(payload.fields.counter, 10))) {
+	                Call.Util.sendLog("[conf] setButtonCounter chat:  payload.fields.counter = ".concat(payload.fields.counter, " (NaN)"));
+	              }
 	              _this14.callView.setButtonCounter('chat', payload.fields.counter);
 	            }
 	          }
@@ -878,6 +868,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        } else if (type === 'conference/common' && typeof payload.messageCount === 'number') {
 	          if (_this14.callView) {
+	            if (Number.isNaN(parseInt(payload.messageCount, 10))) {
+	              Call.Util.sendLog("[conf] setButtonCounter chat: payload.messageCount = ".concat(payload.messageCount, " (NaN)"));
+	            }
 	            _this14.callView.setButtonCounter('chat', payload.messageCount);
 	          }
 	        }
@@ -915,7 +908,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            return true;
 	          }
 	          if (Object.values(Call.Hardware.microphoneList).length === 0) {
-	            _this15.setError(im_const.ConferenceErrorCode.missingMicrophone);
+	            _this15.setError(call_const.ConferenceErrorCode.missingMicrophone);
 	          }
 	          if (!_this15.isViewerMode()) {
 	            _this15.checkAvailableCamera();
@@ -927,9 +920,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          resolve();
 	        })["catch"](function (error) {
 	          if (error === 'NO_WEBRTC' && _this15.isHttps()) {
-	            _this15.setError(im_const.ConferenceErrorCode.unsupportedBrowser);
+	            _this15.setError(call_const.ConferenceErrorCode.unsupportedBrowser);
 	          } else if (error === 'NO_WEBRTC' && !_this15.isHttps()) {
-	            _this15.setError(im_const.ConferenceErrorCode.unsafeConnection);
+	            _this15.setError(call_const.ConferenceErrorCode.unsafeConnection);
 	          }
 	          im_lib_logger.Logger.error('Init hardware error', error);
 	          reject(error);
@@ -1171,6 +1164,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        this.callView.show();
+	        if (Number.isNaN(parseInt(this.getDialogData().counter, 10))) {
+	          Call.Util.sendLog("[conf] setButtonCounter chat: this.getDialogData().counter = ".concat(this.getDialogData().counter, " (NaN)"));
+	        }
 	        this.callView.setButtonCounter('chat', this.getDialogData().counter);
 	      } else {
 	        this.callView.setLayout(Call.View.Layout.Grid);
@@ -1266,6 +1262,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              status: call_lib_analytics.Analytics.AnalyticsStatus.success
 	            });
 	          }
+	          _this17.checkVpnStatus();
 	          _this17.onUpdateLastUsedCameraId();
 	        });
 	      })["catch"](function (error) {
@@ -1369,6 +1366,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this18.currentCall.answer({
 	          joinAsViewer: joinAsViewer
 	        });
+	        _this18.checkVpnStatus();
 	        _this18.onUpdateLastUsedCameraId();
 	      })["catch"](function (error) {
 	        console.error(error);
@@ -1394,18 +1392,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function endCall() {
 	      var _this$currentCall;
 	      var finishCall = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-	      if (this.isRecording()) {
+	      if (_classPrivateMethodGet(this, _isLocalRecordStarted, _isLocalRecordStarted2).call(this)) {
 	        call_lib_analytics.Analytics.getInstance().onRecordStop({
 	          callId: this.currentCall.uuid,
 	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	          subSection: finishCall ? call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu : call_lib_analytics.Analytics.AnalyticsSubSection.window,
 	          element: finishCall ? call_lib_analytics.Analytics.AnalyticsElement.finishForAllButton : call_lib_analytics.Analytics.AnalyticsElement.disconnectButton,
-	          recordTime: Call.Util.getRecordTimeText(this.callRecordInfo)
+	          recordTime: Call.Util.getRecordTimeText(this.commonRecord.info)
 	        });
-	        this.callRecordInfo = null;
-	        BXDesktopSystem.CallRecordStop();
 	      }
-	      _classPrivateMethodGet(this, _stopRecordCall, _stopRecordCall2).call(this);
+	      _classPrivateMethodGet(this, _stopCommonRecord, _stopCommonRecord2).call(this);
 	      this.setConferenceHasErrorInCall(false);
 	      this.showFeedback = !!((_this$currentCall = this.currentCall) !== null && _this$currentCall !== void 0 && _this$currentCall.wasConnected);
 	      if (this.currentCall) {
@@ -1434,7 +1430,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.callView.releaseLocalMedia();
 	        this.callView.close();
 	        this.closeReconnectionBaloon();
-	        this.setError(im_const.ConferenceErrorCode.userLeftCall);
+	        this.setError(call_const.ConferenceErrorCode.userLeftCall);
 	        this.controller.getStore().commit('conference/endCall');
 	      }
 	      if (this.riseYouHandToTalkPopup) {
@@ -1471,7 +1467,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "kickFromCall",
 	    value: function kickFromCall() {
-	      this.setError(im_const.ConferenceErrorCode.kickedFromCall);
+	      this.setError(call_const.ConferenceErrorCode.kickedFromCall);
 	      this.pullClient.disconnect();
 	      this.endCall();
 	    }
@@ -1554,16 +1550,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.getFeature(id).state;
 	    }
 	  }, {
-	    key: "canRecord",
-	    value: function canRecord() {
-	      return im_lib_utils.Utils.platform.isBitrixDesktop() && im_lib_utils.Utils.platform.getDesktopVersion() >= 54;
-	    }
-	  }, {
-	    key: "isRecording",
-	    value: function isRecording() {
-	      return this.canRecord() && this.callRecordState != Call.View.RecordState.Stopped;
-	    }
-	  }, {
 	    key: "showFeatureLimitSlider",
 	    value: function showFeatureLimitSlider(id) {
 	      var articleCode = this.getFeature(id).articleCode;
@@ -1589,6 +1575,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	    }
 	  }, {
+	    key: "checkVpnStatus",
+	    value: function checkVpnStatus() {
+	      var _BXDesktopSystem;
+	      if (im_v2_lib_desktopApi.DesktopApi.isDesktop() && typeof ((_BXDesktopSystem = BXDesktopSystem) === null || _BXDesktopSystem === void 0 ? void 0 : _BXDesktopSystem.IsVpnConnected) === 'function' && BXDesktopSystem.IsVpnConnected()) {
+	        this.showVpnIsActiveNotification();
+	      }
+	    }
+	  }, {
+	    key: "showVpnIsActiveNotification",
+	    value: function showVpnIsActiveNotification() {
+	      if (this.callView) {
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Text.encode(main_core.Loc.getMessage('CALL_MESSAGE_VPN_IS_ACTIVE')),
+	          position: 'top-right',
+	          autoHideDelay: 10000,
+	          closeButton: true,
+	          category: 'vpnIsActive'
+	        });
+	      }
+	    }
+	  }, {
 	    key: "showMicMutedNotification",
 	    value: function showMicMutedNotification() {
 	      var _this19 = this;
@@ -1612,7 +1619,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function createUnmuteButton() {
 	      var _this20 = this;
 	      return new BX.UI.Button({
-	        baseClass: "ui-btn ui-btn-icon-mic",
+	        baseClass: "ui-btn bx-call-view-popup-call-hint-unmute",
 	        text: BX.message("IM_CALL_UNMUTE_MIC"),
 	        size: BX.UI.Button.Size.EXTRA_SMALL,
 	        color: BX.UI.Button.Color.LIGHT_BORDER,
@@ -1916,29 +1923,58 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "onCallToggleSubscribe",
 	    value: function onCallToggleSubscribe(e) {
 	      if (this.currentCall && this.currentCall.provider === Call.Provider.Bitrix && e.data) {
+	        // comment to update bundles
 	        this.currentCall.toggleRemoteParticipantVideo(e.data.participantIds, e.data.showVideo, true);
 	      }
 	    }
 	  }, {
 	    key: "renameGuest",
-	    value: function renameGuest(newName) {
-	      var _this22 = this;
-	      this.callView.localUser.userModel.renameRequested = true;
-	      this.setUserName(newName).then(function () {
-	        _this22.callView.localUser.userModel.wasRenamed = true;
-	        im_lib_logger.Logger.log('setting name to', newName);
-	      })["catch"](function (error) {
-	        im_lib_logger.Logger.error('error setting name', error);
-	      });
-	    }
+	    value: function () {
+	      var _renameGuest = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(newName) {
+	        var _response$answer, _this$currentCall2, response, result;
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              this.callView.localUser.userModel.renameRequested = true;
+	              _context.prev = 1;
+	              _context.next = 4;
+	              return this.setUserName(newName);
+	            case 4:
+	              response = _context.sent;
+	              result = response === null || response === void 0 ? void 0 : (_response$answer = response.answer) === null || _response$answer === void 0 ? void 0 : _response$answer.result;
+	              if (main_core.Type.isString(result === null || result === void 0 ? void 0 : result.userToken) && result.userToken.length > 0) {
+	                call_lib_callTokenManager.CallTokenManager.setUserToken(result.userToken);
+	              }
+	              (_this$currentCall2 = this.currentCall) === null || _this$currentCall2 === void 0 ? void 0 : _this$currentCall2.updateUserData({
+	                name: newName
+	              });
+	              this.callView.localUser.userModel.wasRenamed = true;
+	              im_lib_logger.Logger.log('setting name to', newName);
+	              _context.next = 15;
+	              break;
+	            case 12:
+	              _context.prev = 12;
+	              _context.t0 = _context["catch"](1);
+	              im_lib_logger.Logger.error('error setting name', _context.t0);
+	            case 15:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }, _callee, this, [[1, 12]]);
+	      }));
+	      function renameGuest(_x) {
+	        return _renameGuest.apply(this, arguments);
+	      }
+	      return renameGuest;
+	    }()
 	  }, {
 	    key: "renameGuestMobile",
 	    value: function renameGuestMobile(newName) {
-	      var _this23 = this;
+	      var _this22 = this;
 	      this.setUserName(newName).then(function () {
 	        im_lib_logger.Logger.log('setting mobile name to', newName);
-	        if (_this23.callView.renameSlider) {
-	          _this23.callView.renameSlider.close();
+	        if (_this22.callView.renameSlider) {
+	          _this22.callView.renameSlider.close();
 	        }
 	      })["catch"](function (error) {
 	        im_lib_logger.Logger.error('error setting name', error);
@@ -1956,7 +1992,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        //inviteUser: this.onCallViewInviteUserButtonClick.bind(this),
 	        toggleMute: this.onCallViewToggleMuteButtonClick.bind(this),
 	        toggleScreenSharing: this.onCallViewToggleScreenSharingButtonClick.bind(this),
-	        record: this.onCallViewRecordButtonClick.bind(this),
+	        record: _classPrivateMethodGet(this, _onCallViewRecordButtonClick, _onCallViewRecordButtonClick2).bind(this),
 	        toggleVideo: this.onCallViewToggleVideoButtonClick.bind(this),
 	        toggleSpeaker: this.onCallViewToggleSpeakerButtonClick.bind(this),
 	        showChat: this.onCallViewShowChatButtonClick.bind(this),
@@ -1978,9 +2014,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewHangupButtonClick",
 	    value: function onCallViewHangupButtonClick(e) {
-	      var _this$currentCall2;
+	      var _this$currentCall3;
 	      call_lib_analytics.Analytics.getInstance().onDisconnectCall({
-	        callId: (_this$currentCall2 = this.currentCall) === null || _this$currentCall2 === void 0 ? void 0 : _this$currentCall2.uuid,
+	        callId: (_this$currentCall3 = this.currentCall) === null || _this$currentCall3 === void 0 ? void 0 : _this$currentCall3.uuid,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	        subSection: call_lib_analytics.Analytics.AnalyticsSubSection.finishButton,
 	        mediaParams: {
@@ -1994,7 +2030,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "_onCallViewHangupOptionsButtonClick",
 	    value: function _onCallViewHangupOptionsButtonClick() {
-	      var _this24 = this;
+	      var _this23 = this;
 	      if (this.hangupOptionsMenu) {
 	        this.hangupOptionsMenu.destroy();
 	        return;
@@ -2003,24 +2039,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var menuItems = [{
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
 	        onclick: function onclick() {
-	          var _this24$currentCall, _this24$currentCall2, _this24$currentCall3;
+	          var _this23$currentCall, _this23$currentCall2, _this23$currentCall3;
 	          call_lib_analytics.Analytics.getInstance().onFinishCall({
-	            callId: (_this24$currentCall = _this24.currentCall) === null || _this24$currentCall === void 0 ? void 0 : _this24$currentCall.uuid,
+	            callId: (_this23$currentCall = _this23.currentCall) === null || _this23$currentCall === void 0 ? void 0 : _this23$currentCall.uuid,
 	            callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	            status: call_lib_analytics.Analytics.AnalyticsStatus.finishedForAll,
-	            chatId: (_this24$currentCall2 = _this24.currentCall) === null || _this24$currentCall2 === void 0 ? void 0 : _this24$currentCall2.associatedEntity.id,
-	            callUsersCount: _this24.getCallUsers(true).length,
-	            callLength: Call.Util.getTimeText((_this24$currentCall3 = _this24.currentCall) === null || _this24$currentCall3 === void 0 ? void 0 : _this24$currentCall3.startDate)
+	            chatId: (_this23$currentCall2 = _this23.currentCall) === null || _this23$currentCall2 === void 0 ? void 0 : _this23$currentCall2.associatedEntity.id,
+	            callUsersCount: _this23.getCallUsers(true).length,
+	            callLength: Call.Util.getTimeText((_this23$currentCall3 = _this23.currentCall) === null || _this23$currentCall3 === void 0 ? void 0 : _this23$currentCall3.startDate)
 	          });
-	          _this24.stopLocalVideoStream();
-	          _this24.endCall(true);
+	          _this23.stopLocalVideoStream();
+	          _this23.endCall(true);
 	        }
 	      }, {
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
 	        onclick: function onclick() {
-	          var _this24$currentCall4;
+	          var _this23$currentCall4;
 	          call_lib_analytics.Analytics.getInstance().onDisconnectCall({
-	            callId: (_this24$currentCall4 = _this24.currentCall) === null || _this24$currentCall4 === void 0 ? void 0 : _this24$currentCall4.uuid,
+	            callId: (_this23$currentCall4 = _this23.currentCall) === null || _this23$currentCall4 === void 0 ? void 0 : _this23$currentCall4.uuid,
 	            callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	            subSection: call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu,
 	            mediaParams: {
@@ -2028,16 +2064,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              audio: !Call.Hardware.isMicrophoneMuted
 	            }
 	          });
-	          _this24.stopLocalVideoStream();
-	          _this24.endCall(false);
+	          _this23.stopLocalVideoStream();
+	          _this23.endCall(false);
 	        }
 	      }];
 	      this.hangupOptionsMenu = new BX.PopupMenuWindow({
 	        className: 'bx-messenger-videocall-hangup-options-container',
-	        background: '#22272B',
-	        contentBackground: '#22272B',
+	        background: '#00428F',
+	        contentBackground: '#00428F',
 	        darkMode: true,
 	        contentBorderRadius: '6px',
+	        borderRadius: '6px',
 	        angle: false,
 	        bindElement: this.callView.buttons.hangupOptions.elements.root,
 	        targetContainer: this.container,
@@ -2064,7 +2101,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          },
 	          onDestroy: function onDestroy() {
-	            return _this24.hangupOptionsMenu = null;
+	            return _this23.hangupOptionsMenu = null;
 	          }
 	        },
 	        items: menuItems
@@ -2100,7 +2137,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      {
 	      	this.template.$emit('setMicState', !event.data.muted);
 	      }
-	      	if (this.isRecording())
+	      	if (this.#isCommonRecordStarted())
 	      {
 	      	BXDesktopSystem.CallRecordMute(event.data.muted);
 	      }
@@ -2114,7 +2151,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "_onCallViewToggleMuteHandler",
 	    value: function _onCallViewToggleMuteHandler(e) {
-	      var _this$currentCall3;
+	      var _this$currentCall4;
 	      if (!e.muted && !(Call.Hardware !== null && Call.Hardware !== void 0 && Call.Hardware.hasMicrophone())) {
 	        return;
 	      }
@@ -2145,10 +2182,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          this.allowMutePopup = true;
 	        }
 	      }
-	      if (this.isRecording()) {
+	      if (_classPrivateMethodGet(this, _isCommonRecordStarted, _isCommonRecordStarted2).call(this) && _classPrivateMethodGet(this, _canLocalRecord, _canLocalRecord2).call(this)) {
 	        BXDesktopSystem.CallRecordMute(e.muted);
 	      }
-	      if ((_this$currentCall3 = this.currentCall) !== null && _this$currentCall3 !== void 0 && _this$currentCall3.userId) {
+	      if ((_this$currentCall4 = this.currentCall) !== null && _this$currentCall4 !== void 0 && _this$currentCall4.userId) {
 	        this.updateCallUser(this.currentCall.userId, {
 	          microphoneState: !e.muted
 	        });
@@ -2173,7 +2210,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      if (this.currentCall.isScreenSharingStarted()) {
 	        this.currentCall.stopScreenSharing();
-	        if (this.isRecording()) {
+	        if (_classPrivateMethodGet(this, _isCommonRecordStarted, _isCommonRecordStarted2).call(this) && _classPrivateMethodGet(this, _canLocalRecord, _canLocalRecord2).call(this)) {
 	          BXDesktopSystem.CallRecordStopSharing();
 	        }
 	        if (this.floatingScreenShareWindow) {
@@ -2202,49 +2239,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      this.callView.isActivePiPFromController = isActiveStatePictureInPictureCallWindow;
 	      this.callView.toggleStatePictureInPictureCallWindow(isActiveStatePictureInPictureCallWindow);
-	    }
-	  }, {
-	    key: "onCallViewRecordButtonClick",
-	    value: function onCallViewRecordButtonClick(event) {
-	      call_lib_analytics.Analytics.getInstance().onRecordBtnClick({
-	        callId: this.currentCall.uuid,
-	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
-	      });
-	      if (event.data.recordState === Call.View.RecordState.Started) {
-	        if (this.getFeatureState('record') === ConferenceApplication.FeatureState.Limited) {
-	          this.showFeatureLimitSlider('record');
-	          return;
-	        }
-	        if (this.getFeatureState('record') === ConferenceApplication.FeatureState.Disabled) {
-	          return;
-	        }
-	        if (this.canRecord()) {
-	          // TODO: create popup menu with choice type of record - im/install/js/im/call/controller.js:1635
-	          // Call.View.RecordType.Video / Call.View.RecordType.Audio
-
-	          this.callView.setButtonActive('record', true);
-	        } else {
-	          if (window.BX.Helper) {
-	            window.BX.Helper.show("redirect=detail&code=22079566");
-	          }
-	          return;
-	        }
-	      } else if (event.data.recordState === Call.View.RecordState.Paused) {
-	        if (this.canRecord()) {
-	          BXDesktopSystem.CallRecordPause(true);
-	        }
-	      } else if (event.data.recordState === Call.View.RecordState.Resumed) {
-	        if (this.canRecord()) {
-	          BXDesktopSystem.CallRecordPause(false);
-	        }
-	      } else if (event.data.recordState === Call.View.RecordState.Stopped) {
-	        this.callView.setButtonActive('record', false);
-	      }
-	      this.currentCall.sendRecordState({
-	        action: event.data.recordState,
-	        date: new Date()
-	      });
-	      this.callRecordState = event.data.recordState;
 	    }
 	  }, {
 	    key: "_onCallViewToggleVideoButtonClickHandler",
@@ -2388,7 +2382,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onInputFileOpenedStateUpdate",
 	    value: function onInputFileOpenedStateUpdate(isActive) {
-	      var _this25 = this;
+	      var _this24 = this;
 	      if (isActive) {
 	        this.clearPictureInPictureDebounceForOpen();
 	        this.togglePictureInPictureCallWindow({
@@ -2398,9 +2392,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      if (!isActive && !this.pictureInPictureDebounceForOpen) {
 	        this.pictureInPictureDebounceForOpen = setTimeout(function () {
-	          _this25.togglePictureInPictureCallWindow();
-	          _this25.isFileChooserActive = false;
-	          _this25.pictureInPictureDebounceForOpen = null;
+	          _this24.togglePictureInPictureCallWindow();
+	          _this24.isFileChooserActive = false;
+	          _this24.pictureInPictureDebounceForOpen = null;
 	        }, 1000);
 	      }
 	    }
@@ -2504,9 +2498,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewShowChatButtonClick",
 	    value: function onCallViewShowChatButtonClick() {
-	      var _this$currentCall4;
+	      var _this$currentCall5;
 	      call_lib_analytics.Analytics.getInstance().onShowChat({
-	        callId: (_this$currentCall4 = this.currentCall) === null || _this$currentCall4 === void 0 ? void 0 : _this$currentCall4.uuid,
+	        callId: (_this$currentCall5 = this.currentCall) === null || _this$currentCall5 === void 0 ? void 0 : _this$currentCall5.uuid,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
 	      });
 	      this.toggleChat();
@@ -2519,7 +2513,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "_onCallcontrolButtonClick",
 	    value: function _onCallcontrolButtonClick(e) {
-	      var _this26 = this;
+	      var _this25 = this;
 	      if (!Call.Util.canControlChangeSettings()) {
 	        return;
 	      }
@@ -2530,35 +2524,35 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.participantsPermissionPopup = new Call.ParticipantsPermissionPopup({
 	        turnOffAllParticipansStream: function turnOffAllParticipansStream(options) {
 	          var _options$data;
-	          _this26._onCallViewTurnOffAllParticipansStreamButtonClick(options);
+	          _this25._onCallViewTurnOffAllParticipansStreamButtonClick(options);
 	          call_lib_analytics.Analytics.getInstance().onTurnOffAllParticipansStream({
-	            callId: _this26._getCallIdentifier(_this26.currentCall),
-	            callType: _this26.getCallType(),
+	            callId: _this25._getCallIdentifier(_this25.currentCall),
+	            callType: _this25.getCallType(),
 	            typeOfStream: (_options$data = options.data) === null || _options$data === void 0 ? void 0 : _options$data.typeOfStream
 	          });
 	        },
 	        onPermissionChanged: function onPermissionChanged(options) {
-	          _this26.currentCall.changeSettings(options);
+	          _this25.currentCall.changeSettings(options);
 	          if (!options.settingEnabled)
 	            // send only when it turned off
 	            {
 	              call_lib_analytics.Analytics.getInstance().onCallSettingsChanged({
-	                callId: _this26._getCallIdentifier(_this26.currentCall),
-	                callType: _this26.getCallType(),
+	                callId: _this25._getCallIdentifier(_this25.currentCall),
+	                callType: _this25.getCallType(),
 	                typeOfSetting: options.typeOfSetting,
 	                settingEnabled: options.settingEnabled
 	              });
 	            }
 	        },
 	        onClose: function onClose() {
-	          _this26.participantsPermissionPopup = null;
-	          _this26._afterCloseParticipantsPermissionPopup();
+	          _this25.participantsPermissionPopup = null;
+	          _this25._afterCloseParticipantsPermissionPopup();
 	        },
 	        onOpen: function onOpen() {
-	          _this26._afterOpenParticipantsPermissionPopup();
+	          _this25._afterOpenParticipantsPermissionPopup();
 	          call_lib_analytics.Analytics.getInstance().onOpenCallSettings({
-	            callId: _this26._getCallIdentifier(_this26.currentCall),
-	            callType: _this26.getCallType()
+	            callId: _this25._getCallIdentifier(_this25.currentCall),
+	            callType: _this25.getCallType()
 	          });
 	        }
 	      });
@@ -2569,10 +2563,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewFeedbackButtonClick",
 	    value: function onCallViewFeedbackButtonClick() {
-	      var _this27 = this;
+	      var _this26 = this;
 	      BX.loadExt('ui.feedback.form').then(function () {
 	        BX.UI.Feedback.Form.open({
-	          id: "call_feedback_".concat(_this27.currentCall.uuid, "-").concat(_this27.currentCall.instanceId, "-").concat(Math.random()),
+	          id: "call_feedback_".concat(_this26.currentCall.uuid, "-").concat(_this26.currentCall.instanceId, "-").concat(Math.random()),
 	          forms: [{
 	            zones: ['ru', 'by', 'kz'],
 	            id: 406,
@@ -2601,10 +2595,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }],
 	          presets: {
 	            sender_page: 'call',
-	            call_type: _this27.currentCall.provider,
-	            call_amount: _this27.currentCall.users.length + 1,
-	            call_id: "id: ".concat(_this27.currentCall.uuid, ", instanceId: ").concat(_this27.currentCall.instanceId),
-	            id_of_user: _this27.currentCall.userId,
+	            call_type: _this26.currentCall.provider,
+	            call_amount: _this26.currentCall.users.length + 1,
+	            call_id: "id: ".concat(_this26.currentCall.uuid, ", instanceId: ").concat(_this26.currentCall.instanceId),
+	            id_of_user: _this26.currentCall.userId,
 	            from_domain: location.origin
 	          }
 	        });
@@ -2722,22 +2716,22 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onChangeStateCopilot",
 	    value: function onChangeStateCopilot() {
-	      var _this28 = this;
+	      var _this27 = this;
 	      var action = !this.currentCall.isCopilotActive ? 'call.Track.start' : 'call.Track.stop';
 	      BX.ajax.runAction(action, {
 	        data: {
 	          callId: this.currentCall.id
 	        }
 	      }).then(function () {
-	        _this28.onUpdateCallCopilotState({
-	          isTrackRecordOn: !_this28.currentCall.isCopilotActive
+	        _this27.onUpdateCallCopilotState({
+	          isTrackRecordOn: !_this27.currentCall.isCopilotActive
 	        });
 	      });
 	    }
 	  }, {
 	    key: "onCallViewFloorRequestButtonClick",
 	    value: function onCallViewFloorRequestButtonClick() {
-	      var _this29 = this;
+	      var _this28 = this;
 	      call_lib_analytics.Analytics.getInstance().onFloorRequest({
 	        callId: this.currentCall.uuid,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
@@ -2751,8 +2745,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      clearTimeout(this.callViewFloorRequestTimeout);
 	      if (talkingState && !floorState) {
 	        this.callViewFloorRequestTimeout = setTimeout(function () {
-	          if (_this29.currentCall) {
-	            _this29.currentCall.requestFloor(false);
+	          if (_this28.currentCall) {
+	            _this28.currentCall.requestFloor(false);
 	          }
 	        }, 1500);
 	      }
@@ -2780,13 +2774,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.currentCall.addEventListener(Call.Event.onNeedResetMediaDevicesState, this.onNeedResetMediaDevicesStateHandler);
 	      this.currentCall.addEventListener(Call.Event.onUserVideoPaused, this.onCallUserVideoPausedHandler);
 	      this.currentCall.addEventListener(Call.Event.onLocalMediaReceived, this.onCallLocalMediaReceivedHandler);
+	      this.currentCall.addEventListener(Call.Event.onLocalMediaStopped, this.onCallLocalMediaStoppedHandler);
 	      this.currentCall.addEventListener(Call.Event.onRemoteMediaReceived, this.onCallRemoteMediaReceivedHandler);
 	      this.currentCall.addEventListener(Call.Event.onRemoteMediaStopped, this.onCallRemoteMediaStoppedHandler);
 	      this.currentCall.addEventListener(Call.Event.onUserVoiceStarted, this.onCallUserVoiceStartedHandler);
 	      this.currentCall.addEventListener(Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 	      this.currentCall.addEventListener(Call.Event.onUserStatsReceived, this.onUserStatsReceivedHandler);
 	      this.currentCall.addEventListener(Call.Event.onUserScreenState, this.onCallUserScreenStateHandler);
-	      this.currentCall.addEventListener(Call.Event.onUserRecordState, this.onCallUserRecordStateHandler);
+	      main_core.Event.bind(this.currentCall, Call.Event.onUserCommonRecordState, babelHelpers.classPrivateFieldGet(this, _onCallUserCommonRecordStateHandler));
+	      main_core.Event.bind(this.currentCall, Call.Event.onCloudRecordStatusChanged, babelHelpers.classPrivateFieldGet(this, _onCloudRecordStatusChangedHandler));
 	      this.currentCall.addEventListener(Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 	      this.currentCall.addEventListener(Call.Event.onMicrophoneLevel, this.onMicrophoneLevelHandler);
 	      //this.currentCall.addEventListener(Call.Event.onDeviceListUpdated, this._onCallDeviceListUpdatedHandler);
@@ -2830,7 +2826,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.currentCall.removeEventListener(Call.Event.onUserVoiceStopped, this.onCallUserVoiceStoppedHandler);
 	      this.currentCall.removeEventListener(Call.Event.onUserStatsReceived, this.onUserStatsReceivedHandler);
 	      this.currentCall.removeEventListener(Call.Event.onUserScreenState, this.onCallUserScreenStateHandler);
-	      this.currentCall.removeEventListener(Call.Event.onUserRecordState, this.onCallUserRecordStateHandler);
+	      main_core.Event.unbind(this.currentCall, Call.Event.onUserCommonRecordState, babelHelpers.classPrivateFieldGet(this, _onCallUserCommonRecordStateHandler));
+	      main_core.Event.unbind(this.currentCall, Call.Event.onCloudRecordStatusChanged, babelHelpers.classPrivateFieldGet(this, _onCloudRecordStatusChangedHandler));
 	      this.currentCall.removeEventListener(Call.Event.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 	      this.currentCall.removeEventListener(Call.Event.onMicrophoneLevel, this.onMicrophoneLevelHandler);
 	      this.currentCall.removeEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
@@ -2858,28 +2855,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "removeAdditionalEvents",
 	    value: function removeAdditionalEvents() {
-	      var _this30 = this;
+	      var _this29 = this;
 	      window.removeEventListener('focus', function () {
-	        _this30.onWindowFocus();
+	        _this29.onWindowFocus();
 	      });
 	      window.removeEventListener('blur', function () {
-	        _this30.onWindowBlur();
+	        _this29.onWindowBlur();
 	      });
 	      document.body.removeEventListener('click', function (evt) {
-	        _this30.onDocumentBodyClick(evt);
+	        _this29.onDocumentBodyClick(evt);
 	      });
 	    }
 	  }, {
 	    key: "onCallUserInvited",
 	    value: function onCallUserInvited(e) {
-	      var _this31 = this;
+	      var _this30 = this;
 	      this.callView.addUser(e.userId);
 	      Call.Util.getUsers(this.currentCall.id, [e.userId]).then(function (userData) {
-	        _this31.controller.getStore().dispatch('users/set', Object.values(userData));
-	        _this31.controller.getStore().dispatch('conference/setUsers', {
+	        _this30.controller.getStore().dispatch('users/set', Object.values(userData));
+	        _this30.controller.getStore().dispatch('conference/setUsers', {
 	          users: Object.keys(userData)
 	        });
-	        _this31.callView.updateUserData(userData);
+	        _this30.callView.updateUserData(userData);
 	      });
 	    }
 	  }, {
@@ -2903,17 +2900,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (e.state === Call.UserState.Ready && e.previousState === Call.UserState.Connected && !Object.keys(this.currentCall).includes(e.userId)) {
 	        e.state = Call.UserState.Idle;
 	      }
-	      if (e.state === Call.UserState.Idle && e.userId === this.callRecordInitiatorId) {
-	        this.callRecordState = Call.View.RecordState.Stopped;
-	        this.callView.setRecordState(this.callView.getDefaultRecordState());
-	        this.callView.setButtonActive('record', false);
+	      if (e.state === Call.UserState.Idle && e.previousState === Call.UserState.Connected) {
+	        if (!_classPrivateMethodGet(this, _canCloudRecord, _canCloudRecord2).call(this) && e.userId === this.commonRecord.initiatorId) {
+	          _classPrivateMethodGet(this, _stopCommonRecord, _stopCommonRecord2).call(this);
+	        }
 	      }
 	      this.callView.setUserState(e.userId, e.state);
 	      this.updateCallUser(e.userId, {
 	        state: e.state
 	      });
-	      if (!this.isRecording()) {
-	        this.callView.getConnectedUserCount(false) ? this.callView.unblockButtons(['record']) : this.callView.blockButtons(['record']);
+	      if (!_classPrivateMethodGet(this, _isCommonRecordStarted, _isCommonRecordStarted2).call(this)) {
+	        this.callView.unblockButtons(['record']);
 	      }
 	      /*if (e.direction)
 	      {
@@ -2997,6 +2994,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    }
 	  }, {
+	    key: "onCallLocalMediaStopped",
+	    value: function onCallLocalMediaStopped(e) {
+	      if (this.callView && e.kind === 'audio') {
+	        Call.Hardware.isMicrophoneMuted = true;
+	        this.showNotification(main_core.Loc.getMessage('CALL_ERROR_MICROPHONE_STREAM_STOPPED'));
+	      }
+	    }
+	  }, {
 	    key: "onCallRemoteMediaReceived",
 	    value: function onCallRemoteMediaReceived(e) {
 	      var getStreamType = function getStreamType(stream) {
@@ -3065,13 +3070,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "loopConnectionQuality",
 	    value: function loopConnectionQuality(userId, quality) {
-	      var _this32 = this;
+	      var _this31 = this;
 	      var timeout = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 200;
 	      if (this.callView) {
 	        this.loopTimers[userId] = setTimeout(function () {
-	          _this32.callView.setUserConnectionQuality(userId, quality);
+	          _this31.callView.setUserConnectionQuality(userId, quality);
 	          var newQuality = quality >= 4 ? 1 : quality + 1;
-	          _this32.loopConnectionQuality(userId, newQuality, timeout);
+	          _this31.loopConnectionQuality(userId, newQuality, timeout);
 	        }, timeout);
 	      }
 	    }
@@ -3330,12 +3335,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "_onUserRoleChanged",
 	    value: function _onUserRoleChanged(e) {
-	      var _this33 = this;
+	      var _this32 = this;
 	      if (e.data.toUserId == this.callEngine.getCurrentUserId()) {
 	        var content = BX.message('CALL_YOU_HAVE_BEEN_APPOINTED_AS_ADMIN');
 	        if (content) {
 	          this.promotedToAdminTimeout = setTimeout(function () {
-	            return _this33.createCallControlNotify({
+	            return _this32.createCallControlNotify({
 	              content: content,
 	              isAllow: true
 	            });
@@ -3438,7 +3443,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "showRiseYouHandToTalkNotification",
 	    value: function showRiseYouHandToTalkNotification(params) {
-	      var _this34 = this;
+	      var _this33 = this;
 	      if (!this.callView) {
 	        return;
 	      }
@@ -3453,8 +3458,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        callFolded: false,
 	        bindElement: this.callView.buttons.microphone.elements.icon,
 	        targetContainer: this.callView.container,
-	        icon: 'raise-hand',
-	        showAngle: true,
+	        icon: 'mic',
+	        showAngle: false,
 	        initiatorName: params.initiatorName,
 	        customClassName: 'bx-call-view-popup-call-hint-rise-hand-to-talk',
 	        autoCloseDelay: 30 * 60 * 1000,
@@ -3468,7 +3473,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              '#INITIATOR_NAME#': this.initiatorName,
 	              '[hint-label]': "<div class=\"bx-call-view-popup-call-hint-text\">",
 	              '[/hint-label]': '</div>',
-	              '#RISE_HAND_ICON#': "<div class=\"bx-call-view-popup-call-hint-hand-raise-icon\"></div>",
+	              '#RISE_HAND_ICON#': "<div class=\"ui-btn bx-call-view-popup-call-hint-hand-raise-icon\"></div>",
 	              '[label-or]': "<div class=\"bx-call-view-popup-call-hint-hand-raise-or-label\">",
 	              '[/label-or]': '</div>',
 	              '#REQUEST_NOW_BUTTON#': "<div class = \"bx-call-view-popup-call-hint-button-placeholder\"></div>"
@@ -3480,14 +3485,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        buttons: [],
 	        onClose: function onClose() {
-	          _this34.riseYouHandToTalkPopup.close();
-	          _this34.riseYouHandToTalkPopup = null;
+	          _this33.riseYouHandToTalkPopup.close();
+	          _this33.riseYouHandToTalkPopup = null;
 	        },
 	        onAskSpeakButtonClicked: function onAskSpeakButtonClicked() {
-	          _this34.onCallViewFloorRequestButtonClick();
-	          if (_this34.riseYouHandToTalkPopup) {
-	            _this34.riseYouHandToTalkPopup.close();
-	            _this34.riseYouHandToTalkPopup = null;
+	          _this33.onCallViewFloorRequestButtonClick();
+	          if (_this33.riseYouHandToTalkPopup) {
+	            _this33.riseYouHandToTalkPopup.close();
+	            _this33.riseYouHandToTalkPopup = null;
 	          }
 	        }
 	      });
@@ -3574,66 +3579,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        screenState: e.screenState
 	      });
 	    }
-	  }, {
-	    key: "onCallUserRecordState",
-	    value: function onCallUserRecordState(event) {
-	      this.callRecordState = event.recordState.state;
-	      this.callView.setRecordState(event.recordState);
-	      this.callRecordInitiatorId = event.userId;
-	      if (!this.canRecord() || event.userId != this.controller.getUserId()) {
-	        return true;
-	      }
-	      if (event.recordState.state === Call.View.RecordState.Stopped) {
-	        this.callRecordInitiatorId = null;
-	      } else {
-	        this.callRecordInfo = event.recordState;
-	      }
-	      if (event.recordState.state === Call.View.RecordState.Started && event.recordState.userId == this.controller.getUserId()) {
-	        var windowId = window.bxdWindowId || window.document.title;
-	        var fileName = BX.message('IM_CALL_RECORD_NAME');
-	        var dialogId = this.currentCall.associatedEntity.id;
-	        var dialogName = this.currentCall.associatedEntity.name;
-	        var callId = this.currentCall.uuid;
-	        var callDate = BX.Main.Date.format(this.params.formatRecordDate || 'd.m.Y');
-	        if (fileName) {
-	          fileName = fileName.replace('#CHAT_TITLE#', dialogName).replace('#CALL_ID#', callId).replace('#DATE#', callDate);
-	        } else {
-	          fileName = "call_record_".concat(callId);
-	        }
-	        this.callEngine.getRestClient().callMethod("call.Call.onStartRecord", {
-	          callUuid: this.currentCall.uuid
-	        });
-	        call_lib_analytics.Analytics.getInstance().onRecordStart({
-	          callId: this.currentCall.uuid,
-	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
-	        });
-	        BXDesktopSystem.CallRecordStart({
-	          windowId: windowId,
-	          fileName: fileName,
-	          callId: callId,
-	          // now not used
-	          callDate: callDate,
-	          dialogId: dialogId,
-	          dialogName: dialogName,
-	          muted: Call.Hardware.isMicrophoneMuted,
-	          cropTop: 72,
-	          cropBottom: 90,
-	          shareMethod: 'im.disk.record.share',
-	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
-	        });
-	      } else if (event.recordState.state === Call.View.RecordState.Stopped) {
-	        call_lib_analytics.Analytics.getInstance().onRecordStop({
-	          callId: this.currentCall.uuid,
-	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
-	          subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
-	          element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
-	          recordTime: Call.Util.getRecordTimeText(this.callRecordInfo)
-	        });
-	        this.callRecordInfo = null;
-	        BXDesktopSystem.CallRecordStop();
-	      }
-	      return true;
-	    }
+	    /**
+	     * @param {Object} event
+	     * @param {number} event.code
+	     * @param {number} event.initiatorId
+	     * @param {number} event.userId
+	     * @param { boolean } event.justJoined
+	     * @param {Object} event.commonRecordState
+	     * @private
+	     */
 	  }, {
 	    key: "onCallUserFloorRequest",
 	    value: function onCallUserFloorRequest(e) {
@@ -3755,16 +3709,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.webScreenSharePopup) {
 	        this.webScreenSharePopup.close();
 	      }
+	      _classPrivateMethodGet(this, _stopCommonRecord, _stopCommonRecord2).call(this);
+	      this.commonRecord.state = Call.CallCommonRecordState.Stopped;
+	      this.commonRecord.type = Call.CallCommonRecordType.None;
 	      this.togglePictureInPictureCallWindow({
 	        isForceClose: true
 	      });
 	      if (!this.getActiveCallUsers().length) {
-	        var _this$currentCall5, _this$currentCall6;
+	        var _this$currentCall6, _this$currentCall7;
 	        call_lib_analytics.Analytics.getInstance().onFinishCall({
-	          callId: (_this$currentCall5 = this.currentCall) === null || _this$currentCall5 === void 0 ? void 0 : _this$currentCall5.uuid,
+	          callId: (_this$currentCall6 = this.currentCall) === null || _this$currentCall6 === void 0 ? void 0 : _this$currentCall6.uuid,
 	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	          status: call_lib_analytics.Analytics.AnalyticsStatus.lastUserLeft,
-	          chatId: (_this$currentCall6 = this.currentCall) === null || _this$currentCall6 === void 0 ? void 0 : _this$currentCall6.associatedEntity.id,
+	          chatId: (_this$currentCall7 = this.currentCall) === null || _this$currentCall7 === void 0 ? void 0 : _this$currentCall7.associatedEntity.id,
 	          callUsersCount: this.getCallUsers(true).length,
 	          callLength: Call.Util.getTimeText(this.currentCall.startDate)
 	        });
@@ -3788,6 +3745,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.riseYouHandToTalkPopup.close();
 	        this.riseYouHandToTalkPopup = null;
 	      }
+	      _classPrivateMethodGet(this, _stopCommonRecord, _stopCommonRecord2).call(this);
 	      this.restart();
 	    }
 	  }, {
@@ -3814,11 +3772,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function setCameraState(state) {
 	      Call.Hardware.isCameraOn = state;
 	    }
-	  }, {
-	    key: "isChatShowed",
 	    /* endregion 01. Call methods */
 	    /* region 02. Component methods */
 	    /* region 01. General actions */
+	  }, {
+	    key: "isChatShowed",
 	    value: function isChatShowed() {
 	      return this.getConference().common.showChat;
 	    }
@@ -3826,24 +3784,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "toggleChat",
 	    value: function toggleChat() {
 	      var rightPanelMode = this.getConference().common.rightPanelMode;
-	      if (rightPanelMode === im_const.ConferenceRightPanelMode.hidden) {
+	      if (rightPanelMode === call_const.ConferenceRightPanelMode.hidden) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.chat
+	          mode: call_const.ConferenceRightPanelMode.chat
 	        });
 	        this.callView.setButtonActive('chat', true);
-	      } else if (rightPanelMode === im_const.ConferenceRightPanelMode.chat) {
+	      } else if (rightPanelMode === call_const.ConferenceRightPanelMode.chat) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.hidden
+	          mode: call_const.ConferenceRightPanelMode.hidden
 	        });
 	        this.callView.setButtonActive('chat', false);
-	      } else if (rightPanelMode === im_const.ConferenceRightPanelMode.users) {
+	      } else if (rightPanelMode === call_const.ConferenceRightPanelMode.users) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.split
+	          mode: call_const.ConferenceRightPanelMode.split
 	        });
 	        this.callView.setButtonActive('chat', true);
-	      } else if (rightPanelMode === im_const.ConferenceRightPanelMode.split) {
+	      } else if (rightPanelMode === call_const.ConferenceRightPanelMode.split) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.users
+	          mode: call_const.ConferenceRightPanelMode.users
 	        });
 	        this.callView.setButtonActive('chat', false);
 	      }
@@ -3852,24 +3810,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "toggleUserList",
 	    value: function toggleUserList() {
 	      var rightPanelMode = this.getConference().common.rightPanelMode;
-	      if (rightPanelMode === im_const.ConferenceRightPanelMode.hidden) {
+	      if (rightPanelMode === call_const.ConferenceRightPanelMode.hidden) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.users
+	          mode: call_const.ConferenceRightPanelMode.users
 	        });
 	        this.callView.setButtonActive('users', true);
-	      } else if (rightPanelMode === im_const.ConferenceRightPanelMode.users) {
+	      } else if (rightPanelMode === call_const.ConferenceRightPanelMode.users) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.hidden
+	          mode: call_const.ConferenceRightPanelMode.hidden
 	        });
 	        this.callView.setButtonActive('users', false);
-	      } else if (rightPanelMode === im_const.ConferenceRightPanelMode.chat) {
+	      } else if (rightPanelMode === call_const.ConferenceRightPanelMode.chat) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.split
+	          mode: call_const.ConferenceRightPanelMode.split
 	        });
 	        this.callView.setButtonActive('users', true);
-	      } else if (rightPanelMode === im_const.ConferenceRightPanelMode.split) {
+	      } else if (rightPanelMode === call_const.ConferenceRightPanelMode.split) {
 	        this.controller.getStore().dispatch('conference/changeRightPanelMode', {
-	          mode: im_const.ConferenceRightPanelMode.chat
+	          mode: call_const.ConferenceRightPanelMode.chat
 	        });
 	        this.callView.setButtonActive('users', false);
 	      }
@@ -3952,7 +3910,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 	      var rightPanelMode = this.getConference().common.rightPanelMode;
-	      return !im_lib_utils.Utils.device.isMobile() && params.chatId === this.getChatId() && (rightPanelMode !== im_const.ConferenceRightPanelMode.chat || rightPanelMode !== im_const.ConferenceRightPanelMode.split) && params.message.senderId !== this.controller.getUserId() && !this.getConference().common.error;
+	      return !im_lib_utils.Utils.device.isMobile() && params.chatId === this.getChatId() && (rightPanelMode !== call_const.ConferenceRightPanelMode.chat || rightPanelMode !== call_const.ConferenceRightPanelMode.split) && params.message.senderId !== this.controller.getUserId() && !this.getConference().common.error;
 	    }
 	  }, {
 	    key: "onInputFocus",
@@ -4049,9 +4007,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onReconnectingFailed",
 	    value: function onReconnectingFailed(e) {
-	      var _this$currentCall7;
+	      var _this$currentCall8;
 	      call_lib_analytics.Analytics.getInstance().onReconnectError({
-	        callId: (_this$currentCall7 = this.currentCall) === null || _this$currentCall7 === void 0 ? void 0 : _this$currentCall7.id,
+	        callId: (_this$currentCall8 = this.currentCall) === null || _this$currentCall8 === void 0 ? void 0 : _this$currentCall8.id,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 	        errorCode: e === null || e === void 0 ? void 0 : e.code
 	      });
@@ -4070,7 +4028,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function setError(errorCode) {
 	      var currentError = this.getConference().common.error;
 	      // if user kicked from call - dont show him end of call form
-	      if (currentError && currentError === im_const.ConferenceErrorCode.kickedFromCall) {
+	      if (currentError && currentError === call_const.ConferenceErrorCode.kickedFromCall) {
 	        return;
 	      }
 	      this.controller.getStore().commit('conference/setError', {
@@ -4128,14 +4086,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "setUserName",
 	    value: function setUserName(name) {
-	      var _this35 = this;
+	      var _this34 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this35.restClient.callMethod('im.call.user.update', {
+	        _this34.restClient.callMethod('im.call.user.update', {
 	          name: name,
-	          chat_id: _this35.getChatId()
-	        }).then(function () {
-	          resolve();
-	        })["catch"](function (error) {
+	          chat_id: _this34.getChatId()
+	        }).then(resolve)["catch"](function (error) {
 	          reject(error);
 	        });
 	      });
@@ -4143,18 +4099,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "checkPassword",
 	    value: function checkPassword(password) {
-	      var _this36 = this;
+	      var _this35 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this36.restClient.callMethod('im.videoconf.password.check', {
+	        _this35.restClient.callMethod('im.videoconf.password.check', {
 	          password: password,
-	          alias: _this36.params.alias
+	          alias: _this35.params.alias
 	        }).then(function (result) {
 	          if (result.data() === true) {
-	            _this36.restClient.setPassword(password);
-	            _this36.controller.getStore().commit('conference/common', {
+	            _this35.restClient.setPassword(password);
+	            _this35.controller.getStore().commit('conference/common', {
 	              passChecked: true
 	            });
-	            _this36.initUserComplete();
+	            _this35.initUserComplete();
 	            resolve();
 	          } else {
 	            reject();
@@ -4167,10 +4123,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "changeLink",
 	    value: function changeLink() {
-	      var _this37 = this;
+	      var _this36 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this37.restClient.callMethod('im.videoconf.share.change', {
-	          dialog_id: _this37.getDialogId()
+	        _this36.restClient.callMethod('im.videoconf.share.change', {
+	          dialog_id: _this36.getDialogId()
 	        }).then(function () {
 	          resolve();
 	        })["catch"](function (error) {
@@ -4305,16 +4261,387 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }]);
 	  return ConferenceApplication;
 	}();
-	function _stopRecordCall2() {
-	  if (this.isRecording()) {
-	    this.callRecordState = Call.View.RecordState.Stopped;
-	    this.callView.setRecordState(this.callView.getDefaultRecordState());
+	function _canLocalRecord2() {
+	  var isDesktop = im_lib_utils.Utils.platform.isBitrixDesktop();
+	  var isValidApi = im_lib_utils.Utils.platform.getDesktopVersion() >= 54;
+
+	  // It's a desktop with the right API version.
+	  if (!isDesktop || !isValidApi) {
+	    return false;
+	  }
+
+	  // If cloud recording is disabled, can record local
+	  if (!Call.CallCloudRecord.serviceEnabled) {
+	    return true;
+	  }
+
+	  // If the cloud recording tariff is not available, can record local
+	  if (!Call.CallCloudRecord.tariffAvailable) {
+	    return true;
+	  }
+
+	  // If the cloud recording is active, and it is a paid plan, then we turn it on only in plain
+	  return this.currentCall.provider === Call.Provider.Plain;
+	}
+	function _canCloudRecord2() {
+	  return Call.CallCloudRecord.serviceEnabled && Call.CallCloudRecord.tariffAvailable;
+	}
+	function _canCommonRecord2() {
+	  return _classPrivateMethodGet(this, _canLocalRecord, _canLocalRecord2).call(this) || _classPrivateMethodGet(this, _canCloudRecord, _canCloudRecord2).call(this);
+	}
+	function _isLocalRecordStarted2() {
+	  return _classPrivateMethodGet(this, _canLocalRecord, _canLocalRecord2).call(this) && this.commonRecord.state != Call.CallCommonRecordState.Stopped && this.commonRecord.state != Call.CallCommonRecordState.Destroyed;
+	}
+	function _isCommonRecordStarted2() {
+	  return _classPrivateMethodGet(this, _canCommonRecord, _canCommonRecord2).call(this) && this.commonRecord.state != Call.CallCommonRecordState.Stopped && this.commonRecord.state != Call.CallCommonRecordState.Destroyed;
+	}
+	function _startCommonRecord2(type) {
+	  var isPlainCall = this.currentCall.provider === Call.Provider.Plain;
+	  this.commonRecord.type = type;
+	  if (Call.CallCloudRecord.serviceEnabled && !isPlainCall) {
+	    var kind = type === 'audio' ? Call.CloudRecordKind.AUDIO : Call.CloudRecordKind.VIDEO;
+	    this.callView.blockButtons(['record']);
+	    this.currentCall.setCloudRecordState(Call.CloudRecordStatus.STARTED, kind);
+	    return;
+	  }
+	  this.callView.setButtonActive('record', true);
+	  this.currentCall.sendLocalRecordState({
+	    action: Call.CallCommonRecordState.Started,
+	    type: this.commonRecord.type,
+	    date: new Date()
+	  });
+	  this.commonRecord.state = Call.CallCommonRecordState.Started;
+	}
+	function _stopCommonRecord2() {
+	  var initiatorId = this.commonRecord.initiatorId;
+	  var state = this.commonRecord.state;
+	  this.commonRecord = _classPrivateMethodGet(this, _getDefaultCommonRecord, _getDefaultCommonRecord2).call(this);
+	  if (_classPrivateMethodGet(this, _canLocalRecord, _canLocalRecord2).call(this)) {
+	    BXDesktopSystem.CallRecordStop();
+	  }
+	  if (this.callView) {
+	    this.callView.setCommonRecordState(this.callView.getDefaultCommonRecordState());
 	    this.callView.setButtonActive('record', false);
-	    this.currentCall.sendRecordState({
-	      action: Call.View.RecordState.Stopped,
+	  }
+	  if (state !== Call.CallCommonRecordState.Stopped && this.currentCall && this.currentCall.isAnyoneParticipating() && initiatorId === this.currentCall.userId) {
+	    this.currentCall.sendLocalRecordState({
+	      action: Call.CallCommonRecordState.Stopped,
 	      userId: this.currentCall.userId
 	    });
 	  }
+	}
+	function _onCommonRecordMenu2(event) {
+	  var _this37 = this;
+	  var _event$data = event.data,
+	    state = _event$data.state,
+	    kind = _event$data.kind,
+	    hotkey = _event$data.hotkey;
+
+	  // Recording state (Started, Paused, Stopped, etc.)
+	  switch (state) {
+	    case Call.CallCommonRecordState.Started:
+	      {
+	        // If forced recording → start immediately
+	        if (hotkey) {
+	          _classPrivateMethodGet(this, _startCommonRecord, _startCommonRecord2).call(this, Call.CallCommonRecordType.Video);
+	          return;
+	        }
+	        if (kind === Call.CallCommonRecordType.Audio) {
+	          // If copilot is active → ask if recording is needed
+	          if (this.currentCall && this.currentCall.isCopilotActive) {
+	            this.callView.showConfirmModal({
+	              title: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
+	              message: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
+	              yesButtonText: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
+	              noButtonText: main_core.Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON')
+	            }).then(function (choice) {
+	              if (choice === 'no') {
+	                _classPrivateMethodGet(_this37, _startCommonRecord, _startCommonRecord2).call(_this37, Call.CallCommonRecordType.Audio);
+	              }
+	            })["catch"](function (error) {
+	              return console.error('Unspecified error in callView.showConfirmModal:', error);
+	            });
+	            return;
+	          }
+	          // Else start audio recording immediately
+	          _classPrivateMethodGet(this, _startCommonRecord, _startCommonRecord2).call(this, Call.CallCommonRecordType.Audio);
+	        }
+
+	        // Start video recording
+	        if (kind === Call.CallCommonRecordType.Video) {
+	          _classPrivateMethodGet(this, _startCommonRecord, _startCommonRecord2).call(this, Call.CallCommonRecordType.Video);
+	        }
+	        return;
+	      }
+	    case Call.CallCommonRecordState.Paused:
+	    case Call.CallCommonRecordState.Resumed:
+	      {
+	        // For cloud recording → change recorder state
+	        if (_classPrivateMethodGet(this, _canCloudRecord, _canCloudRecord2).call(this)) {
+	          var _status = state === Call.CallCommonRecordState.Paused ? Call.CloudRecordStatus.PAUSED : Call.CloudRecordStatus.STARTED;
+	          this.currentCall.setCloudRecordState(_status);
+	          this.commonRecord.state = state;
+	          return;
+	        }
+
+	        // For desktop → pause / resume recording
+	        if (_classPrivateMethodGet(this, _canLocalRecord, _canLocalRecord2).call(this)) {
+	          BXDesktopSystem.CallRecordPause(state === Call.CallCommonRecordState.Paused);
+	        }
+	        break;
+	      }
+	    case Call.CallCommonRecordState.Stopped:
+	      {
+	        // For cloud recording → block button and stop recording
+	        if (_classPrivateMethodGet(this, _canCloudRecord, _canCloudRecord2).call(this)) {
+	          this.callView.blockButtons(['record']);
+	          this.currentCall.setCloudRecordState(Call.CloudRecordStatus.STOPPED);
+	          this.commonRecord.state = Call.CallCommonRecordState.Stopped;
+	          return;
+	        }
+
+	        // For desktop → just deactivate the recording button
+	        this.callView.setButtonActive('record', false);
+	        break;
+	      }
+	    case Call.CallCommonRecordState.Destroyed:
+	      {
+	        // For cloud recording → confirm recording deletion
+	        if (_classPrivateMethodGet(this, _canCloudRecord, _canCloudRecord2).call(this)) {
+	          this.callView.showConfirmModal({
+	            title: main_core.Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_TITLE'),
+	            message: main_core.Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_MESSAGE'),
+	            yesButtonText: main_core.Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_RESUME_BUTTON'),
+	            noButtonText: main_core.Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_DELETE_BUTTON')
+	          }).then(function (choice) {
+	            if (choice === 'no') {
+	              _this37.callView.blockButtons(['record']);
+	              _this37.currentCall.setCloudRecordState(Call.CloudRecordStatus.DESTROYED);
+	              _this37.commonRecord.state = Call.CallCommonRecordState.Destroyed;
+	            }
+	          })["catch"](function (error) {
+	            return console.error('Unspecified error in callView.showConfirmModal:', error);
+	          });
+	          return;
+	        }
+	        break;
+	      }
+	    default:
+	      {
+	        console.warn('Unknown recording state', state);
+	        break;
+	      }
+	  }
+
+	  // Send current recording state
+	  this.currentCall.sendLocalRecordState({
+	    action: state,
+	    type: this.commonRecord.type,
+	    date: new Date()
+	  });
+
+	  // Save current recording state locally
+	  this.commonRecord.state = state;
+	}
+	function _onCallViewRecordButtonClick2() {
+	  // Send analytics event for record button click
+	  call_lib_analytics.Analytics.getInstance().onRecordBtnClick({
+	    callId: this.currentCall.uuid,
+	    callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
+	  });
+	  if (Call.CallCloudRecord.serviceEnabled) {
+	    if (!Call.CallCloudRecord.tariffAvailable) {
+	      Call.Util.openArticle(Call.CallCloudRecord.tariffSlider);
+	      return;
+	    }
+	    var isPlainCall = this.currentCall.provider === Call.Provider.Plain;
+	    if (isPlainCall && !im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	      this.callView.showCloudRecordInfoPopup(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
+	      return;
+	    }
+	    this.callView.showCommonRecordMenuPopup(isPlainCall && im_v2_lib_desktopApi.DesktopApi.isDesktop());
+	    return;
+	  }
+	  if (!_classPrivateMethodGet(this, _canCommonRecord, _canCommonRecord2).call(this)) {
+	    if (window.BX.Helper) {
+	      window.BX.Helper.show('redirect=detail&code=22079566');
+	    }
+	    return;
+	  }
+	  this.callView.showCommonRecordMenuPopup(true);
+	}
+	function _onCloudRecordStatusChanged2(event) {
+	  if (this.controller.getUserId() === event.userId) {
+	    var state = event.commonRecordState.state;
+	    var callId = this.currentCall.uuid;
+	    var callType = call_lib_analytics.Analytics.AnalyticsType.videoconf;
+	    switch (state) {
+	      case Call.CallCommonRecordState.Started:
+	        {
+	          if (this.commonRecord.state === Call.CallCommonRecordState.Resumed) {
+	            call_lib_analytics.Analytics.getInstance().onRecordResumed({
+	              callId: callId,
+	              callType: callType,
+	              errorCode: null
+	            });
+	          } else {
+	            call_lib_analytics.Analytics.getInstance().onRecordStart({
+	              callId: callId,
+	              callType: callType,
+	              recordType: event.commonRecordState.type,
+	              errorCode: null
+	            });
+	          }
+	          break;
+	        }
+	      case Call.CallCommonRecordState.Paused:
+	        {
+	          call_lib_analytics.Analytics.getInstance().onRecordPaused({
+	            callId: callId,
+	            callType: callType,
+	            errorCode: null
+	          });
+	          break;
+	        }
+	      case Call.CallCommonRecordState.Stopped:
+	        {
+	          call_lib_analytics.Analytics.getInstance().onRecordStop({
+	            callId: callId,
+	            callType: callType,
+	            subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
+	            element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
+	            recordTime: Call.Util.getRecordTimeText(this.commonRecord.info, true)
+	          });
+	          break;
+	        }
+	      case Call.CallCommonRecordState.Destroyed:
+	        {
+	          call_lib_analytics.Analytics.getInstance().onRecordDelete({
+	            callId: callId,
+	            callType: callType,
+	            errorCode: null
+	          });
+	          break;
+	        }
+	      default:
+	        {
+	          if (Call.Util.isCloudRecordLogEnabled()) {
+	            console.error("Unknown record state: ".concat(status));
+	          }
+	        }
+	    }
+	  }
+	  if (event.userId && event.userId !== this.controller.getUserId()) {
+	    if (event.justJoined) {
+	      if (event.commonRecordState.state === Call.CallCommonRecordState.Started) {
+	        if (Call.CallCloudRecord.isCisRegion) {
+	          this.callView.showCommonRecordStartNotify(event.userId, Call.CallCommonRecordState.Started);
+	        } else {
+	          this.callView.showCommonRecordStartModal();
+	        }
+	      }
+	    } else {
+	      this.callView.showCommonRecordStartNotify(event.userId, event.commonRecordState.state);
+	    }
+	  }
+	  this.commonRecord.state = event.commonRecordState.state;
+	  this.callView.setCommonRecordState(event.commonRecordState);
+	  this.commonRecord.initiatorId = event.initiatorId;
+	  if (Call.Util.isCommonRecordStateInactive(event.commonRecordState.state)) {
+	    this.commonRecord.info = null;
+	    this.commonRecord.initiatorId = null;
+	  } else {
+	    this.commonRecord.info = structuredClone(event.commonRecordState);
+	  }
+	  this.callView.unblockButtons(['record']);
+	  this.callView.setButtonActive('record', [Call.CloudRecordStatus.STARTED, Call.CloudRecordStatus.PAUSED].includes(event.code));
+	}
+	function _onCallUserCommonRecordState2(event) {
+	  if (_classPrivateMethodGet(this, _canCloudRecord, _canCloudRecord2).call(this)) {
+	    return;
+	  }
+	  var commonRecordState = event.commonRecordState,
+	    userId = event.userId;
+	  var state = commonRecordState.state,
+	    initiatorId = commonRecordState.userId;
+	  this.commonRecord.state = state;
+	  this.callView.setCommonRecordState(commonRecordState);
+	  this.commonRecord.initiatorId = initiatorId;
+	  if ([Call.CallCommonRecordState.Stopped, Call.CallCommonRecordState.Destroyed].includes(state)) {
+	    this.commonRecord.initiatorId = null;
+	  } else {
+	    this.commonRecord.info = commonRecordState;
+	  }
+	  if (!this.commonRecord.notifyShowed && state === Call.CallCommonRecordState.Started && initiatorId !== this.controller.getUserId()) {
+	    this.commonRecord.notifyShowed = true;
+	    this.callView.showCommonRecordStartNotify(initiatorId);
+	  }
+	  if (Call.Util.isCommonRecordStateInactive(state) && initiatorId !== this.controller.getUserId()) {
+	    this.commonRecord.notifyShowed = false;
+	  }
+	  if (!_classPrivateMethodGet(this, _canCommonRecord, _canCommonRecord2).call(this) || userId !== this.controller.getUserId()) {
+	    return;
+	  }
+	  var isStartedByMe = state === Call.CallCommonRecordState.Started && initiatorId === this.controller.getUserId();
+	  var isStopped = state === Call.CallCommonRecordState.Stopped;
+	  if (isStartedByMe) {
+	    var callType = call_lib_analytics.Analytics.AnalyticsType.videoconf;
+	    var callId = this.currentCall.uuid;
+	    var _this$currentCall$ass = this.currentCall.associatedEntity,
+	      dialogId = _this$currentCall$ass.id,
+	      dialogName = _this$currentCall$ass.name;
+	    var callDate = BX.Main.Date.format(this.params.formatRecordDate || 'd.m.Y');
+	    var fileName = main_core.Loc.getMessage('IM_CALL_RECORD_NAME');
+	    if (fileName) {
+	      fileName = fileName.replace('#CHAT_TITLE#', dialogName).replace('#CALL_ID#', callId).replace('#DATE#', callDate);
+	    } else {
+	      fileName = "call_record_".concat(callId);
+	    }
+	    this.callEngine.getRestClient().callMethod('call.Call.onStartRecord', {
+	      callUuid: this.currentCall.uuid
+	    });
+	    call_lib_analytics.Analytics.getInstance().onRecordStart({
+	      callId: callId,
+	      callType: callType,
+	      recordType: this.commonRecord.type,
+	      errorCode: null
+	    });
+	    BXDesktopSystem.CallRecordStart({
+	      windowId: window.bxdWindowId || window.document.title,
+	      fileName: fileName,
+	      callId: callId,
+	      // now not used
+	      callDate: callDate,
+	      dialogId: dialogId,
+	      dialogName: dialogName,
+	      video: this.commonRecord.type !== Call.CallCommonRecordType.Audio,
+	      muted: Call.Hardware.isMicrophoneMuted,
+	      cropTop: 72,
+	      cropBottom: 90,
+	      shareMethod: 'im.disk.record.share',
+	      callType: callType
+	    });
+	    return;
+	  }
+	  if (isStopped) {
+	    call_lib_analytics.Analytics.getInstance().onRecordStop({
+	      callId: this.currentCall.uuid,
+	      callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
+	      subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
+	      element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
+	      recordTime: Call.Util.getRecordTimeText(this.commonRecord.info)
+	    });
+	    _classPrivateMethodGet(this, _stopCommonRecord, _stopCommonRecord2).call(this);
+	  }
+	}
+	function _getDefaultCommonRecord2() {
+	  return {
+	    state: Call.CallCommonRecordState.Stopped,
+	    type: Call.CallCommonRecordType.None,
+	    initiatorId: null,
+	    info: null,
+	    notifyShowed: false
+	  };
 	}
 	ConferenceApplication.FeatureState = {
 	  Enabled: 'enabled',
@@ -4323,7 +4650,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	};
 
 	exports.ConferenceApplication = ConferenceApplication;
-	exports.ConferenceChannel = ConferenceChannel;
 
-}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Call.Lib,BX.Call.Lib,BX.Call.Lib,BX,BX.Messenger.Application,BX.Messenger,BX.Messenger.Model,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Const,BX.UI.NotificationManager,BX,BX.UI,BX.UI,BX.UI.Viewer,BX,BX,BX,BX,BX.Main,BX.Event,BX,BX.Messenger.Provider.Pull,BX.Messenger.v2.Lib,BX.Call,BX,BX.Messenger.Lib));
+}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Call,BX.Call.Lib,BX.Call.Lib,BX.Call.Lib,BX.Messenger.Application,BX,BX.Messenger.Application,BX.Messenger,BX.Messenger.v2.Lib,BX.Call.Model,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Const,BX.Call.Const,BX.UI.NotificationManager,BX,BX.UI,BX.UI,BX.UI.Viewer,BX,BX,BX,BX,BX.Main,BX.Event,BX,BX.Messenger.Provider.Pull,BX,BX.Messenger.Lib));
 //# sourceMappingURL=conference.bundle.js.map

@@ -22,6 +22,11 @@ export const ActionButton = {
 			type: String,
 			default: '',
 		},
+		iconSize: {
+			type: Number,
+			required: false,
+			default: null,
+		},
 	},
 	setup(): Object
 	{
@@ -45,7 +50,8 @@ export const ActionButton = {
 			<BIcon
 				:name="iconName"
 				:color="iconColor"
-				:hoverable="true"
+				:size="iconSize"
+				hoverable
 				class="tasks-card-description-field-icon"
 			/>
 		</button>

@@ -1,0 +1,38 @@
+.mail_massconnect__connection-data_form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md)
+}
+
+.mail_massconnect__input-group {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+}
+
+.mail_massconnect__input-group_main {
+	flex-grow: 1;
+}
+
+.mail_massconnect__input-group_port {
+	width: 20%;
+	flex-shrink: 0;
+}
+
+.mail_massconnect__connection-data_checkbox-group {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.mail_massconnect__connection-data_checkbox-group label {
+	font-size: 14px;
+	color: var(--ui-color-base-2);
+	cursor: pointer;
+}
+
+.mail_massconnect__checkbox {
+	width: 14px;
+	height: 14px;
+	cursor: pointer;
+}

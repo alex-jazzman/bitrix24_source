@@ -1,31 +1,37 @@
 <?php
 define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
+define('NO_AGENT_STATISTIC', 'Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 define('BX_SENDPULL_COUNTER_QUEUE_DISABLE', true);
 
-$authToken = isset($_REQUEST['auth']) ? $_REQUEST['auth'] : '';
-if($authToken !== '')
+$authToken = $_REQUEST['auth'] ?? '';
+if ($authToken !== '')
 {
 	define('NOT_CHECK_PERMISSIONS', true);
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/services/quickway.php');
+require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/include/prolog_before.php');
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 $errors = array();
-if(CModule::IncludeModule('crm'))
+if (CModule::IncludeModule('crm'))
 {
 	$options = array();
-	if($authToken !== '')
+	if ($authToken !== '')
 	{
 		$options['oauth_token'] = $authToken;
 	}
 
 	if (isset($_REQUEST['preview']) && mb_strtoupper($_REQUEST['preview']) == 'Y')
+	{
 		$options['preview'] = true;
+	}
 
 	CCrmFileProxy::WriteDiskFileToResponse(
 		isset($_REQUEST['ownerTypeId']) ? (int)$_REQUEST['ownerTypeId'] : CCrmOwnerType::Undefined,
@@ -35,12 +41,12 @@ if(CModule::IncludeModule('crm'))
 		$options
 	);
 }
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_after.php");
-if(!empty($errors))
+require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_after.php");
+if (!empty($errors))
 {
-	foreach($errors as $error)
+	foreach ($errors as $error)
 	{
 		echo $error;
 	}
 }
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog.php");
+require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog.php");

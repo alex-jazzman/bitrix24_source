@@ -8,6 +8,9 @@ jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module
 	const { AvatarClass } = require('ui-system/blocks/avatar');
 	const { SelectorDataProvider } = require('layout/ui/user/user-name');
 	const { BaseSelectorEntity } = require('selector/widget/entity');
+	const { makeLibraryImagePath } = require('asset-manager');
+	const { Color, Typography } = require('tokens');
+	const { feature } = require('native/feature');
 
 	/**
 	 * @class SocialNetworkUserSelector
@@ -78,6 +81,80 @@ jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module
 		static canCreateWithEmptySearch()
 		{
 			return true;
+		}
+
+		static getCustomCreateElement({ items = [], isRecent = false } = {})
+		{
+			if (!feature.isFeatureEnabled('list_widget_invite_banner'))
+			{
+				return null;
+			}
+
+			const accent = isRecent && items.length < 5;
+			const imageUrl = encodeURI(
+				makeLibraryImagePath(`add-3${accent ? '-active' : ''}.png`, 'volumetric'),
+			);
+
+			return {
+				id: `invite-banner${accent ? '-accent' : ''}`,
+				type: 'invite',
+				title: Loc.getMessage('SELECTOR_COMPONENT_INVITE_BANNER_TITLE'),
+				subtitle: Loc.getMessage('SELECTOR_COMPONENT_INVITE_BANNER_DESCRIPTION'),
+				styles: {
+					image: {
+						image: {
+							borderRadius: 0,
+						},
+					},
+					innerContent: {
+						backgroundColor: accent ? Color.accentMainPrimary.toHex() : Color.accentSoftBlue2.toHex(),
+						// cornerRadius: Component.elementAccentCorner.toNumber(),
+						cornerRadius: 32,
+					},
+					title: {
+						color: accent ? Color.baseWhiteFixed.toHex() : Color.accentMainLink.toHex(),
+						font: {
+							typographyName: Typography.text4Accent.getName(),
+							color: accent ? Color.baseWhiteFixed.toHex() : Color.accentMainLink.toHex(),
+							useColor: true,
+						},
+					},
+					subtitle: {
+						color: accent ? Color.chatOverallBaseWhite2.toHex() : Color.base3.toHex(),
+						font: {
+							typographyName: Typography.text6.getName(),
+							color: accent ? Color.chatOverallBaseWhite2.toHex() : Color.base3.toHex(),
+							useColor: true,
+						},
+					},
+					arrow: {
+						backgroundColor: accent ? Color.chatMyPrimary3.toHex() : Color.accentSoftBlue3.toHex(),
+						image: {
+							tintColor: accent ? Color.baseWhiteFixed.toHex() : Color.accentMainPrimaryalt.toHex(),
+						},
+					},
+				},
+				useLetterImage: false,
+				params: {
+					preventCloseOnSelect: true,
+				},
+				imageUrl,
+				sectionCode: 'common',
+				unselectable: true,
+			};
+		}
+
+		static addEvents(events)
+		{
+			return {
+				onItemSelected: ({ item, widgetEntity }) => {
+					if (item.type === 'invite')
+					{
+						widgetEntity?.createOptions?.handler?.();
+					}
+				},
+				...events,
+			};
 		}
 
 		static getCreateEntityHandler(providerOptions, createOptions)

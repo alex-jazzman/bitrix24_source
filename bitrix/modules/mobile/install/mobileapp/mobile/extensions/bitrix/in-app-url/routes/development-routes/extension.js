@@ -14,6 +14,17 @@ jn.define('in-app-url/routes/development-routes', (require, exports, module) => 
 			});
 		}).name('storybook');
 
+		inAppUrl.register('/development/testing.tools', () => {
+			// eslint-disable-next-line no-undef
+			ComponentHelper.openLayout({
+				name: 'testing.tools',
+				object: 'layout',
+				widgetParams: {
+					title: 'Manual testing tools',
+				},
+			});
+		}).name('testing.tools');
+
 		inAppUrl.register('/development/unit.tests', ({ component }) => {
 			// eslint-disable-next-line no-undef
 			ComponentHelper.openLayout({

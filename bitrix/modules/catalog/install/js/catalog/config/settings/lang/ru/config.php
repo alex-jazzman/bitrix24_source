@@ -3,6 +3,7 @@ $MESS["CAT_CONFIG_SETTINGS_TITLE"] = "Складской учёт";
 $MESS["CAT_CONFIG_SETTINGS_DESCRIPTION"] = "Настройте учёт для повышения эффективности работы склада, установите сроки резервирования индивидуально для вашей компании";
 $MESS["CAT_CONFIG_SETTINGS_RESERVATION_SECTION_TITLE"] = "Настройки резервирования";
 $MESS["CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION"] = "Выберите режим резервирования товара в сделке.";
+$MESS["CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION_1C"] = "В режиме Складского учёта 1С управление резервами происходит на стороне 1С";
 $MESS["CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_SECTION_TITLE"] = "Метод списания";
 $MESS["CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_SECTION_HINT"] = "Изменить метод списания можно при перезапуске Складского учёта.";
 $MESS["CAT_CONFIG_SETTINGS_COST_PRICE_CALCULATION_SECTION_WARNING"] = "Изменить метод списания можно будет только при перезапуске Складского учёта. Возможно, при этом потребуется заново создать все складские документы.";

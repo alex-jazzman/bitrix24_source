@@ -3,9 +3,15 @@
  */
 jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, exports, module) => {
 	const { MentionProvider } = require('im/messenger/controller/dialog/lib/mention/provider');
+	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
-	const { EventType, BBCode } = require('im/messenger/const');
+	const {
+		EventType,
+		BBCode,
+		BBCodeEntity,
+	} = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
@@ -292,15 +298,10 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.lastQuerySymbolPosition = cursorPosition - 1;
 			if (this.mentionSymbolPosition === this.lastQuerySymbolPosition)
 			{
-				if (DialogHelper.isChatId(this.dialogId))
-				{
-					const userIdList = this.getRecentUsers();
-
-					this.drawItems(userIdList);
-
-					return;
-				}
-				const userIdList = await this.provider.loadChatParticipants();
+				const userIdList = DialogHelper.isChatId(this.dialogId)
+					? this.getRecentUsers()
+					: await this.provider.loadChatParticipants()
+				;
 
 				this.drawParticipantsItems(userIdList);
 
@@ -348,15 +349,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			const mentionSymbolPosition = cursorPosition - 1;
 
-			if (
-				mentionSymbolPosition !== 0
-				&& !MENTION_PREFIX.has(text[mentionSymbolPosition - 1])
-			)
-			{
-				return false;
-			}
-
-			return true;
+			return mentionSymbolPosition === 0 || MENTION_PREFIX.has(text[mentionSymbolPosition - 1]);
 		}
 
 		/**
@@ -398,19 +391,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		onMentionItemSelected(item)
 		{
-			logger.log('Mention: item selected', item);
-
-			let bbCodeText = '';
-
-			if (DialogHelper.isDialogId(item.id))
-			{
-				const id = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](item.id).chatId;
-				bbCodeText = this.wrapTextInBBCode(item.title, BBCode.chat, id);
-			}
-			else
-			{
-				bbCodeText = this.wrapTextInBBCode(item.title, BBCode.user, item.id);
-			}
+			const bbCodeText = this.#getBBCodeTextByItem(item);
 
 			const fromIndex = this.mentionSymbolPosition ?? this.view.textField.getCursorIndex();
 			let toIndex = (this.lastQuerySymbolPosition ?? this.mentionSymbolPosition) + this.focusIndexPosition;
@@ -448,24 +429,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 
-			let bbCodeText = '';
-			if (type === BBCode.user)
+			if (id === BBCodeEntity.all && DialogHelper.isChatId(this.dialogId))
 			{
-				const userModelState = serviceLocator.get('core').getStore().getters['usersModel/getById'](id);
-				if (Type.isUndefined(userModelState))
-				{
-					return false;
-				}
+				return;
+			}
 
-				const userName = Type.isStringFilled(userModelState.name)
-					? userModelState.name : `${userModelState.firstName} ${userModelState.lastName}`;
-				bbCodeText = this.wrapTextInBBCode(userName, BBCode.user, id);
-			}
-			else
-			{
-				const dialogModelState = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](id);
-				bbCodeText = this.wrapTextInBBCode(dialogModelState.name, BBCode.chat, dialogModelState.dialogId);
-			}
+			let bbCodeText = this.#getBBCodeTextByType(type, id);
 
 			const text = this.view.getInput();
 			if (Type.isStringFilled(text) && !text.endsWith(' '))
@@ -498,24 +467,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 		/**
 		 * @private
-		 * @param {string} text
-		 * @param {string} bbCode
-		 * @param {string || number || null} [param=null]
-		 * @return {string}
-		 */
-		wrapTextInBBCode(text, bbCode, param = null)
-		{
-			if (param !== null)
-			{
-				return `[${bbCode}=${param}]${text}[/${bbCode}] `;
-			}
-
-			return `[${bbCode}]${text}[/${bbCode}] `;
-		}
-
-		/**
-		 * @private
-		 * @param {string} itemId
+		 * @param {DialogId} itemId
 		 * @return {MentionItem}
 		 */
 		prepareItemForDrawing(itemId)
@@ -524,7 +476,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			const avatarTitleParams = ChatAvatar.createFromDialogId(itemId);
 
 			return {
-				id: itemId.toString(),
+				id: String(itemId),
 				title: chatTitleParams.getTitle(),
 				titleColor: chatTitleParams.getTitleColor(),
 				description: chatTitleParams.getDescription(),
@@ -535,13 +487,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				/** @deprecated use to avatar {AvatarDetail} */
 				isSuperEllipseIcon: avatarTitleParams.getIsSuperEllipseIcon(),
 				avatar: avatarTitleParams.getMentionAvatarProps(),
-				testId: itemId.toString(),
+				testId: String(itemId),
 			};
 		}
 
 		/**
 		 * @private
-		 * @param {Array<string>} itemIds
+		 * @param {Array<DialogId>} itemIds
 		 */
 		drawItems(itemIds)
 		{
@@ -560,7 +512,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			});
 
 			logger.log('Mention: draw items', result);
-
 			if (this.isProcessed)
 			{
 				this.view.mentionPanel.setItems(result);
@@ -582,9 +533,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			return this.provider.loadRecentUsers();
 		}
 
+		/**
+		 * @param {Array<number>} userIdList
+		 */
 		drawParticipantsItems(userIdList)
 		{
-			const result = [];
+			const result = this.getFixedItems();
 
 			userIdList.forEach((itemId) => {
 				const item = this.prepareItemForDrawing(itemId);
@@ -594,6 +548,14 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			logger.log('Mention: draw items', result);
 
+			if (!this.isProcessed)
+			{
+				this.view.mentionPanel.open(result);
+
+				this.isProcessed = true;
+
+				return;
+			}
 			this.view.mentionPanel.setItems(result);
 			this.view.mentionPanel.hideLoader();
 		}
@@ -617,12 +579,198 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		drawUserFoInitial(userIdList)
 		{
-			if (DialogHelper.isChatId(this.dialogId))
+			this.drawParticipantsItems(userIdList);
+		}
+
+		getFixedItems()
+		{
+			const result = [];
+
+			const copilotMentionItem = this.getCopilotMentionItem();
+			if (copilotMentionItem)
 			{
-				return this.drawItems(userIdList);
+				result.push(copilotMentionItem);
 			}
 
-			return this.drawParticipantsItems(userIdList);
+			const allUsersMentionItem = this.getAllUsersMentionItem();
+			if (allUsersMentionItem)
+			{
+				result.push(allUsersMentionItem);
+			}
+
+			return result;
+		}
+
+		getAllUsersMentionItem()
+		{
+			if (!Feature.isMentionAllAvailable)
+			{
+				return null;
+			}
+
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+			if (!helper)
+			{
+				return null;
+			}
+
+			if (helper.isDirect)
+			{
+				return null;
+			}
+
+			return this.createAllUsersMentionItem();
+		}
+
+		getCopilotMentionItem()
+		{
+			if (!Feature.isCopilotMentionAvailable)
+			{
+				return null;
+			}
+
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+			if (!helper)
+			{
+				return null;
+			}
+
+			if (!helper.isCopilotMentionSupported)
+			{
+				return null;
+			}
+
+			return this.createCopilotMentionItem();
+		}
+
+		createCopilotMentionItem()
+		{
+			const copilotData = serviceLocator.get('core').getStore().getters['usersModel/getCopilotData']();
+			const chatTitleParams = ChatTitle.getCopilotMentionTitle(copilotData);
+			const avatarTitleParams = ChatAvatar.createCopilotMentionAvatar();
+
+			return {
+				id: String(copilotData.id),
+				title: chatTitleParams.title,
+				titleColor: chatTitleParams.titleColor,
+				description: chatTitleParams.description,
+				avatar: avatarTitleParams,
+				testId: 'copilot',
+			};
+		}
+
+		/**
+		 * @param {string} type see BBCode constant
+		 * @param {string | DialogId} id
+		 * @return {string}
+		 */
+		#getBBCodeTextByType(type, id)
+		{
+			switch (type)
+			{
+				case BBCode.user: {
+					if (id === BBCodeEntity.all)
+					{
+						return this.#getBBCodeAllUsersText();
+					}
+
+					return this.#getBBCodeUserText(id);
+				}
+
+				case BBCode.chat: {
+					return this.#getBBCodeChatText(id);
+				}
+
+				default: {
+					return '';
+				}
+			}
+		}
+
+		#getBBCodeAllUsersText()
+		{
+			return `[USER=all]${Loc.getMessage('IMMOBILE_MESSENGER_COMMON_ALL_USERS')}[/USER] `;
+		}
+
+		#getBBCodeUserText(userId)
+		{
+			const userModelState = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
+			if (Type.isUndefined(userModelState))
+			{
+				return '';
+			}
+
+			const userName = Type.isStringFilled(userModelState.name)
+				? userModelState.name : `${userModelState.firstName} ${userModelState.lastName}`;
+
+			return this.#wrapTextInBBCode(userName, BBCode.user, userId);
+		}
+
+		#getBBCodeChatText(dialogId)
+		{
+			const dialogModelState = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			if (Type.isUndefined(dialogModelState))
+			{
+				return '';
+			}
+
+			return this.#wrapTextInBBCode(dialogModelState.name, BBCode.chat, dialogModelState.dialogId);
+		}
+
+		/**
+		 * @private
+		 * @param {string} text
+		 * @param {string} bbCode
+		 * @param {string || number || null} [param=null]
+		 * @return {string}
+		 */
+		#wrapTextInBBCode(text, bbCode, param = null)
+		{
+			if (param !== null)
+			{
+				return `[${bbCode}=${param}]${text}[/${bbCode}] `;
+			}
+
+			return `[${bbCode}]${text}[/${bbCode}] `;
+		}
+
+		/**
+		 * @return {MentionItem}
+		 */
+		createAllUsersMentionItem()
+		{
+			const chatTitleParams = ChatTitle.createMentionAllUsersTitle();
+			const avatarTitleParams = ChatAvatar.createMentionAllUsersAvatar();
+
+			return {
+				id: BBCodeEntity.all,
+				title: chatTitleParams.title,
+				titleColor: chatTitleParams.titleColor,
+				description: chatTitleParams.description,
+				avatar: avatarTitleParams,
+				testId: BBCodeEntity.all,
+			};
+		}
+
+		/**
+		 * @param {MentionItem} item
+		 * @return {string}
+		 */
+		#getBBCodeTextByItem(item)
+		{
+			if (item.id === BBCodeEntity.all)
+			{
+				return this.#getBBCodeAllUsersText();
+			}
+
+			if (DialogHelper.isDialogId(item.id))
+			{
+				const id = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](item.id).chatId;
+
+				return this.#wrapTextInBBCode(item.title, BBCode.chat, id);
+			}
+
+			return this.#wrapTextInBBCode(item.title, BBCode.user, item.id);
 		}
 	}
 

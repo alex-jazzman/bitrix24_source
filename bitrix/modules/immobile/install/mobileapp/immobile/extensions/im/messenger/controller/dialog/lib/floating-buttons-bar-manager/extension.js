@@ -476,7 +476,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			void this.contextManager?.goToMessageContextByCommentChatId({
 				dialogId: this.dialogId,
 				commentChatId: this.lastScrolledCommentChatId,
-			})
+			});
 		};
 
 		#getNextMessageIdWithReactionToJump = () => {

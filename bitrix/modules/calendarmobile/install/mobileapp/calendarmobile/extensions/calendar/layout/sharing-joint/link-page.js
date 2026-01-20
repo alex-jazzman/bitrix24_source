@@ -211,6 +211,7 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.layoutWidget,
+				analyticsSection: 'calendar_sharing_joint_link_page',
 			});
 		}
 

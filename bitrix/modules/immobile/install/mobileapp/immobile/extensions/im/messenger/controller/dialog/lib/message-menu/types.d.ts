@@ -72,12 +72,16 @@ interface IMessageMenuMessage {
 interface IMessageMenuView {
 	reactionList: string[];
 	actionList: Array<Object>;
+	showMoreReactions: boolean;
 
 	addReaction(reaction: string): this;
 
 	addSeparator(): this;
 
 	addAction(action: Object): this;
+
+	setMoreReactionsSetting(value: boolean): this;
+	setReactionVersion(value: number): this;
 }
 
 type MessageMenuControllerCreateParams = {

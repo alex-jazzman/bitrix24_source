@@ -78,7 +78,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<ReactionList
 						v-if="canSetReactions"
 						:messageId="message.id"
-						:contextDialogId="dialogId"
 						class="bx-im-message-default-content__reaction-list"
 					/>
 					<div v-if="isError" class="bx-im-message-default-content__bottom-panel">

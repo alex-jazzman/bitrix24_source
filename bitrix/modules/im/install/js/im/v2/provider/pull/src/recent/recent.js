@@ -1,10 +1,10 @@
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
-import { ImModelMessage } from 'im.v2.model';
 
 import { NewMessageManager } from './classes/new-message-manager';
 import { RecentUpdateManager } from './classes/recent-update-manager';
+import { buildRecentItem } from './helpers/helpers';
 
 import type { PullExtraParams, RawMessage } from '../types/common';
 import type {
@@ -15,8 +15,8 @@ import type {
 } from '../types/message';
 import type { ChatUnreadParams } from '../types/chat';
 import type { UserInviteParams } from '../types/user';
-import type { RecentUpdateParams, UserShowInRecentParams } from '../types/recent';
-import type { ImModelRecentItem } from 'im.v2.model';
+import type { RecentHideParams, RecentUpdateParams, UserShowInRecentParams } from '../types/recent';
+import type { ImModelRecentItem, ImModelMessage } from 'im.v2.model';
 
 // noinspection JSUnusedGlobalSymbols
 export class RecentPullHandler
@@ -39,25 +39,15 @@ export class RecentPullHandler
 	handleMessageAdd(params: MessageAddParams, extra: PullExtraParams)
 	{
 		const manager = new NewMessageManager(params, extra);
+
 		if (manager.needToSkipMessageEvent(params))
 		{
 			return;
 		}
 
 		Logger.warn('RecentPullHandler: handleMessageAdd', params);
-		const newRecentItem = {
-			id: params.dialogId,
-			chatId: params.chatId,
-			messageId: params.message.id,
-		};
 
-		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
-		if (recentItem)
-		{
-			newRecentItem.isFakeElement = false;
-			newRecentItem.isBirthdayPlaceholder = false;
-			newRecentItem.liked = false;
-		}
+		const newRecentItem = buildRecentItem(params);
 
 		const addActions = manager.getAddActions();
 		addActions.forEach((actionName) => {
@@ -134,7 +124,7 @@ export class RecentPullHandler
 		});
 	}
 
-	handleChatHide(params)
+	handleChatHide(params: RecentHideParams)
 	{
 		Logger.warn('RecentPullHandler: handleChatHide', params);
 		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
@@ -143,7 +133,7 @@ export class RecentPullHandler
 			return;
 		}
 
-		Core.getStore().dispatch('recent/delete', {
+		void Core.getStore().dispatch('recent/hide', {
 			id: params.dialogId,
 		});
 	}
@@ -157,7 +147,7 @@ export class RecentPullHandler
 			return;
 		}
 
-		Core.getStore().dispatch('recent/delete', {
+		Core.getStore().dispatch('recent/hide', {
 			id: params.dialogId,
 		});
 	}
@@ -227,7 +217,7 @@ export class RecentPullHandler
 	{
 		if (!newLastMessageId)
 		{
-			Core.getStore().dispatch('recent/delete', { id: dialogId });
+			Core.getStore().dispatch('recent/hide', { id: dialogId });
 
 			return;
 		}

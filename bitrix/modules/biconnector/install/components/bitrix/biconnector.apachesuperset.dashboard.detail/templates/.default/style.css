@@ -1,28 +1,29 @@
 #dashboard {
+	flex-direction: column;
+	display: flex;
+	overflow: clip;
 	height: 100vh;
 }
 
 .biconnector-dashboard__loader {
-	height: calc(100vh - 65px);
-	max-height: calc(100vh - 65px);
+	height: calc(100vh - 58px);
+	max-height: calc(100vh - 58px);
 	overflow: hidden;
 	background-color: var(--ui-color-palette-gray-05);
 }
 
 .dashboard-header {
-	padding: 12px 22px;
+	padding: 12px 22px 12px 16px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	box-shadow: 0 1px 1px 0 #00000012;
+	position: relative;
+	z-index:100;
 }
 
 .dashboard-header-logo-svg {
-	background-repeat: no-repeat;
-	background-position-x: left;
-	background-position-y: center;
-	background-size: contain;
-	width: 154px;
-	height: 30px;
+	height: 22px;
 }
 
 .dashboard-header .ui-icon i {
@@ -45,16 +46,26 @@
 
 .dashboard-header .dashboard-header-buttons {
 	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+#more-btn {
+	cursor: pointer;
 }
 
 .dashboard-header-buttons-more {
-	margin-left: 10px;
+	padding-left: 10px;
+	padding-right: 5px;
 }
 
 .dashboard-header-logo {
-	padding-right: 83px;
+	width: 283px;
 	margin-right: 20px;
-	border-right: 1px solid rgba(82, 93, 105, 0.25);
+	border-right: 1px solid #F0F0F0;
+	display: flex;
+	align-items: flex-end;
+	gap: 6px;
 }
 
 .dashboard-header-title-section {
@@ -67,7 +78,7 @@
 }
 
 .dashboard-iframe {
-	height: 93%;
+	flex: 1;
 }
 
 .dashboard-iframe iframe {
@@ -83,10 +94,13 @@
 }
 
 .biconnector-dashboard__animation {
+	display: flex;
 	position: relative;
+	height: 100%;
 }
 
-.biconnector-dashboard__animation_box {
+.biconnector-dashboard__animation_box,
+.biconnector-dashboard__filter_box {
 	filter: blur(4px);
 }
 
@@ -178,6 +192,34 @@
 	width: 260px;
 	height: 128px;
 }
+.biconnector-dashboard__filter_box {
+	width: 300px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background-color: #FFFFFF;
+	justify-content: space-between;
+}
+
+.biconnector-dashboard__filter_box_top {
+	height: 207px;
+	width: 300px;
+	background: url("images/filter-skeleton-top.svg") center center no-repeat;
+}
+
+.biconnector-dashboard__filter_box_bottom {
+	height: 55px;
+	width: 300px;
+	background: url("images/filter-skeleton-bottom.svg") center center no-repeat;
+}
+
+.biconnector-dashboard__skeleton {
+	width: 100%;
+}
+
+.biconnector-dashboard__animation_box {
+	width: 100%;
+}
 
 .biconnector-dashboard__error_desc {
 	margin-bottom: 24px;
@@ -201,10 +243,12 @@
 }
 
 .dashboard-header-selector-text {
-	color: var(--ui-color-link-primary-base, #2066B0);
-	font-size: 20px;
-	font-style: normal;
 	font-weight: 500;
+	font-size: 19px;
+	line-height: 26px;
+	text-align: center;
+	color: var(  --ui-color-bg-content-inapp, #085DC1);
+	font-style: normal;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

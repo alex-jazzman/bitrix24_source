@@ -1,0 +1,37 @@
+.bx-im-player-timeline__container {
+	--im-player-timeline__background_wave: url('images/waves.svg') no-repeat;
+	--im-player-timeline__background-color_seeker: #333;
+
+	width: 168px;
+	height: 17px;
+	position: relative;
+	outline: none;
+}
+
+.bx-im-player-timeline__container.--with-seeking {
+	cursor: pointer;
+}
+
+.bx-im-player-timeline__wave {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	background: var(--im-player-timeline__background_wave);
+	pointer-events: none;
+}
+
+.bx-im-player-timeline__seeker {
+	width: 1px;
+	height: 17px;
+	position: absolute;
+	top: 0;
+	margin-left: -2.5px;
+	background-color: var(--im-player-timeline__background-color_seeker);
+	opacity: 0;
+	transition: opacity 0.3s;
+	pointer-events: none;
+}
+
+.bx-im-player-timeline__container:hover .bx-im-player-timeline__seeker {
+	opacity: 1;
+}

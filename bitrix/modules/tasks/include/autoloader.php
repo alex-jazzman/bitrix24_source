@@ -35,7 +35,6 @@ $classes = [
 	'CTaskRestService' => 'classes/general/restservice.php',
 	'CTaskListCtrl' => 'classes/general/tasklistctrl.php',
 	'CTaskListState' => 'classes/general/taskliststate.php',
-	'CTaskIntranetTools' => 'classes/general/intranettools.php',
 	'CTaskTimerCore' => 'classes/general/timercore.php',
 	'CTaskTimerManager' => 'classes/general/timermanager.php',
 	'CTaskCountersProcessor' => 'classes/general/countersprocessor.php',

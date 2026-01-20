@@ -14,6 +14,7 @@ const forwardMessageComponents = new Set([
 	MessageComponent.FeedbackFormMessage,
 	MessageComponent.ImOpenLinesMessage,
 	MessageComponent.ImOpenLinesForm,
+	MessageComponent.sticker,
 ]);
 
 // @vue/component

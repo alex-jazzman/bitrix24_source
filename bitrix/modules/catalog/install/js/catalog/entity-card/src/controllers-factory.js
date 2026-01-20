@@ -1,5 +1,5 @@
 import IblockSectionController from './iblock-section/controller';
-import {type BaseEvent, EventEmitter} from 'main.core.events'
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import VariationGridController from './variation-grid/controller';
 import VariationLinkController from './variation-link/controller';
 import GoogleMapController from './google-map/controller';
@@ -8,7 +8,8 @@ import UserController from './user/controller';
 import IblockElementController from './iblock-element/controller';
 import BindingToCrmElementController from './binding-to-crm-element/controller';
 import FieldConfiguratorController from './field-configurator/controller';
-import ProductServiceGridController from "./product-service-grid/controller"
+import ProductServiceGridController from './product-service-grid/controller';
+import FileController from './file/controller';
 
 export default class ControllersFactory
 {
@@ -16,7 +17,7 @@ export default class ControllersFactory
 	{
 		EventEmitter.subscribe('BX.UI.EntityEditorControllerFactory:onInitialize', (event: BaseEvent) => {
 			const [, eventArgs] = event.getCompatData();
-			eventArgs.methods['entityCard'] = this.factory.bind(this);
+			eventArgs.methods.entityCard = this.factory.bind(this);
 		});
 	}
 
@@ -70,6 +71,11 @@ export default class ControllersFactory
 		if (type === 'service_grid')
 		{
 			return new ProductServiceGridController(controlId, settings);
+		}
+
+		if (type === 'file')
+		{
+			return new FileController(controlId, settings);
 		}
 
 		return null;

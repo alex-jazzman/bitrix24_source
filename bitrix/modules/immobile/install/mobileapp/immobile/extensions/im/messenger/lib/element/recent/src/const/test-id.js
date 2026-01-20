@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/recent/const/test-id', (require, exports, module) => {
 	const CounterPrefix = Object.freeze({
-		counter: 'counter',
+		listItemCounter: 'list-item-counter',
 	});
 
 	const CounterValue = Object.freeze({
@@ -16,9 +16,16 @@ jn.define('im/messenger/lib/element/recent/const/test-id', (require, exports, mo
 		watch: 'watch',
 	});
 
+	const CounterSuffix = Object.freeze({
+		comments: 'comments',
+		posts: 'posts',
+		messages: 'messages',
+	});
+
 	module.exports = {
 		CounterPrefix,
 		CounterValue,
 		CounterPostfix,
+		CounterSuffix,
 	};
 });

@@ -2,7 +2,7 @@ import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 
 import { Runtime } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BaseEvent } from 'main.core.events';
 
 import { Utils } from 'im.v2.lib.utils';
 import { EventType } from 'im.v2.const';
@@ -20,6 +20,7 @@ import { SearchItem } from './elements/search-item';
 import './css/chat-search.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const AddToChat = {
@@ -80,11 +81,11 @@ export const AddToChat = {
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
 		this.recentSearchItems = getUsersFromRecentItems({ withFakeUsers: true });
 
-		EventEmitter.subscribe(EventType.search.keyPressed, this.onKeyPressed);
+		this.getEmitter().subscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.search.keyPressed, this.onKeyPressed);
+		this.getEmitter().unsubscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
 	methods: {
 		startSearch(query: string)
@@ -180,6 +181,10 @@ export const AddToChat = {
 		isSelected(dialogId: string): boolean
 		{
 			return this.selectedItems.includes(dialogId);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(key: string): string
 		{

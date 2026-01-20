@@ -4,47 +4,58 @@
 jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { Promo, PromoType, EventType } = require('im/messenger/const');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { PromotionRest } = require('im/messenger/provider/rest');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Feature } = require('im/messenger/lib/feature');
+	const { VideoNotePromotion } = require('im/messenger/lib/promotion/video-note');
+	const { CopilotPromotion } = require('im/messenger/lib/promotion/copilot');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const logger = getLoggerWithContext('promotion', 'Promotion');
 
 	const COMPONENT_NAME = 'im.messenger.Promotion';
+
+	/** @type {Promotion || null} */
+	let instance = null;
 
 	/**
 	 * @class Promotion
 	 */
 	class Promotion
 	{
+		/**
+		 * @return {Promotion}
+		 */
+		static getInstance()
+		{
+			instance ??= new this();
+
+			return instance;
+		}
+
 		constructor()
 		{
-			this.bindMethods();
+			this.#bindMethods();
 
-			this.promoCollection = this.buildPromoCollection();
-			this.activePromoList = [];
-			this.currentActivePromo = '';
+			this.promoCollection = [];
+			this.promoQueue = [];
 			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.subscribeEvents();
 		}
 
-		bindMethods()
+		#bindMethods()
 		{
-			this.onCloseWidget = this.onCloseWidget.bind(this);
-			this.handlePromotionGet = this.handlePromotionGet.bind(this);
+			this.handlePromotionGet = this.#handlePromotionGet.bind(this);
 			this.onReadPromo = this.#onReadPromo.bind(this);
-			this.openPromoOnInit = this.openPromoOnInit.bind(this);
-			this.openPromotionFromBackgroundUIManagerEvent = this.openPromotionFromBackgroundUIManagerEvent.bind(this);
+			this.openPromotionFromBackgroundUIManagerEvent = this.#openPromotionFromBackgroundUIManagerEvent.bind(this);
+			this.onShowPromoCallback = this.#onShowPromoCallback.bind(this);
 		}
 
 		subscribeEvents()
 		{
-			this.subscribeInitMessengerEvent();
-			this.subscribeNavigationEvents();
-			this.subscribeToBackgroundUIManagerEvent();
+			this.#subscribeInitMessengerEvent();
+			this.#subscribeToBackgroundUIManagerEvent();
 		}
 
-		subscribeToBackgroundUIManagerEvent()
+		#subscribeToBackgroundUIManagerEvent()
 		{
 			BX.addCustomEvent(
 				'BackgroundUIManager::openComponentInAnotherContext',
@@ -55,10 +66,20 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 		/**
 		 * @param {string} componentName
 		 */
-		openPromotionFromBackgroundUIManagerEvent(componentName)
-		{}
+		#openPromotionFromBackgroundUIManagerEvent(componentName)
+		{
+			logger.log('openPromotionFromBackgroundUIManagerEvent', componentName);
 
-		unsubscribeBackgroundUIManagerEvent()
+			if (componentName !== COMPONENT_NAME || this.promoQueue.length === 0)
+			{
+				return;
+			}
+
+			const nextPromo = this.promoQueue.shift();
+			nextPromo.callback();
+		}
+
+		#unsubscribeBackgroundUIManagerEvent()
 		{
 			BX.removeCustomEvent(
 				'BackgroundUIManager::openComponentInAnotherContext',
@@ -66,203 +87,110 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 			);
 		}
 
-		subscribeInitMessengerEvent()
+		#subscribeInitMessengerEvent()
 		{
 			this.messengerInitService.onInit(this.handlePromotionGet);
 		}
 
-		subscribeNavigationEvents()
-		{}
-
-		unsubscribeNavigationEvents()
-		{}
-
 		destruct()
 		{
-			this.unsubscribeNavigationEvents();
-			this.unsubscribeBackgroundUIManagerEvent();
+			this.#unsubscribeBackgroundUIManagerEvent();
 		}
 
-		/**
-		 * @return {Record<string, showSpotlightOptions>}
-		 */
-		buildPromoCollection()
-		{
-			return {};
-		}
-
-		handlePromotionGet(data)
+		#handlePromotionGet(data)
 		{
 			if (data?.promotion)
 			{
-				this.activePromoList = data.promotion;
-
-				this.openPromoOnInit();
+				this.promoCollection = data.promotion;
 			}
-		}
-
-		openPromoOnInit()
-		{
-			BX.postComponentEvent(
-				'BackgroundUIManagerEvents::tryToOpenComponentFromAnotherContext',
-				[
-					{
-						componentName: COMPONENT_NAME,
-						priority: 10000,
-					},
-				],
-			);
 		}
 
 		/**
-		 * @return {Promise<boolean>}
+		 * @param {string} promoId
+		 * @return {boolean}
 		 */
-		async checkPromoCopilotInDefaultTab()
+		shouldShowPromo(promoId)
 		{
-			if (
-				!Feature.isCopilotEnabled
-				|| !Feature.isSpotlightIdInTabViewAvailable
-			)
-			{
-				return false;
-			}
-
-			const hasPromoCopilotInDefaultTab = this.activePromoList.includes(Promo.copilotInDefaultTab);
-			const navigationContext = await PageManager.getNavigator().getNavigationContext();
-
-			return navigationContext.isTabActive && hasPromoCopilotInDefaultTab;
+			return this.promoCollection.includes(promoId);
 		}
 
 		/**
-		 * @param {showSpotlightOptions} options
+		 * @param {string} promoId
+		 * @param {() => any} callback
 		 */
-		showSpotlight(options)
+		addToPromoQueue({ promoId, callback = () => {} })
 		{
-			const spotlight = dialogs.createSpotlight();
-
-			const {
-				setComponent,
-				setHint,
-				setTarget,
-				setHandler,
-			} = options;
-
-			if (setTarget?.target)
+			if (!this.promoCollection.includes(promoId))
 			{
-				spotlight.setTarget(setTarget.target, setTarget.params);
+				return;
 			}
 
-			if (setComponent?.component)
+			this.promoQueue.push({ promoId, callback });
+			if (this.promoQueue.length === 1)
 			{
-				spotlight.setComponent(setComponent.component, setComponent.params);
+				this.#queueTickUp();
 			}
-			else if (setHint?.text)
-			{
-				spotlight.setHint({ text: setHint.text });
-			}
-
-			spotlight.setHandler(setHandler);
-			spotlight.show();
-
-			this.spotlight = spotlight;
 		}
 
-		hideSpotlight()
+		#queueTickUp()
 		{
-			this.spotlight?.hide();
-		}
+			logger.log('queueTickUp queue:', this.promoQueue);
+			BX.postComponentEvent('BackgroundUIManager::onCloseActiveComponent', []);
 
-		showWidget()
-		{
-			PageManager.openWidget(
-				'layout',
-				{
-					backdrop:
+			if (this.promoQueue.length > 0)
+			{
+				BX.postComponentEvent(
+					'BackgroundUIManagerEvents::tryToOpenComponentFromAnotherContext',
+					[
 						{
-							hideNavigationBar: true,
-							shouldResizeContent: false,
-							mediumPositionPercent: 93,
+							componentName: COMPONENT_NAME,
+							priority: 1000,
 						},
-				},
-			).then(
-				(widget) => {
-					this.widget = widget;
-					this.widgetReady();
-					// TODO: refactor when the widget appears
-					// this.widget.showComponent(new ReleaseView({ widget, videoHeight, url }));
-				},
-			).catch((error) => {
-				Logger.error('Promotion.error widget', error);
-			});
-		}
-
-		widgetReady()
-		{
-			this.subscribeWidgetEvents();
-		}
-
-		subscribeWidgetEvents()
-		{
-			this.widget.on(EventType.view.close, this.onCloseWidget);
-			this.widget.on(EventType.view.hidden, this.onCloseWidget);
-		}
-
-		onCloseWidget()
-		{
-			this.onReadPromo();
-		}
-
-		show(id)
-		{
-			if (!this.promoCollection[id] || !this.activePromoList.includes(id))
-			{
-				return false;
-			}
-
-			const promo = this.promoCollection[id];
-
-			if (promo.type === PromoType.spotlight)
-			{
-				this.currentActivePromo = id;
-				this.showSpotlight(promo.options);
-			}
-
-			if (promo.type === PromoType.widget)
-			{
-				this.currentActivePromo = id;
-				this.showWidget();
-			}
-			Logger.info('Promotion.show', id);
-
-			setTimeout(() => {
-				this.onReadPromo(id);
-			}, 5000);
-
-			return true;
-		}
-
-		#onReadPromo()
-		{
-			const currentPromoId = this.currentActivePromo;
-			if (Type.isStringFilled(currentPromoId))
-			{
-				this.deleteActivePromo(currentPromoId);
-				this.read(currentPromoId);
-				this.hideSpotlight();
-				this.currentActivePromo = '';
+					],
+				);
 			}
 		}
 
-		deleteActivePromo(id)
+		/**
+		 * @param {string} promoId
+		 */
+		#onReadPromo(promoId)
 		{
-			this.activePromoList = this.activePromoList.filter((activePromoListId) => activePromoListId !== id);
+			logger.log('onReadPromo', promoId);
+
+			if (Type.isStringFilled(promoId))
+			{
+				this.promoCollection = this.promoCollection.filter((activePromoListId) => activePromoListId !== promoId);
+				PromotionRest.read(promoId);
+			}
 		}
 
-		read(id)
+		/**
+		 * @param {PromotionCallbackData} callbackData
+		 */
+		#onShowPromoCallback(callbackData)
 		{
-			PromotionRest.read(id);
-			Logger.info('Promotion.read', id);
+			if (callbackData?.read && callbackData?.promoId)
+			{
+				this.onReadPromo(callbackData.promoId);
+			}
+
+			this.#queueTickUp();
 		}
+
+		/**
+		 * @param {number} chatId
+		 */
+		showVideoNotePromotion = (chatId) => {
+			VideoNotePromotion.show(chatId, this.onShowPromoCallback);
+		};
+
+		/**
+		 * @param {LayoutComponent} targetRef
+		 */
+		showCopilotSidebarChangeEnginePromotion = (targetRef) => {
+			CopilotPromotion.showCopilotSidebarChangeEngine(targetRef, this.onShowPromoCallback);
+		};
 	}
 
 	module.exports = {

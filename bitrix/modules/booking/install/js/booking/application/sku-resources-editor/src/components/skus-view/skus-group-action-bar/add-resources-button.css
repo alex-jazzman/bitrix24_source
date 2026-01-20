@@ -1,0 +1,21 @@
+.booking-sre-app--add-resources-button {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+}
+
+.booking-sre-app--add-resources-button:hover {
+	filter: opacity(0.8);
+}
+
+.booking-sre-app--add-resources-button__label {
+	color: var(--ui-color-on-primary);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: -0.05px;
+}

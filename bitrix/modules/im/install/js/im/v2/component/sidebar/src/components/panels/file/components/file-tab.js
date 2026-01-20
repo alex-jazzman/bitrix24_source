@@ -15,6 +15,7 @@ import { DetailEmptyState as StartState, DetailEmptyState } from '../../../eleme
 import '../css/file-tab.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelSidebarFileItem } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -94,7 +95,7 @@ export const FileTab = {
 		this.service = new File({ dialogId: this.dialogId });
 		this.serviceSearch = new FileSearch({ dialogId: this.dialogId });
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new FileMenu();
+		this.contextMenu = new FileMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -146,6 +147,10 @@ export const FileTab = {
 			}
 			this.isLoading = false;
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -159,7 +164,6 @@ export const FileTab = {
 					v-for="file in dateGroup.items"
 					:fileItem="file"
 					:searchQuery="searchQuery"
-					:contextDialogId="dialogId"
 					:viewerContext="FileViewerContext.sidebarTabFiles"
 					@contextMenuClick="onContextMenuClick"
 				/>

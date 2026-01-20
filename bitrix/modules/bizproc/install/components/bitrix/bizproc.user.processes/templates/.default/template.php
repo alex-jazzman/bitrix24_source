@@ -119,8 +119,48 @@ $getRowCounter = function (array $workflow, int $currentUserId, int $targetUserI
 	return [];
 };
 
-$gridRows = [];
+/** @var \Bitrix\Main\UI\PageNavigation $pageNavigation */
+$pageNavigation = $arResult['pageNavigation'];
 
+$gridParams = [
+	'GRID_ID' => $arResult['gridId'],
+	'COLUMNS' => $arResult['gridColumns'],
+
+	'SHOW_ROW_CHECKBOXES' => true,
+	'NAV_OBJECT' => $arResult['pageNavigation'],
+	'AJAX_MODE' => 'Y',
+	'AJAX_ID' => CAjax::getComponentID('bitrix:bizproc.user.processes', '.default', ''),
+	'PAGE_SIZES' => $arResult['pageSizes'],
+	'AJAX_OPTION_JUMP' => 'N',
+	'SHOW_ROW_ACTIONS_MENU' => true,
+	'SHOW_GRID_SETTINGS_MENU' => true,
+	'SHOW_MORE_BUTTON' => true,
+	'CURRENT_PAGE' => $pageNavigation->getCurrentPage(),
+	'NAV_PARAM_NAME' => $arResult['navigationId'],
+	'SHOW_SELECTED_COUNTER' => true,
+	'SHOW_TOTAL_COUNTER' => false,
+	'SHOW_PAGESIZE' => true,
+	'SHOW_ACTION_PANEL' => true,
+	'ACTION_PANEL' => $arResult['gridActions'] ?? null,
+	'ALLOW_COLUMNS_SORT' => true,
+	'ALLOW_COLUMNS_RESIZE' => true,
+	'ALLOW_HORIZONTAL_SCROLL' => true,
+	'ALLOW_INLINE_EDIT' => true,
+	'ALLOW_SORT' => true,
+	'ALLOW_PIN_HEADER' => true,
+	'AJAX_OPTION_HISTORY' => 'N',
+	'HANDLE_RESPONSE_ERROR' => true,
+	'MESSAGES' => array_map(
+		fn ($error) => [
+			'TEXT' => $error->getMessage(),
+			'TYPE' => 'error',
+		],
+		$this->getComponent()->getErrors(),
+	),
+];
+unset($workflows[$pageNavigation->getLimit()]);
+
+$gridRows = [];
 foreach ($workflows as $row)
 {
 	$workflowId = $row['workflowId'] ?? '';
@@ -155,55 +195,14 @@ foreach ($workflows as $row)
 		'counters' => $getRowCounter($row, $currentUserId, $targetUserId),
 	];
 }
+$gridParams['ROWS'] = $gridRows;
 
 /** @var array $arResult */
 global $APPLICATION;
-/** @var \Bitrix\Main\UI\PageNavigation $pageNavigation */
-$pageNavigation = $arResult['pageNavigation'];
-
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
-	[
-		'GRID_ID' => $arResult['gridId'],
-		'COLUMNS' => $arResult['gridColumns'],
-		'ROWS' => $gridRows,
-		'SHOW_ROW_CHECKBOXES' => true,
-		'NAV_OBJECT' => $arResult['pageNavigation'],
-		'AJAX_MODE' => 'Y',
-		'AJAX_ID' => CAjax::getComponentID('bitrix:bizproc.user.processes', '.default', ''),
-		'PAGE_SIZES' => $arResult['pageSizes'],
-		'AJAX_OPTION_JUMP' => 'N',
-		'SHOW_ROW_ACTIONS_MENU' => true,
-		'SHOW_GRID_SETTINGS_MENU' => true,
-		'SHOW_NAVIGATION_PANEL' => true,
-		'SHOW_PAGINATION' => true,
-		'SHOW_MORE_BUTTON' => true,
-		'ENABLE_NEXT_PAGE' => $pageNavigation->getCurrentPage() < $pageNavigation->getPageCount(),
-		'CURRENT_PAGE' => $pageNavigation->getCurrentPage(),
-		'NAV_PARAM_NAME' => $arResult['navigationId'],
-		'SHOW_SELECTED_COUNTER' => false,
-		'SHOW_TOTAL_COUNTER' => true,
-		'TOTAL_ROWS_COUNT' => $arResult['pageNavigation']->getRecordCount(),
-		'SHOW_PAGESIZE' => true,
-		'SHOW_ACTION_PANEL' => true,
-		'ACTION_PANEL' => $arResult['gridActions'] ?? null,
-		'ALLOW_COLUMNS_SORT' => true,
-		'ALLOW_COLUMNS_RESIZE' => true,
-		'ALLOW_HORIZONTAL_SCROLL' => true,
-		'ALLOW_INLINE_EDIT' => true,
-		'ALLOW_SORT' => true,
-		'ALLOW_PIN_HEADER' => true,
-		'AJAX_OPTION_HISTORY' => 'N',
-		'HANDLE_RESPONSE_ERROR' => true,
-		'MESSAGES' => array_map(
-			fn ($error) => [
-				'TEXT' => $error->getMessage(),
-				'TYPE' => 'error',
-			],
-			$this->getComponent()->getErrors(),
-		),
-	],
+	$gridParams,
 );
 
 $messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);

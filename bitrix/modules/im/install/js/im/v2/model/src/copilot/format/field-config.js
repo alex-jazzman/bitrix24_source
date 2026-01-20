@@ -1,25 +1,31 @@
 import { Type } from 'main.core';
 
-import { formatFieldsWithConfig, type FieldsConfig } from '../../utils/validate';
+import type { FieldsConfig } from '../../utils/validate';
 
 export const copilotFieldsConfig: FieldsConfig = [
 	{
-		fieldName: 'recommendedRoles',
-		targetFieldName: 'recommendedRoles',
-		checkFunction: Type.isArray,
+		fieldName: 'code',
+		targetFieldName: 'code',
+		checkFunction: Type.isString,
 	},
 	{
-		fieldName: 'roles',
-		targetFieldName: 'roles',
-		checkFunction: Type.isPlainObject,
-		formatFunction: (target) => {
-			return Object.values(target).map((role) => {
-				return formatFieldsWithConfig(role, rolesFieldsConfig);
-			});
-		},
+		fieldName: 'default',
+		targetFieldName: 'default',
+		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'recommended',
+		targetFieldName: 'recommended',
+		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'supportsReasoning',
+		targetFieldName: 'supportsReasoning',
+		checkFunction: Type.isBoolean,
+	},
+	{
+		fieldName: 'name',
+		targetFieldName: 'name',
+		checkFunction: Type.isString,
 	},
 ];
-
-
-
-

@@ -67,6 +67,7 @@ return [
 				'constructorParams' => static function() {
 					return [
 						\Bitrix\Booking\Internals\Container::getBookingRepositoryMapper(),
+						\Bitrix\Booking\Internals\Container::getBookingSkuService(),
 					];
 				},
 			],
@@ -76,12 +77,21 @@ return [
 					return [
 						'resourceMapper' => \Bitrix\Booking\Internals\Container::getResourceRepositoryMapper(),
 						'clientMapper' => \Bitrix\Booking\Internals\Container::getClientRepositoryMapper(),
+						'skuMapper' => \Bitrix\Booking\Internals\Container::getBookingSkuMapper(),
 						'externalDataItemMapper' => \Bitrix\Booking\Internals\Container::getExternalDataItemRepositoryMapper(),
 					];
 				},
 			],
 			'booking.client.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingClientRepository::class,
+			],
+			'booking.sku.repository' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingSkuRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'mapper' => \Bitrix\Booking\Internals\Container::getBookingSkuMapper(),
+					];
+				},
 			],
 			'booking.external.data.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingExternalDataRepository::class,
@@ -98,6 +108,7 @@ return [
 					return [
 						\Bitrix\Booking\Internals\Container::getResourceRepositoryMapper(),
 						\Bitrix\Booking\Internals\Container::getResourceDataRepositoryMapper(),
+						\Bitrix\Booking\Internals\Container::getResourceSkuService(),
 					];
 				},
 			],
@@ -134,6 +145,9 @@ return [
 			],
 			'booking.client.repository.mapper' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\Mapper\ClientMapper::class,
+			],
+			'booking.sku.mapper' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\Mapper\BookingSkuMapper::class,
 			],
 			'booking.external.data.item.repository.mapper' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\Mapper\ExternalDataItemMapper::class,
@@ -196,8 +210,10 @@ return [
 						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
 						'resourceService' => \Bitrix\Booking\Internals\Container::getResourceService(),
 						'clientService' => \Bitrix\Booking\Internals\Container::getClientService(),
+						'skuService' => \Bitrix\Booking\Internals\Container::getBookingSkuService(),
 						'externalDataService' => \Bitrix\Booking\Internals\Container::getExternalDataService(),
 						'overbookingOverlapPolicy' => \Bitrix\Booking\Internals\Container::getOverBookingOverlapPolicy(),
+						'dealForBookingService' => \Bitrix\Booking\Internals\Container::getDealForBookingService(),
 					];
 				},
 			],
@@ -206,6 +222,16 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'bookingClientRepository' => \Bitrix\Booking\Internals\Container::getBookingClientRepository(),
+					];
+				},
+			],
+			'booking.internals.sku.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\BookingSkuService::class,
+				'constructorParams' => static function() {
+					return [
+						'skuRepository' => \Bitrix\Booking\Internals\Container::getBookingSkuRepository(),
+						'skuDataLoader' => \Bitrix\Booking\Internals\Container::getSkuDataLoader(),
+						'productRowDataLoader' => \Bitrix\Booking\Internals\Container::getProductRowDataLoader(),
 					];
 				},
 			],
@@ -229,6 +255,9 @@ return [
 						'resourceLinkedEntityRepository' => \Bitrix\Booking\Internals\Container::getResourceLinkedEntityRepository(),
 					];
 				},
+			],
+			'booking.internals.resource.avatar.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\ResourceAvatarService::class,
 			],
 			'booking.internals.wait.list.item.service' => [
 				'className' => \Bitrix\Booking\Internals\Service\WaitListItemService::class,
@@ -334,11 +363,28 @@ return [
 				'className' => Bitrix\Booking\Internals\Service\Yandex\CreateBookingService::class,
 				'constructorParams' => static function() {
 					return [
-						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
 						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
 						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
 						'contactService' => \Bitrix\Booking\Internals\Container::getCrmContactService(),
-						'dealService' => \Bitrix\Booking\Internals\Container::getCrmDealService(),
+						'findResourceService' => \Bitrix\Booking\Internals\Container::getYandexFindResourceService(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.update.booking.service' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\UpdateBookingService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'findResourceService' => \Bitrix\Booking\Internals\Container::getYandexFindResourceService(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.find.resource.service' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\FindResourceService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
 					];
 				},
 			],
@@ -377,12 +423,18 @@ return [
 			],
 			'booking.internals.service.yandex.api.client' => [
 				'className' => Bitrix\Booking\Internals\Service\Yandex\ApiClient::class,
+				'constructorParams' => static function() {
+					return [
+						'availabilityService' => \Bitrix\Booking\Internals\Container::getYandexAvailabilityService(),
+					];
+				},
 			],
 			'booking.internals.service.yandex.account' => [
 				'className' => Bitrix\Booking\Internals\Service\Yandex\Account::class,
 				'constructorParams' => static function() {
 					return [
 						'apiClient' => \Bitrix\Booking\Internals\Container::getYandexApiClient(),
+						'feedHashService' => \Bitrix\Booking\Internals\Container::getYandexCompanyFeedHashService(),
 					];
 				},
 			],
@@ -391,25 +443,77 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'apiClient' => \Bitrix\Booking\Internals\Container::getYandexApiClient(),
+						'feedHashService' => \Bitrix\Booking\Internals\Container::getYandexCompanyFeedHashService(),
 					];
 				},
 			],
 			'booking.internals.integration.catalog.sku.data.loader' => [
-				'className' => Bitrix\Booking\Internals\Integration\Catalog\CatalogSkuDataLoader::class,
+				'className' => Bitrix\Booking\Internals\Integration\Catalog\SkuDataLoader::class,
 				'constructorParams' => static function() {
 					return [
 						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
 					];
 				},
 			],
-			'booking.booking.provider' => [
-				'className' => \Bitrix\Booking\Provider\BookingProvider::class,
-			],
 			'booking.internals.integration.crm.deal.data.loader' => [
 				'className' => Bitrix\Booking\Internals\Integration\Crm\CrmDealDataLoader::class,
 			],
 			'booking.internals.integration.intranet.booking.tool' => [
 				'className' => \Bitrix\Booking\Internals\Integration\Intranet\BookingTool::class,
+			],
+			'booking.internals.repository.resource.sku' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceSkuRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'mapper' => new \Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceSkuMapper(),
+					];
+				}
+			],
+			'booking.internals.repository.resource.sku.yandex' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceSkuYandexRepository::class,
+			],
+			'booking.internals.service.yandex.resource.sku.relations.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\Yandex\ResourceSkuRelationsService::class,
+				'constructorParams' => static function() {
+					return [
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'resourceSkuRepository' => \Bitrix\Booking\Internals\Container::getResourceSkuRepository(),
+						'resourceSkuYandexRepository' => \Bitrix\Booking\Internals\Container::getResourceSkuYandexRepository(),
+					];
+				},
+			],
+			'booking.internals.service.resource.sku.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\ResourceSkuService::class,
+				'constructorParams' => static function() {
+					return [
+						'resourceSkuRepository' => \Bitrix\Booking\Internals\Container::getResourceSkuRepository(),
+						'resourceSkuYandexRepository' => \Bitrix\Booking\Internals\Container::getResourceSkuYandexRepository(),
+						'skuDataLoader' => \Bitrix\Booking\Internals\Container::getSkuDataLoader(),
+						'skuService' => \Bitrix\Booking\Internals\Container::getSkuService(),
+					];
+				},
+			],
+			'booking.internals.service.sku.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\SkuService::class,
+				'constructorParams' => static function() {
+					return [
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+					];
+				},
+			],
+			'booking.internals.yandex.service.status' => [
+				'className' => \Bitrix\Booking\Internals\Service\Yandex\StatusService::class,
+				'constructorParams' => static function() {
+					return [
+						'account' => \Bitrix\Booking\Internals\Container::getYandexAccount(),
+					];
+				},
+			],
+			'booking.internals.service.timezone' => [
+				'className' => \Bitrix\Booking\Internals\Service\Timezone::class,
+			],
+			\Bitrix\Booking\Provider\BookingProvider::class => [
+				'className' => \Bitrix\Booking\Provider\BookingProvider::class,
 			],
 			\Bitrix\Booking\Internals\Repository\BookingRepositoryInterface::class => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingRepository::class,
@@ -425,6 +529,61 @@ return [
 			],
 			\Bitrix\Booking\Internals\Repository\BookingMessageRepositoryInterface::class => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingMessageRepository::class,
+			],
+			\Bitrix\Booking\Internals\Service\Yandex\IntegrationService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Yandex\IntegrationService::class,
+				'constructorParams' => static function() {
+					return [
+						'resourceSkuRelationsService' => \Bitrix\Booking\Internals\Container::getYandexResourceSkuRelationsService(),
+						'companyRepository' => \Bitrix\Booking\Internals\Container::getYandexCompanyRepository(),
+						'account' => \Bitrix\Booking\Internals\Container::getYandexAccount(),
+						'companyFeedProvider' => \Bitrix\Booking\Internals\Container::getYandexCompanyFeedProvider(),
+						'statusService' => \Bitrix\Booking\Internals\Container::getYandexStatusService(),
+						'availabilityService' => \Bitrix\Booking\Internals\Container::getYandexAvailabilityService(),
+					];
+				},
+			],
+			\Bitrix\Booking\Internals\Service\Yandex\AvailabilityService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Yandex\AvailabilityService::class,
+			],
+			\Bitrix\Booking\Internals\Service\Timezone::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Timezone::class,
+			],
+			\Bitrix\Booking\Internals\Service\Yandex\CompanyRepository::class => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\CompanyRepository::class,
+			],
+			\Bitrix\Booking\Internals\Service\Integration\IntegrationManager::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Integration\IntegrationManager::class,
+			],
+			'booking.internals.service.gis.integration.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\Gis\IntegrationService::class,
+			],
+			\Bitrix\Booking\Internals\Service\Yandex\CompanyFeedHashService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Yandex\CompanyFeedHashService::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\ProductRowDataLoader::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ProductRowDataLoader::class,
+			],
+			\Bitrix\Booking\Internals\Service\DealForBookingService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\DealForBookingService::class,
+				'constructorParams' => static function()
+				{
+					return [
+						'dealService' => \Bitrix\Booking\Internals\Container::getCrmDealService(),
+						'bookingSkuRepository' => \Bitrix\Booking\Internals\Container::getBookingSkuRepository(),
+						'bookingExternalDataRepository' => \Bitrix\Booking\Internals\Container::getBookingExternalDataRepository(),
+					];
+				}
+			],
+			\Bitrix\Booking\Internals\Service\Notifications\WhatsAppEmergencyService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\WhatsAppEmergencyService::class,
+				'constructorParams' => static function()
+				{
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'optionRepository' => \Bitrix\Booking\Internals\Container::getOptionRepository(),
+					];
+				}
 			],
 		],
 	],

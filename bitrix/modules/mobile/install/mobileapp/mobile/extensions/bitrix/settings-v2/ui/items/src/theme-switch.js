@@ -33,6 +33,12 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 			});
 
 			this.state.selectedTheme = props.value;
+
+			props.controller.setOnCancel(() => {
+				this.setState({
+					selectedTheme: props.value,
+				});
+			});
 		}
 
 		render()
@@ -56,13 +62,13 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 		{
 			const selected = this.state.selectedTheme === themeType;
 
-			return Card(
+			return View(
 				{
-					excludePaddingSide: { all: true },
 					onClick: () => this.onChange(themeType),
 				},
 				Card(
 					{
+						testId: this.getTestId(`theme-card-${themeType}`),
 						design: CardDesign.PRIMARY,
 						accent: selected,
 						border: true,
@@ -90,7 +96,7 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 					style: {
 						width: 29,
 						height: 54,
-						marginHorizontal: Indent.XL4.toNumber(),
+						marginHorizontal: Indent.XL2.toNumber(),
 					},
 					svg: {
 						uri: `${THEME_ASSET_PATH}${themeType}.svg`,
@@ -100,6 +106,12 @@ jn.define('settings-v2/ui/items/src/theme-switch', (require, exports, module) =>
 		}
 
 		onChange = (themeType) => {
+
+			if (this.state.selectedTheme === themeType)
+			{
+				return;
+			}
+
 			const { id, controller, onChange } = this.props;
 
 			this.setState({

@@ -94,6 +94,38 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 
 			return this.executeSql({ query });
 		}
+
+		/**
+		 * @param {Array<number>} messageIdList
+		 * @return {Promise<Awaited<{}>>}
+		 */
+		async deleteByMessageIdList(messageIdList)
+		{
+			if (!Feature.isLocalStorageEnabled || this.readOnly)
+			{
+				return Promise.resolve({});
+			}
+
+			let ids = [];
+			if (Type.isArray(messageIdList))
+			{
+				ids = messageIdList.filter((id) => Type.isNumber(id));
+			}
+
+			if (ids.length === 0)
+			{
+				return Promise.resolve({});
+			}
+
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), ids);
+
+			const query = `
+				DELETE FROM b_im_reaction
+				WHERE messageId IN (${idsFormatted});
+			`;
+
+			return this.executeSql({ query });
+		}
 	}
 
 	module.exports = {

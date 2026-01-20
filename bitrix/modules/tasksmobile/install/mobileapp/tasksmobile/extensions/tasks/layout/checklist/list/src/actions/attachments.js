@@ -12,12 +12,18 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 	const { NotifyManager } = require('notify-manager');
 
 	const ICON_SIZE = 24;
+	let attachmentsRefMap = new Map();
 
 	/**
 	 * @class ItemAttachments
 	 */
 	class ItemAttachments extends LayoutComponent
 	{
+		componentWillUnmount()
+		{
+			this.removeAttachmentRef();
+		}
+
 		async getAttachmentsInfo()
 		{
 			const { item } = this.props;
@@ -132,7 +138,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 		addFile()
 		{
-			this.getFieldRef().openFilePicker();
+			this.getAttachmentRef().openFilePicker();
 		}
 
 		handleOnOpenAttachmentList = async () => {
@@ -148,7 +154,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 				NotifyManager.hideLoadingIndicatorWithoutFallback();
 			}
 
-			const { layoutWidget } = await this.getFieldRef().onOpenAttachmentList();
+			const { layoutWidget } = await this.getAttachmentRef().onOpenAttachmentList();
 
 			layoutWidget.preventBottomSheetDismiss(true);
 			layoutWidget.on('preventDismiss', () => {
@@ -191,25 +197,32 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return String(count);
 		}
 
-		setFieldRef = (ref) => {
+		setAttachmentRef = (ref) => {
 			const { item } = this.props;
 
-			if (!layout.fileFieldRef)
+			if (!attachmentsRefMap)
 			{
-				layout.fileFieldRef = new Map();
+				attachmentsRefMap = new Map();
 			}
 
-			layout.fileFieldRef.set(item.getNodeId(), ref);
+			attachmentsRefMap.set(item.getNodeId(), ref);
 		};
 
 		/**
 		 * @return {FileField}
 		 */
-		getFieldRef()
+		getAttachmentRef()
 		{
 			const { item } = this.props;
 
-			return layout.fileFieldRef.get(item.getNodeId());
+			return attachmentsRefMap.get(item.getNodeId());
+		}
+
+		removeAttachmentRef()
+		{
+			const { item } = this.props;
+
+			attachmentsRefMap.delete(item.getNodeId());
 		}
 
 		render()
@@ -265,7 +278,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 				readOnly,
 				onChange: this.handleUpdateAttachedFiles,
 				ThemeComponent: ({ field }) => {
-					this.setFieldRef(field);
+					this.setAttachmentRef(field);
 
 					return this.renderFileCounter();
 				},

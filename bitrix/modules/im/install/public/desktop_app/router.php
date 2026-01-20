@@ -54,7 +54,6 @@ if (!defined('SKIP_SHOW_PANEL'))
 }
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
-
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public/desktop_app/router.php");
 
 $APPLICATION->SetTitle(GetMessage("IM_ROUTER_PAGE_TITLE"));

@@ -1,6 +1,6 @@
 import type { PopupOptions } from 'main.popup';
 import { Popup } from 'ui.vue3.components.popup';
-import { taskService } from 'tasks.v2.provider.service.task-service';
+
 import { DeadlinePopupContent } from './deadline-popup-content';
 
 // @vue/component
@@ -14,16 +14,24 @@ export const DeadlinePopup = {
 			type: [Number, String],
 			required: true,
 		},
+		deadlineTs: {
+			type: [Number, null],
+			required: true,
+		},
 		bindElement: {
 			type: HTMLElement,
 			required: true,
 		},
+		coordinates: {
+			type: Object,
+			default: null,
+		},
 	},
-	emits: ['update', 'close'],
+	emits: ['update:deadlineTs', 'close'],
 	computed: {
-		popupOptions(): PopupOptions
+		options(): PopupOptions
 		{
-			return {
+			const baseOptions = {
 				id: `tasks-field-deadline-popup-${this.taskId}`,
 				bindElement: this.bindElement,
 				padding: 24,
@@ -31,39 +39,26 @@ export const DeadlinePopup = {
 				offsetLeft: -100,
 				targetContainer: document.body,
 			};
+
+			if (this.coordinates?.x)
+			{
+				const bindElementRect = this.bindElement.getBoundingClientRect();
+
+				baseOptions.offsetLeft += this.coordinates.x - bindElementRect.left;
+			}
+
+			return baseOptions;
 		},
 	},
 	methods: {
-		clear(): void
-		{
-			this.deadlineTs = null;
-		},
 		handleUpdate(dateTs: number): void
 		{
-			this.deadlineTs = dateTs;
-			this.$emit('update', dateTs);
-		},
-		handleClose(): void
-		{
-			if (this.deadlineTs)
-			{
-				void taskService.update(
-					this.taskId,
-					{
-						deadlineTs: this.deadlineTs,
-					},
-				);
-			}
-
-			this.$emit('close');
+			this.$emit('update:deadlineTs', dateTs);
 		},
 	},
 	template: `
-		<Popup
-			:options="popupOptions"
-			@close="handleClose"
-		>
-			<DeadlinePopupContent :taskId="taskId" @update="handleUpdate" @close="handleClose"/>
+		<Popup :options @close="$emit('close')">
+			<DeadlinePopupContent :taskId @update="handleUpdate" @close="$emit('close')"/>
 		</Popup>
 	`,
 };

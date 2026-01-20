@@ -54,14 +54,6 @@ export default class ToolbarComponent extends EventEmitter
 	initHints(): void
 	{
 		BX.UI.Hint.init(BX('ui-toolbar-after-title-buttons'));
-		BX.UI.Hint.popupParameters = {
-			closeByEsc: true,
-			autoHide: true,
-			angle: {
-				offset: 60,
-			},
-			offsetLeft: 40,
-		};
 	}
 
 	bindEvents(): void
@@ -168,7 +160,7 @@ export default class ToolbarComponent extends EventEmitter
 
 		if (hash === '#robots')
 		{
-			const robotsBtn = document.querySelector('.crm-robot-btn');
+			const robotsBtn = document.querySelector('.robot-button-container');
 			if (robotsBtn)
 			{
 				guide = new Guide({

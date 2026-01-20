@@ -40,6 +40,71 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      console.error('SettingsService: changeStatus error', result.error());
 	    });
 	  }
+	  async switchScheme(newScheme) {
+	    void im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
+	      [im_v2_const.Settings.notification.mode]: newScheme
+	    });
+	    const newNotificationsSettings = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsNotifySwitchScheme, {
+	      data: {
+	        userId: im_v2_application_core.Core.getUserId(),
+	        scheme: newScheme
+	      }
+	    }).catch(([error]) => {
+	      console.error('SettingsService: switchScheme error', error);
+	    });
+	    void im_v2_application_core.Core.getStore().dispatch('application/settings/set', {
+	      notifications: newNotificationsSettings
+	    });
+	  }
+	  changeExpertOption(payload) {
+	    const {
+	      moduleId,
+	      optionName,
+	      type,
+	      value
+	    } = payload;
+	    void im_v2_application_core.Core.getStore().dispatch('application/settings/setNotificationOption', {
+	      moduleId,
+	      optionName,
+	      type,
+	      value
+	    });
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsNotifyUpdate, {
+	      data: {
+	        userId: im_v2_application_core.Core.getUserId(),
+	        moduleId,
+	        name: optionName,
+	        type,
+	        value
+	      }
+	    }).catch(([error]) => {
+	      console.error('SettingsService: changeExpertOption error', error);
+	    });
+	  }
+	  async toggleSubscription(notificationSubscriptionOptions) {
+	    const {
+	      notifyModule,
+	      notifyEvent,
+	      shouldSubscribe,
+	      lastSubscribedTypes
+	    } = notificationSubscriptionOptions;
+	    const notificationSettings = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.notifications);
+	    const scheme = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.notification.mode);
+	    if (scheme === im_v2_const.NotificationSettingsMode.simple) {
+	      await this.switchScheme(im_v2_const.NotificationSettingsMode.expert);
+	    }
+	    const notificationSetting = notificationSettings[notifyModule].items[notifyEvent];
+	    const promises = lastSubscribedTypes.map(type => {
+	      return this.changeExpertOption({
+	        moduleId: notifyModule,
+	        optionName: notifyEvent,
+	        type,
+	        oldValue: notificationSetting[type],
+	        value: shouldSubscribe
+	      });
+	    });
+	    return Promise.all(promises);
+	  }
 	}
 
 	exports.SettingsService = SettingsService;

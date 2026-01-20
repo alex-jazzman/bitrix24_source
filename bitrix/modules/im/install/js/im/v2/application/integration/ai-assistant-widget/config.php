@@ -11,6 +11,7 @@ return [
 		'main.polyfill.core',
 		'im.v2.application.core',
 		'im.v2.css.classes',
+		'im.v2.lib.analytics',
 		'im.v2.lib.logger',
 		'im.v2.provider.service.chat',
 		'im.v2.component.content.chat',

@@ -1,10 +1,7 @@
-import {Filter} from '../service/filter';
-
-import {EntityStorage} from '../entity/entity.storage';
-
-import {Item} from '../item/item';
-
-import {RequestSender} from '../utility/request.sender';
+import { Filter } from '../service/filter';
+import { EntityStorage } from '../entity/entity.storage';
+import { Item } from '../item/item';
+import { RequestSender } from '../utility/request.sender';
 
 type Params = {
 	requestSender: RequestSender,
@@ -25,17 +22,31 @@ export class PullCounters
 		this.groupId = params.groupId;
 	}
 
-	getModuleId()
+	getModuleId(): string
 	{
 		return 'tasks';
 	}
 
-	getMap()
+	getMap(): Object
 	{
 		return {
+			comment_add: this.onCommentAdd.bind(this),
 			task_view: this.onTaskView.bind(this),
-			scrum_read_all: this.onCommentsReadAll.bind(this)
+			scrum_read_all: this.onCommentsReadAll.bind(this),
 		};
+	}
+
+	onCommentAdd(data): void
+	{
+		const inputTaskId = parseInt(data.taskId, 10);
+		const ownerUserId = parseInt(data.ownerId, 10);
+
+		if (ownerUserId === this.userId)
+		{
+			return;
+		}
+
+		this.#updateCurrentState(this.#getItem(inputTaskId));
 	}
 
 	onTaskView(data)
@@ -48,22 +59,7 @@ export class PullCounters
 			return;
 		}
 
-		let item = this.entityStorage.findItemBySourceId(inputTaskId);
-		if (!item)
-		{
-			item = this.entityStorage.findItemBySourceInFilteredCompletedSprints(inputTaskId);
-		}
-
-		if (item)
-		{
-			this.requestSender.getCurrentState({
-				taskId: item.getSourceId()
-			}).then((response) => {
-				item.updateYourself(Item.buildItem(response.data.itemData));
-			}).catch((response) => {
-				this.requestSender.showErrorAlert(response);
-			});
-		}
+		this.#updateCurrentState(this.#getItem(inputTaskId));
 	}
 
 	onCommentsReadAll(data)
@@ -74,5 +70,32 @@ export class PullCounters
 		{
 			this.filterService.applyFilter();
 		}
+	}
+
+	#getItem(inputTaskId: number): ?Item
+	{
+		let item = this.entityStorage.findItemBySourceId(inputTaskId);
+		if (!item)
+		{
+			item = this.entityStorage.findItemBySourceInFilteredCompletedSprints(inputTaskId);
+		}
+
+		return item;
+	}
+
+	#updateCurrentState(item: ?Item): void
+	{
+		if (!item)
+		{
+			return;
+		}
+
+		this.requestSender.getCurrentState({
+			taskId: item.getSourceId(),
+		}).then((response) => {
+			item.updateYourself(Item.buildItem(response.data.itemData));
+		}).catch((response) => {
+			this.requestSender.showErrorAlert(response);
+		});
 	}
 }

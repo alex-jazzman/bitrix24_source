@@ -13,6 +13,7 @@
 	var _counters = /*#__PURE__*/new WeakMap();
 	var _canEdit = /*#__PURE__*/new WeakMap();
 	var _bizprocEditorUrl = /*#__PURE__*/new WeakMap();
+	var _bizprocNewEditorUrl = /*#__PURE__*/new WeakMap();
 	var _onAfterGridUpdated = /*#__PURE__*/new WeakSet();
 	var _renderStartedByMeNow = /*#__PURE__*/new WeakSet();
 	var WorkflowStartList = /*#__PURE__*/function () {
@@ -40,6 +41,10 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _bizprocNewEditorUrl, {
+	      writable: true,
+	      value: void 0
+	    });
 	    if (!main_core.Type.isPlainObject(options)) {
 	      return;
 	    }
@@ -48,6 +53,7 @@
 	    this.errorsContainerDiv = options.errorsContainerDiv;
 	    babelHelpers.classPrivateFieldSet(this, _canEdit, options.canEdit);
 	    babelHelpers.classPrivateFieldSet(this, _bizprocEditorUrl, options.bizprocEditorUrl);
+	    babelHelpers.classPrivateFieldSet(this, _bizprocNewEditorUrl, options.bizprocNewEditorUrl);
 	    if (main_core.Type.isStringFilled(options.signedDocumentType)) {
 	      babelHelpers.classPrivateFieldSet(this, _signedDocumentType, options.signedDocumentType);
 	    }
@@ -66,7 +72,7 @@
 	    }
 	  }, {
 	    key: "editTemplate",
-	    value: function editTemplate(event, templateId) {
+	    value: function editTemplate(event, templateId, templateType) {
 	      if (!babelHelpers.classPrivateFieldGet(this, _canEdit)) {
 	        this.showNoPermissionsHint(event.target);
 	        return;
@@ -75,7 +81,7 @@
 	        this.showNoEditorHint(event.target);
 	        return;
 	      }
-	      this.openBizprocEditor(templateId);
+	      this.openBizprocEditor(templateId, templateType);
 	    }
 	  }, {
 	    key: "showAngleHint",
@@ -154,7 +160,7 @@
 	    }
 	  }, {
 	    key: "startWorkflow",
-	    value: function startWorkflow(event, templateId) {
+	    value: function startWorkflow(event, templateId, triggerType) {
 	      var _this2 = this;
 	      event.preventDefault();
 	      var id = main_core.Text.toNumber(templateId);
@@ -177,13 +183,18 @@
 	      bizproc_workflow_starter.Starter.singleStart({
 	        signedDocumentId: babelHelpers.classPrivateFieldGet(this, _signedDocumentId),
 	        signedDocumentType: babelHelpers.classPrivateFieldGet(this, _signedDocumentType),
-	        templateId: id
+	        templateId: id,
+	        triggerType: triggerType
 	      }, afterSuccessStart);
 	    }
 	  }, {
 	    key: "openBizprocEditor",
-	    value: function openBizprocEditor(templateId) {
-	      top.window.location.href = babelHelpers.classPrivateFieldGet(this, _bizprocEditorUrl).replace('#ID#', templateId);
+	    value: function openBizprocEditor(templateId, templateType) {
+	      if (templateType === WorkflowStartList.NEW_TEMPLATE_TYPE) {
+	        top.window.location.href = babelHelpers.classPrivateFieldGet(this, _bizprocNewEditorUrl).replace('#ID#', templateId);
+	      } else {
+	        top.window.location.href = babelHelpers.classPrivateFieldGet(this, _bizprocEditorUrl).replace('#ID#', templateId);
+	      }
 	    }
 	  }], [{
 	    key: "changePin",
@@ -255,6 +266,7 @@
 	  message = message.replace('[/bold]', '</span>');
 	  return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-typography-text-xs\">", "</div>"])), message);
 	}
+	babelHelpers.defineProperty(WorkflowStartList, "NEW_TEMPLATE_TYPE", 'nodes');
 	namespace.WorkflowStartList = WorkflowStartList;
 
 }((this.window = this.window || {}),BX,BX.Event,BX.UI,BX.Bizproc.Workflow));

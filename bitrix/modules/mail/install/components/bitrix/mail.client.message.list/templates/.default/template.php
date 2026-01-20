@@ -1,12 +1,15 @@
 <?php
 
+use Bitrix\Mail\Helper\Message;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Theme;
 use Bitrix\Mail\Helper\LicenseManager;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\Tag;
 use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
@@ -38,7 +41,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.hint',
 	'ui.icons.service',
 	'pull.client',
-	'mail.notification.grid-notification',
+	'mail.notification.mail-guide',
+	'ui.icon-set.outline',
+	'ui.system.highlighter',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/css/main/font-awesome.css");
@@ -63,22 +68,40 @@ Toolbar::addFilter([
 	],
 ]);
 
-if (
-	$arResult['HAS_ACCESS_TO_MAILBOX_GRID']
-	&& Main\Config\Option::get('mail', 'enable_mailbox_list_grid_page', 'N') === 'Y'
-)
+if ($arResult['HAS_ACCESS_TO_MAILBOX_GRID'])
 {
-	Toolbar::addButton([
-		"color" => Color::LIGHT_BORDER,
-		"tag" => Tag::LINK,
-		"link" => '/mail/mailbox-list',
-		"text" => Loc::getMessage('MAIL_MESSAGE_MAILBOX_GRID_BTN'),
-		"dataset" => [
+	$mailboxGridUrl = '/mail/mailbox-list';
+	$sliderData = Json::encode([
+		'source' => 'mail_inbox',
+	]);
+
+	$onclickCode = sprintf("BX.SidePanel.Instance.open('%s', { data: %s })",
+		$mailboxGridUrl,
+		$sliderData,
+	);
+
+	$gridButtonParams = [
+		'color' => Color::LIGHT_BORDER,
+		'tag' => Tag::LINK,
+		'text' => Loc::getMessage('MAIL_MESSAGE_MAILBOX_GRID_BTN'),
+		'dataset' => [
 			'toolbar-collapsed-icon' => Icon::LIST,
-			'id' => 'mailboxGridButton',
+			'id' => 'mail-mailbox-grid-button',
 			'test-id' => 'mailbox-grid-button',
 		],
-	]);
+	];
+
+	if (!$arResult['MAILBOX_GRID_TARIFF_RESTRICTED'])
+	{
+		$gridButtonParams['onclick'] = new JsCode($onclickCode);
+	}
+	else
+	{
+		$gridButtonParams['icon'] = Icon::LOCK;
+		$gridButtonParams['onclick'] =  new JsCode("BX.Mail.Client.Message.LimitHelpers.showLimitSlider('limit_v2_mail_mailboxes_management_grid')");
+	}
+
+	Toolbar::addButton($gridButtonParams);
 }
 
 Toolbar::addButton(
@@ -235,6 +258,44 @@ $settingsMenu = [
 		'onclick' => 'BX.Mail.Home.Grid.openGridSettingsWindow()',
 	],*/
 ];
+
+if ($arResult['HAS_ACCESS_TO_ACCESS_RIGHTS'])
+{
+	array_unshift($settingsMenu, [
+		'delimiter' => true,
+	]);
+
+	if (!$arResult['ACCESS_RIGHTS_TARIFF_RESTRICTED'])
+	{
+		$permissionsUrl = '/mail/permissions';
+		$sliderData = Json::encode([
+			'source' => 'mail_inbox',
+		]);
+
+		$onclickCode = sprintf("BX.SidePanel.Instance.open('%s', { data: %s })",
+			$permissionsUrl,
+			$sliderData,
+		);
+
+		$accessButton = [
+			'text' => Loc::getMessage('MAIL_MESSAGE_LIST_CONFIG_PERMISSIONS_LINK'),
+			'onclick' => $onclickCode,
+		];
+	}
+	else
+	{
+		$accessButton = [
+			'onclick' => "BX.Mail.Client.Message.LimitHelpers.showLimitSlider('limit_v2_mail_access_rights')",
+			'html' => '<div class="mail-connect-lock-item-container">'
+				. '<div class="mail-connect-lock-item-icon ui-icon-set --lock-m"></div>'
+				. '<span class="mail-connect-lock-text">' . htmlspecialcharsbx(Loc::getMessage('MAIL_MESSAGE_LIST_CONFIG_PERMISSIONS_LINK')) . '</span>'
+				. '</div>'
+			,
+		];
+	}
+
+	array_unshift($settingsMenu, $accessButton);
+}
 
 $APPLICATION->AddViewContent('mail-msg-counter-panel', '
 	<div class="mail-error-box-wrapper" data-role="mail-error-box-wrapper"></div>
@@ -774,6 +835,22 @@ $APPLICATION->includeComponent(
 
 	BX.ready(function()
 	{
+		<?php if (!empty($arResult['ANALYTICS']['SOURCE'])): ?>
+			const analyticsParams = {
+				tool: 'mail',
+				event: 'mail_inbox_open',
+				category: 'mail_general_ops',
+			}
+
+			<?php if ($arResult['ANALYTICS']['SOURCE'] === Message::SOURCE_TYPE_NOTIFICATION): ?>
+				analyticsParams.c_section = '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE']) ?>'
+			<?php else: ?>
+				analyticsParams.c_element = '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE']) ?>'
+			<?php endif; ?>
+
+			BX.UI.Analytics.sendData(analyticsParams);
+		<?php endif;?>
+
 		var Mail = BX.Mail.Home;
 		Mail.Grid.setGridId('<?= CUtil::JSEscape($arResult['GRID_ID'])?>');
 		var mailboxId = Number(<?= intval($arResult['MAILBOX']['ID']) ?>);
@@ -1021,11 +1098,18 @@ $APPLICATION->includeComponent(
 		<?php if (
 		$arResult['HAS_ACCESS_TO_MAILBOX_GRID']
 		&& $arResult['NEED_SHOW_MAILBOX_GRID_HINT']
-		&& Main\Config\Option::get('mail', 'enable_mailbox_list_grid_page', 'N') === 'Y'
 		): ?>
-		(new BX.Mail.MailboxGridNotification({
-			description: '<?= Loc::getMessage("MAIL_MESSAGE_MAILBOX_GRID_HINT_DESCRIPTION") ?>',
-		})).show();
+		const button = document.querySelector('[data-id="mail-mailbox-grid-button"]');
+		if (button)
+		{
+			(new BX.Mail.MailGuide({
+				id: 'push-mailbox-grid',
+				description: '<?= Loc::getMessage("MAIL_MESSAGE_MAILBOX_GRID_HINT_DESCRIPTION") ?>',
+				bindElement: button,
+				addHighlighter: true,
+				userOptionName: '<?= \CUtil::jsEscape($arParams['MAILBOX_GRID_GUIDE_NAME'] ?? null) ?>',
+			})).show();
+		}
 		<?php endif ?>
 	});
 

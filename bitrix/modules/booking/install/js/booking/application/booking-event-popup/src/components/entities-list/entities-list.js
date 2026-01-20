@@ -1,5 +1,6 @@
 import { CounterSize, CounterStyle } from 'ui.cnt';
 import { Counter } from 'ui.vue3.components.counter';
+import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { BIcon as UiIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
@@ -9,6 +10,7 @@ import './entity-list.css';
 export const EntitiesList = {
 	name: 'EntitiesList',
 	components: {
+		RichLoc,
 		UiCounter: Counter,
 		UiIcon,
 	},
@@ -56,8 +58,9 @@ export const EntitiesList = {
 		},
 		more(): string
 		{
-			return this.loc('BOOKING_EVENT_POPUP_ENTITIES_MORE', {
+			return this.loc('BOOKING_EVENT_POPUP_ENTITIES_MORE_MSGVER_1', {
 				'#COUNT#': (this.entities.length - this.names.length) || '',
+				'#RESOURCES#': this.names.join(', '),
 			});
 		},
 		count(): number
@@ -123,14 +126,17 @@ export const EntitiesList = {
 						{ '--no-access': hasNoAccess }
 					]"
 				>
-					{{ names.join(', ') }}{{ hasMore ? ', ' : '' }}
-					<span
-						v-if="hasMore"
-						class="booking-event-popup__resources-item_text-more"
-						@click="limit = Infinity"
-					>
-						{{ more }}
-					</span>
+					<RichLoc :text="more" placeholder="[button]" style="display: inline-block">
+						<template #button="{ text }">
+							<span
+								v-if="hasMore"
+								class="booking-event-popup__resources-item_text-more"
+								@click="limit = Infinity"
+							>
+								{{ text }}
+							</span>
+						</template>
+					</RichLoc>
 				</div>
 			</div>
 		</div>

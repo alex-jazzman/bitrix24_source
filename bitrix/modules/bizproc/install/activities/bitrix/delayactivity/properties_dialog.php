@@ -1,5 +1,16 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Bizproc\Public\Entity\Document\Workflow;
+
+/**
+ * @var PropertiesDialog $dialog
+ */
 ?>
 <tr>
 	<td align="right" width="40%"><?= GetMessage("CPAD_DP_TIME_SELECT") ?>:</td>
@@ -72,6 +83,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 		</label>
 	</td>
 </tr>
+<?php if(!CBPHelper::isEqualDocument($dialog->getDocumentType(), Workflow::getComplexType())): ?>
 <tr>
 	<td align="right" width="40%"></td>
 	<td width="60%">
@@ -83,6 +95,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 		><?= GetMessage('CPAD_DP_WRITE_TO_LOG') ?></label>
 	</td>
 </tr>
+<?php endif ?>
 <script>
 	SetDelayMode(<?= (empty($arCurrentValues['delay_date'])) ? 'true' : 'false' ?>);
 </script>

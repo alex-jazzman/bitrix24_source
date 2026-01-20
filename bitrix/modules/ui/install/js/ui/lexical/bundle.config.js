@@ -58,7 +58,7 @@ module.exports = {
 		resolve: true,
 		custom: [
 			replace({
-				'process.env.NODE_ENV': JSON.stringify('production'),
+				'process.env.NODE_ENV': JSON.stringify('development'),
 			}),
 			importFlowType(),
 		],
@@ -66,7 +66,7 @@ module.exports = {
 	adjustConfigPhp: false,
 	sourceMaps: false,
 	minification: {
-		mangle: false,
+		mangle: true,
 		enclose: false,
 		keep_classnames: false,
 		keep_fnames: false,

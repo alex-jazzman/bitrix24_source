@@ -1,0 +1,92 @@
+.intranet-push-otp-connect-popup__view-connect-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: 16px;
+	gap: 24px;
+	padding: 32px;
+	min-height: 264px;
+	background: var(--accent-soft-accent-soft-blue-3, #EDF7FF);
+	box-sizing: border-box;
+}
+
+.intranet-push-otp-connect-popup__qr-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 200px;
+	height: 200px;
+	padding: 18px;
+	background: url('./../images/qr-graphic.svg') no-repeat;
+	border-radius: 24px;
+	box-sizing: border-box;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container .intranet-push-otp-connect-popup__view-guide-connect ol {
+	font-weight: 400;
+	font-size: 15px;
+	line-height: 20px;
+	letter-spacing: var(--global-font-letter-spacing-L);
+	color: var(--base-base-1, #333333);
+}
+
+.intranet-push-otp-connect-popup__view-connect-container .intranet-push-otp-connect-popup__view-guide-connect ul {
+	font-weight: 400;
+	font-size: 12px;
+	line-height: 15px;
+	letter-spacing: var(--global-font-letter-spacing-L);
+	color: var(--accent-main-accent-main-alert, #FF5752);
+}
+
+.intranet-push-otp-connect-popup-ol-list {
+	padding: 0;
+	margin: 0;
+}
+
+.intranet-push-otp-connect-popup-alert {
+	display: flex;
+	padding-top: 14px;
+}
+
+.intranet-push-otp-connect-popup-alert-text {
+	margin-left: 10px;
+	font-size: 12px;
+	color: #FF5752;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item {
+	position: relative;
+	padding-left: 24px;
+	margin-bottom: 14px;
+	list-style: none;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item:before {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 0;
+	display: block;
+	width: 18px;
+	height: 18px;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item .ui-link {
+	font-size: 15px;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item.--marker-1:before {
+	background: url('./../images/list-marker-1.svg') no-repeat;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item.--marker-2:before {
+	background: url('./../images/list-marker-2.svg') no-repeat;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item.--marker-3:before {
+	background: url('./../images/list-marker-3.svg') no-repeat;
+}
+
+.intranet-push-otp-connect-popup-ol-list-item.--marker-4:before {
+	background: url('./../images/list-marker-4.svg') no-repeat;
+}

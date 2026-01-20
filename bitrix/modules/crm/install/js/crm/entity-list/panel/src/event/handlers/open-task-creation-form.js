@@ -1,4 +1,5 @@
 import type { ProgressBarRepository } from 'crm.autorun';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import { Loc, Reflection, Text } from 'main.core';
 import type { SettingsCollection } from 'main.core.collections';
 import { BaseHandler } from './base-handler';
@@ -35,6 +36,20 @@ export class OpenTaskCreationForm extends BaseHandler
 		const urlTemplate = String(this.#extensionSettings.get('taskCreateUrl'));
 		if (urlTemplate === '')
 		{
+			return;
+		}
+
+		const maxBindingsCount = Number(this.#extensionSettings.get('maxBindingsCount'));
+		if (maxBindingsCount !== 0 && selectedIds.length > maxBindingsCount)
+		{
+			const alertText = Loc.getMessage(
+				'CRM_ENTITY_LIST_PANEL_CREATE_TASK_MAX_BINDINGS_ERROR',
+				{
+					'#MAX_BINDINGS_COUNT#': maxBindingsCount,
+				},
+			);
+			MessageBox.alert(alertText);
+
 			return;
 		}
 

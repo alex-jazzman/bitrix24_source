@@ -1,21 +1,17 @@
 import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 
-import { DesktopApi } from 'im.v2.lib.desktop-api';
-
 import { legacyMessenger, legacyDesktop } from './legacy';
 import { desktop } from './desktop';
 import { prepareSettingsSection } from './functions/settings';
 
-import type { ForwardedEntityConfig } from 'im.v2.provider.service.sending';
 import type { NavigationMenuItemParams } from 'im.v2.lib.navigation';
 import type { CreatableChatType, OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
 import type { ChatEmbeddedApplicationType, ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
 
 type Opener = {
-	openChat: (dialogId?: string, text?: string) => Promise,
+	openChat: (dialogId?: string, messageId?: number) => Promise,
 	openNavigationItem: (menuItem: NavigationMenuItemParams) => Promise,
 	openChatWithBotContext: (dialogId: string, context: JsonObject) => Promise,
-	forwardEntityToChat: (dialogId: string, entityConfig: ForwardedEntityConfig) => Promise,
 	openLines: (dialogId?: string) => Promise,
 	openCopilot: (dialogId?: string) => Promise,
 	openCollab: (dialogId?: string) => Promise,
@@ -82,18 +78,6 @@ class Messenger
 		}
 
 		return getOpener()?.openChatWithBotContext(dialogId, context);
-	}
-
-	async forwardEntityToChat(dialogId: string, entityConfig: ForwardedEntityConfig): Promise
-	{
-		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
-		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
-		if (isRedirectAllowed)
-		{
-			// return DesktopManager?.getInstance().redirectToEntityForward(dialogId, messageId);
-		}
-
-		return getOpener()?.forwardEntityToChat(dialogId, entityConfig);
 	}
 
 	async openLines(dialogId: string = ''): Promise
@@ -351,7 +335,7 @@ class Messenger
 
 		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 		const desktopIsActive = await DesktopManager?.getInstance().checkStatusInDifferentContext();
-		if (desktopIsActive && !DesktopApi.isAirDesignEnabledInDesktop())
+		if (desktopIsActive && !DesktopManager.isDesktop())
 		{
 			return DesktopManager?.getInstance().redirectToPhoneCall(number, params);
 		}
@@ -370,7 +354,7 @@ class Messenger
 
 		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 		const desktopIsActive = await DesktopManager?.getInstance().checkStatusInDifferentContext();
-		if (desktopIsActive && !DesktopApi.isAirDesignEnabledInDesktop())
+		if (desktopIsActive && !DesktopManager.isDesktop())
 		{
 			return DesktopManager?.getInstance().redirectToCallList(callListId, params);
 		}
@@ -420,8 +404,9 @@ class Messenger
 		Notifier?.file.onDiskSaveComplete();
 	}
 
-	async openNavigationItem({ id, entityId, target }: NavigationMenuItemParams): Promise<void>
+	async openNavigationItem(payload: NavigationMenuItemParams): Promise<void>
 	{
+		const { id, entityId } = payload;
 		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 		const LayoutManager = Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
 
@@ -432,7 +417,12 @@ class Messenger
 			return DesktopManager?.getInstance().redirectToLayout({ id, entityId });
 		}
 
-		return getOpener()?.openNavigationItem({ id, entityId, target });
+		if (DesktopManager?.isChatWindow())
+		{
+			return getOpener()?.openNavigationItem({ ...payload, asLink: false });
+		}
+
+		return getOpener()?.openNavigationItem(payload);
 	}
 
 	isEmbeddedMode(): boolean

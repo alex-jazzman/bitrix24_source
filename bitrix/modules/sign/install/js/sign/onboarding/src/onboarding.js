@@ -13,14 +13,12 @@ import b2eWelcomeGif from './video/b2e_welcome.gif';
 type WelcomeGuideOptions = {
 	region: string,
 	byEmployeeEnabled: boolean,
-	hasCompanies?: boolean,
 	showTariffSlider?: boolean,
 	canEditDocument?: boolean,
 	canCreateDocument?: boolean,
 }
 
 type BannerOptions = {
-	hasCompanies: boolean,
 	showTariffSlider: boolean,
 }
 
@@ -91,7 +89,7 @@ export class Onboarding
 				}`,
 				events: options.showTariffSlider ? {} : {
 					click: () => {
-						this.#openSigningSlider(options);
+						this.#openSigningSlider();
 					},
 				},
 			});
@@ -229,7 +227,7 @@ export class Onboarding
 				events: options.showTariffSlider ? {} : {
 					click: () => {
 						popup.close();
-						this.#openSigningSlider(options);
+						this.#openSigningSlider();
 					},
 				},
 			}));
@@ -345,14 +343,14 @@ export class Onboarding
 		return icon.render();
 	}
 
-	#openSigningSlider(options: OnboardingOptions): void
+	#openSigningSlider(): void
 	{
 		BX.SidePanel.Instance.open('onboarding-signing-slider', {
 			width: 750,
 			contentCallback: () => {
 				const containerId = 'onboarding-signing-slider-container';
 				const container = Tag.render`<div id="${containerId}"></div>`;
-				const onboardingSignSettings = new B2EOnboardingSignSettings(containerId, Boolean(options.hasCompanies));
+				const onboardingSignSettings = new B2EOnboardingSignSettings();
 				onboardingSignSettings.renderToContainer(container);
 
 				return container;

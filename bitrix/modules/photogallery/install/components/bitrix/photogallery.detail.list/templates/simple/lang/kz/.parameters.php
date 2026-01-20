@@ -1,0 +1,23 @@
+<?php
+$MESS["IBLOCK_MAX_VOTE"] = "Ең жоғары балл";
+$MESS["IBLOCK_VOTE_NAMES"] = "Баллдарға жазу";
+$MESS["P_GALLERY_AVATAR_SIZE"] = "Галерея аватарларының өлшемі (көппайдаланушы режимінде компонентпен жұмыс істегенде қолданылады, px)";
+$MESS["P_SHOW_COMMENTS"] = "Пікірлер санын көрсету";
+$MESS["P_SHOW_PAGE_NAVIGATION"] = "Навигацияны көрсету";
+$MESS["P_SHOW_PAGE_NAVIGATION_BOTH"] = "жоғары және төмен";
+$MESS["P_SHOW_PAGE_NAVIGATION_BOTTOM"] = "төменнен";
+$MESS["P_SHOW_PAGE_NAVIGATION_NONE"] = "көрсетпеу";
+$MESS["P_SHOW_PAGE_NAVIGATION_TOP"] = "жоғарыдан";
+$MESS["P_SHOW_RATING"] = "Дауыс берулерді көрсету";
+$MESS["P_SHOW_SHOWS"] = "Көрсетілімдер санын көрсету";
+$MESS["P_THUMBS_SIZE"] = "Егжей-тегжейлі фотосуреттің өлшемі (px)";
+$MESS["RATING_MAIN_TYPE"] = "Рейтингбатырмаларының түрі (бас модуль)";
+$MESS["RATING_MAIN_TYPE_CONFIG"] = "әдепкі бойынша";
+$MESS["RATING_MAIN_TYPE_LIKE_GRAPHIC"] = "Маған ұнайды (графикалық)";
+$MESS["RATING_MAIN_TYPE_LIKE_TEXT"] = "Маған ұнайды (мәтінді)";
+$MESS["RATING_MAIN_TYPE_STANDART_GRAPHIC"] = "Ұнайды / Ұнамайды (графикалық)";
+$MESS["RATING_MAIN_TYPE_STANDART_TEXT"] = "Ұнайды / Ұнамайды (мәтінді)";
+$MESS["TP_CBIV_AVERAGE"] = "Орташа мәні";
+$MESS["TP_CBIV_DISPLAY_AS_RATING"] = "Рейтинг ретінде көрсету";
+$MESS["TP_CBIV_RATING"] = "Рейтинг";
+$MESS["TP_CBIV_RATING_MAIN"] = "Рейтинг (басты модульдің)";

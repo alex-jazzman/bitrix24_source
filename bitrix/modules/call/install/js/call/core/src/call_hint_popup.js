@@ -50,10 +50,13 @@ export class CallHint
 			targetContainer: this.targetContainer,
 			content: this.render(),
 			padding: 0,
-			contentPadding: 14,
-			// height: this.getPopupHeight(),
+			contentPadding: 0,
 			className: ('bx-call-view-popup-call-hint ' + this.customClassName),
-			contentBackground: 'unset',
+			background: '#00428F',
+			contentBackground: '#00428F',
+			darkMode: true,
+			contentBorderRadius: '27px',
+			borderRadius: '27px',
 			//maxWidth: this.maxWidth,
 			angle: (this.showAngle && this.bindElement),
 			events: {
@@ -154,7 +157,7 @@ export class CallHint
 		}
 		hotKeyMessage = '<span class="bx-call-view-popup-call-hint-text-hotkey">' + hotKeyMessage + '</span>';
 
-		return this.title + '<br>' + hotKeyMessage;
+		return this.title + (this.buttonsLayout === 'bottom' ? '' : '<br>') + hotKeyMessage;
 	}
 
 	/**

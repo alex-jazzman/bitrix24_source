@@ -1,15 +1,15 @@
-import {Cache, Event, Tag, Dom, Type} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Cache, Event, Tag, Dom, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
-import {Backend} from 'landing.backend';
+import { Backend } from 'landing.backend';
 
 import isHex from '../../internal/is-hex';
 import './css/recent.css';
 
 export default class Recent extends EventEmitter
 {
-	static +USER_OPTION_NAME = 'color_field_recent_colors';
-	static +MAX_ITEMS = 6;
+	static USER_OPTION_NAME = 'color_field_recent_colors';
+	static MAX_ITEMS = 24;
 
 	static items: [] = [];
 	static itemsLoaded: boolean = false;
@@ -23,8 +23,6 @@ export default class Recent extends EventEmitter
 
 	getLayout(): HTMLDivElement
 	{
-		this.initItems();
-
 		return this.getLayoutContainer();
 	}
 
@@ -35,47 +33,57 @@ export default class Recent extends EventEmitter
 		});
 	}
 
-	initItems()
+	static initItems()
 	{
-		if (Recent.itemsLoaded)
-		{
-			this.buildItemsLayout();
-		}
-		else
-		{
-			Backend.getInstance()
-				.action("Utils::getUserOption", {name: Recent.USER_OPTION_NAME})
-				.then(result => {
-					if (result && Type.isString(result.items))
-					{
-						Recent.items = [];
-						result.items.split(',').forEach(item => {
-							if (isHex((item)) && Recent.items.length < Recent.MAX_ITEMS)
-							{
-								Recent.items.push(item);
-							}
-						});
-						Recent.itemsLoaded = true;
-
-						this.buildItemsLayout();
-					}
-				});
-			// todo: what if ajax error?
-		}
+		return new Promise((resolve) => {
+			if (Recent.itemsLoaded)
+			{
+				resolve();
+			}
+			else
+			{
+				Backend.getInstance()
+					.action('Utils::getUserOption', { name: Recent.USER_OPTION_NAME })
+					.then((result) => {
+						if (result && Type.isString(result.items))
+						{
+							Recent.items = [];
+							result.items.split(',').forEach((item) => {
+								if (isHex((item)) && Recent.items.length < Recent.MAX_ITEMS)
+								{
+									Recent.items.push(item);
+								}
+							});
+							Recent.itemsLoaded = true;
+						}
+						resolve();
+					});
+			}
+		});
 	}
 
-	buildItemsLayout(): Recent
+	buildItemsLayout(activeHex = null): Recent
 	{
+		if (activeHex)
+		{
+			this.activeHex = activeHex;
+		}
 		Dom.clean(this.getLayoutContainer());
-		Recent.items.forEach(item => {
+		this.itemElements = [];
+
+		Recent.items.forEach((item) => {
 			if (isHex(item))
 			{
-				let itemLayout = Tag.render`<div 
-					class="landing-ui-field-color-recent-item" 
-					style="background:${item}"
-					data-value="${item}"
-				></div>`;
-				Event.bind(itemLayout, 'click', () => this.onItemClick(event));
+				const isActive = this.activeHex === item;
+				const itemLayout = Tag.render`
+					<div 
+						class="landing-ui-field-color-recent-item${isActive ? ' active' : ''}"
+						style="background:${item}"
+						data-value="${item}"
+					></div>
+				`;
+				this.itemElements.push(itemLayout);
+				Event.bind(itemLayout, 'click', () => this.onItemClick(event, itemLayout));
 				Dom.append(itemLayout, this.getLayoutContainer());
 			}
 		});
@@ -83,16 +91,20 @@ export default class Recent extends EventEmitter
 		return this;
 	}
 
-	onItemClick(event: MouseEvent)
+	onItemClick(event: MouseEvent, clickedElement: HTMLElement)
 	{
-		this.emit('onChange', {hex: event.currentTarget.dataset.value});
+		this.itemElements.forEach((el) => BX.Dom.removeClass(el, 'active'));
+		BX.Dom.addClass(clickedElement, 'active');
+		this.activeHex = clickedElement.dataset.value;
+
+		this.emit('onChange', { hex: event.currentTarget.dataset.value });
 	}
 
 	addItem(hex: string): Recent
 	{
 		if (isHex(hex))
 		{
-			let pos = Recent.items.indexOf(hex);
+			const pos = Recent.items.indexOf(hex);
 			if (pos !== -1)
 			{
 				Recent.items.splice(pos, 1);

@@ -1,4 +1,3 @@
-import { EventEmitter } from 'main.core.events';
 import { Text, Runtime, Extension } from 'main.core';
 
 import { Loader } from 'im.v2.component.elements.loader';
@@ -18,8 +17,9 @@ import { concatAndSortSearchResult } from '../../../classes/panels/helpers/conca
 
 import './css/file-panel.css';
 
-import type { ImModelChat } from 'im.v2.model';
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
+import type { ImModelChat } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
 
@@ -167,7 +167,7 @@ export const FilePanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.file });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.file });
 		},
 		onTabSelect(tabName: $Keys<typeof SidebarFileTabGroups>)
 		{
@@ -185,6 +185,10 @@ export const FilePanel = {
 		toggleSearchPanelOpened()
 		{
 			this.isSearchHeaderOpened = !this.isSearchHeaderOpened;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{

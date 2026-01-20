@@ -837,6 +837,33 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				return store.dispatch('updateList', { ...payload, actionName: 'setFromSync' });
 			},
 
+			/**
+			 * @function messagesModel/updateReactionState
+			 */
+			updateReactionState: (store, { id, fields }) => {
+				if (!store.state.collection[id])
+				{
+					return;
+				}
+
+				const updateMessageData = {
+					id,
+					fields: validate(fields),
+				};
+
+				const storedMessage = store.state.collection[id];
+
+				if (isEqual(storedMessage, mergeImmutable(storedMessage, updateMessageData.fields)))
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'updateReactionState',
+					data: updateMessageData,
+				});
+			},
+
 			/** @function messagesModel/updateList */
 			updateList: (store, { messageList, actionName = 'updateList' }) => {
 				if (!Type.isArrayFilled(messageList))
@@ -1202,8 +1229,9 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function messagesModel/setAudioState */
-			setAudioState(store, payload) {
+			/** @function messagesModel/setPlayingState */
+			setPlayingState(store, payload)
+			{
 				const message = store.state.collection[payload.id];
 				if (!message)
 				{
@@ -1211,9 +1239,9 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				}
 
 				const fieldsToUpdate = {};
-				if (!Type.isUndefined(payload.audioPlaying))
+				if (!Type.isUndefined(payload.isPlaying))
 				{
-					fieldsToUpdate.audioPlaying = payload.audioPlaying;
+					fieldsToUpdate.isPlaying = payload.isPlaying;
 				}
 
 				if (!Type.isUndefined(payload.playingTime))
@@ -1222,7 +1250,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				}
 
 				store.commit('update', {
-					actionName: 'setAudioState',
+					actionName: 'setPlayingState',
 					data: {
 						id: payload.id,
 						fields: fieldsToUpdate,

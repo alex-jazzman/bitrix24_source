@@ -4,6 +4,7 @@ import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
 import { ApiClient } from 'booking.lib.api-client';
+import { ResourceMappers } from 'booking.provider.service.resources-service';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 
 import { ResourceDialogDataExtractor } from './resource-dialog-data-extractor';
@@ -14,6 +15,7 @@ class ResourceDialogService
 {
 	#queryCache = [];
 	#loadByIdsPromises = {};
+	#loadBySkuIdsPromises = {};
 	#mainResourcesCache: Promise | null = null;
 
 	async loadByIds(idsToLoad: number[], dateTs: number): Promise<void>
@@ -51,9 +53,49 @@ class ResourceDialogService
 		}
 	}
 
+	async loadBySkuIds(idsToLoad: number[], dateTs: number): Promise<void>
+	{
+		try
+		{
+			this.#loadBySkuIdsPromises[dateTs] ??= {};
+
+			const requestedIds = Object.keys(this.#loadBySkuIdsPromises[dateTs])
+				.flatMap((key) => key.split(','))
+				.map((id) => Number(id))
+			;
+
+			const requestedIdsSet = new Set(requestedIds);
+
+			const ids = idsToLoad.filter((id) => !requestedIdsSet.has(id));
+			if (!Type.isArrayFilled(ids))
+			{
+				await Promise.all(Object.values(this.#loadBySkuIdsPromises[dateTs]));
+
+				return;
+			}
+
+			const idsKey = ids.join(',');
+
+			this.#loadBySkuIdsPromises[dateTs][idsKey] = this.#requestLoadBySkuIds(ids, dateTs);
+
+			const data = await this.#loadBySkuIdsPromises[dateTs][idsKey];
+
+			await this.#upsertResponseData(data, dateTs);
+		}
+		catch (error)
+		{
+			console.error('ResourceDialogLoadBySkuIdsRequest: error', error);
+		}
+	}
+
 	async #requestLoadByIds(ids: number[], dateTs: number): Promise<void>
 	{
 		return new ApiClient().post('ResourceDialog.loadByIds', { ids, dateTs });
+	}
+
+	async #requestLoadBySkuIds(ids: number[], dateTs: number): Promise<void>
+	{
+		return new ApiClient().post('ResourceDialog.loadBySkuIds', { ids, dateTs });
 	}
 
 	async fillDialog(dateTs: number): Promise<void>
@@ -128,6 +170,11 @@ class ResourceDialogService
 
 			const ids = extractor.getMainResourceIds();
 			await Core.getStore().dispatch(`${Model.MainResources}/setMainResources`, ids);
+
+			const resources = data.map(
+				(resourceDto) => ResourceMappers.mapDtoToModel(resourceDto),
+			);
+			await Core.getStore().dispatch(`${Model.Resources}/upsertMany`, resources);
 		}
 		catch (error)
 		{

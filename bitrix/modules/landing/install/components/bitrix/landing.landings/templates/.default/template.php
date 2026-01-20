@@ -59,6 +59,7 @@ Asset::getInstance()->addCSS(
 $metrika = new Metrika\Metrika(
 	Metrika\Categories::getBySiteType($arParams['TYPE']),
 	Metrika\Events::openMarket,
+	Metrika\Tools::getBySiteType($arParams['TYPE']),
 );
 $metrika
 	->setSection(Metrika\Sections::page)
@@ -314,6 +315,8 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 						 onclick="showTileMenu(this,{
 									viewSite: '',
 									ID: '<?= $item['ID']?>',
+									siteId: '<?= $item['SITE_ID']?>',
+							 		siteType: '<?= Metrika\Tools::getBySiteType($arParams['TYPE'])->value?>',
 									title: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['TITLE']));?>',
 									createPageUrl: '<?= htmlspecialcharsbx(CUtil::jsEscape($arParams['PAGE_URL_LANDING_ADD_FOLDER_MENU'])) ?>',
 									publicUrl: '',
@@ -349,6 +352,8 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 						 onclick="showTileMenu(this,{
 							viewSite: '<?= htmlspecialcharsbx(CUtil::jsEscape($urlView)) ?>',
 							ID: '<?= $item['ID'] ?>',
+							siteId: '<?= $item['SITE_ID']?>',
+							siteType: '<?= Metrika\Tools::getBySiteType($arParams['TYPE'])->value?>',
 							title: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['TITLE']));?>',
 							isArea: <?= $item['IS_AREA'] ? 'true' : 'false' ?>,
 					        isMainPage: <?= $item['IS_HOMEPAGE'] ? 'true' : 'false' ?>,
@@ -808,6 +813,16 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 					disabled: params.isDeleted || params.isSettingsDisabled,
 					onclick: function()
 					{
+						if (!params.isFolder)
+						{
+							BX.UI.Analytics.sendData({
+								tool: params.siteType,
+								category: 'settings',
+								event: 'open',
+								c_section: 'page_list',
+								p3: `siteID_${params.siteId}`,
+							});
+						}
 						this.popupWindow.close();
 					}
 				},

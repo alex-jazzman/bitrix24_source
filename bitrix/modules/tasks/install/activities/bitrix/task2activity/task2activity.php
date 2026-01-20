@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Integration\AiAssistant\ActivityAiPropertyConverter;
 use Bitrix\Bizproc\Result\ResultDto;
 
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
@@ -1183,12 +1184,18 @@ class CBPTask2Activity extends CBPActivity implements
 		return array_merge($errors, parent::validateProperties($testProperties, $user));
 	}
 
-	private static function getPropertiesDialogMap(): array
+	protected static function getPropertiesDialogMap(): array
 	{
+		$aiDescriptionProperty = class_exists(ActivityAiPropertyConverter::class)
+			? ActivityAiPropertyConverter::PROPERTY_FIELD_AI_DESCRIPTION
+			: 'AiDescription'
+		;
+
 		return [
 			'Fields' => [
 				'FieldName' => 'Fields',
 				'Map' => static::getTaskFieldsMap(),
+				$aiDescriptionProperty => 'Created task fields',
 				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
 					$fields = $currentActivity['Properties']['Fields'];
 					$files = $fields['UF_TASK_WEBDAV_FILES'] ?? null;
@@ -1598,6 +1605,7 @@ class CBPTask2Activity extends CBPActivity implements
 		$bpOptions = [
 			'HoldToClose' => [
 				'Name' => Loc::getMessage('BPTA1A_HOLD_TO_CLOSE'),
+				'FieldName' => 'HOLD_TO_CLOSE',
 				'Type' => \Bitrix\Bizproc\FieldType::BOOL,
 				'BaseType' => \Bitrix\Bizproc\FieldType::BOOL,
 				'Required' => true,

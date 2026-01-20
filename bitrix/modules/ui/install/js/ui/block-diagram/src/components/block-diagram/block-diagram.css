@@ -8,6 +8,10 @@
 	cursor: grabbing !important;
 }
 
+.ui-block-diagram.--disabled {
+	pointer-events: none;
+}
+
 .ui-block-diagram.--cursor-ew-resize {
 	cursor: ew-resize !important;
 }

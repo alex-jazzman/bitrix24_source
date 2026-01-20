@@ -19,3 +19,4 @@ CJSCore::RegisterExt('task-popups', [
 
 require_once __DIR__ . '/include/internal_events.php';
 require_once $moduleRoot . '/include/asset.php';
+require_once $moduleRoot . '/include/migrate_recent_tasks.php';

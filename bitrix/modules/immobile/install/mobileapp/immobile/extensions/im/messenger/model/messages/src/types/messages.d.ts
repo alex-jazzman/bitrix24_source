@@ -3,6 +3,7 @@ import {DialogType} from '../../../dialogues/src/types';
 import {ReactionsModelState, MessageId} from '../reactions/types';
 import {KeyboardButtonConfig} from './keyboard';
 import {VoteModelState} from '../vote/types';
+import {FullStickerData, StickerPackId, StickerPackType} from "../../../sticker-pack/src/types";
 
 declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
@@ -34,7 +35,7 @@ export type MessagesModelState = {
 	error: boolean,
 	errorReason: number,
 	retry: boolean,
-	audioPlaying: boolean,
+	isPlaying: boolean,
 	playingTime: number,
 	forward?: {
 		id: string,
@@ -42,11 +43,13 @@ export type MessagesModelState = {
 		chatTitle: string | null,
 		chatType: DialogType,
 	},
-	reactions?: ReactionsModelState, // extended property
 	attach: Array<AttachConfig>,
 	keyboard: Array<KeyboardButtonConfig>,
 	richLinkId: number,
 	vote?: VoteModelState,
+	reactionsViewed: boolean,
+	lastReactionId: string,
+	stickerParams?: FullStickerData,
 }
 
 declare type MessageParams = {
@@ -59,6 +62,8 @@ declare type MessageParams = {
 	componentId: string,
 	COMPONENT_PARAMS?: Object,
 	CHAT_MESSAGE?: number,
+	STICKER_PARAMS: object,
+	replyId: number,
 }
 
 declare type AttachConfig = {
@@ -174,6 +179,7 @@ export type MessagesModelActions =
 	| 'messagesModel/update'
 	| 'messagesModel/updateList'
 	| 'messagesModel/updateListFromSync'
+	| 'messagesModel/updateReactionState'
 	| 'messagesModel/updateParams'
 	| 'messagesModel/delete'
 	| 'messagesModel/readMessages'
@@ -188,6 +194,7 @@ export type MessagesModelActions =
 	| 'messagesModel/deleteAttach'
 	| 'messagesModel/clearChatCollection'
 	| 'messagesModel/disableKeyboardByMessageId'
+	| 'messagesModel/setPlayingState'
 
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'
@@ -258,7 +265,8 @@ export type MessagesUpdateActions =
 	| 'readMessages'
 	| 'setViewedByOthers'
 	| 'updateLoadTextProgress'
-	| 'setAudioState'
+	| 'updateReactionState'
+	| 'setPlayingState'
 	| 'deleteAttach'
 	;
 export type MessageUpdateData =

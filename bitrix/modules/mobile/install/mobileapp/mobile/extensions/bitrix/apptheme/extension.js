@@ -69,6 +69,11 @@ jn.define('apptheme', (require, exports, module) => {
 			return AppTheme.cachedFonts;
 		}
 
+		static get localStyles()
+		{
+			return styles;
+		}
+
 		static get styles()
 		{
 			if (AppTheme.cachedStyles === null)

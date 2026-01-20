@@ -3,6 +3,7 @@ $MESS["IM_DIALOG_AVATAR_MENU_MENTION_2"] = "Атап өту";
 $MESS["IM_DIALOG_CHAT_BLOCK_MARKED_MESSAGES"] = "Кейінірек қараңыз";
 $MESS["IM_DIALOG_CHAT_BLOCK_NEW_MESSAGES_2"] = "Жаңа хабарламалар";
 $MESS["IM_DIALOG_CHAT_LOADER_TEXT"] = "Чатты жүктеу...";
+$MESS["IM_DIALOG_CHAT_MENU_ASK_COPILOT"] = "CoPilot-тан сұраңыз";
 $MESS["IM_DIALOG_CHAT_MENU_COPY"] = "Көшіру";
 $MESS["IM_DIALOG_CHAT_MENU_COPY_FILE"] = "Файлды көшіру";
 $MESS["IM_DIALOG_CHAT_MENU_COPY_LINK_MSGVER_1"] = "Сілтемені көшіру";

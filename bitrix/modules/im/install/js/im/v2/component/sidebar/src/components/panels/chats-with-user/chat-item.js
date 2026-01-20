@@ -76,11 +76,7 @@ export const ChatItem = {
 			class="bx-im-chat-with-user-item__container bx-im-chat-with-user-item__scope"
 		>
 			<div class="bx-im-chat-with-user-item__avatar-container">
-				<ChatAvatar 
-					:avatarDialogId="dialogId" 
-					:contextDialogId="dialogId" 
-					:size="AvatarSize.XL" 
-				/>
+				<ChatAvatar :avatarDialogId="dialogId" :size="AvatarSize.XL" />
 			</div>
 			<div class="bx-im-chat-with-user-item__content-container">
 				<div class="bx-im-chat-with-user-item__content_header">

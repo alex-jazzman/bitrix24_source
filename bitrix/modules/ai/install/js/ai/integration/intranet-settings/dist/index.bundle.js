@@ -100,15 +100,15 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    parent: this,
 	    section: {
 	      title: title,
-	      titleIconClasses: 'ui-icon-set ' + ((_icon$code = icon.code) !== null && _icon$code !== void 0 ? _icon$code : _classStaticPrivateFieldSpecGet(AiPage, AiPage, _groupIconDefaultIcon)),
+	      titleIconClasses: "ui-icon-set ".concat((_icon$code = icon.code) !== null && _icon$code !== void 0 ? _icon$code : _classStaticPrivateFieldSpecGet(AiPage, AiPage, _groupIconDefaultIcon)),
 	      isOpen: this.isOpen
 	    }
 	  });
 	  if (group.description) {
 	    var description = group.description;
 	    if (helpdesk) {
-	      var helpdeskCode = 'redirect=detail&code=' + helpdesk;
-	      description += ' <a href="javascript: void();"' + ' onclick="BX.PreventDefault(); top.BX.Helper.show(\'' + helpdeskCode + '\');"' + '>' + main_core.Loc.getMessage('INTRANET_SETTINGS_HELPDESK_LINK') + '</a>';
+	      var helpdeskCode = "redirect=detail&code=".concat(helpdesk);
+	      description += ' <a href="javascript: void();"' + " onclick=\"BX.PreventDefault(); top.BX.Helper.show('".concat(helpdeskCode, "');\"") + ">".concat(main_core.Loc.getMessage('INTRANET_SETTINGS_HELPDESK_LINK'), "</a>");
 	    }
 	    section.getSectionView().append(new ui_section.Row({
 	      content: new ui_alerts.Alert({
@@ -163,32 +163,30 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	      checkerOptions.bannerCode = restriction.bannerCode;
 	    }
 	    field = new ui_formElements_view.Checker(checkerOptions);
-	  } else if (type === 'list') {
-	    if (options && value) {
-	      var items = [];
-	      var additionalItems = [];
-	      for (var option in options) {
-	        if (main_core.Type.isString(options[option])) {
-	          items.push({
-	            name: options[option],
-	            value: option,
-	            selected: option === value
-	          });
-	        } else if (main_core.Type.isPlainObject(options[option])) {
-	          additionalItems.push(options[option]);
-	        }
-	      }
-	      if (items.length > 0) {
-	        field = new ai_ui_field_selectorfield.SelectorField({
-	          inputName: code,
-	          label: title,
-	          name: code,
-	          items: items,
-	          additionalItems: additionalItems,
-	          recommendedItems: recommended,
-	          current: value
+	  } else if (type === 'list' && options && value) {
+	    var items = [];
+	    var additionalItems = [];
+	    for (var option in options) {
+	      if (main_core.Type.isString(options[option])) {
+	        items.push({
+	          name: options[option],
+	          value: option,
+	          selected: option === value
 	        });
+	      } else if (main_core.Type.isPlainObject(options[option])) {
+	        additionalItems.push(options[option]);
 	      }
+	    }
+	    if (items.length > 0) {
+	      field = new ai_ui_field_selectorfield.SelectorField({
+	        inputName: code,
+	        label: title,
+	        name: code,
+	        items: items,
+	        additionalItems: additionalItems,
+	        recommendedItems: recommended,
+	        current: value
+	      });
 	    }
 	  }
 	  if (field) {
@@ -196,7 +194,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	  }
 	  if (withOnSave) {
 	    var onSaveField = new ui_formElements_view.Checker({
-	      inputName: code + '_onsave',
+	      inputName: "".concat(code, "_onsave"),
 	      title: onSave.switcher,
 	      checked: false,
 	      size: 'extra-small',

@@ -2,13 +2,13 @@ import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialo
 import { PromoManager } from 'im.v2.lib.promo';
 import { PromoId } from 'im.v2.const';
 
-import { CopilotService } from './classes/copilot-serivce';
+import { CopilotService } from './classes/copilot-service';
 import { ChangeRolePromo } from './components/change-role-promo';
 
 import './css/copilot-role.css';
 
 import type { JsonObject } from 'main.core';
-import type { ImModelCopilotRole } from 'im.v2.model';
+import type { RawRole } from './classes/copilot-service';
 
 // @vue/component
 export const CopilotRole = {
@@ -79,11 +79,11 @@ export const CopilotRole = {
 			this.shouldShowChangeRolePromo = false;
 			void PromoManager.getInstance().markAsWatched(PromoId.changeRoleCopilot);
 		},
-		onCopilotDialogSelectRole(role)
+		onCopilotDialogSelectRole(role: RawRole)
 		{
 			void (new CopilotService()).updateRole({
 				dialogId: this.dialogId,
-				role,
+				newRole: role,
 			});
 		},
 	},

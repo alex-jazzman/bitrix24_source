@@ -12,9 +12,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { Form, CompactMode } = require('layout/ui/form');
 	const { ColorScheme } = require('layout/ui/fields/base/theme/air-compact');
-	const { Description } = require('tasks/layout/task/create-new/description');
-	const { Priority } = require('tasks/layout/task/create-new/priority');
-	const { BottomPanel } = require('tasks/layout/task/create-new/bottom-panel');
+	const { Description } = require('tasks/layout/task/create-new/src/description');
+	const { Priority } = require('tasks/layout/task/create-new/src/priority');
+	const { BottomPanel } = require('tasks/layout/task/create-new/src/bottom-panel');
 	const { DeadlineField } = require('tasks/layout/fields/deadline/theme/air-compact');
 	const { UserField: UserFieldCompact } = require('layout/ui/fields/user/theme/air-compact');
 	const { ProjectField } = require('layout/ui/fields/project/theme/air-compact');
@@ -27,6 +27,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking/theme/air-compact');
 	const { UserFieldsField } = require('tasks/layout/fields/user-fields/theme/air-compact');
 	const { isFieldValid } = require('tasks/layout/fields/user-fields/validator');
+	const { Onboarding, CaseName } = require('tasks/onboarding');
+	const { CaseHistory } = require('onboarding');
 
 	const store = require('statemanager/redux/store');
 	const { batchActions } = require('statemanager/redux/batched-actions');
@@ -34,7 +36,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { usersSelector, usersUpserted, usersAddedFromEntitySelector } = require('statemanager/redux/slices/users');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
-	const { selectFirstStage, selectEntities: selectStageEntities } = require('tasks/statemanager/redux/slices/stage-settings');
+	const { selectFirstStage, selectEntities: selectStageEntities } = require(
+		'tasks/statemanager/redux/slices/stage-settings',
+	);
 	const { create } = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsAddedFromEntitySelector, groupsUpserted } = require('tasks/statemanager/redux/slices/groups');
 	const { upsertFlows } = require('tasks/statemanager/redux/slices/flows');
@@ -58,7 +62,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	} = require('tasks/enum');
 	const { getDiskFolderId } = require('tasks/disk');
 	const { confirmClosing, confirmDefaultAction } = require('alert');
-	const { clone } = require('utils/object');
+	const { clone, isEmpty } = require('utils/object');
 	const { debounce } = require('utils/function');
 	const { guid: getGuid } = require('utils/guid');
 	const { dayMonth } = require('utils/date/formats');
@@ -153,15 +157,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					shouldResizeContent: true,
 					adoptHeightByKeyboard: true,
 				},
-			})
-				.then((layoutWidget) => {
-					layoutWidget.showComponent(createNew);
+			}).then((layoutWidget) => {
+				layoutWidget.showComponent(createNew);
 
-					createNew.layoutWidget = layoutWidget;
-					createNew.isLayoutWidgetClosed = false;
-				})
-				.catch(() => {})
-			;
+				createNew.layoutWidget = layoutWidget;
+				createNew.isLayoutWidgetClosed = false;
+			}).catch(console.error);
 		}
 
 		constructor(props)
@@ -478,6 +479,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 				imChatId: initialTaskData?.IM_CHAT_ID,
 				imMessageId: initialTaskData?.IM_MESSAGE_ID,
+
+				mailMessageId: initialTaskData?.mailMessageId,
 			};
 			this.initialTaskData = {
 				...this.task,
@@ -702,7 +705,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						this.refreshBottomPanel();
 						this.handlePreventBottomSheetDismiss();
 					},
-					onSubmitEditing: () => {},
+					onSubmitEditing: () => {
+					},
 				}),
 			);
 		}
@@ -716,20 +720,16 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					paddingVertical: Indent.XL.toNumber(),
 				},
 				description: this.task.description,
-				files: [...this.task.files, ...this.task.uploadedFiles],
-				parentWidget: this.layoutWidget,
-				ref: (ref) => {
-					this.descriptionRef = ref;
+				fileField: {
+					value: this.#getTaskFiles(),
+					config: this.#getFileFieldConfig(),
 				},
+				parentWidget: this.layoutWidget,
 				onLayout: ({ height }) => {
 					this.descriptionHeight = height;
 					this.updateSheetHeight();
 				},
-				onChange: (description) => {
-					this.task.description = description;
-					this.focusTitle();
-					this.handlePreventBottomSheetDismiss();
-				},
+				onChange: this.#onChangeDescription,
 			});
 		}
 
@@ -791,6 +791,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							onChange: this.onChangeDeadline,
 							onFocusOut: this.delayedFocusTitle,
 							onContentClick: this.notifyDeadlineDisabledByFlow,
+							task: this.task,
 						},
 						compact: DeadlineField,
 					},
@@ -842,27 +843,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						factory: FileField,
 						props: {
 							id: Fields.FILES,
-							value: [...this.task.files, ...this.task.uploadedFiles],
+							value: this.#getTaskFiles(),
 							readOnly: false,
 							required: false,
 							multiple: true,
 							title: Loc.getMessage('M_TASKS_FIELDS_FILES'),
 							onChange: this.onChangeFiles,
-							config: {
-								textMultiple: Loc.getMessage('M_TASKS_FIELDS_FILES_MULTI'),
-								parentWidget: this.layoutWidget,
-								uploadController: {
-									endpoint: 'tasks.FileUploader.TaskController',
-									options: {
-										taskId: 0,
-									},
-								},
-								disk: {
-									isDiskModuleInstalled: true,
-									isWebDavModuleInstalled: true,
-									fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${this.currentUserData.id}`,
-								},
-							},
+							config: this.#getFileFieldConfig(),
 							showFilesName: true,
 							onFileAttachmentViewHidden: this.focusTitle,
 							onFocusOut: this.focusTitle,
@@ -898,7 +885,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								groupId: this.task.group?.id || 0,
 							}),
 							restrictionPolicy: getFieldRestrictionPolicy(Fields.ACCOMPLICES),
-							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.ACCOMPLICES, this.layoutWidget),
+							showRestrictionCallback: getFieldShowRestrictionCallback(
+								Fields.ACCOMPLICES,
+								this.layoutWidget,
+							),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeAccomplices,
 							analytics: this.#getAnalyticsForUserField(),
@@ -918,7 +908,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								items: this.task.auditors,
 							}),
 							restrictionPolicy: getFieldRestrictionPolicy(Fields.AUDITORS),
-							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.AUDITORS, this.layoutWidget),
+							showRestrictionCallback: getFieldShowRestrictionCallback(
+								Fields.AUDITORS,
+								this.layoutWidget,
+							),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeAuditors,
 							analytics: this.#getAnalyticsForUserField(),
@@ -1066,13 +1059,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.extraFieldsFormRef = ref;
 		}
 
-		onChangeDeadline(deadline)
+		onChangeDeadline({ deadline })
 		{
 			const groupPlanRange = this.task.group?.customData?.datePlan || {};
 			if (deadline && !this.isDateInGroupPlanRange(deadline, groupPlanRange))
 			{
 				this.showDateConflictToast(Loc.getMessage('M_TASKS_DEADLINE_IS_OUT_OF_PROJECT_RANGE'));
-				this.setState({ forceUpdate: Math.random() });
+				this.#forceUpdate();
 
 				return;
 			}
@@ -1084,7 +1077,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 		onChangeDatePlan = (startDatePlan, endDatePlan) => {
 			this.task.startDatePlan = startDatePlan ?? null;
 			this.task.endDatePlan = endDatePlan ?? null;
-			this.setState({ forceUpdate: Math.random() });
+			this.#forceUpdate();
 		};
 
 		onChangeProject(_, groups = [])
@@ -1106,7 +1099,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					&& !this.isDateInGroupPlanRange(this.task.endDatePlan, groupPlanRange)
 				)
 				{
-					this.showDateConflictToast(Loc.getMessage('M_TASKS_PLANNING_START_AND_END_DATE_IS_OUT_OF_PROJECT_RANGE'));
+					this.showDateConflictToast(Loc.getMessage(
+						'M_TASKS_PLANNING_START_AND_END_DATE_IS_OUT_OF_PROJECT_RANGE',
+					));
 
 					selectedGroup = this.task.group;
 				}
@@ -1137,7 +1132,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 			this.checklistController.setGroupId(this.task.group?.id || 0);
 			this.handlePreventBottomSheetDismiss();
-			this.setState({ forceUpdate: Math.random() });
+			this.#forceUpdate();
 		}
 
 		/**
@@ -1295,6 +1290,25 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 		onChangeFiles(files)
 		{
+			this.#updateFiles(files);
+			this.handlePreventBottomSheetDismiss();
+			this.#forceUpdate();
+		}
+
+		#onChangeDescription = async ({ description, files }) => {
+			if (!isEmpty(files))
+			{
+				this.#updateFiles(files);
+				await this.extraFieldsFormRef.updateFieldValue(Fields.FILES, files);
+			}
+
+			this.task.description = description;
+			this.focusTitle();
+			this.handlePreventBottomSheetDismiss();
+		};
+
+		#updateFiles(files)
+		{
 			const uploadedFiles = [];
 			const existingFiles = [];
 
@@ -1311,7 +1325,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.task.files = existingFiles;
 			this.task.uploadedFiles = uploadedFiles;
 			this.refreshBottomPanelDebounced();
-			this.handlePreventBottomSheetDismiss();
 		}
 
 		onChangeAccomplices(_, users = [])
@@ -1376,7 +1389,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			});
 
 			this.handlePreventBottomSheetDismiss();
-			this.setState({ forceUpdate: Math.random() });
+			this.#forceUpdate();
 		}
 
 		handlePreventBottomSheetDismiss()
@@ -1471,13 +1484,15 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				}
 				const { analyticsLabel = {}, closeAfterSave, parentWidget } = this.props;
 
-				const analyticsLabelParams = [{
-					tool: 'tasks',
-					category: 'task_operations',
-					type: 'task',
-					event: 'task_create',
-					...analyticsLabel,
-				}];
+				const analyticsLabelParams = [
+					{
+						tool: 'tasks',
+						category: 'task_operations',
+						type: 'task',
+						event: 'task_create',
+						...analyticsLabel,
+					},
+				];
 
 				if (this.task.parentId > 0)
 				{
@@ -1520,6 +1535,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				if (closeAfterSave)
 				{
 					this.layoutWidget.close(async () => {
+						void Onboarding.tryToShowCasesBatch([
+							{ id: CaseName.MORE_THAN_THREE_TASKS },
+							{ id: CaseName.MORE_THAN_SIX_TASKS },
+						]);
+
+						void new CaseHistory().markAsShown(CaseName.ON_EMPTY_TASK_LIST);
+
 						if (Number.isNaN(this.state.flowId) || this.state.flowId === 0)
 						{
 							await AppRatingClient.increaseTaskCreatedCounter();
@@ -1678,6 +1700,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				CRM: this.task.crm,
 				IM_CHAT_ID: this.task.imChatId,
 				IM_MESSAGE_ID: this.task.imMessageId,
+				UF_MAIL_MESSAGE: this.task.mailMessageId,
 				CHECKLIST: this.checklistController.getChecklistRequestData(),
 				START_DATE_PLAN: this.task.startDatePlan ? this.convertDateFromUnixToISOString(this.task.startDatePlan) : '',
 				END_DATE_PLAN: this.task.endDatePlan ? this.convertDateFromUnixToISOString(this.task.endDatePlan) : '',
@@ -1830,6 +1853,34 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 			return `${prefix}_${code}`;
 		}
+
+		#getTaskFiles()
+		{
+			return [...this.task.files, ...this.task.uploadedFiles];
+		}
+
+		#getFileFieldConfig()
+		{
+			return {
+				textMultiple: Loc.getMessage('M_TASKS_FIELDS_FILES_MULTI'),
+				parentWidget: this.layoutWidget,
+				uploadController: {
+					endpoint: 'tasks.FileUploader.TaskController',
+					options: {
+						taskId: 0,
+					},
+				},
+				disk: {
+					isDiskModuleInstalled: true,
+					isWebDavModuleInstalled: true,
+					fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${this.currentUserData.id}`,
+				},
+			};
+		}
+
+		#forceUpdate = () => {
+			this.setState({ forceUpdate: Math.random() });
+		};
 	}
 
 	module.exports = { CreateNew };

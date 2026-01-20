@@ -50,5 +50,7 @@ jn.define('ui-system/blocks/badges/button/src/design-enum', (require, exports, m
 		}
 	}
 
-	module.exports = { BadgeButtonDesign };
+	module.exports = {
+		BadgeButtonDesign: BadgeButtonDesign.export(),
+	};
 });

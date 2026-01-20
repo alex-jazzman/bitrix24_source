@@ -4,27 +4,32 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,ui_vue3,crm_ai_slider,crm_ai_textbox,ui_notification,crm_audioPlayer,pull_client,pull_queuemanager,ui_lottie,crm_copilot_callAssessmentSelector,crm_router,crm_timeline_tools,main_core_events,ui_bbcode_formatter_htmlFormatter,ui_sidepanel,ui_designTokens,main_core) {
 	'use strict';
 
-	var _templateObject;
+	var _templateObject, _templateObject2, _templateObject3;
+	var ActivityProvider = Object.freeze({
+	  call: 'VOXIMPLANT_CALL',
+	  openLine: 'IMOPENLINES_SESSION'
+	});
 	var Base = /*#__PURE__*/function () {
 	  function Base(data) {
-	    var _data$languageTitle;
+	    var _data$languageTitle, _data$activityProvide, _data$jobId, _this$jobId;
 	    babelHelpers.classCallCheck(this, Base);
 	    babelHelpers.defineProperty(this, "languageTitle", null);
+	    babelHelpers.defineProperty(this, "activityProvider", null);
+	    babelHelpers.defineProperty(this, "audioPlayerApp", null);
+	    babelHelpers.defineProperty(this, "topElementNode", null);
 	    this.initDefaultOptions();
 	    this.activityId = data.activityId;
 	    this.ownerTypeId = data.ownerTypeId;
 	    this.ownerId = data.ownerId;
 	    this.languageTitle = (_data$languageTitle = data.languageTitle) !== null && _data$languageTitle !== void 0 ? _data$languageTitle : null;
-	    this.audioPlayerNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div id=\"crm-textbox-audio-player\"></div>"])));
-	    this.audioPlayerApp = new crm_audioPlayer.AudioPlayer({
-	      rootNode: this.audioPlayerNode
-	    });
+	    this.activityProvider = (_data$activityProvide = data.activityProvider) !== null && _data$activityProvide !== void 0 ? _data$activityProvide : null;
+	    this.jobId = (_data$jobId = data.jobId) !== null && _data$jobId !== void 0 ? _data$jobId : null;
 	    this.textbox = new crm_ai_textbox.Textbox({
 	      title: this.textboxTitle,
-	      previousTextContent: this.audioPlayerNode,
+	      previousTextContent: this.getTopElementNode(),
 	      attentions: this.getTextboxAttentions()
 	    });
-	    this.sliderId = "".concat(this.id, "-").concat(this.activityId);
+	    this.sliderId = "".concat(this.id, "-").concat(this.activityId, "-").concat((_this$jobId = this.jobId) !== null && _this$jobId !== void 0 ? _this$jobId : '0');
 	    this.wrapperSlider = new crm_ai_slider.Slider({
 	      url: this.sliderId,
 	      sliderTitle: this.sliderTitle,
@@ -62,10 +67,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this = this;
 	      return {
 	        onLoad: function onLoad() {
-	          _this.audioPlayerApp.attachTemplate();
+	          var _this$audioPlayerApp;
+	          (_this$audioPlayerApp = _this.audioPlayerApp) === null || _this$audioPlayerApp === void 0 ? void 0 : _this$audioPlayerApp.attachTemplate();
 	        },
 	        onClose: function onClose() {
-	          _this.audioPlayerApp.detachTemplate();
+	          var _this$audioPlayerApp2;
+	          (_this$audioPlayerApp2 = _this.audioPlayerApp) === null || _this$audioPlayerApp2 === void 0 ? void 0 : _this$audioPlayerApp2.detachTemplate();
 	        }
 	      };
 	    }
@@ -74,9 +81,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function open() {
 	      var _this2 = this;
 	      var content = new Promise(function (resolve, reject) {
-	        _this2.getAiJobResultAndCallRecord().then(function (response) {
-	          var audioProps = _this2.prepareAudioProps(response);
-	          _this2.audioPlayerApp.setAudioProps(audioProps);
+	        _this2.getAiData().then(function (response) {
+	          if (_this2.activityProvider === ActivityProvider.call) {
+	            var _this2$audioPlayerApp;
+	            (_this2$audioPlayerApp = _this2.audioPlayerApp) === null || _this2$audioPlayerApp === void 0 ? void 0 : _this2$audioPlayerApp.setAudioProps(_this2.prepareAudioProps(response));
+	          } else if (_this2.activityProvider === ActivityProvider.openLine) {
+	            main_core.Dom.append(_this2.getOpenLineElementNode(response.data.openline), _this2.topElementNode);
+	          }
 	          var aiJobResult = _this2.prepareAiJobResult(response);
 	          _this2.textbox.setText(aiJobResult);
 	          _this2.textbox.render();
@@ -90,16 +101,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.wrapperSlider.open();
 	    }
 	  }, {
-	    key: "getAiJobResultAndCallRecord",
-	    value: function getAiJobResultAndCallRecord() {
+	    key: "getAiData",
+	    value: function getAiData() {
 	      var actionData = {
 	        data: {
 	          activityId: this.activityId,
 	          ownerTypeId: this.ownerTypeId,
-	          ownerId: this.ownerId
+	          ownerId: this.ownerId,
+	          jobId: this.jobId
 	        }
 	      };
-	      return BX.ajax.runAction(this.aiJobResultAndCallRecordAction, actionData);
+	      return BX.ajax.runAction(this.aiDataAction, actionData);
 	    }
 	  }, {
 	    key: "showError",
@@ -163,6 +175,37 @@ this.BX.Crm = this.BX.Crm || {};
 	        preset: crm_ai_textbox.AttentionPresets.COPILOT,
 	        content: content
 	      });
+	    }
+	  }, {
+	    key: "getTopElementNode",
+	    value: function getTopElementNode() {
+	      if (this.activityProvider === ActivityProvider.call) {
+	        this.topElementNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div id=\"crm-textbox-audio-player\"></div>"])));
+
+	        // by default, we attach audio player to the top element node
+	        this.audioPlayerApp = new crm_audioPlayer.AudioPlayer({
+	          rootNode: this.topElementNode
+	        });
+	      } else if (this.activityProvider === ActivityProvider.openLine) {
+	        this.topElementNode = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div id=\"crm-textbox-top-container\"></div>"])));
+	      }
+	      return this.topElementNode;
+	    }
+	  }, {
+	    key: "getOpenLineElementNode",
+	    value: function getOpenLineElementNode(openlineData) {
+	      var openMessengerSliderFn = function openMessengerSliderFn(dialogId) {
+	        return function () {
+	          if (main_core.Type.isStringFilled(dialogId)) {
+	            top.BXIM.openMessenger(dialogId);
+	          } else {
+	            throw new Error('Dialog ID is empty');
+	          }
+	        };
+	      };
+	      var element = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), openMessengerSliderFn(openlineData.dialogId), openlineData.name);
+	      main_core.Dom.addClass(element, 'openline-element-container');
+	      return element;
 	    }
 	  }, {
 	    key: "getNotAccuratePhraseCode",
@@ -458,7 +501,8 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	var ARTICLE_CODE = '23240682';
-	var DISCLAIMER_ARTICLE_CODE = '20412666';
+	var DISCLAIMER_ARTICLE_RU_CODE = '20412666';
+	var DISCLAIMER_ARTICLE_CODE = '25775495';
 	var RecommendationBlock = {
 	  props: {
 	    recommendations: {
@@ -482,8 +526,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  computed: {
 	    disclaimer: function disclaimer() {
+	      var language = main_core.Loc.getMessage('LANGUAGE_ID');
+	      var region = main_core.Extension.getSettings('crm.ai.call').get('region');
+	      var code = DISCLAIMER_ARTICLE_CODE;
+	      if (['ru', 'by', 'kz', 'uz'].includes(language !== null && language !== void 0 ? language : region)) {
+	        code = DISCLAIMER_ARTICLE_RU_CODE;
+	      }
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1', {
-	        '#LINK_START#': "<a onclick='window.top.BX?.Helper?.show(`redirect=detail&code=".concat(DISCLAIMER_ARTICLE_CODE, "`)' href=\"#\">"),
+	        '#LINK_START#': "<a onclick='window.top.BX?.Helper?.show(`redirect=detail&code=".concat(code, "`)' href=\"#\">"),
 	        '#LINK_END#': '</a>'
 	      });
 	    }
@@ -491,7 +541,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  template: "\n\t\t<div class=\"call-quality__explanation --copilot-content\">\n\t\t\t<div class=\"call-quality__explanation__container \">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tv-if=\"!useInRating\"\n\t\t\t\t\t\tclass=\"call-quality__explanation-badge\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING') }}\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"call-quality__explanation-badge-article ui-icon-set --help\"\n\t\t\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ summary }}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ recommendations }}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-disclaimer\" v-html=\"disclaimer\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
-	var _templateObject$1, _templateObject2;
+	var _templateObject$1, _templateObject2$1;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -538,7 +588,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 	function _createContainer2() {
 	  this.innerTitleNode = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
-	  this.titleNode = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"call-quality__script-selector\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.innerTitleNode);
+	  this.titleNode = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"call-quality__script-selector\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.innerTitleNode);
 	  return this.titleNode;
 	}
 
@@ -988,7 +1038,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  template: "\n\t\t<div class=\"call-quality__column --info\">\n\t\t\t<div>\n\t\t\t\t<div class=\"call-quality__header\">\n\t\t\t\t\t<div class=\"call-quality__header-row --flex\">\n\t\t\t\t\t\t<div :class=\"clientNameClassList\" v-html=\"clientName\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"call-quality__call-date\">\n\t\t\t\t\t\t\t{{ formattedDate }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__header-row\">\n\t\t\t\t\t\t<div id=\"crm-textbox-audio-player\" ref=\"audioPlayer\">\n\t\t\t\t\t\t\t<AudioPlayerComponent v-if=\"isShowAudioPlayer\" v-bind=\"audioProps\" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<ComplianceComponent \n\t\t\t\t\t:assessment=\"quality.assessment\"\n\t\t\t\t\t:title=\"quality.title\"\n\t\t\t\t\t:viewMode=\"viewMode\"\n\t\t\t\t\t:lowBorder=\"quality.lowBorder\"\n\t\t\t\t\t:highBorder=\"quality.highBorder\"\n\t\t\t\t/>\n\t\t\t\t<RecommendationBlock\n\t\t\t\t\tv-if=\"isUsedCurrentVersionOfScriptViewMode\"\n\t\t\t\t\t:recommendations=\"quality.recommendations\"\n\t\t\t\t\t:summary=\"quality.summary\"\n\t\t\t\t\t:use-in-rating=\"quality.useInRating\"\n\t\t\t\t/>\n\t\t\t\t<OtherScriptBlock\n\t\t\t\t\tv-if=\"isUsedOtherVersionOfScriptViewMode\"\n\t\t\t\t\t@showAssessment=\"onShowCurrentAssessment\"\n\t\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t\t/>\n\t\t\t\t<NotAssessmentScriptBlock\n\t\t\t\t\tv-if=\"isUsedNotAssessmentScriptViewMode\"\n\t\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t\t/>\n\t\t\t\t<AssessmentSettingsPendingBlock v-if=\"isAssessmentSettingsPendingViewMode\"/>\n\t\t\t\t<PendingBlock v-if=\"isPendingViewMode\"/>\n\t\t\t\t<ErrorBlock v-if=\"isErrorViewMode\" ref=\"errorBlock\"/>\n\t\t\t\t<EmptyScriptListBlock v-if=\"isEmptyScriptListViewMode\"/>\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"call-quality__column --prompt\">\n\t\t\t<ScriptSelectorComponent\n\t\t\t\tref=\"scriptSelector\"\n\t\t\t\t:assessmentSettingsId=\"quality.assessmentSettingsId\"\n\t\t\t\t:assessmentSettingsStatus=\"quality.assessmentSettingsStatus\"\n\t\t\t\t:assessmentSettingsTitle=\"quality.title\"\n\t\t\t\t:isPromptChanged=\"quality.isPromptChanged\"\n\t\t\t\t:promptUpdatedAt=\"quality.promptUpdatedAt\"\n\t\t\t\t:prompt=\"prompt\"\n\t\t\t\t:viewMode=\"viewMode\"\n\t\t\t\t@onBeforeSelect=\"onChangeScript\"\n\t\t\t\t@onShowActualPrompt=\"onShowActualPrompt\"\n\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
-	var _templateObject$2, _templateObject2$1, _templateObject3, _templateObject4, _templateObject5;
+	var _templateObject$2, _templateObject2$2, _templateObject3$1, _templateObject4, _templateObject5;
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -1088,10 +1138,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Rating;
 	}();
 	function _getSkeleton2() {
-	  return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	  return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	}
 	function _getContent2() {
-	  return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"call-quality__rating__text-container\">\n\t\t\t\t", "\n\t\t\t\t<div \n\t\t\t\t\tclass=\"call-quality__rating_article ui-icon-set --help\"\n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div class=\"call-quality__rating__value-container\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"call-quality__rating__value\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span class=\"call-quality__rating__measure\">%</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__rating__trend ", "\"></div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_RATING'), _classPrivateMethodGet$1(this, _showArticle, _showArticle2).bind(this), _classPrivateMethodGet$1(this, _getAvatar, _getAvatar2).call(this), babelHelpers.classPrivateFieldGet(this, _rating), _classPrivateMethodGet$1(this, _getTrendClass, _getTrendClass2).call(this));
+	  return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"call-quality__rating__text-container\">\n\t\t\t\t", "\n\t\t\t\t<div \n\t\t\t\t\tclass=\"call-quality__rating_article ui-icon-set --help\"\n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div class=\"call-quality__rating__value-container\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"call-quality__rating__value\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span class=\"call-quality__rating__measure\">%</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__rating__trend ", "\"></div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_RATING'), _classPrivateMethodGet$1(this, _showArticle, _showArticle2).bind(this), _classPrivateMethodGet$1(this, _getAvatar, _getAvatar2).call(this), babelHelpers.classPrivateFieldGet(this, _rating), _classPrivateMethodGet$1(this, _getTrendClass, _getTrendClass2).call(this));
 	}
 	function _getAvatar2() {
 	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl))) {
@@ -1155,6 +1205,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _babelHelpers$classPr;
 	    var _this;
 	    babelHelpers.classCallCheck(this, CallQuality$$1);
+	    // eslint-disable-next-line no-param-reassign
+	    data.activityProvider = ActivityProvider.call; // for call only
+
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallQuality$$1).call(this, data));
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _prepareRating);
 	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _layoutComponent, {
@@ -1207,7 +1260,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var width = Math.round(BX.SidePanel.Instance.getTopSlider().getWidth() * 0.75);
 	      this.sliderWidth = width > 0 ? width : Math.round(window.screen.width * 0.75);
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
-	      this.aiJobResultAndCallRecordAction = 'crm.timeline.ai.getCopilotCallQuality';
+	      this.aiDataAction = 'crm.timeline.ai.getCopilotCallQuality';
 	    }
 	  }, {
 	    key: "getExtensions",
@@ -1257,7 +1310,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function open() {
 	      var _this4 = this;
 	      var content = new Promise(function (resolve, reject) {
-	        _this4.getAiJobResultAndCallRecord().then(function (response) {
+	        _this4.getAiData().then(function (response) {
 	          var audioProps = _this4.prepareAudioProps(response);
 	          _classPrivateMethodGet$2(_this4, _prepareRating, _prepareRating2).call(_this4, response.data);
 	          var context = {
@@ -1292,8 +1345,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.wrapperSlider.open();
 	    }
 	  }, {
-	    key: "getAiJobResultAndCallRecord",
-	    value: function getAiJobResultAndCallRecord() {
+	    key: "getAiData",
+	    value: function getAiData() {
 	      var actionData = {
 	        data: {
 	          activityId: this.activityId,
@@ -1303,7 +1356,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          assessmentSettingsId: babelHelpers.classPrivateFieldGet(this, _assessmentSettingsId)
 	        }
 	      };
-	      return BX.ajax.runAction(this.aiJobResultAndCallRecordAction, actionData);
+	      return BX.ajax.runAction(this.aiDataAction, actionData);
 	    }
 	  }, {
 	    key: "getNotAccuratePhraseCode",
@@ -1342,7 +1395,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "initDefaultOptions",
 	    value: function initDefaultOptions() {
 	      this.id = 'crm-copilot-summary';
-	      this.aiJobResultAndCallRecordAction = 'crm.timeline.ai.getCopilotSummaryAndCallRecord';
+	      this.aiDataAction = 'crm.timeline.ai.getCopilotSummary';
 	      this.sliderTitle = main_core.Loc.getMessage('CRM_COMMON_COPILOT');
 	      this.sliderWidth = 520;
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_SUMMARY_TITLE');
@@ -1366,15 +1419,17 @@ this.BX.Crm = this.BX.Crm || {};
 	 */
 	var Transcription = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Transcription, _Base);
-	  function Transcription() {
+	  function Transcription(data) {
 	    babelHelpers.classCallCheck(this, Transcription);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Transcription).apply(this, arguments));
+	    // eslint-disable-next-line no-param-reassign
+	    data.activityProvider = ActivityProvider.call; // for call only
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Transcription).call(this, data));
 	  }
 	  babelHelpers.createClass(Transcription, [{
 	    key: "initDefaultOptions",
 	    value: function initDefaultOptions() {
 	      this.id = 'crm-copilot-transcript';
-	      this.aiJobResultAndCallRecordAction = 'crm.timeline.ai.getCopilotTranscriptAndCallRecord';
+	      this.aiDataAction = 'crm.timeline.ai.getCopilotTranscript';
 	      this.sliderTitle = main_core.Loc.getMessage('CRM_COMMON_COPILOT');
 	      this.sliderWidth = 730;
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
@@ -1400,6 +1455,7 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	exports.Call = Call;
+	exports.ActivityProvider = ActivityProvider;
 
 }((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Vue3,BX.Crm.AI,BX.Crm.AI,BX,BX.Crm,BX,BX.Pull,BX.UI,BX.Crm.Copilot,BX.Crm,BX.Crm.Timeline,BX.Event,BX.UI.BBCode.Formatter,BX,BX,BX));
 //# sourceMappingURL=call.bundle.js.map

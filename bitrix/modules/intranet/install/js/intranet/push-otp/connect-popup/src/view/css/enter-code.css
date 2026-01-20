@@ -1,0 +1,76 @@
+.intranet-push-otp-connect-popup__view-enter-code-container {
+	display: flex;
+	flex-direction: column;
+	border-radius: 16px;
+	gap: 20px;
+	padding: 32px;
+	min-height: 264px;
+	background: var(--accent-soft-accent-soft-blue-3, #EDF7FF);
+	justify-content: center;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.enter-confirm-code-container {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.confirm-code-input {
+	width: 34px;
+	height: 38px;
+	border-radius: 8px;
+	font-size: 15px;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.confirm-code-input.--primary {
+	border: 1px solid #C9CCD0;
+}
+
+.confirm-code-input.--active {
+	border: 1px solid #0154C8;
+}
+
+.confirm-code-input.--done {
+	border: 1px solid rgba(31, 134, 255, .52);
+}
+
+.confirm-code-input.--danger {
+	border: 1px solid #FF5752;
+}
+
+.intranet-push-otp-connect-popup__view-enter-code-cooldown {
+	color: var(--base-base-4, #A8ADB4);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.intranet-push-otp-connect-popup__resend-code {
+	cursor: pointer;
+	color: var(--accent-main-accent-main-link, #0154C8);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.intranet-push-otp-connect-popup__view-enter-code-errors {
+	color: var(--base-base-4, #FF5752);
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.intranet-push-otp-connect-popup__view-enter-code-new {
+	border-bottom: 1px dashed rgba(1, 84, 200, .28);
+	font-size: 13px;
+	color: #0154C8;
+	transition: border-bottom .3s;
+}
+
+.intranet-push-otp-connect-popup__view-enter-code-new:hover {
+	border-bottom: 1px dashed transparent;
+}

@@ -1,5 +1,4 @@
 import { Tag, Text } from 'main.core';
-import { SidePanel } from 'main.sidepanel';
 import { Member, MemberData } from './member';
 
 export type LineData = {
@@ -64,8 +63,15 @@ export class Line
 
 	#getTitleElement(): HTMLElement
 	{
+		if (this.#canRead)
+		{
+			return Tag.render`
+				<a class="tasks-flow__task-queue-line_title-access" href="${this.#url}">${Text.encode(this.#title)}</a>
+			`;
+		}
+
 		return Tag.render`
-			<div class="${this.#getTitleClass()}" onclick="${this.#openTask.bind(this)}">${Text.encode(this.#title)}</div>
+			<div class="tasks-flow__task-queue-line_title">${Text.encode(this.#title)}</div>
 		`;
 	}
 
@@ -74,23 +80,6 @@ export class Line
 		return Tag.render`
 			<div class="tasks-flow__task-queue-line_number">${this.#getSerial()}</div>
 		`;
-	}
-
-	#getTitleClass(): string
-	{
-		return this.#canRead
-			? 'tasks-flow__task-queue-line_title-access'
-			: 'tasks-flow__task-queue-line_title';
-	}
-
-	#openTask(): void
-	{
-		if (!this.#canRead)
-		{
-			return;
-		}
-
-		SidePanel.Instance.open(this.#url);
 	}
 
 	#getSerial(): string

@@ -43,7 +43,38 @@ $aTabs = [
 			'sphinx_index_name' => [GetMessage('SEARCH_OPTIONS_SPHINX_INDEX_NAME'), ['text', 45], 'sphinx'],
 			'sphinx_note' => ['', ['note', '
 <pre>
-#sphinx.conf
+# sphinx.conf - for 3.X
+index bitrix
+{
+	#main settings
+		type = rt
+	#choose appropriate type of morphology to use
+		#morphology = lemmatize_ru_all, lemmatize_en_all, lemmatize_de_all, stem_enru
+		morphology = stem_enru, soundex
+	#these settings are used by bitrix:search.title component
+		min_prefix_len = 2
+	#all fields must be defined exactly as followed
+		field = title
+		field = body
+		attr_uint = module_id
+		attr_string = module
+		attr_uint = item_id
+		attr_string = item
+		attr_uint = param1_id
+		attr_string = param1
+		attr_uint = param2_id
+		attr_string = param2
+		attr_uint = date_change
+		attr_uint = date_to
+		attr_uint = date_from
+		attr_uint = custom_rank
+		attr_uint_set = tags
+		attr_uint_set = right
+		attr_uint_set = site
+		attr_uint_set = param
+}
+
+# sphinx.conf - for 2.X
 index bitrix
 {
 	#main settings
@@ -70,19 +101,15 @@ index bitrix
 		rt_attr_string = param1
 		rt_attr_uint = param2_id
 		rt_attr_string = param2
-		rt_attr_timestamp = date_change
-		rt_attr_timestamp = date_to
-		rt_attr_timestamp = date_from
+		rt_attr_uint = date_change
+		rt_attr_uint = date_to
+		rt_attr_uint = date_from
 		rt_attr_uint = custom_rank
 		rt_attr_multi = tags
 		rt_attr_multi = right
 		rt_attr_multi = site
 		rt_attr_multi = param
-	#depends on settings of your site
-		# uncomment for single byte character set
-		charset_type = sbcs
-		# uncomment for UTF character set
-		#charset_type = utf-8
+		charset_type = utf-8
 }
 </pre>
 			'

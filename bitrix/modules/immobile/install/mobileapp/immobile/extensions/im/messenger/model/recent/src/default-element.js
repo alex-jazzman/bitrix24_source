@@ -32,6 +32,7 @@ jn.define('im/messenger/model/recent/default-element', (require, exports, module
 		},
 		options: {},
 		uploadingState: null,
+		sticker: false,
 	});
 
 	module.exports = {

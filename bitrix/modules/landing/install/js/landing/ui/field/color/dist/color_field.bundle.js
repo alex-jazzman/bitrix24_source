@@ -520,99 +520,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	let _ = t => t,
 	  _t;
-	class BaseProcessor extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    super();
-	    this.cache = new main_core.Cache.MemoryCache();
-	    this.property = 'color';
-	    this.options = options;
-	    this.pseudoClass = null;
-	    this.setEventNamespace('BX.Landing.UI.Field.Processor.BaseProcessor');
-	  }
-	  getProperty() {
-	    return main_core.Type.isArray(this.property) ? this.property : [this.property];
-	  }
-	  getVariableName() {
-	    return main_core.Type.isArray(this.variableName) ? this.variableName : [this.variableName];
-	  }
-	  isNullValue(value) {
-	    return main_core.Type.isNull(value);
-	  }
-	  getNullValue() {
-	    return new ColorValue();
-	  }
-	  getPseudoClass() {
-	    return this.pseudoClass;
-	  }
-	  getLayout() {
-	    return this.cache.remember('layout', () => {
-	      return this.buildLayout();
-	    });
-	  }
-	  buildLayout() {
-	    return main_core.Tag.render(_t || (_t = _`<div>Base processor</div>`));
-	  }
-	  getClassName() {
-	    return [this.className];
-	  }
-	  getValue() {}
-	  getStyle() {
-	    if (main_core.Type.isNull(this.getValue())) {
-	      return {
-	        [this.getVariableName()]: null
-	      };
-	    }
-	    return {
-	      [this.getVariableName()]: this.getValue().getStyleString()
-	    };
-	  }
-
-	  /**
-	   * Set value by new format
-	   * @param value {string: string}
-	   */
-	  setProcessorValue(value) {
-	    // Just get last css variable
-	    const processorProperty = this.getVariableName()[this.getVariableName().length - 1];
-	    this.cache.delete('value');
-	    this.setValue(value[processorProperty]);
-	  }
-
-	  /**
-	   * Set old-type value by computedStyle
-	   * @param value {string: string} | null
-	   */
-	  setDefaultValue(value) {
-	    if (!main_core.Type.isNull(value)) {
-	      const inlineProperty = this.getProperty()[this.getProperty().length - 1];
-	      if (inlineProperty in value) {
-	        this.setValue(value[inlineProperty]);
-	        this.cache.delete('value');
-	        this.unsetActive();
-	        return;
-	      }
-	    }
-	    this.setValue(null);
-	    this.cache.set('value', null);
-	  }
-	  setValue(value) {}
-	  onReset() {
-	    this.emit('onReset');
-	  }
-	  unsetActive() {}
-	  onChange() {
-	    this.cache.delete('value');
-	    this.emit('onChange');
-	  }
-	  defineActiveControl(items, currentNode) {}
-	  setActiveControl(controlName) {}
-	  prepareProcessorValue(processorValue, defaultValue, data) {
-	    return processorValue;
-	  }
-	}
-
-	let _$1 = t => t,
-	  _t$1;
 	class BaseControl extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super();
@@ -624,7 +531,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    });
 	  }
 	  buildLayout() {
-	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	    return main_core.Tag.render(_t || (_t = _`
 			<div class="landing-ui-field-base-control">
 				Base control
 			</div>
@@ -659,96 +566,77 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	}
 	BaseControl.ACTIVE_CLASS = 'active';
 
-	let _$2 = t => t,
-	  _t$2,
+	let _$1 = t => t,
+	  _t$1,
 	  _t2,
 	  _t3,
-	  _t4,
-	  _t5;
+	  _t4;
 	class Hex extends BaseControl {
 	  constructor() {
 	    super();
 	    this.setEventNamespace('BX.Landing.UI.Field.Color.Hex');
-	    this.previewMode = false;
 	    this.onInput = main_core.Runtime.debounce(this.onInput.bind(this), 300);
-	    this.onButtonClick = this.onButtonClick.bind(this);
-	  }
-	  setPreviewMode(preview) {
-	    this.previewMode = !!preview;
+	    this.previewMode = false;
 	  }
 	  buildLayout() {
-	    if (!this.previewMode) {
-	      // todo: add Enter click handler
-	      main_core.Event.bind(this.getInput(), 'input', this.onInput);
-	      main_core.Event.bind(this.getButton(), 'click', this.onButtonClick);
-	    }
+	    main_core.Event.bind(this.getInput(), 'input', this.onInput);
 	    this.adjustColors(Hex.DEFAULT_COLOR, Hex.DEFAULT_BG);
-	    return main_core.Tag.render(_t$2 || (_t$2 = _$2`
-			<div class="landing-ui-field-color-hex">
+	    const modeClass = this.previewMode ? '--preview' : '--base';
+	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+			<div class="landing-ui-field-color-hex ${0}">
+				${0}
 				${0}
 				${0}
 			</div>
-		`), this.getInput(), this.getButton());
+		`), modeClass, this.getPreview(), this.getInput(), this.previewMode ? this.getButton() : '');
+	  }
+	  getPreview() {
+	    return this.cache.remember('preview', () => {
+	      return main_core.Tag.render(_t2 || (_t2 = _$1`<div class="landing-ui-field-color-hex-preview"></div>`));
+	    });
 	  }
 	  getInput() {
 	    return this.cache.remember('input', () => {
-	      return this.previewMode ? main_core.Tag.render(_t2 || (_t2 = _$2`<div class="landing-ui-field-color-hex-preview">${0}</div>`), Hex.DEFAULT_TEXT) : main_core.Tag.render(_t3 || (_t3 = _$2`<input type="text" name="hexInput" value="${0}" class="landing-ui-field-color-hex-input">`), Hex.DEFAULT_TEXT);
-	    });
-	  }
-	  getButton() {
-	    return this.cache.remember('editButton', () => {
-	      return this.previewMode ? main_core.Tag.render(_t4 || (_t4 = _$2`
-					<svg class="landing-ui-field-color-hex-preview-btn" width="9" height="9" xmlns="http://www.w3.org/2000/svg">
-						<path
-							d="M7.108 0l1.588 1.604L2.486 7.8.896 6.194 7.108 0zM.006 8.49a.166.166 0 00.041.158.161.161 0 00.16.042l1.774-.478L.484 6.715.006 8.49z"
-							fill="#525C69"
-							fill-rule="evenodd"/>
-					</svg>`)) : main_core.Tag.render(_t5 || (_t5 = _$2`
-					<svg class="landing-ui-field-color-hex-preview-btn" width="12" height="9" xmlns="http://www.w3.org/2000/svg">
-						<path
-							d="M4.27 8.551L.763 5.304 2.2 3.902l2.07 1.846L9.836.533l1.439 1.402z"
-							fill="#525C69"
-							fill-rule="evenodd"/>
-					</svg>`));
+	      return main_core.Tag.render(_t3 || (_t3 = _$1`<input type="text" name="hexInput" value="${0}" class="landing-ui-field-color-hex-input">`), Hex.DEFAULT_TEXT);
 	    });
 	  }
 	  onInput() {
-	    let value = this.getInput().value.replace(/[^\da-f]/gi, '');
-	    value = value.substring(0, 6);
-	    this.getInput().value = '#' + value.toLowerCase();
+	    let value = this.getInput().value.replaceAll(/[^\da-f]/gi, '');
+	    value = value.slice(0, 6);
+	    this.getInput().value = `#${value.toLowerCase()}`;
+	    if (this.getInput().value.length === 7) {
+	      this.emit('onValidInput', {
+	        value
+	      });
+	    }
 	    this.onChange();
-	  }
-	  onButtonClick() {
-	    this.onChange();
-	    this.emit('onButtonClick', {
-	      color: this.getValue()
-	    });
 	  }
 	  onChange(event) {
 	    const color = this.getInput().value.length === 7 && isHex(this.getInput().value) ? new ColorValue(this.getInput().value) : null;
 	    this.setValue(color);
 	    this.cache.delete('value');
 	    this.emit('onChange', {
-	      color: color
+	      color
 	    });
 	  }
 	  adjustColors(textColor, bgColor) {
-	    main_core.Dom.style(this.getInput(), 'background-color', bgColor);
-	    main_core.Dom.style(this.getInput(), 'color', textColor);
-	    main_core.Dom.style(this.getButton().querySelector('path'), 'fill', textColor);
+	    if (this.previewMode === true) {
+	      main_core.Dom.style(this.getInput(), 'color', textColor);
+	      main_core.Dom.style(this.getButton(), 'fill', textColor);
+	      main_core.Dom.style(this.getInput(), 'background', 'transparent');
+	      main_core.Dom.style(this.getPreview(), 'display', 'none');
+	    } else {
+	      main_core.Dom.style(this.getPreview(), 'background-color', bgColor);
+	    }
 	  }
 	  focus() {
-	    if (!this.previewMode) {
-	      if (this.getValue() === null) {
-	        this.getInput().value = '#';
-	      }
-	      this.getInput().focus();
+	    if (this.getValue() === null) {
+	      this.getInput().value = '#';
 	    }
+	    this.getInput().focus();
 	  }
 	  unFocus() {
-	    if (!this.previewMode) {
-	      this.getInput().blur();
-	    }
+	    this.getInput().blur();
 	  }
 	  getValue() {
 	    return this.cache.remember('value', () => {
@@ -759,18 +647,19 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    // todo: set checking in always controls?
 	    if (this.isNeedSetValue(value)) {
 	      super.setValue(value);
-	      if (value !== null) {
-	        this.adjustColors(value.getContrast().getHex(), value.getHex());
-	        this.setActive();
-	      } else {
+	      if (value === null) {
 	        this.adjustColors(Hex.DEFAULT_COLOR, Hex.DEFAULT_BG);
 	        this.unsetActive();
+	      } else {
+	        this.adjustColors(value.getContrast().getHex(), value.getHex());
+	        this.setActive();
 	      }
-	      if (this.previewMode) {
-	        this.getInput().innerText = value !== null ? value.getHex() : Hex.DEFAULT_TEXT;
-	      } else if (landing_pageobject.PageObject.getRootWindow().document.activeElement !== this.getInput()) {
-	        this.getInput().value = value !== null ? value.getHex() : Hex.DEFAULT_TEXT;
+	      if (landing_pageobject.PageObject.getRootWindow().document.activeElement !== this.getInput()) {
+	        this.getInput().value = value === null ? Hex.DEFAULT_TEXT : value.getHex();
 	      }
+	      this.emit('onSetValue', {
+	        color: value === null ? Hex.DEFAULT_BG : value.getHex()
+	      });
 	    }
 	  }
 	  setActive() {
@@ -782,23 +671,32 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  isActive() {
 	    return main_core.Dom.hasClass(this.getInput(), Hex.ACTIVE_CLASS);
 	  }
+	  setPreviewMode(preview) {
+	    this.previewMode = preview;
+	  }
+	  isPreviewMode() {
+	    return Boolean(this.previewMode);
+	  }
+	  getButton() {
+	    return this.cache.remember('editButton', () => {
+	      return main_core.Tag.render(_t4 || (_t4 = _$1`
+				<svg class="landing-ui-field-color-hex-preview-btn" width="9" height="9" xmlns="http://www.w3.org/2000/svg">
+					<path
+						d="M7.108 0l1.588 1.604L2.486 7.8.896 6.194 7.108 0zM.006 8.49a.166.166 0 00.041.158.161.161 0 00.16.042l1.774-.478L.484 6.715.006 8.49z"
+						fill-rule="evenodd"/>
+				</svg>
+			`));
+	    });
+	  }
 	}
-	Hex.DEFAULT_TEXT = '#HEX';
+	Hex.DEFAULT_TEXT = '#hex';
 	Hex.DEFAULT_COLOR = '#000000';
 	Hex.DEFAULT_BG = '#eeeeee';
 
-	let _$3 = t => t,
-	  _t$3,
+	let _$2 = t => t,
+	  _t$2,
 	  _t2$1;
 	class Spectrum extends BaseControl {
-	  // todo: debug, del method, change calls, change css
-	  static getDefaultSaturation() {
-	    const global = window.top.document.location.saturation;
-	    const urlParam = new URL(window.top.document.location).searchParams.get('saturation');
-	    const saturation = global || urlParam || Spectrum.DEFAULT_SATURATION;
-	    window.top.document.body.style.setProperty('--saturation', saturation + '%');
-	    return parseInt(saturation);
-	  }
 	  constructor(options) {
 	    super();
 	    this.setEventNamespace('BX.Landing.UI.Field.Color.Spectrum');
@@ -806,12 +704,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.onPickerDragMove = this.onPickerDragMove.bind(this);
 	    this.onPickerDragEnd = this.onPickerDragEnd.bind(this);
 	    this.onScroll = this.onScroll.bind(this);
-	    this.document = landing_pageobject.PageObject.getRootWindow().document;
 	    this.scrollContext = options.contentRoot;
 	    main_core.Event.bind(this.getLayout(), 'mousedown', this.onPickerDragStart);
 	  }
 	  buildLayout() {
-	    return main_core.Tag.render(_t$3 || (_t$3 = _$3`
+	    return main_core.Tag.render(_t$2 || (_t$2 = _$2`
 			<div class="landing-ui-field-color-spectrum">
 				${0}
 			</div>
@@ -819,7 +716,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getPicker() {
 	    return this.cache.remember('picker', () => {
-	      return main_core.Tag.render(_t2$1 || (_t2$1 = _$3`<div class="landing-ui-field-color-spectrum-picker"></div>`));
+	      return main_core.Tag.render(_t2$1 || (_t2$1 = _$2`<div class="landing-ui-field-color-spectrum-picker"></div>`));
 	    });
 	  }
 	  getPickerPos() {
@@ -832,12 +729,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    if (event.ctrlKey || event.metaKey || event.button) {
 	      return;
 	    }
+	    const documentBody = this.getLayout().ownerDocument.body;
 	    main_core.Event.bind(this.scrollContext, 'scroll', this.onScroll);
-	    main_core.Event.bind(this.document, 'mousemove', this.onPickerDragMove);
-	    main_core.Event.bind(this.document, 'mouseup', this.onPickerDragEnd);
-	    main_core.Dom.addClass(this.document.body, 'landing-ui-field-color-draggable');
+	    main_core.Event.bind(this.getLayout(), 'mousemove', this.onPickerDragMove);
+	    main_core.Event.bind(this.getLayout(), 'mouseup', this.onPickerDragEnd);
+	    main_core.Dom.addClass(documentBody, 'landing-ui-field-color-draggable');
 	    this.onScroll();
 	    this.showPicker();
+	    this.emit('onPickerDragStart', {
+	      color: this.getValue()
+	    });
 	    this.onPickerDragMove(event);
 	  }
 	  onPickerDragMove(event) {
@@ -848,22 +749,28 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.onChange();
 	  }
 	  onPickerDragEnd() {
+	    const documentBody = this.getLayout().ownerDocument.body;
 	    main_core.Event.unbind(this.scrollContext, 'scroll', this.onScroll);
-	    main_core.Event.unbind(this.document, 'mousemove', this.onPickerDragMove);
-	    main_core.Event.unbind(this.document, 'mouseup', this.onPickerDragEnd);
-	    main_core.Dom.removeClass(this.document.body, 'landing-ui-field-color-draggable');
+	    main_core.Event.unbind(this.getLayout(), 'mousemove', this.onPickerDragMove);
+	    main_core.Event.unbind(this.getLayout(), 'mouseup', this.onPickerDragEnd);
+	    main_core.Dom.removeClass(documentBody, 'landing-ui-field-color-draggable');
+	    this.emit('onPickerDragEnd', {
+	      color: this.getValue()
+	    });
 	  }
 	  onScroll() {
 	    this.cache.delete('layoutSize');
 	  }
 	  getLayoutRect() {
+	    const ownerDocument = this.getLayout().ownerDocument;
 	    return this.cache.remember('layoutSize', () => {
 	      const layoutRect = this.getLayout().getBoundingClientRect();
+	      const scrollTop = ownerDocument.documentElement.scrollTop || 0;
 	      return {
 	        width: layoutRect.width,
 	        height: layoutRect.height,
-	        top: layoutRect.top,
-	        left: layoutRect.left
+	        left: layoutRect.left,
+	        top: layoutRect.top + scrollTop
 	      };
 	    });
 	  }
@@ -901,8 +808,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }
 	      return new ColorValue({
 	        h: Math.min(h, Spectrum.HUE_RANGE_GRAY_THRESHOLD),
-	        s: h >= Spectrum.HUE_RANGE_GRAY_THRESHOLD ? 0 : Spectrum.getDefaultSaturation(),
-	        l: l
+	        s: h >= Spectrum.HUE_RANGE_GRAY_THRESHOLD ? 0 : Spectrum.DEFAULT_SATURATION,
+	        l
 	      });
 	    });
 	  }
@@ -934,7 +841,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    return this.getValue() !== null && Spectrum.isSpectrumValue(this.getValue());
 	  }
 	  static isSpectrumValue(value) {
-	    return value !== null && (value.getHsl().s === Spectrum.getDefaultSaturation() || value.getHsl().s === 0);
+	    return value !== null && (value.getHsl().s === Spectrum.DEFAULT_SATURATION || value.getHsl().s === 0);
 	  }
 	}
 	Spectrum.DEFAULT_SATURATION = 100;
@@ -943,264 +850,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	Spectrum.HUE_RANGE_GRAY_MIDDLE = 367;
 	Spectrum.HIDE_CLASS = 'hidden';
 
-	let _$4 = t => t,
-	  _t$4,
-	  _t2$2;
-	class Recent extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    this.cache = new main_core.Cache.MemoryCache();
-	    this.setEventNamespace('BX.Landing.UI.Field.Color.Recent');
-	  }
-	  getLayout() {
-	    this.initItems();
-	    return this.getLayoutContainer();
-	  }
-	  getLayoutContainer() {
-	    return this.cache.remember('layout', () => {
-	      return main_core.Tag.render(_t$4 || (_t$4 = _$4`<div class="landing-ui-field-color-recent"></div>`));
-	    });
-	  }
-	  initItems() {
-	    if (Recent.itemsLoaded) {
-	      this.buildItemsLayout();
-	    } else {
-	      landing_backend.Backend.getInstance().action("Utils::getUserOption", {
-	        name: Recent.USER_OPTION_NAME
-	      }).then(result => {
-	        if (result && main_core.Type.isString(result.items)) {
-	          Recent.items = [];
-	          result.items.split(',').forEach(item => {
-	            if (isHex(item) && Recent.items.length < Recent.MAX_ITEMS) {
-	              Recent.items.push(item);
-	            }
-	          });
-	          Recent.itemsLoaded = true;
-	          this.buildItemsLayout();
-	        }
-	      });
-	      // todo: what if ajax error?
-	    }
-	  }
-
-	  buildItemsLayout() {
-	    main_core.Dom.clean(this.getLayoutContainer());
-	    Recent.items.forEach(item => {
-	      if (isHex(item)) {
-	        let itemLayout = main_core.Tag.render(_t2$2 || (_t2$2 = _$4`<div 
-					class="landing-ui-field-color-recent-item" 
-					style="background:${0}"
-					data-value="${0}"
-				></div>`), item, item);
-	        main_core.Event.bind(itemLayout, 'click', () => this.onItemClick(event));
-	        main_core.Dom.append(itemLayout, this.getLayoutContainer());
-	      }
-	    });
-	    return this;
-	  }
-	  onItemClick(event) {
-	    this.emit('onChange', {
-	      hex: event.currentTarget.dataset.value
-	    });
-	  }
-	  addItem(hex) {
-	    if (isHex(hex)) {
-	      let pos = Recent.items.indexOf(hex);
-	      if (pos !== -1) {
-	        Recent.items.splice(pos, 1);
-	      }
-	      Recent.items.unshift(hex);
-	      if (Recent.items.length > Recent.MAX_ITEMS) {
-	        Recent.items.splice(Recent.MAX_ITEMS);
-	      }
-	      this.buildItemsLayout();
-	      this.saveItems();
-	    }
-	    return this;
-	  }
-	  saveItems() {
-	    if (Recent.items.length > 0) {
-	      BX.userOptions.save('landing', Recent.USER_OPTION_NAME, 'items', Recent.items);
-	    }
-	    return this;
-	  }
-	}
-	Recent.USER_OPTION_NAME = 'color_field_recent_colors';
-	Recent.MAX_ITEMS = 6;
-	Recent.items = [];
-	Recent.itemsLoaded = false;
-
-	let _$5 = t => t,
-	  _t$5,
-	  _t2$3,
-	  _t3$1,
-	  _t4$1;
-	class Colorpicker extends BaseControl {
-	  constructor(options) {
-	    super();
-	    this.setEventNamespace('BX.Landing.UI.Field.Color.Colorpicker');
-	    this.popupId = 'colorpicker_popup_' + main_core.Text.getRandom();
-	    this.popupTargetContainer = options.contentRoot;
-	    this.hexPreview = new Hex();
-	    this.hexPreview.setPreviewMode(true);
-	    main_core.Event.bind(this.hexPreview.getLayout(), 'click', this.onPopupOpenClick.bind(this));
-
-	    // popup
-	    this.hex = new Hex();
-	    this.hex.subscribe('onChange', this.onHexChange.bind(this));
-	    this.hex.subscribe('onButtonClick', this.onSelectClick.bind(this));
-	    this.spectrum = new Spectrum(options);
-	    this.spectrum.subscribe('onChange', this.onSpectrumChange.bind(this));
-	    this.recent = new Recent();
-	    this.recent.subscribe('onChange', this.onRecentChange.bind(this));
-	    main_core.Event.bind(this.getCancelButton(), 'click', this.onCancelClick.bind(this));
-	    main_core.Event.bind(this.getSelectButton(), 'click', this.onSelectClick.bind(this));
-	    // end popup
-
-	    this.previously = this.getValue();
-	  }
-	  onSelectClick(event) {
-	    const value = event instanceof main_core_events.BaseEvent ? event.getData().color : this.getValue();
-	    if (value !== null) {
-	      this.recent.addItem(this.getValue().getHex());
-	    }
-	    this.getPopup().close();
-	  }
-	  buildLayout() {
-	    return main_core.Tag.render(_t$5 || (_t$5 = _$5`
-			<div class="landing-ui-field-color-colorpicker">
-				${0}
-			</div>
-		`), this.hexPreview.getLayout());
-	  }
-	  getPopupContent() {
-	    return main_core.Tag.render(_t2$3 || (_t2$3 = _$5`
-			<div class="landing-ui-field-color-popup-container">
-				<div class="landing-ui-field-color-popup-head">
-					${0}
-					${0}
-				</div>
-				${0}
-				<div class="landing-ui-field-color-popup-footer">
-					${0}
-					${0}
-				</div>
-			</div>
-		`), this.recent.getLayout(), this.hex.getLayout(), this.spectrum.getLayout(), this.getSelectButton(), this.getCancelButton());
-	  }
-	  getSelectButton() {
-	    return this.cache.remember('selectButton', () => {
-	      return main_core.Tag.render(_t3$1 || (_t3$1 = _$5`
-				<button class="ui-btn ui-btn-xs ui-btn-primary">
-					${0}
-				</button>
-			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-BUTTON_SELECT'));
-	    });
-	  }
-	  getCancelButton() {
-	    return this.cache.remember('cancelButton', () => {
-	      return main_core.Tag.render(_t4$1 || (_t4$1 = _$5`
-				<button class="ui-btn ui-btn-xs ui-btn-light-border">
-					${0}
-				</button>
-			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-BUTTON_CANCEL'));
-	    });
-	  }
-	  getHexPreviewObject() {
-	    return this.hexPreview;
-	  }
-	  getPopup() {
-	    return this.cache.remember('popup', () => {
-	      return main_popup.PopupManager.create({
-	        id: this.popupId,
-	        className: 'landing-ui-field-color-spectrum-popup',
-	        autoHide: true,
-	        bindElement: this.hexPreview.getLayout(),
-	        bindOptions: {
-	          forceTop: true,
-	          forceLeft: true
-	        },
-	        padding: 0,
-	        contentPadding: 14,
-	        width: 260,
-	        offsetTop: -37,
-	        offsetLeft: -180,
-	        content: this.getPopupContent(),
-	        closeByEsc: true,
-	        targetContainer: this.popupTargetContainer
-	      });
-	    });
-	  }
-	  getValue() {
-	    return this.cache.remember('value', () => {
-	      return this.spectrum.getValue();
-	    });
-	  }
-	  onHexChange(event) {
-	    this.setValue(event.getData().color);
-	    this.onChange(event);
-	  }
-	  onSpectrumChange(event) {
-	    this.hex.unFocus();
-	    this.setValue(event.getData().color);
-	    this.onChange(event);
-	  }
-	  onRecentChange(event) {
-	    const recentColor = new ColorValue(event.getData().hex);
-	    this.setValue(recentColor);
-	    this.onChange(new main_core_events.BaseEvent({
-	      data: {
-	        color: recentColor
-	      }
-	    }));
-	  }
-	  onCancelClick() {
-	    this.setValue(this.previously);
-	    this.getPopup().close();
-	    this.onChange(new main_core_events.BaseEvent({
-	      data: {
-	        color: this.getValue()
-	      }
-	    }));
-	  }
-	  onPopupOpenClick() {
-	    this.recent.buildItemsLayout();
-	    this.previously = this.getValue();
-	    this.getPopup().show();
-	    if (this.getPopup().isShown()) {
-	      this.hex.focus();
-	    }
-	  }
-	  setValue(value) {
-	    if (this.isNeedSetValue(value)) {
-	      super.setValue(value);
-	      this.spectrum.setValue(value);
-	      this.hex.setValue(value);
-	      this.hexPreview.setValue(value);
-	    }
-	    this.setActivity(value);
-	  }
-	  setActivity(value) {
-	    if (value !== null) {
-	      if (this.spectrum.isActive()) {
-	        this.hex.unsetActive();
-	      } else {
-	        this.hex.setActive();
-	      }
-	      this.hexPreview.setActive();
-	    }
-	  }
-	  unsetActive() {
-	    this.hex.unsetActive();
-	    this.hexPreview.unsetActive();
-	  }
-	  isActive() {
-	    return this.hex.isActive() || this.hexPreview.isActive();
-	  }
-	}
-
-	let _$6 = t => t,
-	  _t$6;
+	let _$3 = t => t,
+	  _t$3;
 	class Primary extends main_core_events.EventEmitter {
 	  // todo: layout or control?
 	  constructor(options = {}) {
@@ -1214,7 +865,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getLayout() {
 	    return this.cache.remember('layout', () => {
-	      return main_core.Tag.render(_t$6 || (_t$6 = _$6`
+	      return main_core.Tag.render(_t$3 || (_t$3 = _$3`
 				<div class="landing-ui-field-color-primary">
 					<i class="landing-ui-field-color-primary-preview"></i>
 					<span class="landing-ui-field-color-primary-text">
@@ -1463,24 +1114,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      return preset;
 	    });
 	  }
-	  static getBlackAndWhitePreset() {
-	    return this.cache.remember('blackAndWhite', () => {
-	      const preset = {
-	        id: 'blackAndWhite',
-	        items: []
-	      };
-	      const start = new ColorValue('#ffffff');
-	      preset.items.push(new ColorValue(start));
-	      preset.items.push(new ColorValue(start.darken(14.28)));
-	      preset.items.push(new ColorValue(start.darken(14.28)));
-	      preset.items.push(new ColorValue(start.darken(14.28)));
-	      preset.items.push(new ColorValue(start.darken(14.28)));
-	      preset.items.push(new ColorValue(start.darken(14.28)));
-	      preset.items.push(new ColorValue(start.darken(14.28)));
-	      preset.items.push(new ColorValue(start.darken(14.32)));
-	      return preset;
-	    });
-	  }
 	  static getGradientByColorOptions(options) {
 	    const items = [];
 	    const pairs = [[1, 2], [1, 4], [5, 12], [1, 8], [8, 9], [1, 9], [10, 7], [7, 11]];
@@ -1501,67 +1134,127 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	Generator.BITRIX_COLOR = '#2fc6f6';
 	Generator.cache = new main_core.Cache.MemoryCache();
 	Generator.defaultPresets = [{
+	  id: 'blackAndWhite',
+	  items: ['#ffffff', '#f2f2f2', '#dbdbdb', '#b5b5b5', '#919191', '#808080', '#6e6e6e', '#5c5c5c', '#4a4a4a', '#242424', '#171717', '#000000']
+	}, {
 	  id: 'agency',
-	  items: ['#ff6366', '#40191a', '#803233', '#bf4b4d', '#e65a5c', '#ffc1c2', '#363643', '#57dca3', '#ee76ba', '#ffa864', '#eaeaec', '#fadbdc']
+	  items: ['#ff6366', '#40191a', '#803233', '#bf4b4d', '#e65a5c', '#ffc1c2', '#363643', '#57dca3', '#ee76ba', '#ffa864', '#eaeaec', '#fadbdc'
+	  // '#ff6366', '#2b2b2b', '#595959', '#858585', '#ff4245', '#ffc1c2',
+	  // '#3d3d3d', '#33ffa7', '#ff66bd', '#ffa864', '#ebebeb', '#ffd6d8',
+	  ]
 	}, {
 	  id: 'accounting',
-	  items: ['#a5c33c', '#384215', '#6f8228', '#8fa834', '#b0cf40', '#dae6ae', '#4c4c4c', '#5d84e6', '#cd506b', '#fe6466', '#dfdfdf', '#e9f0cf']
+	  items: ['#a5c33c', '#384215', '#6f8228', '#8fa834', '#b0cf40', '#dae6ae', '#4c4c4c', '#5d84e6', '#cd506b', '#fe6466', '#dfdfdf', '#e9f0cf'
+	  // '#c8ff00', '#445700', '#84a800', '#acdb00', '#cbff0f', '#e8ff94',
+	  // '#4c4c4c', '#4278ff', '#ff1f4f', '#ff6164', '#dfdfdf', '#f2ffc2',
+	  ]
 	}, {
 	  id: 'app',
-	  items: ['#4fd2c2', '#1f524c', '#379187', '#46b8aa', '#54dece', '#c8f1ec', '#6639b6', '#e81c62', '#9a69ca', '#6279d8', '#ffc337', '#e9faf8']
+	  items: ['#4fd2c2', '#1f524c', '#379187', '#46b8aa', '#54dece', '#c8f1ec', '#6639b6', '#e81c62', '#9a69ca', '#6279d8', '#ffc337', '#e9faf8'
+	  // '#24ffe5', '#383838', '#636363', '#808080', '#33ffe7', '#b8fff7',
+	  // '#5800f0', '#ff055d', '#999999', '#3d64ff', '#ffc337', '#e5fffc',
+	  ]
 	}, {
 	  id: 'architecture',
-	  items: ['#c94645', '#4a1919', '#8a2f2f', '#b03c3c', '#d64949', '#eec3c3', '#363643', '#446d90', '#a13773', '#c98145', '#eaeaec', '#f9e8e7']
+	  items: ['#c94645', '#4a1919', '#8a2f2f', '#b03c3c', '#d64949', '#eec3c3', '#363643', '#446d90', '#a13773', '#c98145', '#eaeaec', '#f9e8e7'
+	  // '#ff0f0f', '#303030', '#5c5c5c', '#757575', '#ff1f1f', '#ffb3b3',
+	  // '#3d3d3d', '#6b6b6b', '#6b6b6b', '#ff7b0f', '#ebebeb', '#ffe2e0',
+	  ]
 	}, {
 	  id: 'business',
-	  items: ['#3949a0', '#232c61', '#313e87', '#3e4fad', '#556ced', '#d8d7dc', '#14122c', '#1d1937', '#a03949', '#2f295a', '#c87014', '#f4f4f5']
+	  items: ['#3949a0', '#232c61', '#313e87', '#3e4fad', '#556ced', '#d8d7dc', '#14122c', '#1d1937', '#a03949', '#2f295a', '#c87014', '#f4f4f5'
+	  // '#6e6e6e', '#424242', '#5c5c5c', '#757575', '#425fff', '#d9d9d9',
+	  // '#1f1f1f', '#292929', '#6e6e6e', '#424242', '#db7100', '#f5f5f5',
+	  ]
 	}, {
 	  id: 'charity',
-	  items: ['#f5f219', '#f58419', '#f5cc19', '#a8e32a', '#f9f76a', '#fcfbb6', '#000000', '#262e37', '#74797f', '#e569b1', '#edeef0', '#fefedf']
+	  items: ['#f5f219', '#f58419', '#f5cc19', '#a8e32a', '#f9f76a', '#fcfbb6', '#000000', '#262e37', '#74797f', '#e569b1', '#edeef0', '#fefedf'
+	  // '#fffb0f', '#ff830f', '#ffd30f', '#b3ff0f', '#fffc66', '#fffeb3',
+	  // '#000000', '#2e2e2e', '#7a7a7a', '#ff4db5', '#f0f0f0', '#ffffe0',
+	  ]
 	}, {
 	  id: 'construction',
-	  items: ['#f7b70b', '#382a02', '#785905', '#b88907', '#dea509', '#fdf1d1', '#111111', '#a3a3a3', '#f7410b', '#f70b4b', '#d6dde9', '#fef9ea']
+	  items: ['#f7b70b', '#382a02', '#785905', '#b88907', '#dea509', '#fdf1d1', '#111111', '#a3a3a3', '#f7410b', '#f70b4b', '#d6dde9', '#fef9ea'
+	  // '#ffbc05', '#382900', '#805e00', '#bd8a00', '#e6a800', '#fff3d1',
+	  // '#111111', '#a3a3a3', '#ff3f05', '#ff0548', '#e0e0e0', '#fffaeb',
+	  ]
 	}, {
 	  id: 'consulting',
-	  items: ['#21a79b', '#38afa5', '#14665f', '#1c8c83', '#30f2e2', '#a9ddd9', '#ec4672', '#58d400', '#f0ac00', '#2d6faf', '#2da721', '#e6f5f4']
+	  items: ['#21a79b', '#38afa5', '#14665f', '#1c8c83', '#30f2e2', '#a9ddd9', '#ec4672', '#58d400', '#f0ac00', '#2d6faf', '#2da721', '#e6f5f4'
+	  // '#00c7b6', '#00e6d2', '#007a70', '#00a89a', '#24ffed', '#c2c2c2',
+	  // '#ff3369', '#58d400', '#f0ac00', '#006edb', '#11c700', '#ededed',
+	  ]
 	}, {
 	  id: 'corporate',
-	  items: ['#6ab8ee', '#31556e', '#4e86ad', '#5fa3d4', '#70c1fa', '#d2e9f8', '#36e2c0', '#ffaa3c', '#ee6a76', '#ffa468', '#5feb99', '#ebf4fb']
+	  items: ['#6ab8ee', '#31556e', '#4e86ad', '#5fa3d4', '#70c1fa', '#d2e9f8', '#36e2c0', '#ffaa3c', '#ee6a76', '#ffa468', '#5feb99', '#ebf4fb'
+	  // '#57b9ff', '#4f4f4f', '#7d7d7d', '#33aaff', '#6bc1ff', '#ccebff',
+	  // '#1affd1', '#ffaa3c', '#ff5765', '#ffa468', '#4dff97', '#e5f4ff',
+	  ]
 	}, {
 	  id: 'courses',
-	  items: ['#6bda95', '#2c593d', '#4b9969', '#5ebf83', '#70e69d', '#c2f0d3', '#31556e', '#ff947d', '#738ed3', '#f791ab', '#ffb67d', '#e2f8eb']
+	  items: ['#6bda95', '#2c593d', '#4b9969', '#5ebf83', '#70e69d', '#c2f0d3', '#31556e', '#ff947d', '#738ed3', '#f791ab', '#ffb67d', '#e2f8eb'
+	  // '#47ff8e', '#424242', '#737373', '#8f8f8f', '#57ff97', '#b3ffcf',
+	  // '#4f4f4f', '#ff947d', '#477bff', '#ff8aa7', '#ffb67d', '#dbffea',
+	  ]
 	}, {
 	  id: 'event',
-	  items: ['#f73859', '#380d14', '#781c2b', '#b82a42', '#de334f', '#fdbbc6', '#151726', '#ffb553', '#30d59b', '#b265e0', '#edeef0', '#ffeaed']
+	  items: ['#f73859', '#380d14', '#781c2b', '#b82a42', '#de334f', '#fdbbc6', '#151726', '#ffb553', '#30d59b', '#b265e0', '#edeef0', '#ffeaed'
+	  // '#ff2e51', '#47000c', '#940019', '#e00025', '#ff143c', '#ffb8c4',
+	  // '#1f1f1f', '#ffb553', '#05ffa8', '#bc47ff', '#f0f0f0', '#ffeaed',
+	  ]
 	}, {
 	  id: 'gym',
-	  items: ['#6b7de0', '#2f3661', '#4d5aa1', '#5f6fc7', '#7284ed', '#e4e8fa', '#333333', '#ffd367', '#a37fe8', '#e06b7d', '#6dc1e0', '#f4f6fd']
+	  items: ['#6b7de0', '#2f3661', '#4d5aa1', '#5f6fc7', '#7284ed', '#e4e8fa', '#333333', '#ffd367', '#a37fe8', '#e06b7d', '#6dc1e0', '#f4f6fd'
+	  // '#4d67ff', '#474747', '#787878', '#949494', '#6179ff', '#e0e6ff',
+	  // '#333333', '#ffd367', '#9c66ff', '#ff4d67', '#4dcfff', '#f0f3ff',
+	  ]
 	}, {
 	  id: 'lawyer',
-	  items: ['#e74c3c', '#69231b', '#a8382c', '#cf4536', '#f55240', '#f9d0cb', '#4e4353', '#5a505e', '#e7863c', '#38a27f', '#e2e1e3', '#fdeeec']
+	  items: ['#e74c3c', '#69231b', '#a8382c', '#cf4536', '#f55240', '#f9d0cb', '#4e4353', '#5a505e', '#e7863c', '#38a27f', '#e2e1e3', '#fdeeec'
+	  // '#ff3a24', '#850d00', '#d61500', '#ff1e05', '#ff4c38', '#ffcdc7',
+	  // '#4a4a4a', '#575757', '#ff8324', '#6e6e6e', '#e3e3e3', '#ffedeb',
+	  ]
 	}, {
 	  id: 'photography',
-	  items: ['#f7a700', '#382600', '#785200', '#b87d00', '#de9800', '#fde8ba', '#333333', '#0b5aa0', '#e93d18', '#06c4ed', '#3672a8', '#fff6e3']
+	  items: ['#f7a700', '#382600', '#785200', '#b87d00', '#de9800', '#fde8ba', '#333333', '#0b5aa0', '#e93d18', '#06c4ed', '#3672a8', '#fff6e3'
+	  // '#f7a700', '#382600', '#785200', '#b87d00', '#de9800', '#ffe8b8',
+	  // '#333333', '#005cad', '#ff2f00', '#00c8f5', '#0078e0', '#fff6e3',
+	  ]
 	}, {
 	  id: 'restaurant',
-	  items: ['#e6125d', '#660829', '#a60d43', '#cc1052', '#f21361', '#facfde', '#0eb88e', '#00946f', '#e04292', '#9b12e6', '#bfde00', '#fef2f6']
+	  items: ['#e6125d', '#660829', '#a60d43', '#cc1052', '#f21361', '#facfde', '#0eb88e', '#00946f', '#e04292', '#9b12e6', '#bfde00', '#fef2f6'
+	  // '#fa0057', '#700027', '#b3003e', '#db004d', '#ff055d', '#ffccde',
+	  // '#00c795', '#00946f', '#ff2491', '#a200fa', '#bfde00', '#fff0f5',
+	  ]
 	}, {
 	  id: 'shipping',
-	  items: ['#ff0000', '#400000', '#800000', '#bf0000', '#e60000', '#ffb4b4', '#333333', '#ff822a', '#d63986', '#00ac6b', '#ffb800', '#fff3f3']
+	  items: ['#ff0000', '#400000', '#800000', '#bf0000', '#e60000', '#ffb4b4', '#333333', '#ff822a', '#d63986', '#00ac6b', '#ffb800', '#fff3f3'
+	  // '#ff0000', '#400000', '#800000', '#bf0000', '#e60000', '#ffb4b4',
+	  // '#333333', '#ff822a', '#ff0f83', '#00ac6b', '#ffb800', '#fff3f3',
+	  ]
 	}, {
 	  id: 'spa',
-	  items: ['#9dba04', '#313b01', '#667a02', '#86a103', '#a6c704', '#e4ecb9', '#ba7c04', '#cf54bb', '#049dba', '#1d7094', '#eead2f', '#f2f6dd']
+	  items: ['#9dba04', '#313b01', '#667a02', '#86a103', '#a6c704', '#e4ecb9', '#ba7c04', '#cf54bb', '#049dba', '#1d7094', '#eead2f', '#f2f6dd'
+	  // '#9dbd00', '#333d00', '#667a00', '#88a300', '#aacc00', '#f2ffa8',
+	  // '#bd7e00', '#ff24da', '#009dbd', '#007db3', '#ffb41f', '#f8ffd6',
+	  ]
 	}, {
 	  id: 'travel',
-	  items: ['#ee4136', '#6e1f19', '#ad3128', '#d43c31', '#fa4639', '#fef1f0', '#31353e', '#3e434d', '#ee8036', '#428abc', '#eaebec', '#c3c4c7']
+	  items: ['#ee4136', '#6e1f19', '#ad3128', '#d43c31', '#fa4639', '#fef1f0', '#31353e', '#3e434d', '#ee8036', '#428abc', '#eaebec', '#c3c4c7'
+	  // '#ff3224', '#850900', '#d60e00', '#ff1605', '#ff4133', '#fff1f0',
+	  // '#383838', '#454545', '#ff7b24', '#808080', '#ebebeb', '#c4c4c4',
+	  ]
 	}, {
 	  id: 'wedding',
-	  items: ['#d65779', '#572431', '#963e55', '#bd4d6b', '#e35d81', '#f7dfe5', '#af58a7', '#6bc34b', '#ec8c60', '#50a098', '#57b9d6', '#fdf4f6']
+	  items: ['#d65779', '#572431', '#963e55', '#bd4d6b', '#e35d81', '#f7dfe5', '#af58a7', '#6bc34b', '#ec8c60', '#50a098', '#57b9d6', '#fdf4f6'
+	  // '#ff2e66', '#3d3d3d', '#6b6b6b', '#858585', '#ff4275', '#ffd6e0',
+	  // '#858585', '#4fff0f', '#ff854d', '#787878', '#2eceff', '#fff0f3',
+	  ]
 	}];
 
-	let _$7 = t => t,
-	  _t$7,
-	  _t2$4;
+	let _$4 = t => t,
+	  _t$4,
+	  _t2$2;
 	class Preset extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super();
@@ -1586,7 +1279,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getLayout() {
 	    return this.cache.remember('layout', () => {
-	      return main_core.Tag.render(_t$7 || (_t$7 = _$7`
+	      return main_core.Tag.render(_t$4 || (_t$4 = _$4`
 				<div class="landing-ui-field-color-preset">
 					${0}
 				</div>
@@ -1599,7 +1292,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    return this.cache.remember(name, () => {
 	      const color = this.getItemByName(name);
 	      const style = main_core.Type.isString(color) ? color : color.getStyleString();
-	      const item = main_core.Tag.render(_t2$4 || (_t2$4 = _$7`
+	      const item = main_core.Tag.render(_t2$2 || (_t2$2 = _$4`
 				<div
 					class="landing-ui-field-color-preset-item"
 					style="background: ${0}"
@@ -1656,6 +1349,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }
 	    }
 	  }
+	  setActiveHex(hexValue) {
+	    this.items.forEach(item => {
+	      const hexItem = item.getHex();
+	      if (hexValue === hexItem) {
+	        this.setActiveItem(item.getName());
+	      }
+	    });
+	  }
 	  unsetActive() {
 	    this.items.forEach(item => {
 	      main_core.Dom.removeClass(this.getItemLayout(item.getName()), Preset.ACTIVE_CLASS);
@@ -1669,12 +1370,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	}
 	Preset.ACTIVE_CLASS = 'active';
 
-	let _$8 = t => t,
-	  _t$8,
-	  _t2$5,
-	  _t3$2,
-	  _t4$2,
-	  _t5$1;
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$3,
+	  _t3$1,
+	  _t4$1,
+	  _t5;
 	class PresetCollection extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super();
@@ -1722,6 +1423,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      return null;
 	    }
 	  }
+	  getAllPresets() {
+	    return Object.keys(this.presets).map(id => this.getPresetById(id)).filter(Boolean);
+	  }
 	  getPresetByItemValue(value) {
 	    if (value === null) {
 	      return null;
@@ -1742,7 +1446,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getLayout() {
 	    return this.cache.remember('value', () => {
-	      return main_core.Tag.render(_t$8 || (_t$8 = _$8`
+	      return main_core.Tag.render(_t$5 || (_t$5 = _$5`
 				<div class="landing-ui-field-color-presets">
 					<div class="landing-ui-field-color-presets-left">
 						<span class="landing-ui-field-color-presets-title">
@@ -1756,7 +1460,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getOpenButton() {
 	    return this.cache.remember('openButton', () => {
-	      return main_core.Tag.render(_t2$5 || (_t2$5 = _$8`<span class="landing-ui-field-color-presets-open">
+	      return main_core.Tag.render(_t2$3 || (_t2$3 = _$5`<span class="landing-ui-field-color-presets-open">
 				${0}
 			</span>`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-PRESETS_MORE'));
 	    });
@@ -1788,7 +1492,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getPopupLayout() {
 	    return this.cache.remember('popupLayout', () => {
-	      const layouts = main_core.Tag.render(_t3$2 || (_t3$2 = _$8`<div class="landing-ui-field-color-presets-popup">
+	      const layouts = main_core.Tag.render(_t3$1 || (_t3$1 = _$5`<div class="landing-ui-field-color-presets-popup">
 				<div class="landing-ui-field-color-presets-popup-title">
 					${0}
 				</div>
@@ -1809,12 +1513,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getPresetLayout(presetId) {
 	    return this.cache.remember(presetId + 'layout', () => {
-	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$8`
+	      return main_core.Tag.render(_t4$1 || (_t4$1 = _$5`
 				<div class="landing-ui-field-color-presets-preset" data-id="${0}">
 					${0}
 				</div>
 			`), presetId, this.presets[presetId].items.map(item => {
-	        return main_core.Tag.render(_t5$1 || (_t5$1 = _$8`<div
+	        return main_core.Tag.render(_t5 || (_t5 = _$5`<div
 								class="landing-ui-field-color-presets-preset-item"
 								style="background: ${0}"
 							></div>`), main_core.Type.isString(item) ? item : item.getStyleString());
@@ -1855,71 +1559,1065 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	PresetCollection.globalActiveId = null;
 	PresetCollection.ACTIVE_CLASS = 'active';
 
-	let _$9 = t => t,
-	  _t$9;
-	class Reset extends main_core_events.EventEmitter {
-	  constructor(options) {
+	let _$6 = t => t,
+	  _t$6,
+	  _t2$4;
+	class Recent extends main_core_events.EventEmitter {
+	  constructor() {
 	    super();
-	    this.options = options;
 	    this.cache = new main_core.Cache.MemoryCache();
-	    this.setEventNamespace('BX.Landing.UI.Field.Color.Reset');
-	    main_core.Event.bind(this.getLayout(), 'click', () => this.onClick());
-	    const hint = BX.UI.Hint.createInstance({
-	      popupParameters: {
-	        targetContainer: options.contentRoot,
-	        padding: 0
-	      }
-	    });
-	    hint.init(this.getLayout());
+	    this.setEventNamespace('BX.Landing.UI.Field.Color.Recent');
 	  }
 	  getLayout() {
-	    if (this.options && !this.options.styleNode) {
-	      return null;
-	    }
+	    return this.getLayoutContainer();
+	  }
+	  getLayoutContainer() {
 	    return this.cache.remember('layout', () => {
-	      return main_core.Tag.render(_t$9 || (_t$9 = _$9`
-				<div class="landing-ui-field-color-reset-container">
-					<div class="landing-ui-field-color-reset"
-						data-hint="${0}"
-						data-hint-no-icon
-					>
-					</div>
-				</div>
-			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-RESET_HINT_2'));
+	      return main_core.Tag.render(_t$6 || (_t$6 = _$6`<div class="landing-ui-field-color-recent"></div>`));
 	    });
 	  }
-	  onClick() {
-	    this.emit('onReset');
+	  static initItems() {
+	    return new Promise(resolve => {
+	      if (Recent.itemsLoaded) {
+	        resolve();
+	      } else {
+	        landing_backend.Backend.getInstance().action('Utils::getUserOption', {
+	          name: Recent.USER_OPTION_NAME
+	        }).then(result => {
+	          if (result && main_core.Type.isString(result.items)) {
+	            Recent.items = [];
+	            result.items.split(',').forEach(item => {
+	              if (isHex(item) && Recent.items.length < Recent.MAX_ITEMS) {
+	                Recent.items.push(item);
+	              }
+	            });
+	            Recent.itemsLoaded = true;
+	          }
+	          resolve();
+	        });
+	      }
+	    });
+	  }
+	  buildItemsLayout(activeHex = null) {
+	    if (activeHex) {
+	      this.activeHex = activeHex;
+	    }
+	    main_core.Dom.clean(this.getLayoutContainer());
+	    this.itemElements = [];
+	    Recent.items.forEach(item => {
+	      if (isHex(item)) {
+	        const isActive = this.activeHex === item;
+	        const itemLayout = main_core.Tag.render(_t2$4 || (_t2$4 = _$6`
+					<div 
+						class="landing-ui-field-color-recent-item${0}"
+						style="background:${0}"
+						data-value="${0}"
+					></div>
+				`), isActive ? ' active' : '', item, item);
+	        this.itemElements.push(itemLayout);
+	        main_core.Event.bind(itemLayout, 'click', () => this.onItemClick(event, itemLayout));
+	        main_core.Dom.append(itemLayout, this.getLayoutContainer());
+	      }
+	    });
+	    return this;
+	  }
+	  onItemClick(event, clickedElement) {
+	    this.itemElements.forEach(el => BX.Dom.removeClass(el, 'active'));
+	    BX.Dom.addClass(clickedElement, 'active');
+	    this.activeHex = clickedElement.dataset.value;
+	    this.emit('onChange', {
+	      hex: event.currentTarget.dataset.value
+	    });
+	  }
+	  addItem(hex) {
+	    if (isHex(hex)) {
+	      const pos = Recent.items.indexOf(hex);
+	      if (pos !== -1) {
+	        Recent.items.splice(pos, 1);
+	      }
+	      Recent.items.unshift(hex);
+	      if (Recent.items.length > Recent.MAX_ITEMS) {
+	        Recent.items.splice(Recent.MAX_ITEMS);
+	      }
+	      this.buildItemsLayout();
+	      this.saveItems();
+	    }
+	    return this;
+	  }
+	  saveItems() {
+	    if (Recent.items.length > 0) {
+	      BX.userOptions.save('landing', Recent.USER_OPTION_NAME, 'items', Recent.items);
+	    }
+	    return this;
+	  }
+	}
+	Recent.USER_OPTION_NAME = 'color_field_recent_colors';
+	Recent.MAX_ITEMS = 24;
+	Recent.items = [];
+	Recent.itemsLoaded = false;
+
+	let _$7 = t => t,
+	  _t$7,
+	  _t2$5,
+	  _t3$2,
+	  _t4$2,
+	  _t5$1,
+	  _t6,
+	  _t7,
+	  _t8;
+	class Favourite extends main_core_events.EventEmitter {
+	  constructor() {
+	    super();
+	    this.setEventNamespace('BX.Landing.UI.Field.Color.Favourite');
+	    this.cache = new main_core.Cache.MemoryCache();
+	    this.itemsContainer = null;
+	    this.isEditMode = false;
+	    this.activeHex = null;
+	    this.itemElements = [];
+	    this.buttonChange = null;
+	    this.buttonSave = null;
+	  }
+	  getLayout() {
+	    return this.getLayoutContainer();
+	  }
+	  getLayoutContainer() {
+	    this.buttonChange = main_core.Tag.render(_t$7 || (_t$7 = _$7`
+			<div class="landing-ui-field-color-favourite-head-button-change">
+				${0}
+			</div>
+		`), main_core.Loc.getMessage('LANDING_FIELD_COLOR_FAVOURITES_BUTTON_CHANGE'));
+	    this.buttonSave = main_core.Tag.render(_t2$5 || (_t2$5 = _$7`
+			<div class="landing-ui-field-color-favourite-head-button-save" hidden>
+				${0}
+			</div>
+		`), main_core.Loc.getMessage('LANDING_FIELD_COLOR_FAVOURITES_BUTTON_SAVE'));
+	    main_core.Event.bind(this.buttonChange, 'click', () => this.onChangeButtonClick());
+	    main_core.Event.bind(this.buttonSave, 'click', () => this.onSaveButtonClick());
+	    return this.cache.remember('layout', () => {
+	      this.itemsContainer = main_core.Tag.render(_t3$2 || (_t3$2 = _$7`<div class="landing-ui-field-color-favourite-colors view-mode"></div>`));
+	      main_core.Dom.append(this.getItemsLayout(), this.itemsContainer);
+	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$7`
+				<div>
+					<div class="landing-ui-field-color-favourite-head">
+						<div class="landing-ui-field-color-favourite-head-title">
+							${0}
+						</div>
+						<div class="landing-ui-field-color-favourite-head-buttons">
+							${0}
+							${0}
+						</div>
+					</div>
+					${0}
+				</div>
+			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR_FAVOURITES_TITLE'), this.buttonChange, this.buttonSave, this.itemsContainer);
+	    });
+	  }
+	  static initItems() {
+	    return new Promise(resolve => {
+	      if (Favourite.itemsLoaded) {
+	        resolve();
+	      } else {
+	        landing_backend.Backend.getInstance().action('Utils::getUserOption', {
+	          name: Favourite.USER_OPTION_NAME
+	        }).then(result => {
+	          if (result && main_core.Type.isString(result.items)) {
+	            Favourite.items = [];
+	            result.items.split(',').forEach(item => {
+	              if (isHex(item) && Favourite.items.length < Favourite.MAX_ITEMS) {
+	                Favourite.items.push(item);
+	              }
+	            });
+	            Favourite.itemsLoaded = true;
+	          }
+	          resolve();
+	        }).catch(() => {
+	          resolve();
+	        });
+	      }
+	    });
+	  }
+	  getItemsLayout(activeHex = null) {
+	    const itemLayoutButtonAdd = main_core.Tag.render(_t5$1 || (_t5$1 = _$7`
+			<div class="landing-ui-field-color-favourite-item-container">
+				<div class="landing-ui-field-color-favourite-item-add"></div>
+			</div>
+		`));
+	    main_core.Event.bind(itemLayoutButtonAdd, 'click', () => this.onAddButtonClick());
+	    if (activeHex) {
+	      this.setActiveHex(activeHex);
+	    }
+	    this.itemElements = [];
+	    const itemsContainer = main_core.Tag.render(_t6 || (_t6 = _$7`<div class="landing-ui-field-color-favourite-items-container"></div>`));
+	    main_core.Dom.append(itemLayoutButtonAdd, itemsContainer);
+	    Favourite.items.forEach(item => {
+	      if (isHex(item)) {
+	        const isActive = this.activeHex === item;
+	        const removeButton = main_core.Tag.render(_t7 || (_t7 = _$7`
+					<div class="landing-ui-field-color-favourite-item-remove-button"${0}></div>
+				`), this.isEditMode ? '' : ' hidden');
+	        const itemLayout = main_core.Tag.render(_t8 || (_t8 = _$7`
+					<div class="landing-ui-field-color-favourite-item-container ${0}">
+						<div 
+							class="landing-ui-field-color-favourite-item"
+							style="background:${0}"
+							data-value="${0}"
+						></div>
+						${0}
+					</div>
+				`), isActive ? ' active' : '', item, item, removeButton);
+	        this.itemElements.push(itemLayout);
+	        const colorItem = itemLayout.querySelector('.landing-ui-field-color-favourite-item');
+	        if (colorItem) {
+	          main_core.Event.bind(colorItem, 'click', event => this.onItemClick(event, itemLayout));
+	        }
+	        if (removeButton) {
+	          main_core.Event.bind(removeButton, 'click', event => this.onRemoveButtonClick(event, item, itemLayout));
+	        }
+	        main_core.Dom.append(itemLayout, itemsContainer);
+	      }
+	    });
+	    return itemsContainer;
+	  }
+	  buildItemsLayout(activeHex = null) {
+	    if (activeHex) {
+	      this.setActiveHex(activeHex);
+	    }
+	    if (this.itemsContainer) {
+	      main_core.Dom.clean(this.itemsContainer);
+	      main_core.Dom.append(this.getItemsLayout(), this.itemsContainer);
+	    }
+	  }
+	  onItemClick(event, clickedElement) {
+	    this.itemElements.forEach(el => BX.Dom.removeClass(el, 'active'));
+	    BX.Dom.addClass(clickedElement, 'active');
+	    this.setActiveHex(clickedElement.dataset.value);
+	    this.emit('onSelectColor', {
+	      hex: event.currentTarget.dataset.value
+	    });
+	  }
+	  onAddButtonClick() {
+	    if (this.activeHex !== null) {
+	      this.addItem(this.activeHex);
+	    }
+	    this.emit('onAddColor', {
+	      hex: this.activeHex
+	    });
+	  }
+	  onRemoveButtonClick(event, hex) {
+	    event.stopPropagation();
+	    this.removeItem(hex);
+	    this.emit('onRemoveColor', {
+	      hex
+	    });
+	  }
+	  onChangeButtonClick() {
+	    this.emit('onEditColors');
+	    this.isEditMode = true;
+	    BX.Dom.removeClass(this.itemsContainer, Favourite.MODE_CLASSES.VIEW);
+	    BX.Dom.addClass(this.itemsContainer, Favourite.MODE_CLASSES.EDIT);
+	    if (this.buttonChange && this.buttonSave) {
+	      this.buttonChange.setAttribute('hidden', 'true');
+	      this.buttonSave.removeAttribute('hidden');
+	    }
+	    const removeButtons = this.itemsContainer ? this.itemsContainer.querySelectorAll('.landing-ui-field-color-favourite-item-remove-button') : [];
+	    removeButtons.forEach(btn => btn.removeAttribute('hidden'));
+	  }
+	  onSaveButtonClick() {
+	    this.emit('onSaveColors');
+	    this.isEditMode = false;
+	    BX.Dom.addClass(this.itemsContainer, Favourite.MODE_CLASSES.VIEW);
+	    BX.Dom.removeClass(this.itemsContainer, Favourite.MODE_CLASSES.EDIT);
+	    if (this.buttonChange && this.buttonSave) {
+	      this.buttonSave.setAttribute('hidden', 'true');
+	      this.buttonChange.removeAttribute('hidden');
+	    }
+	    const removeButtons = this.itemsContainer ? this.itemsContainer.querySelectorAll('.landing-ui-field-color-favourite-item-remove-button') : [];
+	    removeButtons.forEach(btn => btn.setAttribute('hidden', ''));
+	  }
+	  addItem(hex) {
+	    if (isHex(hex)) {
+	      const pos = Favourite.items.indexOf(hex);
+	      if (pos !== -1) {
+	        Favourite.items.splice(pos, 1);
+	      }
+	      Favourite.items.unshift(hex);
+	      if (Favourite.items.length > Favourite.MAX_ITEMS) {
+	        Favourite.items.splice(Favourite.MAX_ITEMS);
+	      }
+	      this.buildItemsLayout(hex);
+	      this.saveItems();
+	    }
+	    return this;
+	  }
+	  removeItem(hex) {
+	    if (isHex(hex)) {
+	      const index = Favourite.items.indexOf(hex);
+	      if (index !== -1) {
+	        Favourite.items.splice(index, 1);
+	      }
+	      this.buildItemsLayout();
+	      this.saveItems();
+	    }
+	    return this;
+	  }
+	  saveItems() {
+	    if (Favourite.items.length > 0) {
+	      BX.userOptions.save('landing', Favourite.USER_OPTION_NAME, 'items', Favourite.items);
+	    }
+	    return this;
+	  }
+	  setActiveHex(hex) {
+	    this.activeHex = hex;
+	  }
+	}
+	Favourite.USER_OPTION_NAME = 'color_field_favourite_colors';
+	Favourite.MAX_ITEMS = 80;
+	Favourite.items = [];
+	Favourite.itemsLoaded = false;
+	Favourite.MODE_CLASSES = {
+	  VIEW: 'view-mode',
+	  EDIT: 'edit-mode'
+	};
+
+	let _$8 = t => t,
+	  _t$8,
+	  _t2$6,
+	  _t3$3,
+	  _t4$3,
+	  _t5$2,
+	  _t6$1,
+	  _t7$1,
+	  _t8$1,
+	  _t9;
+	class ColorPopup extends BaseControl {
+	  constructor(options) {
+	    super();
+
+	    //todo: check for inline twice call
+
+	    this.options = options;
+	    this.hexPreview = options.hexPreview;
+	    this.isHexPreviewMode = options.hexPreviewMode;
+	    this.isNeedCalcPopupOffset = options.isNeedCalcPopupOffset;
+	    this.isNeedResetPopupWhenOpen = options.isNeedResetPopupWhenOpen;
+	    this.popupId = `colorpopup_${main_core.Text.getRandom()}`;
+	    this.popupTargetContainer = options.contentRoot;
+	    this.activeTab = ColorPopup.TABS.RECENT;
+	    if (this.hexPreview) {
+	      this.bindElement = this.hexPreview.getLayout();
+	      this.hexPreview.subscribe('onValidInput', this.onHexPreviewValidInput.bind(this));
+	    }
+	    if (this.options.bindElement) {
+	      this.bindElement = this.options.bindElement;
+	    }
+	    if (this.options.bindElement) {
+	      this.targetContainer = this.options.targetContainer;
+	    }
+	    this.tabButtons = {};
+	    this.tabContents = {};
+	    this.init();
+	    this.initAnalytics(options.analytics);
+	  }
+	  init() {
+	    this.hex = new Hex();
+	    this.hex.subscribe('onChange', this.onHexChange.bind(this));
+	    this.recent = new Recent();
+	    this.recent.subscribe('onChange', this.onRecentChange.bind(this));
+	    this.spectrum = new Spectrum(this.options);
+	    this.spectrum.subscribe('onChange', this.onSpectrumChange.bind(this));
+	    this.spectrum.subscribe('onPickerDragStart', this.onSpectrumDragStart.bind(this));
+	    this.spectrum.subscribe('onPickerDragEnd', this.onSpectrumDragEnd.bind(this));
+	    this.presetCollection = new PresetCollection(this.options);
+	    this.presetCollection.addDefaultPresets();
+	    this.presets = this.presetCollection.getAllPresets();
+	    this.presets.forEach(preset => {
+	      preset.subscribe('onChange', this.onPresetChange.bind(this));
+	    });
+	    this.favourite = new Favourite();
+	    this.favourite.subscribe('onSelectColor', this.onFavouriteSelect.bind(this));
+	    this.favourite.subscribe('onAddColor', this.onAddFavouriteColor.bind(this));
+	    this.favourite.subscribe('onRemoveColor', this.onRemoveFavouriteColor.bind(this));
+	    this.favourite.subscribe('onEditColors', this.onEditFavouriteColors.bind(this));
+	    this.favourite.subscribe('onSaveColors', this.onSaveFavouriteColors.bind(this));
+	  }
+	  initAnalytics(options) {
+	    this.analyticsCategory = ColorPopup.ANALYTICS.CATEGORY_DESIGN;
+	    if (this.hexPreview) {
+	      this.analyticsCElement = this.isHexPreviewMode ? ColorPopup.ANALYTICS.COLOR_TYPE_GRADIENT : ColorPopup.ANALYTICS.COLOR_TYPE_SOLID;
+	    }
+	    this.analyticsCSubSection = this.options.style;
+	    if (options) {
+	      if (options.category) {
+	        this.analyticsCategory = options.category;
+	      }
+	      if (options.c_sub_section) {
+	        this.analyticsCSubSection = options.c_sub_section;
+	      }
+	      if (options.p1) {
+	        this.analyticsP1 = options.p1;
+	      }
+	    }
+	  }
+	  getPopup() {
+	    let offsetLeft = 0;
+	    let offsetTop = 3;
+	    const popupWidth = 287;
+	    const editorPanelCurrentElement = BX.Landing.UI.Panel.EditorPanel.getInstance().currentElement;
+	    if (editorPanelCurrentElement !== null && editorPanelCurrentElement.ownerDocument !== BX.Landing.PageObject.getRootWindow().document && !this.hexPreview) {
+	      offsetTop -= 66;
+	    }
+	    if (this.bindElement && this.isNeedCalcPopupOffset !== false) {
+	      const layoutClientRect = this.bindElement.getBoundingClientRect();
+	      const panelWidth = 320;
+	      const panelPaddingRight = 12;
+	      offsetLeft = panelWidth - popupWidth - panelPaddingRight - layoutClientRect.x;
+	    }
+	    return this.cache.remember('popup', () => {
+	      var _this$popupTargetCont;
+	      return main_popup.PopupManager.create({
+	        id: this.popupId,
+	        className: 'landing-ui-field-color-popup',
+	        autoHide: true,
+	        autoHideHandler: event => {
+	          const target = event.target;
+	          if (!this.hexPreview) {
+	            return !(target && target.closest('.popup-window-content'));
+	          }
+	          return target !== this.hexPreview.getInput() && !this.getPopup().contentContainer.contains(target);
+	        },
+	        bindElement: this.bindElement,
+	        bindOptions: {
+	          forceTop: true,
+	          forceLeft: true
+	        },
+	        padding: 0,
+	        contentPadding: 16,
+	        width: popupWidth,
+	        offsetTop,
+	        offsetLeft,
+	        content: this.getPopupContent(),
+	        closeByEsc: true,
+	        targetContainer: (_this$popupTargetCont = this.popupTargetContainer) != null ? _this$popupTargetCont : null,
+	        events: {
+	          onPopupClose: () => {
+	            this.favourite.onSaveButtonClick();
+	            this.emit('onPopupClose');
+	          },
+	          onPopupShow: () => {
+	            this.emit('onPopupShow');
+	          }
+	        }
+	      });
+	    });
+	  }
+	  getPopupContent() {
+	    var _this$colorPickerPopu;
+	    const tabNames = [{
+	      key: ColorPopup.TABS.RECENT,
+	      label: main_core.Loc.getMessage('LANDING_FIELD_COLOR_TAB_RECENT')
+	    }, {
+	      key: ColorPopup.TABS.SPECTRUM,
+	      label: main_core.Loc.getMessage('LANDING_FIELD_COLOR_TAB_SPECTRUM')
+	    }, {
+	      key: ColorPopup.TABS.PRESET,
+	      label: main_core.Loc.getMessage('LANDING_FIELD_COLOR_TAB_PRESETS')
+	    }];
+	    const tabButtonsRow = main_core.Tag.render(_t$8 || (_t$8 = _$8`
+			<div class="landing-ui-field-color-popup-tabs"></div>
+		`));
+	    tabNames.forEach(tab => {
+	      const btn = main_core.Tag.render(_t2$6 || (_t2$6 = _$8`
+				<button 
+					class="landing-ui-field-color-popup-tab-btn"
+					data-tab="${0}"
+					type="button"
+				>${0}</button>
+			`), tab.key, tab.label);
+	      BX.Dom.append(btn, tabButtonsRow);
+	      this.tabButtons[tab.key] = btn;
+	      main_core.Event.bind(btn, 'click', () => this.setActiveTab(tab.key, true));
+	    });
+	    const recentTab = main_core.Tag.render(_t3$3 || (_t3$3 = _$8`
+			<div class="landing-ui-field-color-popup-container-recent">
+				${0}
+			</div>
+		`), this.recent.getLayout());
+	    const spectrumTab = main_core.Tag.render(_t4$3 || (_t4$3 = _$8`
+			<div class="landing-ui-field-color-popup-container-spectrum" hidden>
+				${0}
+			</div>
+		`), this.spectrum.getLayout());
+	    const presetsTab = main_core.Tag.render(_t5$2 || (_t5$2 = _$8`
+			<div class="landing-ui-field-color-popup-container-presets" hidden>
+				${0}
+			</div>
+		`), this.getPresetsLayout());
+	    this.tabContents = {
+	      recent: recentTab,
+	      spectrum: spectrumTab,
+	      preset: presetsTab
+	    };
+	    const favouriteColors = main_core.Tag.render(_t6$1 || (_t6$1 = _$8`
+			<div class="landing-ui-field-color-popup-favourite-colors">
+				${0}
+			</div>
+		`), this.favourite.getLayout());
+	    if (!this.hexPreview) {
+	      this.colorPickerPopup = this.getColorPickerPopupLayout();
+	      main_core.Event.bind(this.colorPickerPopup, 'input', this.onColorPopupInput.bind(this));
+	    }
+	    const content = main_core.Tag.render(_t7$1 || (_t7$1 = _$8`
+			<div class="landing-ui-field-color-popup-container">
+				${0}
+				${0}
+				${0}
+				${0}
+				${0}
+				${0}
+			</div>
+		`), (_this$colorPickerPopu = this.colorPickerPopup) != null ? _this$colorPickerPopu : null, tabButtonsRow, recentTab, spectrumTab, presetsTab, favouriteColors);
+	    main_core.Event.bind(content, 'click', event => {
+	      event.preventDefault();
+	      event.stopPropagation();
+	    });
+	    this.setActiveTab(this.activeTab);
+	    return content;
+	  }
+	  onPopupOpenClick(event, bindElement = null) {
+	    if (bindElement !== null) {
+	      this.bindElement = bindElement;
+	    }
+	    if (!this.hexPreview && this.isNeedResetPopupWhenOpen !== false) {
+	      this.resetPopupValue();
+	    }
+	    Promise.all([Recent.initItems(), Favourite.initItems()]).then(() => {
+	      const popup = this.getPopup();
+	      if (this.hexPreview && !popup.isShown()) {
+	        if (event.target === this.hexPreview.getLayout()) {
+	          this.setActiveTab(ColorPopup.TABS.RECENT);
+	        }
+	        if (event.target === this.hexPreview.getInput()) {
+	          this.setActiveTab(ColorPopup.TABS.SPECTRUM);
+	        }
+	      }
+	      if (Recent.items.length === 0) {
+	        this.setActiveTab(ColorPopup.TABS.PRESET);
+	      }
+	      if (!popup.isShown()) {
+	        this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.OPEN_POPUP);
+	        popup.show();
+	        this.hex.focus();
+	      }
+	      this.recent.buildItemsLayout();
+	      this.favourite.buildItemsLayout();
+	    });
+	  }
+	  resetPopupValue() {
+	    this.resetColorPickerPopupValue();
+	    this.unsetActivePresets();
+	    this.recent.buildItemsLayout(ColorPopup.HEX_DEFAULT_TEXT);
+	    this.favourite.buildItemsLayout(ColorPopup.HEX_DEFAULT_TEXT);
+	    this.spectrum.hidePicker();
+	  }
+	  onChangeColor(color) {
+	    this.emit('onColorPopupChange', color);
+	    if (!this.hexPreview) {
+	      const hex = main_core.Type.isString(color) && isHex(color) ? color : color && main_core.Type.isFunction(color.getHex) ? color.getHex() : null;
+	      this.updateColorPickerPopup(hex);
+	      this.emit('onHexColorPopupChange', hex);
+	    }
+	  }
+	  setValue(value) {
+	    if (!value) {
+	      return;
+	    }
+	    this.spectrum.setValue(value);
+	    this.hex.setValue(value);
+	    const hexValue = value.getHex();
+	    this.currentHexValue = hexValue;
+	    this.presets.forEach(preset => {
+	      preset.setActiveHex(hexValue);
+	    });
+	    this.recent.buildItemsLayout(hexValue);
+	    this.favourite.buildItemsLayout(hexValue);
+	    this.updateColorPickerPopup(hexValue);
+	  }
+	  setHexValue(hexValue) {
+	    this.setValue(new ColorValue(hexValue));
+	  }
+	  getValue() {
+	    return this.spectrum.getValue();
+	  }
+	  getPresetsLayout() {
+	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$8`
+			<div class="landing-ui-field-color-presets-list">
+				${0}
+			</div>
+		`), this.presets.map(preset => preset.getLayout()));
+	  }
+	  getColorPickerPopupLayout() {
+	    this.colorPickerPopupId = `colorpicket_${main_core.Text.getRandom()}`;
+	    let value = ColorPopup.HEX_DEFAULT_TEXT;
+	    let bgValue = '#eeeeee';
+	    if (this.currentHexValue) {
+	      value = this.currentHexValue;
+	      bgValue = this.currentHexValue;
+	    }
+	    return main_core.Tag.render(_t9 || (_t9 = _$8`
+			<div class="landing-ui-field-color-popup-picker">
+				<div class="landing-ui-field-color-popup-picker-preview" style="background-color: ${0};"></div>
+				<input id="${0}" type="text" value="${0}" class="landing-ui-field-color-popup-picker-input">
+			</div>
+		`), bgValue, this.colorPickerPopupId, value);
+	  }
+	  updateColorPickerPopup(hex) {
+	    if (!this.colorPickerPopup) {
+	      return;
+	    }
+	    const preview = this.colorPickerPopup.querySelector('.landing-ui-field-color-popup-picker-preview');
+	    if (preview) {
+	      BX.Dom.style(preview, 'background-color', hex);
+	    }
+	    const input = this.colorPickerPopup.querySelector('.landing-ui-field-color-popup-picker-input');
+	    if (input) {
+	      input.value = hex;
+	    }
+	  }
+	  resetColorPickerPopupValue() {
+	    if (!this.colorPickerPopup) {
+	      return;
+	    }
+	    const preview = this.colorPickerPopup.querySelector('.landing-ui-field-color-popup-picker-preview');
+	    if (preview) {
+	      BX.Dom.style(preview, 'background-color', '#eeeeee');
+	    }
+	    const input = this.colorPickerPopup.querySelector('.landing-ui-field-color-popup-picker-input');
+	    if (input) {
+	      input.value = ColorPopup.HEX_DEFAULT_TEXT;
+	    }
+	  }
+	  onColorPopupInput() {
+	    const input = this.colorPickerPopup.querySelector('.landing-ui-field-color-popup-picker-input');
+	    if (this.colorPopupInputTimeout) {
+	      clearTimeout(this.colorPopupInputTimeout);
+	    }
+	    this.colorPopupInputTimeout = setTimeout(() => {
+	      let value = input.value.replaceAll(/[^\da-f]/gi, '');
+	      value = value.slice(0, 6);
+	      const hex = `#${value.toLowerCase()}`;
+	      input.value = hex;
+	      const hexRegex = /^#([\da-f]{6})$/;
+	      if (hexRegex.test(hex)) {
+	        this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.SELECT_COLOR, {
+	          type: ColorPopup.ANALYTICS.TYPE_COLORS.HEX
+	        });
+	        const color = new ColorValue(hex);
+	        this.recent.addItem(hex);
+	        this.recent.buildItemsLayout();
+	        this.setValue(color);
+	        this.onChangeColor(hex);
+	        input.focus();
+	      }
+	    }, 333);
+	  }
+	  setActiveTab(tabKey, isUserClick = false) {
+	    if (isUserClick === true && tabKey !== this.activeTab) {
+	      this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.CHANGE_TAB, {
+	        type: tabKey
+	      });
+	    }
+	    this.activeTab = tabKey;
+	    if (this.activeTab === ColorPopup.TABS.RECENT) {
+	      this.recent.buildItemsLayout();
+	    }
+	    Object.entries(this.tabContents).forEach(([key, node]) => {
+	      node.hidden = key !== tabKey;
+	    });
+	    Object.entries(this.tabButtons).forEach(([key, btn]) => {
+	      if (key === tabKey) {
+	        BX.Dom.addClass(btn, 'active');
+	      } else {
+	        BX.Dom.removeClass(btn, 'active');
+	      }
+	    });
+	  }
+	  onHexChange(event) {
+	    this.unsetActivePresets();
+	    const color = event.getData().color;
+	    if (color) {
+	      this.recent.addItem(color.getHex());
+	    }
+	    this.setValue(color);
+	    this.onChange(event);
+	  }
+	  onSpectrumChange(event) {
+	    const color = event.getData().color;
+	    this.unsetActivePresets();
+	    this.hex.unFocus();
+	    this.setValue(color);
+	    this.onChangeColor(color);
+	  }
+	  onSpectrumDragStart(event) {
+	    landing_pageobject.PageObject.getRootWindow().document.activeElement.blur();
+	  }
+	  onSpectrumDragEnd(event) {
+	    this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.SELECT_COLOR, {
+	      type: ColorPopup.ANALYTICS.TYPE_COLORS.SPECTRUM
+	    });
+	    const color = event.getData().color;
+	    this.recent.addItem(color.getHex());
+	  }
+	  onPresetChange(event) {
+	    this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.SELECT_COLOR, {
+	      type: ColorPopup.ANALYTICS.TYPE_COLORS.PRESET
+	    });
+	    const presetId = event.target.id;
+	    this.unsetActivePresets(presetId);
+	    const color = event.getData().color;
+	    this.recent.addItem(color.getHex());
+	    this.setValue(color);
+	    this.onChangeColor(color);
+	  }
+	  onRecentChange(event) {
+	    this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.SELECT_COLOR, {
+	      type: ColorPopup.ANALYTICS.TYPE_COLORS.RECENT
+	    });
+	    this.unsetActivePresets();
+	    const color = new ColorValue(event.getData().hex);
+	    this.setValue(color);
+	    this.onChangeColor(color);
+	  }
+	  unsetActivePresets(presetId = null) {
+	    this.presets.forEach(preset => {
+	      if (presetId !== preset.id) {
+	        preset.unsetActive();
+	      }
+	    });
+	  }
+	  onFavouriteSelect(event) {
+	    this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.SELECT_COLOR, {
+	      type: ColorPopup.ANALYTICS.TYPE_COLORS.MY
+	    });
+	    this.unsetActivePresets();
+	    const favouriteColor = new ColorValue(event.getData().hex);
+	    const color = event.getData().hex;
+	    this.recent.addItem(color);
+	    this.setValue(favouriteColor);
+	    this.onChangeColor(favouriteColor);
+	  }
+	  onAddFavouriteColor(event) {
+	    this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.ADD_MY_COLOR);
+	  }
+	  onHexPreviewValidInput(event) {
+	    const color = event.getData().value;
+	    if (color) {
+	      this.recent.addItem(`#${color}`);
+	      this.recent.buildItemsLayout();
+	      this.sendAnalytics(ColorPopup.ANALYTICS.EVENTS.SELECT_COLOR, {
+	        type: ColorPopup.ANALYTICS.TYPE_COLORS.HEX
+	      });
+	    }
+	  }
+	  onRemoveFavouriteColor(event) {}
+	  onEditFavouriteColors(event) {}
+	  onSaveFavouriteColors(event) {}
+	  getAnalyticsCategory() {
+	    return this.analyticsCategory;
+	  }
+	  getAnalyticsCSubSection() {
+	    return this.analyticsCSubSection;
+	  }
+	  getAnalyticsCElement() {
+	    var _this$analyticsCEleme;
+	    return (_this$analyticsCEleme = this.analyticsCElement) != null ? _this$analyticsCEleme : null;
+	  }
+	  getAnalyticsP1() {
+	    var _this$analyticsP;
+	    return (_this$analyticsP = this.analyticsP1) != null ? _this$analyticsP : null;
+	  }
+	  sendAnalytics(event, params = {}) {
+	    const analyticsData = {
+	      event,
+	      tool: BX.Landing.Main.getAnalyticsCategoryByType(),
+	      category: (params == null ? void 0 : params.category) || this.getAnalyticsCategory(),
+	      c_sub_section: (params == null ? void 0 : params.c_sub_section) || this.getAnalyticsCSubSection(),
+	      p1: (params == null ? void 0 : params.p1) || this.getAnalyticsP1()
+	    };
+	    if (params && params.type) {
+	      analyticsData.type = params.type;
+	    }
+	    const cElement = this.getAnalyticsCElement();
+	    if (cElement !== null) {
+	      analyticsData.c_element = cElement;
+	    }
+	    BX.UI.Analytics.sendData(analyticsData);
+	  }
+	}
+	ColorPopup.TABS = {
+	  RECENT: 'recent',
+	  SPECTRUM: 'spectrum',
+	  PRESET: 'preset'
+	};
+	ColorPopup.ANALYTICS = {
+	  CATEGORY_DESIGN: 'design_slider',
+	  COLOR_TYPE_GRADIENT: 'gradient',
+	  COLOR_TYPE_SOLID: 'solid',
+	  EVENTS: {
+	    OPEN_POPUP: 'open_color_popup',
+	    CHANGE_TAB: 'change_color_tab',
+	    SELECT_COLOR: 'select_color',
+	    ADD_MY_COLOR: 'add_my_color'
+	  },
+	  TYPE_COLORS: {
+	    RECENT: 'recent',
+	    SPECTRUM: 'spectrum',
+	    PRESET: 'preset',
+	    MY: 'my',
+	    HEX: 'hex'
+	  }
+	};
+	ColorPopup.HEX_DEFAULT_TEXT = '#hex';
+
+	let _$9 = t => t,
+	  _t$9;
+	class BaseProcessor extends main_core_events.EventEmitter {
+	  constructor(options) {
+	    super();
+	    this.cache = new main_core.Cache.MemoryCache();
+	    this.property = 'color';
+	    this.options = options;
+	    this.pseudoClass = null;
+	    this.setEventNamespace('BX.Landing.UI.Field.Processor.BaseProcessor');
+	  }
+	  getProperty() {
+	    return main_core.Type.isArray(this.property) ? this.property : [this.property];
+	  }
+	  getVariableName() {
+	    return main_core.Type.isArray(this.variableName) ? this.variableName : [this.variableName];
+	  }
+	  isNullValue(value) {
+	    return main_core.Type.isNull(value);
+	  }
+	  getNullValue() {
+	    return new ColorValue();
+	  }
+	  getPseudoClass() {
+	    return this.pseudoClass;
+	  }
+	  getLayout() {
+	    return this.cache.remember('layout', () => {
+	      return this.buildLayout();
+	    });
+	  }
+	  buildLayout() {
+	    return main_core.Tag.render(_t$9 || (_t$9 = _$9`<div>Base processor</div>`));
+	  }
+	  getClassName() {
+	    return [this.className];
+	  }
+	  getValue() {}
+	  getStyle() {
+	    if (main_core.Type.isNull(this.getValue())) {
+	      return {
+	        [this.getVariableName()]: null
+	      };
+	    }
+	    return {
+	      [this.getVariableName()]: this.getValue().getStyleString()
+	    };
+	  }
+
+	  /**
+	   * Set value by new format
+	   * @param value {string: string}
+	   */
+	  setProcessorValue(value) {
+	    // Just get last css variable
+	    const processorProperty = this.getVariableName()[this.getVariableName().length - 1];
+	    this.cache.delete('value');
+	    this.setValue(value[processorProperty]);
+	  }
+
+	  /**
+	   * Set old-type value by computedStyle
+	   * @param value {string: string} | null
+	   */
+	  setDefaultValue(value) {
+	    if (!main_core.Type.isNull(value)) {
+	      const inlineProperty = this.getProperty()[this.getProperty().length - 1];
+	      if (inlineProperty in value) {
+	        this.setValue(value[inlineProperty]);
+	        this.cache.delete('value');
+	        this.unsetActive();
+	        return;
+	      }
+	    }
+	    this.setValue(null);
+	    this.cache.set('value', null);
+	  }
+	  setValue(value) {}
+	  unsetActive() {}
+	  onChange() {
+	    this.cache.delete('value');
+	    this.emit('onChange');
+	  }
+	  defineActiveControl(items, currentNode) {}
+	  setActiveControl(controlName) {}
+	  prepareProcessorValue(processorValue, defaultValue, data) {
+	    return processorValue;
 	  }
 	}
 
 	let _$a = t => t,
-	  _t$a,
-	  _t2$6;
+	  _t$a;
+	class Colorpicker extends BaseControl {
+	  constructor(options) {
+	    super();
+	    this.options = options;
+	    this.setEventNamespace('BX.Landing.UI.Field.Color.Colorpicker');
+	    this.popupId = `colorpicker_popup_${main_core.Text.getRandom()}`;
+	    this.popupTargetContainer = options.contentRoot;
+	    this.isHexPreviewMode = options.hexPreviewMode;
+	    this.hexPreview = new Hex();
+	    if (options.hexPreviewMode === true) {
+	      this.hexPreview.setPreviewMode(true);
+	    }
+	    this.options.hexPreview = this.hexPreview;
+
+	    // popup
+	    this.colorPopup = new ColorPopup(this.options);
+	    this.colorPopup.subscribe('onColorPopupChange', this.onColorPopupChange.bind(this));
+	    this.hex = new Hex();
+	    this.spectrum = new Spectrum(options);
+	    this.presetCollection = new PresetCollection(options);
+	    this.presetCollection.addDefaultPresets();
+	    this.presets = this.presetCollection.getAllPresets();
+
+	    // end popup
+
+	    this.initLoader();
+	    main_core.Event.bind(this.hexPreview.getLayout(), 'click', event => {
+	      if (!this.colorPopup.getPopup().isShown()) {
+	        BX.Dom.style(this.hexPreview.getButton(), 'opacity', '.5');
+	        this.loader.show();
+	      }
+	      this.colorPopup.onPopupOpenClick(event);
+	    });
+	    this.colorPopup.subscribe('onPopupShow', e => {
+	      this.loader.hide();
+	      BX.Dom.style(this.hexPreview.getButton(), 'opacity', '1');
+	    });
+	    this.hexPreview.subscribe('onValidInput', this.onValidInput.bind(this));
+	    this.hexPreview.subscribe('onChange', this.onHexChange.bind(this));
+	    this.tabButtons = {};
+	    this.tabContents = {};
+	  }
+	  initLoader() {
+	    this.loader = new BX.Loader({
+	      target: this.hexPreview.getLayout()
+	    });
+	    const loaderNode = this.loader.layout;
+	    if (loaderNode) {
+	      BX.Dom.style(loaderNode, 'width', '28px');
+	      BX.Dom.style(loaderNode, 'height', '28px');
+	      BX.Dom.style(loaderNode, 'left', 'unset');
+	      BX.Dom.style(loaderNode, 'right', '0');
+	      BX.Dom.style(loaderNode, 'transform', 'translate(0, -50%)');
+	    }
+	  }
+	  buildLayout() {
+	    return main_core.Tag.render(_t$a || (_t$a = _$a`
+			<div class="landing-ui-field-color-colorpicker">
+				${0}
+			</div>
+		`), this.hexPreview.getLayout());
+	  }
+	  getHexPreviewObject() {
+	    return this.hexPreview;
+	  }
+	  getValue() {
+	    return this.cache.remember('value', () => {
+	      return this.spectrum.getValue();
+	    });
+	  }
+	  onColorPopupChange(event) {
+	    const color = event.getData();
+	    if (color) {
+	      this.setValue(color);
+	    }
+	    this.onChange(new main_core_events.BaseEvent({
+	      data: {
+	        color
+	      }
+	    }));
+	  }
+	  onHexChange(event) {
+	    const color = event.getData().color;
+	    this.setValue(color);
+	    this.onChange(event);
+	  }
+	  onValidInput(event) {
+	    const color = `#${event.getData().value}`;
+	    if (color) {
+	      this.emit('onValidInput', {
+	        color
+	      });
+	    }
+	  }
+	  setValue(value) {
+	    if (this.isNeedSetValue(value)) {
+	      super.setValue(value);
+	      this.spectrum.setValue(value);
+	      this.hex.setValue(value);
+	      this.hexPreview.setValue(value);
+	      this.colorPopup.setValue(value);
+	      if (value) {
+	        const hexValue = value.getHex();
+	        this.presets.forEach(preset => {
+	          preset.setActiveHex(hexValue);
+	        });
+	      }
+	    }
+	    this.setActivity(value);
+	  }
+	  setActivity(value) {
+	    if (value !== null) {
+	      if (this.spectrum.isActive()) {
+	        this.hex.unsetActive();
+	      } else {
+	        this.hex.setActive();
+	      }
+	      this.hexPreview.setActive();
+	    }
+	  }
+	  unsetActive() {
+	    this.hex.unsetActive();
+	    this.hexPreview.unsetActive();
+	  }
+	  isActive() {
+	    return this.hex.isActive() || this.hexPreview.isActive();
+	  }
+	}
+	Colorpicker.TABS = {
+	  RECENT: 'recent',
+	  SPECTRUM: 'spectrum',
+	  PRESET: 'preset'
+	};
+
+	let _$b = t => t,
+	  _t$b,
+	  _t2$7;
 	class ColorSet extends BaseControl {
 	  constructor(options) {
 	    super();
 	    this.options = options;
 	    this.setEventNamespace('BX.Landing.UI.Field.Color.ColorSet');
-	    this.reset = new Reset(options);
-	    this.reset.subscribe('onReset', () => {
-	      this.emit('onReset');
-	    });
-	    this.blackAndWhitePreset = new Preset(Generator.getBlackAndWhitePreset());
-	    this.blackAndWhitePreset.subscribe('onChange', event => {
-	      this.preset.unsetActive();
-	      this.onPresetItemChange(event);
-	    });
 	    this.colorpicker = new Colorpicker(options);
 	    this.colorpicker.subscribe('onChange', event => {
 	      this.preset.unsetActive();
-	      this.blackAndWhitePreset.unsetActive();
 	      const color = event.getData().color;
 	      if (this.preset.isPresetValue(color)) {
 	        this.preset.setActiveValue(color);
-	        this.colorpicker.unsetActive();
-	      } else if (this.blackAndWhitePreset.isPresetValue(color)) {
-	        this.blackAndWhitePreset.setActiveValue(color);
 	        this.colorpicker.unsetActive();
 	      }
 	      this.onChange(event);
@@ -1935,19 +2633,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    }
 	  }
 	  buildLayout() {
-	    main_core.Dom.append(this.reset.getLayout(), this.presets.getTitleContainer());
-	    return main_core.Tag.render(_t$a || (_t$a = _$a`
+	    return main_core.Tag.render(_t$b || (_t$b = _$b`
 			<div class="landing-ui-field-color-colorset">
-				<div class="landing-ui-field-color-colorset-top">
-					${0}
-				</div>
-				${0}
 				<div class="landing-ui-field-color-colorset-bottom">
-					${0}
 					${0}
 				</div>
 			</div>
-		`), this.presets.getLayout(), this.getPresetContainer(), this.blackAndWhitePreset.getLayout(), this.colorpicker.getLayout());
+		`), this.colorpicker.getLayout());
 	  }
 	  getTitleLayout() {
 	    return this.cache.remember('titleLayout', () => {
@@ -1956,7 +2648,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getPresetContainer() {
 	    return this.cache.remember('presetContainer', () => {
-	      return main_core.Tag.render(_t2$6 || (_t2$6 = _$a`<div class="landing-ui-field-color-colorset-preset-container"></div>`));
+	      return main_core.Tag.render(_t2$7 || (_t2$7 = _$b`<div class="landing-ui-field-color-colorset-preset-container"></div>`));
 	    });
 	  }
 	  setPreset(preset) {
@@ -1973,13 +2665,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      this.setColorFromContent();
 	    }
 	    this.preset.subscribe('onChange', event => {
-	      this.blackAndWhitePreset.unsetActive();
 	      this.onPresetItemChange(event);
 	    });
 	    main_core.Dom.clean(this.getPresetContainer());
 	    main_core.Dom.append(preset.getLayout(), this.getPresetContainer());
 	    this.emit('onPresetChange', {
-	      preset: preset
+	      preset
 	    });
 	  }
 	  getPreset() {
@@ -2011,19 +2702,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        this.setPreset(activePreset);
 	        this.presets.setActiveItem(activePreset.getId());
 	      }
-	      if (value !== null && this.blackAndWhitePreset.isPresetValue(value)) {
-	        this.unsetActive();
-	        this.blackAndWhitePreset.setActiveValue(value);
-	      }
 	    }
 	  }
 	  unsetActive() {
 	    this.preset.unsetActive();
-	    this.blackAndWhitePreset.unsetActive();
 	    this.colorpicker.unsetActive();
 	  }
 	  isActive() {
-	    return this.preset.isActive() || this.blackAndWhitePreset.isActive() || this.colorpicker.isActive();
+	    return this.preset.isActive() || this.colorpicker.isActive();
 	  }
 	  setColorFromContent() {
 	    const contentValue = this.options.content;
@@ -2047,10 +2733,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	}
 
-	let _$b = t => t,
-	  _t$b,
-	  _t2$7,
-	  _t3$3;
+	let _$c = t => t,
+	  _t$c,
+	  _t2$8,
+	  _t3$4;
 	class Opacity extends BaseControl {
 	  constructor(options) {
 	    super();
@@ -2072,7 +2758,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  buildLayout() {
 	    const defaultOpacityValue = this.defaultOpacity * 100;
-	    const layout = main_core.Tag.render(_t$b || (_t$b = _$b`
+	    const layout = main_core.Tag.render(_t$c || (_t$c = _$c`
 			<div class="landing-ui-field-color-opacity-container">
 				<div class="landing-ui-field-color-opacity">
 					${0}
@@ -2144,14 +2830,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getColorLayout() {
 	    return this.cache.remember('colorLayout', () => {
-	      return main_core.Tag.render(_t2$7 || (_t2$7 = _$b`
+	      return main_core.Tag.render(_t2$8 || (_t2$8 = _$c`
 				<div class="landing-ui-field-color-opacity-color"></div>
 			`));
 	    });
 	  }
 	  getPicker() {
 	    return this.cache.remember('picker', () => {
-	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$b`
+	      return main_core.Tag.render(_t3$4 || (_t3$4 = _$c`
 				<div class="landing-ui-field-color-opacity-picker">
 					<div class="landing-ui-field-color-opacity-picker-item">
 						<div class="landing-ui-field-color-opacity-picker-item-circle"></div>
@@ -2222,13 +2908,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	Opacity.DEFAULT_COLOR = '#cccccc';
 	Opacity.DEFAULT_OPACITY = 1;
 
-	let _$c = t => t,
-	  _t$c,
-	  _t2$8,
-	  _t3$4,
-	  _t4$3,
-	  _t5$2,
-	  _t6;
+	let _$d = t => t,
+	  _t$d,
+	  _t2$9,
+	  _t3$5,
+	  _t4$4,
+	  _t5$3,
+	  _t6$2;
 	class Tabs extends main_core_events.EventEmitter {
 	  constructor() {
 	    super();
@@ -2298,12 +2984,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  getLayout() {
 	    return this.cache.remember('layout', () => {
 	      const additional = this.isBig ? ' landing-ui-field-color-tabs--big' : '';
-	      const layout = main_core.Tag.render(_t$c || (_t$c = _$c`<div class="landing-ui-field-color-tabs${0}"></div>`), additional);
+	      const layout = main_core.Tag.render(_t$d || (_t$d = _$d`<div class="landing-ui-field-color-tabs${0}"></div>`), additional);
 	      if (this.isBig) {
-	        const head = main_core.Tag.render(_t2$8 || (_t2$8 = _$c`
+	        const head = main_core.Tag.render(_t2$9 || (_t2$9 = _$d`
 					<div class="landing-ui-field-color-tabs-head landing-ui-field-color-tabs-head--big"></div>
 				`));
-	        const content = main_core.Tag.render(_t3$4 || (_t3$4 = _$c`
+	        const content = main_core.Tag.render(_t3$5 || (_t3$5 = _$d`
 					<div class="landing-ui-field-color-tabs-content landing-ui-field-color-tabs-content--big"></div>
 				`));
 	        this.tabs.forEach(tab => {
@@ -2314,7 +3000,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        main_core.Dom.append(content, layout);
 	      } else {
 	        this.tabs.forEach(tab => {
-	          const tabLayout = main_core.Tag.render(_t4$3 || (_t4$3 = _$c`<div class="landing-ui-field-color-tabs-tab">
+	          const tabLayout = main_core.Tag.render(_t4$4 || (_t4$4 = _$d`<div class="landing-ui-field-color-tabs-tab">
 						${0}${0}
 					</div>`), tab.getTitle(), tab.getLayout());
 	          main_core.Dom.append(tabLayout, layout);
@@ -2349,7 +3035,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getTitle() {
 	    return this.cache.remember('title', () => {
-	      return main_core.Tag.render(_t5$2 || (_t5$2 = _$c`
+	      return main_core.Tag.render(_t5$3 || (_t5$3 = _$d`
 				<span class="landing-ui-field-color-tabs-tab-toggler">
 					<span class="landing-ui-field-color-tabs-tab-toggler-icon"></span>
 					<span class="landing-ui-field-color-tabs-tab-toggler-name">${0}</span>
@@ -2359,7 +3045,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getLayout() {
 	    return this.cache.remember('layout', () => {
-	      return main_core.Tag.render(_t6 || (_t6 = _$c`
+	      return main_core.Tag.render(_t6$2 || (_t6$2 = _$d`
 				<div class="landing-ui-field-color-tabs-tab-content">
 					${0}
 				</div>
@@ -2393,8 +3079,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	}
 	Tab.SHOW_CLASS = 'show';
 
-	let _$d = t => t,
-	  _t$d;
+	let _$e = t => t,
+	  _t$e;
 	class Zeroing extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super();
@@ -2414,7 +3100,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }
 	    }
 	    return this.cache.remember('layout', () => {
-	      return main_core.Tag.render(_t$d || (_t$d = _$d`<div class="landing-ui-field-color-zeroing">
+	      return main_core.Tag.render(_t$e || (_t$e = _$e`<div class="landing-ui-field-color-zeroing">
 				<div class="landing-ui-field-color-zeroing-preview">
 					<div class="landing-ui-field-color-zeroing-state"></div>
 				</div>
@@ -2441,8 +3127,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	}
 	Zeroing.ACTIVE_CLASS = 'active';
 
-	let _$e = t => t,
-	  _t$e;
+	let _$f = t => t,
+	  _t$f;
 	class Color extends BaseProcessor {
 	  constructor(options) {
 	    super(options);
@@ -2452,7 +3138,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.className = 'g-color';
 	    this.colorSet = new ColorSet(options);
 	    this.colorSet.subscribe('onChange', this.onColorSetChange.bind(this));
-	    this.colorSet.subscribe('onReset', this.onReset.bind(this));
 	    this.opacity = new Opacity();
 	    this.opacity.subscribe('onChange', this.onOpacityChange.bind(this));
 	    const zeroingOptions = {
@@ -2471,7 +3156,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    return new ColorValue('rgba(0, 0, 0, 0)');
 	  }
 	  buildLayout() {
-	    return main_core.Tag.render(_t$e || (_t$e = _$e`
+	    return main_core.Tag.render(_t$f || (_t$f = _$f`
 			<div class="landing-ui-field-color-color">
 				${0}
 				${0}
@@ -2539,10 +3224,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    }
 	    super.setDefaultValue(value);
 	  }
-	  onReset() {
-	    this.zeroing.unsetActive();
-	    super.onReset();
-	  }
 	  setActiveControl(controlName) {
 	    if (controlName === 'primary') {
 	      this.primary.setActive();
@@ -2596,26 +3277,28 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	}
 
-	let _$f = t => t,
-	  _t$f,
-	  _t2$9,
-	  _t3$5,
-	  _t4$4,
-	  _t5$3,
-	  _t6$1,
-	  _t7;
+	let _$g = t => t,
+	  _t$g,
+	  _t2$a,
+	  _t3$6,
+	  _t4$5,
+	  _t5$4,
+	  _t6$3,
+	  _t7$2;
 	class Gradient extends BaseControl {
 	  constructor(options) {
 	    super();
 	    this.ROTATE_STEP = 45;
 	    this.setEventNamespace('BX.Landing.UI.Field.Color.Gradient');
-	    this.popupId = 'gradient_popup_' + main_core.Text.getRandom();
+	    this.options = options;
+	    this.options.hexPreviewMode = true;
+	    this.popupId = `gradient_popup_${main_core.Text.getRandom()}`;
 	    this.popupTargetContainer = options.contentRoot;
-	    this.colorpickerFrom = new Colorpicker(options);
+	    this.colorpickerFrom = new Colorpicker(this.options);
 	    this.colorpickerFrom.subscribe('onChange', event => {
 	      this.onColorChange(event.getData().color, null);
 	    });
-	    this.colorpickerTo = new Colorpicker(options);
+	    this.colorpickerTo = new Colorpicker(this.options);
 	    this.colorpickerTo.subscribe('onChange', event => {
 	      this.onColorChange(null, event.getData().color);
 	    });
@@ -2757,7 +3440,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getPopupContent() {
 	    return this.cache.remember('popupContainer', () => {
-	      return main_core.Tag.render(_t$f || (_t$f = _$f`
+	      return main_core.Tag.render(_t$g || (_t$g = _$g`
 				<div class="landing-ui-field-color-gradient-preset-popup-container">
 					${0}
 					${0}
@@ -2770,13 +3453,15 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      main_core.Dom.clean(this.getPresetContainer());
 	      main_core.Dom.append(this.preset.getLayout(), this.getPresetContainer());
 	    }
-	    return main_core.Tag.render(_t2$9 || (_t2$9 = _$f`
+	    return main_core.Tag.render(_t2$a || (_t2$a = _$g`
 			<div class="landing-ui-field-color-gradient">
-				${0}
-				<div class="landing-ui-field-color-gradient-container">
-					<div class="landing-ui-field-color-gradient-from">${0}</div>
+				<div class="landing-ui-field-color-gradient-container-main">
 					${0}
-					<div class="landing-ui-field-color-gradient-to">${0}</div>
+					<div class="landing-ui-field-color-gradient-container">
+						<div class="landing-ui-field-color-gradient-from">${0}</div>
+						${0}
+						<div class="landing-ui-field-color-gradient-to">${0}</div>
+					</div>
 				</div>
 				<div class="landing-ui-field-color-gradient-switch-type-container">
 					${0}
@@ -2790,39 +3475,42 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  getPresetContainer() {
 	    return this.cache.remember('presetContainer', () => {
-	      return main_core.Tag.render(_t3$5 || (_t3$5 = _$f`<div class="landing-ui-field-color-gradient-preset-container"></div>`));
+	      return main_core.Tag.render(_t3$6 || (_t3$6 = _$g`<div class="landing-ui-field-color-gradient-preset-container"></div>`));
 	    });
 	  }
 	  getPopupButton() {
 	    return this.cache.remember('popupButton', () => {
-	      return main_core.Tag.render(_t4$4 || (_t4$4 = _$f`<span class="landing-ui-field-color-gradient-open-popup"></span>`));
+	      return main_core.Tag.render(_t4$5 || (_t4$5 = _$g`<span class="landing-ui-field-color-gradient-open-popup"></span>`));
 	    });
 	  }
 	  getSwitchTypeButton() {
 	    return this.cache.remember('switchTypeButton', () => {
-	      return main_core.Tag.render(_t5$3 || (_t5$3 = _$f`
+	      return main_core.Tag.render(_t5$4 || (_t5$4 = _$g`
 				<span
 					class="landing-ui-field-color-gradient-switch-type"
 					title="${0}"
-				></span>`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_SWITCH_TYPE'));
+				></span>
+			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_SWITCH_TYPE'));
 	    });
 	  }
 	  getRotateButton() {
 	    return this.cache.remember('rotateButton', () => {
-	      return main_core.Tag.render(_t6$1 || (_t6$1 = _$f`
+	      return main_core.Tag.render(_t6$3 || (_t6$3 = _$g`
 				<span
 					class="landing-ui-field-color-gradient-rotate"
 					title="${0}"
-				></span>`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_ROTATE'));
+				></span>
+			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_ROTATE'));
 	    });
 	  }
 	  getSwapButton() {
 	    return this.cache.remember('swapButton', () => {
-	      return main_core.Tag.render(_t7 || (_t7 = _$f`
+	      return main_core.Tag.render(_t7$2 || (_t7$2 = _$g`
 				<span
 					class="landing-ui-field-color-gradient-swap"
 					title="${0}"
-				></span>`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_SWAP'));
+				></span>
+			`), main_core.Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_SWAP'));
 	    });
 	  }
 	  setPreset(preset) {
@@ -2851,7 +3539,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        from: this.colorpickerFrom.getValue(),
 	        to: this.colorpickerTo.getValue(),
 	        angle: rotate,
-	        type: type
+	        type
 	      });
 	    });
 	  }
@@ -2942,12 +3630,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      this.onChange();
 	    });
 	    const value = this.getValue();
-	    if (value !== null && value instanceof GradientValue) {
-	      if (this.gradient.getPreset().isPresetValue(value)) {
-	        this.colorSet.getPreset().unsetActive();
-	        this.gradient.getPreset().setActiveValue(value);
-	        this.gradient.unsetColorpickerActive();
-	      }
+	    if (value !== null && value instanceof GradientValue && this.gradient.getPreset().isPresetValue(value)) {
+	      this.colorSet.getPreset().unsetActive();
+	      this.gradient.getPreset().setActiveValue(value);
+	      this.gradient.unsetColorpickerActive();
 	    }
 	  }
 	  onColorSetChange(event) {
@@ -3004,12 +3690,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    return this.cache.remember('value', () => {
 	      if (this.activeControl === null) {
 	        return null;
-	      } else if (this.activeControl === this.gradient) {
+	      }
+	      if (this.activeControl === this.gradient) {
 	        const gradValue = this.gradient.getValue();
 	        return gradValue === null ? gradValue : gradValue.setOpacity(this.opacity.getValue().getOpacity());
-	      } else {
-	        return super.getValue();
 	      }
+	      return super.getValue();
 	    });
 	  }
 	}
@@ -3189,8 +3875,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	}
 
-	let _$g = t => t,
-	  _t$g;
+	let _$h = t => t,
+	  _t$h;
 	class Image extends BaseControl {
 	  // todo: move to type
 
@@ -3241,7 +3927,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    });
 	  }
 	  buildLayout() {
-	    return main_core.Tag.render(_t$g || (_t$g = _$g`
+	    return main_core.Tag.render(_t$h || (_t$h = _$h`
 			<div class="landing-ui-field-color-image">
 				${0}
 				${0}
@@ -3409,8 +4095,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  return 'rgb(' + r + ',' + g + ',' + b + ')';
 	}
 
-	let _$h = t => t,
-	  _t$h;
+	let _$i = t => t,
+	  _t$i;
 	class Bg extends BgColor {
 	  constructor(options) {
 	    super(options);
@@ -3440,7 +4126,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.bigTabs = new Tabs().setBig(true).appendTab('Color', main_core.Loc.getMessage('LANDING_FIELD_COLOR-BG_COLOR'), [this.colorSet, this.primary, this.zeroing, this.tabs]).appendTab('Image', main_core.Loc.getMessage('LANDING_FIELD_COLOR-BG_IMAGE'), [this.image, this.imageTabs]);
 	  }
 	  buildLayout() {
-	    return main_core.Tag.render(_t$h || (_t$h = _$h`
+	    return main_core.Tag.render(_t$i || (_t$i = _$i`
 			<div class="landing-ui-field-color-color">
 				${0}
 			</div>
@@ -3892,6 +4578,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.frame = typeof options.frame === 'object' ? options.frame : null;
 	    const processorOptions = {
 	      block: options.block,
+	      style: options.style,
 	      styleNode: options.styleNode,
 	      selector: options.selector,
 	      contentRoot: this.contentRoot,
@@ -3899,7 +4586,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    };
 	    this.changeHandler = typeof options.onChange === "function" ? options.onChange : () => {};
 	    this.valueChangeHandler = typeof options.onValueChange === "function" ? options.onValueChange : () => {};
-	    this.resetHandler = typeof options.onReset === "function" ? options.onReset : function () {};
 
 	    // todo: rename "subtype"
 	    switch (options.subtype) {
@@ -3966,6 +4652,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      default:
 	        break;
 	    }
+	    if (!this.processor) {
+	      return;
+	    }
 	    this.property = this.processor.getProperty()[this.processor.getProperty().length - 1];
 	    this.processor.getClassName().forEach(item => this.items.push({
 	      name: item,
@@ -3977,7 +4666,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.layout.classList.add("landing-ui-field-color");
 	    main_core.Dom.append(this.processor.getLayout(), this.layout);
 	    this.processor.subscribe('onChange', this.onChange.bind(this));
-	    this.processor.subscribe('onReset', this.onReset.bind(this));
 	  }
 	  getInlineProperties() {
 	    return this.processor.getVariableName();
@@ -4016,9 +4704,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    }));
 	    this.emit('onChange');
 	  }
-	  onReset() {
-	    this.resetHandler(this.items, this.postfix, this.property);
-	  }
 	  getValue() {
 	    return this.processor.getValue() || this.processor.getNullValue();
 	  }
@@ -4054,6 +4739,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    // todo: now not work with "group select", can use just any node from elements. If group - need forEach
 	    const value = this.data.styleNode.getValue(true);
 	    this.setValue(value.style);
+	  }
+	  createPopup(options) {
+	    this.colorPopup = new ColorPopup(options);
 	  }
 	}
 

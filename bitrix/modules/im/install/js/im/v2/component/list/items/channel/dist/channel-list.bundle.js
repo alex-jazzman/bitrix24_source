@@ -176,11 +176,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-list-channel-item__container">
 				<div class="bx-im-list-channel-item__avatar_container">
 					<div class="bx-im-list-channel-item__avatar_content">
-						<ChatAvatar 
-							:avatarDialogId="recentItem.dialogId" 
-							:contextDialogId="recentItem.dialogId"
-							:size="AvatarSize.XL" 
-						/>
+						<ChatAvatar :avatarDialogId="recentItem.dialogId" :size="AvatarSize.XL" />
 					</div>
 				</div>
 				<div class="bx-im-list-channel-item__content_container">
@@ -341,7 +337,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenuManager = new ChannelRecentMenu();
+	    this.contextMenuManager = new ChannelRecentMenu({
+	      emitter: this.getEmitter()
+	    });
 	  },
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
@@ -388,6 +386,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.pullWatchManager = new PullWatchManager();
 	      }
 	      return this.pullWatchManager;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);

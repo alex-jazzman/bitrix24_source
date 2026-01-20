@@ -166,7 +166,7 @@ export class Converter
 		this.convert(entityId, data);
 	}
 
-	convert(entityId: number, data?: Object): void
+	convert(entityId: number, data?: Object): Promise
 	{
 		this.#entityId = entityId;
 		this.#data = data;
@@ -175,7 +175,7 @@ export class Converter
 		{
 			console.error('Scheme is not found', this);
 
-			return;
+			return Promise.reject();
 		}
 
 		if (Type.isStringFilled(schemeItem.getAvailabilityLock()))
@@ -183,10 +183,10 @@ export class Converter
 			// eslint-disable-next-line no-eval
 			eval(schemeItem.getAvailabilityLock());
 
-			return;
+			return Promise.reject();
 		}
 
-		this.#collectAdditionalData(schemeItem).then((result: ResolveResult) => {
+		return this.#collectAdditionalData(schemeItem).then((result: ResolveResult) => {
 			if (result.isCanceled)
 			{
 				// pass it to next 'then' handler

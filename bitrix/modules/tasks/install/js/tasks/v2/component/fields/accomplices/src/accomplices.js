@@ -1,33 +1,27 @@
-import { ParticipantList } from 'tasks.v2.component.elements.participant-list';
-import { Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
+import { Participants } from 'tasks.v2.component.elements.participants';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { UserModel } from 'tasks.v2.model.users';
 
 import { accomplicesMeta } from './accomplices-meta';
-import { AccomplicesMixin } from './accomplices-mixin';
 
 // @vue/component
 export const Accomplices = {
 	name: 'TaskAccomplices',
 	components: {
-		ParticipantList,
+		Participants,
 	},
-	mixins: [AccomplicesMixin],
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+	},
+	setup(): { task: TaskModel }
+	{
+		return {
+			accomplicesMeta,
+		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		users(): UserModel[]
-		{
-			return this.$store.getters[`${Model.Users}/getByIds`](this.task.accomplicesIds);
-		},
 		dataset(): Object
 		{
 			return {
@@ -36,13 +30,31 @@ export const Accomplices = {
 				'data-task-field-value': this.task.accomplicesIds.join(','),
 			};
 		},
+		isLocked(): boolean
+		{
+			return !Core.getParams().restrictions.stakeholder.available;
+		},
+		featureId(): string
+		{
+			return Core.getParams().restrictions.stakeholder.featureId;
+		},
+	},
+	methods: {
+		update(accomplicesIds: number[]): void
+		{
+			void taskService.update(this.taskId, { accomplicesIds });
+		},
 	},
 	template: `
-		<ParticipantList
-			:taskId="taskId"
-			context="accomplices"
-			:users="users"
-			:dataset="dataset"
+		<Participants
+			:taskId
+			:context="accomplicesMeta.id"
+			:userIds="task.accomplicesIds"
+			:canAdd="task.rights.changeAccomplices"
+			:canRemove="task.rights.changeAccomplices"
+			:dataset
+			:isLocked
+			:featureId
 			@update="update"
 		/>
 	`,

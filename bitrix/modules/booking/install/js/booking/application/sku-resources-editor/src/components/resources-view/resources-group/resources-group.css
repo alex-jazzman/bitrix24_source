@@ -1,0 +1,50 @@
+.booking-sre-app__resources-group-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin: var(--ui-space-stack-xs2) 0;
+}
+
+.booking-sre-app__resources-group-header-title {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.booking-sre-app__resources_group-header--title {
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-md);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: -0.05px;
+}
+
+.booking-sre-app__resources-group-header-actions {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.booking-sre-app__resources_group-header--collapse {
+	cursor: pointer;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+}
+
+.booking-sre-app__resources_group-header--collapse-label {
+	color: var(--ui-color-base-70);
+	font-size: var(--ui-font-size-xs);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: -0.05px;
+}
+
+.booking-sre-app__resources_group-header--collapse-icon.--expand {
+	transform: rotate(180deg);
+}
+

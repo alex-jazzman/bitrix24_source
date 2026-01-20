@@ -1031,7 +1031,280 @@ this.BX = this.BX || {};
 	  return PinnedPanel;
 	}();
 
+	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	var Api = /*#__PURE__*/function () {
+	  function Api() {
+	    babelHelpers.classCallCheck(this, Api);
+	  }
+	  babelHelpers.createClass(Api, null, [{
+	    key: "getTaskLinkData",
+	    value: function () {
+	      var _getTaskLinkData = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(createParams) {
+	        var _yield$ajax$runAction, taskLinkData;
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              _context.prev = 0;
+	              _context.next = 3;
+	              return main_core.ajax.runAction('intranet.controlbutton.getTaskLink', {
+	                data: {
+	                  entityType: createParams.entityType,
+	                  entityId: createParams.entityId,
+	                  postEntityType: createParams.postEntityType
+	                }
+	              });
+	            case 3:
+	              _yield$ajax$runAction = _context.sent;
+	              taskLinkData = _yield$ajax$runAction.data;
+	              return _context.abrupt("return", taskLinkData);
+	            case 8:
+	              _context.prev = 8;
+	              _context.t0 = _context["catch"](0);
+	              console.error('TaskCreator: getTaskLinkData error', _context.t0);
+	              return _context.abrupt("return", null);
+	            case 12:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }, _callee, null, [[0, 8]]);
+	      }));
+	      function getTaskLinkData(_x) {
+	        return _getTaskLinkData.apply(this, arguments);
+	      }
+	      return getTaskLinkData;
+	    }()
+	  }, {
+	    key: "clearNewTaskFiles",
+	    value: function () {
+	      var _clearNewTaskFiles = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(signedFiles) {
+	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              _context2.prev = 0;
+	              _context2.next = 3;
+	              return main_core.ajax.runAction('intranet.controlbutton.clearNewTaskFiles', {
+	                data: {
+	                  signedFiles: signedFiles
+	                }
+	              });
+	            case 3:
+	              _context2.next = 8;
+	              break;
+	            case 5:
+	              _context2.prev = 5;
+	              _context2.t0 = _context2["catch"](0);
+	              console.error('TaskCreator: Failed to clear files:', _context2.t0);
+	            case 8:
+	            case "end":
+	              return _context2.stop();
+	          }
+	        }, _callee2, null, [[0, 5]]);
+	      }));
+	      function clearNewTaskFiles(_x2) {
+	        return _clearNewTaskFiles.apply(this, arguments);
+	      }
+	      return clearNewTaskFiles;
+	    }()
+	  }, {
+	    key: "createEntityComment",
+	    value: function () {
+	      var _createEntityComment = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(taskId, createParams) {
+	        var postEntityType;
+	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	          while (1) switch (_context3.prev = _context3.next) {
+	            case 0:
+	              _context3.prev = 0;
+	              postEntityType = createParams.postEntityType;
+	              _context3.next = 4;
+	              return main_core.ajax.runAction('socialnetwork.api.livefeed.createEntityComment', {
+	                data: {
+	                  params: {
+	                    postEntityType: main_core.Type.isStringFilled(postEntityType) ? postEntityType : createParams.entityType,
+	                    sourceEntityType: createParams.entityType,
+	                    sourceEntityId: createParams.entityId,
+	                    entityType: 'TASK',
+	                    entityId: taskId,
+	                    logId: createParams.logId
+	                  }
+	                }
+	              });
+	            case 4:
+	              _context3.next = 9;
+	              break;
+	            case 6:
+	              _context3.prev = 6;
+	              _context3.t0 = _context3["catch"](0);
+	              console.error('TaskCreator: createEntityComment error', _context3.t0);
+	            case 9:
+	            case "end":
+	              return _context3.stop();
+	          }
+	        }, _callee3, null, [[0, 6]]);
+	      }));
+	      function createEntityComment(_x3, _x4) {
+	        return _createEntityComment.apply(this, arguments);
+	      }
+	      return createEntityComment;
+	    }()
+	  }]);
+	  return Api;
+	}();
+
+	var EntityType = Object.freeze({
+	  CalendarEvent: 'CALENDAR_EVENT',
+	  BlogPost: 'BLOG_POST',
+	  BlogComment: 'BLOG_COMMENT'
+	});
+	var Context = Object.freeze({
+	  Feed: 'feed'
+	});
+	var Element = Object.freeze({
+	  PostContextMenu: 'post_context_menu',
+	  CommentContextMenu: 'comment_context_menu'
+	});
+	var Analytics = Object.freeze({
+	  Context: Context,
+	  Element: Element
+	});
+
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	var CardBuilder = /*#__PURE__*/function () {
+	  function CardBuilder() {
+	    babelHelpers.classCallCheck(this, CardBuilder);
+	  }
+	  babelHelpers.createClass(CardBuilder, null, [{
+	    key: "buildCardParams",
+	    value: function buildCardParams(createParams, requestData) {
+	      var isFromComment = createParams.entityType === EntityType.BlogComment;
+	      return {
+	        taskId: "".concat(createParams.entityType, "_").concat(Date.now()),
+	        createParams: createParams,
+	        requestData: requestData,
+	        description: _classStaticPrivateMethodGet(this, CardBuilder, _formatTaskDescription).call(this, createParams.entityType, requestData),
+	        groupId: Number(requestData.GROUP_ID) || null,
+	        parentId: Number(requestData.PARENT_ID) || null,
+	        auditorsIds: requestData.AUDITORS.split(',').filter(function (id) {
+	          return id;
+	        }).map(Number),
+	        fileIds: requestData.UF_TASK_WEBDAV_FILES,
+	        source: _classStaticPrivateMethodGet(this, CardBuilder, _buildSourceParams).call(this, createParams),
+	        analytics: _classStaticPrivateMethodGet(this, CardBuilder, _buildAnalyticsParams).call(this, isFromComment)
+	      };
+	    }
+	  }]);
+	  return CardBuilder;
+	}();
+	function _buildAnalyticsParams(isFromComment) {
+	  return {
+	    context: Analytics.Context.Feed,
+	    element: isFromComment ? Analytics.Element.CommentContextMenu : Analytics.Element.PostContextMenu
+	  };
+	}
+	function _buildSourceParams(createParams) {
+	  return {
+	    type: createParams.entityType,
+	    entityId: Number(createParams.entityId),
+	    subEntityId: Number(createParams.logId) || null
+	  };
+	}
+	function _formatTaskDescription(entityType, requestData) {
+	  var text = main_core.Text.decode(requestData.DESCRIPTION);
+	  var title = requestData.TITLE;
+	  var url = new URL(requestData.URL, location).toString();
+	  var suffix = main_core.Type.isStringFilled(requestData.SUFFIX) ? "_".concat(requestData.SUFFIX) : '';
+	  var headerLoc = "SONET_EXT_COMMENTAUX_CREATE_TASK_".concat(entityType).concat(suffix);
+	  var headerText = main_core.Loc.getMessage(headerLoc).replace('#A_BEGIN#', "[URL=".concat(url, "]")).replace('#A_END#', '[/URL]');
+	  if (entityType === EntityType.BlogPost && main_core.Type.isStringFilled(title)) {
+	    return "[QUOTE]".concat(headerText, "\n\n[B]").concat(title, "[/B]\n\n").concat(text, "[/QUOTE]");
+	  }
+	  return "[QUOTE]".concat(headerText, "\n\n").concat(text, "[/QUOTE]");
+	}
+
+	var _inited, _handleTaskAdded, _handleCardClosed;
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var createdTasks = new Set();
+	var eventHandler = new (_inited = /*#__PURE__*/new WeakMap(), _handleTaskAdded = /*#__PURE__*/new WeakMap(), _handleCardClosed = /*#__PURE__*/new WeakMap(), /*#__PURE__*/function () {
+	  function _class2() {
+	    babelHelpers.classCallCheck(this, _class2);
+	    _classPrivateFieldInitSpec(this, _inited, {
+	      writable: true,
+	      value: false
+	    });
+	    _classPrivateFieldInitSpec(this, _handleTaskAdded, {
+	      writable: true,
+	      value: function value(event) {
+	        var _event$getData = event.getData(),
+	          task = _event$getData.task,
+	          initialTask = _event$getData.initialTask;
+	        createdTasks.add(initialTask.id);
+	        void Api.createEntityComment(task.id, initialTask.createParams);
+	      }
+	    });
+	    _classPrivateFieldInitSpec(this, _handleCardClosed, {
+	      writable: true,
+	      value: function value(event) {
+	        var cardParams = event.getData();
+	        if (createdTasks.has(cardParams.taskId)) {
+	          return;
+	        }
+	        void Api.clearNewTaskFiles(cardParams.requestData.UF_TASK_WEBDAV_FILES_SIGN);
+	      }
+	    });
+	  }
+	  babelHelpers.createClass(_class2, [{
+	    key: "init",
+	    value: function init() {
+	      if (babelHelpers.classPrivateFieldGet(this, _inited)) {
+	        return;
+	      }
+	      main_core_events.EventEmitter.subscribe('tasks:card:taskAdded', babelHelpers.classPrivateFieldGet(this, _handleTaskAdded));
+	      main_core_events.EventEmitter.subscribe('tasks:full-card:closed', babelHelpers.classPrivateFieldGet(this, _handleCardClosed));
+	      main_core_events.EventEmitter.subscribe('tasks:card:closed', babelHelpers.classPrivateFieldGet(this, _handleCardClosed));
+	      babelHelpers.classPrivateFieldSet(this, _inited, true);
+	    }
+	  }]);
+	  return _class2;
+	}())();
+
+	function _regeneratorRuntime$1() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$1 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	var createFromContent = /*#__PURE__*/function () {
+	  var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee(createParams) {
+	    var taskLinkData, cardParams, _yield$top$BX$Runtime, TaskCard, isFromComment;
+	    return _regeneratorRuntime$1().wrap(function _callee$(_context) {
+	      while (1) switch (_context.prev = _context.next) {
+	        case 0:
+	          eventHandler.init();
+	          _context.next = 3;
+	          return Api.getTaskLinkData(createParams);
+	        case 3:
+	          taskLinkData = _context.sent;
+	          cardParams = CardBuilder.buildCardParams(createParams, taskLinkData);
+	          _context.next = 7;
+	          return top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
+	        case 7:
+	          _yield$top$BX$Runtime = _context.sent;
+	          TaskCard = _yield$top$BX$Runtime.TaskCard;
+	          isFromComment = main_core.Type.isStringFilled(createParams.postEntityType);
+	          if (isFromComment) {
+	            TaskCard.showCompactCard(cardParams);
+	          } else {
+	            TaskCard.showFullCard(cardParams);
+	          }
+	        case 11:
+	        case "end":
+	          return _context.stop();
+	      }
+	    }, _callee);
+	  }));
+	  return function createFromContent(_x) {
+	    return _ref.apply(this, arguments);
+	  };
+	}();
+
 	var _templateObject$1, _templateObject2, _templateObject3;
+	function _regeneratorRuntime$2() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$2 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	var TaskCreator = /*#__PURE__*/function () {
 	  function TaskCreator() {
 	    babelHelpers.classCallCheck(this, TaskCreator);
@@ -1040,6 +1313,9 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(TaskCreator, [{
 	    key: "initEvents",
 	    value: function initEvents() {
+	      if (main_core.Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y' && main_core.Loc.getMessage('SONET_EXT_LIVEFEED_isV2Form') === 'Y') {
+	        return;
+	      }
 	      main_core_events.EventEmitter.subscribe('tasksTaskEvent', function (event) {
 	        var _event$getCompatData = event.getCompatData(),
 	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
@@ -1070,149 +1346,170 @@ this.BX = this.BX || {};
 	    }
 	  }], [{
 	    key: "create",
-	    value: function create(params) {
-	      var _this = this;
-	      if (main_core.Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y') {
-	        main_core.ajax.runAction('intranet.controlbutton.getTaskLink', {
-	          data: {
-	            entityType: params.entityType,
-	            entityId: params.entityId,
-	            postEntityType: main_core.Type.isStringFilled(params.postEntityType) ? params.postEntityType : params.entityType,
-	            entityData: {}
-	          }
-	        }).then(function (response) {
-	          if (!main_core.Type.isStringFilled(response.data.SUFFIX)) {
-	            response.data.SUFFIX = '';
-	          }
-	          var requestData = response.data;
-	          requestData.DESCRIPTION = _this.formatTaskDescription(requestData.DESCRIPTION, requestData.URL, params.entityType, requestData.SUFFIX);
-	          if (parseInt(params.parentTaskId) > 0) {
-	            requestData.PARENT_ID = parseInt(params.parentTaskId);
-	          }
-	          if (main_core.Type.isStringFilled(requestData.UF_TASK_WEBDAV_FILES_SIGN)) {
-	            _this.signedFiles = requestData.UF_TASK_WEBDAV_FILES_SIGN;
-	          }
-	          _this.sliderUrl = response.data.link;
-	          var link = _this.getLinkWithAnalytics(response.data.link, params);
-	          BX.SidePanel.Instance.open(link, {
-	            requestMethod: 'post',
-	            requestParams: requestData,
-	            cacheable: false
-	          });
-	        });
-	      } else {
-	        this.createTaskPopup = new main_popup.Popup('BXCTP', null, {
-	          autoHide: false,
-	          zIndex: 0,
-	          offsetLeft: 0,
-	          offsetTop: 0,
-	          overlay: false,
-	          lightShadow: true,
-	          closeIcon: {
-	            right: '12px',
-	            top: '10px'
-	          },
-	          draggable: {
-	            restrict: true
-	          },
-	          closeByEsc: false,
-	          contentColor: 'white',
-	          contentNoPaddings: true,
-	          buttons: [],
-	          content: main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div id=\"BXCTP_content\" class=\"", "\"></div>"])), this.cssClass.popupContent),
-	          events: {
-	            onAfterPopupShow: function onAfterPopupShow() {
-	              _this.createTaskSetContent(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\">", "</div>"])), _this.cssClass.popupTitle, main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_WAIT')));
-	              main_core.ajax.runAction('socialnetwork.api.livefeed.getRawEntryData', {
-	                data: {
-	                  params: {
+	    value: function () {
+	      var _create = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$2().mark(function _callee(params) {
+	        var _this = this;
+	        return _regeneratorRuntime$2().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              if (!(main_core.Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y' && main_core.Loc.getMessage('SONET_EXT_LIVEFEED_isV2Form') === 'Y')) {
+	                _context.next = 3;
+	                break;
+	              }
+	              void createFromContent(params);
+	              return _context.abrupt("return");
+	            case 3:
+	              if (main_core.Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y') {
+	                main_core.ajax.runAction('intranet.controlbutton.getTaskLink', {
+	                  data: {
 	                    entityType: params.entityType,
 	                    entityId: params.entityId,
-	                    logId: main_core.Type.isNumber(params.logId) ? params.logId : null,
-	                    additionalParams: {
-	                      getSonetGroupAvailable: 'Y',
-	                      getLivefeedUrl: 'Y',
-	                      checkPermissions: {
-	                        feature: 'tasks',
-	                        operation: 'create_tasks'
-	                      }
-	                    }
+	                    postEntityType: main_core.Type.isStringFilled(params.postEntityType) ? params.postEntityType : params.entityType,
+	                    entityData: {}
 	                  }
-	                }
-	              }).then(function (response) {
-	                var entryTitle = main_core.Type.isStringFilled(response.data.TITLE) ? response.data.TITLE : '';
-	                var entryDescription = main_core.Type.isStringFilled(response.data.DESCRIPTION) ? response.data.DESCRIPTION : '';
-	                var entryDiskObjects = main_core.Type.isPlainObject(response.data.DISK_OBJECTS) ? response.data.DISK_OBJECTS : [];
-	                var entryUrl = main_core.Type.isStringFilled(response.data.LIVEFEED_URL) ? response.data.LIVEFEED_URL : '';
-	                var entrySuffix = main_core.Type.isStringFilled(response.data.SUFFIX) ? response.data.SUFFIX : '';
-	                var groupsAvailable = main_core.Type.isPlainObject(response.data.GROUPS_AVAILABLE) ? response.data.GROUPS_AVAILABLE : [];
-	                var logId = !main_core.Type.isUndefined(response.data.LOG_ID) ? parseInt(response.data.LOG_ID) : 0;
-	                if ((main_core.Type.isStringFilled(entryTitle) || main_core.Type.isStringFilled(entryDescription)) && main_core.Type.isStringFilled(entryUrl)) {
-	                  var taskDescription = _this.formatTaskDescription(entryDescription, entryUrl, params.entityType, entrySuffix);
-	                  var taskData = {
-	                    TITLE: entryTitle,
-	                    DESCRIPTION: taskDescription,
-	                    RESPONSIBLE_ID: main_core.Loc.getMessage('USER_ID'),
-	                    CREATED_BY: main_core.Loc.getMessage('USER_ID'),
-	                    UF_TASK_WEBDAV_FILES: entryDiskObjects
-	                  };
-	                  var sonetGroupIdList = [];
-	                  for (var _i = 0, _Object$entries = Object.entries(groupsAvailable); _i < _Object$entries.length; _i++) {
-	                    var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
-	                      key = _Object$entries$_i[0],
-	                      value = _Object$entries$_i[1];
-	                    sonetGroupIdList.push(value);
+	                }).then(function (response) {
+	                  if (!main_core.Type.isStringFilled(response.data.SUFFIX)) {
+	                    response.data.SUFFIX = '';
 	                  }
-	                  if (sonetGroupIdList.length == 1) {
-	                    taskData.GROUP_ID = parseInt(sonetGroupIdList[0]);
+	                  var requestData = response.data;
+	                  requestData.DESCRIPTION = _this.formatTaskDescription(requestData.DESCRIPTION, requestData.URL, params.entityType, requestData.SUFFIX);
+	                  if (parseInt(params.parentTaskId) > 0) {
+	                    requestData.PARENT_ID = parseInt(params.parentTaskId);
 	                  }
-	                  if (parseInt(params.entityType) > 0) {
-	                    taskData.PARENT_ID = parseInt(params.entityType);
+	                  if (main_core.Type.isStringFilled(requestData.UF_TASK_WEBDAV_FILES_SIGN)) {
+	                    _this.signedFiles = requestData.UF_TASK_WEBDAV_FILES_SIGN;
 	                  }
-	                  main_core.ajax.runComponentAction('bitrix:tasks.task', 'legacyAdd', {
-	                    mode: 'class',
-	                    data: {
-	                      data: taskData
-	                    }
-	                  }).then(function (response) {
-	                    var resultData = response.data;
-	                    _this.createTaskSetContentSuccess(resultData.DATA.ID);
-	                    main_core.ajax.runAction('socialnetwork.api.livefeed.createEntityComment', {
-	                      data: {
-	                        params: {
-	                          postEntityType: main_core.Type.isStringFilled(params.postEntityType) ? params.postEntityType : params.entityType,
-	                          sourceEntityType: params.entityType,
-	                          sourceEntityId: params.entityId,
-	                          entityType: 'TASK',
-	                          entityId: resultData.DATA.ID,
-	                          logId: main_core.Type.isNumber(params.logId) ? params.logId : logId > 0 ? logId : null
-	                        }
-	                      }
-	                    }).then(function () {}, function () {});
-	                  }, function (response) {
-	                    if (response.errors && response.errors.length) {
-	                      var errors = [];
-	                      response.errors.forEach(function (error) {
-	                        errors.push(error.message);
-	                      });
-	                      _this.createTaskSetContentFailure(errors);
-	                    }
+	                  _this.sliderUrl = response.data.link;
+	                  var link = _this.getLinkWithAnalytics(response.data.link, params);
+	                  BX.SidePanel.Instance.open(link, {
+	                    requestMethod: 'post',
+	                    requestParams: requestData,
+	                    cacheable: false
 	                  });
-	                } else {
-	                  _this.createTaskSetContentFailure([main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA')]);
-	                }
-	              }, function () {
-	                _this.createTaskSetContentFailure([main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA')]);
-	              });
-	            },
-	            onPopupClose: function onPopupClose() {
-	              _this.createTaskPopup.destroy();
-	            }
+	                });
+	              } else {
+	                this.createTaskPopup = new main_popup.Popup('BXCTP', null, {
+	                  autoHide: false,
+	                  zIndex: 0,
+	                  offsetLeft: 0,
+	                  offsetTop: 0,
+	                  overlay: false,
+	                  lightShadow: true,
+	                  closeIcon: {
+	                    right: '12px',
+	                    top: '10px'
+	                  },
+	                  draggable: {
+	                    restrict: true
+	                  },
+	                  closeByEsc: false,
+	                  contentColor: 'white',
+	                  contentNoPaddings: true,
+	                  buttons: [],
+	                  content: main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div id=\"BXCTP_content\" class=\"", "\"></div>"])), this.cssClass.popupContent),
+	                  events: {
+	                    onAfterPopupShow: function onAfterPopupShow() {
+	                      _this.createTaskSetContent(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\">", "</div>"])), _this.cssClass.popupTitle, main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_WAIT')));
+	                      main_core.ajax.runAction('socialnetwork.api.livefeed.getRawEntryData', {
+	                        data: {
+	                          params: {
+	                            entityType: params.entityType,
+	                            entityId: params.entityId,
+	                            logId: main_core.Type.isNumber(params.logId) ? params.logId : null,
+	                            additionalParams: {
+	                              getSonetGroupAvailable: 'Y',
+	                              getLivefeedUrl: 'Y',
+	                              checkPermissions: {
+	                                feature: 'tasks',
+	                                operation: 'create_tasks'
+	                              }
+	                            }
+	                          }
+	                        }
+	                      }).then(function (response) {
+	                        var entryTitle = main_core.Type.isStringFilled(response.data.TITLE) ? response.data.TITLE : '';
+	                        var entryDescription = main_core.Type.isStringFilled(response.data.DESCRIPTION) ? response.data.DESCRIPTION : '';
+	                        var entryDiskObjects = main_core.Type.isPlainObject(response.data.DISK_OBJECTS) ? response.data.DISK_OBJECTS : [];
+	                        var entryUrl = main_core.Type.isStringFilled(response.data.LIVEFEED_URL) ? response.data.LIVEFEED_URL : '';
+	                        var entrySuffix = main_core.Type.isStringFilled(response.data.SUFFIX) ? response.data.SUFFIX : '';
+	                        var groupsAvailable = main_core.Type.isPlainObject(response.data.GROUPS_AVAILABLE) ? response.data.GROUPS_AVAILABLE : [];
+	                        var logId = main_core.Type.isUndefined(response.data.LOG_ID) ? 0 : parseInt(response.data.LOG_ID);
+	                        if ((main_core.Type.isStringFilled(entryTitle) || main_core.Type.isStringFilled(entryDescription)) && main_core.Type.isStringFilled(entryUrl)) {
+	                          var taskDescription = _this.formatTaskDescription(entryDescription, entryUrl, params.entityType, entrySuffix);
+	                          var taskData = {
+	                            TITLE: entryTitle,
+	                            DESCRIPTION: taskDescription,
+	                            RESPONSIBLE_ID: main_core.Loc.getMessage('USER_ID'),
+	                            CREATED_BY: main_core.Loc.getMessage('USER_ID'),
+	                            UF_TASK_WEBDAV_FILES: entryDiskObjects
+	                          };
+	                          var sonetGroupIdList = [];
+	                          for (var _i = 0, _Object$entries = Object.entries(groupsAvailable); _i < _Object$entries.length; _i++) {
+	                            var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
+	                              key = _Object$entries$_i[0],
+	                              value = _Object$entries$_i[1];
+	                            sonetGroupIdList.push(value);
+	                          }
+	                          if (sonetGroupIdList.length == 1) {
+	                            taskData.GROUP_ID = parseInt(sonetGroupIdList[0]);
+	                          }
+	                          if (parseInt(params.entityType) > 0) {
+	                            taskData.PARENT_ID = parseInt(params.entityType);
+	                          }
+	                          main_core.ajax.runComponentAction('bitrix:tasks.task', 'legacyAdd', {
+	                            mode: 'class',
+	                            data: {
+	                              data: taskData
+	                            }
+	                          }).then(function (response) {
+	                            var resultData = response.data;
+	                            _this.createTaskSetContentSuccess(resultData.DATA.ID);
+	                            main_core.ajax.runAction('socialnetwork.api.livefeed.createEntityComment', {
+	                              data: {
+	                                params: {
+	                                  postEntityType: main_core.Type.isStringFilled(params.postEntityType) ? params.postEntityType : params.entityType,
+	                                  sourceEntityType: params.entityType,
+	                                  sourceEntityId: params.entityId,
+	                                  entityType: 'TASK',
+	                                  entityId: resultData.DATA.ID,
+	                                  logId: main_core.Type.isNumber(params.logId) ? params.logId : logId > 0 ? logId : null
+	                                }
+	                              }
+	                            }).then(function () {}, function () {});
+	                          }, function (response) {
+	                            if (response.errors && response.errors.length > 0) {
+	                              var errors = [];
+	                              response.errors.forEach(function (error) {
+	                                errors.push(error.message);
+	                              });
+	                              _this.createTaskSetContentFailure(errors);
+	                            }
+	                          });
+	                        } else {
+	                          _this.createTaskSetContentFailure([main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA')]);
+	                        }
+	                      }, function () {
+	                        _this.createTaskSetContentFailure([main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA')]);
+	                      });
+	                    },
+	                    onPopupClose: function onPopupClose() {
+	                      _this.createTaskPopup.destroy();
+	                    }
+	                  }
+	                });
+	                this.createTaskPopup.show();
+	              }
+	            case 4:
+	            case "end":
+	              return _context.stop();
 	          }
-	        });
-	        this.createTaskPopup.show();
+	        }, _callee, this);
+	      }));
+	      function create(_x) {
+	        return _create.apply(this, arguments);
 	      }
-	    }
+	      return create;
+	    }()
 	  }, {
 	    key: "getLinkWithAnalytics",
 	    value: function getLinkWithAnalytics(link, params) {
@@ -1256,7 +1553,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createTaskSetContentFailure",
 	    value: function createTaskSetContentFailure(errors) {
-	      this.createTaskSetContent(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>\n\t\t\t<div class=\"", "\">", "</div>\n\t\t\t<div class=\"", "\">", "</div>\n\t\t</div>"])), this.cssClass.popupTitle, main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_FAILURE_TITLE'), this.cssClass.popupDescription, errors.join('<br>')));
+	      this.createTaskSetContent(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t\t\t<div class=\"", "\">", "</div>\n\t\t\t\t\t\t<div class=\"", "\">", "</div>\n\t\t\t\t\t</div>\n\t\t"])), this.cssClass.popupTitle, main_core.Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_FAILURE_TITLE'), this.cssClass.popupDescription, errors.join('<br>')));
 	    }
 	  }, {
 	    key: "createTaskSetContent",
@@ -1273,8 +1570,8 @@ this.BX = this.BX || {};
 	    value: function formatTaskDescription(taskDescription, livefeedUrl, entityType, suffix) {
 	      var result = taskDescription;
 	      suffix = main_core.Type.isStringFilled(suffix) ? "_".concat(suffix) : '';
-	      if (!!livefeedUrl && !!entityType && livefeedUrl.length > 0) {
-	        result += "\n\n" + main_core.Loc.getMessage("SONET_EXT_COMMENTAUX_CREATE_TASK_".concat(entityType).concat(suffix)).replace('#A_BEGIN#', "[URL=".concat(livefeedUrl, "]")).replace('#A_END#', '[/URL]');
+	      if (Boolean(livefeedUrl) && Boolean(entityType) && livefeedUrl.length > 0) {
+	        result += "\n\n".concat(main_core.Loc.getMessage("SONET_EXT_COMMENTAUX_CREATE_TASK_".concat(entityType).concat(suffix)).replace('#A_BEGIN#', "[URL=".concat(livefeedUrl, "]")).replace('#A_END#', '[/URL]'));
 	      }
 	      return result;
 	    }

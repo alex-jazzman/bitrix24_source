@@ -4,6 +4,7 @@ import 'ui.design-tokens';
 import { DateTimeFormat } from 'main.date';
 import { Tag, Dom, Loc, Text, Browser, Type, Event, Cache } from 'main.core';
 import { Api } from 'sign.v2.api';
+import { SigningFrameEventHandler } from 'sign.v2.b2e.signing-frame-event-handler';
 import './sign-link.css';
 
 type EmployeeData = {
@@ -54,6 +55,7 @@ export class SignLink
 	#frameEventHandler: (event: Object) => void = null;
 
 	#cache = new Cache.MemoryCache();
+	static #signingFrameEventHandler: SigningFrameEventHandler = null;
 
 	constructor(options: SignLinkOptions = {})
 	{
@@ -62,6 +64,20 @@ export class SignLink
 		this.#requireBrowser = options?.requireBrowser || true;
 		this.#mobileAllowed = options?.mobileAllowed || true;
 		this.#slider = options?.slider || null;
+
+		this.#initializeSigningFrameEventHandler();
+	}
+
+	#initializeSigningFrameEventHandler(): void
+	{
+		if (!SignLink.#signingFrameEventHandler)
+		{
+			SignLink.#signingFrameEventHandler = new SigningFrameEventHandler();
+		}
+
+		const signingFrameEventHandler = SignLink.#signingFrameEventHandler;
+		signingFrameEventHandler.startListening();
+		signingFrameEventHandler.subscribeSliderCloseEvent();
 	}
 
 	preloadData(): Promise<void>
@@ -180,6 +196,21 @@ export class SignLink
 			this.#errorCode = errors?.errors?.[0]?.code;
 			this.#errorMessage = errors?.errors?.[0]?.message;
 		});
+	}
+
+	#getDownloadLink(): string | null
+	{
+		return this.#employeeData?.uri?.signedDocument;
+	}
+
+	async #getOrLoadDownloadLink(): Promise<string | null>
+	{
+		if (!this.#employeeData?.uri?.signedDocument)
+		{
+			await this.#loadData();
+		}
+
+		return this.#getDownloadLink();
 	}
 
 	#getLoader(): HTMLElement
@@ -309,7 +340,7 @@ export class SignLink
 								</div>
 							</div>
 						</div>
-						<a href="${Text.encode(this.#employeeData.uri.signedDocument)}" class="ui-btn ui-btn-success ui-btn-round ui-btn-sm" download>
+						<a onclick="${this.#onDownloadButtonClick.bind(this)}" class="ui-btn ui-btn-success ui-btn-round ui-btn-sm" download>
 							${Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_BTN')}
 						</a>
 					</div>
@@ -357,6 +388,38 @@ export class SignLink
 	{
 		// return window.navigator.userAgent.includes('BitrixDesktop');
 		return typeof (BXDesktopSystem) != "undefined" || typeof (BXDesktopWindow) != "undefined";
+	}
+
+	/**
+	 * Calls when download button was clicked.
+	 * @param {PointerEvent} event
+	 */
+	async #onDownloadButtonClick(event: PointerEvent): void
+	{
+		const target = event?.target;
+		let downloadLink = this.#getDownloadLink();
+		if (target && downloadLink)
+		{
+			target.href = downloadLink;
+
+			return;
+		}
+
+		event?.preventDefault?.();
+		event?.stopPropagation?.();
+		downloadLink = await this.#getOrLoadDownloadLink();
+
+		if (!target || !downloadLink)
+		{
+			window.top.BX.UI.Notification.Center.notify({
+				content: Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY'),
+			});
+
+			return;
+		}
+
+		target.href = downloadLink;
+		target.click();
 	}
 
 	#handleIframeEvent(event): void

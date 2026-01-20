@@ -20,8 +20,6 @@ if(!defined('NOT_CHECK_PERMISSIONS') || NOT_CHECK_PERMISSIONS !== true)
 		$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/checklist.php");
-
 \Bitrix\Main\Localization\Loc::loadMessages(__DIR__."/checklist.php");
 
 $APPLICATION->AddHeadString('

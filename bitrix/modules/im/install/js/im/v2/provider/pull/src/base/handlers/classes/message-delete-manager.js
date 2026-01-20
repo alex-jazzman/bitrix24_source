@@ -1,4 +1,3 @@
-import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Store } from 'ui.vue3.vuex';
 
@@ -71,7 +70,6 @@ export class MessageDeleteManager
 		EventEmitter.emit(EventType.dialog.closeComments);
 		Analytics.getInstance().messageDelete.onDeletedPostNotification({
 			dialogId: params.dialogId,
-			messageId: params.id,
 		});
 
 		Notifier.message.onNotFoundError();

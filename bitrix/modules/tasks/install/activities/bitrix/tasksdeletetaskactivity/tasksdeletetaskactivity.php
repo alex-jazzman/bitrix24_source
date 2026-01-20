@@ -32,6 +32,7 @@ class CBPTasksDeleteTaskActivity extends CBPDeleteDocumentActivity
 		if (
 			Tasks\Integration\Bizproc\Document\Task::isProjectTask($documentType)
 			|| Tasks\Integration\Bizproc\Document\Task::isScrumProjectTask($documentType)
+			|| Tasks\Integration\Bizproc\Document\Task::isBizprocTask($documentType)
 		)
 		{
 			$canDelete = true;

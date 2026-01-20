@@ -1,10 +1,10 @@
 /**
- * @module tasks/layout/task/create-new/bottom-panel
+ * @module tasks/layout/task/create-new/src/bottom-panel
  */
-jn.define('tasks/layout/task/create-new/bottom-panel', (require, exports, module) => {
+jn.define('tasks/layout/task/create-new/src/bottom-panel', (require, exports, module) => {
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
 	const { Icon } = require('assets/icons');
-	const { Responsible } = require('tasks/layout/task/create-new/responsible');
+	const { Responsible } = require('tasks/layout/task/create-new/src/responsible');
 	const { Indent } = require('tokens');
 	const { Haptics } = require('haptics');
 

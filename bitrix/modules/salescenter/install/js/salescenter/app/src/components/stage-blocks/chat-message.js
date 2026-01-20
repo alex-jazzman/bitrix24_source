@@ -3,6 +3,8 @@ import { Block } from 'salescenter.component.stage-block';
 import { UserAvatar, MessageEditor } from 'salescenter.component.stage-block.sms-message';
 import { ContextDictionary } from '../../const/context-dictionary';
 import { StageMixin } from './stage-mixin';
+import {MessageMixin} from "./message-mixin";
+import { Editor } from 'crm.messagesender.editor';
 
 const ChatMessage = {
 	props: {
@@ -38,8 +40,12 @@ const ChatMessage = {
 			type: String,
 			required: true,
 		},
+		messageSenderData: {
+			type: Object,
+			required: false,
+		},
 	},
-	mixins: [StageMixin],
+	mixins: [StageMixin, MessageMixin],
 	components: {
 		'stage-block-item':	Block,
 		'chat-user-avatar-block': UserAvatar,
@@ -52,6 +58,8 @@ const ChatMessage = {
 			senders: [],
 			pushedToUseBitrix24Notifications: null,
 			smsSenderListComponentKey: 0,
+			messageSenderEditor: null,
+			templateError: false,
 		};
 	},
 	computed: {
@@ -79,9 +87,43 @@ const ChatMessage = {
 			return this.$root.$app.context !== ContextDictionary.sms;
 		},
 	},
-	created() {
+	watch: {
+		messageData(newMessageData): void
+		{
+			if (!this.messageSenderEditor)
+			{
+				return;
+			}
+
+			this.setTemplateError(!newMessageData.body || !newMessageData.body.includes('#LINK#'));
+
+			this.$store.commit(
+				'orderCreation/setIsSenderSelected',
+				!this.templateError,
+			);
+		},
+	},
+	mounted() {
+		if (this.messageSenderAvailable)
+		{
+			this.initMessageSenderEditor();
+		}
 	},
 	methods: {
+		initMessageSenderEditor()
+		{
+			this.messageSenderEditor = new Editor(this.messageSenderData);
+			this.messageSenderEditor.render().then(() => this.initMessageData()).catch(() => {});
+			this.messageSenderEditor.subscribe('onMessageBodyChange', this.onMessageBodyChangeHandler.bind(this));
+		},
+		initMessageData()
+		{
+			const state = this.messageSenderEditor.getState();
+			const messageData = {
+				body: state.message?.body,
+			};
+			this.$store.dispatch('orderCreation/setMessageData', messageData);
+		},
 		onItemHint(e)
 		{
 			BX.Salescenter.Manager.openSlider(this.$root.$app.options.urlSettingsCompanyContacts, {width: 1200} );
@@ -106,7 +148,10 @@ const ChatMessage = {
 			</template>
 			<template v-slot:block-container>
 				<div :class="containerClassMixin" class="salescenter-app-payment-by-sms-item-container-offtop">
-					<div class="salescenter-app-payment-by-sms-item-container-sms">
+					<div v-if="messageSenderAvailable && !isMessageReadOnly">
+						<div :id="messageSenderId"></div>
+					</div>
+					<div v-else class="salescenter-app-payment-by-sms-item-container-sms">
 						<chat-user-avatar-block :manager="manager"/>
 						<div class="salescenter-app-payment-by-sms-item-container-sms-content">
 							<chat-message-editor-block :editor="editor" :isReadOnly="isMessageReadOnly" :selectedMode="selectedMode"/>

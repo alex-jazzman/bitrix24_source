@@ -1,5 +1,4 @@
 import { Type } from 'main.core';
-import { Reactions } from 'ui.vue3.components.reactions';
 
 import { Parser } from 'im.v2.lib.parser';
 
@@ -13,7 +12,6 @@ import type { ImModelMessage } from 'im.v2.model';
 export const DefaultMessageContent = {
 	name: 'DefaultMessageContent',
 	components: {
-		Reactions,
 		MessageStatus,
 		MessageAttach,
 		ReactionList,
@@ -76,7 +74,6 @@ export const DefaultMessageContent = {
 				<ReactionList 
 					v-if="canSetReactions" 
 					:messageId="message.id" 
-					:contextDialogId="dialogId"
 					class="bx-im-message-default-content__reaction-list" 
 				/>
 				<div v-if="withMessageStatus" class="bx-im-message-default-content__status-container">

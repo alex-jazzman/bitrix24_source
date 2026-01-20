@@ -10,6 +10,7 @@ import { TaskRecentMenu } from './classes/context-menu-manager';
 import './css/task-list.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem } from 'im.v2.model';
 
 // @vue/component
@@ -58,7 +59,7 @@ export const TaskList = {
 	},
 	created()
 	{
-		this.contextMenuManager = new TaskRecentMenu();
+		this.contextMenuManager = new TaskRecentMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -110,6 +111,10 @@ export const TaskList = {
 			}
 
 			return this.service;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

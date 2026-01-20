@@ -57,6 +57,16 @@ jn.define('utils/enums/base', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @param name
+		 * @returns {boolean}
+		 */
+		static hasEnum(name)
+		{
+			return Boolean(this.getEnum(name));
+		}
+
+		/**
+		 * @public
 		 * @param {string} name
 		 * @return {TEnumType}
 		 */

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,ui_buttons,ui_sidepanelContent,ui_designTokens,main_date,main_core,sign_v2_api) {
+(function (exports,ui_buttons,ui_sidepanelContent,ui_designTokens,main_date,main_core,sign_v2_api,sign_v2_b2e_signingFrameEventHandler) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
@@ -10,6 +10,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _container = /*#__PURE__*/new WeakMap();
 	var _memberId = /*#__PURE__*/new WeakMap();
@@ -26,7 +32,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _slider = /*#__PURE__*/new WeakMap();
 	var _frameEventHandler = /*#__PURE__*/new WeakMap();
 	var _cache = /*#__PURE__*/new WeakMap();
+	var _initializeSigningFrameEventHandler = /*#__PURE__*/new WeakSet();
 	var _loadData = /*#__PURE__*/new WeakSet();
+	var _getDownloadLink = /*#__PURE__*/new WeakSet();
+	var _getOrLoadDownloadLink = /*#__PURE__*/new WeakSet();
 	var _getLoader = /*#__PURE__*/new WeakSet();
 	var _renderError = /*#__PURE__*/new WeakSet();
 	var _getErrorTitle = /*#__PURE__*/new WeakSet();
@@ -38,12 +47,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _isNeedToContinueInBrowser = /*#__PURE__*/new WeakSet();
 	var _isNeedToContinueOnDesktop = /*#__PURE__*/new WeakSet();
 	var _isDesktopApp = /*#__PURE__*/new WeakSet();
+	var _onDownloadButtonClick = /*#__PURE__*/new WeakSet();
 	var _handleIframeEvent = /*#__PURE__*/new WeakSet();
 	var SignLink = /*#__PURE__*/function () {
 	  function SignLink() {
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, SignLink);
 	    _classPrivateMethodInitSpec(this, _handleIframeEvent);
+	    _classPrivateMethodInitSpec(this, _onDownloadButtonClick);
 	    _classPrivateMethodInitSpec(this, _isDesktopApp);
 	    _classPrivateMethodInitSpec(this, _isNeedToContinueOnDesktop);
 	    _classPrivateMethodInitSpec(this, _isNeedToContinueInBrowser);
@@ -55,7 +66,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    _classPrivateMethodInitSpec(this, _getErrorTitle);
 	    _classPrivateMethodInitSpec(this, _renderError);
 	    _classPrivateMethodInitSpec(this, _getLoader);
+	    _classPrivateMethodInitSpec(this, _getOrLoadDownloadLink);
+	    _classPrivateMethodInitSpec(this, _getDownloadLink);
 	    _classPrivateMethodInitSpec(this, _loadData);
+	    _classPrivateMethodInitSpec(this, _initializeSigningFrameEventHandler);
 	    _classPrivateFieldInitSpec(this, _container, {
 	      writable: true,
 	      value: null
@@ -121,6 +135,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldSet(this, _requireBrowser, (options === null || options === void 0 ? void 0 : options.requireBrowser) || true);
 	    babelHelpers.classPrivateFieldSet(this, _mobileAllowed, (options === null || options === void 0 ? void 0 : options.mobileAllowed) || true);
 	    babelHelpers.classPrivateFieldSet(this, _slider, (options === null || options === void 0 ? void 0 : options.slider) || null);
+	    _classPrivateMethodGet(this, _initializeSigningFrameEventHandler, _initializeSigningFrameEventHandler2).call(this);
 	  }
 	  babelHelpers.createClass(SignLink, [{
 	    key: "preloadData",
@@ -233,6 +248,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }]);
 	  return SignLink;
 	}();
+	function _initializeSigningFrameEventHandler2() {
+	  if (!_classStaticPrivateFieldSpecGet(SignLink, SignLink, _signingFrameEventHandler)) {
+	    _classStaticPrivateFieldSpecSet(SignLink, SignLink, _signingFrameEventHandler, new sign_v2_b2e_signingFrameEventHandler.SigningFrameEventHandler());
+	  }
+	  var signingFrameEventHandler = _classStaticPrivateFieldSpecGet(SignLink, SignLink, _signingFrameEventHandler);
+	  signingFrameEventHandler.startListening();
+	  signingFrameEventHandler.subscribeSliderCloseEvent();
+	}
 	function _loadData2() {
 	  return _loadData3.apply(this, arguments);
 	}
@@ -266,6 +289,35 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }, _callee3, this);
 	  }));
 	  return _loadData3.apply(this, arguments);
+	}
+	function _getDownloadLink2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _employeeData)) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.uri) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.signedDocument;
+	}
+	function _getOrLoadDownloadLink2() {
+	  return _getOrLoadDownloadLink3.apply(this, arguments);
+	}
+	function _getOrLoadDownloadLink3() {
+	  _getOrLoadDownloadLink3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+	    var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+	      while (1) switch (_context4.prev = _context4.next) {
+	        case 0:
+	          if ((_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _employeeData)) !== null && _babelHelpers$classPr5 !== void 0 && (_babelHelpers$classPr6 = _babelHelpers$classPr5.uri) !== null && _babelHelpers$classPr6 !== void 0 && _babelHelpers$classPr6.signedDocument) {
+	            _context4.next = 3;
+	            break;
+	          }
+	          _context4.next = 3;
+	          return _classPrivateMethodGet(this, _loadData, _loadData2).call(this);
+	        case 3:
+	          return _context4.abrupt("return", _classPrivateMethodGet(this, _getDownloadLink, _getDownloadLink2).call(this));
+	        case 4:
+	        case "end":
+	          return _context4.stop();
+	      }
+	    }, _callee4, this);
+	  }));
+	  return _getOrLoadDownloadLink3.apply(this, arguments);
 	}
 	function _getLoader2() {
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('mask', function () {
@@ -311,16 +363,16 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  main_core.Dom.append(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sign-ui-signing-link__empty-state\">\n\t\t\t\t<div class=\"sign-ui-signing-link__empty-state_icon\"></div>\n\t\t\t\t<div class=\"sign-ui-signing-link__empty-state_title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"sign-ui-signing-link__empty-state_desc\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t\tclass=\"ui-btn ui-btn-primary ui-btn-round\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(main_core.Loc.getMessage('SIGN_V2_B2E_LINK_DESKTOP_TITLE')), main_core.Text.encode(main_core.Loc.getMessage('SIGN_V2_B2E_LINK_DESKTOP_TEXT')), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _uri)), main_core.Text.encode(main_core.Loc.getMessage('SIGN_V2_B2E_LINK_DESKTOP_BUTTON'))), babelHelpers.classPrivateFieldGet(this, _container));
 	}
 	function _renderDownloadSignedDocForEmployee2() {
-	  main_core.Dom.append(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sign-ui-signing-link__employee\">\n\t\t\t\t<div class=\"sign-ui-signing-link__employee-header\">\n\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-header-header\">\n\t\t\t\t\t\t<h2>", "</h2>\n\t\t\t\t\t\t<p>", "</p>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc\">\n\t\t\t\t\t<p>", "</p>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"sign-ui-signing-link__employee-doc--icon\"></span>\n\t\t\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc--info\">\n\t\t\t\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc--info-title\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc--info-date\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<a href=\"", "\" class=\"ui-btn ui-btn-success ui-btn-round ui-btn-sm\" download>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div onclick=\"BX.SidePanel.Instance.open('", "')\" class=\"sign-ui-signing-link__employee-alldocs\" target=\"_blank\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).document.title), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_DISCLAIMER_MSGVER1'), babelHelpers.classPrivateFieldGet(this, _renderMemberInfo) ? _classPrivateMethodGet(this, _renderMemberInfoBlock, _renderMemberInfoBlock2).call(this, babelHelpers.classPrivateFieldGet(this, _employeeData).member) : '', main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_MSG'), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).document.title), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_DOCUMENT_DATE', {
+	  main_core.Dom.append(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sign-ui-signing-link__employee\">\n\t\t\t\t<div class=\"sign-ui-signing-link__employee-header\">\n\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-header-header\">\n\t\t\t\t\t\t<h2>", "</h2>\n\t\t\t\t\t\t<p>", "</p>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc\">\n\t\t\t\t\t<p>", "</p>\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"sign-ui-signing-link__employee-doc--icon\"></span>\n\t\t\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc--info\">\n\t\t\t\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc--info-title\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"sign-ui-signing-link__employee-doc--info-date\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<a onclick=\"", "\" class=\"ui-btn ui-btn-success ui-btn-round ui-btn-sm\" download>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div onclick=\"BX.SidePanel.Instance.open('", "')\" class=\"sign-ui-signing-link__employee-alldocs\" target=\"_blank\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).document.title), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_DISCLAIMER_MSGVER1'), babelHelpers.classPrivateFieldGet(this, _renderMemberInfo) ? _classPrivateMethodGet(this, _renderMemberInfoBlock, _renderMemberInfoBlock2).call(this, babelHelpers.classPrivateFieldGet(this, _employeeData).member) : '', main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_MSG'), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).document.title), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_DOCUMENT_DATE', {
 	    '#DATE#': main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT'), babelHelpers.classPrivateFieldGet(this, _employeeData).dateSignedTs)
-	  }), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).uri.signedDocument), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_BTN'), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).uri.allDocuments), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_BUTTON_ALLDOCS')), babelHelpers.classPrivateFieldGet(this, _container));
+	  }), _classPrivateMethodGet(this, _onDownloadButtonClick, _onDownloadButtonClick2).bind(this), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_BTN'), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _employeeData).uri.allDocuments), main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_BUTTON_ALLDOCS')), babelHelpers.classPrivateFieldGet(this, _container));
 	}
 	function _renderMemberInfoBlock2(memberInfo) {
 	  return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sign-ui-signing-link__employee-header-person\">\n\t\t\t\t<div class=\"sign-ui-signing-link__employee-header-person-photo\">\n\t\t\t\t\t<img src=\"", "\" alt=\"\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"sign-ui-signing-link__employee-header-person-text\">\n\t\t\t\t\t", "\n\t\t\t\t\t<br>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(memberInfo === null || memberInfo === void 0 ? void 0 : memberInfo.photo), main_core.Text.encode(memberInfo === null || memberInfo === void 0 ? void 0 : memberInfo.name), main_core.Text.encode(memberInfo === null || memberInfo === void 0 ? void 0 : memberInfo.position));
 	}
 	function _needToShowPageForEmployee2() {
-	  var _babelHelpers$classPr;
-	  return ((_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _employeeData)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.signed) === true;
+	  var _babelHelpers$classPr3;
+	  return ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _employeeData)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.signed) === true;
 	}
 	function _isNeedToContinueInBrowser2() {
 	  return babelHelpers.classPrivateFieldGet(this, _requireBrowser) && _classPrivateMethodGet(this, _isDesktopApp, _isDesktopApp2).call(this);
@@ -331,6 +383,50 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _isDesktopApp2() {
 	  // return window.navigator.userAgent.includes('BitrixDesktop');
 	  return typeof BXDesktopSystem != "undefined" || typeof BXDesktopWindow != "undefined";
+	}
+	function _onDownloadButtonClick2(_x2) {
+	  return _onDownloadButtonClick3.apply(this, arguments);
+	}
+	function _onDownloadButtonClick3() {
+	  _onDownloadButtonClick3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(event) {
+	    var _event$preventDefault, _event$stopPropagatio;
+	    var target, downloadLink;
+	    return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+	      while (1) switch (_context5.prev = _context5.next) {
+	        case 0:
+	          target = event === null || event === void 0 ? void 0 : event.target;
+	          downloadLink = _classPrivateMethodGet(this, _getDownloadLink, _getDownloadLink2).call(this);
+	          if (!(target && downloadLink)) {
+	            _context5.next = 5;
+	            break;
+	          }
+	          target.href = downloadLink;
+	          return _context5.abrupt("return");
+	        case 5:
+	          event === null || event === void 0 ? void 0 : (_event$preventDefault = event.preventDefault) === null || _event$preventDefault === void 0 ? void 0 : _event$preventDefault.call(event);
+	          event === null || event === void 0 ? void 0 : (_event$stopPropagatio = event.stopPropagation) === null || _event$stopPropagatio === void 0 ? void 0 : _event$stopPropagatio.call(event);
+	          _context5.next = 9;
+	          return _classPrivateMethodGet(this, _getOrLoadDownloadLink, _getOrLoadDownloadLink2).call(this);
+	        case 9:
+	          downloadLink = _context5.sent;
+	          if (!(!target || !downloadLink)) {
+	            _context5.next = 13;
+	            break;
+	          }
+	          window.top.BX.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY')
+	          });
+	          return _context5.abrupt("return");
+	        case 13:
+	          target.href = downloadLink;
+	          target.click();
+	        case 15:
+	        case "end":
+	          return _context5.stop();
+	      }
+	    }, _callee5, this);
+	  }));
+	  return _onDownloadButtonClick3.apply(this, arguments);
 	}
 	function _handleIframeEvent2(event) {
 	  if (babelHelpers.classPrivateFieldGet(this, _uri).indexOf(event.origin) !== 0) {
@@ -344,13 +440,17 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    message.type = event.data;
 	  }
 	  if (message.type === 'BX:SidePanel:close') {
-	    var _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _slider)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.close();
+	    var _babelHelpers$classPr4;
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _slider)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.close();
 	    main_core.Event.unbind(window, 'message', babelHelpers.classPrivateFieldGet(this, _frameEventHandler));
 	  }
 	}
+	var _signingFrameEventHandler = {
+	  writable: true,
+	  value: null
+	};
 
 	exports.SignLink = SignLink;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.UI,BX.UI.Sidepanel.Content,BX,BX.Main,BX,BX.Sign.V2));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.UI,BX.UI.Sidepanel.Content,BX,BX.Main,BX,BX.Sign.V2,BX.Sign.V2.B2e));
 //# sourceMappingURL=sign-link.bundle.js.map

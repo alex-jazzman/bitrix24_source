@@ -1,0 +1,42 @@
+.intranet-settings-info-banner {
+	padding: var(--ui-space-inset-lg);
+	border-radius: var(--ui-border-radius-lg);
+	display: flex;
+	gap: var(--ui-space-inline-md);
+	background: var(--ui-color-accent-soft-blue-2);
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
+}
+
+.intranet-settings-info-banner__container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.intranet-settings-info-banner:before {
+	content: '';
+	display: inline-block;
+	min-height: 108px;
+	min-width: 108px;
+	background-image: image-set(url(./images/person-key.png) 1x, url(./images/person-key2x.png) 2x);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.intranet-settings-info-banner__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+}
+
+.intranet-settings-info-banner__footer {
+	display: flex;
+	gap: 8px;
+}
+
+.image-section.--person-key-img
+{
+	background: url('../images/person-key.png') center no-repeat;
+	background-size: 180%;
+}

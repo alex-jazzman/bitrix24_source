@@ -35,8 +35,10 @@ export class TextInput
 				class="ui-ctl-element"
 				rows="3"
 				id="${this.#id}"
-			>${this.#inputText}</textarea>
+			></textarea>
 		`;
+
+		this.#inputLayout.innerHTML = this.#inputText;
 
 		const label = Tag.render`
 			<label class="ui-entity-editor-block-title">

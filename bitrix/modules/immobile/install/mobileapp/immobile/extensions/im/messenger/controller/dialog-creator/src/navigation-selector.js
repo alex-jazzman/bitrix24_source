@@ -29,19 +29,22 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		 * @param {Array} userList
 		 * @param parentLayout
 		 */
-		static open({ userList }, parentLayout = null)
+		static async open({ userList, parentLayout = null })
 		{
-			const widget = new NavigationSelector(userList, parentLayout);
+			const totalEmployees = userList?.length;
+
+			const widget = new NavigationSelector({ userList, totalEmployees, parentLayout });
 			widget.show();
 		}
 
-		constructor(userList, parentLayout)
+		constructor({ userList, totalEmployees, parentLayout })
 		{
 			this.userList = userList || [];
 			this.layout = parentLayout || null;
 
 			this.view = new NavigationSelectorView({
 				userList,
+				totalEmployees,
 				onClose: () => {
 					this.layout.close();
 				},

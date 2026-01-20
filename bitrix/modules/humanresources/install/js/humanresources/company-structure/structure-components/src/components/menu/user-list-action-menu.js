@@ -18,6 +18,7 @@ export const UserListActionMenu = {
 			}
 
 			BX.SidePanel.Instance.open(url, {
+				width: 1100,
 				cacheable: false,
 			});
 		},

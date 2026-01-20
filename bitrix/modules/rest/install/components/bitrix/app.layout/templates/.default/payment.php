@@ -1,8 +1,19 @@
 <?php
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+/**
+ * Bitrix vars
+ *
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $this
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Rest\AppTable;
@@ -10,6 +21,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Rest\Marketplace\Client;
 use Bitrix\Rest\PlacementTable;
+use Bitrix\Rest\Engine\Access;
 
 Loc::loadMessages(__FILE__);
 
@@ -27,10 +39,24 @@ if ($arParams['IS_SLIDER'])
 	$APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, $bodyClasses)));
 }
 
-$needPadding = $arParams['SET_TITLE'] == 'Y' ? true : false;
+$needPadding = ($arParams['SET_TITLE'] ?? 'Y') === 'Y';
 
 Loader::includeModule('ui');
 Extension::load(['ui.common','ui.buttons','marketplace']);
+
+$code = Access::getHelperCode(Access::ACTION_OPEN, Access::ENTITY_TYPE_APP, $arResult['APP_ID']);
+if ($code !== '')
+{
+	$arResult['HELPER_DATA']['CODE'] = $code;
+	$arResult['HELPER_DATA']['TEMPLATE_URL'] = \Bitrix\UI\InfoHelper::getUrl();
+	$arResult['HELPER_DATA']['URL'] = str_replace(
+		'/code/',
+		'/' . $code . '/',
+		$arResult['HELPER_DATA']['TEMPLATE_URL']
+	);
+}
+
+
 
 $demoButton = '';
 if ($arResult['PAYMENT_TYPE'] === AppTable::STATUS_SUBSCRIPTION || $arResult['APP_STATUS']['STATUS'] === AppTable::STATUS_SUBSCRIPTION)

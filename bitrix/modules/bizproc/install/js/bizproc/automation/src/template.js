@@ -794,6 +794,8 @@ export class Template extends EventEmitter
 			form,
 		});
 
+		window.console.info('Opened robot ID: %s', robot.getId());
+
 		context.DOCUMENT_CATEGORY_ID = this.#context.document.getCategoryId();
 		if (
 			Type.isPlainObject(robot.data.DialogContext)

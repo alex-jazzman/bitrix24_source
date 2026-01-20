@@ -253,12 +253,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["register_submit_button"] 
 			$arResult["ERRORS"][] = $user->LAST_ERROR;
 		}
 
-		if(empty($arResult["ERRORS"]))
-		{
-			if(COption::GetOptionString("main", "event_log_register", "N") === "Y")
-				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER", "main", $ID);
-		}
-		else
+		if(!empty($arResult["ERRORS"]))
 		{
 			if(COption::GetOptionString("main", "event_log_register_fail", "N") === "Y")
 				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER_FAIL", "main", $ID, $arResult["ERRORS"]);

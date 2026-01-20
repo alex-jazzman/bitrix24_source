@@ -1,113 +1,168 @@
 import { Event, Tag } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
-import { EntitySelectorEntity, EventName, TaskField } from 'tasks.v2.const';
-import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
+import { TaskCard } from 'tasks.v2.application.task-card';
+import { Core } from 'tasks.v2.core';
+import { Model, EntitySelectorEntity, EventName } from 'tasks.v2.const';
+import { EntitySelectorDialog, type Item, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { relationError } from 'tasks.v2.lib.relation-error';
+import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { RelationMeta } from './types';
+import type { RelationDialogMeta } from './types';
+
+type Params = {
+	targetNode: HTMLElement,
+	targetContainer: HTMLElement,
+	taskId: TaskId,
+	ids: number[],
+	onClose: Function,
+	onUpdate: Function,
+};
 
 export class RelationTasksDialog
 {
-	#meta: RelationMeta;
-	#taskId: number | string;
-	#dialog: EntitySelectorDialog | null = null;
-	#onUpdateOnce: Function | null = null;
+	#dialogs: { [taskId: TaskId]: EntitySelectorDialog } = {};
+	#meta: RelationDialogMeta;
 
-	constructor(meta: RelationMeta)
+	#taskId: TaskId;
+	#ids: number[];
+	#onClose: Function | null;
+	#onUpdate: Function | null;
+
+	constructor(meta: RelationDialogMeta)
 	{
 		this.#meta = meta;
+
+		EventEmitter.subscribe(EventName.TaskAdded, (event: BaseEvent) => {
+			const task: TaskModel = event.getData().task;
+
+			this.#addTaskItems([task.id]);
+		});
+
+		EventEmitter.subscribe(EventName.TaskDeleted, (event: BaseEvent) => {
+			const task: TaskModel = event.getData();
+
+			this.#deleteTaskItems([task.id]);
+		});
 	}
 
-	setTaskId(taskId: number | string): RelationTasksDialog
+	show(params: Params): void
 	{
-		this.#taskId = taskId;
+		this.#ids = params.ids;
+		this.#taskId = params.taskId;
+		this.#onClose = params.onClose;
+		this.#onUpdate = params.onUpdate;
 
-		return this;
-	}
+		if (!this.#ids && !this.#meta.service.areIdsLoaded(this.#taskId))
+		{
+			return;
+		}
 
-	showTo(targetNode: HTMLElement, targetContainer: HTMLElement): void
-	{
-		this.#dialog ??= this.#createDialog();
-		if (this.#dialog.isLoaded())
+		if (!this.#ids && this.dialog.isLoaded())
 		{
 			this.#addTaskItems(this.#task[this.#meta.idsField]);
+			this.dialog.setSelectableByIds(this.#selectableItems);
 		}
-		this.#dialog.selectItemsByIds(this.#items);
-		this.#dialog.setSelectableByIds(this.#selectableItems);
-		this.#dialog.getPopup().setTargetContainer(targetContainer);
-		this.#dialog.showTo(targetNode);
+
+		this.dialog.selectItemsByIds(this.#items);
+		this.dialog.getPopup().setTargetContainer(params.targetContainer);
+		this.dialog.showTo(params.targetNode);
 	}
 
-	getDialog(): EntitySelectorDialog
+	get dialog(): EntitySelectorDialog
 	{
-		return this.#dialog;
-	}
+		this.#dialogs[this.#taskId] ??= this.#createDialog();
 
-	onUpdateOnce(callback: Function): RelationTasksDialog
-	{
-		this.#onUpdateOnce = callback;
-
-		return this;
+		return this.#dialogs[this.#taskId];
 	}
 
 	#createDialog(): EntitySelectorDialog
 	{
-		const handleClose = (): void => {
-			if (!this.#dialog.isLoaded())
-			{
-				return;
-			}
-
-			const ids = this.#dialog.getSelectedItems().map((item) => Number(item.getId()));
-			if (ids.sort().join(',') !== this.#task[this.#meta.idsField].sort().join(','))
-			{
-				void this.#updateTask();
-			}
-		};
-
 		return new EntitySelectorDialog({
 			context: 'tasks-card',
-			multiple: true,
+			multiple: !this.#ids,
 			enableSearch: true,
 			width: 500,
 			entities: [
 				{
-					id: EntitySelectorEntity.Task,
+					id: this.#entityId,
+					options: {
+						withFooter: false,
+					},
 				},
 			],
 			preselectedItems: this.#items,
-			popupOptions: {
-				events: {
-					onClose: handleClose,
+			events: {
+				onLoad: (): void => {
+					const titles = this.dialog.getItems().map((item: Item): TaskModel => ({
+						id: this.#isTemplate ? idUtils.boxTemplate(item.getId()) : item.getId(),
+						title: item.getTitle().replace(new RegExp(`\\[${item.getId()}\\]$`), ''),
+					}));
+
+					void Core.getStore().dispatch(`${Model.Tasks}/setTitles`, titles);
 				},
 			},
-			footer: this.#createFooter(),
+			popupOptions: {
+				events: {
+					onClose: (): void => {
+						this.#onClose?.(this.dialog.getSelectedItems());
+						if (this.dialog.isLoaded() && !this.#ids)
+						{
+							void this.#updateTask();
+						}
+					},
+				},
+			},
+			footer: this.#isTemplate ? null : this.#createFooter(),
 		});
 	}
 
-	#createFooter(): HTMLElement
+	#createFooter(): ?HTMLElement
 	{
 		const footer = Tag.render`
 			<span class="ui-selector-footer-link ui-selector-footer-link-add">${this.#meta.footerText}</span>
 		`;
 
-		Event.bind(footer, 'click', () => EventEmitter.emit(EventName.OpenCompactCard, {
-			[TaskField.Title]: this.getDialog().getActiveTab().getLastSearchQuery?.().getQuery(),
-			[this.#meta.relationToField]: this.#taskId,
-		}));
+		Event.bind(footer, 'click', () => {
+			TaskCard.showCompactCard({
+				title: this.dialog.getTagSelector()?.getTextBoxValue(),
+				groupId: this.#task.groupId,
+				[this.#meta.relationToField]: this.#taskId,
+			});
+			this.dialog.clearSearch();
+			this.dialog.freeze();
+
+			const unfreeze = () => {
+				this.dialog.unfreeze();
+				EventEmitter.unsubscribe(EventName.CardClosed, unfreeze);
+				EventEmitter.unsubscribe(EventName.FullCardClosed, unfreeze);
+
+				if (this.#ids)
+				{
+					this.dialog.hide();
+				}
+			};
+
+			EventEmitter.subscribe(EventName.CardClosed, unfreeze);
+			EventEmitter.subscribe(EventName.FullCardClosed, unfreeze);
+		});
 
 		return footer;
 	}
 
-	#addTaskItems(ids: number): void
+	#addTaskItems(ids: number[]): void
 	{
-		const itemIds = new Set(this.#dialog.getItems().map((it) => it.getId()));
+		if (!this.dialog || this.#isTemplate)
+		{
+			return;
+		}
+
+		const itemIds = new Set(this.dialog.getItems().map((it) => it.getId()));
 		ids.filter((id) => !itemIds.has(id)).forEach((id: number) => {
 			const task = taskService.getStoreTask(id);
-			this.#dialog.addItem({
+			this.dialog.addItem({
 				id,
 				entityId: EntitySelectorEntity.Task,
 				title: task.title,
@@ -118,22 +173,35 @@ export class RelationTasksDialog
 		});
 	}
 
-	async #updateTask(): void
+	#deleteTaskItems(ids: number[]): void
 	{
-		const selectedItems = this.#dialog.getSelectedItems();
-		const newTaskIds = selectedItems.map((item) => Number(item.getId()));
+		if (!this.dialog || this.#isTemplate)
+		{
+			return;
+		}
+
+		ids.forEach((id: number) => this.dialog.removeItem([EntitySelectorEntity.Task, id]));
+	}
+
+	async #updateTask(): Promise<void>
+	{
 		const currentTaskIds = this.#task[this.#meta.idsField];
+		const newTaskIds = this.dialog.getSelectedItems().map((item) => {
+			return this.#isTemplate ? idUtils.boxTemplate(item.getId()) : item.getId();
+		});
 
 		const idsToDelete = currentTaskIds.filter((id) => !newTaskIds.includes(id));
 		const idsToAdd = newTaskIds.filter((id) => !currentTaskIds.includes(id));
 
-		await Promise.all([
-			this.#meta.service.delete(this.#taskId, idsToDelete),
-			this.#add(idsToAdd),
-		]);
+		if (idsToDelete.length > 0 || idsToAdd.length > 0)
+		{
+			await Promise.all([
+				this.#meta.service.delete(this.#taskId, idsToDelete),
+				this.#add(idsToAdd),
+			]);
 
-		this.#onUpdateOnce?.();
-		this.#onUpdateOnce = null;
+			this.#onUpdate?.();
+		}
 	}
 
 	async #add(ids: number[]): Promise<void>
@@ -171,12 +239,22 @@ export class RelationTasksDialog
 
 	get #items(): ItemId[]
 	{
-		return this.#mapIdsToItemIds(this.#task[this.#meta.idsField]);
+		return this.#mapIdsToItemIds(this.#ids ?? this.#task?.[this.#meta.idsField] ?? []);
 	}
 
 	#mapIdsToItemIds(ids: number[]): ItemId[]
 	{
-		return ids.map((id: number) => [EntitySelectorEntity.Task, id]);
+		return ids.map((id: number) => [this.#entityId, idUtils.unbox(id)]);
+	}
+
+	get #entityId(): string
+	{
+		return this.#isTemplate ? EntitySelectorEntity.Template : EntitySelectorEntity.Task;
+	}
+
+	get #isTemplate(): boolean
+	{
+		return this.#meta.isTemplate && idUtils.isTemplate(this.#taskId);
 	}
 
 	get #task(): TaskModel

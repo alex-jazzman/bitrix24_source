@@ -23,12 +23,16 @@ $MESS['BRCW_SETTINGS_CARD_TYPE_SELECTOR_CREATE_BTN'] = 'Создать свой 
 $MESS['BRCW_SETTINGS_CARD_TYPE_FORM_NAME_LABEL'] = 'Название';
 $MESS['BRCW_SETTINGS_CARD_TYPE_FORM_NAME_PLACEHOLDER'] = 'Введите название';
 
+$MESS['BRCW_SETTINGS_CARD_DESCRIPTION_LABEL'] = 'Описание';
+$MESS['BRCW_SETTINGS_CARD_DESCRIPTION_PLACEHOLDER'] = 'Например, образование специалиста, сертификаты и опыт работы';
+$MESS['BRCW_SETTINGS_CARD_AVATAR_UPLOAD_LABEL'] = 'Изображение';
 $MESS['BRCW_SETTINGS_CARD_NAME_LABEL'] = 'Название или имя';
-$MESS['BRCW_SETTINGS_CARD_NAME_DESCRIPTION'] = 'Название ресурса будет видно [nowrap]в расписании[/nowrap] и в сообщениях клиенту';
 $MESS['BRCW_SETTINGS_CARD_REQUIRED_FIELD'] = 'Заполните обязательное поле';
 $MESS['BRCW_SETTINGS_CARD_TYPE_LABEL'] = 'Тип';
 $MESS['BRCW_SETTINGS_CARD_TYPE_PLACEHOLDER'] = 'Выбрать или создать';
 $MESS['BRCW_SETTINGS_CARD_TYPE_SELECTOR_SUPER_TITLE'] = 'Тип ресурса';
+
+$MESS['BRCW_SETTINGS_CARD_ADDITIONAL_INFO_TITLE'] = 'Информация для клиентов';
 
 $MESS['BRCW_SETTINGS_CARD_SCHEDULE_TITLE_MSGVER_1'] = 'Как показывать в расписании';
 $MESS['BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE_MSGVER_1'] = 'В колонках';
@@ -110,6 +114,9 @@ $MESS['BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECT_TYPE'] = 'Выбрать
 $MESS['BRCW_BOOKING_SOON_HINT'] = 'Скоро будет доступно';
 $MESS['BRCW_MESSAGE_TEMPLATE_SOON_TEXT'] = 'Здесь будет текст сообщения';
 
+$MESS['BRCW_SETTINGS_CARD_BASE_TITLE'] = 'О ресурсе';
+$MESS['BRCW_SETTINGS_CARD_BASE_DESCRIPTION'] = 'Добавьте название или имя ресурса, описание и изображение. Это увидят клиенты, когда будут записываться, а подробная информация поможет им сделать выбор. [helpdesk]Подробнее[/helpdesk]';
+
 $MESS['BRCW_SETTINGS_CARD_INTEGRATION_TITLE'] = 'Куда добавлять записи ресурса';
 $MESS['BRCW_SETTINGS_CARD_INTEGRATION_DESCRIPTION'] = 'Настройте связь с календарём — так специалист всегда сможет посмотреть своё расписание. [helpdesk]Подробнее[/helpdesk]';
 
@@ -123,3 +130,18 @@ $MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_ROOM_TEXT'] = 'Выбер
 $MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_REMINDER_TITLE'] = 'Когда напомнить специалисту о записи';
 $MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_REMINDER_TEXT'] = 'Настройте напоминания для календаря, чтобы сотрудник точно не забыл о записи';
 $MESS['BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'] = 'Выбрать';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_ROOM_TITLE'] = 'Ничего не найдено';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_ROOM_SUBTITLE'] = 'Попробуйте сформулировать иначе или создайте новую переговорную в разделе Календарь';
+
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_TITLE'] = 'Услуги';
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_TEXT'] = 'Добавьте услуги, которые можно выбрать вместе с этим ресурсом. Клиенты увидят их, когда будут записываться. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'] = 'Найти или создать услугу';
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_WARNING'] = 'Недостаточно прав на просмотр и редактирование каталога услуг. Обратитесь к администратору вашего Битрикс24';
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_HIDDEN_ITEM'] = 'Услуги скрыты';
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_TITLE_MSGVER_1'] = 'Здесь будут ваши услуги';
+$MESS['BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_SUBTITLE_MSGVER_1'] = 'Добавьте первую услугу, чтобы клиенты могли записываться самостоятельно';
+
+$MESS['BRCW_NOTIFICATION_CARD_TARIFF_INFO_TITLE'] = 'Уведомления';
+$MESS['BRCW_NOTIFICATION_CARD_TARIFF_INFO_DESCRIPTION'] = 'Настройте, какие уведомления получат клиенты и менеджеры после записи. Автоматические напоминания и подтверждения помогут клиентам не забыть о визите, а уведомления для менеджеров помогут отследить неподтверждённые записи. [helpdesk]Подробнее[/helpdesk]';
+
+$MESS['BRCW_NOTIFICATION_CARD_TARIFF_INFO_ALERT'] = 'На бесплатном тарифе доступен только просмотр шаблонов сообщений. Чтобы отправлять их клиентам, перейдите на другой тариф.';

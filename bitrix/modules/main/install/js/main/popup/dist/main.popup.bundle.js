@@ -322,7 +322,6 @@ this.BX = this.BX || {};
 	    _this.autoHide = params.autoHide === true;
 	    _this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
 	    _this.autoHideHandler = main_core.Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
-	    _this.handleOverlayClick = _this.handleOverlayClick.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.isAutoHideBinded = false;
 	    _this.closeByEsc = params.closeByEsc === true;
 	    _this.isCloseByEscBinded = false;
@@ -1231,14 +1230,8 @@ this.BX = this.BX || {};
 	        if (this.isCompatibleMode()) {
 	          main_core.Event.bind(this.getPopupContainer(), 'click', this.handleContainerClick);
 	        }
-	        if (this.overlay && this.overlay.element) {
-	          main_core.Event.bind(this.overlay.element, 'click', this.handleOverlayClick);
-	        } else {
-	          if (this.isCompatibleMode()) {
-	            main_core.Event.bind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
-	          } else {
-	            this.targetContainer.ownerDocument.addEventListener('click', this.handleAutoHide, true);
-	          }
+	        if (!this.hasOverlay()) {
+	          main_core.Event.bind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide, !this.isCompatibleMode());
 	        }
 	      }
 	    }
@@ -1253,14 +1246,8 @@ this.BX = this.BX || {};
 	        if (this.isCompatibleMode()) {
 	          main_core.Event.unbind(this.getPopupContainer(), 'click', this.handleContainerClick);
 	        }
-	        if (this.overlay && this.overlay.element) {
-	          main_core.Event.unbind(this.overlay.element, 'click', this.handleOverlayClick);
-	        } else {
-	          if (this.isCompatibleMode()) {
-	            main_core.Event.unbind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
-	          } else {
-	            this.targetContainer.ownerDocument.removeEventListener('click', this.handleAutoHide, true);
-	          }
+	        if (!this.hasOverlay()) {
+	          main_core.Event.unbind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide, !this.isCompatibleMode());
 	        }
 	      }
 	    }
@@ -1298,15 +1285,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "handleOverlayClick",
 	    value: function handleOverlayClick(event) {
-	      this.tryCloseByEvent(event);
-	      event.stopPropagation();
+	      if (this.autoHide) {
+	        this.tryCloseByEvent(event);
+	        event.stopPropagation();
+	      }
 	    }
 	  }, {
 	    key: "setOverlay",
 	    value: function setOverlay(params) {
 	      if (this.overlay === null) {
+	        this.unbindAutoHide();
 	        this.overlay = {
-	          element: main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"popup-window-overlay\" id=\"popup-window-overlay-", "\"></div>\n\t\t\t\t"])), this.getId())
+	          element: main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"popup-window-overlay\" \n\t\t\t\t\t\tid=\"popup-window-overlay-", "\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t></div>\n\t\t\t\t"])), this.getId(), this.handleOverlayClick.bind(this))
 	        };
 	        this.resizeOverlay();
 	        main_core.Dom.append(this.overlay.element, this.getTargetContainer());
@@ -1321,6 +1311,11 @@ this.BX = this.BX || {};
 	      if (params !== null && params !== void 0 && params.blur) {
 	        main_core.Dom.style(this.overlay.element, 'backdrop-filter', params.blur);
 	      }
+	    }
+	  }, {
+	    key: "hasOverlay",
+	    value: function hasOverlay() {
+	      return this.overlay !== null && this.overlay.element !== null;
 	    }
 	  }, {
 	    key: "removeOverlay",
@@ -1509,7 +1504,11 @@ this.BX = this.BX || {};
 	        main_core.Dom.addClass(this.getPopupContainer(), this.animationShowClassName);
 	        if (this.animationCloseEventType !== null) {
 	          var eventName = this.animationCloseEventType + 'end';
-	          this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd() {
+	          var className = this.animationShowClassName;
+	          this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd(event) {
+	            if (!main_core.Dom.hasClass(event.target, className)) {
+	              return;
+	            }
 	            this.removeEventListener(eventName, handleTransitionEnd);
 	            callback();
 	          });
@@ -1531,7 +1530,11 @@ this.BX = this.BX || {};
 	        main_core.Dom.addClass(this.getPopupContainer(), this.animationCloseClassName);
 	        if (this.animationCloseEventType !== null) {
 	          var eventName = this.animationCloseEventType + 'end';
-	          this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd() {
+	          var className = this.animationCloseClassName;
+	          this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd(event) {
+	            if (!main_core.Dom.hasClass(event.target, className)) {
+	              return;
+	            }
 	            this.removeEventListener(eventName, handleTransitionEnd);
 	            callback();
 	          });
@@ -1625,7 +1628,8 @@ this.BX = this.BX || {};
 	      if (!this.bindOptions.forceBindPosition && this.bindElementPos !== null && bindElementPos.top === this.bindElementPos.top && bindElementPos.left === this.bindElementPos.left) {
 	        return;
 	      }
-	      this.bindElementPos = bindElementPos;
+	      var bindElementVanished = bindElementPos.top === 0 && bindElementPos.left === 0 && bindElementPos.width === 0 && bindElementPos.height === 0;
+	      this.bindElementPos = bindElementVanished && this.bindElementPos !== null ? this.bindElementPos : bindElementPos;
 	      var windowSize = bindElementPos.windowSize ? bindElementPos.windowSize : this.getWindowSize();
 	      var windowScroll = bindElementPos.windowScroll ? bindElementPos.windowScroll : this.getWindowScroll();
 	      var popupWidth = bindElementPos.popupWidth ? bindElementPos.popupWidth : this.popupContainer.offsetWidth;

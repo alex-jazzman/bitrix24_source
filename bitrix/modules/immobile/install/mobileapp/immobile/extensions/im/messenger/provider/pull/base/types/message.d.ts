@@ -20,7 +20,7 @@ export type AddReactionParams = {
 	},
 	reaction: ReactionType,
 	userId: number,
-	dialogId: string
+	dialogId: string|number,
 };
 
 export type DeleteReactionParams = {

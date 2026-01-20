@@ -28,12 +28,6 @@ if ($component->isAjaxRequest())
 	$postfix .= time();
 }
 
-$fileInputUtility = FileInputUtility::instance();
-$uploaderContextGenerator = (new \Bitrix\Main\UserField\File\UploaderContextGenerator($fileInputUtility, $arResult['userField']));
-
-$controlId = $uploaderContextGenerator->getControlId();
-$containerId = 'field-item-' . $controlId . '-' . $postfix;
-
 if (isset($arResult['value']) && is_array($arResult['value']))
 {
 	$arResult['value'] = array_filter(
@@ -42,21 +36,31 @@ if (isset($arResult['value']) && is_array($arResult['value']))
 		ARRAY_FILTER_USE_KEY
 	);
 }
-
-$cid = $fileInputUtility->registerControl("", $controlId);
-
-$context = $uploaderContextGenerator->getContextInEditMode($cid);
-
 $fileIds = $arResult['value'] ?? [];
+$fileIds = array_values(array_map('intval', $fileIds));
+
+$fileUploaderSession = \Bitrix\Main\UserField\File\UploadSession::getInstance();
+
 foreach ($fileIds as $fileId)
 {
-	$fileId = (int)$fileId;
 	if ($fileId > 0)
 	{
-		$fileInputUtility->registerFile($cid, $fileId);
+		$fileUploaderSession->registerFile(
+			$fileId,
+			[
+				'FIELD_ID' => $arResult['userField']['ID'] ?? 0,
+				'ENTITY_VALUE_ID' => $arResult['userField']['ENTITY_VALUE_ID'] ?? 0,
+			]
+		);
 	}
 }
-unset($fileId);
+
+$uploaderContextGenerator = (new \Bitrix\Main\UserField\File\UploaderContextGenerator($arResult['userField']));
+
+$controlId = $uploaderContextGenerator->getControlId();
+$containerId = 'field-item-' . $controlId . '-' . $postfix;
+
+$context = $uploaderContextGenerator->getContextInEditMode($fileUploaderSession);
 
 ?>
 
@@ -67,13 +71,12 @@ unset($fileId);
 
 <script>
 	BX.ready(() => {
-		const app = new BX.Main.Field.File.App(<?= Json::encode([
+		new BX.Main.Field.File.App(<?= Json::encode([
+			'fieldName' => $arResult['userField']['FIELD_NAME'],
 			'controlId' => $controlId,
 			'containerId' => $containerId,
 			'context'=> $context,
 			'value'=> $fileIds,
 		]) ?>);
-
-		app.start();
 	});
 </script>

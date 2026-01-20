@@ -1,13 +1,15 @@
 import { Runtime } from 'main.core';
-import { Outline } from 'ui.icon-set.api.core';
+import { Chip, ChipDesign, type ChipImage } from 'ui.system.chip.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
-import { Chip, ChipDesign, type ChipImage } from 'tasks.v2.component.elements.chip';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 import { analytics } from 'tasks.v2.lib.analytics';
+import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -23,18 +25,19 @@ export const GroupChip = {
 		Hint,
 		GroupPopup,
 	},
-	inject: ['analytics', 'cardType'],
+	inject: {
+		analytics: {},
+		cardType: {},
+		task: {},
+		taskId: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		isAutonomous: {
 			type: Boolean,
 			default: false,
 		},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			groupMeta,
@@ -47,10 +50,6 @@ export const GroupChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		group(): ?GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
@@ -71,7 +70,7 @@ export const GroupChip = {
 				return this.task.groupId > 0;
 			}
 
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, groupMeta.id);
+			return this.task.filledFields[groupMeta.id];
 		},
 		isFilled(): boolean
 		{
@@ -115,41 +114,33 @@ export const GroupChip = {
 		{
 			return (this.task.flowId ?? 0) <= 0;
 		},
-		hintText(): boolean
-		{
-			return this.loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW');
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
-		},
 		isLocked(): boolean
 		{
-			return !Core.getParams().limits.project;
+			return !Core.getParams().restrictions.project.available;
 		},
 	},
 	created(): void
 	{
-		groupDialog.setTaskId(this.taskId).init();
+		if (this.task.groupId && !this.group)
+		{
+			void groupService.getGroup(this.task.groupId);
+		}
 	},
 	methods: {
 		handleClick(): void
 		{
-			if (this.isLocked)
+			if (!this.isAutonomous && this.isSelected)
 			{
-				void Runtime.loadExtension('tasks.limit').then((exports) => {
-					const { Limit } = exports;
-					Limit.showInstance({
-						featureId: Core.getParams().limits.projectFeatureId,
-					});
-				});
+				this.highlightField();
 
 				return;
 			}
 
-			if (!this.isAutonomous && this.isSelected)
+			if (this.isLocked)
 			{
-				this.highlightField();
+				void showLimit({
+					featureId: Core.getParams().restrictions.project.featureId,
+				});
 
 				return;
 			}
@@ -161,15 +152,32 @@ export const GroupChip = {
 				return;
 			}
 
-			groupDialog.setTaskId(this.taskId).showTo(this.$refs.chip.$el);
-
-			if (!this.isAutonomous)
+			groupDialog.show({
+				targetNode: this.$refs.chip.$el,
+				taskId: this.taskId,
+				onClose: this.handleDialogClose,
+			});
+		},
+		handleDialogClose(groupId: number): void
+		{
+			if (this.isAutonomous)
 			{
-				groupDialog.onUpdateOnce(this.highlightField);
+				this.$refs.chip?.$el.focus();
 			}
 
-			groupDialog.onHide(this.handleFieldClose);
-			groupDialog.onUpdate(this.handleUpdate);
+			if (!this.isAutonomous && this.isSelected)
+			{
+				this.highlightField();
+			}
+
+			if (groupId && groupId !== this.task.groupId)
+			{
+				analytics.sendAddProject(this.analytics, {
+					cardType: this.cardType,
+					viewersCount: this.task.auditorsIds.length,
+					coexecutorsCount: this.task.accomplicesIds.length,
+				});
+			}
 		},
 		highlightField(): void
 		{
@@ -177,37 +185,18 @@ export const GroupChip = {
 		},
 		handleClear(): void
 		{
-			void taskService.update(
-				this.taskId,
-				{
-					groupId: 0,
-					stageId: 0,
-				},
-			);
-		},
-		handleFieldClose(): void
-		{
-			if (this.isAutonomous)
-			{
-				this.$refs.chip?.$el.focus();
-			}
-		},
-		handleUpdate(): void
-		{
-			analytics.sendAddProject(this.analytics, {
-				cardType: this.cardType,
-				viewersCount: this.task.auditorsIds.length,
-				coexecutorsCount: this.task.accomplicesIds.length,
+			void taskService.update(this.taskId, {
+				groupId: 0,
+				stageId: 0,
 			});
 		},
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
-			:icon="icon"
-			:image="image"
-			:text="text"
+			:design
+			:icon
+			:image
+			:text
 			:withClear="isFilled && !isFlowFilled"
 			:lock="isLocked"
 			:trimmable="isFilled"
@@ -223,8 +212,8 @@ export const GroupChip = {
 			:bindElement="$refs.chip.$el"
 			@close="doShowHint = false"
 		>
-			{{ hintText }}
+			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
-		<GroupPopup v-if="isAutonomous" :taskId="taskId" :getBindElement="() => $refs.chip.$el"/>
+		<GroupPopup v-if="isAutonomous" :getBindElement="() => $refs.chip.$el"/>
 	`,
 };

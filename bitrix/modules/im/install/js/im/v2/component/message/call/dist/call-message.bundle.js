@@ -35,5 +35,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CallMessage = CallMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Call.Component));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX?.Messenger?.v2?.Component?.Message??{},BX?.Call?.Component??{}));
 //# sourceMappingURL=call-message.bundle.js.map

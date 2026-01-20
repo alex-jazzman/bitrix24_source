@@ -20,6 +20,7 @@ use Bitrix\Tasks\Slider\Path\PathMaker;
 use Bitrix\Tasks\UI\Component\TemplateHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\V2\FormV2Feature;
 
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.templates.list/templates/.default/script.js");
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/table-view.js");
@@ -134,7 +135,8 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 			&& $allowedActions[ActionDictionary::ACTION_TEMPLATE_CREATE]
 		;
 
-		if ($canCreate)
+		// todo: Remove the second condition after creating template copy V2 API
+		if ($canCreate && !FormV2Feature::isOn())
 		{
 			$actions[] = [
 				'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_COPY'),
@@ -193,6 +195,14 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 					'template_id' => $row['ID'],
 				]
 			) . $strIframe,
+		];
+	}
+
+	if ($arParams['relationToId'] ?? null)
+	{
+		$actions[] = [
+			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_UNLINK'),
+			'onclick' => "UnlinkTemplate({$row['ID']}, {$arParams['relationToId']});",
 		];
 	}
 

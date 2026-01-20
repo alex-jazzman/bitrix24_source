@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,ui_notification,ui_sidepanelContent,sign_v2_api,sign_type) {
+(function (exports,sign_type,main_core,ui_notification,ui_sidepanelContent,sign_v2_api) {
 	'use strict';
 
 	async function request(method, endpoint, data, notifyError = true) {
@@ -205,39 +205,39 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 
 	class SignersListApi {
-	  deleteSignersList(listId) {
+	  deleteSignersList(listId, notifyError = true) {
 	    return post('sign.api_v1.b2e.signers.deleteList', {
 	      listId
-	    });
+	    }, notifyError);
 	  }
-	  copySignersList(listId) {
+	  copySignersList(listId, notifyError = true) {
 	    return post('sign.api_v1.b2e.signers.copyList', {
 	      listId
-	    });
+	    }, notifyError);
 	  }
-	  deleteSignersFromList(listId, userIds) {
+	  deleteSignersFromList(listId, userIds, notifyError = true) {
 	    return post('sign.api_v1.b2e.signers.deleteSignersFromList', {
 	      listId,
 	      userIds
-	    });
+	    }, notifyError);
 	  }
-	  createList(title) {
+	  createList(title, notifyError = true) {
 	    return post('sign.api_v1.b2e.signers.createList', {
 	      title
-	    });
+	    }, notifyError);
 	  }
-	  renameList(listId, title) {
+	  renameList(listId, title, notifyError = true) {
 	    return post('sign.api_v1.b2e.signers.renameList', {
 	      listId,
 	      title
-	    });
+	    }, notifyError);
 	  }
-	  addSignersToList(listId, members, excludeRejected = true) {
+	  addSignersToList(listId, members, excludeRejected = true, notifyError = true) {
 	    return post('sign.api_v1.b2e.signers.addSignersToList', {
 	      listId,
 	      members,
 	      excludeRejected
-	    });
+	    }, notifyError);
 	  }
 	}
 
@@ -687,5 +687,5 @@ this.BX.Sign = this.BX.Sign || {};
 
 	exports.Api = Api;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX,BX.UI.Sidepanel.Content,BX.Sign.V2,BX.Sign));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign,BX,BX,BX.UI.Sidepanel.Content,BX.Sign.V2));
 //# sourceMappingURL=api.bundle.js.map

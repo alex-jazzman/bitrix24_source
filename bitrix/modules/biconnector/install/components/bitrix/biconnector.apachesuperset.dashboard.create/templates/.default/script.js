@@ -101,7 +101,7 @@
 	      groups: new Set(),
 	      scopes: new Set(),
 	      params: new Set(),
-	      scopeParamsMap: babelHelpers.classPrivateFieldGet(this, _props).scopeParamsMap
+	      paramList: babelHelpers.classPrivateFieldGet(this, _props).paramList
 	    }));
 	    main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _paramsSelector).getLayout(), babelHelpers.classPrivateFieldGet(this, _node));
 	  }

@@ -16,6 +16,7 @@ return [
 		'ui.uploader.tile-widget',
 		'ui.fonts.inter',
 		'ui.design-tokens',
+		'ui.viewer',
 	],
 	'skip_core' => true,
 ];

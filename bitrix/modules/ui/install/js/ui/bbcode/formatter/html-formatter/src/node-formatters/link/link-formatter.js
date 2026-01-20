@@ -21,11 +21,6 @@ export class LinkNodeFormatter extends NodeFormatter
 	{
 		super({
 			name: 'url',
-			validate({ node }: ValidateCallbackOptions): boolean {
-				const nodeValue: string = LinkNodeFormatter.fetchNodeValue(node);
-
-				return validateUrl(nodeValue);
-			},
 			before({ node, formatter }: AfterCallbackOptions): BBCodeElementNode {
 				if (formatter.isShortLinkEnabled())
 				{
@@ -91,19 +86,25 @@ export class LinkNodeFormatter extends NodeFormatter
 
 					return node.getContent();
 				})();
-				const nodeAttributes: {[key: string]: string} = node.getAttributes();
-				const { defaultTarget = '_blank', attributes } = formatter.getLinkSettings();
 
-				return Dom.create({
-					tag: 'a',
-					attrs: {
-						...nodeAttributes,
-						...attributes,
-						href: sourceHref,
-						target: defaultTarget,
-						className: 'ui-typography-link',
-					},
-				});
+				if (validateUrl(sourceHref))
+				{
+					const nodeAttributes: {[key: string]: string} = node.getAttributes();
+					const { defaultTarget = '_blank', attributes } = formatter.getLinkSettings();
+
+					return Dom.create({
+						tag: 'a',
+						attrs: {
+							...nodeAttributes,
+							...attributes,
+							href: sourceHref,
+							target: defaultTarget,
+							className: 'ui-typography-link',
+						},
+					});
+				}
+
+				return document.createDocumentFragment();
 			},
 			...options,
 		});

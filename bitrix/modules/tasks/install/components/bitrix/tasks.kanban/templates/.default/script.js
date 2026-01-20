@@ -186,15 +186,6 @@ BX.Tasks.KanbanComponent.onReady = function()
 	});
 };
 
-BX.addCustomEvent("SidePanel.Slider:onCloseByEsc", function(event) {
-	var reg = /tasks\/task\/edit/;
-	var str = event.getSlider().getUrl();
-	if (reg.test(str) && !confirm(BX.message('TASKS_CLOSE_PAGE_CONFIRM')))
-	{
-		event.denyAction();
-	}
-});
-
 BX.Tasks.KanbanComponent.TourGuideController = function(options)
 {
 	this.tours = options.tours;

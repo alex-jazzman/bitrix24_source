@@ -68,7 +68,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 			<?if (
 				\Bitrix\Main\Loader::includeModule("bitrix24") && \Bitrix\Main\ModuleManager::isModuleInstalled("landing")
 				&& (
-					in_array(\CBitrix24::getPortalZone(), array("ru", "ua", "kz", "by"))
+					in_array(\CBitrix24::getPortalZone(), array("ru", "kz", "by", 'uz'))
 					|| Bitrix\Bitrix24\Release::isAvailable("landing")
 				)
 			):?>

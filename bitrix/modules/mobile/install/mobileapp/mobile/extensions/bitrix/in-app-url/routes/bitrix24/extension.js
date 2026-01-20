@@ -3,11 +3,11 @@
  */
 jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { WhatsNewUIManager } = require('whats-new/ui-manager');
+	const { ComponentOpener } = require('whats-new/ui-manager/component-opener');
 
 	module.exports = function(inAppUrl) {
 		inAppUrl.register('/whats-new/', (params, { context }) => {
-			WhatsNewUIManager.openComponent();
+			ComponentOpener.open();
 		}).name('/bitrix24/whats-new');
 
 		inAppUrl.register('/bitrix24/profile', (params, { context }) => {
@@ -20,7 +20,10 @@ jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 					const isNewProfileFeatureEnabled = await fetchNewProfileFeatureEnabled();
 					if (isNewProfileFeatureEnabled)
 					{
-						void UserProfile.open({ openInComponent: true });
+						void UserProfile.open({
+							openInComponent: true,
+							analyticsSection: 'in_app_url_profile',
+						});
 
 						return;
 					}

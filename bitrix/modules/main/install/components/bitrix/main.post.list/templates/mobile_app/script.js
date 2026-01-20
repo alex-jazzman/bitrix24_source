@@ -84,6 +84,7 @@
 		this.attachments = (attachments || []);
 		this.node = null;
 		this.mentions = {};
+		this.analyticsData = null;
 	};
 	commentObj.prototype = {
 		getText : function() {
@@ -109,6 +110,12 @@
 		{
 			res = id;
 		}
+
+		if (BX.type.isObject(id) && BX.type.isObject(id.analyticsData))
+		{
+			res.analyticsData = { ...id.analyticsData };
+		}
+
 		return res;
 	};
 	commentObj.removeInstance = function(comment) {
@@ -173,6 +180,9 @@
 							comment.mentions[authorName] = '[USER=' + authorId + ']' + authorName + '[/USER]';
 							var text = (this.handler && this.handler.simpleForm ? this.handler.simpleForm.writingParams["~text"] : comment.text);
 							comment.text = text + (text == "" ? "" : " ") + '[USER=' + authorId + ']' + authorName + '[/USER]' + ', ';
+							comment.analyticsData = {
+								context: 'reply_button',
+							};
 						}
 						this.show(comment, comment.text, false);
 					}
@@ -321,15 +331,19 @@
 				attachments = comment.attachments,
 				entityHdl = this.entitiesId[comment.id[0]],
 				post_data = this.handler.getForm({
-					ENTITY_XML_ID : comment.id[0],
-					REVIEW_TEXT : text,
-					NOREDIRECT : "Y",
-					MODE : "RECORD",
-					AJAX_POST : "Y",
-					id : comment.id,
-					sessid : BX.bitrix_sessid(),
-					SITE_ID : BX.message("SITE_ID"),
-					LANGUAGE_ID : BX.message("LANGUAGE_ID")
+					ENTITY_XML_ID: comment.id[0],
+					REVIEW_TEXT: text,
+					NOREDIRECT: "Y",
+					MODE: "RECORD",
+					AJAX_POST: "Y",
+					id: comment.id,
+					sessid: BX.bitrix_sessid(),
+					SITE_ID: BX.message("SITE_ID"),
+					LANGUAGE_ID: BX.message("LANGUAGE_ID"),
+					ANALYTICS_LABEL: {
+						context: 'add_comment_field',
+						...analyticsData,
+					},
 				}),
 				post = new window.MobileAjaxWrapper(),
 				fd = new window.FormData(),

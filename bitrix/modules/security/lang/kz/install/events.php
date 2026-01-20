@@ -1,4 +1,8 @@
 <?php
+$MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_DESC"] = "#USER_PHONE# - телефон нөмірі
+#CODE# - растау коды";
+$MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_NAME"] = "СМС арқылы кіруді растау";
+$MESS["SECURITY_INSTALL_SMS_TEMPLATE_OTP_CONFIRM_MESS"] = "#CODE# — Битрикс24 кіру үшін растау коды";
 $MESS["VIRUS_DETECTED_DESC"] = "#EMAIL# - сайт әкімшісінің E-Mail-і (бас модуль баптауларынан)";
 $MESS["VIRUS_DETECTED_MESSAGE"] = "#SITE_NAME# сайтының ақпараттық хабарламасы
 ------------------------------------------

@@ -29,6 +29,7 @@
 		this.baseUrlNode = document.querySelector(".landing-template-preview-base-url");
 		this.loader = new BX.Loader({});
 		this.messages = params.messages || {};
+		this.tool = params.tool || null;
 		this.loaderText = null;
 		this.progressBar = null;
 		this.IsLoadedFrame = false;
@@ -75,7 +76,7 @@
 
 		this.init();
 
-		this.metrika = new BX.Landing.Metrika(true);
+		this.metrika = new BX.Landing.Metrika(true, this.tool);
 		this.metrika.sendData(this.getMetrikaParams('preview_template', 'success'));
 
 		return this;
@@ -543,27 +544,37 @@
 		getMetrikaParams: function (event, status)
 		{
 			/**
-			 * @see \Bitrix\Landing\Metrika\Categories
+			 * @see \Bitrix\Landing\Metrika\Tools
 			 */
-			let category = 'site';
-			if (this.isCrmForm)
+			let tool = 'site';
+			if (this.tool === null)
 			{
-				category = 'crm_forms';
+				if (this.isCrmForm)
+				{
+					tool = 'crm_forms';
+				}
+				else if (this.isStore())
+				{
+					tool = 'shop';
+				}
+				else if (this.isKnowledgeBase)
+				{
+					tool = 'kb';
+				}
+				else if (this.isMainpage())
+				{
+					tool = 'vibe';
+				}
 			}
-			else if (this.isStore())
+			else
 			{
-				category = 'shop';
-			}
-			else if (this.isKnowledgeBase)
-			{
-				category = 'kb';
-			}
-			else if (this.isMainpage())
-			{
-				category = 'vibe';
+				tool = this.tool;
 			}
 
+			const category = tool;
+
 			const metrikaParams = {
+				tool,
 				category,
 				event,
 				type: 'template',
@@ -681,7 +692,7 @@
 
 				const metrikaParams = this.getMetrikaParams(this.getMetrikaCreateEvent(), 'success');
 
-				add['additional[st_category]'] = metrikaParams.category;
+				add['additional[st_tool]'] = metrikaParams.tool;
 				add['additional[st_event]'] = metrikaParams.event;
 				if (metrikaParams.c_section)
 				{

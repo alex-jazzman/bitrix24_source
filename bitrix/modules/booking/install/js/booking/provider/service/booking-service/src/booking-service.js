@@ -255,6 +255,26 @@ class BookingService
 		}
 	}
 
+	async createDeal(id: number): Promise<void>
+	{
+		try
+		{
+			const data = await (new ApiClient()).post('Booking.createDeal', { bookingId: id });
+			const updatedBooking = mapDtoToModel(data);
+
+			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
+				id,
+				booking: updatedBooking,
+			});
+
+			void mainPageService.fetchCounters();
+		}
+		catch (error)
+		{
+			console.error('BookingService: create deal error', error);
+		}
+	}
+
 	async #onAfterDelete(id: number): Promise<void>
 	{
 		const editingBookingId = Core.getStore().getters[`${Model.Interface}/editingBookingId`];
@@ -344,10 +364,12 @@ class BookingService
 				'CLIENTS',
 				'EXTERNAL_DATA',
 				'NOTE',
+				'SKUS',
 			],
 			withCounters: true,
 			withClientData: true,
 			withExternalData: true,
+			withSkus: true,
 		});
 	}
 }

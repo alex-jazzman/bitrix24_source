@@ -67,14 +67,21 @@ export class RolesModel extends BuilderModel
 			getDefault: (state): ImModelCopilotRole => {
 				return Object.values(state.roles).find((role: ImModelCopilotRole) => role.default);
 			},
+			/** @function copilot/roles/getDefaultAvatar */
+			getDefaultAvatar: (state, getters) => (size: ImModelCopilotAvatarSize = 'M'): string => {
+				const avatarSize = AvatarSizes[size];
+
+				return getters.getDefault?.avatar[avatarSize] ?? '';
+			},
 			/** @function copilot/roles/getAvatar */
 			getAvatar: (state, getters) => (roleCode: string, size: ImModelCopilotAvatarSize = 'M'): string => {
+				const avatarSize = AvatarSizes[size];
 				if (!state.roles[roleCode])
 				{
-					return getters.getDefault?.prompts ?? [];
+					return getters.getDefault?.avatar[avatarSize] ?? '';
 				}
 
-				return state.roles[roleCode].avatar[AvatarSizes[size]];
+				return state.roles[roleCode].avatar[avatarSize];
 			},
 		};
 	}

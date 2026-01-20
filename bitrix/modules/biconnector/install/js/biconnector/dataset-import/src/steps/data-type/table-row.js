@@ -77,14 +77,14 @@ export const TableRow = {
 			let typeText = '';
 			if (originalType)
 			{
-				typeText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_TYPE', {
+				typeText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_TYPE_MSGVER_1', {
 					'#CLASS#': '<span class="format-table__orig_info_title">',
 					'#/CLASS#': '</span>',
 					'#TYPENAME#': DataTypeDescriptions[originalType].title,
 				});
 			}
 
-			const nameText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_NAME', {
+			const nameText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_NAME_MSGVER_1', {
 				'#CLASS#': '<span class="format-table__orig_info_title">',
 				'#/CLASS#': '</span>',
 				'#FIELDNAME#': originalName,
@@ -99,9 +99,11 @@ export const TableRow = {
 		},
 		isNeedShowOriginalNameHint(): boolean
 		{
-			return (this.$store.state.config.fileProperties?.firstLineHeader ?? true)
-				&& this.$store.state.config.connectionProperties?.connectionType
-				&& this.$store.state.config.connectionProperties?.connectionType !== 'rest'
+			const { connectionType, connectionIsSupportMapping } = this.$store.state.config.connectionProperties || {};
+			const firstLineHeader = this.$store.state.config.fileProperties?.firstLineHeader;
+
+			return (firstLineHeader ?? true)
+				&& !(connectionType === 'rest' && connectionIsSupportMapping === false)
 			;
 		},
 		hintOptions(): Object
@@ -132,7 +134,7 @@ export const TableRow = {
 		},
 		canEditName(): boolean
 		{
-			const isNew = !Boolean(this.fieldSettings?.id > 0);
+			const isNew = !(this.fieldSettings?.id > 0);
 
 			return isNew || (this.fieldSettings?.visible && this.sourceTypeExternal);
 		},

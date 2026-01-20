@@ -35,7 +35,8 @@ use Bitrix\Main\Localization\Loc;
 		groupId: <?= (int)$arParams['GROUP_ID'] ?>,
 		counterTypes: <?= CUtil::PhpToJSObject($arParams['COUNTERS']) ?>,
 		counters: <?= CUtil::PhpToJSObject($arResult['COUNTERS']) ?>,
-		signedParameters: <?=CUtil::PhpToJSObject($this->getComponent()->getSignedParameters()) ?>
+		signedParameters: <?=CUtil::PhpToJSObject($this->getComponent()->getSignedParameters()) ?>,
+		tasksChatUri: '<?= CUtil::JSEscape($arParams['TASKS_CHAT_URI'] ?? '') ?>',
 	});
 
 	counters.render();

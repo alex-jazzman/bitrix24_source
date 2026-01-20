@@ -16,7 +16,11 @@ use Bitrix\Main\Localization\Loc; ?>
 					<?= Loc::getMessage("REST_MARKETPLACE_SOLUTION_BANNER_TITLE") ?>
 				</div>
 				<div class="rest-market-solution-main__banner-description">
-					<?= Loc::getMessage("REST_MARKETPLACE_SOLUTION_BANNER_DESCRIPTION") ?>
+					<?=
+					$arResult['IS_RENAMED_MARKET']
+						? Loc::getMessage('REST_MARKETPLACE_SOLUTION_BANNER_DESCRIPTION_MSGVER_1')
+						: Loc::getMessage("REST_MARKETPLACE_SOLUTION_BANNER_DESCRIPTION")
+					?>
 				</div>
 				<div class="rest-market-solution-main__banner-action">
 					<a href="/market/category/vertical_crm/"

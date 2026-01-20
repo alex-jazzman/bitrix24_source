@@ -98,16 +98,10 @@ $service = $manager->createService(BIConnector\Services\ApacheSuperset::getServi
 $service->setLanguage($languageCode);
 
 $limitManager = BIConnector\LimitManager::getInstance();
-if ($supersetKey)
+$limitManager->setService($service);
+if (!$limitManager->checkLimit())
 {
-	$limitManager->setSupersetKey($supersetKey);
-}
-elseif (
-	!Main\Loader::includeModule('bitrix24')
-	&& BIConnector\Superset\KeyManager::isActiveKey($biKey)
-)
-{
-	$limitManager->setIsSuperset();
+	$limitManager->releaseLock();
 }
 
 $tableName = isset($_GET['table']) ? (string)$_GET['table'] : null;
@@ -122,7 +116,7 @@ elseif (!$limitManager->isSuperset())
 }
 elseif (
 	Main\Loader::includeModule('bitrix24')
-	&& !Bitrix24\Feature::isFeatureEnabled('biconnector')
+	&& !Bitrix24\Feature::isFeatureEnabled('bi_constructor')
 )
 {
 	echo Json::encode(['error' => 'DISABLED']);
@@ -131,10 +125,6 @@ elseif (isset($_GET['show_tables']))
 {
 	$tableList = $service->getTableList();
 	echo Json::encode($tableList, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-}
-elseif (!$limitManager->checkLimit())
-{
-	echo Json::encode(['error' => 'LIMIT_EXCEEDED']);
 }
 elseif (empty($tableName) || !$service->getTableFields($tableName))
 {
@@ -201,7 +191,7 @@ elseif ($service->getTableFields($tableName))
 			$_SERVER['REQUEST_METHOD'],
 			$_SERVER['REQUEST_URI'],
 			$limit,
-			$limitManager
+			$limitManager,
 		);
 
 		if (!$resultQuery->isSuccess())

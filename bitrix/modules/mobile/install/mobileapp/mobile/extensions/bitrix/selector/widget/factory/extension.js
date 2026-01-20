@@ -37,6 +37,18 @@ jn.define('selector/widget/factory', (require, exports, module) => {
 		(new WarnLogger()).warn(e);
 	}
 
+	let MailAddressBookContactSelector = null;
+	let MailCrmElementSelector = null;
+	try
+	{
+		MailAddressBookContactSelector = require('mail/selector/entity/addressbook').MailAddressBookSelector;
+		MailCrmElementSelector = require('mail/selector/entity/mail-crm-element').MailCrmElementSelector;
+	}
+	catch (e)
+	{
+		(new WarnLogger()).warn(e);
+	}
+
 	let TaskSelector = null;
 	let EditableTaskSelector = null;
 	try
@@ -60,10 +72,11 @@ jn.define('selector/widget/factory', (require, exports, module) => {
 		CRM_CONTACT: 'contact',
 		CRM_COMPANY: 'company',
 		CRM_ELEMENT: 'crm-element',
+		MAIL_CRM_ELEMENT: 'mail-crm-element',
 		DOCUMENTGENERATOR_TEMPLATE: 'documentgenerator-template',
 		TASK_TAG: 'task_tag',
 		TASK_FLOW: 'task_flow',
-		MAIL_CONTACT: 'mail_contact',
+		MAIL_ADDRESSBOOK_CONTACT: 'address_book',
 		IBLOCK_PROPERTY_ELEMENT: 'iblock-property-element',
 		IBLOCK_PROPERTY_SECTION: 'iblock-property-section',
 		IBLOCK_ELEMENT_USER_FIELD: 'iblock-element-user-field',
@@ -128,6 +141,16 @@ jn.define('selector/widget/factory', (require, exports, module) => {
 			if (type === Type.CRM_ELEMENT && CrmElementSelector)
 			{
 				return CrmElementSelector.make(data);
+			}
+
+			if (type === Type.MAIL_ADDRESSBOOK_CONTACT && MailAddressBookContactSelector)
+			{
+				return MailAddressBookContactSelector.make(data);
+			}
+
+			if (type === Type.MAIL_CRM_ELEMENT && MailCrmElementSelector)
+			{
+				return MailCrmElementSelector.make(data);
 			}
 
 			if (type === Type.DOCUMENTGENERATOR_TEMPLATE && DocumentGeneratorTemplateSelector)

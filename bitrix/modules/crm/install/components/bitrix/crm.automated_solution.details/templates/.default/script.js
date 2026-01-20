@@ -514,6 +514,24 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	        response: response,
 	        state: main_core.Runtime.clone(store$$1.state)
 	      });
+	      var errors = response.errors;
+	      var _iterator2 = _createForOfIteratorHelper$1(errors),
+	        _step2;
+	      try {
+	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	          var _error$customData2;
+	          var error = _step2.value;
+	          if (main_core.Type.isStringFilled((_error$customData2 = error.customData) === null || _error$customData2 === void 0 ? void 0 : _error$customData2.sliderCode)) {
+	            ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	              code: error.customData.sliderCode
+	            }).show();
+	          }
+	        }
+	      } catch (err) {
+	        _iterator2.e(err);
+	      } finally {
+	        _iterator2.f();
+	      }
 	      store$$1.dispatch('setErrors', response.errors);
 	      throw response.errors;
 	    });
@@ -644,12 +662,14 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	var _container = /*#__PURE__*/new WeakMap();
 	var _initialActiveTabId = /*#__PURE__*/new WeakMap();
 	var _initialState = /*#__PURE__*/new WeakMap();
+	var _readOnly = /*#__PURE__*/new WeakMap();
 	var _app = /*#__PURE__*/new WeakMap();
 	var App = /*#__PURE__*/function () {
 	  function App(_ref) {
 	    var containerId = _ref.containerId,
 	      activeTabId = _ref.activeTabId,
-	      state = _ref.state;
+	      state = _ref.state,
+	      readOnly = _ref.readOnly;
 	    babelHelpers.classCallCheck(this, App);
 	    _classPrivateFieldInitSpec(this, _container, {
 	      writable: true,
@@ -663,6 +683,10 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _readOnly, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _classPrivateFieldInitSpec(this, _app, {
 	      writable: true,
 	      value: null
@@ -672,6 +696,7 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      throw new Error('container not found');
 	    }
 	    babelHelpers.classPrivateFieldSet(this, _initialActiveTabId, String(activeTabId));
+	    babelHelpers.classPrivateFieldSet(this, _readOnly, Boolean(readOnly));
 	    if (main_core.Type.isPlainObject(state)) {
 	      babelHelpers.classPrivateFieldSet(this, _initialState, state);
 	    }
@@ -686,7 +711,8 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	          this.$bitrix.Application.set(appWrapperRef);
 	        }
 	      }), {
-	        initialActiveTabId: babelHelpers.classPrivateFieldGet(this, _initialActiveTabId)
+	        initialActiveTabId: babelHelpers.classPrivateFieldGet(this, _initialActiveTabId),
+	        readOnly: babelHelpers.classPrivateFieldGet(this, _readOnly)
 	      }));
 	      var vuexStore = ui_vue3_vuex.createStore(store);
 	      if (babelHelpers.classPrivateFieldGet(this, _initialState)) {

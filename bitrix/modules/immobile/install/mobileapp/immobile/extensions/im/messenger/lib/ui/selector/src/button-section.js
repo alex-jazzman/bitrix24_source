@@ -2,7 +2,10 @@
  * @module im/messenger/lib/ui/selector/button-section
  */
 jn.define('im/messenger/lib/ui/selector/button-section', (require, exports, module) => {
-	const { Theme } = require('im/lib/theme');
+	const { Area } = require('ui-system/layout/area');
+	const { Corner, Color } = require('tokens');
+	const { mergeImmutable } = require('utils/object');
+
 	class ButtonSection extends LayoutComponent
 	{
 		/**
@@ -21,19 +24,18 @@ jn.define('im/messenger/lib/ui/selector/button-section', (require, exports, modu
 
 		render()
 		{
-			return View(
-				{},
-				View(
-					{
-						style: {
-							backgroundColor: Theme.colors.bgContentPrimary,
-							paddingTop: 12,
-							paddingBottom: 12,
-							borderRadius: 12,
-						},
+			return Area(
+				mergeImmutable({
+					style: {
+						backgroundColor: Color.bgContentPrimary.getValue(),
+						borderRadius: Corner.L.getValue(),
 					},
-					...this.props.buttons,
-				),
+					excludePaddingSide: {
+						horizontal: true,
+					},
+					isFirst: true,
+				}, this.props),
+				...this.props.buttons,
 			);
 		}
 	}

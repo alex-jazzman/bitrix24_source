@@ -155,6 +155,17 @@ export default class Preset extends EventEmitter
 		}
 	}
 
+	setActiveHex(hexValue)
+	{
+		this.items.forEach((item) => {
+			const hexItem = item.getHex();
+			if (hexValue === hexItem)
+			{
+				this.setActiveItem(item.getName());
+			}
+		});
+	}
+
 	unsetActive()
 	{
 		this.items.forEach(item => {

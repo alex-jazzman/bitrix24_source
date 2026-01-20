@@ -1,30 +1,27 @@
 :root {
-	--tasks-color-bg-drawer: #F6F8FA;
-}
-
-.tasks-full-card-slider-content {
-	overflow: visible !important;
+	--tasks-color-bg-drawer: #EEF2F4;
 }
 
 .tasks-full-card {
 	height: 100%;
 	display: flex;
+	overflow: hidden;
 }
 
 .tasks-full-card-main {
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	width: 40%;
+	width: 512px;
 	min-width: 512px;
-	max-width: 660px;
+	max-width: 800px;
 	height: 100%;
 	background: var(--tasks-color-bg-drawer);
 }
 
 @media (min-width: 1600px) {
 	.tasks-full-card-main {
-		width: 42%;
+		width: 660px;
 	}
 }
 
@@ -36,6 +33,7 @@
 	pointer-events: none;
 	opacity: 0;
 	transition: opacity 300ms;
+	z-index: 5;
 }
 
 .tasks-full-card-main.--overlay:after {
@@ -88,10 +86,6 @@
 	transition: .2s;
 }
 
-.tasks-full-card .tasks-card-description-field {
-	margin: 0 calc(var(--ui-space-inline-xl) - var(--scrollbar-width)) var(--ui-space-stack-md) var(--ui-space-inline-md2);
-}
-
 .tasks-full-card-fields {
 	display: flex;
 	flex-direction: column;
@@ -113,6 +107,7 @@
 }
 
 .tasks-full-card-field-container {
+	position: relative;
 	padding: var(--ui-space-inset-md2);
 	background: var(--ui-color-base-8);
 	border-radius: 10px;
@@ -126,10 +121,16 @@
 .tasks-full-card-field-container.--custom {
 	padding: 0;
 	background: none;
+	box-shadow: none;
 }
 
 .tasks-full-card-field-container.--description-preview {
 	padding: 0;
+}
+
+.tasks-full-card-field-container.--task-list {
+	background: #f5f7f8;
+	--highlight-background: #f5f7f8;
 }
 
 .tasks-full-card-chips-fields {

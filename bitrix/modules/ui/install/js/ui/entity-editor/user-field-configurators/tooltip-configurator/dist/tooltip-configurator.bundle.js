@@ -56,7 +56,8 @@ this.BX.UI = this.BX.UI || {};
 	  babelHelpers.createClass(TextInput, [{
 	    key: "prepareLayout",
 	    value: function prepareLayout() {
-	      babelHelpers.classPrivateFieldSet(this, _inputLayout, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<textarea \n\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\trows=\"3\"\n\t\t\t\tid=\"", "\"\n\t\t\t>", "</textarea>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _id), babelHelpers.classPrivateFieldGet(this, _inputText)));
+	      babelHelpers.classPrivateFieldSet(this, _inputLayout, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<textarea \n\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\trows=\"3\"\n\t\t\t\tid=\"", "\"\n\t\t\t></textarea>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _id)));
+	      babelHelpers.classPrivateFieldGet(this, _inputLayout).innerHTML = babelHelpers.classPrivateFieldGet(this, _inputText);
 	      var label = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-entity-editor-block-title\">\n\t\t\t\t", "\n\t\t\t</label>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _labelText));
 	      babelHelpers.classPrivateFieldSet(this, _wrapper, main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-new-field-visibility-wrapper\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), label, babelHelpers.classPrivateFieldGet(this, _inputLayout)));
 	      return babelHelpers.classPrivateFieldGet(this, _wrapper);

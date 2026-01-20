@@ -5,5 +5,6 @@ return [
 		'statemanager/redux/toolkit',
 		'tasks:enum',
 		'tasks:statemanager/redux/slices/tasks/meta',
+		'type',
 	],
 ];

@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/api.bundle.css',
 	'js' => 'dist/api.bundle.js',
 	'rel' => [
+		'sign.type',
 		'main.core',
 		'ui.notification',
 		'ui.sidepanel-content',
 		'sign.v2.api',
-		'sign.type',
 	],
 	'skip_core' => false,
 ];

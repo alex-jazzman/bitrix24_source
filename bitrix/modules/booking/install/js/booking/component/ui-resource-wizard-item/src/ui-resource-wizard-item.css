@@ -1,0 +1,24 @@
+.booking-resource-wizard-item {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 24px 20px 24px 20px;
+	border-radius: var(--ui-border-radius-3xl);
+	background: var(--ui-color-background-primary);
+}
+
+.booking-resource-wizard-item + .booking-resource-wizard-item {
+	margin-top: 20px;
+}
+
+.booking-resource-wizard-item__row-title {
+	display: flex;
+	gap: 7px;
+	align-items: center;
+	font-size: var(--ui-font-size-2xl);
+}
+
+.booking-resource-wizard-item__row-description {
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-sm);
+}

@@ -12,9 +12,9 @@ export class VoteMessageMenu extends MessageMenu
 {
 	#app: VoteApplication;
 
-	constructor()
+	constructor(applicationContext)
 	{
-		super();
+		super(applicationContext);
 		this.#app = VoteApplication.getInstance();
 	}
 

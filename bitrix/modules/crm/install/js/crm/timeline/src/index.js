@@ -40,7 +40,6 @@ import OpenLineItem from "./items/openline";
 import Zoom from "./items/zoom";
 import Conversion from "./items/conversion";
 import Visit from "./items/visit";
-import Scoring from "./items/scoring";
 import ExternalNoticeModification from "./items/external-notice-modification";
 import ExternalNoticeStatusModification from "./items/external-notice-status-modification";
 import Scheduled from "./items/scheduled";
@@ -129,7 +128,6 @@ const Items = {
 	Zoom,
 	Conversion,
 	Visit,
-	Scoring,
 	ExternalNoticeModification,
 	ExternalNoticeStatusModification,
 	ScheduledBase: Scheduled,

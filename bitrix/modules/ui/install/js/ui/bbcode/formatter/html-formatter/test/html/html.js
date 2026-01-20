@@ -1,5 +1,3 @@
-import { defaultTheme } from '../../../../../text-editor/src/themes/default-theme';
-
 export function paragraph(content = '<br>')
 {
 	return `<p class="ui-typography-paragraph">${content}</p>`;
@@ -85,7 +83,7 @@ export function spoiler(content = '', open = true, title = 'Spoiler')
 
 export function table(content = '')
 {
-	return `<table class="ui-typography-table">${content}</table>`;
+	return `<div class="ui-typography-table-scroll"><table class="ui-typography-table">${content}</table></div>`;
 }
 
 export function tr(content = '')

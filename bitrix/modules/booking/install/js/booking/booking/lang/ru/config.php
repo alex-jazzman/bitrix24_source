@@ -164,6 +164,33 @@ $MESS['BOOKING_BOOKING_WAIT_LIST_GROUP_DELETE'] = 'Удалить записи';
 $MESS['BOOKING_BOOKING_WAIT_LIST_GROUP_CONFIRM_DELETE'] = 'Удалить записи?';
 $MESS['BOOKING_BOOKING_WAIT_LIST_GROUP_CONFIRM_DELETE_YES'] = 'Да, удалить';
 
+$MESS['BOOKING_INTEGRATIONS_BUTTON_LABEL'] = 'Каналы продаж';
+$MESS['BOOKING_INTEGRATIONS_POPUP_TITLE'] = 'Каналы продаж';
+$MESS['BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_WITH_YANDEX'] = 'Добавляйте формы записи на ваш сайт, в соцсети, каналы и Яндекс Карты. Это дополнительные точки контакта, которые помогут получать новых клиентов без лишних затрат на рекламу';
+$MESS['BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_MSGVER_1'] = 'Добавляйте формы записи на ваш сайт или в соцсети. Это дополнительные точки контакта, которые помогут получать новых клиентов без лишних затрат на рекламу';
+$MESS['BOOKING_INTEGRATIONS_POPUP_FORMS_TITLE'] = 'Формы онлайн-записи';
+$MESS['BOOKING_INTEGRATIONS_POPUP_FORMS_ACTION'] = 'Все формы';
+$MESS['BOOKING_INTEGRATIONS_POPUP_FORMS_ACTION_WITH_COUNT'] = 'Все формы: #COUNT#';
+$MESS['BOOKING_INTEGRATIONS_POPUP_FORMS_BUTTON_LABEL'] = 'Добавить форму';
+$MESS['BOOKING_INTEGRATIONS_POPUP_MAPS_TITLE'] = 'Карты';
+$MESS['BOOKING_INTEGRATIONS_POPUP_MAPS_STATUS_NOT_CONNECTED'] = 'не подключено';
+$MESS['BOOKING_INTEGRATIONS_POPUP_MAPS_STATUS_IN_PROGRESS'] = 'в ожидании';
+$MESS['BOOKING_INTEGRATIONS_POPUP_MAPS_STATUS_CONNECTED'] = 'подключено';
+$MESS['BOOKING_INTEGRATIONS_POPUP_LABEL_SOON'] = 'Скоро появится';
+$MESS['BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_LABEL'] = 'Яндекс карты';
+$MESS['BOOKING_INTEGRATIONS_POPUP_2GIS_LABEL'] = '2ГИС';
+$MESS['BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_AHA'] = 'Подключите запись на Яндекс Картах и бесплатно получайте клиентов, которые ищут ваши услуги поблизости';
+
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_TITLE'] = 'Карты';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_DESCRIPTION'] = 'Подключите карты: так клиенты смогут найти вас и записаться на услугу прямо из карточки вашей компании. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_YANDEX_TITLE'] = 'Яндекс Карты';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_GIS_TITLE'] = '2ГИС';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_CONNECT_BUTTON_LABEL'] = 'Подключить';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_CONNECTED_LABEL'] = 'Настроено';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_PENDING_LABEL'] = 'В ожидании';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_SOON_LABEL'] = 'Скоро';
+$MESS['BOOKING_INTEGRATIONS_MAPS_LIST_ITEM_MENU_EDIT_BUTTON_LABEL'] = 'Редактировать';
+
 $MESS['BOOKING_OPEN_CRM_FORMS_BUTTON_LABEL'] = 'Формы';
 $MESS['BOOKING_OPEN_CRM_FORMS_POPUP_TITLE'] = 'Формы онлайн-записи';
 $MESS['BOOKING_OPEN_CRM_FORMS_POPUP_DESCRIPTION'] = 'Добавьте форму на сайт, отправьте её в мессенджере или укажите в рекламе. Так клиенты сами смогут записаться к вам в любое время. [helpdesk]Подробнее[/helpdesk]';

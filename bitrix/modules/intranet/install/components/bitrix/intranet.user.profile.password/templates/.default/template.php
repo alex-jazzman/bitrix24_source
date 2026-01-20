@@ -5,6 +5,8 @@ use Bitrix\Main\Page;
 
 $APPLICATION->SetTitle("");
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+\Bitrix\UI\Toolbar\Facade\Toolbar::hideTitle();
 ?>
 <script>
 	new BX.Intranet.UserProfile.Password.EntityEditor({});
@@ -28,6 +30,8 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 			"ENABLE_SECTION_CREATION" => false,
 			"ENABLE_SECTION_DRAG_DROP" => false,
 			"ENABLE_CONFIG_CONTROL" => false,
+			"ENABLE_MODE_TOGGLE" => false,
+			"ENABLE_CONFIG_SCOPE_TOGGLE" => false,
 			"COMPONENT_AJAX_DATA" => array(
 				"COMPONENT_NAME" => $this->getComponent()->getName(),
 				"ACTION_NAME" => "save",
@@ -52,12 +56,28 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 		"INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS"))?>",
 		"INTRANET_USER_PROFILE_PASSWORD_CLOSE" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_CLOSE"))?>"
 	});
-	
-	BX.ready(function () {
+
+	BX.ready(() => {
 		new BX.Intranet.UserProfile.Password({
 			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 			componentName: '<?=$this->getComponent()->getName() ?>',
 			userId: '<?=CUtil::JSEscape($arParams["USER_ID"])?>'
+		});
+		const editor = BX.UI.EntityEditor.get('INTRANET_USER_PROFILE_PASSWORD') || BX.UI.EntityEditor.getDefault();
+		editor.cancel = () => {
+			BX.SidePanel.Instance.close();
+		};
+		BX.addCustomEvent(window, "BX.UI.EntityEditor:onSave", function(editor, eventArgs) {
+			if (editor.getId() === "INTRANET_USER_PROFILE_PASSWORD")
+			{
+				eventArgs.enableCloseConfirmation = false;
+			}
+		});
+		BX.addCustomEvent(window, "onEntityUpdate", function(eventParams) {
+			if (eventParams.sender && eventParams.sender.getId() === "INTRANET_USER_PROFILE_PASSWORD")
+			{
+				BX.SidePanel.Instance.close();
+			}
 		});
 	});
 

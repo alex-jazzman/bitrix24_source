@@ -23,13 +23,16 @@ jn.define('im/messenger/model/messages/default-element', (require, exports, modu
 		error: false,
 		errorReason: 0, // code from rest/classes/general/rest.php:25 or main/install/js/main/core/core_ajax.js:1044
 		retry: false,
-		audioPlaying: false,
+		isPlaying: false,
 		playingTime: 0,
 		attach: [],
 		keyboard: [],
 		richLinkId: null,
 		forward: {},
 		push: false,
+		reactionsViewed: true,
+		lastReactionId: '',
+		stickerParams: null,
 	});
 
 	module.exports = {

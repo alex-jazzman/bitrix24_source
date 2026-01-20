@@ -1,39 +1,38 @@
-import './new-connection.css';
+import { computed, toValue } from 'ui.vue3';
 import { useNewConnectionState } from '../../composables';
 import type { UseNewConnectionState } from '../../composables';
-import { NEW_CONNECTION_VIEW_TYPE } from '../../constants';
-import type { DiagramNewConnectionViewType } from '../../types';
+import './new-connection.css';
 
 type NewConnectionSetup = {
 	hasNewConnection: boolean;
 	newConnectionPathInfo: Pick<UseNewConnectionState, 'newConnectionPathInfo'>;
 };
 
+const PATH_CLASS_NAMES = {
+	base: 'ui-block-diagram-new-connection__path',
+	error: '--error',
+};
+
 // @vue/component
 export const NewConnection = {
-	name: 'new-connection',
-	props: {
-		/** @type DiagramNewConnectionViewType */
-		viewType: {
-			type: String,
-			default: NEW_CONNECTION_VIEW_TYPE.BEZIER,
-			validator(viewType): boolean {
-				return Object.values(NEW_CONNECTION_VIEW_TYPE).includes(viewType);
-			},
-		},
-	},
+	name: 'NewConnection',
 	setup(props): NewConnectionSetup
 	{
 		const {
 			hasNewConnection,
 			newConnectionPathInfo,
-		} = useNewConnectionState({
-			viewType: props.viewType,
-		});
+			isValid,
+		} = useNewConnectionState();
+
+		const pathClassNames = computed((): { [string]: boolean } => ({
+			[PATH_CLASS_NAMES.base]: true,
+			[PATH_CLASS_NAMES.error]: !toValue(isValid),
+		}));
 
 		return {
 			hasNewConnection,
 			newConnectionPathInfo,
+			pathClassNames,
 		};
 	},
 	template: `
@@ -43,7 +42,7 @@ export const NewConnection = {
 		>
 			<path
 				:d="newConnectionPathInfo.path"
-				class="ui-block-diagram-new-connection__path"
+				:class="pathClassNames"
 			/>
 		</svg>
 	`,

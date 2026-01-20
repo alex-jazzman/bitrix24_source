@@ -1,0 +1,60 @@
+<svg width="470" height="815" viewBox="0 0 470 815" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<g id="animated-elements">
+		<rect x="12" width="157" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="68" y="45" width="157" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="294" width="86" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="492" width="86" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="460" width="12" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="42" y="460" width="134" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="18" y="782" width="12" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="42" y="782" width="134" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="446" width="12" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="18" y="32" width="38" height="38" rx="7" fill="#EDEEF0"/>
+		<rect y="23" width="470" height="1" fill="#EDEEF0"/>
+		<rect x="18" y="277" width="434" height="1" fill="#EDEEF0"/>
+		<rect x="18" y="919" width="434" height="1" fill="#EDEEF0"/>
+		<rect x="18" y="79" width="434" height="1" fill="#EDEEF0"/>
+		<rect x="18" y="79" width="434" height="1" fill="#EDEEF0"/>
+		<rect x="18" y="95" width="157" height="8" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="112" width="434" height="38" rx="8" fill="#EDEEF0"/>
+		<rect x="18" y="171" width="157" height="8" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="188" width="434" height="38" rx="8" fill="#EDEEF0"/>
+		<rect x="18" y="322" width="157" height="8" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="339" width="434" height="38" rx="8" fill="#EDEEF0"/>
+		<rect x="18" y="389" width="157" height="8" rx="4" fill="#DFE0E3"/>
+		<rect x="18" y="406" width="434" height="38" rx="8" fill="#EDEEF0"/>
+		<rect x="18" y="240" width="434" height="8" rx="4" fill="#EDEEF0"/>
+		<rect x="18" y="255" width="234" height="8" rx="4" fill="#EDEEF0"/>
+		<rect x="18.5" y="520.5" width="433" height="137" rx="7.5" stroke="#EDEEF0"/>
+		<rect x="26" y="528" width="6" height="12" rx="2" fill="#EDEEF0"/>
+		<rect x="44" y="528" width="23" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="79" y="528" width="216" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="79" y="548" width="182" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="79" y="568" width="259" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="26" y="598" width="6" height="12" rx="2" fill="#EDEEF0"/>
+		<rect x="44" y="598" width="23" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="79" y="598" width="319" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="79" y="618" width="197" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="79" y="638" width="251" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="18.5" y="666.5" width="433" height="67" rx="7.5" stroke="#EDEEF0"/>
+		<rect x="26" y="674" width="6" height="12" rx="2" fill="#EDEEF0"/>
+		<rect x="44" y="674" width="23" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="79" y="674" width="216" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="79" y="694" width="182" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="79" y="714" width="259" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="18.5" y="742.5" width="433" height="27" rx="7.5" stroke="#EDEEF0"/>
+		<rect x="26" y="750" width="6" height="12" rx="2" fill="#EDEEF0"/>
+		<rect x="44" y="750" width="23" height="12" rx="4" fill="#DFE0E3"/>
+		<rect x="79" y="750" width="216" height="12" rx="4" fill="#EDEEF0"/>
+	</g>
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="815"/>
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#828b95" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#828b95" stop-opacity="0.05" offset="50%" />
+		<stop stop-color="#828b95" stop-opacity="0" offset="100%" />
+	</linearGradient>
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+</svg>

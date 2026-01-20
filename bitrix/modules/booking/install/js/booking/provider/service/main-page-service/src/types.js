@@ -22,6 +22,7 @@ export type MainPageGetResponse = {
 	isIntersectionForAll: boolean,
 	isCurrentSenderAvailable: boolean,
 	formsMenu: FormsMenuModel,
+	shouldShowWhatsAppEmergency: boolean,
 };
 
 export type MainPageGetCountersResponse = {
@@ -43,3 +44,15 @@ export type MoneyStatisticsDto = {
 		opportunity: number,
 	}[],
 };
+
+export type CatalogSkuEntityOptions = {
+	basePriceId: number;
+	iblockId: number;
+	restrictedProductTypes: number[];
+	showPriceInCaption: boolean;
+}
+
+export type TimezonesDto = {
+	timezoneId: string;
+	title: string;
+}[];

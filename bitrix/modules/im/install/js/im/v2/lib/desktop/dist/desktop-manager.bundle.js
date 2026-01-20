@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3,im_v2_component_desktop_updateBanner,im_v2_lib_analytics,im_v2_lib_feature,im_public,im_v2_lib_rest,main_core_events,im_v2_application_core,im_v2_provider_service_chat,im_v2_lib_layout,im_v2_provider_service_recent,im_v2_lib_desktop,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,im_v2_lib_call,im_v2_lib_messageNotifier,im_v2_lib_desktopApi) {
+(function (exports,im_v2_lib_feature,im_public,im_v2_lib_rest,im_v2_application_core,im_v2_provider_service_chat,im_v2_lib_layout,im_v2_provider_service_recent,main_core_events,im_v2_lib_desktop,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,im_v2_lib_call,im_v2_lib_messageNotifier,im_v2_lib_desktopApi) {
 	'use strict';
 
 	const IMAGE_DESKTOP_RUN = 'icon.png';
@@ -128,7 +128,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        Height: 400
 	      });
 	      controller.SetProperty('backgroundColor', '#2B3038');
-	      controller.ExecuteCommand('html.load', `<script>location.href="/desktop_app/router.php?alias=${code}&videoconf";</script>`);
+	      controller.ExecuteCommand('html.load', `<script>location.href="/video/${code}/";</script>`);
 	      controller.ExecuteCommand('show');
 
 	      // we need the second 'center' command because we know the exact size of the window after we show it
@@ -216,7 +216,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.entries(params).forEach(([key, value]) => {
 	      params[key] = decodeURIComponent(value);
 	    });
-	    if (command !== im_v2_const.DesktopBxLink.openPage && !im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
+	    if (command !== im_v2_const.DesktopBxLink.openPage) {
 	      im_v2_lib_desktopApi.DesktopApi.activateWindow();
 	    }
 	    if (command === im_v2_const.DesktopBxLink.chat) {
@@ -287,9 +287,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.entries(params).forEach(([key, value]) => {
 	      params[key] = decodeURIComponent(value);
 	    });
-	    if (!im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      im_v2_lib_desktopApi.DesktopApi.activateWindow();
-	    }
 	    if (command === im_v2_const.LegacyDesktopBxLink.messenger) {
 	      if (params.dialog) {
 	        void im_public.Messenger.openChat(params.dialog);
@@ -335,10 +332,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _subscribeToBxProtocolEvent2() {
 	  im_v2_lib_desktopApi.DesktopApi.subscribe(im_v2_const.EventType.desktop.onBxLink, async (command, rawParams) => {
-	    if (!im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      BxLinkProcessor.handleCommand(command, rawParams);
-	      return;
-	    }
 	    await im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
 	    if (im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.portalTabActivation.id)) {
 	      await im_v2_lib_desktopApi.DesktopApi.handlePortalTabActivation();
@@ -525,12 +518,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _bindHotkeys2() {
 	  main_core.Event.bind(window, 'keydown', event => {
-	    const reloadCombination = im_v2_lib_utils.Utils.key.isCombination(event, 'Ctrl+R');
-	    if (reloadCombination) {
-	      im_v2_lib_desktopApi.DesktopApi.reloadWindow();
-	      im_v2_lib_logger.Logger.desktop('NOTICE: User reload window (hotkey)');
-	      return;
-	    }
 	    const logFolderCombination = im_v2_lib_utils.Utils.key.isCombination(event, 'Ctrl+Shift+L');
 	    if (logFolderCombination) {
 	      im_v2_lib_desktopApi.DesktopApi.openLogsFolder();
@@ -645,11 +632,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      im_v2_lib_logger.Logger.desktop('StatusHandler: onWakeUp event, call is active, delay 60 sec');
 	      return;
 	    }
-	    im_v2_lib_logger.Logger.desktop('StatusHandler: onWakeUp event, reload window');
 	    if (!im_v2_lib_desktop.DesktopManager.getInstance().canReloadWindow()) {
 	      await DesktopDataUpdater.reloadChatInfo();
 	      return;
 	    }
+	    im_v2_lib_logger.Logger.desktop('StatusHandler: onWakeUp event, reload window');
 	    im_v2_lib_desktopApi.DesktopApi.reloadWindow();
 	  }
 	}
@@ -660,11 +647,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _startReloadCheck = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startReloadCheck");
 	var _isReloadNeeded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReloadNeeded");
 	var _reloadWindow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reloadWindow");
+	var _subscribeToReloadEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToReloadEvent");
 	class ReloadChecker {
 	  static init() {
 	    return new ReloadChecker();
 	  }
 	  constructor() {
+	    Object.defineProperty(this, _subscribeToReloadEvent, {
+	      value: _subscribeToReloadEvent2
+	    });
 	    Object.defineProperty(this, _reloadWindow, {
 	      value: _reloadWindow2
 	    });
@@ -684,6 +675,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _initDate$1)[_initDate$1] = new Date();
 	    babelHelpers.classPrivateFieldLooseBase(this, _startReloadCheck)[_startReloadCheck]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToReloadEvent)[_subscribeToReloadEvent]();
 	  }
 	}
 	function _startReloadCheck2() {
@@ -716,6 +708,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _reloadWindow2() {
 	  im_v2_lib_logger.Logger.desktop('Checker: checkDayForReload, new day - reload window');
 	  im_v2_lib_desktopApi.DesktopApi.reloadWindow();
+	}
+	function _subscribeToReloadEvent2() {
+	  main_core.Event.bind(window, 'beforeunload', () => {
+	    const event = new main_core_events.BaseEvent();
+	    main_core_events.EventEmitter.emit(window, im_v2_const.EventType.desktop.onReload, event);
+	  });
 	}
 
 	/* eslint-disable no-undef */
@@ -756,10 +754,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _sendInitEvent2() {
 	  const {
-	    currentUser
+	    preloadedEntities: {
+	      legacyCurrentUser
+	    }
 	  } = im_v2_application_core.Core.getApplicationData();
 	  im_v2_lib_desktopApi.DesktopApi.emit(im_v2_const.EventType.desktop.onInit, [{
-	    userInfo: currentUser != null ? currentUser : {}
+	    userInfo: legacyCurrentUser
 	  }]);
 	}
 	function _initComplete2() {
@@ -788,12 +788,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _initComplete$1, {
 	      value: _initComplete2$1
 	    });
-	    if (im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      ReloadChecker.init();
-	      WakeUpHandler.init();
-	      HotkeyHandler.init();
-	      SliderBindings.init();
-	    }
+	    ReloadChecker.init();
+	    WakeUpHandler.init();
+	    HotkeyHandler.init();
+	    SliderBindings.init();
 	    NewTabHandler.init();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initComplete$1)[_initComplete$1]();
 	  }
@@ -878,15 +876,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const DESKTOP_PROTOCOL_VERSION = 2;
 	const LOCATION_RESET_TIMEOUT = 1000;
-	const DESKTOP_VERSION_WITH_AIR_DESIGN_SUPPORT = 17;
-	const BANNER_COMPONENT_NAME = 'update-banner';
 	var _desktopIsActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("desktopIsActive");
 	var _desktopActiveVersion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("desktopActiveVersion");
 	var _locationChangedToBx = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("locationChangedToBx");
 	var _enableRedirectCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableRedirectCounter");
 	var _prepareBxUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareBxUrl");
-	var _shouldShowDesktopUpdateBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowDesktopUpdateBanner");
-	var _showDesktopUpdateBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDesktopUpdateBanner");
 	var _initDesktopStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initDesktopStatus");
 	class DesktopManager {
 	  static getInstance() {
@@ -907,12 +901,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  constructor() {
 	    Object.defineProperty(this, _initDesktopStatus, {
 	      value: _initDesktopStatus2
-	    });
-	    Object.defineProperty(this, _showDesktopUpdateBanner, {
-	      value: _showDesktopUpdateBanner2
-	    });
-	    Object.defineProperty(this, _shouldShowDesktopUpdateBanner, {
-	      value: _shouldShowDesktopUpdateBanner2
 	    });
 	    Object.defineProperty(this, _prepareBxUrl, {
 	      value: _prepareBxUrl2
@@ -937,13 +925,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!DesktopManager.isDesktop()) {
 	      return;
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _shouldShowDesktopUpdateBanner)[_shouldShowDesktopUpdateBanner]()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showDesktopUpdateBanner)[_showDesktopUpdateBanner]();
-	      return;
-	    }
-	    if (im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      DesktopBroadcastManager.init();
-	    }
+	    DesktopBroadcastManager.init();
 	    if (im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
 	      DesktopChatWindow.init();
 	    } else {
@@ -969,7 +951,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _locationChangedToBx)[_locationChangedToBx];
 	  }
 	  canReloadWindow() {
-	    return !im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop() || im_v2_lib_layout.LayoutManager.getInstance().isEmbeddedMode();
+	    return im_v2_lib_layout.LayoutManager.getInstance().isEmbeddedMode();
 	  }
 	  redirectToChat(dialogId = '', messageId = 0) {
 	    im_v2_lib_logger.Logger.warn('Desktop: redirectToChat', dialogId);
@@ -1110,9 +1092,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.isRedirectEnabled() || !this.isRedirectOptionEnabled()) {
 	      return Promise.resolve(false);
 	    }
-	    if (im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      return Promise.resolve(false);
-	    }
 	    return this.checkStatusInDifferentContext();
 	  }
 	  async checkForOpenBrowserPage() {
@@ -1163,21 +1142,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return url.replace('bx://', `bx://v${DESKTOP_PROTOCOL_VERSION}/${location.hostname}/`);
 	}
-	function _shouldShowDesktopUpdateBanner2() {
-	  const isOldDesktopVersion = im_v2_lib_desktopApi.DesktopApi.getMajorVersion() < DESKTOP_VERSION_WITH_AIR_DESIGN_SUPPORT;
-	  return isOldDesktopVersion && im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop();
-	}
-	function _showDesktopUpdateBanner2() {
-	  const desktopUpdateBanner = ui_vue3.BitrixVue.createApp({
-	    name: BANNER_COMPONENT_NAME,
-	    components: {
-	      DesktopUpdateBanner: im_v2_component_desktop_updateBanner.DesktopUpdateBanner
-	    },
-	    template: '<DesktopUpdateBanner />'
-	  });
-	  desktopUpdateBanner.mount(document.body);
-	  im_v2_lib_analytics.Analytics.getInstance().desktopUpdateBanner.onShow();
-	}
 	function _initDesktopStatus2() {
 	  const settings = main_core.Extension.getSettings('im.v2.lib.desktop');
 	  this.setDesktopActive(settings.get('desktopIsActive'));
@@ -1187,5 +1151,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.DesktopManager = DesktopManager;
 	exports.DesktopBroadcastManager = DesktopBroadcastManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3,BX.Messenger.v2.Component.Desktop,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=desktop-manager.bundle.js.map

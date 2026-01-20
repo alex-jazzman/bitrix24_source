@@ -559,7 +559,10 @@ class VariationGrid
 			this.addCellToTable(tableRow, store.quantityCommon, false);
 			if (this.isShowedStoreReserve)
 			{
-				const quantityReservedNode = Tag.render`<a class="main-grid-cell-content-catalog-reserved-quantity">${store.quantityReserved}</a>`;
+				const quantityReservedNode = this.reservedDealsSliderLink
+					? Tag.render`<a class="main-grid-cell-content-catalog-reserved-quantity">${store.quantityReserved}</a>`
+					: store.quantityReserved
+				;
 				Event.bind(
 					quantityReservedNode,
 					'click',

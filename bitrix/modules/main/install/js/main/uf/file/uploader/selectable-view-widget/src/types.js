@@ -2,7 +2,10 @@ import { ButtonIcon } from 'ui.buttons';
 
 export type SelectableViewWidgetOptions = {
 	fileItems: FileItemOptions[],
-	viewId: ?string,
+	viewSettings: {
+		isAllowSwitchView: boolean,
+		viewId: ?string,
+	},
 };
 
 export type FileItemOptions = {

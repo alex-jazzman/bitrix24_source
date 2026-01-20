@@ -23,6 +23,9 @@ import { DocumentSelectorModel } from './models/document-selector';
 import { OrderCreationModel } from './models/ordercreation';
 import 'ui.icon-set.actions';
 import { MobileAppInstallPopup } from './components/deal-terminal-payment/mobile-app-install-popup';
+import { Builder, Dictionary } from 'crm.integration.analytics';
+import { sendData } from 'ui.analytics';
+
 
 const instances = new Map();
 
@@ -225,6 +228,23 @@ export class App
 			.addModel(DocumentSelectorModel.create())
 			.useNamespace(true)
 			.build();
+	}
+
+	sendMessageAnalytic(): void
+	{
+		const messageData = this.store.getters['orderCreation/getMessageData'];
+		const channelId = messageData?.channelId;
+		if (!channelId)
+		{
+			return;
+		}
+
+		const eventData = Builder.Communication.Editor.SendEvent.createDefault(channelId)
+			.setSection(Dictionary.SECTION_SALESCENTER_SLIDER)
+			.buildData()
+		;
+
+		sendData(eventData);
 	}
 
 	initPull()
@@ -666,6 +686,7 @@ export class App
 			sendCompilationLinkToFacebook: sendCompilationLinkToFacebook,
 			compilationId: this.compilation ? this.compilation.ID : this.newCompilationId,
 			editable: this.options.templateMode === 'create',
+			messageData: this.store.getters['orderCreation/getMessageData'],
 		};
 
 		if (this.stageOnOrderPaid !== null)
@@ -915,6 +936,7 @@ export class App
 			},
 			analyticsLabel: 'salescenterCreateCompilation',
 		}).then((result) => {
+			this.sendMessageAnalytic();
 			this.store.dispatch('orderCreation/resetBasket');
 			this.stopProgress(buttonEvent);
 
@@ -1041,6 +1063,7 @@ export class App
 			context: this.context,
 			currency: this.currencyCode,
 			assignedById: this.assignedById,
+			messageData: this.store.getters['orderCreation/getMessageData'],
 		};
 
 		if (this.documentSelector)
@@ -1072,6 +1095,7 @@ export class App
 			}
 		}).then((result) =>
 		{
+			this.sendMessageAnalytic();
 			this.store.dispatch('orderCreation/resetBasket');
 			this.stopProgress(buttonEvent);
 			if (skipPublicMessage === 'y')
@@ -1378,6 +1402,7 @@ export class App
 			stageOnOrderPaid: this.stageOnOrderPaid,
 			ownerTypeId: this.ownerTypeId,
 			ownerId: this.ownerId,
+			messageData: this.store.getters['orderCreation/getMessageData'],
 		};
 		if (this.documentSelector)
 		{
@@ -1396,6 +1421,7 @@ export class App
 			}
 		}).then((result) =>
 		{
+			this.sendMessageAnalytic();
 			this.stopProgress(buttonEvent);
 			this.closeApplication();
 			this.emitGlobalEvent('salescenter.app:onpaymentresend');

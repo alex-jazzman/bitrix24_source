@@ -5,5 +5,5 @@ export function getGroupBlockSlotName(group: string): string
 
 export function getGroupConnectionSlotName(group: string): string
 {
-	return `conenction:${group}`;
+	return `connection:${group}`;
 }

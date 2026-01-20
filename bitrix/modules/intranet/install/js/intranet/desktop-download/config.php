@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/desktop-download.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.popup',
 	],
 	'skip_core' => false,
 	'settings' => [

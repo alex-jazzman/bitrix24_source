@@ -85,7 +85,7 @@ Toolbar::deleteFavoriteStar();
 	BX.ready(function ()
 	{
 		new BX.rest.integration.grid.init({
-			gridId: '<?=CUtil::JSEscape($arResult['GRID_ID'])?>'
+			gridId: '<?=CUtil::JSEscape($arParams['GRID_ID'])?>'
 		});
 	});
 </script>

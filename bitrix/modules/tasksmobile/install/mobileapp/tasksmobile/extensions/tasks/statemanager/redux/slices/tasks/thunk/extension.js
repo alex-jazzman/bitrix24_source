@@ -5,6 +5,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const { createAsyncThunk } = require('statemanager/redux/toolkit');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { isOnline } = require('device/connection');
+	const { isEmpty } = require('utils/object');
 	const { selectRelatedTasksById } = require('tasks/statemanager/redux/slices/tasks/selector');
 
 	const { Views } = require('tasks/statemanager/redux/types');
@@ -51,13 +52,53 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		{ condition },
 	);
 
+	const attachFiles = createAsyncThunk(
+		'tasks:tasks/update',
+		({ taskId, addedIds }) => {
+			if (!taskId || isEmpty(addedIds))
+			{
+				return Promise.resolve();
+			}
+
+			return runActionPromise({
+				action: 'tasksmobile.Task.attachFiles',
+				options: { taskId, ids: addedIds },
+			});
+		},
+		{ condition },
+	);
+
+	const detachFiles = createAsyncThunk(
+		'tasks:tasks/update',
+		async ({ taskId, removedIds }, thunkAPI) => {
+			if (!taskId || isEmpty(removedIds))
+			{
+				return Promise.resolve();
+			}
+
+			const response = await runActionPromise({
+				action: 'tasksmobile.Task.detachFiles',
+				options: { taskId, ids: removedIds },
+			});
+
+			if (isEmpty(response?.data))
+			{
+				return thunkAPI.rejectWithValue({ message: 'No permission to detach files' });
+			}
+
+			return response;
+		},
+		{ condition },
+	);
+
 	const updateDeadline = createAsyncThunk(
 		'tasks:tasks/updateDeadline',
-		({ taskId, deadline }) => runActionPromise({
+		({ taskId, deadline, reason = null }) => runActionPromise({
 			action: 'tasksmobile.Task.updateDeadline',
 			options: {
 				taskId,
 				deadline: (deadline ? (new Date(deadline)).toISOString() : null),
+				reason,
 			},
 		}),
 		{
@@ -339,5 +380,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		readAllForProject,
 		updateSubTasks,
 		updateRelatedTasks,
+		attachFiles,
+		detachFiles,
 	};
 });

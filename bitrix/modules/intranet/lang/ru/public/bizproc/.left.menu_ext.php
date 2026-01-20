@@ -7,3 +7,4 @@ $MESS["MENU_BIZPROC_TASKS"] = "Задания бизнес-процессов";
 $MESS["MENU_BIZPROC_TASKS_1"] = "Задания бизнес-процессов";
 $MESS["MENU_BIZPROC_ACTIVE"] = "Все активные";
 $MESS['MENU_USER_PROCESSES'] = 'Процессы';
+$MESS['MENU_BIZPROC_TEMPLATE_PROCESSES'] = 'Шаблоны процессов';

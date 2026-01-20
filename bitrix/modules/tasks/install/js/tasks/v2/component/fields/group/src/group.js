@@ -1,21 +1,19 @@
-import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.vue3.components.menu';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.system.menu.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
+import { Core } from 'tasks.v2.core';
 import { GroupType, Model } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
-import { heightTransition } from 'tasks.v2.lib.height-transition';
-import { openGroup } from 'tasks.v2.lib.open-group';
+import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel } from 'tasks.v2.model.tasks';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 
 import { groupMeta } from './group-meta';
-import { Stage } from './stage/stage';
-import { Scrum } from './scrum/scrum';
 import { GroupPopup } from './group-popup/group-popup';
 import { groupDialog } from './group-dialog';
 import './group.css';
@@ -25,20 +23,17 @@ export const Group = {
 	components: {
 		BIcon,
 		BMenu,
-		Stage,
-		Scrum,
 		Hint,
 		HoverPill,
 		FieldAdd,
 		GroupPopup,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			groupMeta,
@@ -53,21 +48,9 @@ export const Group = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
-		},
 		group(): GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
-		},
-		isScrum(): boolean
-		{
-			return this.group?.type === GroupType.Scrum;
 		},
 		menuOptions(): MenuOptions
 		{
@@ -84,7 +67,7 @@ export const Group = {
 					{
 						title: this.loc('TASKS_V2_GROUP_CHANGE'),
 						icon: Outline.EDIT_L,
-						onClick: this.showDialog,
+						onClick: this.isLocked ? this.showLimitDialog : this.showDialog,
 					},
 					{
 						design: MenuItemDesign.Alert,
@@ -104,10 +87,6 @@ export const Group = {
 		{
 			return encodeURI(this.group?.image);
 		},
-		hintText(): string
-		{
-			return this.loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW');
-		},
 		isSecret(): boolean
 		{
 			return Boolean(this.task.groupId) && !this.group;
@@ -120,14 +99,10 @@ export const Group = {
 		{
 			return !this.task.rights.edit || this.hasFlow;
 		},
-	},
-	mounted(): void
-	{
-		heightTransition.animate(this.$refs.container);
-	},
-	updated(): void
-	{
-		heightTransition.animate(this.$refs.container);
+		isLocked(): boolean
+		{
+			return !Core.getParams().restrictions.project.available;
+		},
 	},
 	methods: {
 		getAboutItemTitle(): string
@@ -158,34 +133,42 @@ export const Group = {
 
 			if (this.isEdit && this.group)
 			{
-				this.showMenu();
+				this.isMenuShown = true;
+			}
+			else if (this.isLocked)
+			{
+				this.showLimitDialog();
 			}
 			else
 			{
 				this.showDialog();
 			}
 		},
-		showMenu(): void
+		async openGroup(): Promise<void>
 		{
-			this.isMenuShown = true;
-		},
-		openGroup(): void
-		{
-			void openGroup(this.group.id, this.group.type);
+			const href = await groupService.getUrl(this.group.id, this.group.type);
+
+			BX.SidePanel.Instance.emulateAnchorClick(href);
 		},
 		showDialog(): void
 		{
-			groupDialog.setTaskId(this.taskId).showTo(this.$refs.group);
+			groupDialog.show({
+				targetNode: this.$refs.group,
+				taskId: this.taskId,
+			});
 		},
 		clearField(): void
 		{
-			void taskService.update(
-				this.taskId,
-				{
-					groupId: 0,
-					stageId: 0,
-				},
-			);
+			void taskService.update(this.taskId, {
+				groupId: 0,
+				stageId: 0,
+			});
+		},
+		showLimitDialog(): void
+		{
+			void showLimit({
+				featureId: Core.getParams().restrictions.project.featureId,
+			});
 		},
 	},
 	template: `
@@ -193,12 +176,13 @@ export const Group = {
 			:data-task-id="taskId"
 			:data-task-field-id="groupMeta.id"
 			:data-task-field-value="task.groupId"
-			ref="container"
+			ref="group"
 		>
-			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" ref="group" @click="handleClick">
+			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" @click="handleClick">
 				<HoverPill
 					v-if="task.groupId"
 					:withClear="!readonly && !isEdit && (task.flowId ?? 0) <= 0"
+					:active="isMenuShown"
 					@clear="clearField"
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
@@ -207,17 +191,11 @@ export const Group = {
 				</HoverPill>
 				<FieldAdd v-else :icon="Outline.FOLDER_PLUS"/>
 			</div>
-			<Stage v-if="isEdit && group && !task.flowId" :taskId="taskId"/>
-			<Scrum v-if="isScrum && !task.flowId" :taskId="taskId"/>
 		</div>
-		<Hint
-			v-if="isHintShown"
-			:bindElement="$refs.container"
-			@close="isHintShown = false"
-		>
-			{{ hintText }}
+		<Hint v-if="isHintShown" :bindElement="$refs.group" @close="isHintShown = false">
+			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
-		<GroupPopup :taskId="taskId" :getBindElement="() => $refs.group"/>
+		<GroupPopup :getBindElement="() => $refs.group"/>
 	`,
 };

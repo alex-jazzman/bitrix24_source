@@ -23,6 +23,7 @@
 	display: flex;
 	align-items: center;
 	cursor: pointer;
+	user-select: none;
 }
 
 .booking--booking-actions-popup__item-waitlist-btn.--end {
@@ -31,6 +32,9 @@
 
 .booking--booking-actions-popup__item-waitlist-btn.--disabled {
 	opacity: 0.5;
-	cursor: unset;
-	user-select: none;
+	cursor: not-allowed;
+}
+
+.booking--booking-actions-popup__item-waitlist-btn.--locked .booking-actions-popup__item-waitlist-label {
+	color: var(--ui-color-base-3);
 }

@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
@@ -8,6 +6,7 @@ import { Spinner, SpinnerSize, SpinnerColor } from 'im.v2.component.elements.loa
 import './search-input.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const SearchInput = {
@@ -75,11 +74,11 @@ export const SearchInput = {
 	},
 	created()
 	{
-		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+		this.getEmitter().subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+		this.getEmitter().unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 	},
 	mounted()
 	{
@@ -161,6 +160,10 @@ export const SearchInput = {
 		{
 			this.hasFocus = false;
 			this.$refs.searchInput.blur();
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

@@ -39,7 +39,10 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				return state.collection[id];
 			},
 
-			/** @function dialoguesModel/getByIdList */
+			/**
+			 * @function dialoguesModel/getByIdList
+			 * @return {Array<DialoguesModelState>}
+			 */
 			getByIdList: (state, getters) => (idList) => {
 				if (!Type.isArrayFilled(idList))
 				{

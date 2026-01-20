@@ -19,7 +19,7 @@ BX.ImMobile = function(params)
 	this.mobileActionRun = false;
 	this.webComponent = true;
 
-	this.revision = 21; // api revision - sync with im/lib/revision.php
+	this.revision = 22; // api revision - sync with im/lib/revision.php
 	this.errorMessage = '';
 	this.isAdmin = false;
 	this.bitrixNetwork = false;

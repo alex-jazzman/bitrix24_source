@@ -54,7 +54,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 						paddingTop: Indent.XS.toNumber(),
 					},
 				},
-				title && Text4({
+				this.shouldShowSectionTitle() && title && Text4({
 					testId: this.getTestId(`section-${id}-title`),
 					text: title,
 					color: Color.base4,
@@ -65,7 +65,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 					numberOfLines: 1,
 					ellipsize: 'end',
 				}),
-				...this.renderItems(items),
+				...this.renderItems(items).filter(Boolean),
 				showDivider && View({
 					testId: this.getTestId(`section-${id}-divider`),
 					style: {
@@ -77,11 +77,16 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 			);
 		}
 
+		shouldShowSectionTitle = () => {
+			return this.props?.shouldShowSectionTitle ?? true;
+		};
+
 		renderItem(item, index)
 		{
 			const { highlightOnPress = true } = this.props;
 
 			return new ListItem({
+				id: item.id,
 				icon: item.imageName,
 				title: item.title,
 				badge: item.counterValue,
@@ -89,8 +94,10 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 				onClick: this.onItemClick,
 				itemData: item,
 				style: {
-					backgroundColor: highlightOnPress && withPressed(Color.bgContentPrimary.toHex()),
+					backgroundColor: highlightOnPress && withPressed(Color.bgContentSecondaryInvert.toHex()),
 				},
+				tag: item.tag,
+				mode: item.mode,
 			});
 		}
 	}
@@ -108,6 +115,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 				path: PropTypes.string,
 				title: PropTypes.string,
 				sort: PropTypes.number,
+				tag: PropTypes.string,
 				params: PropTypes.oneOfType([
 					PropTypes.shape({
 						counter: PropTypes.string,

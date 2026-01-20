@@ -1582,7 +1582,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
-			skipCheckChatWindow: DesktopApi.isAirDesignEnabledInDesktop(),
+			skipCheckChatWindow: DesktopApi.isDesktop(),
 		});
 		this.#bindPhoneViewCallbacks(this.callView);
 		this.callView.show();
@@ -1702,7 +1702,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
-			skipCheckChatWindow: DesktopApi.isAirDesignEnabledInDesktop(),
+			skipCheckChatWindow: DesktopApi.isDesktop(),
 		});
 
 		this.#bindPhoneViewCallbacks(this.callView);

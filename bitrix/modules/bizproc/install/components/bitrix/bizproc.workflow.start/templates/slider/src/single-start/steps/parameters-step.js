@@ -23,6 +23,7 @@ export class ParametersStep extends StepWithErrors
 	#signedDocumentId: string;
 	#signedDocumentType: string;
 	#templateId: number;
+	#triggerType: ?string;
 
 	#body: HTMLElement;
 	#form: HTMLFormElement;
@@ -45,6 +46,7 @@ export class ParametersStep extends StepWithErrors
 		this.#templateId = Text.toInteger(config.templateId);
 		this.#signedDocumentType = config.signedDocumentType;
 		this.#signedDocumentId = config.signedDocumentId;
+		this.#triggerType = config.triggerType;
 
 		this.#startTime = Math.round(Date.now() / 1000);
 	}
@@ -122,6 +124,7 @@ export class ParametersStep extends StepWithErrors
 		data.set('signedDocumentType', this.#signedDocumentType);
 		data.set('signedDocumentId', this.#signedDocumentId);
 		data.set('startDuration', Math.round(Date.now() / 1000) - this.#startTime);
+		data.set('triggerType', this.#triggerType ?? '');
 
 		return new Promise((resolve, reject) => {
 			startWorkflowAction(data)

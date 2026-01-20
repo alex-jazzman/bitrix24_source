@@ -1,3 +1,6 @@
 <?
 $MESS["INTRANET_USER_PROFILE_NO_USER_ERROR"] = "Пользователь не найден.";
-?>
+$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATE_STATUS"] = 'Автоматическое включение через #REMAINDER#';
+$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATE_STATUS_UNINITIALIZED"] = 'Доступ будет закрыт через #REMAINDER#';
+$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATED_MSGVER_1"] = 'Защита аккаунта выключена';
+$MESS["INTRANET_USER_PROFILE_OTP_UNINITIALIZED"] = 'Защита аккаунта не настроена';

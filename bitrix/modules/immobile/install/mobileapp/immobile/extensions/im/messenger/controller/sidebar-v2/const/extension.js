@@ -17,10 +17,13 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 		CLEAR_HISTORY: 'clear_history',
 		CLEAR_HISTORY_FOR_ME: 'clear_history_for_me',
 		CLEAR_HISTORY_FOR_ALL: 'clear_history_for_all',
+		COPILOT_HELP: 'copilot_help',
 	};
 
 	const SidebarContextMenuActionSection = {
 		CLEAR_HISTORY: 'clear_history',
+		COPILOT_MODELS: 'copilot_models',
+		COPILOT_HELP: 'copilot_help',
 	};
 
 	const SidebarContextMenuActionPosition = {
@@ -44,6 +47,8 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 		VIDEO_CALL: 'video-call',
 		AUDIO_CALL: 'audio-call',
 		MESSAGE_AUTO_DELETE: 'messages-auto-delete',
+		COPILOT_ROLE: 'copilot-role',
+		COPILOT_MODEL: 'copilot-model',
 	};
 
 	module.exports = {

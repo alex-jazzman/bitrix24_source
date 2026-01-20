@@ -206,6 +206,37 @@
 	color: #af9a9a;
 }
 
+.ui-typography-table-scroll {
+	overflow-x: auto;
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
+}
+
+.ui-typography-table-scroll::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+}
+
+.ui-typography-table-scroll::-webkit-scrollbar:horizontal {
+	background-color: rgba(0, 0, 0, 0);
+	height: 7px;
+}
+
+.ui-typography-table-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.ui-typography-table-scroll::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.20);
+	cursor: pointer;
+	transition: .2s;
+}
+
+.ui-typography-table-scroll::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(0, 0, 0, 0.35);
+	border-left-width: 3px;
+	border-right-width: 3px;
+}
+
 .ui-typography-table {
 	border: 1px double #bfbfbf;
 	border-collapse: collapse;
@@ -216,6 +247,11 @@
 	margin-bottom: var(--ui-typography-block-space-stack);
 }
 
+.ui-typography-table-scroll .ui-typography-table {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
 .ui-typography-table-row {
 
 }
@@ -223,12 +259,17 @@
 .ui-typography-table-cell {
 	border: 1px solid #bfbfbf;
 	overflow-wrap: break-word;
-	min-width: 30px;
+	min-width: 100px;
 	vertical-align: top;
 	text-align: start;
-	padding: 0 var(--ui-typography-block-space-stack);
+	padding: 4px 8px;
 	position: relative;
 	outline: none;
+}
+
+.ui-typography-table-cell > .ui-typography-paragraph {
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
 .ui-typography-table-cell-header {
@@ -267,6 +308,8 @@
 	outline: none;
 	-webkit-user-select: contain;
 	        user-select: contain;
+	min-height: 32px;
+	box-sizing: border-box;
 }
 
 .ui-typography-spoiler-title:empty:after {

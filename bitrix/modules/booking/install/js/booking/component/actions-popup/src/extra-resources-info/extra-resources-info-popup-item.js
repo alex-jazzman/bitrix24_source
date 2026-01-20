@@ -41,12 +41,12 @@ export const ExtraResourcesInfoPopupItem = {
 		},
 	},
 	template: `
-		<div class="booking--extra-resources-info_element">
-			<div class="booking--extra-resources-info_element-icon —ui-context-content-light">
+		<div class="booking__actions-popup-info_element">
+			<div class="booking__actions-popup-info_element-icon —ui-context-content-light">
 				<Icon :name="Outline.PRODUCT" :size="iconSize" :color="iconColor"/>
 			</div>
 
-			<div class="booking--extra-resources-info_element-text" :title="title">
+			<div class="booking__actions-popup-info_element-text" :title="title">
 				{{ title }}
 			</div>
 

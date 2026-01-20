@@ -465,7 +465,7 @@ Class intranet extends CModule
 			'UF_1C',
 			'UF_INN',
 			'UF_DISTRICT',
-			'UF_SKYPE',
+			'UF_SKYPE_MSGVER_1',
 			'UF_SKYPE_LINK',
 			'UF_ZOOM',
 			'UF_TWITTER',
@@ -551,7 +551,7 @@ Class intranet extends CModule
 				'SHOW_IN_LIST' => 'Y',
 				'EDIT_IN_LIST' => 'Y',
 				'IS_SEARCHABLE' => 'Y',
-				'SETTINGS' => array('PATTERN' => '<a href="skype://#VALUE#">#VALUE#</a>'),
+				'SETTINGS' => ['PATTERN' => '<a href="skype://#VALUE#">#VALUE#</a>'],
 			),
 			'UF_SKYPE_LINK' => array(
 				'ENTITY_ID' => 'USER',
@@ -710,9 +710,16 @@ Class intranet extends CModule
 				continue;
 
 			$arLabelNames = Array();
+
+			$fieldToMsgKeyMap = [
+				'UF_SKYPE' => 'UF_SKYPE_MSGVER_1',
+			];
+
+			$messageKey = $fieldToMsgKeyMap[$arProperty['FIELD_NAME']] ?? $arProperty['FIELD_NAME'];
+
 			foreach($arLanguages as $languageID)
 			{
-				$arLabelNames[$languageID] = $arMess[$arProperty["FIELD_NAME"]][$languageID];
+				$arLabelNames[$languageID] = $arMess[$messageKey][$languageID];
 			}
 
 			$arProperty["EDIT_FORM_LABEL"] = $arLabelNames;

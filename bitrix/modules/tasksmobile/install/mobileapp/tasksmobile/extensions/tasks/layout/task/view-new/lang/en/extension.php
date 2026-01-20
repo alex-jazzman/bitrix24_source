@@ -1,5 +1,8 @@
 <?php
+$MESS["M_TASK_CHAT_BUTTON_AHA_MOMENT_DESCRIPTION"] = "Every task has its own live discussion thread, making it easy to collaborate, communicate, and track updates.";
+$MESS["M_TASK_CHAT_BUTTON_AHA_MOMENT_TITLE"] = "Chat based tasks";
 $MESS["M_TASK_DETAILS_APPROVE_BUTTON"] = "Approve";
+$MESS["M_TASK_DETAILS_CHAT_BUTTON"] = "Task chat";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_EMPTY"] = "Comments";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_MSGVER_1"] = "Comments: #COMMENTS_COUNT#";
 $MESS["M_TASK_DETAILS_COMMENTS_TITLE"] = "Comments";
@@ -11,9 +14,9 @@ $MESS["M_TASK_DETAILS_DEADLINE_IN_ONE_MINUTE"] = "in a minute";
 $MESS["M_TASK_DETAILS_DEADLINE_TODAY"] = "today at #TIME#";
 $MESS["M_TASK_DETAILS_DEADLINE_TOMORROW"] = "tomorrow at #TIME#";
 $MESS["M_TASK_DETAILS_DEADLINE_YESTERDAY"] = "yesterday at #TIME#";
-$MESS["M_TASK_DETAILS_FIELD_CREATOR_TITLE"] = "Created by";
+$MESS["M_TASK_DETAILS_FIELD_CREATOR_TITLE"] = "Task owner";
 $MESS["M_TASK_DETAILS_FIELD_DELEGATE_TITLE"] = "Delegate";
-$MESS["M_TASK_DETAILS_FIELD_DESCRIPTION_PLACEHOLDER"] = "Enter task description.\nHelp the assignee by providing as many details as possible";
+$MESS["M_TASK_DETAILS_FIELD_DESCRIPTION_PLACEHOLDER"] = "Enter task description. Help the assignee by providing as many details as possible.";
 $MESS["M_TASK_DETAILS_FIELD_DESCRIPTION_TITLE"] = "Task description";
 $MESS["M_TASK_DETAILS_FIELD_RESPONSIBLE_TITLE"] = "Assignee";
 $MESS["M_TASK_DETAILS_FIELD_TITLE_PLACEHOLDER"] = "Task name";
@@ -28,3 +31,4 @@ $MESS["M_TASK_RATING_LIKE_NO_WITH_COUNTER"] = "No: #QUANTITY#";
 $MESS["M_TASK_RATING_LIKE_QUESTION"] = "Do you like it?";
 $MESS["M_TASK_RATING_LIKE_YES"] = "Yes";
 $MESS["M_TASK_RATING_LIKE_YES_WITH_COUNTER"] = "Yes: #QUANTITY#";
+$MESS["M_TASK_TOAST_FILES_DELETE_DENIED"] = "Cannot delete files added by someone else.";

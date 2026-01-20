@@ -1,5 +1,4 @@
 <?php
-$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_AI_ASSISTANT_BUTTON_COPY"] = "Көшіру";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_AI_ASSISTANT_FOOT_NOTE_TEXT"] = "Марта AI жауаптары дұрыс болмауы мүмкін, маңызды ақпаратты тексеріңіз. [U]Толығырақ[/U]";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_FILE_DOWNLOAD"] = "Жүктеу";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_SHOW"] = "Тіркемені көрсету";
@@ -39,7 +38,10 @@ $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_TEXT_MSGVER_1"] = "Маға
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_TITLE_HELLO"] = "Сәлем! Мен - #ROLE_NAME#";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_TITLE_NOW"] = "Енді мен - #ROLE_NAME#";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_DELETED"] = "Хабарлама жойылды";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_DELETED_STICKER"] = "Стикер жойылды";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_EDITED"] = "өзгертілді";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_BAAS_LIMIT_ERROR"] = "Тегін сұраулар аяқталды. Сіз #LINK#BitrixGPT + Маркетплейске жазылымды рәсімдей#/LINK# және AI-мен шектеусіз сөйлесе аласыз! Сондай-ақ жазылымда — сіздің бизнесіңіз үшін 5000+ дайын шешімдер мен интеграцияларға шексіз қолжетімділік бар";
+$MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR"] = "Аудионы мәтінге айналдыру мүмкін болмады";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL"] = "Арна: #CHANNEL_NAME#, #USER_NAME# -нен қайта жіберілді";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_MSGVER_1"] = "#USER_NAME# -нен қайта жіберілді";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM"] = "Жүйелік хабарлама қайта жіберілді";

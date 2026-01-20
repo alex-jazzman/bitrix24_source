@@ -53,6 +53,13 @@ if(!$hasErrors) {
 					],
 				],
 				[
+					'NAME' => Loc::getMessage('MAIN_FIELD_CONFIG_TOOLTIP_ALL_LANGUAGES'),
+					'ATTRIBUTES' => [
+						'onclick' => 'BX.Main.UserField.Config.handleLeftMenuClick(' . ((int)$arResult['field']['ID']) . ', \'tooltips\');',
+						'data-role' => 'tab-tooltips',
+					],
+				],
+				[
 					'NAME' => Loc::getMessage('MAIN_FIELD_CONFIG_MENU_ADDITIONAL'),
 					'ATTRIBUTES' => [
 						'onclick' => 'BX.Main.UserField.Config.handleLeftMenuClick(' . ((int)$arResult['field']['ID']) . ', \'additional\');',
@@ -165,6 +172,28 @@ if(!$hasErrors) {
 				</div>
 			</div>
 		<?php endforeach; ?>
+		<?php foreach($arResult['form']['editFormTooltip'] as $tooltip):
+			if(empty($tooltip['language']['isCurrent']))
+			{
+				continue;
+			}
+			?>
+			<div
+				class="main-user-field-edit-input main-user-field-label"
+				data-language="<?= htmlspecialcharsbx($tooltip['language']['id']) ?>"
+			>
+				<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['generalTooltipLabel']) ?></div>
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<textarea
+						class="ui-ctl-element ui-ctl-w100"
+						rows="3"
+						name="HELP_MESSAGE[<?= htmlspecialcharsbx($tooltip['language']['id']) ?>]"
+						data-role="main-user-field-editFormTooltip"
+					><?= htmlspecialcharsbx($arResult['field']['HELP_MESSAGE'][$tooltip['language']['id']])
+					?></textarea>
+				</div>
+			</div>
+		<?php endforeach; ?>
 		<div class="main-user-field-edit-input">
 			<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['sort']['label']); ?></div>
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
@@ -243,6 +272,28 @@ if(!$hasErrors) {
 							value="<?= htmlspecialcharsbx($arResult['field']['EDIT_FORM_LABEL'][$label['language']['id']] ?? ''); ?>"
 							data-role="main-user-field-editFormLabel-<?= htmlspecialcharsbx($label['language']['id']); ?>"
 					>
+				</div>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<div class="main-user-field-edit-tab" data-tab="tooltips">
+		<?php foreach($arResult['form']['editFormTooltip'] as $tooltip): ?>
+			<div
+				class="main-user-field-edit-input main-user-field-label"
+				data-role="main-user-field-tooltip-container"
+				data-language="<?= htmlspecialcharsbx($tooltip['language']['id']) ?>"
+			>
+				<div class="ui-ctl-label-text">
+					<?= htmlspecialcharsbx($tooltip['label']) ?>
+				</div>
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<textarea
+						class="ui-ctl-element ui-ctl-w100"
+						rows="3"
+						name="HELP_MESSAGE[<?= htmlspecialcharsbx($tooltip['language']['id']) ?>]"
+						data-role="main-user-field-editFormTooltip-<?= htmlspecialcharsbx($tooltip['language']['id']) ?>"
+					><?= htmlspecialcharsbx($arResult['field']['HELP_MESSAGE'][$tooltip['language']['id']] ?? '')
+					?></textarea>
 				</div>
 			</div>
 		<?php endforeach; ?>

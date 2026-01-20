@@ -15,7 +15,6 @@ $MESS["SEARCH_OPTIONS_MAX_BODY_SIZE"] = "Нәтижені бөлектеу үш�
 $MESS["SEARCH_OPTIONS_MAX_RESULT_SIZE"] = "Іздеу нәтижелеріндегі құжаттардың максималды саны:";
 $MESS["SEARCH_OPTIONS_MYSQL_ERROR"] = "Толықмәтінді іздеуді қосудың қатесі:";
 $MESS["SEARCH_OPTIONS_MYSQL_NOTE"] = "Егер индексті қосқан кезде 1214 коды бар қатені көрсеңіз, онда MySql-ді >=5.6.4 нұсқасына дейін жаңарту керек.";
-$MESS["SEARCH_OPTIONS_OPENSEARCH_ANALYZER"] = "Іздеу сұранысының анализаторы (<a href=\"https://opensearch.org/docs/latest/analyzers/supported-analyzers/index/\">https://opensearch.org/docs/latest/analyzers/supported-analyzers/index/</a>):";
 $MESS["SEARCH_OPTIONS_OPENSEARCH_ANALYZER_FOR_SITE"] = "#SITE_ID# сайтына арналған іздеу анализаторы";
 $MESS["SEARCH_OPTIONS_OPENSEARCH_ANALYZER_NOTE"] = "Тіл анализаторлары туралы толығырақ: <a href=\"https://opensearch.org/docs/latest/analyzers/language-analyzers/index\">https://opensearch.org/docs/latest/analyzers/language-analyzers/index</a>  ";
 $MESS["SEARCH_OPTIONS_OPENSEARCH_CONNECTION"] = "OpensSearch (https://myserver:9200) cервері:";

@@ -4,13 +4,15 @@
 jn.define('settings-v2/controller/smartfilter-status', (require, exports, module) => {
 	const { BaseSettingController } = require('settings-v2/controller/base');
 	const { Type } = require('type');
+	const { NotificationsCacheKey } = require('settings-v2/const');
+	const { MessengerDBService } = require('settings-v2/services/db/messenger');
 
 	class SmartFilterStatusSettingController extends BaseSettingController
 	{
 		async get()
 		{
 			return new Promise((resolve) => {
-				const cachedSmartFilterStatus = Application.storage.get('mobile.push.smartfilter.status');
+				const cachedSmartFilterStatus = Application.storage.get(NotificationsCacheKey.smartFilterStatus);
 
 				if (!Type.isNil(cachedSmartFilterStatus))
 				{
@@ -48,7 +50,8 @@ jn.define('settings-v2/controller/smartfilter-status', (require, exports, module
 
 		setToCache(value)
 		{
-			Application.storage.set('mobile.push.smartfilter.status', value);
+			Application.storage.set(NotificationsCacheKey.smartFilterStatus, value);
+			(new MessengerDBService()).setNotifyConfig({ smartFilter: value });
 		}
 	}
 

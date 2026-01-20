@@ -13,19 +13,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		MessageParams,
 		MessageMenuActionType,
 	} = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 
-	const {
-		LikeReaction,
-		KissReaction,
-		LaughReaction,
-		WonderReaction,
-		CryReaction,
-		AngryReaction,
-		FacepalmReaction,
-	} = require('im/messenger/controller/dialog/lib/message-menu/reaction');
 	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
 	const { MessageMenuView } = require('im/messenger/controller/dialog/lib/message-menu/view');
 	const { MessageMenu } = require('im/messenger/controller/dialog/lib/message-menu/menu');
@@ -303,7 +296,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		{
 			logger.log('MessageMenuController onMessageMenuReactionTap', reactionId, message);
 
-			this.dialogLocator.get('message-service').setReaction(reactionId, message.id);
+			this.dialogLocator.get('message-service').setReaction(reactionId, message.id, { shouldAnimated: false, isUpdateUi: false });
 		}
 
 		/**
@@ -314,8 +307,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		{
 			const baseController = this.createBaseMessageContextMenuControllerByMessageId(messageId);
 			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
+			const reactionAssets = await this.getReactionsAssets();
+
 			this.actions = {
-				[MessageMenuActionType.reaction]: this.addReactionAction.bind(this),
+				[MessageMenuActionType.reaction]: (menu, message) => {
+					this.addReactionAction(menu, message, reactionAssets);
+				},
 				...controller.getActions(),
 				...baseController.getActions(),
 			};
@@ -338,21 +335,42 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		/**
 		 * @param {MessageMenuView} menu
 		 * @param {MessageMenuMessage} message
+		 * @param {Array<object>} reactions
 		 */
-		addReactionAction(menu, message)
+		async addReactionAction(menu, message, reactions)
 		{
-			if (message.isPossibleReact())
+			if (!message.isPossibleReact())
 			{
-				menu
-					.addReaction(LikeReaction)
-					.addReaction(KissReaction)
-					.addReaction(LaughReaction)
-					.addReaction(WonderReaction)
-					.addReaction(CryReaction)
-					.addReaction(AngryReaction)
-					.addReaction(FacepalmReaction)
-				;
+				return;
 			}
+
+			if (Feature.isReactionsV2Enabled)
+			{
+				menu.setReactionVersion(2);
+				menu.setMoreReactionsSetting(true);
+			}
+
+			reactions.forEach((reaction) => {
+				menu.addReaction(reaction);
+			});
+		}
+
+		/**
+		 * @return {Promise<Array<ReactionData>>|Array<ReactionData>}
+		 */
+		async getReactionsAssets()
+		{
+			let reactions = [];
+			if (Feature.isReactionsV2Enabled)
+			{
+				reactions = await ReactionAssetsManager.getInstance().getTopReactions();
+			}
+			else
+			{
+				reactions = ReactionAssetsManager.getInstance().getLegacyReactions();
+			}
+
+			return reactions;
 		}
 
 		#getMessageModel(messageId)

@@ -1,0 +1,190 @@
+.tasks-field-reminders {
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-md);
+}
+
+.tasks-field-reminders-title {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+}
+
+.tasks-field-reminders-main {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	flex: 1;
+}
+
+.tasks-field-reminders-main.--readonly {
+	cursor: default;
+}
+
+.tasks-field-reminders-main .ui-icon-set {
+	margin-right: var(--ui-space-inline-2xs2);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-reminders-icon {
+	margin-left: auto;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-reminders-edit-container {
+	margin-left: auto;
+	align-items: center;
+}
+
+.tasks-field-reminders-sheet {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-reminders-sheet-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-md2);
+}
+
+.tasks-field-reminders-sheet-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-reminders-sheet-content {
+	position: relative;
+	overflow: auto;
+	scrollbar-width: none;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-reminders-sheet-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	margin-top: auto;
+	padding: var(--ui-space-inline-xl) 0 0;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-reminders-list {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+}
+
+.tasks-field-reminders-list-header {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 0;
+	display: flex;
+	background: var(--ui-color-bg-content-primary);
+	min-height: 32px;
+	border-top: 1px solid var(--ui-color-divider-default);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	box-shadow: 0 1px 9px rgba(0, 0, 0, 0.04);
+	z-index: 1;
+}
+
+.tasks-field-reminder-sheet {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.tasks-field-reminder-sheet-header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tasks-field-reminder-sheet-header .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-reminders-row.--header {
+	flex: 1;
+	padding: 0;
+	height: auto;
+}
+
+.tasks-field-reminders-column.--header {
+	gap: var(--ui-space-inline-2xs);
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-column.--header .ui-text {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+	height: 62px;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.tasks-field-reminders-row:last-child {
+	border-bottom: none;
+}
+
+.tasks-field-reminders-column {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	white-space: nowrap;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-column .ui-text {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.tasks-field-reminders-column.--via {
+	width: 5%;
+}
+
+.tasks-field-reminders-column.--date {
+	width: 35%;
+}
+
+.tasks-field-reminders-column.--recipients {
+	flex: 1;
+}
+
+.tasks-field-reminders-column.--action {
+	min-width: 52px;
+	margin-left: auto;
+	gap: var(--ui-space-inline-sm);
+}
+
+.tasks-field-reminders-column.--action .ui-icon-set {
+	cursor: pointer;
+}
+
+.tasks-field-reminders-to {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	display: flex;
+	background: var(--ui-color-accent-soft-blue-2);
+	border-radius: 1in;
+	margin-right: var(--ui-space-inline-xs);
+	padding: 1px;
+}

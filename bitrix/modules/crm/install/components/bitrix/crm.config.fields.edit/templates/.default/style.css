@@ -11,3 +11,12 @@
 .sort-down {background-image:url(images/sort_down.gif);}
 .sort-arrow {background-position:left top; background-repeat:no-repeat; display:block; height:16px; width:16px; overflow:hidden; cursor:pointer;}
 .delete-action {background-position:left top; background-repeat:no-repeat; display:block; height:16px; width:16px; overflow:hidden; cursor:pointer; background-image:url(images/delete.gif);}
+
+/*
+	In intranet/install/js/intranet/old-interface/form/form.css
+	Intranet defines width for text-inputs as 257px, so for uniformity textareas go alike
+*/
+.bx-field-value textarea {
+	width: 257px !important;
+	box-sizing: border-box;
+}

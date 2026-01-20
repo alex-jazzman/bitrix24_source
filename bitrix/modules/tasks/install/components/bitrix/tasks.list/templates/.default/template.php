@@ -31,7 +31,6 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/tasks/install/comp
 
 ?>
 
-<?include('process.php');?>
 
 <script>
 BX.message(<?=CUtil::PhpToJSObject(array(

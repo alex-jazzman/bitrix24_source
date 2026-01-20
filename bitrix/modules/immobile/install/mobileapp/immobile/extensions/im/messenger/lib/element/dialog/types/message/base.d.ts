@@ -13,6 +13,7 @@ import {
 import {VoteMessageData} from "../../../src/dialog/message/vote/types/vote";
 import {CheckInMessageData} from "../../../src/dialog/message/check-in/types/check-in-configuration";
 import {CallMessageData} from "../../../src/dialog/message/call/types/call-configuration";
+import {MessageVideoNote} from "./element/video-note";
 
 declare type MessageRichLink = {
 	description: string,
@@ -43,7 +44,8 @@ declare type MessageButton = {
 export type DialogWidgetItem = MediaGalleryDialogWidgetItem|FileGalleryDialogWidgetItem|
 	FileDialogWidgetItem|ImageDialogWidgetItem|VideoDialogWidgetItem|AudioDialogWidgetItem|
 	CopilotDialogWidgetItem|CopilotPromptDialogWidgetItem|CopilotErrorDialogWidgetItem|
-	VoteDialogWidgetItem|CheckInDialogWidgetItem|CallDialogWidgetItem|BannerDialogWidgetItem;
+	VoteDialogWidgetItem|CheckInDialogWidgetItem|CallDialogWidgetItem|BannerDialogWidgetItem|
+	VideoNoteDialogWidgetItem|VideoNoteTextDialogWidgetItem;
 
 export type BaseDialogWidgetItem = {
 	align: 'center' | 'left' | 'right' | null,
@@ -59,10 +61,8 @@ export type BaseDialogWidgetItem = {
 	isAuthorTopMessage: boolean,
 	isBackgroundWide: boolean,
 	keyboard: Array<KeyboardButtonConfig>,
-	likeCount: number,
 	loadText: string,
 	me: boolean,
-	meLiked: boolean,
 	message: Array<{ type: string, text: string }>,
 	reactions: Array<DialogWidgetItemReactions>,
 	read: boolean,
@@ -136,8 +136,16 @@ export type VideoDialogWidgetItem = BaseDialogWidgetItem & {
 	},
 }
 
+export type VideoNoteDialogWidgetItem = BaseDialogWidgetItem & {
+	videoNote: MessageVideoNote,
+}
+
+export type VideoNoteTextDialogWidgetItem = AudioDialogWidgetItem & {
+	previewUrl: string,
+}
+
 export type AudioDialogWidgetItem = BaseDialogWidgetItem & {
-	video: MessageAudio,
+	audio: MessageAudio,
 	audioUrl: string,
 	localAudioUrl: string,
 	size: number,
@@ -173,4 +181,10 @@ export type BannerDialogWidgetItem = BaseDialogWidgetItem & {
 export type AiAssistantDialogWidgetItem = BaseDialogWidgetItem & {
 	buttons: MessageButton[],
 	footnote: MessageFootnote,
+}
+
+export type Speech2Text = {
+	text: string,
+	textColor: string,
+	status: 'ready' | 'progress' | 'expanded' | 'error',
 }

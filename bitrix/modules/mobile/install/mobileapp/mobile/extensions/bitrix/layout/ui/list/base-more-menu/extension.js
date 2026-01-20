@@ -154,6 +154,7 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 			sectionCode = 'default',
 			sectionTitle,
 			nextMenu,
+			isDestructive = false,
 		})
 		{
 			let iconUrlToShow = null;
@@ -179,6 +180,7 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 				counterStyle: { backgroundColor: counterColor },
 				onItemSelected: (event, item) => this.onMenuItemSelected(event, item),
 				nextMenu,
+				isDestructive,
 			};
 		}
 

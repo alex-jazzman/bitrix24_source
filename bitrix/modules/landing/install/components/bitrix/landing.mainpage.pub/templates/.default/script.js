@@ -68,12 +68,13 @@ this.BX.Landing = this.BX.Landing || {};
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 
 	// Block and analytics constants
-	var CATEGORY = 'vibe';
+	var TOOL = 'vibe';
 	var SECTION_ACTIVE_PAGE = 'active_page';
 	var SECTION_PREVIEW_PAGE = 'preview_page';
 	var P1_TEMPLATE_CODE = 'templateCode';
 	var P2_WIDGET_ID = 'widgetId';
 	var TRIAL_BUTTON_ID = 'trialButton';
+	var FEEDBACK_BUTTON_ID = 'feedback-button';
 	var EVENT_DEMO_ACTIVATED = 'demo_activated';
 	var EVENT_CLICK_ON_BUTTON = 'click_on_button';
 
@@ -91,8 +92,11 @@ this.BX.Landing = this.BX.Landing || {};
 	var DOT = '.';
 	var B24URL_TYPE = 'b24url';
 	var SLIDER_TYPE = 'slider';
+	var HELPDESK_TYPE = 'helpdesk';
 	var OTHER_URL_TYPE = 'otherurl';
-	var REGEX_SLIDER = /BX\.Helper\.show\(["'].*?code=(\d+)["']\)/;
+	var PARTNER_FORM = 'patnerform';
+	var REGEX_HELPDESK = /BX\.Helper\.show\(["'].*?code=(\d+)["']\)/;
+	var REGEX_SLIDER = /BX\.UI\.InfoHelper\.show\(["'](.*?)["']\)/;
 	var REGEX_PSEUDO_URL = /^\/|^https?:\/\/|^#/;
 	var QUOT_ENTITY = '&quot;';
 	var QUOTE = '"';
@@ -116,7 +120,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    babelHelpers.classCallCheck(this, Analytics);
 	    this.isPublished = options.isPublished;
 	    this.templateCode = options.templateCode;
-	    this.metrika = new landing_metrika.Metrika(IS_LIGHT_METRIKA);
+	    this.metrika = new landing_metrika.Metrika(IS_LIGHT_METRIKA, TOOL);
 	    this.clickableElements = [];
 	    this.initEventListeners();
 	  }
@@ -163,7 +167,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    key: "findClickableElements",
 	    value: function findClickableElements(block) {
 	      var _this2 = this;
-	      var elements = babelHelpers.toConsumableArray(block.querySelectorAll("".concat(TAG_A, ", ").concat(TAG_BUTTON, ", [").concat(DATA_PSEUDO_URL, "]")));
+	      var elements = babelHelpers.toConsumableArray(block.querySelectorAll("".concat(TAG_A, ", ").concat(TAG_BUTTON, ", [").concat(DATA_PSEUDO_URL, "], #").concat(FEEDBACK_BUTTON_ID)));
 	      return elements.filter(function (el) {
 	        return _this2.isClickableElement(el);
 	      });
@@ -183,7 +187,7 @@ this.BX.Landing = this.BX.Landing || {};
 	      if (element.closest(TAG_A)) {
 	        return false;
 	      }
-	      return tag === TAG_BUTTON || element.hasAttribute(DATA_PSEUDO_URL);
+	      return tag === TAG_BUTTON || element.hasAttribute(DATA_PSEUDO_URL) || element.id === FEEDBACK_BUTTON_ID;
 	    }
 	    /**
 	     * Extracts a unique code for the block based on its class names.
@@ -211,11 +215,18 @@ this.BX.Landing = this.BX.Landing || {};
 	    key: "onClick",
 	    value: function onClick(event, code) {
 	      var target = event.currentTarget;
+	      var eventName = this.getEventName(target);
+	      var trackingParam = null;
+	      if (eventName === EVENT_CLICK_ON_BUTTON) {
+	        trackingParam = this.getTrackingParameter(target);
+	      }
 	      var data = {
-	        event: this.getEventName(target),
-	        p2: [P2_WIDGET_ID, code],
-	        p4: this.getTrackingParameter(target)
+	        event: eventName,
+	        p2: [P2_WIDGET_ID, code]
 	      };
+	      if (trackingParam !== null) {
+	        data.p4 = trackingParam;
+	      }
 	      this.sendAnalytics(data);
 	    }
 	    /**
@@ -237,16 +248,23 @@ this.BX.Landing = this.BX.Landing || {};
 	  }, {
 	    key: "getTrackingParameter",
 	    value: function getTrackingParameter(target) {
+	      if (target.id === FEEDBACK_BUTTON_ID) {
+	        return [SLIDER_TYPE, PARTNER_FORM];
+	      }
 	      var href = this.extractHrefFromPseudoUrl(target) || this.extractHrefFromElement(target);
 	      if (!href) {
 	        return undefined;
+	      }
+	      var helpdeskMatch = href.match(REGEX_HELPDESK);
+	      if (helpdeskMatch) {
+	        return [HELPDESK_TYPE, helpdeskMatch[1]];
 	      }
 	      var sliderMatch = href.match(REGEX_SLIDER);
 	      if (sliderMatch) {
 	        return [SLIDER_TYPE, sliderMatch[1]];
 	      }
 	      if (href.startsWith('/') || href.includes(window.location.origin)) {
-	        return [B24URL_TYPE, href];
+	        return [B24URL_TYPE, href.replaceAll(/\/\d+(?=\/)/g, '/')];
 	      }
 	      return [OTHER_URL_TYPE, href];
 	    }
@@ -300,7 +318,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    key: "getAnalyticsData",
 	    value: function getAnalyticsData(data) {
 	      return _objectSpread({
-	        category: CATEGORY,
+	        category: TOOL,
 	        c_section: this.isPublished ? SECTION_ACTIVE_PAGE : SECTION_PREVIEW_PAGE,
 	        p1: [P1_TEMPLATE_CODE, this.templateCode]
 	      }, data);

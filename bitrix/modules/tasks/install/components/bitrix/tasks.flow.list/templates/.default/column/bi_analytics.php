@@ -4,6 +4,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Access\AccessController;
+use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Configuration\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Flow\Integration\AI\Configuration;
@@ -25,10 +29,11 @@ if (!function_exists('renderBIAnalyticsColumn'))
 		}
 
 		$dashboards = $data['dashboards'];
+		$isDashboardsExist = $data['isDashboardsExist'];
 		$flowId = $data['flowId'];
 
 		$onclick = getBIOnclick($dashboards, $flowId);
-		$hint = getBIEmptyHint($dashboards);
+		$hint =getBIEmptyHint($dashboards, $isDashboardsExist);
 
 		return <<<HTML
 			<div class="tasks-flow__list-cell $disableClass">
@@ -76,15 +81,60 @@ if (!function_exists('getBIOnclick'))
 
 if (!function_exists('getBIEmptyHint'))
 {
-	function getBIEmptyHint(array $dashboards): string
+	function getBIEmptyHint(array $dashboards, bool $isDashboardsExist): string
 	{
 		if (!empty($dashboards))
+		{
+			if (count($dashboards) === 1)
+			{
+				return getHint(Loc::getMessage(
+					'TASKS_FLOW_LIST_BI_ANALYTICS_BY_REPORT',
+					[
+						'#DASHBOARD_TITLE#' => reset($dashboards)['title'],
+					],
+				));
+			}
+
+			return '';
+		}
+
+		if (
+			Loader::includeModule('biconnector')
+			&& !Feature::isBuilderEnabled()
+		)
+		{
+			return getHint(Loc::getMessage('TASKS_FLOW_LIST_BI_CONSTRUCTOR_TARIFF_ERROR'));
+		}
+
+		if (
+			Loader::includeModule('biconnector')
+			&& !AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_ACCESS)
+		)
+		{
+			return getHint(Loc::getMessage('TASKS_FLOW_LIST_BI_CONSTRUCTOR_NO_ACCESS'));
+		}
+
+		if (!$isDashboardsExist)
+		{
+			return getHint(Loc::getMessage('TASKS_FLOW_LIST_BI_ANALYTICS_NO_AVAILABLE_REPORTS'));
+		}
+
+		return getHint(Loc::getMessage('TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS'));
+	}
+}
+
+if (!function_exists('getHint'))
+{
+	function getHint(string $hintText): string
+	{
+		if (empty($hintText))
 		{
 			return '';
 		}
 
 		return 'data-hint="'
-			. Loc::getMessage('TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS')
-			. '" data-hint-no-icon';
+			. htmlspecialcharsbx($hintText)
+			. '" data-hint-no-icon'
+		;
 	}
 }

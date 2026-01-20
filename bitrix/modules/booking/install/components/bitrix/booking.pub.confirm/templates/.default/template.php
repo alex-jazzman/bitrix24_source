@@ -16,7 +16,7 @@ global $APPLICATION;
 
 $APPLICATION->SetTitle($arResult['title']);
 
-Extension::load(['booking.confirm-page-public', 'ui.design-tokens']);
+Extension::load(['booking.application.confirm-page-public', 'ui.design-tokens']);
 
 $currentLang = $arResult['currentLang'] ?? null;
 $hasBitrix24Link = is_string($arResult['bitrix24Link']);
@@ -46,7 +46,7 @@ $hasBitrix24Link = is_string($arResult['bitrix24Link']);
 		const company = '<?= CUtil::JSEscape($arResult['company']); ?>';
 		const context = '<?= $arResult['context']; ?>';
 
-		new BX.Booking.ConfirmPagePublic({
+		new BX.Booking.Application.ConfirmPagePublic({
 			container,
 			booking,
 			hash,

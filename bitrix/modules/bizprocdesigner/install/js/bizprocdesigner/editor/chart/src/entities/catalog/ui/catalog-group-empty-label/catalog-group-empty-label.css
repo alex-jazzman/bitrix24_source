@@ -1,0 +1,23 @@
+.editor-chart-catalog-group-empty-label {
+	min-width: 330px;
+	width: 100%;
+	height: 70%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+}
+
+.editor-chart-catalog-group-empty-label h2 {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-gray-60);
+	margin: 0;
+}
+
+.editor-chart-catalog-group-empty-label p {
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-lg);
+	margin: 1em 3em;
+}

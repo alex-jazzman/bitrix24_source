@@ -159,7 +159,8 @@
 .docs-template-load-user,
 .docs-template-load-numerator,
 .docs-template-load-result,
-.template-edit-hidden {
+.template-edit-hidden,
+.docs-template__template-user-control {
 	display: none;
 }
 

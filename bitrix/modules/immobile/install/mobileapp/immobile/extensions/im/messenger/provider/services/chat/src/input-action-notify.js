@@ -14,9 +14,10 @@ jn.define('im/messenger/provider/services/chat/input-action-notify', (require, e
 	{
 		/**
 		 * @param {string} dialogId
+		 * @param {string} type
 		 * @return {Promise}
 		 */
-		async writingMessageNotify(dialogId)
+		async notify(dialogId, type = UserInputAction.writing)
 		{
 			if (!this.#isValidDialogId(dialogId))
 			{
@@ -24,65 +25,16 @@ jn.define('im/messenger/provider/services/chat/input-action-notify', (require, e
 			}
 			const data = {
 				dialogId,
-				type: UserInputAction.writing,
+				type,
 			};
 
 			return runAction(RestMethod.imV2ChatInputActionNotify, { data })
 				.then((result) => {
-					Logger.log(`${this.constructor.name}.writingMessageNotify`, result);
+					Logger.log(`${this.constructor.name}.notify`, result);
 
 					return result;
 				})
-				.catch((err) => Logger.error(`${this.constructor.name}.writingMessageNotify`, err));
-		}
-
-		/**
-		 * @param {string} dialogId
-		 * @return {Promise}
-		 */
-		async recordVoiceMessageNotify(dialogId)
-		{
-			if (!this.#isValidDialogId(dialogId))
-			{
-				return Promise.reject();
-			}
-			const data = {
-				dialogId,
-				type: UserInputAction.recordingVoice,
-			};
-
-			return runAction(RestMethod.imV2ChatInputActionNotify, { data })
-				.then((result) => {
-					Logger.log(`${this.constructor.name}.recordVoiceMessageNotify`, result);
-
-					return result;
-				})
-				.catch((err) => Logger.error(`${this.constructor.name}.recordVoiceMessageNotify`, err));
-		}
-
-		/**
-		 * @param {string} dialogId
-		 * @return {Promise}
-		 */
-		async uploadFileMessageNotify(dialogId)
-		{
-			if (!this.#isValidDialogId(dialogId))
-			{
-				return Promise.reject();
-			}
-
-			const data = {
-				dialogId,
-				type: UserInputAction.sendingFile,
-			};
-
-			return runAction(RestMethod.imV2ChatInputActionNotify, { data })
-				.then((result) => {
-					Logger.log(`${this.constructor.name}.uploadFileMessageNotify`, result);
-
-					return result;
-				})
-				.catch((err) => Logger.error(`${this.constructor.name}.uploadFileMessageNotify`, err));
+				.catch((err) => Logger.error(`${this.constructor.name}.notify`, err));
 		}
 
 		#isValidDialogId(dialogId)

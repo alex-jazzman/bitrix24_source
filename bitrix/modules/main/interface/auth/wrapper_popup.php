@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Bitrix vars
+ * @global CMain $APPLICATION
+ * @var array $arAuthResult From CMain::AuthForm()
+ * @var string $last_login wrapper.php
+ */
+
 use Bitrix\Main\Web\Json;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();

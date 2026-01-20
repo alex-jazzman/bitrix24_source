@@ -16,4 +16,5 @@ export const PopupType = Object.freeze({
 	messageBaseFileMenu: 'im-message-base-file-context-menu',
 	desktopItemMenu: 'im-navigation-desktop-item-context-menu',
 	messageHistoryLimit: 'im-message-history-limit-popup',
+	emoteSelector: 'im-emote-selector-popup',
 });

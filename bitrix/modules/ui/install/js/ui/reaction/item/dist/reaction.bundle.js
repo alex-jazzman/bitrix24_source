@@ -13,6 +13,12 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	  fire: 'fire',
 	  cry: 'cry',
 	  slightlySmilingFace: 'slightlySmilingFace',
+	  handshake: 'handshake',
+	  hundredPoints: 'hundredPoints',
+	  sleepingSymbol: 'sleepingSymbol',
+	  crossMark: 'crossMark',
+	  whiteHeavyCheckMark: 'whiteHeavyCheckMark',
+	  eyes: 'eyes',
 	  winkingFace: 'winkingFace',
 	  laugh: 'laugh',
 	  kiss: 'kiss',
@@ -47,13 +53,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	  questionMark: 'questionMark',
 	  exclamationMark: 'exclamationMark',
 	  lightBulb: 'lightBulb',
-	  bomb: 'bomb',
-	  sleepingSymbol: 'sleepingSymbol',
-	  crossMark: 'crossMark',
-	  whiteHeavyCheckMark: 'whiteHeavyCheckMark',
-	  eyes: 'eyes',
-	  handshake: 'handshake',
-	  hundredPoints: 'hundredPoints'
+	  bomb: 'bomb'
 	});
 
 	const e1 = '/bitrix/js/ui/reaction/item/animations/emoji_01.json';
@@ -213,10 +213,12 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	const ReactionEvent = Object.freeze({
 	  animationFinish: 'animationFinish'
 	});
+	var _LottieInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("LottieInstance");
 	var _name = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("name");
 	var _size = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("size");
 	var _animate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("animate");
 	var _infiniteAnimate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("infiniteAnimate");
+	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
 	var _lottieAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lottieAnimation");
 	var _wrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wrapper");
 	var _animatedReaction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("animatedReaction");
@@ -228,10 +230,14 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	var _initAnimatedReaction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAnimatedReaction");
 	var _switchAnimatedToStatic = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("switchAnimatedToStatic");
 	var _switchStaticToAnimated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("switchStaticToAnimated");
+	var _destroyAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyAnimation");
 	class Reaction extends main_core_events.EventEmitter {
 	  constructor(options = {}) {
 	    var _options$animation, _options$animation2;
 	    super(options);
+	    Object.defineProperty(this, _destroyAnimation, {
+	      value: _destroyAnimation2
+	    });
 	    Object.defineProperty(this, _switchStaticToAnimated, {
 	      value: _switchStaticToAnimated2
 	    });
@@ -266,6 +272,10 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _id, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _lottieAnimation, {
 	      writable: true,
 	      value: null
@@ -291,6 +301,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _size)[_size] = main_core.Type.isNumber(options.size) ? options.size : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _animate)[_animate] = ((_options$animation = options.animation) == null ? void 0 : _options$animation.animate) === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _infiniteAnimate)[_infiniteAnimate] = ((_options$animation2 = options.animation) == null ? void 0 : _options$animation2.infinite) === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = `${babelHelpers.classPrivateFieldLooseBase(this, _name)[_name]}_${Math.round(Math.random() * 1000000000)}`;
 	    babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _animatedReaction)[_animatedReaction] = null;
@@ -341,8 +352,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _isAnimationPaused)[_isAnimationPaused] = true;
 	  }
 	  destroy() {
-	    var _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation]) == null ? void 0 : _babelHelpers$classPr2.destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _destroyAnimation)[_destroyAnimation]();
 	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper] = null;
 	  }
@@ -374,6 +384,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	    main_core.Runtime.loadExtension(['ui.lottie']).then(({
 	      Lottie
 	    }) => {
+	      babelHelpers.classPrivateFieldLooseBase(Reaction, _LottieInstance)[_LottieInstance] = Lottie;
 	      if (!babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation]) {
 	        const wrapper = main_core.Tag.render(_t3 || (_t3 = _`<span class="ui-reaction__animation-wrapper"></span>`));
 	        main_core.Dom.style(wrapper, 'color-scheme', 'only light');
@@ -381,6 +392,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	          container: wrapper,
 	          path: LottieAnimation[babelHelpers.classPrivateFieldLooseBase(this, _name)[_name]],
 	          loop: true,
+	          name: babelHelpers.classPrivateFieldLooseBase(this, _id)[_id],
 	          autoplay: true,
 	          renderer: 'svg',
 	          rendererSettings: {
@@ -400,6 +412,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	            babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation].pause();
 	            babelHelpers.classPrivateFieldLooseBase(this, _switchAnimatedToStatic)[_switchAnimatedToStatic]();
 	            this.emit(ReactionEvent.animationFinish);
+	            babelHelpers.classPrivateFieldLooseBase(this, _destroyAnimation)[_destroyAnimation]();
 	          }
 	        });
 	      }
@@ -422,6 +435,17 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	    console.error(error);
 	  });
 	}
+	function _destroyAnimation2() {
+	  var _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(Reaction, _LottieInstance)[_LottieInstance]) == null ? void 0 : _babelHelpers$classPr2.destroy(babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation] = null;
+	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _animatedReaction)[_animatedReaction]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _animatedReaction)[_animatedReaction] = null;
+	}
+	Object.defineProperty(Reaction, _LottieInstance, {
+	  writable: true,
+	  value: null
+	});
 
 	// @vue/component
 	const Reaction$1 = {

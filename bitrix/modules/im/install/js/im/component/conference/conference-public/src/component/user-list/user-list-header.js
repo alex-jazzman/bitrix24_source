@@ -42,6 +42,12 @@ const UserListHeader = {
 
 			this.menuPopup = MenuManager.create({
 				id: 'bx-im-component-call-user-list-header-popup',
+				className: 'bx-conference-user-list-context-menu',
+				background: '#00428F',
+				contentBackground: '#00428F',
+				darkMode: true,
+				contentBorderRadius: '6px',
+				borderRadius: '6px',
 				bindElement: this.$refs['user-list-header-menu'],
 				items: this.getMenuItems(),
 				events: {
@@ -125,16 +131,20 @@ const UserListHeader = {
 		}
 	},
 	template: `
-		<div class="bx-im-component-call-right-header">
-			<div class="bx-im-component-call-right-header-left">
-				<div @click="onCloseUsers" class="bx-im-component-call-right-header-close" :title="$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']"></div>
-			<div class="bx-im-component-call-right-header-title">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>
+		<div class="bx-im-component-call-user-list-header">
+			<div class="bx-im-component-call-user-list-header-top-actions">
+				<div class="bx-im-component-call-user-list-header-left">
+					<div @click="onCloseUsers" class="bx-im-component-call-user-list-header-close" :title="$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']"></div>
+				</div>
+				<div class="bx-im-component-call-user-list-header-right">
+					<div @click="openMenu" class="bx-im-component-call-user-list-header-more" ref="user-list-header-menu"></div>
+				</div>
 			</div>
-			<div class="bx-im-component-call-right-header-right">
-				<div @click="openMenu" class="bx-im-component-call-user-list-header-more" ref="user-list-header-menu"></div>	
+			<div class="bx-im-component-call-user-list-header-users-summary">
+				<div class="bx-im-component-call-user-list-header-title">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>
 			</div>
 		</div>
-	`
+	`,
 };
 
 export {UserListHeader};

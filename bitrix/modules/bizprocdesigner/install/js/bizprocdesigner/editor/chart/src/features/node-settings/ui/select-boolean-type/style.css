@@ -1,0 +1,21 @@
+.node-settings-boolean-type-switcher {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.node-settings-boolean-type-switcher_tab {
+	font-size: 13px;
+	line-height: 17px;
+	font-weight: var(--ui-font-weight-medium);
+	padding: 4px 8px;
+	border-radius: 6px;
+	color: var(--ui-color-palette-white-base);
+	cursor: pointer;
+	background: #58a4ff;
+}
+
+.node-settings-boolean-type-switcher_tab:not(.--selected) {
+	background: none;
+	color: var(--ui-color-palette-gray-60);
+}

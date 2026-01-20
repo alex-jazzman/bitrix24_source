@@ -14,6 +14,16 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/dummy', (re
 		{
 			this.logger.log('onInit');
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		redraw()
+		{
+			this.logger.log('redraw');
+		}
 	}
 
 	module.exports = DummyFloatingButtonService;

@@ -201,7 +201,7 @@ while($arRes = $rsData->NavNext(true, "f_")):
 	$row =& $lAdmin->AddRow($f_ID, $arRes);
 
 	$arUserType = $USER_FIELD_MANAGER->GetUserType($f_USER_TYPE_ID);
-	$row->AddViewField("USER_TYPE_ID", htmlspecialcharsbx($arUserType["DESCRIPTION"]));
+	$row->AddViewField("USER_TYPE_ID", htmlspecialcharsbx($arUserType["DESCRIPTION"] ?? ''));
 	$row->AddInputField("SORT", array("size"=>5));
 	$row->AddViewField("MULTIPLE", $f_MULTIPLE=="Y"?GetMessage("MAIN_YES"):GetMessage("MAIN_NO"));
 	$row->AddCheckField("MANDATORY");
@@ -421,4 +421,4 @@ $oFilter->End();
 
 <?$lAdmin->DisplayList();?>
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

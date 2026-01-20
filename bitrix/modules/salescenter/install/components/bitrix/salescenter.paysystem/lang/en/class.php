@@ -10,6 +10,7 @@ $MESS["SALESCENTER_SP_CASHBOX_MEASURE_HINT"] = "Unit of measurement is printed o
 $MESS["SALESCENTER_SP_CASHBOX_OFD_OPTION_OTHER"] = "Other";
 $MESS["SALESCENTER_SP_CASHBOX_OFD_SETTINGS"] = "OFD settings";
 $MESS["SALESCENTER_SP_CASHBOX_OFD_TITLE"] = "OFD";
+$MESS["SALESCENTER_SP_CASHBOX_VAT_22_ATTENTION"] = "As of Juanuary 1 2026, your new tax rate is 22%. Use the code #CODE#.";
 $MESS["SALESCENTER_SP_CASHBOX_VAT_ATTENTION"] = "The value of \"No Tax [0%]\" must be the same as \"No Tax [Default]\" if you are tax exempt.";
 $MESS["SALESCENTER_SP_CASHBOX_VAT_HINT"] = "Tax rate is printed on the receipt for reference.";
 $MESS["SALESCENTER_SP_CONNECT_COMPANY_DETAILS_INN"] = "Taxpayer ID #INN#";

@@ -1,4 +1,5 @@
 import { Loc } from 'main.core';
+
 import { Base } from './base.js';
 
 /**
@@ -9,7 +10,7 @@ export class Summary extends Base
 	initDefaultOptions(): void
 	{
 		this.id = 'crm-copilot-summary';
-		this.aiJobResultAndCallRecordAction = 'crm.timeline.ai.getCopilotSummaryAndCallRecord';
+		this.aiDataAction = 'crm.timeline.ai.getCopilotSummary';
 
 		this.sliderTitle = Loc.getMessage('CRM_COMMON_COPILOT');
 		this.sliderWidth = 520;

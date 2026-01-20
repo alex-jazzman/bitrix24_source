@@ -1,0 +1,27 @@
+.editor-chart-burger-btn {
+	position: relative;
+	display: inline-block;
+	flex-shrink: 0;
+	width: 38px;
+	height: 38px;
+	border: none;
+	border-radius: var(--ui-border-radius-md);
+	background-color: transparent;
+	vertical-align: middle;
+	overflow: hidden;
+	opacity: .7;
+	transition: opacity .3s;
+	cursor: pointer;
+}
+
+.editor-chart-burger-btn:hover {
+	background-color: color-mix(in srgb, transparent 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+}
+
+.editor-chart-burger-btn__icon {
+	background-color: var(--ui-color-palette-gray-70);
+}
+
+.editor-chart-burger-btn.--opened .editor-chart-burger-btn__icon {
+	background-color: var(--ui-color-palette-gray-90);
+}

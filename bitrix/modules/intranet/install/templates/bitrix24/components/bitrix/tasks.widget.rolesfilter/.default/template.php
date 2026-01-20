@@ -24,7 +24,7 @@ $this->SetViewTarget("sidebar", 200);
 			$path = (new Tasks\Slider\Path\TaskPathMaker(0, Tasks\Slider\Path\PathMaker::EDIT_ACTION))->makeEntityPath();
 			$url = new \Bitrix\Main\Web\Uri($path);
 			$url->addParams([
-				'ta_sec' => Tasks\Helper\Analytics::SECTION['tasks'],
+				'ta_sec' => Tasks\Helper\Analytics::SECTION['feed'],
 				'ta_el' => Tasks\Helper\Analytics::ELEMENT['widget_menu']
 			]);
 		?>

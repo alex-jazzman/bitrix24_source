@@ -45,6 +45,10 @@ export type InterfaceModelState = {
 	animationPause: boolean,
 	createdFromEmbedBookings: { [key: number | string ]: number | string },
 	createdFromEmbedWaitListItems: { [key: number | string ]: number | string },
+	menuOpenedForBookingKey: string,
+	menuOpenedForWaitListItem: number,
+	enabledFeature: EnabledFeatures,
+	shouldShowWhatsAppEmergency: boolean,
 }
 
 export type Intersections = {
@@ -77,4 +81,14 @@ export type DraggedDataTransfer = {
 	id: number,
 	resourceId: number,
 	kind: $Values<typeof DraggedElementKind> | null,
+}
+
+export type EnabledFeatures = {
+	booking: boolean;
+	bookingCalendar: boolean;
+	bookingWaitlist: boolean;
+	bookingOverbooking: boolean;
+	bookingMulti: boolean;
+	bookingCrmSlider: boolean;
+	bookingNotificationsSettings: boolean;
 }

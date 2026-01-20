@@ -9,7 +9,6 @@ export type User = {
 	color: string,
 	workPosition: string,
 	gender: 'M' | 'F',
-	isAdmin: boolean,
 	type: $Values<typeof UserType>,
 	network: boolean,
 	connector: boolean,
@@ -27,7 +26,9 @@ export type User = {
 		personalMobile: string,
 		workPhone: string,
 		innerPhone: string,
-	}
+	},
+	email: string,
+	website: string,
 };
 
 export type Bot = {

@@ -30,3 +30,4 @@ $MESS["admin_authorize_error"] = "Авторландыру қатесі!";
 $MESS["admin_authorize_info"] = "Ақпарат";
 $MESS["admin_change_password_error"] = "Құпиясөзді ауыстыру қатесі!";
 $MESS["admin_forgot_password_error"] = "Құпиясөзді қалпына келтіру қатесі!";
+$MESS["admin_push_otp_error"] = "Растауды сұраудағы қате";

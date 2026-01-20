@@ -57,6 +57,7 @@ export default class Menu
 		Options.showSitemapMenuItem = params.showSitemapMenuItem;
 		Options.showLicenseButton = params.showLicenseButton;
 		Options.licenseButtonPath = params.licenseButtonPath;
+		Options.isMessengerEmbedded = params.isMessengerEmbedded === 'Y';
 
 		this.isCollapsedMode = params.isCollapsedMode;
 		this.analytics = new Analytics(params.isAdmin);

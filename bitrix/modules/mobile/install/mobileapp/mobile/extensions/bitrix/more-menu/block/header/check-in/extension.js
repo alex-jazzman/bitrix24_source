@@ -2,6 +2,7 @@
  * @module more-menu/block/header/check-in
  */
 jn.define('more-menu/block/header/check-in', (require, exports, module) => {
+	const { makeLibraryImagePath } = require('asset-manager');
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
 	const { inAppUrl } = require('in-app-url');
@@ -16,6 +17,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 	const { shortTime } = require('utils/date/formats');
 	const { capitalize } = require('utils/string');
 	const { createTestIdGenerator } = require('utils/test');
+	const { isEqual } = require('utils/object');
 
 	let StatusEnum = null;
 
@@ -61,6 +63,16 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 			this.startTimeUpdateInterval();
 		}
 
+		componentWillReceiveProps(props)
+		{
+			const currentShift = props?.currentShift;
+
+			if (!isEqual(currentShift, this.state.isEqual))
+			{
+				this.state.currentShift = currentShift;
+			}
+		}
+
 		componentWillUnmount()
 		{
 			BX.removeCustomEvent('onPullEvent-stafftrack', this.subscribeToPullEvent);
@@ -92,11 +104,21 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		subscribeToPullEvent(command, params, extra, moduleId)
 		{
 			const shift = params?.shift;
+
 			if (shift.userId === Number(env.userId))
 			{
-				this.setState({
-					currentShift: shift,
-				});
+				if (command === 'shift_delete')
+				{
+					this.setState({
+						currentShift: null,
+					});
+				}
+				else
+				{
+					this.setState({
+						currentShift: shift,
+					});
+				}
 			}
 		}
 
@@ -106,26 +128,72 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'row',
-						padding: Indent.XL2.toNumber(),
 						alignItems: 'center',
+						flexGrow: 2,
+						justifyContent: 'space-between',
 					},
 				},
 				View(
 					{
-						testId: this.getTestId('content'),
 						style: {
-							flex: 2,
-							marginRight: Indent.L.toNumber(),
+							flexDirection: 'row',
+							alignItems: 'center',
 							flexShrink: 2,
 						},
-						onClick: () => {
-							inAppUrl.open('/check-in', {});
-						},
 					},
-					this.renderHeader(),
-					this.renderStatus(),
+					this.renderIcon(),
+					View(
+						{
+							testId: this.getTestId('content'),
+							style: {
+								flexShrink: 2,
+								marginRight: Indent.XS.toNumber(),
+							},
+							onClick: () => {
+								inAppUrl.open('/check-in', {});
+							},
+						},
+						this.renderHeader(),
+						this.renderStatus(),
+					),
 				),
-				this.renderActions(),
+				View(
+					{},
+					this.renderActions(),
+				),
+			);
+		}
+
+		renderIcon()
+		{
+			if (device.screen.width <= 360)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						width: 40,
+						height: 40,
+						marginRight: Indent.XS.toNumber(),
+					},
+					onClick: () => {
+						inAppUrl.open('/check-in', {});
+					},
+				},
+				Image({
+					testId: this.getTestId('image'),
+					uri: makeLibraryImagePath('location.png', 'more-menu'),
+					style: {
+						width: 44,
+						height: 44,
+						position: 'absolute',
+						top: -2,
+						right: -3,
+					},
+					resizeMode: 'cover',
+				}),
 			);
 		}
 
@@ -133,18 +201,22 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: this.getTestId('header'),
 					style: {
 						flexDirection: 'row',
-						marginBottom: Indent.S.toNumber(),
 						alignItems: 'center',
+						flexShrink: 2,
 					},
 				},
 				Text3({
 					testId: this.getTestId('title'),
-					text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_TITLE'),
+					text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_TITLE_MSGVER_1'),
 					color: Color.base1,
 					numberOfLines: 1,
 					ellipsize: 'end',
+					style: {
+						flexShrink: 2,
+					},
 				}),
 				IconView({
 					testId: this.getTestId('chevron'),
@@ -217,6 +289,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 						flexShrink: 2,
 					},
 				}),
+				showTime: true,
 			});
 		}
 
@@ -229,12 +302,11 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 				return Button({
 					testId: 'MORE_MENU_HEADER_CHECK_IN_BUTTON',
 					text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_BUTTON_DEFAULT'),
-					size: ButtonSize.M,
-					design: ButtonDesign.OUTLINE,
+					size: ButtonSize.S,
+					design: ButtonDesign.OUTLINE_ACCENT_2,
 					onClick: () => {
 						inAppUrl.open('/check-in', {});
 					},
-					backgroundColor: Color.bgContentPrimary,
 				});
 			}
 
@@ -242,12 +314,11 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 				testId: 'MORE_MENU_HEADER_CHECK_IN_BUTTON_START',
 				text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_BUTTON_START'),
 				leftIcon: Icon.LOCATION,
-				size: ButtonSize.M,
-				design: ButtonDesign.OUTLINE,
+				size: ButtonSize.S,
+				design: ButtonDesign.OUTLINE_ACCENT_2,
 				onClick: () => {
 					inAppUrl.open('/check-in', {});
 				},
-				backgroundColor: Color.bgContentPrimary,
 			});
 		}
 
@@ -257,7 +328,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 			const timeString = moment.format(shortTime());
 
 			return Loc.getMessage(
-				'MORE_MENU_HEADER_CHECK_IN_CANCEL',
+				'MORE_MENU_HEADER_CHECK_IN_CANCEL_MSGVER_1',
 				{
 					'#TIME#': timeString,
 				},

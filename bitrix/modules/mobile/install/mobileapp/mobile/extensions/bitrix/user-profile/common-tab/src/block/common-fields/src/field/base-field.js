@@ -217,7 +217,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/base-field'
 				text: Loc.getMessage('M_PROFILE_COMMON_FIELDS_ADD_VALUE_BUTTON_TEXT'),
 				size: 4,
 				color: Color.link,
-				onPress: onAddNewValue,
+				onClick: onAddNewValue,
 				style: {
 					marginTop: Indent.S.toNumber(),
 				},
@@ -228,19 +228,32 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/base-field'
 			const { onChange, isMultiple } = this.props;
 			const { value } = this.state;
 			const newValues = isMultiple
-				? value.map((item, i) => (i === idx ? newValue : item))
+				? value.map((item, i) => (i === idx ? newValue : item)).filter(Boolean)
 				: newValue;
+			this.setState({
+				value: newValues,
+			}, () => {
+				const preparedForSaveValues = isMultiple
+					? newValues.map((item) => this.prepareValueForSave(item))
+					: this.prepareValueForSave(newValues);
+				onChange?.(preparedForSaveValues);
+			});
+		};
+
+		prepareValueForSave(value)
+		{
+			return value;
+		}
+
+		addValue = () => {
+			const { onChange } = this.props;
+			const { value } = this.state;
+			const newValues = [...value, this.getDefaultValue()];
 			this.setState({
 				value: newValues,
 			}, () => {
 				onChange?.(newValues);
 			});
-		};
-
-		addValue = () => {
-			const { onChange } = this.props;
-			const { value } = this.state;
-			onChange?.([...value, this.getDefaultValue()]);
 		};
 
 		bindRef = (ref, idx) => {

@@ -8,6 +8,7 @@ import { MessageBox } from 'ui.dialogs.messagebox';
 import { Label, LabelColor } from 'ui.label';
 import DocumentManager from './document-manager';
 import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
+import 'ui.hint';
 
 declare var BX: {[key: string]: any};
 

@@ -1,6 +1,6 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -9,6 +9,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 /** @var \CBitrixComponentTemplate $this */
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
@@ -118,13 +119,15 @@ $APPLICATION->IncludeComponent(
 		],
 		$this->getComponent(),
 	);
+
+	$readOnly = $arResult['readOnly'] ?? false;
 ?></div>
 
 <script>
 	BX.ready(() => {
 		BX.message(<?= Json::encode(
 			array_merge(
-				\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages(),
+				Container::getInstance()->getLocalization()->loadMessages(),
 				Loc::loadLanguageFile(__FILE__),
 			)
 		) ?>);
@@ -133,6 +136,7 @@ $APPLICATION->IncludeComponent(
 			'containerId' => 'crm-automated-solution-details-app-container',
 			'activeTabId' => $activeTabId,
 			'state' => $arResult['state'],
+			'readOnly' => $readOnly,
 		]) ?>);
 
 		app.start();

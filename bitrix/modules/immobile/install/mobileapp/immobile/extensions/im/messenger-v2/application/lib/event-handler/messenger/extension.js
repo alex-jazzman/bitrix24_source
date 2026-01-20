@@ -7,6 +7,7 @@ jn.define('im/messenger-v2/application/lib/event-handler/messenger', (require, e
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { clearDatabaseHandler } = require('im/messenger/lib/clear-database-handler');
+	const { ComponentRequestHandler } = require('im/messenger-v2/application/lib/component-request-handler');
 
 	/**
 	 * @class MessengerEventHandler
@@ -32,6 +33,7 @@ jn.define('im/messenger-v2/application/lib/event-handler/messenger', (require, e
 		{
 			this.isLaunched = false;
 			this.logger = getLoggerWithContext('messenger-v2--messenger-event-handler', this);
+			this.componentRequestHandler = new ComponentRequestHandler();
 
 			this.#bindMethods();
 		}
@@ -57,6 +59,8 @@ jn.define('im/messenger-v2/application/lib/event-handler/messenger', (require, e
 			this.openDialogHandler = this.openDialogHandler.bind(this);
 			this.openLineHandler = this.openLineHandler.bind(this);
 			this.getOpenLineParamsHandler = this.getOpenLineParamsHandler.bind(this);
+			this.notificationOpenHandler = this.notificationOpenHandler.bind(this);
+			this.executeInComponentRequestHandler = this.executeInComponentRequestHandler.bind(this);
 		}
 
 		subscribeEvents()
@@ -70,6 +74,8 @@ jn.define('im/messenger-v2/application/lib/event-handler/messenger', (require, e
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLineHandler);
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParamsHandler);
 			BX.addCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
+			BX.addCustomEvent(EventType.notification.open, this.notificationOpenHandler);
+			BX.addCustomEvent(EventType.messenger.api.executeInComponentRequest, this.executeInComponentRequestHandler);
 
 			this.isLaunched = true;
 		}
@@ -85,6 +91,8 @@ jn.define('im/messenger-v2/application/lib/event-handler/messenger', (require, e
 			BX.removeCustomEvent(EventType.messenger.openLine, this.openLineHandler);
 			BX.removeCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParamsHandler);
 			BX.removeCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
+			BX.removeCustomEvent(EventType.notification.open, this.notificationOpenHandler);
+			BX.removeCustomEvent(EventType.messenger.api.executeInComponentRequest, this.executeInComponentRequestHandler);
 
 			this.isLaunched = false;
 		}
@@ -130,6 +138,31 @@ jn.define('im/messenger-v2/application/lib/event-handler/messenger', (require, e
 					this.logger.error(error);
 				})
 			;
+		}
+
+		/**
+		 * @param {{result: boolean, newCounter: number}} params
+		 */
+		notificationOpenHandler(params)
+		{
+			if (params.result === true)
+			{
+				const tabCounters = serviceLocator.get('tab-counters');
+				tabCounters.setNotificationCounters(params.newCounter);
+				tabCounters.update();
+			}
+		}
+
+		/**
+		 * @param {string} requestUuid
+		 * @param {string} methodName
+		 * @param {object} methodParams
+		 */
+		executeInComponentRequestHandler(requestUuid, methodName, methodParams)
+		{
+			this.logger.log('executeInComponentRequestHandler:', requestUuid, methodName, methodParams);
+
+			void this.componentRequestHandler.handle(requestUuid, methodName, methodParams);
 		}
 	}
 

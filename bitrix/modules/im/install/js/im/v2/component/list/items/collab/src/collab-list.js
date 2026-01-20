@@ -10,6 +10,7 @@ import { CollabRecentMenu } from './classes/context-menu-manager';
 import './css/collab-list.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem } from 'im.v2.model';
 
 // @vue/component
@@ -59,7 +60,7 @@ export const CollabList = {
 	},
 	created()
 	{
-		this.contextMenuManager = new CollabRecentMenu();
+		this.contextMenuManager = new CollabRecentMenu({ emitter: this.getEmitter() });
 		void DraftManager.getInstance().initDraftHistory();
 	},
 	beforeUnmount()
@@ -109,6 +110,10 @@ export const CollabList = {
 			}
 
 			return this.service;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

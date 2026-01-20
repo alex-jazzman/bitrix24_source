@@ -36,6 +36,18 @@
 	--padding-space: 200px;
 }
 
+.social-group-create-body #crm-frame-popup-workarea {
+	min-width:905px;
+}
+
+.social-group-create-body #workarea-content {
+	background: #ebf1f4;
+}
+
+.social-group-create-body .ui-side-panel-wrap-workarea {
+	margin-bottom: 68px;
+}
+
 body:not(.workgroup-form-master) .socialnetwork-group-create-ex__scope {
 	padding: 15px 15px 20px;
 	background-color: #fff;

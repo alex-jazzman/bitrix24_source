@@ -65,7 +65,7 @@ if (!function_exists('prepareTaskRowUserBaloonHtml'))
 
 $rows = [];
 
-if ($arResult['VIOLATION_LIST'])
+if ($arResult['VIOLATION_LIST'] ?? null)
 {
 	$users = [];
 

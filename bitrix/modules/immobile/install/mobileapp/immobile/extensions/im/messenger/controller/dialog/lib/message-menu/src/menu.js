@@ -7,7 +7,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 	const { Alert, confirmDestructiveAction } = require('alert');
 	const { Icon } = require('assets/icons');
 	const { isOnline } = require('device/connection');
-	const { EventType, MessageMenuActionType, PinCount } = require('im/messenger/const');
+	const {
+		EventType,
+		MessageMenuActionType,
+		PinCount,
+		BBCode,
+	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
@@ -41,6 +46,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 		FinishVoteAction,
 		RevoteAction,
 		OpenVoteResultAction,
+		AskCopilotAction,
 	} = require('im/messenger/controller/dialog/lib/message-menu/action');
 	const { MessageCreateMenu } = require('im/messenger/controller/dialog/lib/message-create-menu');
 	const { MessageHelper } = require('im/messenger/lib/helper');
@@ -99,6 +105,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 				[MessageMenuActionType.subscribe]: this.addSubscribeAction.bind(this),
 				[MessageMenuActionType.unsubscribe]: this.addUnsubscribeAction.bind(this),
 				[MessageMenuActionType.forward]: this.addForwardAction.bind(this),
+				[MessageMenuActionType.askCopilot]: this.askCopilotAction.bind(this),
 				[MessageMenuActionType.create]: this.addCreateAction.bind(this),
 				[MessageMenuActionType.reply]: this.addReplyAction.bind(this),
 				[MessageMenuActionType.profile]: this.addProfileAction.bind(this),
@@ -130,6 +137,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 				[MessageMenuActionType.subscribe]: this.onSubscribe.bind(this),
 				[MessageMenuActionType.unsubscribe]: this.onUnsubscribe.bind(this),
 				[MessageMenuActionType.forward]: this.onForward.bind(this),
+				[MessageMenuActionType.askCopilot]: this.onAskCopilot.bind(this),
 				[MessageMenuActionType.create]: this.onCreate.bind(this),
 				[MessageMenuActionType.profile]: this.onProfile.bind(this),
 				[MessageMenuActionType.edit]: this.onEdit.bind(this),
@@ -155,6 +163,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 			if (message.isPossibleCopy())
 			{
 				menu.addAction(CopyAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		askCopilotAction(menu, message)
+		{
+			if (message.isPossibleAskCopilot())
+			{
+				menu.addAction(AskCopilotAction);
 			}
 		}
 
@@ -622,6 +642,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 			});
 
 			return forwardSelector.open({ parentWidget });
+		}
+
+		onAskCopilot(message)
+		{
+			const copilot = this.store.getters['usersModel/getCopilotData']();
+			if (Type.isNil(copilot))
+			{
+				return;
+			}
+
+			this.onReply(message);
+			BX.postComponentEvent(EventType.dialog.external.mention, [copilot.id, BBCode.user, this.#getDialogId()]);
 		}
 
 		/**

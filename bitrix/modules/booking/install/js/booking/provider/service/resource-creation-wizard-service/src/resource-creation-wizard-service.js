@@ -25,8 +25,10 @@ class ResourceCreationWizardService
 
 			await Promise.all([
 				this.$store.dispatch(`${wizardModel}/setAdvertisingTypes`, extractor.getAdvertisingTypes()),
+				this.$store.dispatch(`${wizardModel}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
 				this.$store.dispatch(`${wizardModel}/setCompanyScheduleSlots`, extractor.getCompanyScheduleSlots()),
 				this.$store.dispatch(`${wizardModel}/setCompanyScheduleAccess`, extractor.isCompanyScheduleAccess()),
+				this.$store.dispatch(`${wizardModel}/setLicenseWarning`, extractor.showLicenseWarning()),
 				this.$store.dispatch(`${wizardModel}/setCompanyScheduleUrl`, extractor.getCompanyScheduleUrl()),
 				this.$store.dispatch(`${wizardModel}/setWeekStart`, extractor.getWeekStart()),
 				this.$store.dispatch(`${wizardModel}/setIsChannelChoiceAvailable`, extractor.isChannelChoiceAvailable()),

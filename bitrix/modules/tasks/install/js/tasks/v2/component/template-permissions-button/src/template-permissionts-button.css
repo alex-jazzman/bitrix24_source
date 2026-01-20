@@ -1,0 +1,17 @@
+.tasks--template-permissions-button--wrapper {
+	display: flex;
+	gap: 10px;
+}
+
+.tasks--template-permissions-button--counter {
+	display: flex;
+	gap: 2px;
+	padding: 2px 8px 2px 4px;
+	align-items: center;
+	border-radius: 30px;
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.tasks--template-permissions-button--counter__count {
+	color: var(--ui-color-accent-main-primary);
+}

@@ -24,18 +24,20 @@ import { getCore, getLogger } from './utils/core-proxy';
 import './parser.css';
 
 import type { ImModelMessage, ImModelNotification, ImModelRecentItem } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 import type { ParserConfig } from './types/parser-config';
 
 type ResultRecentConfig = {
 	files: boolean | Object[],
 	attach: boolean | string | Object[],
 	text: string,
+	sticker?: boolean,
 };
 
 export const Parser = {
 	decodeMessage(message: ImModelMessage): string
 	{
-		const messageFiles = getCore().store.getters['messages/getMessageFiles'](message.id);
+		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
 		const contextDialogId = ParserUtils.getDialogIdByChatId(message.chatId);
 
 		return this.decode({
@@ -54,6 +56,14 @@ export const Parser = {
 			attach: notification.params.attach ?? false,
 			showIconIfEmptyText: false,
 			showImageFromLink: false,
+			urlTarget: DesktopApi.isDesktop() ? '_blank' : '_self',
+		});
+	},
+
+	decodeNotificationParam(text: string): string
+	{
+		return this.decode({
+			text,
 			urlTarget: DesktopApi.isDesktop() ? '_blank' : '_self',
 		});
 	},
@@ -172,18 +182,20 @@ export const Parser = {
 
 	purifyMessage(message: ImModelMessage): string
 	{
-		const messageFiles = getCore().store.getters['messages/getMessageFiles'](message.id);
+		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
+		const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](message.id);
 
 		return this.purify({
 			text: message.text,
 			attach: message.attach,
 			files: messageFiles,
+			isSticker,
 		});
 	},
 
 	purifyNotification(notification: ImModelNotification): string
 	{
-		const messageFiles = getCore().store.getters['messages/getMessageFiles'](notification.id);
+		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](notification.id);
 
 		return this.purify({
 			text: notification.text,
@@ -208,13 +220,14 @@ export const Parser = {
 			});
 		}
 
-		const { files, attach, text } = this.prepareConfigForRecent(recentMessage);
+		const { files, attach, text, isSticker } = this.prepareConfigForRecent(recentMessage);
 
 		return this.purify({
 			text,
 			attach,
 			files,
 			showPhraseMessageWasDeleted: recentMessage.messageId !== 0,
+			isSticker,
 		});
 	},
 
@@ -236,6 +249,7 @@ export const Parser = {
 		const {
 			attach = false,
 			files = false,
+			isSticker = false,
 			showPhraseMessageWasDeleted = true,
 		} = config;
 
@@ -244,9 +258,9 @@ export const Parser = {
 			text = Type.isNumber(text) ? text.toString() : '';
 		}
 
-		if (!text)
+		if (!text || isSticker)
 		{
-			text = ParserIcon.addIconToShortText({ text, attach, files });
+			text = ParserIcon.addIconToShortText({ text, attach, files, isSticker });
 
 			return text.trim();
 		}
@@ -291,7 +305,8 @@ export const Parser = {
 
 		let text = quoteText === '' ? message.text : quoteText;
 
-		const files = getCore().store.getters['messages/getMessageFiles'](id);
+		const files = getCore().getStore().getters['messages/getMessageFiles'](id);
+		const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](id);
 
 		text = Text.encode(text.trim());
 
@@ -307,6 +322,11 @@ export const Parser = {
 		if (quoteText === '')
 		{
 			text = ParserIcon.addIconToShortText({ text, attach, files });
+		}
+
+		if (isSticker)
+		{
+			text = ParserIcon.addIconToShortText({ isSticker });
 		}
 
 		text = text.length > 0 ? Text.decode(text) : Loc.getMessage('IM_PARSER_MESSAGE_DELETED');
@@ -337,7 +357,7 @@ export const Parser = {
 	{
 		const { id } = message;
 
-		const files = getCore().store.getters['messages/getMessageFiles'](id).map((file) => {
+		const files = getCore().getStore().getters['messages/getMessageFiles'](id).map((file) => {
 			return `[DISK=${file.id}]\n`;
 		});
 
@@ -346,13 +366,13 @@ export const Parser = {
 
 	prepareConfigForRecent(recentMessage: ImModelRecentItem): ResultRecentConfig
 	{
-		let files = getCore().store.getters['messages/getMessageFiles'](recentMessage.messageId);
+		let files = getCore().getStore().getters['messages/getMessageFiles'](recentMessage.messageId);
 		if (files.length === 0)
 		{
 			files = false;
 		}
 
-		const message = getCore().store.getters['messages/getById'](recentMessage.messageId);
+		const message = getCore().getStore().getters['messages/getById'](recentMessage.messageId);
 
 		let attach = false;
 		if (
@@ -367,8 +387,9 @@ export const Parser = {
 		{
 			attach = [message.attach];
 		}
+		const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](recentMessage.messageId);
 
-		return { files, attach, text: message.text };
+		return { files, attach, text: message.text, isSticker };
 	},
 
 	prepareLegacyConfigForRecent(recentMessage): ResultRecentConfig
@@ -402,11 +423,11 @@ export const Parser = {
 		return { files, attach, text: recentMessage.message.text };
 	},
 
-	executeClickEvent(event: PointerEvent)
+	executeClickEvent(event: PointerEvent, context: ApplicationContext)
 	{
-		ParserMention.executeClickEvent(event);
-		ParserQuote.executeClickEvent(event);
-		ParserAction.executeClickEvent(event);
+		ParserMention.executeClickEvent(event, context);
+		ParserQuote.executeClickEvent(event, context);
+		ParserAction.executeClickEvent(event, context);
 	},
 
 	getContextCodeFromForwardId(forwardId: string): string

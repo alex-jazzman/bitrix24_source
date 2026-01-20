@@ -117,6 +117,9 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					currentView: this.props.currentView,
 					requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
 					projectId: this.props.projectId,
+					spotlightIds: {
+						fab: 'tasks_fab',
+					},
 				}),
 			);
 		}

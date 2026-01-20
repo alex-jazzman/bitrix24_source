@@ -87,6 +87,10 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * @deprecated use ReactionAssetsManager.getReactionAssetsUrl
+	 * @class Legacy reaction assets manager
+	 */
 	class ReactionAssets
 	{
 		static getLottieUrl(reactionType)

@@ -13,6 +13,8 @@ export type CallAiOptions = {
 	baasPromoSlider?: string;
 	helpSlider?: string;
 	disclaimerArticleCode?: string;
+	marketSubscriptionEnabled?: boolean;
+	marketSubscriptionSlider?: string;
 };
 
 export const CallAiError = {
@@ -21,6 +23,7 @@ export const CallAiError = {
 	AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
 	AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
 	AI_NOT_ENOUGH_BAAS_ERROR: 'AI_NOT_ENOUGH_BAAS_ERROR',
+	AI_MARKET_SUBSCRIPTION: 'AI_MARKET_SUBSCRIPTION',
 };
 
 class CallAi
@@ -37,6 +40,8 @@ class CallAi
 		this.baasPromoSlider = '';
 		this.helpSlider = '';
 		this.disclaimerArticleCode = '';
+		this.marketSubscriptionEnabled = false;
+		this.marketSubscriptionSlider = '';
 
 		if (Extension.getSettings('call.core').ai)
 		{
@@ -85,6 +90,14 @@ class CallAi
 		if (options.disclaimerArticleCode)
 		{
 			this.disclaimerArticleCode = options.disclaimerArticleCode;
+		}
+		if (options.marketSubscriptionEnabled)
+		{
+			this.marketSubscriptionEnabled = options.marketSubscriptionEnabled;
+		}
+		if (options.marketSubscriptionSlider)
+		{
+			this.marketSubscriptionSlider = options.marketSubscriptionSlider;
 		}
 	}
 
@@ -178,6 +191,24 @@ class CallAi
 		this._disclaimerArticleCode = value;
 	}
 
+	get marketSubscriptionEnabled(): boolean
+	{
+		return this._marketSubscriptionEnabled;
+	}
+	set marketSubscriptionEnabled(flag: boolean)
+	{
+		this._marketSubscriptionEnabled = flag;
+	}
+
+	get marketSubscriptionSlider(): string
+	{
+		return this._marketSubscriptionSlider;
+	}
+	set marketSubscriptionSlider(value: string)
+	{
+		this._marketSubscriptionSlider = value;
+	}
+
 	handleCopilotError(errorType: string)
 	{
 		switch (errorType)
@@ -194,6 +225,9 @@ class CallAi
 				break;
 			case CallAiError.AI_NOT_ENOUGH_BAAS_ERROR:
 				this.baasAvailable = false;
+				break;
+			case CallAiError.AI_MARKET_SUBSCRIPTION:
+				this.marketSubscriptionEnabled = false;
 				break;
 			default:
 				console.error('there are no such errorTypes');

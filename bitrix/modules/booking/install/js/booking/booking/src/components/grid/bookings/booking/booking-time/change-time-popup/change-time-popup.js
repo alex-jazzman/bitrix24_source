@@ -2,7 +2,7 @@ import { Event } from 'main.core';
 import { PopupOptions } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { EventName, LimitFeatureId, Model } from 'booking.const';
 import { Popup } from 'booking.component.popup';
 import { TimeSelector } from 'booking.component.time-selector';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
@@ -75,10 +75,15 @@ export const ChangeTimePopup = {
 				},
 			};
 		},
-		isBusy(): boolean
+		featureOverbookingEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingOverbooking;
+		},
+		bookingsCountInTimes(): number
 		{
 			const bookingId = this.bookingId;
-			const bookings = this.bookings
+
+			return this.bookings
 				.filter(({ id, dateToTs, dateFromTs }) => {
 					if (id !== bookingId && this.overbookingMap.has(id))
 					{
@@ -102,9 +107,12 @@ export const ChangeTimePopup = {
 						&& dateToTs > this.fromTs
 						&& this.toTs > dateFromTs
 					);
-				});
-
-			return bookings.length > 1;
+				})
+				.length;
+		},
+		isBusy(): boolean
+		{
+			return this.bookingsCountInTimes > 1;
 		},
 		bookings(): BookingModel[]
 		{
@@ -132,16 +140,31 @@ export const ChangeTimePopup = {
 		closePopup(): void
 		{
 			const tsChanged = this.booking.dateFromTs !== this.fromTs || this.booking.dateToTs !== this.toTs;
-			if (!this.isBusy && tsChanged)
+			if (!tsChanged || this.isBusy)
 			{
-				void bookingService.update({
-					id: this.booking.id,
-					dateFromTs: this.fromTs,
-					dateToTs: this.toTs,
-					timezoneFrom: this.booking.timezoneFrom,
-					timezoneTo: this.booking.timezoneTo,
-				});
+				this.$emit('close');
+
+				return;
 			}
+
+			if (!this.featureOverbookingEnabled && this.bookingsCountInTimes > 0)
+			{
+				Event.EventEmitter.emit(EventName.StartLockedBookingAnimation, {
+					bookingId: this.bookingId,
+					featureId: LimitFeatureId.Overbooking,
+				});
+				this.$emit('close');
+
+				return;
+			}
+
+			void bookingService.update({
+				id: this.booking.id,
+				dateFromTs: this.fromTs,
+				dateToTs: this.toTs,
+				timezoneFrom: this.booking.timezoneFrom,
+				timezoneTo: this.booking.timezoneTo,
+			});
 
 			this.$emit('close');
 		},

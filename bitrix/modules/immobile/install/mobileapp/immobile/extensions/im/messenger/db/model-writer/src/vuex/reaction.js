@@ -91,7 +91,9 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 				'setFromPullEvent',
 				'set',
 				'setReaction',
+				'setReactionSilent',
 				'removeReaction',
+				'removeReactionSilent',
 			];
 
 			if (!saveActions.includes(actionName))
@@ -143,7 +145,9 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 			const data = mutation?.payload?.data || {};
 			const saveActions = [
 				'setReaction',
+				'setReactionSilent',
 				'removeReaction',
+				'removeReactionSilent',
 			];
 
 			if (!saveActions.includes(actionName))

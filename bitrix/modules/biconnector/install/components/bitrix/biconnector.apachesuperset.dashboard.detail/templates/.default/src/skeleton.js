@@ -35,12 +35,7 @@ export class Skeleton
 
 		if (this.supersetStatus === 'READY' && this.status === 'N')
 		{
-			DashboardManager.installDashboard(this.dashboardId)
-				.then(() => {})
-				.catch(() => {
-					this.#changeContent(this.#getFailedContent());
-					this.#clearReloadInterval();
-				});
+			this.#installDashboard();
 		}
 
 		if (this.#periodicReload)
@@ -69,7 +64,7 @@ export class Skeleton
 				{
 					case 'READY':
 						this.#clearReloadInterval();
-						DashboardManager.installDashboard(this.dashboardId);
+						setTimeout(this.#installDashboard.bind(this), 5000);
 						break;
 					case 'LOAD':
 						this.#changeContent(this.#getLoadingContent());
@@ -109,6 +104,27 @@ export class Skeleton
 				}
 			}
 		});
+	}
+
+	#installDashboard()
+	{
+		const dashboardManagerInstance = new DashboardManager();
+		DashboardManager.installDashboard(this.dashboardId)
+			.then(() => dashboardManagerInstance.getDashboardEmbeddedData(this.dashboardId))
+			.then((response) => {
+				const dashboard = response.data.dashboard;
+				if (
+					dashboard.embeddedUrl
+					&& dashboard.embeddedUrl !== window.location.href
+				)
+				{
+					window.location.href = dashboard.embeddedUrl;
+				}
+			})
+			.catch(() => {
+				this.#changeContent(this.#getFailedContent());
+				this.#clearReloadInterval();
+			});
 	}
 
 	#onDashboardStatusUpdated(status: string): void
@@ -165,7 +181,13 @@ export class Skeleton
 		return Tag.render`
 			<div class="biconnector-dashboard__animation">
 				<div class="biconnector-dashboard__hint_container"></div>
-				${animationBox}
+				<div class="biconnector-dashboard__filter_box">
+					<div class="biconnector-dashboard__filter_box_top"></div>
+					<div class="biconnector-dashboard__filter_box_bottom"></div>
+				</div>
+				<div class="biconnector-dashboard__skeleton">
+					${animationBox}
+				</div>
 			</div>
 		`;
 	}

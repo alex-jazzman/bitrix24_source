@@ -1,0 +1,110 @@
+.tasks-time-tracking-list-users {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+}
+
+.tasks-time-tracking-list-users.--popup {
+	overflow: auto;
+	gap: 10px;
+	font-size: var(--ui-font-size-lg);
+	--scrollbar-width: 5px;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	margin-right: calc(3 * var(--scrollbar-width));
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tasks-time-tracking-list-users.--popup {
+		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.tasks-time-tracking-list-users.--popup::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: var(--scrollbar-width);
+}
+
+.tasks-time-tracking-list-users.--popup::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tasks-time-tracking-list-users.--popup::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-time-tracking-list-user-container {
+	display: flex;
+}
+
+.tasks-time-tracking-list-user {
+	z-index: 1;
+	--text-color: var(--ui-color-base-1);
+}
+
+.tasks-time-tracking-list-user.--collaber {
+	--text-color: var(--ui-color-collab-accent-primary);
+}
+
+.tasks-time-tracking-list-user.--email {
+	--text-color: #ca8600;
+}
+
+.tasks-time-tracking-list-user.--extranet {
+	--text-color: #ca8600;
+}
+
+.tasks-time-tracking-list-user-inner {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	overflow: hidden;
+	width: 100%;
+	box-sizing: border-box;
+	padding-bottom: 12px;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-time-tracking-list-user-container:last-child .tasks-time-tracking-list-user-inner {
+	padding-bottom: 12px;
+	border-bottom: none;
+}
+
+.tasks-time-tracking-list-user-inner div {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	gap: 6px;
+	cursor: default;
+}
+
+.tasks-time-tracking-list-user-image {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	width: 24px;
+	height: 24px;
+}
+
+.tasks-time-tracking-list-user-title {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--text-color);
+}
+
+.tasks-time-tracking-list-user-title:hover {
+	color: var(--text-color);
+}
+
+.tasks-time-tracking-list-user-icon {
+	margin-right: 6px;
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}

@@ -123,7 +123,7 @@ else
 	$serverRequest = new \Bitrix\Rest\V3\Interaction\Request\ServerRequest(($routes[$arVariables['method']] ?? $arVariables['method']), $query, \Bitrix\Main\Context::getCurrent()->getRequest());
 
 	$server = new CRestApiServer([
-		'LOCAL_ERROR_LANGUAGE' => \Bitrix\Main\Context::getCurrent()->getRequest()->getHeader('X-Local-Error-Language'),
+		'RESPONSE_LANGUAGE' => \Bitrix\Main\Context::getCurrent()->getRequest()->getHeader('X-Bitrix-Rest-Response-Language'),
 	]);
 
 	$result = $server->processServerRequest($serverRequest);

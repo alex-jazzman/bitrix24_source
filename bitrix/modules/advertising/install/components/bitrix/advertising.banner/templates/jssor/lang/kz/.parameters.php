@@ -1,0 +1,19 @@
+<?php
+$MESS["ADV_JSSOR_ALWAYS"] = "әрқашан";
+$MESS["ADV_JSSOR_ANIMATION_DURATION"] = "Анимацияның ұзақтығы (мсек.)";
+$MESS["ADV_JSSOR_ARROW_NAV"] = "Слайдта навигация элементтерін көрсету";
+$MESS["ADV_JSSOR_BS_HIDE_FOR_PHONES"] = "Баннер аймағын ұялы телефонда жасыру";
+$MESS["ADV_JSSOR_BS_HIDE_FOR_TABLETS"] = "Баннер аймағын планшеттерде жасыру";
+$MESS["ADV_JSSOR_BULLET_NAV"] = "Парақша бойынша навигация элементін көрсету";
+$MESS["ADV_JSSOR_CYCLE"] = "циклдік түрде";
+$MESS["ADV_JSSOR_CYCLING"] = "Слайдтың автоматты түрде ауысуы";
+$MESS["ADV_JSSOR_EFFECTS"] = "Слайдтарды ауыстыру әсері";
+$MESS["ADV_JSSOR_HOVER"] = "бағыттау кезінде";
+$MESS["ADV_JSSOR_INTERVAL"] = "Слайдтардың ауысу жылдамдығы (мсек.)";
+$MESS["ADV_JSSOR_KEYBOARD"] = "Пернетақта арқылы навигация";
+$MESS["ADV_JSSOR_NEVER"] = "ешқашан";
+$MESS["ADV_JSSOR_PAUSE"] = "Бағыттау кезінде тоқтату";
+$MESS["ADV_JSSOR_SCALE"] = "Ата-анасының еніне қатысты масштабтау";
+$MESS["ADV_JSSOR_SLIDE"] = "айналдырып өту";
+$MESS["ADV_JSSOR_STOP"] = "тоқтату";
+$MESS["ADV_JSSOR_WRAP"] = "Бастапқыға айналдыру";

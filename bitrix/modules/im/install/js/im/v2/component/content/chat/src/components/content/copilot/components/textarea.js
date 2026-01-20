@@ -1,13 +1,15 @@
 import { ChatTextarea } from 'im.v2.component.textarea';
 
+import { ReasoningButton } from './reasoning-button';
+
 // @vue/component
 export const CopilotTextarea = {
 	name: 'CopilotTextarea',
-	components: { ChatTextarea },
+	components: { ChatTextarea, ReasoningButton },
 	props: {
 		dialogId: {
 			type: String,
-			default: '',
+			required: true,
 		},
 	},
 	methods: {
@@ -24,6 +26,10 @@ export const CopilotTextarea = {
 			:withEdit="false"
 			:withUploadMenu="false"
 			:withSmileSelector="false"
-		/>
+		>
+			<template #bottom-panel-buttons>
+				<ReasoningButton :dialogId="dialogId" />
+			</template>
+		</ChatTextarea>
 	`,
 };

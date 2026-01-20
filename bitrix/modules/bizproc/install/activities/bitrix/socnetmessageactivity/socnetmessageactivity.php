@@ -241,9 +241,11 @@ class CBPSocNetMessageActivity extends CBPActivity
 		$arProperties = array();
 		foreach ($arMap as $key => $value)
 		{
-			if ($key == "message_user_from" || $key == "message_user_to")
+			if ($key === "message_user_from" || $key === "message_user_to")
+			{
 				continue;
-			$arProperties[$value] = (string)$arCurrentValues[$key];
+			}
+			$arProperties[$value] = (string)($arCurrentValues[$key] ?? '');
 		}
 
 		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);

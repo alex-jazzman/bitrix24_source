@@ -877,12 +877,7 @@ export class LinkUrl extends Text
 				value: LinkUrl.TYPE_HREF_LINK,
 				className: 'landing-ui-field-link-url-select-action-item fas landing-ui-field-link-url-icon--link',
 			},
-			{
-				name: BX.Landing.Loc.getMessage("LANDING_LINK_URL_ACTION_FILE_MSGVER_1"),
-				value: LinkUrl.TYPE_HREF_FILE,
-				className: 'landing-ui-field-link-url-select-action-item fas landing-ui-field-link-url-icon--file',
-				type: ['KNOWLEDGE', 'GROUP'],
-			},
+			this.getFileItem(),
 			{
 				name: BX.Landing.Loc.getMessage("LANDING_LINK_URL_ACTION_USER"),
 				value: LinkUrl.TYPE_HREF_USER,
@@ -896,7 +891,12 @@ export class LinkUrl extends Text
 			},
 		];
 		let setItems = [];
-		items.forEach(function(item) {
+		items.forEach((item) => {
+			if (item === null)
+			{
+				return;
+			}
+
 			if (
 				!item.hasOwnProperty('type')
 				|| item.type === type
@@ -905,7 +905,7 @@ export class LinkUrl extends Text
 			{
 				setItems.push(item);
 			}
-		})
+		});
 
 		if (!Type.isUndefined(this.constantType))
 		{
@@ -936,6 +936,21 @@ export class LinkUrl extends Text
 			className: 'landing-ui-field-link-url-dropdown-href-type',
 			classForTextNode: 'landing-ui-field-input-text',
 		});
+	}
+
+	getFileItem(): ?object
+	{
+		if (!BX.DiskFileDialog)
+		{
+			return null;
+		}
+
+		return {
+			name: BX.Landing.Loc.getMessage("LANDING_LINK_URL_ACTION_FILE_MSGVER_1"),
+			value: LinkUrl.TYPE_HREF_FILE,
+			className: 'landing-ui-field-link-url-select-action-item fas landing-ui-field-link-url-icon--file',
+			type: ['KNOWLEDGE', 'GROUP'],
+		};
 	}
 
 	/**

@@ -3,385 +3,46 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_button,ui_uploader_core,ui_lexical_core,tasks_v2_core,main_core_events,ui_vue3_directives_hint,tasks_v2_component_elements_hint,ui_bbcode_formatter_htmlFormatter,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,disk_uploader_userFieldWidget,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,ui_vue3_components_popup,ui_vue3_vuex,main_core,ui_textEditor,tasks_v2_model_tasks,tasks_v2_const,tasks_v2_provider_service_taskService,tasks_v2_provider_service_fileService) {
+(function (exports,ui_vue3_components_button,ui_system_typography_vue,ui_vue3_directives_hint,tasks_v2_component_elements_hint,ui_dialogs_messagebox,tasks_v2_const,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_component_elements_userFieldWidgetComponent,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,main_core,ui_textEditor,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_provider_service_fileService,tasks_v2_component_entityText) {
 	'use strict';
 
-	const DefaultEditorOptions = Object.freeze({
-	  toolbar: [],
-	  floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', 'link'],
-	  removePlugins: ['BlockToolbar'],
-	  visualOptions: {
-	    borderWidth: 0,
-	    blockSpaceInline: 0,
-	    colorBackground: 'transparent'
-	  },
-	  mention: {
-	    dialogOptions: {
-	      entities: [{
-	        id: tasks_v2_const.EntitySelectorEntity.User,
-	        options: {
-	          emailUsers: true,
-	          inviteEmployeeLink: false
-	        },
-	        itemOptions: {
-	          default: {
-	            link: '',
-	            linkTitle: ''
-	          }
-	        }
-	      }, {
-	        id: tasks_v2_const.EntitySelectorEntity.StructureNode,
-	        options: {
-	          selectMode: 'usersOnly',
-	          allowFlatDepartments: false
-	        }
-	      }]
-	    }
-	  },
-	  copilot: {
-	    copilotOptions: {}
-	  },
-	  paragraphPlaceholder: 'auto'
-	});
-
-	var _editor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editor");
-	var _fileService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fileService");
-	var _uploaderAdapter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderAdapter");
-	var _syncHighlightsDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("syncHighlightsDebounced");
-	var _subscribeToEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToEvents");
-	var _unsubscribeToEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unsubscribeToEvents");
-	var _registerCommands = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
-	var _syncHighlights = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("syncHighlights");
-	class DescriptionTextEditor extends main_core_events.EventEmitter {
-	  constructor(taskId, options) {
-	    super();
-	    Object.defineProperty(this, _syncHighlights, {
-	      value: _syncHighlights2
-	    });
-	    Object.defineProperty(this, _registerCommands, {
-	      value: _registerCommands2
-	    });
-	    Object.defineProperty(this, _unsubscribeToEvents, {
-	      value: _unsubscribeToEvents2
-	    });
-	    Object.defineProperty(this, _subscribeToEvents, {
-	      value: _subscribeToEvents2
-	    });
-	    Object.defineProperty(this, _editor, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _fileService, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _uploaderAdapter, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _syncHighlightsDebounced, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.onFileComplete = event => {
-	      const file = event.getData();
-	      babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dispatchCommand(ui_textEditor.Plugins.File.ADD_FILE_COMMAND, file);
-	      this.emit('filesChanged');
-	    };
-	    this.onFileRemove = event => {
-	      const {
-	        file
-	      } = event.getData();
-	      this.handleRemoveFile(file.serverFileId);
-	      this.emit('filesChanged');
-	    };
-	    this.handleEditorChange = () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _syncHighlightsDebounced)[_syncHighlightsDebounced]();
-	      this.emit('editorChanged');
-	    };
-	    this.setEventNamespace('Tasks.V2.Component.Description-Text-Editor');
-	    this.initService(taskId);
-	    this.initEditor(taskId, options);
-	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToEvents)[_subscribeToEvents]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands)[_registerCommands]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _syncHighlightsDebounced)[_syncHighlightsDebounced] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _syncHighlights)[_syncHighlights], 500, this);
-	  }
-	  getEditor() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor];
-	  }
-	  initService(taskId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService] = tasks_v2_provider_service_fileService.fileService.get(taskId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderAdapter)[_uploaderAdapter] = tasks_v2_provider_service_fileService.fileService.get(taskId).getAdapter();
-	  }
-	  initEditor(taskId, options) {
-	    const content = this.initDescription(taskId, options.content);
-	    const additionalEditorOptions = {
-	      content,
-	      minHeight: 118,
-	      placeholder: main_core.Loc.getMessage('TASKS_V2_CHANGE_DESCRIPTION'),
-	      newLineMode: 'paragraph',
-	      events: {
-	        onChange: this.handleEditorChange
-	      },
-	      file: {
-	        mode: 'disk',
-	        files: this.getFiles()
-	      },
-	      visualOptions: {
-	        borderWidth: 0,
-	        blockSpaceInline: 'var(--ui-space-stack-md2)',
-	        colorBackground: 'transparent'
-	      }
-	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = new ui_textEditor.TextEditor({
-	      ...DefaultEditorOptions,
-	      ...additionalEditorOptions
-	    });
-	  }
-	  initDescription(taskId, originalDescription) {
-	    if (!main_core.Type.isStringFilled(originalDescription)) {
-	      return originalDescription;
-	    }
-	    const mapping = this.getTempToServerFileIdMap();
-	    const changedDescription = originalDescription.replaceAll(/(\[disk file id=)(n\d+)/gi, (match, prefix, nId) => {
-	      return prefix + (mapping[nId] === undefined ? nId : mapping[nId]);
-	    });
-	    if (originalDescription !== changedDescription) {
-	      const fields = {
-	        description: changedDescription
-	      };
-	      void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: taskId,
-	        fields
-	      });
-	    }
-	    return changedDescription;
-	  }
-	  setEditorText(taskId, content) {
-	    const text = this.initDescription(taskId, content);
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].setText(text);
-	  }
-	  getFiles() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _uploaderAdapter)[_uploaderAdapter].getItems();
-	  }
-	  getTempToServerFileIdMap() {
-	    const filesMap = {};
-	    this.getFiles().forEach(file => {
-	      const key = `n${file.customData.objectId}`;
-	      filesMap[key] = file.serverFileId;
-	    });
-	    return filesMap;
-	  }
-	  destroy() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _unsubscribeToEvents)[_unsubscribeToEvents]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].destroy();
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = null;
-	  }
-	  handleRemoveFile(serverFileId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dispatchCommand(ui_textEditor.Plugins.File.REMOVE_FILE_COMMAND, {
-	      serverFileId,
-	      skipHistoryStack: true
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _syncHighlights)[_syncHighlights]();
-	  }
-	  insertFile(fileInfo) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dispatchCommand(ui_textEditor.Plugins.File.INSERT_FILE_COMMAND, {
-	      serverFileId: fileInfo.serverFileId,
-	      width: 600,
-	      height: 600,
-	      info: fileInfo,
-	      inline: true
-	    });
-	  }
-	  get $store() {
-	    return tasks_v2_core.Core.getStore();
-	  }
-	}
-	function _subscribeToEvents2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].subscribe('onFileComplete', this.onFileComplete);
-	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].subscribe('onFileRemove', this.onFileRemove);
-	}
-	function _unsubscribeToEvents2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].unsubscribe('onFileComplete', this.onFileComplete);
-	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].unsubscribe('onFileRemove', this.onFileRemove);
-	}
-	function _registerCommands2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].registerCommand(ui_lexical_core.PASTE_COMMAND, clipboardEvent => {
-	    const clipboardData = clipboardEvent.clipboardData;
-	    if (!clipboardData || !ui_uploader_core.isFilePasted(clipboardData)) {
-	      return false;
-	    }
-	    clipboardEvent.preventDefault();
-	    ui_uploader_core.getFilesFromDataTransfer(clipboardData).then(files => {
-	      files.forEach(file => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _uploaderAdapter)[_uploaderAdapter].getUploader().addFile(file, {
-	          events: {
-	            [ui_uploader_core.FileEvent.LOAD_ERROR]: () => {},
-	            [ui_uploader_core.FileEvent.UPLOAD_ERROR]: () => {},
-	            [ui_uploader_core.FileEvent.UPLOAD_COMPLETE]: event => {
-	              const uploaderFile = event.getTarget();
-	              this.insertFile(uploaderFile.toJSON());
-	            }
-	          }
-	        });
-	      });
-	    }).catch(() => {
-	      console.error('clipboard pasting error');
-	    });
-	    return true;
-	  }, ui_lexical_core.COMMAND_PRIORITY_NORMAL);
-	}
-	function _syncHighlights2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor]) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dispatchCommand(ui_textEditor.Plugins.File.GET_INSERTED_FILES_COMMAND, nodes => {
-	    const inserted = new Set();
-	    for (const node of nodes) {
-	      const {
-	        serverFileId
-	      } = node.getInfo();
-	      if (main_core.Type.isStringFilled(serverFileId) || main_core.Type.isNumber(serverFileId)) {
-	        inserted.add(serverFileId);
-	      }
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderAdapter)[_uploaderAdapter].getUploader().getFiles().forEach(file => {
-	      if (inserted.has(file.getServerFileId())) {
-	        file.setCustomData('tileSelected', true);
-	        inserted.delete(file.getServerFileId());
-	      } else {
-	        file.setCustomData('tileSelected', false);
-	      }
-	    });
-	    for (const serverFileId of inserted) {
-	      this.handleRemoveFile(serverFileId);
-	    }
-	  });
-	}
-	const instances = {};
-	const descriptionTextEditor = {
-	  get(taskId, options = {}) {
-	    var _instances$taskId;
-	    (_instances$taskId = instances[taskId]) != null ? _instances$taskId : instances[taskId] = new DescriptionTextEditor(taskId, options);
-	    if (main_core.Type.isStringFilled(options == null ? void 0 : options.content)) {
-	      instances[taskId].setEditorText(taskId, options.content);
-	    }
-	    return instances[taskId];
-	  },
-	  replace(tempId, taskId) {
-	    instances[taskId] = instances[tempId];
-	    instances[taskId].initService(taskId);
-	    delete instances[tempId];
-	  },
-	  delete(taskId) {
-	    var _instances$taskId2;
-	    (_instances$taskId2 = instances[taskId]) == null ? void 0 : _instances$taskId2.destroy();
-	    delete instances[taskId];
-	  }
-	};
-
 	// @vue/component
-	const DescriptionTextArea = {
-	  name: 'TaskDescriptionTextArea',
-	  components: {
-	    TextEditorComponent: ui_textEditor.TextEditorComponent,
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  emits: ['change', 'filesChange'],
-	  setup(props) {
-	    return {
-	      /** @type TextEditor */
-	      editor: null,
-	      descriptionTextEditor: descriptionTextEditor.get(props.taskId),
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
-	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
-	    };
-	  },
+	const DescriptionMixin = {
 	  data() {
 	    return {
-	      files: this.fileService.getFiles()
+	      isAiCommandProcessing: false
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    readonly() {
-	      return !this.task.rights.edit;
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
-	    widgetOptions() {
-	      return {
-	        isEmbedded: true,
-	        withControlPanel: false,
-	        canCreateDocuments: false,
-	        insertIntoText: true,
-	        tileWidgetOptions: {
-	          compact: true,
-	          hideDropArea: true,
-	          readonly: this.readonly,
-	          autoCollapse: false,
-	          removeFromServer: !this.isEdit,
-	          events: {
-	            onInsertIntoText: this.handleInsertFile
-	          }
-	        }
-	      };
-	    },
-	    filesCount() {
-	      return this.files.length;
+	    checkLists() {
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    }
-	  },
-	  created() {
-	    this.editor = this.descriptionTextEditor.getEditor();
-	  },
-	  mounted() {
-	    this.fileService.subscribe('onFileAdd', this.onFileAdd);
-	    this.fileService.subscribe('onFileRemove', this.onFileRemove);
-	    this.descriptionTextEditor.subscribe('editorChanged', this.onEditorChange);
-	  },
-	  unmounted() {
-	    this.fileService.unsubscribe('onFileAdd', this.onFileAdd);
-	    this.fileService.unsubscribe('onFileRemove', this.onFileRemove);
-	    this.descriptionTextEditor.unsubscribe('editorChanged', this.onEditorChange);
 	  },
 	  methods: {
-	    onFileAdd() {
-	      this.$emit('filesChange');
+	    async handleCheckListButtonClick() {
+	      if (this.isAiCommandProcessing) {
+	        return;
+	      }
+	      this.isAiCommandProcessing = true;
+	      const {
+	        CommandExecutor
+	      } = await main_core.Runtime.loadExtension('ai.command-executor');
+	      const aiCommandExecutor = new CommandExecutor({
+	        moduleId: 'tasks',
+	        contextId: 'tasks_field_checklist'
+	      });
+	      const editorText = this.editor.getText() || 'empty';
+	      const checklistString = await aiCommandExecutor.makeChecklistFromText(editorText);
+	      this.isAiCommandProcessing = false;
+	      this.handleClose();
+	      setTimeout(() => {
+	        this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.AiAddCheckList, checklistString);
+	      }, 500);
 	    },
-	    onFileRemove() {
-	      this.$emit('filesChange');
-	    },
-	    onEditorChange() {
-	      this.$emit('change');
-	    },
-	    handleInsertFile(event) {
-	      const fileInfo = event.getData().item;
-	      this.descriptionTextEditor.insertFile(fileInfo);
+	    handleClose() {
+	      this.$emit('close');
 	    }
-	  },
-	  template: `
-		<div class="tasks-card-description-text-area-wrapper" ref="editorWrapper">
-			<TextEditorComponent :editorInstance="editor">
-				<template v-if="filesCount > 0" #footer>
-					<div id="descriptionEditorFiles" class="tasks-card-description-editor-files" ref="filesWrapper">
-						<UserFieldWidgetComponent
-							:uploaderAdapter="uploaderAdapter"
-							:widgetOptions="widgetOptions"
-						/>
-					</div>
-				</template>
-			</TextEditorComponent>
-		</div>
-	`
+	  }
 	};
 
 	// @vue/component
@@ -404,6 +65,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    iconColor: {
 	      type: String,
 	      default: ''
+	    },
+	    iconSize: {
+	      type: Number,
+	      required: false,
+	      default: null
 	    }
 	  },
 	  setup() {
@@ -426,10 +92,65 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<BIcon
 				:name="iconName"
 				:color="iconColor"
-				:hoverable="true"
+				:size="iconSize"
+				hoverable
 				class="tasks-card-description-field-icon"
 			/>
 		</button>
+	`
+	};
+
+	// @vue/component
+	const CheckList = {
+	  name: 'TaskDescriptionCheckList',
+	  components: {
+	    ActionButton,
+	    Outline: ui_iconSet_api_vue.Outline,
+	    TextSm: ui_system_typography_vue.TextSm
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  props: {
+	    loading: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  computed: {
+	    buttonColor() {
+	      return 'var(--ui-color-copilot-primary)';
+	    },
+	    title() {
+	      return this.loading ? this.loc('TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_CREATING') : this.loc('TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_TITLE');
+	    },
+	    tooltip() {
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.loc('TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_HINT'),
+	        popupOptions: {
+	          offsetLeft: this.$el.offsetWidth / 2
+	        }
+	      });
+	    }
+	  },
+	  template: `
+		<div class="tasks-card-description-action-check-list" v-hint="tooltip">
+			<div :class="{ 'tasks-card-description-action-check-list-spinner': loading }">
+				<ActionButton
+					:iconName="loading ? Outline.AI_STARS : Outline.LIST_AI"
+					:iconColor="buttonColor"
+					:iconSize="loading ? 20 : null"
+				/>
+			</div>
+			<TextSm class="tasks-card-description-action-check-list-label">
+				{{ title }}
+			</TextSm>
+		</div>
 	`
 	};
 
@@ -450,17 +171,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return 'var(--ui-color-copilot-primary)';
 	    }
 	  },
-	  methods: {
-	    handleClick() {
-	      alert('Not implemented yet');
-	    }
-	  },
 	  template: `
 		<ActionButton
 			:iconName="Outline.COPILOT"
 			:title="loc('TASKS_V2_DESCRIPTION_ACTION_COPILOT_TITLE')"
 			:iconColor="buttonColor"
-			@click="handleClick"
 		/>
 	`
 	};
@@ -511,15 +226,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    UiButton: ui_vue3_components_button.Button,
+	    CheckList,
 	    Copilot,
 	    Attach,
-	    Mention,
-	    DescriptionTextArea
+	    Mention
+	  },
+	  mixins: [DescriptionMixin],
+	  inject: {
+	    task: {}
 	  },
 	  props: {
 	    taskId: {
 	      type: [Number, String],
 	      required: true
+	    },
+	    enableSaveButton: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['close', 'show'],
@@ -529,18 +252,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      ButtonColor: ui_vue3_components_button.ButtonColor,
 	      Outline: ui_iconSet_api_vue.Outline,
 	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
-	      descriptionTextEditor: descriptionTextEditor.get(props.taskId)
+	      entityTextEditor: tasks_v2_component_entityText.entityTextEditor.get(props.taskId)
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    readonly() {
 	      return !this.task.rights.edit;
 	    },
 	    editor() {
-	      return this.descriptionTextEditor.getEditor();
+	      return this.entityTextEditor.getEditor();
+	    },
+	    isDiskModuleInstalled() {
+	      return tasks_v2_core.Core.getParams().features.disk;
+	    },
+	    isCopilotEnabled() {
+	      return tasks_v2_core.Core.getParams().features.isCopilotEnabled;
 	    }
 	  },
 	  mounted() {
@@ -550,11 +276,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  methods: {
-	    handleClose() {
-	      this.$emit('close');
-	    },
 	    focusToEnd() {
 	      this.editor.focus(null, {
+	        defaultSelection: 'rootEnd'
+	      });
+	    },
+	    handleCopilotButtonClick() {
+	      if (!this.isCopilotEnabled) {
+	        return;
+	      }
+	      this.editor.focus(() => {
+	        this.editor.dispatchCommand(BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND);
+	      }, {
 	        defaultSelection: 'rootEnd'
 	      });
 	    },
@@ -583,23 +316,36 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</div>
 				<BIcon
 					:name="Outline.CROSS_L"
-					:hoverable="true"
+					hoverable
 					class="tasks-card-description-field-icon"
 					@click="handleClose"
 				/>
 			</div>
 			<div class="tasks-card-description-editor-wrapper" id="descriptionTextAreaDestination"/>
-			<div v-if="!readonly" class="tasks-card-description-footer" ref="descriptionActions">
+			<div v-if="!readonly" class="tasks-card-description-editor-footer" ref="descriptionActions">
 				<div class="tasks-card-description-action-list">
-					<Copilot />
-					<Attach ref="attach" @click="handleAttachButtonClick"/>
+					<Copilot
+						v-if="isCopilotEnabled"
+						@click="handleCopilotButtonClick"
+					/>
+					<Attach
+						v-if="isDiskModuleInstalled"
+						ref="attach"
+						@click="handleAttachButtonClick"
+					/>
 					<Mention @click="handleMentionButtonClick"/>
+					<CheckList
+						v-if="isCopilotEnabled"
+						:loading="isAiCommandProcessing"
+						@click="handleCheckListButtonClick"
+					/>
 				</div>
 				<div class="tasks-card-description-footer-buttons">
 					<UiButton
 						:text="loc('TASKS_V2_DESCRIPTION_BUTTON_SAVE')"
 						:size="ButtonSize.MEDIUM"
 						:color="ButtonColor.PRIMARY"
+						:disabled="!enableSaveButton"
 						@click="handleClose"
 					/>
 				</div>
@@ -625,11 +371,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
-	  computed: {
-	    iconSize() {
-	      return 20;
-	    }
-	  },
 	  template: `
 		<div class="tasks-card-change-description-mini-btn">
 			<div class="tasks-full-card-field-container --small-vertical-padding">
@@ -637,7 +378,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<template v-if="filesCount">
 						<BIcon
 							:name="Outline.ATTACH"
-							:size=iconSize
+							:size="20"
 							class="tasks-card-description-field-icon-link"
 						/>
 						<div class="tasks-card-change-description-mini-text-files">
@@ -650,8 +391,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						</div>
 						<BIcon
 							:name="Outline.CREATE_CHAT"
-							:size=iconSize
-							:hoverable="true"
+							:size="20"
+							hoverable
 							class="tasks-card-description-field-icon"
 						/>
 					</template>
@@ -665,12 +406,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const FullDescription = {
 	  name: 'TaskFullDescription',
 	  components: {
-	    ActionButton,
-	    Outline: ui_iconSet_api_core.Outline
+	    ActionButton
 	  },
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  template: `
@@ -685,77 +425,74 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const MiniForm = {
 	  name: 'TaskDescriptionMiniForm',
 	  components: {
-	    TextEditorComponent: ui_textEditor.TextEditorComponent,
+	    CheckList,
 	    Copilot,
 	    Attach,
 	    Mention,
 	    FullDescription,
-	    DescriptionTextArea
+	    EntityTextArea: tasks_v2_component_entityText.EntityTextArea
+	  },
+	  mixins: [DescriptionMixin],
+	  inject: {
+	    task: {},
+	    isEdit: {}
 	  },
 	  props: {
 	    taskId: {
 	      type: [Number, String],
 	      required: true
 	    },
-	    isSlotShown: {
+	    isSheetShown: {
 	      type: Boolean,
 	      required: true
 	    }
 	  },
-	  emits: ['expand', 'closeEdit'],
+	  emits: ['expand', 'change', 'filesChange', 'close'],
 	  setup(props) {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline,
+	      EntityTextTypes: tasks_v2_component_entityText.EntityTextTypes,
 	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
-	      descriptionTextEditor: descriptionTextEditor.get(props.taskId)
+	      entityTextEditor: tasks_v2_component_entityText.entityTextEditor.get(props.taskId)
 	    };
 	  },
 	  data() {
 	    return {
-	      isNeedTeleport: false,
-	      hasChanges: false,
-	      closed: false
+	      isNeedTeleport: false
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    taskDescription() {
-	      var _this$task$descriptio;
-	      return (_this$task$descriptio = this.task.description) != null ? _this$task$descriptio : '';
+	    readonly() {
+	      return !this.task.rights.edit;
 	    },
 	    editor() {
-	      return this.descriptionTextEditor.getEditor();
+	      return this.entityTextEditor.getEditor();
+	    },
+	    isDiskModuleInstalled() {
+	      return tasks_v2_core.Core.getParams().features.disk;
+	    },
+	    isCopilotEnabled() {
+	      return tasks_v2_core.Core.getParams().features.isCopilotEnabled;
 	    }
 	  },
 	  watch: {
-	    isSlotShown(newValue) {
+	    isSheetShown(newValue) {
 	      this.handleTeleport(newValue);
 	    }
 	  },
-	  async created() {
-	    this.saveDebounced = main_core.Runtime.debounce(this.handleSave, 30000, this);
-	    main_core.Event.bind(window, 'beforeunload', this.handleSave);
-	  },
-	  mounted() {
-	    if (!main_core.Type.isStringFilled(this.taskDescription)) {
-	      this.focusToEnd();
-	    }
-	  },
-	  async beforeUnmount() {
-	    main_core.Event.unbind(window, 'beforeunload', this.handleSave);
-	    await this.handleSave();
-	    this.closed = true;
-	  },
 	  methods: {
-	    focusToEnd() {
-	      this.editor.focus(null, {
-	        defaultSelection: 'rootEnd'
-	      });
-	    },
 	    handleExpand() {
 	      this.$emit('expand');
+	    },
+	    handleCopilotButtonClick() {
+	      if (!this.isCopilotEnabled) {
+	        return;
+	      }
+	      this.editor.focus(() => {
+	        this.editor.dispatchCommand(BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND);
+	      }, {
+	        defaultSelection: 'rootEnd'
+	      });
 	    },
 	    handleMentionButtonClick() {
 	      this.editor.focus(() => {
@@ -770,37 +507,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        onHideCallback: this.onFileBrowserClose
 	      });
 	    },
-	    handleEditorChange() {
-	      this.hasChanges = this.taskDescription !== this.getEditorText();
-	      void this.saveDebounced();
-	    },
-	    async handleAddButtonClick() {
-	      await this.save();
-	    },
-	    getEditorText() {
-	      var _this$editor;
-	      return (_this$editor = this.editor) == null ? void 0 : _this$editor.getText().replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '').trim();
-	    },
-	    async handleSave() {
-	      if (this.closed || !this.hasChanges || !this.editor) {
-	        return;
-	      }
-	      await this.save();
-	      this.hasChanges = false;
-	    },
-	    async save() {
-	      await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	        description: this.editor.getText()
-	      });
-	    },
-	    handleTeleport(isSlotShown) {
-	      if (isSlotShown === true) {
+	    handleTeleport(isSheetShown) {
+	      if (isSheetShown === true) {
 	        setTimeout(() => {
 	          this.isNeedTeleport = true;
+	          this.editor.setVisualOptions({
+	            blockSpaceInline: 'var(--ui-space-stack-xl)'
+	          });
 	        }, 100);
-	        this.editor.setVisualOptions({
-	          blockSpaceInline: 0
-	        });
+	        setTimeout(() => {
+	          this.editor.focus(null, {
+	            defaultSelection: 'rootEnd'
+	          });
+	        }, 300);
 	      } else {
 	        this.isNeedTeleport = false;
 	        this.editor.setMaxHeight(null);
@@ -821,19 +540,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				tabindex="-1"
 			>
 				<Teleport :to="isNeedTeleport ? '#descriptionTextAreaDestination' : undefined" :disabled="!isNeedTeleport">
-					<DescriptionTextArea
-						:taskId="taskId"
+					<EntityTextArea
+						:entityId="taskId"
+						:entityType="EntityTextTypes.Task"
+						:readonly
+						:removeFromServer="!isEdit"
+						@change="$emit('change')"
+						@filesChange="$emit('filesChange')"
 						ref="descriptionTextArea"
-						@change="handleEditorChange"
-						@filesChange="handleEditorChange"
 					/>
 				</Teleport>
 				<div class="tasks-card-description-footer-container">
 					<div class="tasks-card-description-footer">
 						<div class="tasks-card-description-action-list">
-							<Copilot />
-							<Attach ref="attach" @click="handleAttachButtonClick"/>
+							<Copilot v-if="isCopilotEnabled" @click="handleCopilotButtonClick"/>
+							<Attach
+								v-if="isDiskModuleInstalled"
+								ref="attach"
+								@click="handleAttachButtonClick"
+							/>
 							<Mention @click="handleMentionButtonClick"/>
+							<CheckList
+								v-if="isCopilotEnabled"
+								:loading="isAiCommandProcessing"
+								@click="handleCheckListButtonClick"
+							/>
 						</div>
 						<div
 							class="tasks-card-description-footer-buttons"
@@ -852,9 +583,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const DescriptionPreview = {
 	  name: 'TaskDescriptionPreview',
 	  components: {
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent,
-	    HtmlFormatterComponent: ui_bbcode_formatter_htmlFormatter.HtmlFormatterComponent,
-	    BIcon: ui_iconSet_api_vue.BIcon
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    EntityCollapsibleText: tasks_v2_component_entityText.EntityCollapsibleText,
+	    UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent
+	  },
+	  inject: {
+	    task: {},
+	    isEdit: {}
 	  },
 	  props: {
 	    taskId: {
@@ -865,36 +600,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: Array,
 	      required: true
 	    },
-	    filesCount: {
-	      type: Number,
-	      required: true
-	    },
 	    isMiniFormShown: {
 	      type: Boolean,
 	      default: false
 	    }
 	  },
-	  emits: ['previewButtonClick'],
+	  emits: ['editButtonClick'],
 	  setup(props) {
 	    return {
 	      BIcon: ui_iconSet_api_vue.BIcon,
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
 	    };
 	  },
 	  data() {
 	    return {
-	      isOverflowing: false,
-	      opened: false,
-	      isMouseDown: false,
-	      selectionMade: false,
-	      showRightShadow: null
+	      opened: false
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    taskDescription() {
 	      var _this$task$descriptio;
 	      return (_this$task$descriptio = this.task.description) != null ? _this$task$descriptio : '';
@@ -902,8 +626,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    readonly() {
 	      return !this.task.rights.edit;
 	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
+	    filesCount() {
+	      return this.files.length;
 	    },
 	    widgetOptions() {
 	      return {
@@ -913,251 +637,36 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        tileWidgetOptions: {
 	          compact: true,
 	          hideDropArea: true,
-	          readonly: this.readonly,
+	          readonly: true,
 	          enableDropzone: false,
 	          autoCollapse: false,
 	          removeFromServer: !this.isEdit
 	        }
 	      };
-	    },
-	    hidden() {
-	      if (this.opened) {
-	        return false;
-	      }
-	      return this.filesCount || this.isOverflowing;
-	    },
-	    iconSize() {
-	      return 20;
-	    }
-	  },
-	  watch: {
-	    async taskDescription() {
-	      await this.$nextTick();
-	      this.updateIsOverflowing();
-	    }
-	  },
-	  async mounted() {
-	    setTimeout(this.updateIsOverflowing, 400);
-	    if (this.isMiniFormShown) {
-	      this.openPreview();
-	    }
-	  },
-	  methods: {
-	    updateIsOverflowing() {
-	      if (this.opened || !this.$refs.htmlFormatter) {
-	        return;
-	      }
-	      this.showRightShadow = this.$refs.htmlFormatter.$el.offsetHeight < 50;
-	      this.isOverflowing = this.$refs.preview.offsetHeight - 20 < this.$refs.htmlFormatter.$el.offsetHeight;
-	    },
-	    onPreviewClick() {
-	      if (this.readonly && this.hidden) {
-	        this.openPreview();
-	      }
-	      if (!this.readonly) {
-	        this.$emit('previewButtonClick', {
-	          doOpenInEditMode: false
-	        });
-	      }
-	    },
-	    openPreview() {
-	      if (this.$refs.htmlFormatter) {
-	        main_core.Dom.style(this.$refs.preview, 'maxHeight', `${this.$refs.htmlFormatter.$el.offsetHeight + 32}px`);
-	      }
-	      this.opened = true;
-	    },
-	    onHideClick() {
-	      main_core.Dom.style(this.$refs.preview, 'maxHeight', '120px');
-	      this.opened = false;
-	    },
-	    onMouseDown(event) {
-	      if (event.button === 0) {
-	        this.isMouseDown = true;
-	        this.selectionMade = false;
-	      }
-	    },
-	    onMouseMove() {
-	      if (this.selectionMade) {
-	        return;
-	      }
-	      if (this.isMouseDown) {
-	        const selection = window.getSelection();
-	        if (selection.toString().length > 0) {
-	          this.selectionMade = true;
-	        }
-	      }
-	    },
-	    onMouseUp() {
-	      this.isMouseDown = false;
-	      if (!this.selectionMade) {
-	        this.onPreviewClick();
-	      }
 	    }
 	  },
 	  template: `
 		<div class="tasks-full-card-field-container">
-			<div
-				v-if="taskDescription.length > 0"
-				class="tasks-card-description-preview"
-				ref="preview"
+			<EntityCollapsibleText
+				ref="collapsible"
+				:content="taskDescription"
+				:files
+				:readonly
+				:openByDefault="isMiniFormShown"
+				showFilesIndicator
+				:maxHeight="300"
+				v-model:opened="opened"
+				@editButtonClick="$emit('editButtonClick')"
 			>
-				<HtmlFormatterComponent
-					:bbcode="taskDescription"
-					:options="{ fileMode: 'disk' }"
-					:formatData="{ files }"
-					ref="htmlFormatter"
-					@mousedown="onMouseDown"
-					@mousemove="onMouseMove"
-					@mouseup="onMouseUp"
-				/>
-				<template v-if="hidden">
-					<div class="tasks-card-description-shadow">
-						<div v-if="showRightShadow === true" class="tasks-card-description-shadow-white-right"/>
-						<div v-else-if="showRightShadow === false" class="tasks-card-description-shadow-white-bottom"/>
-					</div>
-				</template>
 				<div
-					v-if="hidden"
-					class="tasks-card-description-preview-button"
-					:style="{ 'bottom': showRightShadow ? '16px' : '12px' }"
-					@click="onPreviewClick"
+					v-if="opened && filesCount"
+					class="tasks-card-description-editor-files --read-only"
+					:class="{ '--with-description': taskDescription.length > 0 }"
+					ref="filesWrapper"
 				>
-					<span class="tasks-card-description-preview-button-files" v-if="filesCount">
-						<BIcon
-							:name="Outline.ATTACH"
-							:size="iconSize"
-							class="tasks-card-description-field-icon-link"
-						/>
-						<span class="tasks-card-description-preview-button-text">
-							{{ filesCount }}
-						</span>
-					</span>
-					<span v-if="isOverflowing" class="tasks-card-description-preview-button-text">
-						{{ loc('TASKS_V2_DESCRIPTION_PREVIEW_BUTTON_MORE') }}
-					</span>
+					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 				</div>
-			</div>
-			<div
-				v-if="opened && filesCount"
-				class="tasks-card-description-editor-files --read-only"
-				:class="{ '--with-description': taskDescription.length > 0 }"
-				ref="filesWrapper"
-			>
-				<UserFieldWidgetComponent
-					:uploaderAdapter="uploaderAdapter"
-					:widgetOptions="widgetOptions"
-				/>
-			</div>
-			<div
-				v-if="opened && !isMiniFormShown"
-				class="tasks-card-description-preview-button --hide"
-				@click="onHideClick"
-			>
-				<div class="tasks-card-description-preview-button-more">
-					<span class="tasks-card-description-preview-button-text">
-						{{ loc('TASKS_V2_DESCRIPTION_BUTTON_COLLAPSE') }}
-					</span>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const DescriptionField = {
-	  name: 'TaskDescriptionField',
-	  components: {
-	    MiniFormButton,
-	    MiniForm,
-	    DescriptionPreview
-	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  setup(props) {
-	    return {
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
-	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
-	    };
-	  },
-	  data() {
-	    return {
-	      isMiniFormShown: false,
-	      isSlotShown: false,
-	      doOpenInEditMode: false,
-	      files: this.fileService.getFiles()
-	    };
-	  },
-	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
-	    readonly() {
-	      return !this.task.rights.edit;
-	    },
-	    filesCount() {
-	      return this.files.length;
-	    }
-	  },
-	  methods: {
-	    openSlotInEditMode() {
-	      this.doOpenInEditMode = true;
-	      this.isSlotShown = true;
-	    },
-	    closeMiniForm() {
-	      this.isMiniFormShown = false;
-	    },
-	    onPreviewButtonClick(eventData) {
-	      this.doOpenInEditMode = eventData.doOpenInEditMode === true;
-	      this.isMiniFormShown = true;
-	    },
-	    closeSlot() {
-	      this.isSlotShown = false;
-	    },
-	    async save() {
-	      var _this$$refs, _this$$refs$miniForm;
-	      await ((_this$$refs = this.$refs) == null ? void 0 : (_this$$refs$miniForm = _this$$refs.miniForm) == null ? void 0 : _this$$refs$miniForm.handleAddButtonClick());
-	    }
-	  },
-	  template: `
-		<slot
-			:isShown="isSlotShown"
-			:doOpenInEditMode="doOpenInEditMode"
-			:close="closeSlot"
-		/>
-		<div
-			v-if="!readonly || task.description.length > 0 || filesCount > 0"
-			class="tasks-card-description-field"
-			:data-task-id="taskId"
-			:data-task-field-id="'description'"
-		>
-			<MiniFormButton
-				v-if="(task.description.length === 0) && !isMiniFormShown"
-				:filesCount="filesCount"
-				@click="isMiniFormShown = true"
-			/>
-			<MiniForm
-				v-else-if="!readonly && (isMiniFormShown || (task.description.length > 0 && !isEdit))"
-				:taskId="taskId"
-				:isSlotShown="isSlotShown"
-				@expand="openSlotInEditMode"
-				@closeEdit="closeMiniForm"
-				ref="miniForm"
-			/>
-			<DescriptionPreview
-				v-else-if="isMiniFormShown || isEdit"
-				:taskId="taskId"
-				:files="files"
-				:filesCount="filesCount"
-				:isMiniFormShown="isMiniFormShown"
-				@previewButtonClick="onPreviewButtonClick"
-			/>
+			</EntityCollapsibleText>
 		</div>
 	`
 	};
@@ -1170,206 +679,310 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    DescriptionEditor,
 	    DropZone: tasks_v2_component_dropZone.DropZone
 	  },
+	  inject: {
+	    task: {},
+	    taskId: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
+	    sheetBindProps: {
+	      type: Object,
 	      required: true
 	    },
-	    isShown: {
-	      type: Boolean,
-	      required: true
-	    },
-	    doOpenInEditMode: {
+	    enableSaveButton: {
 	      type: Boolean,
 	      default: false
-	    },
-	    getBindElement: {
-	      type: Function,
-	      default: null
-	    },
-	    getTargetContainer: {
-	      type: Function,
-	      default: null
 	    }
 	  },
-	  emits: ['show', 'close'],
+	  emits: ['close'],
+	  setup() {
+	    return {
+	      EntityTypes: tasks_v2_provider_service_fileService.EntityTypes
+	    };
+	  },
+	  data() {
+	    return {
+	      uniqueKey: main_core.Text.getRandom()
+	    };
+	  },
 	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
-	    })
-	  },
-	  watch: {
-	    titleFieldOffsetHeight() {
-	      var _this$$refs$bottomShe;
-	      (_this$$refs$bottomShe = this.$refs.bottomSheet) == null ? void 0 : _this$$refs$bottomShe.adjustPosition();
-	    }
-	  },
-	  methods: {
-	    handleShow() {
-	      this.$emit('show');
+	    bottomSheetContainer() {
+	      return document.getElementById(`b24-bottom-sheet-${this.uniqueKey}`) || null;
+	    },
+	    isDiskModuleInstalled() {
+	      return tasks_v2_core.Core.getParams().features.disk;
 	    }
 	  },
 	  template: `
 		<BottomSheet
-			v-if="isShown"
-			:isExpanded="true"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="bottomSheet"
+			isExpanded
+			:padding="0"
+			:popupPadding="0"
+			:sheetBindProps
+			:uniqueKey
+			@close="$emit('close')"
 		>
 			<DescriptionEditor
-				ref="editorComponent"
-				:taskId="taskId"
-				:doOpenInEditMode="doOpenInEditMode"
-				:isExpanded="true"
-				@show="handleShow"
+				:taskId
+				:enableSaveButton
 				@close="$emit('close')"
 			/>
-			<DropZone :taskId="taskId"/>
+			<DropZone
+				v-if="isDiskModuleInstalled && task.rights.edit"
+				:container="bottomSheetContainer || {}"
+				:entityId="taskId"
+				:entityType="EntityTypes.Task"
+			/>
 		</BottomSheet>
 	`
 	};
 
 	// @vue/component
-	const DescriptionPopup = {
-	  name: 'TaskDescriptionPopup',
+	const DescriptionField = {
+	  name: 'TaskDescriptionField',
 	  components: {
-	    Popup: ui_vue3_components_popup.Popup,
-	    DescriptionEditor
+	    MiniFormButton,
+	    MiniForm,
+	    DescriptionPreview,
+	    DescriptionSheet
+	  },
+	  expose: ['save'],
+	  inject: {
+	    task: {},
+	    isEdit: {}
 	  },
 	  props: {
+	    isSheetShown: {
+	      type: Boolean,
+	      required: true
+	    },
 	    taskId: {
 	      type: [Number, String],
 	      required: true
 	    },
-	    isShown: {
-	      type: Boolean,
+	    sheetBindProps: {
+	      type: Object,
 	      required: true
-	    },
-	    doOpenInEditMode: {
-	      type: Boolean,
-	      default: false
 	    }
 	  },
-	  emits: ['show', 'close', 'resize'],
-	  setup() {
+	  // eslint-disable-next-line max-len
+	  setup(props) {
 	    return {
-	      resizeObserver: null
+	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId),
+	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter(),
+	      entityTextEditor: tasks_v2_component_entityText.entityTextEditor.get(props.taskId)
 	    };
 	  },
 	  data() {
 	    return {
-	      popupHeight: 0
+	      checksum: '',
+	      isSaving: false,
+	      isMiniFormShown: false,
+	      enableSaveButton: false,
+	      hasFilesChanges: false,
+	      files: this.fileService.getFiles()
 	    };
 	  },
 	  computed: {
-	    popupId() {
-	      return `tasks-field-description-popup-${this.taskId}`;
+	    taskDescription() {
+	      var _this$task$descriptio;
+	      return (_this$task$descriptio = this.task.description) != null ? _this$task$descriptio : '';
 	    },
-	    popupOptions() {
-	      return {
-	        className: 'tasks-card-description-popup',
-	        minHeight: 360,
-	        maxHeight: this.popupMaxHeight,
-	        width: 580,
-	        offsetTop: 0,
-	        padding: 0,
-	        autoHide: false,
-	        closeByEsc: false,
-	        animation: {
-	          showClassName: 'tasks-description-popup-show',
-	          closeClassName: 'tasks-description-popup-close',
-	          closeAnimationType: 'animation'
-	        },
-	        events: {
-	          onAfterShow: () => this.$refs.editorComponent.focusToEnd()
-	        }
-	      };
+	    taskDescriptionChecksum() {
+	      var _this$task$descriptio2;
+	      return (_this$task$descriptio2 = this.task.descriptionChecksum) != null ? _this$task$descriptio2 : '';
 	    },
-	    popupMaxHeight() {
-	      return document.body.offsetHeight - 120 - this.titleFieldOffsetHeight;
+	    readonly() {
+	      return !this.task.rights.edit;
 	    },
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
+	    filesCount() {
+	      return this.files.length;
 	    },
-	    ...ui_vue3_vuex.mapGetters({
-	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
-	    })
-	  },
-	  watch: {
-	    async titleFieldOffsetHeight() {
-	      if (!this.$refs.popupComponent) {
-	        return;
+	    shouldShowDescriptionField() {
+	      return !this.readonly || this.taskDescription.length > 0 || this.filesCount > 0 && !this.readonly;
+	    },
+	    shouldShowMiniForm() {
+	      if (this.readonly) {
+	        return false;
 	      }
-	      this.resizeEditor();
-	      await this.$nextTick();
-	      this.onResize();
+	      if (!this.isEdit) {
+	        return this.isMiniFormShown || this.task.description.length > 0;
+	      }
+	      return true;
+	    },
+	    shouldShowMiniFormButton() {
+	      return this.taskDescription.length === 0 && (!this.isEdit && !this.isMiniFormShown || this.isEdit && this.filesCount === 0);
+	    },
+	    shouldShowDescriptionPreview() {
+	      return this.isEdit && (this.taskDescription.length > 0 || this.filesCount > 0);
+	    },
+	    miniFormStyle() {
+	      if (this.isEdit) {
+	        return {
+	          display: 'none'
+	        };
+	      }
+	      return null;
+	    },
+	    editor() {
+	      return this.entityTextEditor.getEditor();
 	    }
 	  },
-	  created() {
-	    this.resizeObserver = new ResizeObserver(entries => {
-	      for (const entry of entries) {
-	        if (entry.target === this.$refs.popupWrapper) {
-	          this.onResize();
+	  watch: {
+	    taskDescriptionChecksum: {
+	      handler() {
+	        if (this.editor && this.isSheetShown && !this.hasChanges()) {
+	          this.updateChecksum();
 	        }
-	      }
-	    });
+	      },
+	      deep: true
+	    }
 	  },
 	  mounted() {
-	    main_core.Event.bind(window, 'resize', this.onResize);
-	  },
-	  beforeUnmount() {
-	    main_core.Event.unbind(window, 'resize', this.onResize);
+	    this.entityTextEditor.setEditorText(this.taskDescription);
+	    this.updateChecksum();
 	  },
 	  methods: {
-	    onShow() {
-	      var _this$$refs$popupComp;
-	      this.resizeEditor();
-	      this.$emit('show', {
-	        popupInstance: this.$refs.popupComponent.getPopupInstance()
-	      });
-	      (_this$$refs$popupComp = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp.getPopupInstance().adjustPosition();
-	      setTimeout(() => this.resizeObserver.observe(this.$refs.popupWrapper), 300);
+	    expandDescription() {
+	      this.setSheetShown(true);
 	    },
-	    resizeEditor() {
-	      var _this$$refs$popupComp2;
-	      const popupInstance = (_this$$refs$popupComp2 = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp2.getPopupInstance();
-	      const popupContainer = popupInstance.getPopupContainer();
-	      this.$refs.editorComponent.hideEditor();
-	      main_core.Dom.style(popupContainer, 'min-height', 0);
-	      const popupWithoutEditorHeight = popupContainer.clientHeight;
-	      const additionalOffset = 240;
-	      const maxHeight = document.body.clientHeight - popupWithoutEditorHeight - additionalOffset - this.titleFieldOffsetHeight;
-	      main_core.Dom.style(popupContainer, 'min-height', '360px');
-	      this.$refs.editorComponent.showEditor();
-	      this.$refs.editorComponent.setMaxHeight(maxHeight);
-	      popupInstance.setOffset();
+	    openEditMode() {
+	      if (this.editor && this.hasChanges() && !this.isSaving) {
+	        this.entityTextEditor.setEditorText(this.taskDescription);
+	      }
+	      this.updateChecksum();
+	      this.setSheetShown(true);
 	    },
-	    onResize() {
-	      var _this$$refs$popupComp3;
-	      const popupInstance = (_this$$refs$popupComp3 = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp3.getPopupInstance();
-	      if (popupInstance) {
-	        this.$emit('resize');
-	        popupInstance.adjustPosition();
+	    closeEditMode() {
+	      void this.handleSave();
+	      this.setSheetShown(false);
+	      this.hasFilesChanges = false;
+	      this.enableSaveButton = false;
+	    },
+	    handleMiniFormButtonClick() {
+	      if (this.isEdit) {
+	        this.openEditMode();
+	      } else {
+	        this.isMiniFormShown = true;
 	      }
 	    },
-	    onClose() {
-	      this.resizeObserver.disconnect();
-	      this.$emit('close');
+	    handleTextChanges() {
+	      if (!this.isEdit) {
+	        void this.save();
+	      }
+	      if (this.hasFilesChanges) {
+	        return;
+	      }
+	      this.enableSaveButton = this.hasChanges();
+	    },
+	    handleFilesChanges() {
+	      if (!this.isSheetShown) {
+	        return;
+	      }
+	      this.hasFilesChanges = true;
+	      this.enableSaveButton = true;
+	    },
+	    async handleSave() {
+	      var _result$Endpoint$Task;
+	      if (!this.editor || !this.hasChanges()) {
+	        return;
+	      }
+	      this.isSaving = true;
+	      const result = await this.save();
+	      if ((result == null ? void 0 : (_result$Endpoint$Task = result[tasks_v2_const.Endpoint.TaskDescriptionUpdate]) == null ? void 0 : _result$Endpoint$Task.length) > 0) {
+	        const errorData = result[tasks_v2_const.Endpoint.TaskDescriptionUpdate][0];
+	        const {
+	          customData
+	        } = errorData;
+	        if (customData && customData.changed && customData.changedBy) {
+	          this.showDescriptionChangedAlert(customData.changedBy);
+	        }
+	      }
+	      this.isSaving = false;
+	    },
+	    async save(forceUpdateDescription = false) {
+	      return tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	        forceUpdateDescription,
+	        description: this.editor.getText(),
+	        descriptionChecksum: this.checksum
+	      });
+	    },
+	    hasChanges() {
+	      var _this$editor;
+	      const preparedOldText = this.getPreparedText(this.taskDescription);
+	      const preparedNewText = this.getPreparedText((_this$editor = this.editor) == null ? void 0 : _this$editor.getText());
+	      return preparedOldText !== preparedNewText;
+	    },
+	    getPreparedText(text) {
+	      return text.replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '').trim();
+	    },
+	    setSheetShown(isShown) {
+	      this.$emit('update:isSheetShown', isShown);
+	    },
+	    showDescriptionChangedAlert(changedBy) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        useAirDesign: true,
+	        title: this.loc('TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_TITLE'),
+	        message: this.loc(`TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_DESC_${changedBy.gender.toUpperCase()}`, {
+	          '#NAME#': changedBy.name
+	        }),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: this.loc('TASKS_V2_DESCRIPTION_CHECKSUM_ERROR_BUTTON_OK'),
+	        onOk: dialog => this.onOkDescriptionChangedAlert(dialog),
+	        popupOptions: {
+	          closeByEsc: false,
+	          autoHide: false,
+	          events: {
+	            onClose: () => this.onCloseDescriptionChangedAlert()
+	          }
+	        }
+	      });
+	    },
+	    async onOkDescriptionChangedAlert(dialog) {
+	      dialog.close();
+	      await this.save(true);
+	    },
+	    onCloseDescriptionChangedAlert() {
+	      this.updateChecksum();
+	    },
+	    updateChecksum() {
+	      this.checksum = this.taskDescriptionChecksum;
 	    }
 	  },
 	  template: `
-		<Popup v-if="isShown" :options="popupOptions" ref="popupComponent">
-			<div class="tasks-card-description-popup-wrapper" ref="popupWrapper">
-				<DescriptionEditor
-					ref="editorComponent"
-					:taskId="taskId"
-					:doOpenInEditMode="doOpenInEditMode"
-					@show="onShow"
-					@close="onClose"
-				></DescriptionEditor>
-			</div>
-		</Popup>
+		<div
+			v-if="shouldShowDescriptionField"
+			class="tasks-card-description-field"
+			:data-task-id="taskId"
+			:data-task-field-id="'description'"
+		>
+			<MiniFormButton
+				v-if="shouldShowMiniFormButton"
+				:filesCount
+				@click="handleMiniFormButtonClick"
+			/>
+			<MiniForm
+				v-if="shouldShowMiniForm"
+				:taskId
+				:isSheetShown
+				:style="miniFormStyle"
+				@expand="expandDescription"
+				@change="handleTextChanges"
+				@filesChange="handleFilesChanges"
+			/>
+			<DescriptionPreview
+				v-if="shouldShowDescriptionPreview"
+				:taskId
+				:files
+				:isMiniFormShown
+				@editButtonClick="openEditMode"
+			/>
+		</div>
+		<DescriptionSheet
+			v-if="isSheetShown"
+			:sheetBindProps
+			:enableSaveButton
+			@close="closeEditMode"
+		/>
 	`
 	};
 
@@ -1379,32 +992,40 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    TextEditorComponent: ui_textEditor.TextEditorComponent
 	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {}
 	  },
 	  setup() {
 	    return {
 	      editor: null,
-	      DefaultEditorOptions
+	      DefaultEditorOptions: tasks_v2_component_entityText.DefaultEditorOptions
 	    };
 	  },
-	  data(props) {
+	  data() {
 	    return {
 	      isFocused: false,
 	      isScrolledToTop: true,
-	      isScrolledToBottom: true,
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId)
+	      isScrolledToBottom: true
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    taskDescription() {
 	      return this.task.description;
+	    },
+	    copilotParams() {
+	      if (tasks_v2_core.Core.getParams().features.isCopilotEnabled) {
+	        return {
+	          copilotOptions: {
+	            moduleId: 'tasks',
+	            category: 'tasks',
+	            contextId: `tasks_${this.taskId}`,
+	            menuForceTop: false
+	          },
+	          triggerBySpace: true
+	        };
+	      }
+	      return {};
 	    }
 	  },
 	  created() {
@@ -1418,20 +1039,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        onFocus: this.handleEditorFocus,
 	        onBlur: this.handleEditorBlur,
 	        onChange: this.handleEditorChange
-	      }
+	      },
+	      copilot: this.copilotParams
 	    };
 	    this.editor = new ui_textEditor.TextEditor({
-	      ...DefaultEditorOptions,
+	      ...tasks_v2_component_entityText.DefaultEditorOptions,
 	      ...additionalEditorOptions
 	    });
 	  },
 	  mounted() {
 	    main_core.Event.bind(this.editor.getScrollerContainer(), 'scroll', this.handleScroll);
-	    this.fileService.getAdapter().getUploader().assignPaste(this.$refs.description);
+	    tasks_v2_provider_service_fileService.fileService.get(this.taskId).getAdapter().getUploader().assignPaste(this.$refs.description);
 	  },
 	  beforeUnmount() {
 	    main_core.Event.unbind(this.editor.getScrollerContainer(), 'scroll', this.handleScroll);
-	    this.fileService.getAdapter().getUploader().unassignPaste(this.$refs.description);
+	    tasks_v2_provider_service_fileService.fileService.get(this.taskId).getAdapter().getUploader().unassignPaste(this.$refs.description);
 	  },
 	  methods: {
 	    hasScroll() {
@@ -1480,9 +1102,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DescriptionEditor = DescriptionEditor;
 	exports.DescriptionField = DescriptionField;
 	exports.DescriptionSheet = DescriptionSheet;
-	exports.DescriptionPopup = DescriptionPopup;
 	exports.DescriptionInline = DescriptionInline;
-	exports.descriptionTextEditor = descriptionTextEditor;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Components,BX.UI.Uploader,BX.UI.Lexical.Core,BX.Tasks.V2,BX.Event,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.UI.BBCode.Formatter,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Disk.Uploader,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.UI.Vue3.Components,BX.Vue3.Vuex,BX,BX.UI.TextEditor,BX.Tasks.V2.Model,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Components,BX.UI.System.Typography.Vue,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.UI.Dialogs,BX.Tasks.V2.Const,BX.UI.IconSet,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX,BX.UI.TextEditor,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component));
 //# sourceMappingURL=description.bundle.js.map

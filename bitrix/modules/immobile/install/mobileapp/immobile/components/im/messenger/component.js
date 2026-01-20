@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var
-var REVISION = 21; // API revision – sync with im/lib/revision.php
+var REVISION = 22; // API revision – sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -154,7 +154,7 @@ window.messengerDebug = {};
 			super();
 			this.pushUpdateListPromise = null;
 
-			this.promotion = new Promotion();
+			this.promotion = Promotion.getInstance();
 			this.communication = new Communication();
 			EntityReady.addCondition('chat', () => this.isReady);
 
@@ -934,13 +934,19 @@ window.messengerDebug = {};
 			this.dialogCreator.open();
 		}
 
-		onNotificationOpen()
+		/**
+		 * @param {{result: boolean, newCounter: number}} params
+		 */
+		onNotificationOpen(params)
 		{
 			Logger.log('EventType.notification.open');
 
-			const tabCounters = serviceLocator.get('tab-counters');
-			tabCounters.clearNotificationCounters();
-			tabCounters.update();
+			if (params.result === true)
+			{
+				const tabCounters = serviceLocator.get('tab-counters');
+				tabCounters.setNotificationCounters(params.newCounter);
+				tabCounters.update();
+			}
 		}
 
 		onNotificationReload()

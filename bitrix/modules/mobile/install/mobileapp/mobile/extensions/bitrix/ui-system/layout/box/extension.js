@@ -4,6 +4,7 @@
 jn.define('ui-system/layout/box', (require, exports, module) => {
 	const { animate } = require('animation');
 	const { Component, Color } = require('tokens');
+	const { PropTypes } = require('utils/validation');
 	const { mergeImmutable, isEmpty } = require('utils/object');
 	const { ScrollView } = require('layout/ui/scroll-view');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');

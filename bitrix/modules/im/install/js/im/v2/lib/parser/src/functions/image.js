@@ -266,9 +266,9 @@ export const ParserImage = {
 					return whole.replaceAll(/\[url]([\S\s]*?)\[\/url]/gi, '$1');
 				}
 
-				const classModifier = `bx-im-message-image--${size}`;
+				const classModifier = `--${size}`;
 				const { file } = getUtils();
-				const dialog = getCore().store.getters['chats/get'](contextDialogId, true);
+				const dialog = getCore().getStore().getters['chats/get'](contextDialogId, true);
 				const viewerGroupBy = dialog.chatId;
 				const viewerAttributes = file.getViewerDataForImageSrc({ src: url, viewerGroupBy });
 

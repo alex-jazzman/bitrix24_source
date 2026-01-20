@@ -13,6 +13,7 @@ jn.define('ui/system/blocks/entity-cell/src/entity-enum', (require, exports, mod
 		static MULTIPLE = new EntityCellMode('MULTIPLE');
 		static GROUP = new EntityCellMode('GROUP');
 		static ENTITY_MENU = new EntityCellMode('ENTITY_MENU');
+		static LOCKED = new EntityCellMode('LOCKED');
 	}
 
 	module.exports = {

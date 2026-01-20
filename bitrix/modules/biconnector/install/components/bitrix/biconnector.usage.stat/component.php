@@ -13,13 +13,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\BIConnector\Configuration\Feature;
+use Bitrix\BIConnector\Manager;
+use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 
-$arResult['CAN_VIEW'] =
-	$USER->CanDoOperation('biconnector_key_manage')
-	|| (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y');
+$isBiBuilderService = isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y';
+
+$arResult['CAN_VIEW'] = $USER->CanDoOperation('biconnector_key_manage') || $isBiBuilderService;
 
 if (!$arResult['CAN_VIEW'])
 {
@@ -59,7 +61,7 @@ if (isset($_GET['over_limit']) && $_GET['over_limit'] === 'Y')
 {
 	$filter['=IS_OVER_LIMIT'] = 'Y';
 }
-if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+if ($isBiBuilderService)
 {
 	$filter['SERVICE_ID'] = 'superset';
 }
@@ -91,7 +93,7 @@ $select = [
 	'FILTERS',
 	'ACCESS_KEY' => 'KEY.ACCESS_KEY',
 ];
-if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+if ($isBiBuilderService)
 {
 	$select = array_filter($select, function($key)  {
 		return !in_array($key, ['SERVICE_ID', 'KEY_ID']);
@@ -192,10 +194,11 @@ $arResult['STUB'] = "
 ";
 
 $limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
-if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+if ($isBiBuilderService)
 {
-	$limitManager->setIsSuperset();
+	$limitManager->setService(Manager::getInstance()->createService(ApacheSuperset::getServiceId()));
 }
 $arResult['BICONNECTOR_LIMIT'] = $limitManager->getLimit();
+$arResult['IS_BI_BUILDER_SERVICE'] = $isBiBuilderService;
 
 $this->includeComponentTemplate();

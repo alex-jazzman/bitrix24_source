@@ -122,13 +122,13 @@ class call extends \CModule
 			'onCallFinished'
 		);
 
-		/** @see \Bitrix\Call\EventHandler::onCallFinished */
+		/** @see \Bitrix\Call\Track\TrackService::onCallTrackDownloaded */
 		$eventManager->registerEventHandler(
 			'call',
-			'onCallFinished',
+			'onCallTrackDownloaded',
 			'call',
-			'\Bitrix\Call\EventHandler',
-			'onCallFinished'
+			'\Bitrix\Call\Track\TrackService',
+			'onCallTrackDownloaded'
 		);
 
 		/** @see \Bitrix\Call\EventHandler::onChatUserLeave */
@@ -147,6 +147,43 @@ class call extends \CModule
 			'call',
 			'\Bitrix\Call\EventHandler',
 			'onChatUserAdd'
+		);
+
+
+		/** @see \Bitrix\Call\EventHandler::onCallUserStateChange */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnCallUserStateChange',
+			'call',
+			'\Bitrix\Call\EventHandler',
+			'onCallUserStateChange'
+		);
+
+		/** @see \Bitrix\Call\Integration\Voximplant\EventHandler::onAfterStatisticAdd */
+		$eventManager->registerEventHandler(
+			'voximplant',
+			'OnAfterStatisticAdd',
+			'call',
+			'\Bitrix\Call\Integration\Voximplant\EventHandler',
+			'onAfterStatisticAdd'
+		);
+
+		/** @see \Bitrix\Call\Counter::onGetMobileCounterTypes */
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onGetMobileCounterTypes',
+			'call',
+			'\Bitrix\Call\Counter',
+			'onGetMobileCounterTypes'
+		);
+
+		/** @see \Bitrix\Call\Counter::onGetMobileCounter */
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onGetMobileCounter',
+			'call',
+			'\Bitrix\Call\Counter',
+			'onGetMobileCounter'
 		);
 
 		/** @see \Bitrix\Call\Integration\AI\CallAIService::finishTasks */
@@ -192,6 +229,14 @@ class call extends \CModule
 			'Y',
 			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + \rand(600, 900), 'FULL')
 		);
+
+		// Install fulltext indexes
+		$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/call/install/db/' . $connection->getType() . '/install_ft.sql');
+		if ($errors === false)
+		{
+			\Bitrix\Call\Model\CallUserLogIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
+			\Bitrix\Call\Model\CallUserLogIndexTable::getEntity()->enableFullTextIndex('SEARCH_TITLE');
+		}
 
 		return true;
 	}
@@ -291,10 +336,17 @@ class call extends \CModule
 
 	/**
 	 * Uninstall files.
-	 * @return bool
 	 */
 	public function uninstallFiles()
 	{
-		\DeleteDirFilesEx('/bitrix/js/call/');
+		$dir = new \Bitrix\Main\IO\File($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/call');
+		if (is_link($dir->getPath()))
+		{
+			$dir->delete();
+		}
+		else
+		{
+			\DeleteDirFilesEx('/bitrix/js/call/');
+		}
 	}
 }

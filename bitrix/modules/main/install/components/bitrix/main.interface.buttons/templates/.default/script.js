@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 BX.namespace('BX.Main');
 
 if (typeof(BX.Main.interfaceButtons) === 'undefined')
@@ -600,12 +601,27 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 					subItem['IS_ACTIVE'] = true;
 					this.activateItem(subItem.NODE);
 
+					if (subItem['IS_PINNED'] === true)
+					{
+						continue;
+					}
+
 					for (let index = rootPath.length - 1; index >= 0; index--)
 					{
 						const rootItem = rootPath[index];
+						const hasActiveSubItems = rootItem['ITEMS'].some((item) => {
+							return (
+								item['IS_ACTIVE'] === true
+								&& item['IS_PINNED'] !== true
+								&& item['IS_DELIMITER'] !== true
+							);
+						});
 
-						rootItem['IS_ACTIVE'] = true;
-						this.activateItem(rootItem.NODE);
+						if (hasActiveSubItems)
+						{
+							rootItem['IS_ACTIVE'] = true;
+							this.activateItem(rootItem.NODE);
+						}
 					}
 				}
 
@@ -634,35 +650,32 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 		{
 			for (const subItem of subItems)
 			{
-				if (subItem['DATA_ID'] === itemId)
+				if (subItem['DATA_ID'] === itemId || (parentItem !== null && parentItem['IS_ACTIVE'] === false))
 				{
 					subItem['IS_ACTIVE'] = false;
 					this.deactivateItem(subItem.NODE);
-				}
-				else if (parentItem !== null)
-				{
-					if (parentItem['IS_ACTIVE'] === false)
-					{
-						subItem['IS_ACTIVE'] = false;
-						this.deactivateItem(subItem.NODE);
-					}
-					else
-					{
-						const hasSelected = parentItem['ITEMS'].some((parentSubItem) => {
-							return parentSubItem['IS_ACTIVE'] === true;
-						});
-
-						if (!hasSelected)
-						{
-							parentItem['IS_ACTIVE'] = false;
-							this.deactivateItem(parentItem.NODE);
-						}
-					}
 				}
 
 				if (subItem['ITEMS'])
 				{
 					this.unsetActiveInternal(subItem['ITEMS'], itemId, subItem);
+				}
+
+				if (parentItem !== null)
+				{
+					const hasSelected = parentItem['ITEMS'].some((parentSubItem) => {
+						return (
+							parentSubItem['IS_ACTIVE'] === true
+							&& parentSubItem['IS_PINNED'] !== true
+							&& parentSubItem['IS_DELIMITER'] !== true
+						);
+					});
+
+					if (!hasSelected)
+					{
+						parentItem['IS_ACTIVE'] = false;
+						this.deactivateItem(parentItem.NODE);
+					}
 				}
 			}
 		},
@@ -3829,7 +3842,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 
 		pinItem: function(itemData, flag = true)
 		{
-			const itemId = itemData['ID']
+			const itemId = itemData['ID'];
 			const ids = itemId.split(':');
 
 			let rootItemId = '';

@@ -1,0 +1,83 @@
+.intranet-push-otp-connect-popup__view-connect-container.--code {
+	padding: 24px 50px 0 50px;
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-input {
+	padding: 9px 17px;
+	width: 320px;
+	height: 38px;
+	border-radius: var(--component-input-radius-input-M-radius, 8px);
+	border: 1px solid #0154C8;
+	box-sizing: border-box;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--content-center {
+	justify-content: center;
+	align-items: center;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--space-between {
+	justify-content: space-between;
+	align-items: center;
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-phone {
+	width: 183px;
+	height: 240px;
+	background: url('../images/phone.svg') bottom no-repeat;
+}
+
+.intranet-push-otp-connect-popup__view-connect-logo {
+	margin: 0 auto 28px auto;
+	width: 94px;
+	height: 95px;
+	background: url('../images/phone-ios.png') top no-repeat;
+	background-size: cover;
+}
+
+.intranet-push-otp-connect-popup__view-connect-logo.--android {
+	background: url('../images/phone-android.png') top no-repeat;
+	background-size: cover;
+}
+
+.intranet-push-otp-connect-popup__view-connect-logo-text,
+.intranet-push-otp-connect-popup__view-phone-number-value {
+	font-weight: 500;
+	font-size: 21px;
+	line-height: 29px;
+}
+
+.intranet-push-otp-connect-popup__view-enter-code-subtitle {
+	display: block;
+	margin-bottom: 10px;
+	font-size: 21px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-default);
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-input-box {
+	position: relative;
+	top: -11px;
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-input-box .intranet-push-otp-connect-popup__view-enter-code-errors {
+	position: absolute;
+	margin-top: 4px;
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-value {
+	color: var(--ui-color-base-default);
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-link {
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-50);
+	line-height: 19px;
+	border-bottom: 1px dashed rgba(168, 173, 180, .28);
+	transition: border-bottom .3s;
+	cursor: pointer;
+}
+
+.intranet-push-otp-connect-popup__view-phone-number-link:hover {
+	border-bottom: 1px dashed transparent;
+}

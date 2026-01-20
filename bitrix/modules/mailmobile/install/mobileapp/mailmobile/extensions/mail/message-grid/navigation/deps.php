@@ -1,0 +1,37 @@
+<?php
+
+return [
+	'extensions' => [
+		'loc',
+		'alert',
+		'tokens',
+		'feature',
+		'haptics',
+		'qrauth/utils',
+		'toast/remove',
+		'assets/icons',
+		'layout/ui/menu',
+		'ui-system/layout/box',
+		'ui-system/blocks/icon',
+		'layout/ui/scroll-view',
+		'layout/ui/list/base-sorting',
+		'layout/ui/list/base-more-menu',
+		'statemanager/redux/store',
+		'mail:enum/default-folder-type',
+		'mail:statemanager/redux/slices/folders',
+		'mail:statemanager/redux/slices/messages',
+		'mail:statemanager/redux/slices/messages/thunk',
+		'mail:statemanager/redux/slices/folders/selector',
+		'mail:statemanager/redux/slices/messages/selector',
+		'mail:statemanager/redux/slices/folders/observers/stateful-list',
+		'mail:mailbox/selector',
+		'mail:message-grid',
+		'mail:folder/selector',
+		'mail:statemanager/redux/slices/messages/observers/stateful-list', 'mail:statemanager/redux/slices/mailboxes/selector',],
+	'bundle' => [
+		'./src/sorting',
+		'./src/more-menu',
+		'./src/multi-select-menu',
+		'./src/group-actions-menu',
+	],
+];

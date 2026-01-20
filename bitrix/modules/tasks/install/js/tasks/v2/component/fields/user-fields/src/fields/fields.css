@@ -1,0 +1,42 @@
+.tasks-user-field {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md2);
+	border-top: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-base-8);
+}
+
+.tasks-user-field.--last {
+	border-radius: 0 0 var(--ui-border-radius-md) var(--ui-border-radius-md);
+}
+
+.tasks-user-field-title {
+	color: var(--ui-color-base-3);
+	display: block;
+}
+
+.tasks-user-field-title.--mandatory::after,
+.tasks-user-field-value-mandatory::after {
+	content: '*';
+	color: var(--ui-color-accent-main-alert);
+	margin-left: var(--ui-space-inline-2xs);
+}
+
+.tasks-user-field-value {
+	color: var(--ui-color-base-1);
+	display: block;
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.tasks-user-field-boolean-row {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.tasks-user-field-date-row {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs);
+	margin-top: var(--ui-space-stack-xs);
+}

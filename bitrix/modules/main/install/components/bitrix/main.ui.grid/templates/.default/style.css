@@ -375,6 +375,15 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
+.main-grid-head-title-tooltip {
+	margin: 0 4px;
+}
+
+.main-grid-head-title-tooltip .ui-hint-icon {
+	width: 1em;
+	height: 1em;
+}
+
 .main-grid-col-no-sortable { cursor: default; }
 
 .main-grid-compact .main-grid-cell-head-container { padding: 9px 10px; }

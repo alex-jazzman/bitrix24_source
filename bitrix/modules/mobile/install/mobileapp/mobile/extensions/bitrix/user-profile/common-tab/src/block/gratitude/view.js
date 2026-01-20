@@ -71,8 +71,8 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 			return this.items
 				.slice(0, this.quantityForPreview)
 				.map((badge) => {
-					const badgeImage = GratitudeIcon.getSvgUriByName(badge.name);
-					const testId = GratitudeIcon.getTestIdByName(badge.name);
+					const badgeImage = GratitudeIcon.getSvgUriByFeedId(badge.feedId);
+					const testId = GratitudeIcon.getTestIdByFeedId(badge.feedId);
 
 					return {
 						...badge,

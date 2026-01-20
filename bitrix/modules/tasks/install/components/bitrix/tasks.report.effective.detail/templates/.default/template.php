@@ -20,7 +20,7 @@ Extension::load(['ui.alerts']);
 Loc::loadMessages(__FILE__);
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
-$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'] ?? null;
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)

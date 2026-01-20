@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Analytics } from 'im.v2.lib.analytics';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { EventType, SidebarDetailBlock, ActionByRole } from 'im.v2.const';
@@ -12,6 +10,7 @@ import { TaskItem } from '../../task/task-item';
 
 import '../css/task-list.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelSidebarTaskItem, ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -53,7 +52,7 @@ export const TaskListPreview = {
 	},
 	created()
 	{
-		this.contextMenu = new TaskMenu();
+		this.contextMenu = new TaskMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -77,7 +76,7 @@ export const TaskListPreview = {
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.task,
 				dialogId: this.dialogId,
 			});
@@ -90,6 +89,10 @@ export const TaskListPreview = {
 			};
 
 			this.contextMenu.openMenu(item, target);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{
@@ -126,8 +129,8 @@ export const TaskListPreview = {
 				</div>
 				<TaskItem 
 					v-if="firstTask"
-					:contextDialogId="dialogId"
-					:task="firstTask" @contextMenuClick="onContextMenuClick"
+					:task="firstTask"
+					@contextMenuClick="onContextMenuClick"
 				/>
 				<DetailEmptyState 
 					v-else 

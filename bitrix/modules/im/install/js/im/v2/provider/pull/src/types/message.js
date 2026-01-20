@@ -1,5 +1,3 @@
-import type { reactionType as Reaction } from 'ui.reactions-select';
-
 import { CounterType, RecentType } from 'im.v2.const';
 
 import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog, RawLines, MultipleRawMessage } from './common';
@@ -220,7 +218,7 @@ export type AddReactionParams = {
 		reaction: RawReaction,
 		usersShort: ReactionUser[]
 	},
-	reaction: ReactionType,
+	reaction: string,
 	userId: number,
 	dialogId: string
 };
@@ -230,17 +228,15 @@ export type DeleteReactionParams = {
 		reaction: RawReaction,
 		usersShort: ReactionUser[]
 	},
-	reaction: ReactionType,
+	reaction: string,
 	userId: number
 };
 
-type ReactionType = $Values<typeof Reaction>;
-
-type RawReaction = {
+export type RawReaction = {
 	messageId: number,
 	reactionCounters: {[reactionType: string]: number},
 	reactionUsers: {[reactionType: string]: number[]},
-	ownReactions?: ReactionType[]
+	ownReactions?: string[]
 };
 
 type ReactionUser = {

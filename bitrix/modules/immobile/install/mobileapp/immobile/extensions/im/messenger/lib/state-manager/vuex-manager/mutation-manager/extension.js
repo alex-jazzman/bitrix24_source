@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 	const { MutationManager } = require('statemanager/vuex-manager');
 
 	const { MessengerMutationManagerEvent } = require('im/messenger/lib/state-manager/vuex-manager/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('core--messenger-mutation-manager');
 
@@ -13,6 +14,11 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 	 */
 	class MessengerMutationManager extends MutationManager
 	{
+		get #emitter()
+		{
+			return serviceLocator.get('emitter');
+		}
+
 		async handle(mutation = {}, state = {})
 		{
 			await super.handle(mutation, state);
@@ -46,7 +52,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 		 */
 		postCompleteEvent(mutation)
 		{
-			BX.postComponentEvent(MessengerMutationManagerEvent.handleComplete, [mutation]);
+			this.#emitter.emit(MessengerMutationManagerEvent.handleComplete, [mutation]);
 		}
 	}
 

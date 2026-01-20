@@ -39,11 +39,28 @@ jn.define('im/messenger-v2/application/lib/message-queue-request-manager', (requ
 		}
 
 		/**
+		 * @return {MessengerCoreRepository}
+		 */
+		get #repository()
+		{
+			return serviceLocator.get('core').getRepository();
+		}
+
+		/**
 		 * @return {QueueService}
 		 */
 		get #queueService()
 		{
 			return serviceLocator.get('queue-service');
+		}
+
+		async initQueueRequests()
+		{
+			const queueRequests = await this.#repository.queue.getList();
+			if (queueRequests.length > 0)
+			{
+				await this.#store.dispatch('queueModel/add', queueRequests);
+			}
 		}
 
 		/**

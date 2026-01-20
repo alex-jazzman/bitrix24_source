@@ -118,6 +118,16 @@ if (!$arEvent)
 	return;
 }
 
+if (
+	$arEvent['EVENT']['EVENT_ID'] === 'tasks'
+	&& Loader::includeModule('tasks')
+	&& class_exists(\Bitrix\Tasks\V2\FormV2Feature::class)
+	&& \Bitrix\Tasks\V2\FormV2Feature::isOn()
+)
+{
+	$arEvent['HAS_COMMENTS'] = false;
+}
+
 $contentId = Livefeed\Provider::getContentId($arEvent['EVENT']);
 
 $arResult["canGetCommentContent"] = false;

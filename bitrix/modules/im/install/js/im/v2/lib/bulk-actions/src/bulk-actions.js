@@ -1,12 +1,16 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BaseEvent } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
 
+import type { EventEmitter } from 'main.core.events';
+import type { ApplicationContext } from 'im.v2.const';
+
 export class BulkActionsManager
 {
 	static #instance: BulkActionsManager;
+	#emitter: EventEmitter;
 
 	static getInstance(): BulkActionsManager
 	{
@@ -18,17 +22,18 @@ export class BulkActionsManager
 		return this.#instance;
 	}
 
-	static init()
-	{
-		BulkActionsManager.getInstance();
-	}
-
 	constructor()
 	{
-		EventEmitter.subscribe(EventType.dialog.openBulkActionsMode, this.enableBulkMode.bind(this));
-		EventEmitter.subscribe(EventType.dialog.closeBulkActionsMode, this.disableBulkMode.bind(this));
-
 		this.keyPressHandler = this.#onKeyPressCloseBulkActions.bind(this);
+	}
+
+	bindEvents(context: ApplicationContext)
+	{
+		const { emitter } = context;
+		this.#emitter = emitter;
+
+		this.#emitter.subscribe(EventType.dialog.openBulkActionsMode, this.enableBulkMode.bind(this));
+		this.#emitter.subscribe(EventType.dialog.closeBulkActionsMode, this.disableBulkMode.bind(this));
 	}
 
 	enableBulkMode(event: BaseEvent<{messageId: number, dialogId: string}>)
@@ -63,12 +68,12 @@ export class BulkActionsManager
 
 	#bindEscHandler()
 	{
-		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.keyPressHandler);
+		this.#emitter.subscribe(EventType.key.onBeforeEscape, this.keyPressHandler);
 	}
 
 	#unbindEscHandler()
 	{
-		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.keyPressHandler);
+		this.#emitter.unsubscribe(EventType.key.onBeforeEscape, this.keyPressHandler);
 	}
 
 	#onKeyPressCloseBulkActions(): $Values<typeof EscEventAction>

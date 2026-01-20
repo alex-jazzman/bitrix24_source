@@ -23,6 +23,10 @@ export const TranscriptionButtonItem = {
 			type: Boolean,
 			required: true,
 		},
+		messageId: {
+			type: [String, Number],
+			required: true,
+		},
 	},
 	emits: ['transcriptionToggle'],
 	computed:
@@ -110,7 +114,7 @@ export const TranscriptionButtonItem = {
 		{
 			const messageService = new MessageService({ chatId: this.chatId });
 
-			return messageService.transcribe(this.fileId);
+			return messageService.transcribe(this.fileId, this.messageId);
 		},
 		open(): void
 		{

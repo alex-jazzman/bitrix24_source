@@ -11,6 +11,9 @@ export const AnalyticsEvent = Object.freeze({
 	clickRecord: 'click_record',
 	recordStart: 'record_start',
 	recordStop: 'record_stop',
+	recordPaused: 'record_paused',
+	recordResumed: 'record_resumed',
+	recordDelete: 'record_delete',
 	clickAnswer: 'click_answer',
 	clickDeny: 'click_deny',
 	cameraOn: 'camera_on',
@@ -69,6 +72,7 @@ export const AnalyticsCategory = Object.freeze({
 	messenger: 'messenger',
 	callsOperations: 'calls_operations',
 	callFollowup: 'call_followup',
+	callRecord: 'call_record',
 });
 
 export const AnalyticsType = Object.freeze({

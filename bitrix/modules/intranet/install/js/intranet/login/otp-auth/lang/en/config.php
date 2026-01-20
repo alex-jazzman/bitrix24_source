@@ -1,0 +1,26 @@
+<?php
+$MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY"] = "Other login methods";
+$MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY_TITLE"] = "Select login confirmation method";
+$MESS["INTRANET_AUTH_OTP_CAPTCHA_PROMT"] = "Enter the characters you see on the picture";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_AUTH"] = "Confirm your login in Bitrix24 mobile app";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_LOGIN"] = "Confirm login";
+$MESS["INTRANET_AUTH_OTP_CONFIRM_TEXT"] = "Open your Bitrix24 app to confirm login.";
+$MESS["INTRANET_AUTH_OTP_CONTINUE_BUTTON"] = "Continue";
+$MESS["INTRANET_AUTH_OTP_HELP"] = "Help";
+$MESS["INTRANET_AUTH_OTP_INPUT_RECOVERY_CODE"] = "Enter one of your recovery codes.";
+$MESS["INTRANET_AUTH_OTP_LINK"] = "Log in";
+$MESS["INTRANET_AUTH_OTP_MORE"] = "Learn more";
+$MESS["INTRANET_AUTH_OTP_PLACEHOLDER"] = "Enter your one-time password";
+$MESS["INTRANET_AUTH_OTP_PUSH_SENDED"] = "A request has been sent to your devices.";
+$MESS["INTRANET_AUTH_OTP_RECOVERY_CODES"] = "Recovery code";
+$MESS["INTRANET_AUTH_OTP_RECOVERY_CODES_DESC"] = "You can use your recovery codes if you provided them after enabling two-factor authentication.";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS"] = "Recover account";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TEXT"] = "Please contact your Bitrix24 administrator to recover your account.";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TITLE"] = "Cannot confirm login";
+$MESS["INTRANET_AUTH_OTP_REMEMBER_ME"] = "Remember me on this device";
+$MESS["INTRANET_AUTH_OTP_RESEND_PUSH"] = "Send request again";
+$MESS["INTRANET_AUTH_OTP_SMS"] = "SMS";
+$MESS["INTRANET_AUTH_OTP_SMS_COUNTDOWN"] = "Request a new code in #SEC# seconds.";
+$MESS["INTRANET_AUTH_OTP_SMS_RESEND"] = "Send the code again";
+$MESS["INTRANET_AUTH_OTP_SMS_SENDED"] = "Confirmation code has been sent to #NUMBER#.";
+$MESS["INTRANET_AUTH_OTP_TITLE"] = "Log in to Bitrix24";

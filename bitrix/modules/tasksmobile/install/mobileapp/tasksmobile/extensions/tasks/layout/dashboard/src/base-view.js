@@ -2,6 +2,9 @@
  * @module tasks/layout/dashboard/base-view
  */
 jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { Onboarding, CaseName } = require('tasks/onboarding');
+
 	/**
 	 * @class TasksDashboardBaseView
 	 * @abstract
@@ -16,6 +19,64 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 
 			/** @type {StatefulList|Kanban|null} */
 			this.viewComponent = null;
+			this.completedTask = null;
+
+			this.onSupposedlyCompletedTaskAppeared = this.onSupposedlyCompletedTaskAppeared.bind(this);
+			this.onAllItemsPositionStable = this.onAllItemsPositionStable.bind(this);
+		}
+
+		componentDidMount()
+		{
+			this.showOnboarding();
+		}
+
+		showOnboarding()
+		{
+			if (this.viewComponent)
+			{
+				void Onboarding.tryToShow(CaseName.ON_EMPTY_TASK_LIST, {
+					itemQuantity: this.getItems()?.length ?? 0,
+					onShow: (ctx, onHide) => this.displayFloatingButtonAhaMoment({
+						title: Loc.getMessage('M_ONBOARDING_NO_TASKS_TITLE'),
+						description: Loc.getMessage('M_ONBOARDING_NO_TASKS_DESCRIPTION'),
+						delay: 300,
+						onHide,
+					}),
+				});
+
+				BX.addCustomEvent('TasksDashboard::onSupposedlyCompletedTaskAppeared', this.onSupposedlyCompletedTaskAppeared);
+				BX.addCustomEvent('UI.SimpleList::onAllItemsPositionStable', this.onAllItemsPositionStable);
+			}
+		}
+
+		/**
+		 * @param {object} task
+		 */
+		onSupposedlyCompletedTaskAppeared(task)
+		{
+			const completedTask = this.hasItem(task?.id) ? task : null;
+
+			if (completedTask)
+			{
+				this.completedTask = completedTask;
+			}
+		}
+
+		onAllItemsPositionStable()
+		{
+			if (!this.completedTask)
+			{
+				return;
+			}
+
+			void Onboarding.tryToShow(CaseName.SUPPOSEDLY_COMPLETED_TASKS, {
+				onShow: (ctx, onHide) => this.displayItemAhaMoment(this.completedTask?.id, {
+					title: Loc.getMessage('M_ONBOARDING_SUPPOSEDLY_COMPLETED_TASK_TITLE'),
+					description: Loc.getMessage('M_ONBOARDING_SUPPOSEDLY_COMPLETED_TASK_DESCRIPTION'),
+					delay: 1000,
+					onHide,
+				}),
+			});
 		}
 
 		/**
@@ -243,6 +304,31 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 		getItemMenuViewRef(itemId)
 		{
 			return this.viewComponent?.getItemMenuViewRef(itemId);
+		}
+
+		/**
+		 * @param {Object} ahaMomentProps
+		 * @returns {void}
+		 */
+		displayFloatingButtonAhaMoment(ahaMomentProps)
+		{
+			return this.viewComponent?.displayFloatingButtonAhaMoment({
+				delay: 100,
+				...ahaMomentProps,
+			});
+		}
+
+		/**
+		 * @param {number} itemId
+		 * @param {Object} ahaMomentProps
+		 * @returns {void}
+		 */
+		displayItemAhaMoment(itemId, ahaMomentProps)
+		{
+			return this.viewComponent?.displayItemAhaMoment({
+				itemId,
+				...ahaMomentProps,
+			});
 		}
 	}
 

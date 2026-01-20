@@ -50,6 +50,10 @@ export const BusySlot = {
 		...mapFilterGetters({
 			isFilterMode: 'isFilterMode',
 		}),
+		enabledOverbookingFeature(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingOverbooking;
+		},
 		isDisabled(): boolean
 		{
 			const isDragOffHours = this.isDragMode && this.busySlot.type === BusySlotType.OffHours;
@@ -82,6 +86,7 @@ export const BusySlot = {
 				this.isFilterMode
 				|| this.isEditingBookingMode
 				|| this.busySlot.type === BusySlotType.IntersectionOverbooking
+				|| (!this.enabledOverbookingFeature && this.busySlot.type === BusySlotType.Intersection)
 			)
 			{
 				return;

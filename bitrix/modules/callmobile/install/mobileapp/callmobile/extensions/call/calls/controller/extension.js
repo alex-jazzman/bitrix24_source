@@ -1,15 +1,19 @@
-'use strict';
-
 jn.define('call/calls/controller', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, DialogType, EventType } = require('call/const');
+	const { Analytics, DialogType, EventType, ConnectionType } = require('call/const');
 	const { CallLayout } = require('call/calls/layout');
+	const { PlainCall } = require('call/calls/plain');
+	const { PlainCallJwt } = require('call/calls/plain-jwt');
+	const { BitrixCallJwt } = require('call/calls/bitrix-jwt');
+	const { CallMenu } = require('call/calls/menu');
+	const { DeviceAccessError, CallJoinedElseWhereError, CallStub } = require('call/calls/engine');
+	const { CallSettingsManager } = require('call/settings-manager');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { Tourist } = require('tourist');
-	const { Toast } = jn.require('native/notify')
+	const { Toast } = require('native/notify');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 
@@ -24,6 +28,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.localVideoPromise = null;
 			this.localVideoStream = null;
 			this.localVideoRequired = true;
+			this.bitrixCall = null;
 
 			this.callProvider = null;
 			this._currentCall = null;
@@ -46,8 +51,6 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			this.callInviteTime = null;
 			this.callDeclineTimeout = 35000;
-
-			this.callVideoEnabled = false; // for proximity sensor
 
 			this.ignoreJoinAnalyticsEvent = false;
 			this.ignoreLeaveAnalyticsEvent = false;
@@ -91,6 +94,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onRoomSettingsChangedHandler = this.onRoomSettingsChanged.bind(this);
 			this.onCallConnectedHandler = this.onCallConnected.bind(this);
 
+			this.onActiveCallNotificationSwitchMicrophoneStatusPressHandler = this.onActiveCallNotificationSwitchMicrophoneStatusPress.bind(this);
+			this.onActiveCallNotificationHangupButtonPressHandler = this.onActiveCallNotificationHangupButtonPress.bind(this);
+
 			this.onMicButtonClickHandler = this.onMicButtonClick.bind(this);
 			this.onFloorRequestButtonClickHandler = this.onFloorRequestButtonClick.bind(this);
 			this.onCameraButtonClickHandler = this.onCameraButtonClick.bind(this);
@@ -110,6 +116,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.onNativeCallEndedHandler = this.onNativeCallEnded.bind(this);
 			this.onNativeCallMutedHandler = this.onNativeCallMuted.bind(this);
 			this.onNativeCallVideoIntentHandler = this.onNativeCallVideoIntent.bind(this);
+
+			this.onSwitchConnectionTypeHandler = this.onSwitchConnectionType.bind(this);
 
 			this._nativeAnsweredAction = null;
 			this.ignoreNativeCallAnswer = false;
@@ -193,7 +201,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				return null;
 			}
-			return CallUtil.isLegacyCall(call.provider) ? call.id : call.uuid;
+
+			const callIdentifier = CallUtil.isLegacyCall(call.provider) ? call.id : call.uuid;
+
+			return callIdentifier || 0;
 		}
 
 		sendStartCallAnalytics()
@@ -679,7 +690,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.bindViewEvents();
 				media.audioPlayer().playSound('call_start');
 
-				return this.maybeShowLocalVideo(isVideoEnabled);
+				return;
 			}).then(() => {
 				this.localVideoPromise = null;
 				this.callProvider = provider;
@@ -699,6 +710,19 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			})
 				.then((createResult) => {
 					this.currentCall = createResult.call;
+
+					// user has left a call
+					if (!this.callView)
+					{
+						this.clearEverything(true);
+
+						return;
+					}
+
+					this.currentCall.on(BX.Call.Event.onLocalMediaReceived, (stream) =>
+					{
+						this.setLocalStream(stream);
+					});
 					this.bindCallEvents();
 					callInterface.indicator().setMode('outgoing');
 					device.setIdleTimerDisabled(true);
@@ -779,6 +803,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 					this.clearEverything();
 				});
+		}
+
+		setLocalStream(stream)
+		{
+			this.localStream = stream;
+			this.maybeShowLocalVideo();
 		}
 
 		joinCall(callInfo)
@@ -1184,7 +1214,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.removeCallEvents();
 			// this.removeVideoStrategy();
 			this.childCall.on(BX.Call.Event.onStreamReceived, this.onChildCallFirstStreamHandler);
+			this.childCall.on(BX.Call.Event.onRemoteTrackAdded, this.onChildCallFirstStreamHandler);
 			this.childCall.on(BX.Call.Event.onLocalMediaReceived, this.onCallLocalMediaReceivedHandler);
+
+			this.childCall.muted = this.currentCall.isMuted();
+			this.childCall.isTransitioningToGroupCall = true;
 
 			const isLegacyCall = CallUtil.isLegacyCall(this.childCall.provider, this.childCall?.scheme);
 			if (isLegacyCall)
@@ -1206,6 +1240,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.childCall.answer({
 						useVideo: this.currentCall.isVideoEnabled(),
 					});
+
+					if (this.callView && this.childCall && this.childCall.associatedEntity) {
+						this.callView.updateTotalUsersCount(this.childCall.associatedEntity.userCounter);
+					}
 				}).catch((error) => {
 					CallUtil.error(error);
 				})
@@ -1450,6 +1488,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.on(BX.Call.Event.onRoomSettingsChanged, this.onRoomSettingsChangedHandler)
 				.on(BX.Call.Event.onCallConnected, this.onCallConnectedHandler)
 				.on(BX.Call.Event.onRecordState, this.onRecordStateHandler)
+				.on(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress, this.onActiveCallNotificationSwitchMicrophoneStatusPressHandler)
+				.on(BX.Call.Event.onActiveCallNotificationHangupButtonPress, this.onActiveCallNotificationHangupButtonPressHandler)
+				.on(BX.Call.Event.onSwitchConnectionType, this.onSwitchConnectionTypeHandler)
 			;
 		}
 
@@ -1495,6 +1536,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.off(BX.Call.Event.onRoomSettingsChanged, this.onRoomSettingsChangedHandler)
 				.off(BX.Call.Event.onCallConnected, this.onCallConnectedHandler)
 				.off(BX.Call.Event.onRecordState, this.onRecordStateHandler)
+				.off(BX.Call.Event.onSwitchConnectionType, this.onSwitchConnectionTypeHandler)
 			;
 		}
 
@@ -1830,6 +1872,132 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		showActiveVpnNotification()
+		{
+			const activeVpnToast = new Toast(
+				{
+					message: Loc.getMessage('CALLMOBILE_MESSAGE_VPN_IS_ACTIVE'),
+					time: 10,
+					position: 'top',
+					offset: 15,
+					backgroundColor: '#e79b2b',
+				}, this.rootWidget);
+
+			activeVpnToast.show();
+		}
+
+		checkActiveVpn()
+		{
+			if(
+				device &&
+				typeof device.isVPNConnectionActive === 'function' &&
+				device.isVPNConnectionActive() &&
+				this.callView
+			)
+			{
+				this.showActiveVpnNotification();
+			}
+		}
+
+		onActiveCallNotificationSwitchMicrophoneStatusPress()
+		{
+			this.onMicButtonClick();
+		}
+
+		onActiveCallNotificationHangupButtonPress()
+		{
+			this.onHangupButtonClick();
+		}
+
+		onSwitchConnectionType()
+		{
+			if (!this.callView || !this.currentCall || this.currentCall.getJwtApiVersion() !== '2.0.0')
+			{
+				return;
+			}
+
+			if (this.currentCall instanceof PlainCallJwt)
+			{
+				this.createBitrixCall().then(()=>{
+					this.currentCall.toggleRecorderState();
+					this.currentCall.setVideoEnabled(false);
+					this.currentCall.setMuted(true);
+
+					this.bitrixCall.setVideoEnabled(true);
+					this.bitrixCall.setMuted(false);
+					this.bitrixCall.sendAudio(true);
+					this.bitrixCall.receiveVideo(true);
+					this.bitrixCall.receiveAudio(true);
+				})
+			}
+		}
+
+		async createBitrixCall()
+		{
+			if (this.bitrixCall !== null)
+			{
+				return;
+			}
+			const currentCallData = {
+				id: this.currentCall.id,
+				uuid: this.currentCall.uuid,
+				associatedEntity: this.currentCall.associatedEntity,
+				users: this.currentCall.getUsers(),
+				isVideoEnabled: this.currentCall.isVideoEnabled(),
+				isMuted: true,
+				isCopilotActive: this.currentCall.isCopilotActive
+			};
+			const videoEnabled = this.currentCall.isVideoEnabled();
+
+			try
+			{
+				const tempPlainCall = callEngine.jwtCalls[currentCallData.uuid];
+				delete callEngine.jwtCalls[currentCallData.uuid];
+				const callConfig = {
+					provider: BX.Call.Provider.Bitrix,
+					type: currentCallData.associatedEntity.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
+					entityType: 'chat',
+					entityId: currentCallData.associatedEntity.id,
+					videoEnabled: videoEnabled,
+					joinExisting: true,
+					roomId: currentCallData.uuid,
+					chatInfo: currentCallData.associatedEntity,
+				}
+
+				await new Promise((resolve, reject) => {
+					callEngine.createJwtCall(callConfig).then((createResult) => {
+						this.bitrixCall = createResult.call;
+						// this.bindCallEvents();
+
+						const tempKey = `${currentCallData.uuid}`;
+						callEngine.jwtCalls[tempKey] = tempPlainCall;
+
+						console.log('Successfully transfered to BitrixCallJwt');
+						this.bitrixCall.receiveVideo(true);
+						this.bitrixCall.receiveAudio(true);
+						this.bitrixCall.setMuted(false);
+						this.bitrixCall.setVideoEnabled(true);
+						this.bitrixCall.sendAudio(true);
+
+						resolve(this.bitrixCall); // Возвращаем созданный call
+					}).catch((error) => {
+						console.error('Error while transfering to BitrixCallJwt:', error);
+						// this.bitrixCall = callEngine.jwtCalls[currentCallData.uuid];
+						// this.bindCallEvents();
+
+						reject(error);
+					});
+				});
+
+				return this.bitrixCall; // Возвращаем текущий call для цепочки
+
+			} catch (error) {
+				console.error('Switch Connection Type error', error);
+				// this.bindCallEvents();
+				throw error; // Пробрасываем ошибку дальше
+			}
+		}
+
 		onMicButtonClick()
 		{
 			if (!this.currentCall)
@@ -1862,12 +2030,17 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.muteMicDevice(muted);
 		}
 
-		muteMicDevice(muted){
+		muteMicDevice(muted)
+		{
 			this.currentCall.setMuted(muted);
 			this.callView.setMuted(muted);
 			if (this.nativeCall)
 			{
 				this.nativeCall.mute(muted);
+			}
+			if (this.currentCall.updateActiveCallNotificationMicrophoneStatus)
+			{
+				this.currentCall.updateActiveCallNotificationMicrophoneStatus({ isMicrophoneEnabled: !muted });
 			}
 		}
 
@@ -2160,10 +2333,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (CallUtil.isLegacyCall(this.currentCall.provider, this.currentCall?.scheme))
 			{
-				const action = copilotEnabled ? 'call.Track.start' : 'call.Track.stop';
-				BX.ajax.runAction(action, {
-					data: { callId: this.currentCall.id },
-				}).then(() => {
+				this.runCopilotAction(copilotEnabled).then(() => {
 					const newCopilotState = !this.currentCall.isCopilotActive;
 					this.onUpdateCallCopilotState({
 						isTrackRecordOn: newCopilotState,
@@ -2187,7 +2357,33 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					isTrackRecordOn: newCopilotState,
 					senderId: env.userId,
 				});
-				this.currentCall.toggleRecorderState();
+
+
+				if (copilotEnabled && CallSettingsManager.plainCallFollowUpEnabled
+					&& this.currentCall instanceof PlainCallJwt
+					&& this.currentCall.getJwtApiVersion() === '2.0.0'
+				)
+				{
+					this.currentCall.sendSwitchCallType(ConnectionType.server);
+					this.createBitrixCall().then(() => {
+						this.currentCall.toggleRecorderState();
+						this.currentCall.setVideoEnabled(false);
+						this.currentCall.setMuted(true);
+						this.bitrixCall.receiveVideo(true);
+						this.bitrixCall.receiveAudio(true);
+						this.bitrixCall.setVideoEnabled(true);
+						this.bitrixCall.setMuted(false);
+						this.bitrixCall.sendAudio(true);
+
+					})
+				}
+
+				if (this.currentCall instanceof BitrixCallJwt)
+				{
+					this.currentCall.toggleRecorderState();
+				}
+
+				this.runCopilotAction(copilotEnabled);
 
 				if (newCopilotState)
 				{
@@ -2198,6 +2394,26 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onRecordState(recordState)
 		{
+			if (
+				CallSettingsManager.plainCallCloudRecordingEnabled
+				&& this.currentCall instanceof PlainCallJwt
+				&& recordState === 'started'
+				&& this.currentCall.getJwtApiVersion() === '2.0.0'
+			)
+			{
+				this.createBitrixCall().then(()=>{
+					this.currentCall.toggleRecorderState();
+					this.currentCall.setVideoEnabled(false);
+					this.currentCall.setMuted(true);
+
+					this.bitrixCall.setVideoEnabled(true);
+					this.bitrixCall.setMuted(false);
+					this.bitrixCall.sendAudio(true);
+					this.bitrixCall.receiveVideo(true);
+					this.bitrixCall.receiveAudio(true);
+				})
+			}
+
 			if (this.callView)
 			{
 				this.callView.setRecordState(recordState);
@@ -2232,6 +2448,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				CallUtil.setUserData(e.userData);
 				this.callView.updateUserData(e.userData);
 				this.callView.addUser(e.userId);
+				this.onCallUserStateChanged(e.userId, BX.Call.UserState.Connected);
+
+				const currentUsers = this.getCallUsers(true).length;
+				this.callView.updateTotalUsersCount(currentUsers);
 			}
 		}
 
@@ -2329,9 +2549,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (this.callView)
 			{
 				this.callView.setVideoStream(env.userId, localStream, this.currentCall.isFrontCameraUsed());
+				const actualCameraState = Boolean(localStream && this.currentCall.isVideoEnabled());
+				this.callView.setCameraState(actualCameraState);
 			}
 
-			if (!(this.currentCall instanceof PlainCall))
+			if (!(this.currentCall instanceof PlainCall || this.currentCall instanceof PlainCallJwt))
 			{
 				this.stopLocalVideoStream();
 			}
@@ -2397,8 +2619,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.currentCall.log('Finishing one-to-one call, switching to group call');
 			console.log('Finishing one-to-one call, switching to group call')
 
-			this.callView.setVideoStream(userId, stream);
+			if (stream)
+			{
+				this.callView.setVideoStream(userId, stream);
+			}
+
 			this.childCall.off(BX.Call.Event.onStreamReceived, this.onChildCallFirstStreamHandler);
+			this.childCall.off(BX.Call.Event.onRemoteTrackAdded, this.onChildCallFirstStreamHandler);
 
 			this.removeCallEvents();
 			const oldCall = this.currentCall;
@@ -2429,7 +2656,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 
 			this.bindCallEvents();
-			// this.createVideoStrategy();
+
+			if (this.callView && this.currentCall && this.currentCall.associatedEntity) {
+				this.callView.updateTotalUsersCount(this.currentCall.associatedEntity.userCounter);
+			}
 		}
 
 		onCallTimeout()
@@ -2443,13 +2673,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			if (this.currentCall)
 			{
-				this.currentCall.decline();
+				this.currentCall.decline(603);
 			}
 			this.clearEverything();
 		}
 
 		onCallJoin(e)
 		{
+			this.checkActiveVpn();
+
 			if (!this.ignoreJoinAnalyticsEvent && !e.local)
 			{
 				this.sendJoinCallAnalytics(
@@ -2486,6 +2718,41 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			// remote answer, stop ringing and hide incoming cal notification
 			this.clearEverything();
+		}
+
+		showActiveCallNotification()
+		{
+			if (Application.getPlatform() === 'android' &&
+				this.currentCall &&
+				(this.currentCall instanceof PlainCall ||
+					this.currentCall instanceof BitrixCallJwt ||
+					this.currentCall instanceof PlainCallJwt))
+			{
+				const notificationParams = {
+					contentTitle: this.currentCall.associatedEntity.name,
+					hangupButtonText: BX.message('CALLMOBILE_ACTIVE_CALL_NOTIFICATION_HANGUP_BUTTON_TEXT'),
+					muteButtonText: BX.message('CALLMOBILE_ACTIVE_CALL_NOTIFICATION_MUTE_BUTTON_TEXT'),
+					unmuteButtonText: BX.message('CALLMOBILE_ACTIVE_CALL_NOTIFICATION_UNMUTE_BUTTON_TEXT'),
+					shouldDisplayMuteButton: true,
+					shouldDisplayHangupButton: true,
+					notificationChannelName: BX.message('CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CHANNEL_NAME'),
+					isMicrophoneEnabled: !this.currentCall.muted
+				};
+
+				if (this.currentCall.id)
+				{
+					notificationParams.contentText = BX.message('CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CONTENT_TEXT').replace('#CALL_NUMBER#', this.currentCall.id)
+				}
+
+				try
+				{
+					this.currentCall.showActiveCallNotification(notificationParams);
+				}
+				catch (e)
+				{
+					console.error("Unable to create notification");
+				}
+			}
 		}
 
 		onCallLeave(e)
@@ -2776,6 +3043,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onRoomSettingsChanged(params)
 		{
+			if (params?.notShowNotify)
+			{
+				return;
+			}
+
 			let typesOfMute = {'audio': 'mic', 'video': 'cam', 'screen_share': 'screenshare'};
 
 			let content = '';
@@ -2832,26 +3104,31 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onCallConnected()
 		{
-			const cameraEnabled = this.currentCall.isVideoEnabled();
-			const microphoneMuted = this.currentCall.isMuted();
-
-			if (!CallUtil.havePermissionToBroadcast('cam') && cameraEnabled)
+			if (!(this.currentCall instanceof PlainCall) && !(this.currentCall instanceof PlainCallJwt))
 			{
-				this.switchCameraDeviceState(false);
-				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT', {
-						'#NAME#': this.lastCalledChangeSettingsUserName,
-					}),
-				});
+				const cameraEnabled = this.currentCall.isVideoEnabled();
+				const microphoneMuted = this.currentCall.isMuted();
+
+				if (!CallUtil.havePermissionToBroadcast('cam') && cameraEnabled)
+				{
+					this.switchCameraDeviceState(false);
+					this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT', {
+							'#NAME#': this.lastCalledChangeSettingsUserName,
+						}),
+					});
+				}
+
+				if (!CallUtil.havePermissionToBroadcast('mic') && !microphoneMuted)
+				{
+					this.muteMicDevice(true);
+					this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
+							'#NAME#': this.lastCalledChangeSettingsUserName,
+						}),
+					});
+				}
 			}
 
-			if (!CallUtil.havePermissionToBroadcast('mic') && !microphoneMuted)
-			{
-				this.muteMicDevice(true);
-				this.__createHintControlToast({message: Loc.getMessage('CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT', {
-						'#NAME#': this.lastCalledChangeSettingsUserName,
-					}),
-				});
-			}
+			this.showActiveCallNotification();
 		}
 
 		onRecorderStatusChanged({ status, error })
@@ -2956,11 +3233,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			return false;
 		}
 
-		clearEverything()
+		clearEverything(force)
 		{
 			if (this.currentCall)
 			{
-				this.currentCall.hangup(true);
+				this.currentCall.hangup(force);
 				this.removeCallEvents();
 				this.currentCall = null;
 			}
@@ -2989,6 +3266,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.rootWidget = null;
 			}
 
+			if (this.callProvider === BX.Call.Provider.Plain)
+			{
+				this.callInviteTime = null;
+			}
+
 			this.stopLocalVideoStream(true);
 			this.localVideoRequired = true;
 			this.callView = null;
@@ -3003,13 +3285,21 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			device.setIdleTimerDisabled(false);
 			this.changeProximitySensorStatus(false);
 			this.callWithLegacyMobile = false;
-			this.callVideoEnabled = false;
 
 			this.startCallPromise = null;
 			this.localVideoPromise = null;
 
 			BX.postComponentEvent('CallEvents::viewClosed', []);
 			BX.postWebEvent('CallEvents::viewClosed', {});
+		}
+
+		runCopilotAction(copilotEnabled)
+		{
+			const action = copilotEnabled ? 'call.Track.start' : 'call.Track.stop';
+
+			return BX.ajax.runAction(action, {
+				data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid }
+			});
 		}
 
 		requestDeviceAccess(withVideo)

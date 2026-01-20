@@ -12,13 +12,8 @@ $selectorName = $arResult['userField']['FIELD_NAME'] . \Bitrix\Main\Security\Ran
 $fieldName = $arResult['fieldName'];
 
 $arResult['selectorName'] = $selectorName;
-$arResult['selectorNameJs'] = CUtil::JSEscape($selectorName);
 $arResult['fieldName'] = $fieldName;
 $arResult['fieldNameJs'] = CUtil::JSEscape($fieldName);
-
-$arResult['jsObject'] = 'BX.Intranet.UserFieldEmployee.instance(\'' . $arResult['selectorNameJs'] . '\')';
-
-$componentValue = [];
 
 $pathToUser = COption::GetOptionString(
 	'main',
@@ -37,10 +32,9 @@ $users = UserTable::getList([
 
 $i=0;
 $results = [];
+$itemIds = [];
 while($user = $users->fetch())
 {
-	$componentValue['U' . $user['ID']] = 'users';
-
 	$name = \CUser::FormatName(
 		\CSite::GetNameFormat(),
 		$user,
@@ -73,11 +67,13 @@ while($user = $users->fetch())
 		}
 	}
 
+	$itemIds[] = ['user', $user['ID']];
 	$results[] = $resultItem;
 }
 
+
 $arResult['value'] = $results;
-$arResult['componentValue'] = $componentValue;
+$arResult['itemIds'] = $itemIds;
 $arResult['isMultiple'] = ($arResult['userField']['MULTIPLE'] === 'Y');
 
 /**

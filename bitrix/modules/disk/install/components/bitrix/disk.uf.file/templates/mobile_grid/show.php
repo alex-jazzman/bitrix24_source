@@ -203,7 +203,7 @@ if (!empty($arResult['FILES']))
 				?>
 				<div class="ui-icon ui-icon-file-<?= mb_strtolower($file["EXTENSION"]) ?>"><i></i></div>
 				<a <?=$attributes
-					?>onclick="openDocument({'url': '<?=$file['DOWNLOAD_URL']?>', 'view_url': '<?=$file['VIEW_URL']?>', 'isBoard': '<?=$file['IS_BOARD']?>'}); return BX.PreventDefault(event);" <?php
+					?>onclick="openDocument({'url': '<?=$file['DOWNLOAD_URL']?>', 'view_url': '<?=$file['VIEW_URL']?>', 'isBoard': '<?=($file['IS_BOARD'] ?? '')?>'}); return BX.PreventDefault(event);" <?php
 					?>href="javascript:void(0);" <?php
 					?>class="post-item-attached-file-link"><?php
 						?><span><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?php

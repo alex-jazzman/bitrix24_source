@@ -11,8 +11,11 @@ export const Model = Object.freeze({
 	MessageStatus: 'message-status',
 	Notifications: 'notifications',
 	ResourceCreationWizard: 'resource-creation-wizard',
+	YandexIntegrationWizard: 'yandex-integration-wizard',
 	ResourceTypes: 'resourceTypes',
 	Resources: 'resources',
 	WaitList: 'wait-list',
 	Filter: 'filter',
+	SaleChannels: 'sale-channels',
+	SkuResourcesEditor: 'sku-resources-editor',
 });

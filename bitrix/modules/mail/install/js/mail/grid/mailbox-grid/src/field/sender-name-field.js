@@ -34,7 +34,7 @@ export class SenderNameField extends BaseField
 	#renderSenderName(): void
 	{
 		const senderNameContainer = Tag.render`
-			<div class="mailbox-grid_sender-name-container">
+			<div class="mailbox-grid_sender-name-container mailbox-grid_single-line_field">
 				${Text.encode(this.#senderName)}
 			</div>
 		`;

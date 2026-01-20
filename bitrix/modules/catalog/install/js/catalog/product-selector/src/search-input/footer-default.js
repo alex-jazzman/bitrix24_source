@@ -127,7 +127,7 @@ export class ProductSearchInputDefaultFooter extends DefaultFooter
 	{
 		return this.cache.remember('label', () => {
 			return Tag.render`
-				<span>
+				<span class="catalog-footers-label-container">
 					<span
 						onclick="${this.#handleClick.bind(this)}"
 						class="ui-selector-footer-link  ui-selector-footer-link-add"

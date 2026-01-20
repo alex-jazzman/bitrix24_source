@@ -24,7 +24,8 @@ if(in_array($request->get('senderId'), $senders))
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => [
 				'SENDER_ID' => $request->get('senderId')
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

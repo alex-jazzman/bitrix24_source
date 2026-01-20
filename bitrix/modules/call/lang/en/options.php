@@ -2,9 +2,9 @@
 $MESS["CALL_OPTIONS_CALL_SERVER_ENABLED_MSGVER_1"] = "Use Bitrix24 SFU cloud servers for video calls (requires valid license)";
 $MESS["CALL_OPTIONS_ERROR_PUBLIC_CHECK"] = "Error checking public address: #ERROR#";
 $MESS["CALL_OPTIONS_HEADER_REGISTRATION"] = "Registration";
-$MESS["CALL_OPTIONS_JWT_SCHEME_DISABLE_NOTE"] = "JWT schema disabled for video calls. Call management functions and Copilot Follow-Up are not available.";
+$MESS["CALL_OPTIONS_JWT_SCHEME_DISABLE_NOTE"] = "JWT schema disabled for video calls. Call management functions and CoPilot Follow-Up are not available.";
 $MESS["CALL_OPTIONS_JWT_SCHEME_ENABLE"] = "Use JWT schema for video calls";
-$MESS["CALL_OPTIONS_JWT_SCHEME_ENABLE_NOTE"] = "JWT schema enabled for video calls. Call management functions and Copilot Follow-Up are available.";
+$MESS["CALL_OPTIONS_JWT_SCHEME_ENABLE_NOTE"] = "JWT schema enabled for video calls. Call management functions and CoPilot Follow-Up are available.";
 $MESS["CALL_OPTIONS_JWT_SCHEME_ERROR"] = "Erorr registering your Bitrix24: #ERROR#";
 $MESS["CALL_OPTIONS_POPUP_REGISTER_SECRET_MESSAGE"] = "This will end all active video calls. Do you want to update the key?";
 $MESS["CALL_OPTIONS_POPUP_REGISTER_SECRET_OK_BTN"] = "Update";

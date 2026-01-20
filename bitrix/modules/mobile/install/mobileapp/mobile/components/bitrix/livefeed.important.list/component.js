@@ -1,6 +1,6 @@
-"use strict";
-(()=>{
+'use strict';
 
+(() => {
 class LivefeedImportantList
 {
 	constructor()
@@ -22,7 +22,7 @@ class LivefeedImportantList
 		}
 
 		this.getPage({
-			pageNumber: 1
+			pageNumber: 1,
 		});
 	}
 
@@ -31,11 +31,12 @@ class LivefeedImportantList
 		if (type === 'error')
 		{
 			livefeedImportantListWidget.setItems([ListHolder.EmptyResult], []);
+
 			return;
 		}
 
 		livefeedImportantListWidget.setSections([
-			{ id: this.sectionCode }
+			{ id: this.sectionCode },
 		]);
 
 		items = this.prepareItems(type, items);
@@ -48,6 +49,7 @@ class LivefeedImportantList
 
 				void UserProfile.open({
 					ownerId: user.id,
+					analyticsSection: 'livefeed_important_list',
 					widgetParams: {
 						name: user.title,
 					},
@@ -57,7 +59,7 @@ class LivefeedImportantList
 	}
 
 	getPage({
-		pageNumber
+		pageNumber,
 	})
 	{
 		BX.ajax.runAction('socialnetwork.api.livefeed.blogpost.important.getUsers', {
@@ -67,24 +69,23 @@ class LivefeedImportantList
 					NAME: 'BLOG_POST_IMPRTNT',
 					VALUE: 'Y',
 					AVATAR_SIZE: 100,
-					NAME_TEMPLATE: (typeof this.settings.nameTemplate !== 'undefined' ? this.settings.nameTemplate : '')
-				}
-			}}).then((response) => {
+					NAME_TEMPLATE: (typeof this.settings.nameTemplate === 'undefined' ? '' : this.settings.nameTemplate),
+				},
+			},
+		}).then((response) => {
 			if (response.status === 'error')
 			{
 				this.showResult('error', []);
 			}
 			else
-			{
-				if (typeof response.data.items !== 'undefined')
-				{
-					this.showResult('info', response.data.items);
-				}
-				else
+				if (typeof response.data.items === 'undefined')
 				{
 					this.showResult('error', []);
 				}
-			}
+				else
+				{
+					this.showResult('info', response.data.items);
+				}
 		}, (response) => {
 			this.showResult('error', []);
 		});
@@ -98,9 +99,9 @@ class LivefeedImportantList
 		)
 		{
 			const res = [];
-			for (var key in items)
+			for (const key in items)
 			{
-				if(!items.hasOwnProperty(key))
+				if (!items.hasOwnProperty(key))
 				{
 					continue;
 				}
@@ -109,20 +110,18 @@ class LivefeedImportantList
 			items = res;
 		}
 
-		return items.map(item => {
+		return items.map((item) => {
 			return {
 				sectionCode: this.sectionCode,
-				type: type,
+				type,
 				id: item.ID,
 				title: item.FULL_NAME,
 				imageUrl: (item.PHOTO_SRC.length > 0 ? item.PHOTO_SRC : ''),
-				height: 64
+				height: 64,
 			};
 		});
 	}
 }
 
 this.LivefeedImportantList = new LivefeedImportantList();
-
-
 })();

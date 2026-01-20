@@ -1,17 +1,15 @@
-import { Event } from 'main.core';
-
-import { ReactionsSelect, reactionCssClass as ReactionIconClass } from 'ui.reactions-select';
-import { Lottie } from 'ui.lottie';
+import { Reaction } from 'ui.reaction.item.vue';
 
 import { ReactionUser } from './user';
 import { AdditionalUsers } from './additional-users';
 
 const USERS_TO_SHOW = 5;
+const REACTION_SIZE = 16;
 const SHOW_USERS_DELAY = 500;
 
 // @vue/component
 export const ReactionItem = {
-	components: { ReactionUser, AdditionalUsers },
+	components: { ReactionUser, AdditionalUsers, Reaction },
 	props:
 	{
 		messageId: {
@@ -43,12 +41,8 @@ export const ReactionItem = {
 			required: false,
 			default: true,
 		},
-		contextDialogId: {
-			type: String,
-			required: true,
-		},
 	},
-	emits: ['click'],
+	emits: ['click', 'animationFinish'],
 	data(): Object
 	{
 		return {
@@ -57,55 +51,26 @@ export const ReactionItem = {
 	},
 	computed:
 	{
-		showUsers(): boolean
+		REACTION_SIZE: () => REACTION_SIZE,
+		needToShowUsers(): boolean
 		{
 			if (!this.showAvatars)
 			{
 				return false;
 			}
 			const userLimitIsNotReached = this.counter <= USERS_TO_SHOW;
+			// after reaction removal we do not receive all users data to show avatar list properly
 			const weHaveUsersData = this.counter === this.users.length;
 
 			return userLimitIsNotReached && weHaveUsersData;
 		},
 		preparedUsers(): number[]
 		{
-			return [...this.users].sort((a, b) => a - b).reverse();
+			return [...this.users].sort((a, b) => b - a);
 		},
-		reactionClass(): string
-		{
-			return ReactionIconClass[this.type];
-		},
-	},
-	mounted()
-	{
-		if (this.animate)
-		{
-			this.playAnimation();
-		}
 	},
 	methods:
 	{
-		playAnimation()
-		{
-			this.animation = Lottie.loadAnimation({
-				animationData: ReactionsSelect.getLottieAnimation(this.type),
-				container: this.$refs.reactionIcon,
-				loop: false,
-				autoplay: false,
-				renderer: 'svg',
-				rendererSettings: {
-					viewBoxOnly: true,
-				},
-			});
-			Event.bind(this.animation, 'complete', () => {
-				this.animation.destroy();
-			});
-			Event.bind(this.animation, 'destroy', () => {
-				this.animation = null;
-			});
-			this.animation.play();
-		},
 		startShowUsersTimer()
 		{
 			this.showUsersTimeout = setTimeout(() => {
@@ -119,7 +84,7 @@ export const ReactionItem = {
 		onClick()
 		{
 			this.clearShowUsersTimer();
-			this.$emit('click', { animateItemFunction: this.playAnimation });
+			this.$emit('click');
 		},
 	},
 	template: `
@@ -130,14 +95,20 @@ export const ReactionItem = {
 			class="bx-im-reaction-list__item"
 			:class="{'--selected': selected}"
 		>
-			<div class="bx-im-reaction-list__item_icon" :class="reactionClass" ref="reactionIcon"></div>
-			<div v-if="showUsers" class="bx-im-reaction-list__user_container" ref="users">
+			<div class="bx-im-reaction-list__item_icon">
+				<Reaction
+					:size="REACTION_SIZE"
+					:name="type"
+					:animate="animate"
+					@animationFinish="$emit('animationFinish')"
+				/>
+			</div>
+			<div v-if="needToShowUsers" class="bx-im-reaction-list__user_container" ref="users">
 				<TransitionGroup name="bx-im-reaction-list__user_animation">
 					<ReactionUser 
 						v-for="user in preparedUsers" 
-						:key="user" 
+						:key="type + user" 
 						:userId="user"
-						:contextDialogId="contextDialogId"
 					/>
 				</TransitionGroup>
 			</div>
@@ -146,7 +117,6 @@ export const ReactionItem = {
 				:show="showAdditionalUsers"
 				:bindElement="$refs['users'] || $refs['counter'] || {}"
 				:messageId="messageId"
-				:contextDialogId="contextDialogId"
 				:reaction="type"
 				@close="showAdditionalUsers = false"
 			/>

@@ -127,6 +127,7 @@ $MESS["IM_HISTORY_NEARBY"] = "next and previous messages";
 $MESS["IM_HISTORY_RELATED"] = "Show related";
 $MESS["IM_ICON_SET"] = "Icon sets";
 $MESS["IM_MARKET_BOTS"] = "Chat Bots";
+$MESS["IM_MARKET_BOTS_MSGVER_1"] = "Chat Bots";
 $MESS["IM_MARKET_IM"] = "Chat Apps";
 $MESS["IM_MENTION_MENU_NEW"] = "Mention user or public chat";
 $MESS["IM_MENU_ANSWER"] = "Reply";

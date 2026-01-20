@@ -1,0 +1,12 @@
+.ui-block-diagram-icon-divider {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0;
+	border: none;
+	width: 3px;
+}
+
+.ui-block-diagram-icon-divider .ui-block-diagram-icon-divider-line {
+	width: 1px;
+}

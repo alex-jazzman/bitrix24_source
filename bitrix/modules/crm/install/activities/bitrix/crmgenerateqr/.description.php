@@ -5,68 +5,76 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('CRMBPGQR_DESCR_NAME'),
-	'DESCRIPTION' => Loc::getMessage('CRMBPGQR_DESCR_DESCR_1_MSGVER_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'CrmGenerateQr',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
+$arActivityDescription = (new ActivityDescription(
+	name: Loc::getMessage('CRMBPGQR_DESCR_NAME'),
+	description: Loc::getMessage('CRMBPGQR_DESCR_DESCR_1_MSGVER_1'),
+	type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value, ActivityType::NODE->value ],
+))
+	->setCategory([
 		'ID' => 'other',
-	],
-	'FILTER' => [
+	])
+	->setClass('CrmGenerateQr')
+	->setJsClass('BizProcActivity')
+	->setFilter([
 		'INCLUDE' => [
-			['crm', 'CCrmDocumentDeal'],
-			['crm', 'CCrmDocumentLead'],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
+			[ 'crm', 'CCrmDocumentDeal' ],
+			[ 'crm', 'CCrmDocumentLead' ],
+			[ 'crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class ],
+			[ 'crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class ],
 		],
-	],
-	'ROBOT_SETTINGS' => [
+	])
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
-		'GROUP' => ['other'],
+		'GROUP' => [ 'other' ],
 		'ASSOCIATED_TRIGGERS' => [
 			'QR' => 1,
 		],
 		'SORT' => 3000,
 		'IS_SUPPORTING_ROBOT' => true,
-	],
-	'RETURN' => [
+	])
+	->setReturn([
 		'PageLink' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_PAGE_LINK'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_PAGE_LINK'),
 			'TYPE' => 'string',
 		],
 		'PageLinkBb' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_PAGE_LINK_BB'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_PAGE_LINK_BB'),
 			'TYPE' => 'string',
 		],
 		'PageLinkHtml' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_PAGE_LINK_HTML'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_PAGE_LINK_HTML'),
 			'TYPE' => 'string',
 		],
 		'QrLink' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_QR_LINK'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_QR_LINK'),
 			'TYPE' => 'string',
 		],
 		'QrLinkBb' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_QR_LINK_BB'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_QR_LINK_BB'),
 			'TYPE' => 'string',
 		],
 		'QrLinkHtml' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_QR_LINK_HTML'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_QR_LINK_HTML'),
 			'TYPE' => 'string',
 		],
 		'QrImgHtml' => [
-			'NAME' => GetMessage('CRMBPGQR_RETURN_QR_IMG'),
+			'NAME' => Loc::getMessage('CRMBPGQR_RETURN_QR_IMG'),
 			'TYPE' => 'string',
 		],
-	],
-];
+	])
+	->setGroups([
+		ActivityGroup::OTHER_OPERATIONS->value,
+		ActivityGroup::LEAD->value,
+	])
+	->setColorIndex(ActivityColorIndex::GREY->value)
+	->setIcon(Outline::QR_CODE->name)
+	->toArray()
+;
 
-//TODO: temporary, skip version control
-if (!file_exists(\Bitrix\Main\Application::getDocumentRoot() . '/pub/crm/qr/index.php'))
-{
-	$arActivityDescription['EXCLUDED'] = true;
-}

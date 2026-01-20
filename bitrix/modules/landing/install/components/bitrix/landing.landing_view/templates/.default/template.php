@@ -114,11 +114,19 @@ if (!$isKnowledge)
 // region analytic
 if ($request->get('landing_mode') === 'edit')
 {
+	$tools = $isFormEditor
+		? Metrika\Tools::CrmForms
+		: Metrika\Tools::getBySiteType($arParams['TYPE'])
+	;
 	$category = $isFormEditor
 		? Metrika\Categories::CrmForms
-		:  Metrika\Categories::getBySiteType($arParams['TYPE'])
+		: Metrika\Categories::getBySiteType($arParams['TYPE'])
 	;
-	$metrika = new Metrika\Metrika($category, Metrika\Events::openEditor);
+	$metrika = new Metrika\Metrika(
+		$category,
+		Metrika\Events::openEditor,
+		$tools,
+	);
 	if ($generationId)
 	{
 		$metrika

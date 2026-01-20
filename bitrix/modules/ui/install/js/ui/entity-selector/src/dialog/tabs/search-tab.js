@@ -324,6 +324,7 @@ export default class SearchTab extends Tab
 					const matchResults = SearchEngine.matchItems(
 						[...items.values()],
 						this.getLastSearchQuery(),
+						{ matchAll: true },
 					);
 					this.appendResults(matchResults);
 

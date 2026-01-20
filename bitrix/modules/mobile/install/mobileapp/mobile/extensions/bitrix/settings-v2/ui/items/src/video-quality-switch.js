@@ -57,9 +57,8 @@ jn.define('settings-v2/ui/items/src/video-quality-switch', (require, exports, mo
 		{
 			const selected = this.state.selectedQuality === qualityType;
 
-			return Card(
+			return View(
 				{
-					excludePaddingSide: { all: true },
 					onClick: () => this.onChange(qualityType),
 					testId: this.getTestId('quality-main-card'),
 				},
@@ -93,7 +92,7 @@ jn.define('settings-v2/ui/items/src/video-quality-switch', (require, exports, mo
 					style: {
 						width: 41,
 						height: 41,
-						marginHorizontal: Indent.XL3.toNumber(),
+						marginHorizontal: Indent.XL2.toNumber(),
 						marginVertical: Indent.S.toNumber(),
 					},
 					svg: {

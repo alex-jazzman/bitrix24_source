@@ -1,10 +1,12 @@
 import { BaseField } from './base-field';
 import { Loc, Tag, Dom } from 'main.core';
 import { Button, AirButtonStyle } from 'ui.buttons';
+import { sendData as analyticsSendData } from 'ui.analytics';
 
 type ActionFieldParams = {
 	url: string;
 	hasError: ?boolean,
+	canEdit: ?boolean,
 }
 
 export class ActionField extends BaseField
@@ -16,6 +18,8 @@ export class ActionField extends BaseField
 		`;
 
 		let button = null;
+		let buttonNode = null;
+		const state = this.#getState(params.canEdit ?? false);
 		if (params.hasError)
 		{
 			button = new Button({
@@ -24,16 +28,22 @@ export class ActionField extends BaseField
 				useAirDesign: true,
 				noCaps: true,
 				wide: false,
+				state,
 				onclick: () => {
-					this.#handleClick(params.url);
+					if (params.canEdit)
+					{
+						const source = 'error_button';
+						this.#sendAnalytics(source);
+
+						this.#handleClick(params.url);
+					}
 				},
 				className: 'mailbox-grid_action-button',
 				dataset: { id: 'mailbox-grid_action-button-error-action' },
 			});
 
-			const buttonNode = button.render();
+			buttonNode = button.render();
 			Dom.append(buttonNode, actionContainer);
-			Dom.append(this.#getErrorMessage(), actionContainer);
 		}
 		else
 		{
@@ -41,21 +51,46 @@ export class ActionField extends BaseField
 				size: Button.Size.MEDIUM,
 				text: Loc.getMessage('MAIL_MAILBOX_LIST_ACTION_BUTTON_TITLE'),
 				useAirDesign: true,
-				style: AirButtonStyle.TINTED,
+				style: AirButtonStyle.OUTLINE_NO_ACCENT,
 				noCaps: true,
 				wide: false,
+				state,
 				onclick: () => {
-					this.#handleClick(params.url);
+					if (params.canEdit)
+					{
+						const source = 'edit_button';
+						this.#sendAnalytics(source);
+
+						this.#handleClick(params.url);
+					}
 				},
 				className: 'mailbox-grid_action-button',
 				dataset: { id: 'mailbox-grid_action-button-default-action' },
 			});
 
-			const buttonNode = button.render();
+			buttonNode = button.render();
 			Dom.append(buttonNode, actionContainer);
 		}
 
 		this.appendToFieldNode(actionContainer);
+		if (!params.canEdit)
+		{
+			Dom.attr(buttonNode, {
+				'data-hint': Loc.getMessage('MAIL_MAILBOX_LIST_ACTION_BUTTON_ACCESS_LOCK'),
+				'data-hint-no-icon': 'true',
+			});
+			BX.UI.Hint.init(this.getFieldNode());
+		}
+	}
+
+	#sendAnalytics(source: string): void
+	{
+		analyticsSendData({
+			tool: 'mail',
+			event: 'mailbox_grid_edit',
+			category: 'mail_mass_ops',
+			c_element: source,
+		});
 	}
 
 	#handleClick(url: string): void
@@ -63,13 +98,8 @@ export class ActionField extends BaseField
 		BX.SidePanel.Instance.open(url);
 	}
 
-	#getErrorMessage(): HTMLElement
+	#getState(canEdit: boolean): ?string
 	{
-		return Tag.render`
-			<span class="mailbox-grid_action-field-error-container">
-				<div class="mailbox-grid_action-field-error-icon ui-icon-set --warning-alarm"></div>
-				<span>${Loc.getMessage('MAIL_MAILBOX_LIST_ACTION_BUTTON_ERROR_MESSAGE')}</span>
-			</span>
-		`;
+		return canEdit ? null : Button.State.DISABLED;
 	}
 }

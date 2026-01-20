@@ -18,6 +18,8 @@ jn.define('intranet/department-structure/src/company', (require, exports, module
 	 * @property {number} id
 	 * @property {string} name
 	 * @property {boolean} [chevron = false]
+	 * @property {boolean} [isRoot]
+	 * @property {function} [onClick]
 
 	 * @class Company
 	 */
@@ -41,6 +43,7 @@ jn.define('intranet/department-structure/src/company', (require, exports, module
 					style: {
 						marginBottom: Indent.XL.toNumber(),
 					},
+					onClick: this.#onClick,
 				},
 				View(
 					{
@@ -76,6 +79,11 @@ jn.define('intranet/department-structure/src/company', (require, exports, module
 				),
 			);
 		}
+
+		#onClick = () => {
+			const { id, name, isRoot, onClick } = this.props;
+			onClick?.({ departmentId: id, departmentName: name, isRoot });
+		};
 
 		#renderChevron()
 		{

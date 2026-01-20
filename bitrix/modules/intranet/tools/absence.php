@@ -68,7 +68,9 @@ function AddAbsence($arFields)
 				"PROPERTY_VALUES"=> $PROP,
 				"ACTIVE_FROM" => $arFields["ACTIVE_FROM"],
 				"ACTIVE_TO" => $arFields["ACTIVE_TO"],
-				"IBLOCK_ID" => $iblockID
+				"IBLOCK_ID" => $iblockID,
+				"ABSENCE_TYPE" => $arFields["ABSENCE_TYPE"],
+				"USER_ID" => $arFields["USER_ID"],
 			);
 
 			$ID = $element->Add($arNewFields);

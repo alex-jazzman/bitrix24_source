@@ -1,0 +1,21 @@
+.booking-services-settings-popup__search-input_wrapper {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	background: var(--ui-color-on-primary-alt);
+	border: 1px solid var(--ui-color-base-10);
+	border-radius: var(--ui-border-radius-sm);
+	box-sizing: border-box;
+	padding: 12px 9px;
+	width: 100%;
+}
+
+.booking-services-settings-popup__search-input {
+	font-size: var(--ui-size-sm2);
+	border: unset;
+	width: 100%;
+}
+
+.booking-services-settings-popup__search-input::placeholder {
+	color: rgba(168, 173, 180, 1);
+}

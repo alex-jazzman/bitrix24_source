@@ -1609,12 +1609,26 @@
 
 			if (section.warning)
 			{
-				innerContent.appendChild(BX.create('div', {
-					props: {
-						className: 'ui-alert ui-alert-warning'
-					},
-					text: section.warning
-				}));
+				if (BX.Type.isArray(section.warning))
+				{
+					section.warning.forEach((warningElement) => {
+						innerContent.appendChild(BX.create('div', {
+							props: {
+								className: 'ui-alert ui-alert-warning',
+							},
+							text: warningElement,
+						}));
+					});
+				}
+				else
+				{
+					innerContent.appendChild(BX.create('div', {
+						props: {
+							className: 'ui-alert ui-alert-warning',
+						},
+						text: section.warning,
+					}));
+				}
 			}
 
 			fields.forEach(function (field) {

@@ -4,21 +4,31 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Update\Stepper;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
+use Bitrix\Tasks\Promotion\TasksNewCard;
+use Bitrix\Tasks\Promotion\TasksNewChatButton;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Update\SortConverter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
-use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Util\View;
+use Bitrix\Tasks\V2\FormV2Feature;
 
 /**
  * @global CMain $APPLICATION
  * @var array $arResult
+ * @var array $arParams
+ * @var CBitrixComponent $component
  */
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -34,6 +44,8 @@ Extension::load([
 ]);
 
 $showViewMode = (isset($arParams['SHOW_VIEW_MODE']) && $arParams['SHOW_VIEW_MODE'] === 'Y');
+$showNavigation = $showViewMode && !($arParams['PROJECT_VIEW'] === 'Y' && !$arParams['GROUP_ID']);
+$showChatButton = FormV2Feature::isOn() && Option::get('im', 'is_tasks_recent_list_available') === 'Y' && $showNavigation;
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 $isExtranetUser = (bool)Bitrix\Tasks\Integration\Extranet\User::isExtranet();
 if ($isBitrix24Template)
@@ -41,12 +53,50 @@ if ($isBitrix24Template)
 	$this->SetViewTarget("below_pagetitle");
 }
 
+if (isset($arParams['GROUP_ID']) && (int)$arParams['GROUP_ID'] > 0)
+{
+	$context = SliderFactory::GROUP_CONTEXT;
+	$ownerId = (int)$arParams['GROUP_ID'];
+}
+else
+{
+	$context = SliderFactory::PERSONAL_CONTEXT;
+	$ownerId = (int)$arParams['OWNER_ID'];
+}
+
+$pathToList = (new TaskPathMaker(
+	entityId: 0,
+	ownerId: $ownerId,
+	context: $context,
+))->makeEntitiesListPath();
+
+$tasksChatUri = null;
+if ($showChatButton)
+{
+	$tasksChatUri = (new \Bitrix\Main\Web\Uri($pathToList))->addParams([
+		View::STATE_PARAMETER => View::CHAT->value,
+	])->getUri();
+}
+
+
+$showNewTaskCardPopup = $showNavigation && (new TasksNewCard())->shouldShow((int)$arResult['USER_ID']);
+if ($showNewTaskCardPopup)
+{
+	Extension::load(['tasks.v2.component.onboarding.new-card-popup']);
+}
+$showNewTaskChatButtonPopup = $showChatButton && (new TasksNewChatButton())->shouldShow((int)$arResult['USER_ID']);
+if ($showNewTaskChatButtonPopup)
+{
+	Extension::load(['tasks.v2.component.onboarding.new-chat-button-popup']);
+}
+
 ?>
 
 <div class="ui-actions-bar task-interface-toolbar">
-<?php if ($showViewMode && !($arParams['PROJECT_VIEW'] === 'Y' && !$arParams['GROUP_ID'])):?>
+<?php if ($showNavigation):?>
 	<?php
 		$template = ($arParams['GROUP_ID'] > 0 ? 'PATH_TO_GROUP_TASKS' : 'PATH_TO_USER_TASKS');
+
 		$link = CComponentEngine::makePathFromTemplate($template, [
 			'user_id' => $arParams['OWNER_ID'],
 			'group_id' => $arParams['GROUP_ID'],
@@ -58,17 +108,17 @@ if ($isBitrix24Template)
 		{
 			$item = [];
 			// kanban only for group
-			if ((int) $arParams['GROUP_ID'] <= 0 && $viewKey == 'VIEW_MODE_KANBAN')
+			if ((int)$arParams['GROUP_ID'] <= 0 && $viewKey === 'VIEW_MODE_KANBAN')
 			{
 				continue;
 			}
 
 			$active = array_key_exists('SELECTED', $view) && $view['SELECTED'] === 'Y';
 			$state = \Bitrix\Tasks\Ui\Filter\Task::getListStateInstance()->getState();
-			$url = '?F_STATE=sV'.CTaskListState::encodeState($view['ID']);
+			$url = $pathToList . '?F_STATE=sV' . CTaskListState::encodeState($view['ID']);
 			if (isset($_REQUEST['IFRAME']))
 			{
-				$url .= '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+				$url .= '&IFRAME='.($_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N');
 			}
 
 			$item['active'] = (bool)$active;
@@ -80,6 +130,10 @@ if ($isBitrix24Template)
 	?>
 	<div class="ui-actions-bar__panel" id="tasks-nav-panel"></div>
 <?php endif?>
+
+<?php if ($showChatButton):?>
+	<div class="ui-actions-bar__panel" id="tasks-chat-button"></div>
+<?php endif; ?>
 
 <?php if (!$isBitrix24Template):?>
 	<div class="tasks-interface-toolbar-container">
@@ -97,8 +151,9 @@ if ($isBitrix24Template)
 				'GRID_ID' => $arParams['GRID_ID'],
 				'COUNTERS' => ($arParams['COUNTERS'] ?? []),
 				'FILTER_FIELD' => $arParams['FILTER_FIELD'],
+				'TASKS_CHAT_URI' => $tasksChatUri,
 			],
-			$component
+			$component,
 		);
 	}
 	?>
@@ -130,13 +185,13 @@ if ($isBitrix24Template)
 
 				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0, loader: 'bizproc:automation-loader'});";
 
-				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
+				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : 'ui-btn-icon-robots');
 				$uiClass = 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
 				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
 
-				?><button class="<?=$uiClass?> <?=$lockClass?> task-interface-btn-toolbar --robots --small ui-btn-icon-robots"
+				?><button class="<?=$uiClass?> <?=$lockClass?> task-interface-btn-toolbar --robots --small"
 					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
-					<span class="ui-btn-text"><?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?></span>
+					<span class="ui-btn-text"><?=Loc::getMessage('TASKS_SWITCHER_ITEM_ROBOTS')?></span>
 				</button><?php
 			}
 
@@ -181,12 +236,12 @@ if ($isBitrix24Template)
 ?>
 
 <div class="tasks-interface-toolbar__steps"
-	 style="<?= (isset($state['VIEW_SELECTED']['CODENAME']) && $state['VIEW_SELECTED']['CODENAME'] == 'VIEW_MODE_GANTT')
+	 style="<?= (isset($state['VIEW_SELECTED']['CODENAME']) && $state['VIEW_SELECTED']['CODENAME'] === 'VIEW_MODE_GANTT')
 		 ? 'margin:-15px -15px 15px  -15px'
 		 : ''?>"><?php
 		echo Stepper::getHtml(
 			['tasks' => 'Bitrix\Tasks\Update\FullTasksIndexer'],
-			GetMessage('TASKS_FULL_TASK_INDEXING_TITLE')
+			Loc::getMessage('TASKS_FULL_TASK_INDEXING_TITLE')
 		);
 		echo Stepper::getHtml([
 			'tasks' => [
@@ -199,10 +254,10 @@ if ($isBitrix24Template)
 		<?php \CJSCore::Init(array('update_stepper')); ?>
 		<div class="main-stepper-block">
 			<div class="main-stepper main-stepper-show" >
-				<div class="main-stepper-info"><?= GetMessage('TASKS_FULL_TASK_INDEXING_TITLE'); ?></div>
+				<div class="main-stepper-info"><?= Loc::getMessage('TASKS_FULL_TASK_INDEXING_TITLE'); ?></div>
 				<div class="main-stepper-inner">
 					<div class="main-stepper-bar">
-						<div class="main-stepper-bar-line" style="width:0%;"></div>
+						<div class="main-stepper-bar-line" style="width: 0;"></div>
 					</div>
 					<div class="main-stepper-error-text"></div>
 				</div>
@@ -245,21 +300,21 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 			});
 		}
 
-		<?if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS']):?>
-			var targetElement = BX('tasksSimpleCounters');
-			if (targetElement)
+		<?php if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS']):?>
+		const targetElement = BX('tasksSimpleCounters');
+		if (targetElement)
 			{
-				var spotlight = new BX.SpotLight({
+				const spotlight = new BX.SpotLight({
 					id: 'tasks_simple_counters',
 					targetElement: targetElement,
-					content: '<?= \CUtil::jsEscape(GetMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_MSGVER_1'))?>',
+					content: '<?= \CUtil::jsEscape(Loc::getMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_MSGVER_1'))?>',
 					targetVertex: 'middle-left',
 					left: 24,
 					autoSave: true,
-					lightMode: true
+					lightMode: true,
 				});
 				spotlight.show();
-				spotlight.getPopup().getButtons()[0].setName('<?=GetMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_BUTTON')?>');
+				spotlight.getPopup().getButtons()[0].setName('<?=Loc::getMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_BUTTON')?>');
 				BX.addCustomEvent(spotlight, 'spotLightOk', function() {
 					if (top.BX.Helper)
 					{
@@ -273,17 +328,16 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 			BX.UI.Hint.init(BX('tasksCommentsReadAll'));
 		<?php endif;?>
 
-		var toolbarCounters = document.querySelector('.task-interface-toolbar');
-		if(toolbarCounters)
+		const toolbarCounters = document.querySelector('.task-interface-toolbar');
+
+		if (toolbarCounters)
 		{
-			var toolbarCountersItems = toolbarCounters.querySelectorAll('.ui-actions-bar__panel');
-			var toolbarCountersRobots = toolbarCounters.querySelector('.ui-actions-bar__buttons');
+			const toolbarCountersRobots = toolbarCounters.querySelector('.ui-actions-bar__buttons');
 			if(toolbarCountersRobots)
 			{
 				toolbarCountersRobots.classList.add('task-interface-toolbar--item--3');
 			}
 		}
-
 
 		if (document.location.hash === '#robots')
 		{
@@ -299,7 +353,7 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 							steps: [
 								{
 									target: robotsBtn,
-									title: '<?= GetMessageJs('TASKS_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT') ?>',
+									title: '<?= CUtil::JSEscape(Loc::getMessage('TASKS_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT')) ?>',
 									text: '',
 								}
 							],
@@ -313,5 +367,13 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 				}
 			);
 		}
+
+		<?php if ($showNewTaskCardPopup): ?>
+			BX.Tasks.V2.Component.Onboarding.NewCardPopup.show();
+		<?php endif; ?>
+
+		<?php if ($showNewTaskChatButtonPopup): ?>
+			BX.Tasks.V2.Component.Onboarding.NewChatButtonPopup.show();
+		<?php endif; ?>
 	});
 </script>

@@ -1,4 +1,10 @@
 <?php
+
+if (isset($_GET['action']) && $_GET['action'] === 'downloadFile')
+{
+	require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/services/quickway.php');
+}
+
 define("NOT_CHECK_PERMISSIONS", true);
 define("EXTRANET_NO_REDIRECT", true);
 define("STOP_STATISTICS", true);

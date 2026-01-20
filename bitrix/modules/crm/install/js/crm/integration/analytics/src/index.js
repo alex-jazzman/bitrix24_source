@@ -8,6 +8,18 @@ import { EditEvent as EditTypeEvent } from './builders/automation/type/edit-even
 import { CloseEvent as BlockCloseEvent } from './builders/block/close-event';
 import { EnableEvent as BlockEnableEvent } from './builders/block/enable-event';
 import { LinkEvent as BlockLinkEvent } from './builders/block/link-event';
+
+import { ConnectEvent as CommunicationChannelConnectEventBuilder } from './builders/communication/channel/connect-event';
+
+import { DeleteEvent as CommunicationDeleteEvent } from './builders/communication/delete-event';
+import { CancelEvent as CommunicationEditorCancelEventBuilder } from './builders/communication/editor/cancel-event';
+import { CopilotEvent as CommunicationEditorCopilotEventBuilder } from './builders/communication/editor/copilot-event';
+import { InteractionEvent as CommunicationEditorInteractionEventBuilder } from './builders/communication/editor/interaction-event';
+import { ResendEvent as CommunicationEditorResendEventBuilder } from './builders/communication/editor/resend-event';
+import { SendEvent as CommunicationEditorSendEventBuilder } from './builders/communication/editor/send-event';
+import { ViewEvent as CommunicationEditorViewEventBuilder } from './builders/communication/editor/view-event';
+import { FormEvent as CommunicationFormEvent } from './builders/communication/form-event';
+import { SendEvent as CommunicationSendEvent } from './builders/communication/send-event';
 import { AddEvent as EntityAddEventBuilder } from './builders/entity/add-event';
 import { ChangeStageEvent as EntityChangeStageEventBuilder } from './builders/entity/change-stage-event';
 import { CloseEvent as EntityCloseEventBuilder } from './builders/entity/close-event';
@@ -21,20 +33,23 @@ import { CancelEvent as RepeatSaleSegmentCancelBuilder } from './builders/repeat
 import { EditEvent as RepeatSaleSegmentEditBuilder } from './builders/repeat-sale/segment/edit-event';
 import { ViewEvent as RepeatSaleSegmentViewBuilder } from './builders/repeat-sale/segment/view-event';
 
-import { DeleteEvent as CommunicationDeleteEvent } from './builders/communication/delete-event';
-import { FormEvent as CommunicationFormEvent } from './builders/communication/form-event';
-import { SendEvent as CommunicationSendEvent } from './builders/communication/send-event';
-
 import { Dictionary } from './dictionary';
 import { getCrmMode } from './helpers';
 
 import type {
 	AICallParsingEvent,
+	CommunicationChannelConnectEvent,
+	CommunicationEditorCancelEvent,
+	CommunicationEditorCopilotEvent,
+	CommunicationEditorInteractionEvent,
+	CommunicationEditorResendEvent,
+	CommunicationEditorSendEvent,
+	CommunicationEditorViewEvent,
 	EntityAddEvent,
+	EntityChangeStageEvent,
 	EntityCloseEvent,
 	EntityConvertBatchEvent,
 	EntityConvertEvent,
-	EntityChangeStageEvent,
 	EventStatus,
 	RepeatSaleBannerClickEvent,
 	RepeatSaleBannerCloseEvent,
@@ -50,7 +65,7 @@ const Builder = Object.freeze({
 		ConvertEvent: EntityConvertEventBuilder,
 		ConvertBatchEvent: EntityConvertBatchEventBuilder,
 		CloseEvent: EntityCloseEventBuilder,
-		ChangeStageEvent: EntityChangeStageEventBuilder
+		ChangeStageEvent: EntityChangeStageEventBuilder,
 	},
 	AI: {
 		CallParsingEvent: AICallParsingEventBuilder,
@@ -76,6 +91,17 @@ const Builder = Object.freeze({
 		DeleteEvent: CommunicationDeleteEvent,
 		FormEvent: CommunicationFormEvent,
 		SendEvent: CommunicationSendEvent,
+		Channel: {
+			ConnectEvent: CommunicationChannelConnectEventBuilder,
+		},
+		Editor: {
+			ViewEvent: CommunicationEditorViewEventBuilder,
+			InteractionEvent: CommunicationEditorInteractionEventBuilder,
+			CopilotEvent: CommunicationEditorCopilotEventBuilder,
+			SendEvent: CommunicationEditorSendEventBuilder,
+			ResendEvent: CommunicationEditorResendEventBuilder,
+			CancelEvent: CommunicationEditorCancelEventBuilder,
+		},
 	},
 	RepeatSale: {
 		Banner: {
@@ -111,4 +137,11 @@ export type {
 	RepeatSaleSegmentViewEvent,
 	RepeatSaleSegmentCancelEvent,
 	RepeatSaleSegmentEditEvent,
+	CommunicationChannelConnectEvent,
+	CommunicationEditorInteractionEvent,
+	CommunicationEditorCopilotEvent,
+	CommunicationEditorSendEvent,
+	CommunicationEditorResendEvent,
+	CommunicationEditorCancelEvent,
+	CommunicationEditorViewEvent,
 };

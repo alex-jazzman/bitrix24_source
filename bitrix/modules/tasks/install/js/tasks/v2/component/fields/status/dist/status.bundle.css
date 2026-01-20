@@ -1,9 +1,20 @@
 .tasks-field-status {
 	display: flex;
 	align-items: center;
-	max-width: -webkit-max-content;
-	max-width: max-content;
+	justify-content: space-between;
+	width: 100%;
 	cursor: default;
+}
+
+.tasks-field-status-info {
+	display: flex;
+	align-items: center;
+	cursor: default;
+}
+
+.tasks-field-status-control {
+	display: flex;
+	align-items: center;
 }
 
 .tasks-field-status-icon {
@@ -15,4 +26,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-stack-xs);
+}
+
+.tasks-field-status-control-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }

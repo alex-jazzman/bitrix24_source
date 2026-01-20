@@ -32,8 +32,7 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 		this.mobile = new Mobile(this.userId, modelOptions);
 		this.recovery = new RecoveryCodes(this.userId, modelOptions);
 
-		var tmp = null;
-		tmp = BX(this._options.ui.deactivateButtonId);
+		var tmp = BX(this._options.ui.deactivateButtonId);
 		if (tmp)
 		{
 			this.initializeDeactivatePopup(tmp, 'deactivate');
@@ -148,10 +147,10 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 		this.initialized = false;
 		this.popup = null;
 		this.container = null;
-		this.errorContainer = null;
 		this.userId = userId;
 		this.showButton = BX(this._options.ui.showButtonId);
 		this.type = null;
+		this.deviceInfo = null;
 		this.typeMenu = [];
 
 		BX.bind(
@@ -189,21 +188,35 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 		this.initialized = true;
 		this.container = BX(this._options.ui.id);
 		this.popup = this.getPopup();
-		this.errorContainer = this.container.querySelector('[data-role="error-container"]');
 
 		for(var type in this._options.availableTypes)
 		{
 			if (!this._options.availableTypes.hasOwnProperty(type))
+			{
 				continue;
+			}
+
+			if (!this._options.mobile && this._options.availableTypes[type]['mobile_only'])
+			{
+				continue;
+			}
 
 			this.typeMenu.push({
 				'TEXT': this._options.availableTypes[type].title,
 				'ONCLICK': (function onType(type, isTwoCodeRequired) {
-					if (isTwoCodeRequired === void 0)
-						isTwoCodeRequired = true;
-
-					this.type = type;
-					this.onShow(true, isTwoCodeRequired);
+					if (type === 'push')
+					{
+						this.mobilePush.show();
+					}
+					else
+					{
+						this.type = type;
+						if (isTwoCodeRequired === void 0)
+						{
+							isTwoCodeRequired = true;
+						}
+						this.onShow(true, isTwoCodeRequired);
+					}
 				}).bind(this, this._options.availableTypes[type].type, this._options.availableTypes[type]['required_two_code'])
 			});
 		}
@@ -321,36 +334,15 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 
 	BaseModel.prototype.showError = function(errorMessage)
 	{
-		if (!this.errorContainer)
-			return;
-
-		var errorElement = BX.create('div', {
-			'children': [
-				BX.create('div', {
-					'text': BX.message('SEC_OTP_ERROR_TITLE')
-				}),
-				BX.create('div', {
-					'html': errorMessage
-				})
-			],
-			'attrs': {'className': "bx-notice error"}
-		});
-
-		this.errorContainer.appendChild(errorElement);
-	};
-
-	BaseModel.prototype.clearErrors = function()
-	{
-		if (!this.errorContainer)
-			return;
-
-		BX.cleanNode(this.errorContainer);
+		BX.UI.Dialogs.MessageBox.alert(
+			'<span class="otp-error-wrapper">' + errorMessage + '</span>',
+			BX.message('SEC_OTP_ERROR_TITLE')
+		);
 	};
 
 	BaseModel.prototype.onCheck = function(sync1, sync2)
 	{
-		this.clearErrors();
-		this.activate(sync1.value, sync2? sync2.value: '');
+		this.activate(sync1.value, sync2 ? sync2.value : '');
 	};
 
 	BaseModel.prototype.activate = function(sync1, sync2)
@@ -359,6 +351,7 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 			'secret': this.getSecret(),
 			'type': this.getType(),
 			'startTimestamp': this.getStartTimestamp(),
+			'deviceInfo': this.deviceInfo,
 			'sync1': sync1,
 			'sync2': sync2
 		};
@@ -466,11 +459,14 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 
 	var Mobile = function(userId, options)
 	{
+		this.mobilePush = new MobilePush(userId, options);
+
 		var defaults = {
 			'ui': {
 				'showButtonId': 'otp-connect-mobile',
 				'id': 'otp-mobile-popup'
-			}
+			},
+			'mobile': true
 		};
 		options = options || {};
 		options = mergeObjects(defaults, options);
@@ -494,7 +490,7 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 		}
 
 		this.sendRequest(
-			'get_vew_params',
+			'get_view_params',
 			{'type': this.type || ''},
 			(function onGetParams(response)
 			{
@@ -582,6 +578,101 @@ BX.Security.UserEdit.Otp = (function getUserOtp(BX)
 				window.location.replace(this._options.successfulUrl);
 			}).bind(this)
 		);
+	};
+
+	/* -----------/Mobile push popup/--------------*/
+
+	var MobilePush = function(userId, options)
+	{
+		var defaults = {
+			'ui': {
+				'id': 'otp-mobile-push-popup'
+			}
+		};
+		options = options || {};
+		options = mergeObjects(defaults, options);
+
+		BaseModel.prototype.constructor.call(this, userId, options);
+
+		this.type = 'push';
+	};
+
+	BX.extend(MobilePush, Mobile);
+
+	MobilePush.prototype.onShow = function()
+	{
+		BX.removeClass(this.loaderIconElement, 'ui-icon-set --check');
+		this.loader.show();
+		this.loaderTextElement.textContent = BX.message('SEC_OTP_WAITING_INSTALL');
+
+		this.sendRequest(
+			'get_push_params',
+			{},
+			(function onGetParams(response)
+			{
+				this.drawQrCode(this.qrCodeElement, response.data.mobileAppUri);
+
+				if (response.data.pullConfig)
+				{
+					var Pull = new BX.PullClient();
+					Pull.subscribe({
+						moduleId: 'security',
+						command: 'pushOtpCode',
+						callback: function (params) {
+							this.secret = params.secret;
+							this.deviceInfo = params.device;
+
+							this.loaderTextElement.textContent = BX.message('SEC_OTP_PUSH_SAVING');
+
+							this.activate(params.code);
+						}.bind(this)
+					});
+					Pull.start(response.data.pullConfig);
+				}
+
+				this.showPopup();
+			}).bind(this)
+		);
+	};
+
+	MobilePush.prototype.onInitialize = function()
+	{
+		this.qrCodeElement = this.container.querySelector('[data-role="qr-code-block"]');
+		this.loaderIconElement = this.container.querySelector('[data-role="otp-icon-loader"]');
+		this.loaderTextElement = this.container.querySelector('[data-role="otp-text-loader"]');
+
+		this.loader = new BX.Loader({
+			target: this.loaderIconElement,
+			size: 30,
+			mode: 'inline',
+			color: '#2675d7'
+		});
+
+		this.popup.ClearButtons();
+		this.popup.SetButtons([
+			BX.CDialog.btnCancel
+		]);
+	}
+
+	MobilePush.prototype.showError = function()
+	{
+		const messageBox = BX.UI.Dialogs.MessageBox.alert(
+			'<span class="otp-error-wrapper">' + BX.message('SEC_OTP_PUSH_ERROR') + '</span>',
+			BX.message('SEC_OTP_ERROR_TITLE'),
+			function () {
+				messageBox.close();
+				this.popup.Close();
+			}.bind(this)
+		);
+	};
+
+	MobilePush.prototype.onFinish = function()
+	{
+		this.loader.hide();
+		BX.addClass(this.loaderIconElement, 'ui-icon-set --check');
+		this.loaderTextElement.textContent = BX.message('SEC_OTP_PUSH_SUCCESS');
+
+		window.location.replace(this._options.successfulUrl);
 	};
 
 	/* -----------/Recovery codes popup/--------------*/

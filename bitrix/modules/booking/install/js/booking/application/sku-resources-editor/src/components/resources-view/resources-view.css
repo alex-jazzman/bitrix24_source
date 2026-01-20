@@ -1,0 +1,5 @@
+.booking-sre-app__resources-view__resources-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}

@@ -18,7 +18,7 @@ $userId = CurrentUser::get()->getId();
 
 if ($collaberService->isCollaberById($userId))
 {
-	LocalRedirect('/extranet/online/');
+	LocalRedirect(Intranet\Portal\FirstPage::getInstance()->getLink());
 }
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/index.php");

@@ -10,8 +10,6 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 	const { updateUserThunk, fetchUsersIfNotLoaded, updateProfilePhoto } = require('statemanager/redux/slices/users/thunk');
 	const { Type } = require('type');
 
-	const initialState = StateCache.getReducerState(sliceName, usersAdapter.getInitialState());
-
 	const prepareUser = ({
 		id,
 		login,
@@ -22,6 +20,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		lastName,
 		secondName,
 		fullName,
+		email,
 		link,
 		avatarSizeOriginal,
 		avatarSize100,
@@ -38,6 +37,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		lastName,
 		secondName,
 		fullName,
+		email,
 		workPosition,
 		link,
 		avatarSizeOriginal,
@@ -81,6 +81,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		personalPhone: user.PERSONAL_PHONE,
 	});
 
+	const initialState = StateCache.getReducerState(sliceName, usersAdapter.getInitialState());
 	const usersSlice = createSlice({
 		name: sliceName,
 		initialState,
@@ -143,6 +144,30 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 						{
 							usersAdapter.upsertMany(state, users.map((user) => prepareUser(user)));
 						}
+					}
+				})
+				.addCase('tasks:tasksResultsV2:taskResult/tail/fulfilled', (state, action) => {
+					const { data } = action.payload || {};
+
+					if (Type.isArrayFilled(data?.users))
+					{
+						usersAdapter.upsertMany(state, data.users.map((user) => prepareUser(user)));
+					}
+				})
+				.addCase('tasks:tasksResultsV2:taskResult/getAll/fulfilled', (state, action) => {
+					const { data } = action.payload || {};
+
+					if (Type.isArrayFilled(data?.users))
+					{
+						usersAdapter.upsertMany(state, data.users.map((user) => prepareUser(user)));
+					}
+				})
+				.addCase('tasks:tasksResultsV2:taskResult/get/fulfilled', (state, action) => {
+					const { data } = action.payload || {};
+
+					if (Type.isArrayFilled(data?.users))
+					{
+						usersAdapter.upsertMany(state, data.users.map((user) => prepareUser(user)));
 					}
 				})
 				.addCase(updateUserThunk.fulfilled, (state, action) => {

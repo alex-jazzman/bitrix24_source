@@ -7,7 +7,6 @@ $MESS["TASKS_IMPORT_BUTTONS_NEXT"] = "Әрі қарай";
 $MESS["TASKS_IMPORT_BUTTONS_STOP"] = "Тоқтату";
 $MESS["TASKS_IMPORT_FIELDS_DEFAULT_ASSIGNEE"] = "Әдепкі бойынша орындаушы";
 $MESS["TASKS_IMPORT_FIELDS_DEFAULT_ORIGINATOR"] = "Әдепкі бойынша қоюшы";
-$MESS["TASKS_IMPORT_FIELDS_DEFAULT_RESPONSIBLE"] = "Әдепкі бойынша жауапты";
 $MESS["TASKS_IMPORT_FIELDS_FILE_ENCODING"] = "Деректер файлын кодтау";
 $MESS["TASKS_IMPORT_FIELDS_FILE_SEPARATOR"] = "Бағандарды бөлгіш";
 $MESS["TASKS_IMPORT_FIELDS_FILE_TEMPLATE"] = "Файл қалыбы";

@@ -18,6 +18,7 @@
 	    this.userId = options.userId;
 	    this.taskId = options.taskId;
 	    this.guid = options.guid;
+	    this.shouldRenderTextField = options.shouldRenderTextField;
 	    this.canReadCommentsOnInit = true;
 	    this.timeout = 0;
 	    this.timeoutSec = 2000;
@@ -33,6 +34,9 @@
 	  babelHelpers.createClass(Comments, [{
 	    key: "initTextField",
 	    value: function initTextField() {
+	      if (!this.shouldRenderTextField) {
+	        return;
+	      }
 	      if (BX.MobileUI.TextField.defaultParams) {
 	        window.BX.MobileUI.TextField.show();
 	      } else {

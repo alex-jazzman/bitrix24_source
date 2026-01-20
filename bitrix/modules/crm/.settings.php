@@ -10,6 +10,7 @@ use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MultiplePlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
+use Bitrix\Crm\Security\Notification\Queue\ReadPermissionAddReceiver;
 
 $uiEntitySelectorConfig = [
 	'value' => [
@@ -160,7 +161,14 @@ $uiEntitySelectorConfig = [
 					'moduleId' => 'crm',
 					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CrmEntityProvider',
 				],
-			]
+			],
+			[
+				'entityId' => 'web_form',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\WebFormProvider',
+				],
+			],
 		],
 		'extensions' => ['crm.entity-selector'],
 	],
@@ -168,9 +176,9 @@ $uiEntitySelectorConfig = [
 ];
 
 
-return array(
-	'controllers' => array(
-		'value' => array(
+return [
+	'controllers' => [
+		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Crm\\Controller',
 			'namespaces' => [
 				'\\Bitrix\\Crm\\Controller\\DocumentGenerator' => 'documentgenerator',
@@ -187,9 +195,9 @@ return array(
 			'restIntegration' => [
 				'enabled' => true,
 			],
-		),
+		],
 		'readonly' => true,
-	),
+	],
 	'ui.selector' => [
 		'value' => [
 			'crm.selector',
@@ -205,6 +213,13 @@ return array(
 	'entityFormScope' => [
 		'value' => [
 			'access' => '\\Bitrix\\Crm\\EntityForm\\ScopeAccess',
+			'formConfigData' => '\\Bitrix\\Crm\\EntityForm\\FormConfigData',
+			'scopeListFilter' => '\\Bitrix\\Crm\\EntityForm\\ScopeListFilter',
+		],
+	],
+	'ui.accessrights.v2' => [
+		'value' => [
+			'access' => '\\Bitrix\\Crm\\Security\\Role\\UIAdapters\\AccessRights\\Permission',
 		],
 	],
 	'services' => [
@@ -637,7 +652,7 @@ return array(
 			'Default' => static function () {
 				$loggers = [
 					(new \Bitrix\Crm\Service\Logger\DbLogger('Default', 168))
-						->setLevel(\Psr\Log\LogLevel::ERROR)
+						->setLevel(\Psr\Log\LogLevel::INFO)
 					,
 				];
 
@@ -645,7 +660,24 @@ return array(
 				{
 					$loggers[] =
 						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.Default', 9))
-							->setLevel(\Psr\Log\LogLevel::CRITICAL)
+							->setLevel(\Psr\Log\LogLevel::INFO)
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
+			'Agent' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('crm.agent', 168))
+						->setLevel(\Psr\Log\LogLevel::INFO)
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.agent', 9))
+							->setLevel(\Psr\Log\LogLevel::INFO)
 					;
 				}
 
@@ -745,10 +777,23 @@ return array(
 			'scenarios' => [
 				Bitrix\Crm\Integration\AiAssistant\Scenario\EmptyCrmSetupScenario::class,
 			],
+			'toolSets' => [
+				Bitrix\Crm\Integration\AiAssistant\ToolSets\TuningToolSet::class,
+			],
 			'profileDataProviders' => [
 				Bitrix\Crm\Integration\AiAssistant\DataProviders\CrmProvider::class,
 			],
 		],
 		'readonly' => true,
 	],
-);
+	'messenger' => [
+		'value' => [
+			'queues' => [
+				'crm_role_permission_notification' => [
+					'handler' => ReadPermissionAddReceiver::class,
+				],
+			],
+		],
+		'readonly' => true,
+	],
+];

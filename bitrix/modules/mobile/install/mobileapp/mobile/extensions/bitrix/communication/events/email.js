@@ -52,7 +52,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 
 		async openSendingForm()
 		{
-			const { MailOpener } = await requireLazy('crm:mail/opener') || {};
+			const { MailOpener } = await requireLazy('mail:opener') || {};
 
 			if (MailOpener)
 			{
@@ -80,7 +80,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 
 		async isBitrixMailActive()
 		{
-			const { MailOpener } = await requireLazy('crm:mail/opener') || {};
+			const { MailOpener } = await requireLazy('mail:opener') || {};
 
 			return MailOpener && MailOpener.isActiveMail();
 		}

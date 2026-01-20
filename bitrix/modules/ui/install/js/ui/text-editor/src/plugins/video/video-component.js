@@ -78,7 +78,7 @@ export default class VideoComponent extends DecoratorComponent
 			const src = this.getOption('src');
 			if (this.#trusted)
 			{
-				video = Tag.render`<iframe frameborder="0" src="about:blank" draggable="false"></iframe>`;
+				video = Tag.render`<iframe frameborder="0" src="about:blank" draggable="false" tabindex="-1"></iframe>`;
 				video.src = src;
 			}
 			else
@@ -89,6 +89,7 @@ export default class VideoComponent extends DecoratorComponent
 						controls: true,
 						preload: 'metadata',
 						playsinline: true,
+						tabIndex: -1,
 						src,
 					},
 					events: {

@@ -208,7 +208,6 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/copilot', (requ
 					}),
 				]);
 
-				this.renderService?.renderInstant();
 				this.showLoaderByRestResult(recentData);
 			}
 			catch (error)

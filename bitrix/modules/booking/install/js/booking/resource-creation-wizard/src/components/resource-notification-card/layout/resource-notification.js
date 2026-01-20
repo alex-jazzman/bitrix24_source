@@ -115,7 +115,7 @@ export const ResourceNotification = {
 		},
 		hasTemplate(): boolean
 		{
-			return this.isCurrentSenderAvailable && this.messageTemplate;
+			return Boolean(this.messageTemplate);
 		},
 		disableSwitcher(): boolean
 		{
@@ -138,6 +138,10 @@ export const ResourceNotification = {
 					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
 				},
 			};
+		},
+		isNotificationSettingsFeatureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingNotificationsSettings;
 		},
 	},
 	created(): void
@@ -212,7 +216,13 @@ export const ResourceNotification = {
 		},
 	},
 	template: `
-		<div class="booking-resource-creation-wizard-notification-container" :class="{'--disabled': !checked}">
+		<div
+			class="booking-resource-creation-wizard-notification-container"
+			:class="{
+				'--disabled': !checked,
+				'--locked': !isNotificationSettingsFeatureEnabled,
+			}"
+		>
 			<div class="booking-resource-creation-wizard-notification">
 				<div class="booking-resource-creation-wizard-notification-header" @click="expand">
 					<div class="booking-resource-creation-wizard-notification-number">{{ ordinal }}</div>

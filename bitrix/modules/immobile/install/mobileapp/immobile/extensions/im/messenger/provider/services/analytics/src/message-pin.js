@@ -38,7 +38,7 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
 				.setEvent(Analytics.Event.pinMessage)
 				.setType(type)
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 				.setP3(p3Value)
 			;
 
@@ -65,7 +65,7 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
 				.setEvent(Analytics.Event.unpinMessage)
 				.setType(type)
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
 
 			analyticsEvent.send();
@@ -87,7 +87,7 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				.setTool(Analytics.Tool.im)
 				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
 				.setEvent(Analytics.Event.openPinList)
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
 
 			analyticsEvent.send();
@@ -109,7 +109,7 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				.setTool(Analytics.Tool.im)
 				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
 				.setEvent(Analytics.Event.pinnedMessageLimitException)
-				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
 
 			analyticsEvent.send();

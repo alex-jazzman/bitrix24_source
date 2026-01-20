@@ -6,7 +6,7 @@
 
 .landing-ui-panel-top {
 	position: relative;
-	z-index: 99;
+	z-index: 999;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;

@@ -1,0 +1,5 @@
+<?php
+$MESS["TASKS_GRID_ROW_GANTT_FINISH_FINISH"] = "Finish-to-Finish (FF)";
+$MESS["TASKS_GRID_ROW_GANTT_FINISH_START"] = "Finish-to-Start (FS)";
+$MESS["TASKS_GRID_ROW_GANTT_START_FINISH"] = "Start-to-Finish (SF)";
+$MESS["TASKS_GRID_ROW_GANTT_START_START"] = "Start-to-Start (SS)";

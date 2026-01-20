@@ -116,6 +116,11 @@ export default class DecoratorComponent
 			this.getEditor().registerCommand(
 				CLICK_COMMAND,
 				(event: MouseEvent) => {
+					if (!this.getEditor().isEditable())
+					{
+						return false;
+					}
+
 					if (this.getTarget().contains(event.target))
 					{
 						if (event.shiftKey)

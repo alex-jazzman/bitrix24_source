@@ -66,7 +66,7 @@ class FieldHighlighter
 		clearTimeout(this.#highlightTimeouts[fieldId]);
 		this.#highlightTimeouts[fieldId] = setTimeout(() => this.#stopAnimation(fieldContainer), 1500);
 
-		this.#scrollToField(fieldId);
+		this.scrollToField(fieldId);
 	}
 
 	#startAnimation(fieldContainer: HTMLElement): void
@@ -79,13 +79,13 @@ class FieldHighlighter
 		Dom.removeClass(fieldContainer, ['tasks-field-highlight', '--animate']);
 	}
 
-	#scrollToField(fieldId: string): void
+	scrollToField(fieldId: string): FieldHighlighter
 	{
 		const fieldContainer = this.getFieldContainer(fieldId);
 
 		if (!fieldContainer)
 		{
-			return;
+			return this;
 		}
 
 		Dom.style(fieldContainer, 'scrollMarginTop', '100px');
@@ -98,6 +98,8 @@ class FieldHighlighter
 		setTimeout(() => {
 			Dom.style(fieldContainer, 'scrollMarginTop', null);
 		}, 1000);
+
+		return this;
 	}
 
 	getFieldContainer(fieldId: string): ?HTMLElement

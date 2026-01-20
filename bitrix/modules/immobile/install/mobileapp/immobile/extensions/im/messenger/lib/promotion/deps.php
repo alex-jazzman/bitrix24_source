@@ -2,13 +2,17 @@
 
 return [
 	'extensions' => [
-		'tokens',
-		'ui-system/blocks/icon',
-		'im:messenger/lib/rest-manager',
-		'im:messenger/lib/logger',
+		'type',
+		'ui-system/popups/aha-moment',
+		'im:messenger/loc',
+		'im:messenger/const',
+		'im:messenger/logger',
 		'im:messenger/provider/rest',
+		'im:messenger/assets/promotion',
 		'im:messenger/lib/di/service-locator',
-		'im:messenger/lib/feature',
-		'im:messenger/assets/promotion'
+	],
+	'bundle' => [
+		'./src/video-note',
+		'./src/copilot',
 	],
 ];

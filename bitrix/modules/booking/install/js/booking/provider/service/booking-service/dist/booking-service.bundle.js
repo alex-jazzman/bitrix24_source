@@ -31,7 +31,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    rrule: () => booking.rrule,
 	    note: () => booking.note,
 	    visitStatus: () => booking.visitStatus,
-	    externalData: () => booking.externalData
+	    externalData: () => booking.externalData,
+	    skus: () => booking.skus
 	  };
 	  const dependentFields = new Map([['resources', ['resourcesIds']], ['datePeriod', ['dateFromTs', 'dateToTs']]]);
 	  return Object.keys(mappings).reduce((result, field) => {
@@ -69,7 +70,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    note: bookingDto.note,
 	    visitStatus: bookingDto.visitStatus,
 	    externalData: bookingDto.externalData,
-	    messages: (_bookingDto$messages = bookingDto.messages) != null && _bookingDto$messages.length ? bookingDto.messages : undefined
+	    messages: (_bookingDto$messages = bookingDto.messages) != null && _bookingDto$messages.length ? bookingDto.messages : undefined,
+	    skus: bookingDto.skus
 	  };
 	  return Object.fromEntries(Object.entries(booking).filter(([, value]) => !main_core.Type.isUndefined(value)));
 	}
@@ -329,6 +331,21 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      await $store.dispatch(`${booking_const.Model.Interface}/setAnimationPause`, false);
 	    }
 	  }
+	  async createDeal(id) {
+	    try {
+	      const data = await new booking_lib_apiClient.ApiClient().post('Booking.createDeal', {
+	        bookingId: id
+	      });
+	      const updatedBooking = mapDtoToModel(data);
+	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {
+	        id,
+	        booking: updatedBooking
+	      });
+	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
+	    } catch (error) {
+	      console.error('BookingService: create deal error', error);
+	    }
+	  }
 	  clearFilterCache() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _filterRequests)[_filterRequests] = {};
 	  }
@@ -385,10 +402,11 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	async function _requestFilter2(filter) {
 	  return new booking_lib_apiClient.ApiClient().post('Booking.list', {
 	    filter,
-	    select: ['RESOURCES', 'CLIENTS', 'EXTERNAL_DATA', 'NOTE'],
+	    select: ['RESOURCES', 'CLIENTS', 'EXTERNAL_DATA', 'NOTE', 'SKUS'],
 	    withCounters: true,
 	    withClientData: true,
-	    withExternalData: true
+	    withExternalData: true,
+	    withSkus: true
 	  });
 	}
 	const bookingService = new BookingService();

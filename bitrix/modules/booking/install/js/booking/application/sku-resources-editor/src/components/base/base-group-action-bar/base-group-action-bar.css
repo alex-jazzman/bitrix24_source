@@ -1,0 +1,55 @@
+.booking-sku-resources-editor__base-group-action-bar {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	padding: var(--ui-space-stack-xs2) 10px var(--ui-space-stack-xs2) 16px;
+	align-items: center;
+	border-radius: var(--ui-border-radius-lg);
+	background: #0075FF;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13);
+	z-index: 2;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__title_wrapper {
+	display: flex;
+	flex-direction: row;
+	gap: 6px;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__title {
+	color: var(--ui-color-on-primary);
+	font-size: var(--ui-font-size-sm);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: -0.05px;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__close-icon {
+	cursor: pointer;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__close-icon:hover {
+	filter: opacity(0.6);
+}
+
+.booking-sku-resources-editor__divider-vertical {
+	position: relative;
+	min-height: 20px;
+	width: 9px;
+}
+
+.booking-sku-resources-editor__divider-vertical::before {
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 50%;
+	height: 100%;
+	content: "";
+	border-left: 1px solid rgba(238, 242, 244, 0.4);
+}
+

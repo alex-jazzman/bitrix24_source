@@ -100,6 +100,30 @@ export class BBCodeTagScheme extends BBCodeNodeScheme
 		}
 	}
 
+	static stripFormatting({ node, children })
+	{
+		const notAllowedChildren: Set<string> = new Set(['#tab', '#linebreak']);
+		const bePropagated: Array<BBCodeContentNode> = [];
+		children.forEach((child: BBCodeContentNode) => {
+			if (
+				notAllowedChildren.has(child.getName())
+				|| (
+					child.getName() === '#text'
+					&& /^\s+$/.test(child.getContent())
+				)
+			)
+			{
+				child.remove();
+			}
+			else
+			{
+				bePropagated.push(child);
+			}
+		});
+
+		node.propagateChild(...bePropagated);
+	}
+
 	setVoid(value: boolean)
 	{
 		if (Type.isBoolean(value))

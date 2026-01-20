@@ -6,6 +6,7 @@ jn.define('settings-v2/structure', (require, exports, module) => {
 	const { RootPage } = require('settings-v2/structure/pages/root');
 	const { ThemePage } = require('settings-v2/structure/pages/theme');
 	const { SyncPage } = require('settings-v2/structure/pages/sync');
+	const { SecurityPage } = require('settings-v2/structure/pages/security');
 	const { DebugPage } = require('settings-v2/structure/pages/debug');
 	const { MessengerPage } = require('settings-v2/structure/pages/messenger');
 	const { VideoQualityPage } = require('settings-v2/structure/pages/video-quality');
@@ -24,6 +25,7 @@ jn.define('settings-v2/structure', (require, exports, module) => {
 		[SettingsPageId.MESSENGER]: MessengerPage,
 		[SettingsPageId.THEME]: ThemePage,
 		[SettingsPageId.SYNC]: SyncPage,
+		[SettingsPageId.SECURITY]: SecurityPage,
 		[SettingsPageId.DEBUG]: DebugPage,
 		[SettingsPageId.DEVELOPER]: DeveloperPage,
 		[SettingsPageId.VIDEO_QUALITY]: VideoQualityPage,

@@ -24,6 +24,7 @@ return [
 		'./src/dialog-status',
 		'./src/dialog-background',
 		'./src/dialog-action-type',
+		'./src/dialog-view',
 		'./src/permission',
 		'./src/sidebar-action-type',
 		'./src/file-type',
@@ -58,5 +59,6 @@ return [
 		'./src/audio',
 		'./src/refresher',
 		'./src/transcript-status',
+		'./src/messenger-component-request-method',
 	],
 ];

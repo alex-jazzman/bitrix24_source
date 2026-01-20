@@ -82,3 +82,21 @@ describe('Nested Tags Handling', () => {
 		assert.equal(actual, expected);
 	});
 });
+
+describe('Sticker short text', () => {
+	it('should return sticker label when isSticker=true and empty text', () => {
+		const result = Parser.purify({ text: '', isSticker: true });
+
+		assert.equal(result, '[Sticker]');
+	});
+	it('should return sticker label when isSticker=true and filled text', () => {
+		const result = Parser.purify({ text: '123', isSticker: true });
+
+		assert.equal(result, '[Sticker]');
+	});
+	it('should return empty string when isSticker=false and empty text', () => {
+		const result = Parser.purify({ text: '', isSticker: false });
+
+		assert.equal(result, '');
+	});
+});

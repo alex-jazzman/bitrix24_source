@@ -239,10 +239,7 @@ jn.define('im/messenger-v2/controller/recent/service/database-load/common', (req
 			{
 				this.renderService?.showLoader();
 			}
-			else
-			{
-				this.renderService?.hideLoader();
-			}
+			// page from db should not hide  loader, there may be more items on server
 		}
 
 		/**

@@ -224,7 +224,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-list-container-copilot__scope bx-im-list-container-copilot__container">
 			<div class="bx-im-list-container-copilot__header_container">
-				<div class="bx-im-list-container-copilot__header_title">CoPilot</div>
+				<div class="bx-im-list-container-copilot__header_title">{{ loc('IM_LIST_CONTAINER_COPILOT_HEADER') }}</div>
 				<div
 					v-if="canCreate"
 					class="bx-im-list-container-copilot__create-chat"

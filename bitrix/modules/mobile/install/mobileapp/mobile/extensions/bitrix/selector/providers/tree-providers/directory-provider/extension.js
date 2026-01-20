@@ -38,14 +38,6 @@ jn.define('selector/providers/tree-providers/directory-provider', (require, expo
 				})
 				.catch((e) => {
 					console.error(e);
-					this.loadPersonalStorage()
-						.then(() => this.loadChildren({
-							id: this.getRootId(),
-						}))
-						.then((children) => {
-							this.options.onItemsLoaded?.(children);
-						})
-						.catch(console.error);
 				});
 		}
 

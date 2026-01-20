@@ -42,6 +42,12 @@ class documentgenerator extends CModule
 			{
 				$APPLICATION->ThrowException(GetMessage('DOCUMENTGENERATOR_INSTALL_DEPENDENCIES_ERROR'));
 			}
+
+			if (!IsModuleInstalled('humanresources'))
+			{
+				$APPLICATION->ThrowException(GetMessage('DOCUMENTGENERATOR_INSTALL_HUMANRESOURCES_NOT_INSTALLED_ERROR'));
+			}
+
 			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step1.php");
 		}
 		elseif($step == 2)

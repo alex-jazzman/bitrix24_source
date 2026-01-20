@@ -1,0 +1,15 @@
+.tasks-field-reminders-row.--header {
+	flex: 1;
+	padding: 0;
+	height: auto;
+}
+
+.tasks-field-reminders-column.--header {
+	gap: var(--ui-space-inline-2xs);
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-column.--header .ui-text {
+	color: var(--ui-color-base-4);
+}

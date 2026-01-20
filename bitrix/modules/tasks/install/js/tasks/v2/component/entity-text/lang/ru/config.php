@@ -1,0 +1,6 @@
+<?php
+
+$MESS['TASKS_V2_ENTITY_TEXT_MORE'] = 'ещё';
+$MESS['TASKS_V2_ENTITY_TEXT_EXPAND'] = 'Развернуть';
+$MESS['TASKS_V2_ENTITY_TEXT_COLLAPSE'] = 'Свернуть';
+$MESS['TASKS_V2_ENTITY_TEXT_EDIT'] = 'Изменить';

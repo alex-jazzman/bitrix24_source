@@ -42,6 +42,19 @@ $APPLICATION->setTitle(Loc::getMessage('MAIL_NEW_MESSAGE_TITLE'));
 
 $emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage();
 $message = $arResult['MESSAGE'];
+
+$analyticsElement = 'compose_button';
+if (isset($message['__type']))
+{
+	if ($message['__type'] === 'forward')
+	{
+		$analyticsElement = 'forward';
+	}
+	elseif ($message['__type'] === 'reply')
+	{
+		$analyticsElement = 'reply';
+	}
+}
 ?>
 
 <div class="mail-msg-view-wrapper">
@@ -233,6 +246,32 @@ $message = $arResult['MESSAGE'];
 
 		var mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
 		mailForm.init();
+
+		(function() {
+			const formId = '<?= \CUtil::jsEscape($formId) ?>';
+			const form = document.getElementById(formId);
+			if (!form)
+			{
+				return;
+			}
+
+			const sendButton = form.querySelector('.main-mail-form-submit-button');
+
+			if (sendButton)
+			{
+				BX.bind(sendButton, 'click', function() {
+					BX.UI.Analytics.sendData({
+						tool: 'mail',
+						event: 'mail_send',
+						category: 'mail_operations',
+						type: 'mail',
+						c_section: '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE'] ?? 'mail') ?>',
+						c_element: '<?= \CUtil::JSEscape($analyticsElement) ?>'
+					});
+				});
+			}
+		})();
+
 	});
 
 </script>

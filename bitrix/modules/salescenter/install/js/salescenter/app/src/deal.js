@@ -242,6 +242,11 @@ export default {
 		},
 		isAllowedPaymentDeliverySubmitButton()
 		{
+			if (this.$root.$app.options.messageSenderData)
+			{
+				return this.$store.getters['orderCreation/isAllowedSubmit'];
+			}
+
 			if (!this.$root.$app.hasClientContactInfo())
 			{
 				return false;

@@ -1,0 +1,36 @@
+<?php
+
+use Bitrix\Tasks\V2\Internal\Integration\Im;
+
+return [
+	'value' => [
+		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterDeleteMessagesEvent::class => [
+			Im\EventHandler\OnAfterMessagesDeletedEvent\UpdateCounters::class,
+		],
+		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadAllMessagesEvent::class => [
+			Im\EventHandler\OnAfterReadAllMessagesEvent\UpdateCounters::class,
+			Im\EventHandler\OnAfterReadAllMessagesEvent\SendPushNotification::class,
+		],
+		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadMessagesEvent::class => [
+			Im\EventHandler\OnAfterReadMessageEvent\UpdateCounters::class,
+			Im\EventHandler\OnAfterReadMessageEvent\SendPushNotification::class,
+		],
+		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterSendMessageEvent::class => [
+			Im\EventHandler\OnAfterSendMessageEvent\AddUserToAuditors::class,
+			Im\EventHandler\OnAfterSendMessageEvent\UpdateCounters::class,
+			Im\EventHandler\OnAfterSendMessageEvent\SendPushNotification::class,
+			Im\EventHandler\OnAfterSendMessageEvent\UpdateLastActivityDate::class,
+		],
+		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterMuteEvent::class => [
+			Im\EventHandler\OnAfterMuteEvent\TaskSync::class,
+		],
+		\Bitrix\Im\V2\Message\Event\AfterReadAllChatsEvent::class => [
+			Im\EventHandler\OnAfterReadAllChats\UpdateCounters::class,
+			Im\EventHandler\OnAfterReadAllChats\SendPushNotification::class,
+		],
+		\Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent::class => [
+			Im\EventHandler\OnAfterReadAllChatsByTypeTasksTask\UpdateCounters::class,
+			Im\EventHandler\OnAfterReadAllChatsByTypeTasksTask\SendPushNotification::class,
+		],
+	],
+];

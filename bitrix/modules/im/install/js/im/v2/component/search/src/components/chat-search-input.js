@@ -1,7 +1,7 @@
-import { EventEmitter } from 'main.core.events';
-
 import { EventType } from 'im.v2.const';
 import { SearchInput } from 'im.v2.component.elements.search-input';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const ChatSearchInput = {
@@ -26,14 +26,6 @@ export const ChatSearchInput = {
 		},
 	},
 	emits: ['closeSearch', 'openSearch', 'updateSearch'],
-	created()
-	{
-		EventEmitter.subscribe(EventType.search.close, this.onClose);
-	},
-	beforeUnmount()
-	{
-		EventEmitter.unsubscribe(EventType.search.close, this.onClose);
-	},
 	methods: {
 		onInputFocus()
 		{
@@ -49,7 +41,11 @@ export const ChatSearchInput = {
 		},
 		onKeyPressed(event: KeyboardEvent)
 		{
-			EventEmitter.emit(EventType.search.keyPressed, { keyboardEvent: event });
+			this.getEmitter().emit(EventType.search.keyPressed, { keyboardEvent: event });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(key: string): string
 		{

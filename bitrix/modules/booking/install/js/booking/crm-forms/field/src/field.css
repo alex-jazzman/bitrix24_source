@@ -8,11 +8,13 @@
 	--booking--crm-forms--hint-text-opacity: 1;
 	--booking--crm-forms--datepicker-header-title-color: rgb(var(--booking--crm-forms--text-color-rgb));
 	--booking--crm-forms--datepicker-header-icon-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--resource-name-color: var(--b24-text-color);
 	--booking--crm-forms--resource-type-name-color: rgb(0, 0, 0);
 	--booking--crm-forms--resource-type-name-opacity: .3;
 	--booking--crm-forms--resource-slot-text-color: rgb(82, 92, 105);
 	--booking--crm-forms--resource-slot-text-opacity: 1;
 	--booking--crm-forms--resource-slot-selected-text-color: rgb(82, 92, 105);
+	--booking--crm-forms--resource-description-color: rgb(var(--ui-color-palette-gray-90-rgb));
 }
 
 .b24-form-dark .booking-crm-forms-field-container {
@@ -32,7 +34,7 @@
 .booking-crm-forms-field {
 	position: relative;
 	font-family: var(--b24-font-family), sans-serif;
-	margin-bottom: 15px;
+	margin-bottom: 30px;
 }
 
 .booking-crm-forms-field.--error {
@@ -154,7 +156,6 @@
 }
 
 .booking--crm-forms--change-date-btn {
-	width: 100%;
 	display: flex;
 	min-height: 28px;
 	min-width: 8em;
@@ -205,4 +206,23 @@
 .booking-crm-forms-field-tag-selector.--disabled .booking--crm-forms--field-tag-selector-input-icon {
 	background-color: rgb(var(--booking--crm-forms--text-disabled-color-rgb));
 	cursor: unset;
+}
+
+.booking--crm-forms--field-description-text {
+	color: var(--booking--crm-forms--resource-description-color);
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	padding-top: 11px;
+}
+
+.booking--crm-forms--field-description-text-more {
+	padding-left: 2px;
+	color: rgba(0, 117, 255, 1);
+	cursor: pointer;
+	transition: .4s;
+}
+
+.booking--crm-forms--field-description-text-more:hover {
+	color: rgba(1, 84, 200, 1);
 }

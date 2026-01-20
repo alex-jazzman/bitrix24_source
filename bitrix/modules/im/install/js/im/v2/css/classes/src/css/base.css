@@ -9,6 +9,7 @@
 /* region Scrollbar styles */
 .bx-im-messenger__scope *::-webkit-scrollbar {
 	width:6px;
+	height:6px;
 }
 
 .bx-im-messenger__scope *::-webkit-scrollbar-thumb {

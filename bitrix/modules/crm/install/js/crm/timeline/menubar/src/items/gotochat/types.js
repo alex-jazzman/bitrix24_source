@@ -57,13 +57,16 @@ declare type ChatService = {
 	connectorId: string,
 	connectLabel: string,
 	inviteLabel: string,
+	disabledLabel?: string,
 	soonLabel?: string,
+	disabledHint?: string,
 	region?: ChatServiceRegion,
 	title: string,
 	commonClass: string,
 	iconClass: string,
 	iconColor: string,
 	checkServiceId?: string,
+	hideOnBox?: boolean,
 }
 
 declare type ChatServiceRegion = {

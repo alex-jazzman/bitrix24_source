@@ -209,6 +209,7 @@ foreach($items as $item)
 			$convButton->setColor(Buttons\Color::LIGHT_BORDER);
 		}
 
+		$convButton->setStyle(Buttons\AirButtonStyle::FILLED);
 		$convButton->getMainButton()->addAttribute('id', $labelID);
 		$convButton->getMenuButton()->addAttribute('id', $buttonID);
 

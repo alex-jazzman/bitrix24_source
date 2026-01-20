@@ -25,5 +25,6 @@ return [
 		'intranet:statemanager/redux/slices/employees',
 		'analytics',
 		'user-profile',
+		'type',
 	],
 ];

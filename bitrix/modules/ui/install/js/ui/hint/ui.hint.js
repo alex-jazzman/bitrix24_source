@@ -201,6 +201,9 @@
 				text = BX.util.htmlspecialchars(text);
 			}
 
+			text = BX.util.trim(text);
+			text = BX.util.nl2br(text);
+
 			if (!node.hasAttribute('data-hint-no-icon'))
 			{
 				BX.addClass(node, this.className);
@@ -244,6 +247,13 @@
 			}
 
 			this.anchorNode = anchorNode;
+
+			if (this.popup && this.popup.bindElement !== this.anchorNode)
+			{
+				this.popup.destroy();
+				this.popup = null;
+			}
+
 			if (!this.content)
 			{
 				this.content= document.createElement('div');

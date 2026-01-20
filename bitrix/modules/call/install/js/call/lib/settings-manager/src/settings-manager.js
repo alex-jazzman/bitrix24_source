@@ -3,6 +3,8 @@ import { Extension } from 'main.core';
 export type CallSettingsType = {
 	jwtCallsEnabled?: boolean,
 	plainCallsUseJwt?: boolean,
+	plainCallFollowUpEnabled ?: boolean,
+	plainCallCloudRecordingEnabled ?: boolean,
 	callBalancerUrl?: string,
 };
 
@@ -12,6 +14,8 @@ class CallSettings
 	{
 		this.jwtCallsEnabled = false;
 		this.plainCallsUseJwt = false;
+		this.plainCallFollowUpEnabled = false;
+		this.plainCallCloudRecordingEnabled = false;
 		this.callBalancerUrl = '';
 
 		if (Extension.getSettings('call.core').call)
@@ -30,6 +34,16 @@ class CallSettings
 		if (settings.plainCallsUseJwt !== undefined)
 		{
 			this.plainCallsUseJwt = settings.plainCallsUseJwt;
+		}
+
+		if (settings.plainCallFollowUpEnabled !== undefined)
+		{
+			this.plainCallFollowUpEnabled = settings.plainCallFollowUpEnabled;
+		}
+
+		if (settings.plainCallCloudRecordingEnabled !== undefined)
+		{
+			this.plainCallCloudRecordingEnabled = settings.plainCallCloudRecordingEnabled;
 		}
 
 		if (settings.callBalancerUrl !== undefined)
@@ -66,6 +80,26 @@ class CallSettings
 	set callBalancerUrl(value: string)
 	{
 		this._callBalancerUrl = value;
+	}
+
+	get plainCallFollowUpEnabled(): boolean
+	{
+		return this.isJwtInPlainCallsEnabled && this._plainCallFollowUpEnabled;
+	}
+
+	set plainCallFollowUpEnabled(value: boolean)
+	{
+		this._plainCallFollowUpEnabled = value;
+	}
+
+	get plainCallCloudRecordingEnabled(): boolean
+	{
+		return this.isJwtInPlainCallsEnabled && this._plainCallCloudRecordingEnabled;
+	}
+
+	set plainCallCloudRecordingEnabled(value: boolean)
+	{
+		this._plainCallCloudRecordingEnabled = value;
 	}
 
 	isJwtInPlainCallsEnabled(): boolean

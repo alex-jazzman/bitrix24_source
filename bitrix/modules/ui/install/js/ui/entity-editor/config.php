@@ -54,6 +54,7 @@ return [
 		"ui.design-tokens",
 		"ui.fonts.opensans",
 		"ui.entity-editor.user-field-configurators.tooltip-configurator",
+		"intranet.old-interface.intranet-common",
 	],
 	'settings' => [
 		'isFileUserFieldViewingModesAvailable' => method_exists(FileType::class, 'isAvailableDefaultView'),

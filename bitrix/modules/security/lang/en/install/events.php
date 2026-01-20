@@ -1,8 +1,10 @@
-<?
-$MESS ['VIRUS_DETECTED_NAME'] = "Virus detected";
-$MESS ['VIRUS_DETECTED_DESC'] = "#EMAIL# - Site administrator's e-mail address (from the Kernel module settings)";
-$MESS ['VIRUS_DETECTED_SUBJECT'] = "#SITE_NAME#:  Virus detected";
-$MESS ['VIRUS_DETECTED_MESSAGE'] = "Informational message from #SITE_NAME#
+<?php
+$MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_DESC"] = "#USER_PHONE#: phone number
+#CODE#: confirmation code";
+$MESS["SECURITY_INSTALL_SMS_EVENT_OTP_CONFIRM_NAME"] = "Login confirmation via SMS code";
+$MESS["SECURITY_INSTALL_SMS_TEMPLATE_OTP_CONFIRM_MESS"] = "#CODE# is Bitrix24 login confirmation code.";
+$MESS["VIRUS_DETECTED_DESC"] = "#EMAIL# - Site administrator's e-mail address (from the Kernel module settings)";
+$MESS["VIRUS_DETECTED_MESSAGE"] = "Informational message from #SITE_NAME#
 
 ------------------------------------------
 
@@ -23,4 +25,5 @@ You have received this message as a result of the detection of potentially dange
 
 ---------------------------------------------------------------------
 This message has been automatically generated.";
-?>
+$MESS["VIRUS_DETECTED_NAME"] = "Virus detected";
+$MESS["VIRUS_DETECTED_SUBJECT"] = "#SITE_NAME#:  Virus detected";

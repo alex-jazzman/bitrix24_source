@@ -3,7 +3,8 @@ import { Tag, Dom } from 'main.core';
 import { AccountChangerTool } from '../tools/account-changer-tool';
 import type { BaseSecondaryTool } from '../tools/base-secondary-tool';
 import { AdministrationTool } from '../tools/administration-tool';
-import { PerformanceReviewTool } from '../tools/performance-review-tool';
+import { PerformanUserProfileTool } from '../tools/performan-user-profile-tool';
+import { ThemeSecondaryTool } from '../tools/theme-secondary-tool';
 
 export class SecondaryContent extends Content
 {
@@ -27,9 +28,10 @@ export class SecondaryContent extends Content
 			const tools = this.getOptions().tools;
 
 			return [
+				tools.theme ? new ThemeSecondaryTool(tools.theme) : null,
 				tools.accountChanger ? new AccountChangerTool(tools.accountChanger) : null,
 				tools.admin ? new AdministrationTool(tools.admin) : null,
-				tools.perfReview ? new PerformanceReviewTool(tools.perfReview) : null,
+				tools.performanUserProfile ? new PerformanUserProfileTool(tools.performanUserProfile) : null,
 			].filter(Boolean);
 		});
 	}

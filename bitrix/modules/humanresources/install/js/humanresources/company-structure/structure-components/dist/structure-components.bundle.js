@@ -520,6 +520,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return;
 	      }
 	      BX.SidePanel.Instance.open(url, {
+	        width: 1100,
 	        cacheable: false
 	      });
 	    }

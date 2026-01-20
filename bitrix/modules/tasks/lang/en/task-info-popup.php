@@ -1,11 +1,11 @@
 <?php
 $MESS["TASKS_ASSIGNEE"] = "Assignee";
-$MESS["TASKS_DATE_COMPLETED"] = "Completed on";
-$MESS["TASKS_DATE_CREATED"] = "Created on";
+$MESS["TASKS_DATE_COMPLETED"] = "Completed";
+$MESS["TASKS_DATE_CREATED"] = "Created";
 $MESS["TASKS_DATE_DEADLINE"] = "Deadline";
-$MESS["TASKS_DATE_END"] = "End date";
+$MESS["TASKS_DATE_END"] = "Finish date";
 $MESS["TASKS_DATE_START"] = "Start date";
-$MESS["TASKS_DATE_STARTED"] = "Started on";
+$MESS["TASKS_DATE_STARTED"] = "Started";
 $MESS["TASKS_DIRECTOR"] = "Creator";
 $MESS["TASKS_FILES"] = "Files";
 $MESS["TASKS_PRIORITY_V2"] = "High priority";

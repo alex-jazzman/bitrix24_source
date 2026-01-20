@@ -61,6 +61,17 @@ jn.define('feature', (require, exports, module) => {
 			return !isAndroid || minApiVersion(60, 'canUseAnimatedCounter');
 		}
 
+		static canGetAppActiveTab()
+		{
+			// api 61
+			return feature?.isFeatureEnabled('tabbar_api_v2');
+		}
+
+		static canUseSpotlightIds()
+		{
+			return Boolean(feature?.isFeatureEnabled('reaction_v2'));
+		}
+
 		static canUseWidgetEventOpened()
 		{
 			return feature?.isFeatureEnabled('widget_event_opened');
@@ -74,6 +85,22 @@ jn.define('feature', (require, exports, module) => {
 		static isNativeSettingsCacheApiSupported()
 		{
 			return Boolean(feature?.isFeatureEnabled('cache_module_api'));
+		}
+
+		static isNewReactionVersionSupported()
+		{
+			// api 61
+			return Boolean(feature?.isFeatureEnabled('reaction_v2'));
+		}
+
+		static isNativeBottomPanelApiSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('bottom_panel'));
+		}
+
+		static isNativeSnapshotApiSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('jnlayout_take_snapshot'));
 		}
 	}
 

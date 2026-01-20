@@ -159,6 +159,24 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 		}
 
+		static createMentionAllUsersTitle()
+		{
+			return {
+				title: Loc.getMessage('IMMOBILE_MESSENGER_COMMON_ALL_USERS'),
+				titleColor: Color.base1.toHex(),
+				description: Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_MENTION_ALL_USERS_DESCRIPTION'),
+			};
+		}
+
+		static getCopilotMentionTitle(copilotData)
+		{
+			return {
+				title: copilotData.name,
+				titleColor: Color.base1.toHex(),
+				description: Loc.getMessage('IMMOBILE_MESSENGER_CHAT_TITLE_MENTION_COPILOT_DESCRIPTION'),
+			};
+		}
+
 		/**
 		 * @private
 		 * @param {ChatTitleOptions?} options
@@ -374,7 +392,10 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.inputActions.length > 0)
 			{
-				titleParams.detailText = this.#buildInputActionTextPrivateChat();
+				titleParams.detailText = this.inputActions.length > 1 || this.inputActions[0].userId !== Number(this.dialogId)
+					? this.buildInputActionTextGroupChat()
+					: this.#buildInputActionTextPrivateChat()
+				;
 				titleParams.detailLottie = this.#buildDetailLottie();
 				titleParams.hasInputActions = true;
 				titleParams.detailTextColor = Theme.colors.accentMainPrimaryalt;
@@ -382,7 +403,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.isCurrentUser)
 			{
-				titleParams.detailLottie = null;
+				// now CoPilot can write to notes chat
 			}
 
 			return titleParams;
@@ -612,9 +633,15 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (userCount === 1)
 			{
-				const { userFirstName } = firstUser;
+				const { userFirstName, action } = firstUser;
+				const { statusMessageCode } = action;
 
-				return userFirstName;
+				if (Type.isNil(statusMessageCode))
+				{
+					return userFirstName;
+				}
+
+				return Loc.getMessage(statusMessageCode) || userFirstName;
 			}
 
 			if (userCount === 2)
@@ -650,6 +677,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 					[UserInputAction.writing]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_WRITING_V1',
 					[UserInputAction.recordingVoice]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_RECORDING_VOICE',
 					[UserInputAction.sendingFile]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_SENDING_FILE',
+					[UserInputAction.recordingVideoNote]: 'IMMOBILE_ELEMENT_PRIVATE_CHAT_TITLE_RECORDING_VIDEO_NOTE',
 				};
 			}
 			else
@@ -693,6 +721,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				[UserInputAction.writing]: ChatTitleAssets.getLottieUrl(UserInputAction.writing),
 				[UserInputAction.recordingVoice]: ChatTitleAssets.getLottieUrl(UserInputAction.recordingVoice),
 				[UserInputAction.sendingFile]: ChatTitleAssets.getLottieUrl(UserInputAction.sendingFile),
+				[UserInputAction.recordingVideoNote]: ChatTitleAssets.getLottieUrl(UserInputAction.recordingVoice),
 			};
 
 			if (userCount === 1)

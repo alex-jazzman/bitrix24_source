@@ -44,8 +44,9 @@ else
 {
 	$sTableID = 'b_baas_packages';
 	$lAdmin = new CAdminUiList($sTableID);
+	$packageProvider = Baas\Public\Provider\PackageProvider::create();
 
-	foreach (Baas\Service\PackageService::getInstance()->getAll() as $package)
+	foreach ($packageProvider->getDistributedByBaas() as $package)
 	{
 		$row = $lAdmin->addRow($package->getCode(), [
 			'CODE' => $package->getCode(),
@@ -70,7 +71,7 @@ else
 				'<button  type="button" disabled> ' . Loc::getMessage('BAAS_PACKAGE_HEADER_BUY') . '</button>'
 			);
 		}
-		$purchaseInfo = $package->getPurchaseInfo();
+		$purchaseInfo = $package->getPurchaseInfo(includeDepleted: true);
 
 		$row->AddViewField(
 			'PURCHASES',

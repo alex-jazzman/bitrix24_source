@@ -106,7 +106,7 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 					message,
 				});
 
-				if (helper.isTaskChat)
+				if (helper.isTaskChat())
 				{
 					groups[RecentTab.tasksTask][recentItem.id] = recentItem;
 

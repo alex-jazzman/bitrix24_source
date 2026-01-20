@@ -64,6 +64,13 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._showEmptyFields = BX.prop.getBoolean(this._settings, "showEmptyFields", false);
 		this._personalViewAllowed = BX.prop.getBoolean(this._settings, "personalViewAllowed", true);
 
+		this.hostColumnForQuickEditorId = this?._settings?.hostColumnForQuickEditorId ?? null;
+		this.hostColumnForQuickEditor =
+			!BX.Type.isNull(this.hostColumnForQuickEditorId)
+				? BX.CRM.Kanban.Grid.getInstance().getColumn(this.hostColumnForQuickEditorId)
+				: null
+		;
+
 		BX.Crm.EntityEditor.superclass.initialize.apply(this, [id, settings]);
 
 		this._modeChangeNotifier.notify([ this ]);
@@ -118,6 +125,15 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		BX.addCustomEvent("onCrmEntityCreate", this._entityCreateHandler);
 		BX.addCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
 		BX.addCustomEvent("BX.UI.EntityEditorList:onItemSelect", this.onItemSelectEvent);
+
+		BX.Event.EventEmitter.subscribe(
+			'BX.UI.EntityEditor:onUserFieldFileUploadStart',
+			this.onUploaderUploadStart.bind(this),
+		);
+		BX.Event.EventEmitter.subscribe(
+			'BX.UI.EntityEditor:onUserFieldFileUploadComplete',
+			this.onUploaderUploadComplete.bind(this),
+		);
 	};
 	BX.Crm.EntityEditor.prototype.deattachFromEvents = function()
 	{
@@ -132,6 +148,95 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		BX.removeCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
 		BX.removeCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", this._configurationManagerInitializeHandler);
 		BX.removeCustomEvent("BX.UI.EntityEditorList:onItemSelect", this.onItemSelectEvent);
+
+		BX.Event.EventEmitter.unsubscribe(
+			'BX.UI.EntityEditor:onUserFieldFileUploadStart',
+			this.onUploaderUploadStart,
+		);
+		BX.Event.EventEmitter.unsubscribe(
+			'BX.UI.EntityEditor:onUserFieldFileUploadComplete',
+			this.onUploaderUploadComplete,
+		);
+	};
+	BX.Crm.EntityEditor.prototype.onUploaderUploadStart = function(event)
+	{
+		if (BX.Type.isNull(this.hostColumnForQuickEditor)) // Full-size editor
+		{
+			BX.Crm.EntityEditor.superclass?.onUploaderUploadStart?.call(this, event);
+		}
+		else // Kanban quick editor
+		{
+			const fieldName = event.getData()?.fieldName ?? '';
+
+			if (!BX.Type.isStringFilled(fieldName))
+			{
+				return;
+			}
+
+			this.uploadersInProgress.add(fieldName);
+
+			this.disableQuickFormSaveButton();
+		}
+	};
+	BX.Crm.EntityEditor.prototype.onUploaderUploadComplete = function(event)
+	{
+		if (BX.Type.isNull(this.hostColumnForQuickEditor)) // Full-size editor
+		{
+			BX.Crm.EntityEditor.superclass?.onUploaderUploadComplete?.call(this, event);
+		}
+		else // Kanban quick editor
+		{
+			const fieldName = event.getData()?.fieldName ?? '';
+
+			if (!BX.Type.isStringFilled(fieldName))
+			{
+				return;
+			}
+
+			this.uploadersInProgress.delete(fieldName);
+
+			if (this.uploadersInProgress.size === 0 && !this.isRequestRunning())
+			{
+				this.enableQuickFormSaveButton();
+			}
+		}
+	};
+	BX.Crm.EntityEditor.prototype.enableQuickFormSaveButton = function()
+	{
+		if (
+			BX.Type.isNull(this.hostColumnForQuickEditor)
+			|| !BX.Type.isElementNode(this.hostColumnForQuickEditor.quickFormSaveButton)
+		)
+		{
+			return;
+		}
+
+		this.hostColumnForQuickEditor.quickFormSaveButton.classList.remove('ui-btn-disabled');
+		this.hostColumnForQuickEditor.quickFormSaveButton.disabled = false;
+	};
+	BX.Crm.EntityEditor.prototype.disableQuickFormSaveButton = function()
+	{
+		if (
+			BX.Type.isNull(this.hostColumnForQuickEditor)
+			|| !BX.Type.isElementNode(this.hostColumnForQuickEditor.quickFormSaveButton)
+		)
+		{
+			return;
+		}
+
+		this.hostColumnForQuickEditor.quickFormSaveButton.classList.add('ui-btn-disabled');
+		this.hostColumnForQuickEditor.quickFormSaveButton.disabled = true;
+	};
+	BX.Crm.EntityEditor.prototype.enableSaveButton = function()
+	{
+		if (BX.Type.isNull(this.hostColumnForQuickEditor)) // Full-size editor
+		{
+			BX.Crm.EntityEditor.superclass?.enableSaveButton?.call(this);
+		}
+		else // Kanban quick editor
+		{
+			this.enableQuickFormSaveButton();
+		}
 	};
 	BX.Crm.EntityEditor.prototype.onConfigurationManagerInitialize = function(editor, eventArgs) {
 		if(eventArgs.type === 'editor')

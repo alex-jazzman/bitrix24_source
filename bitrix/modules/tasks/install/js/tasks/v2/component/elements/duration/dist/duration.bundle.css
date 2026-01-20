@@ -1,0 +1,5 @@
+.b24-duration {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--ui-space-stack-sm);
+}

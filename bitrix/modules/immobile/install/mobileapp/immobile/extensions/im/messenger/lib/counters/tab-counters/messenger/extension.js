@@ -101,7 +101,6 @@ jn.define('im/messenger/lib/counters/tab-counters/messenger', (require, exports,
 				{
 					this.unreadCollection.copilot.delete(counterState.chatId);
 					counters.copilot += counterState.counter;
-					continue;
 				}
 
 				if (counterState.type === CounterType.collab)
@@ -283,6 +282,17 @@ jn.define('im/messenger/lib/counters/tab-counters/messenger', (require, exports,
 					unreadCollection.clear();
 				}
 			}
+
+			if (payload.actionName === 'clearByType')
+			{
+				const counterType = payload.data.type;
+				const unreadCollection = this.unreadCollection[counterType];
+				if (Type.isSet(unreadCollection))
+				{
+					unreadCollection.clear();
+				}
+			}
+
 			this.update();
 		};
 

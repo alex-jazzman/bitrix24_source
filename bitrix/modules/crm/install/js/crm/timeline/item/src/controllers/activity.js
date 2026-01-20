@@ -1,6 +1,13 @@
 import { ajax as Ajax, Loc, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
-import { ApplyButton, ButtonColor, ButtonSize, CancelButton } from 'ui.buttons';
+import { Router } from 'crm.router';
+import {
+	ApplyButton,
+	ButtonSize,
+	CancelButton,
+	CreateButton,
+	AirButtonStyle,
+} from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Dialog, Item } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
@@ -12,6 +19,14 @@ const ALLOWED_MOVE_TO_ITEM_TYPES = [
 	'Activity:Email',
 	'Activity:OpenLine',
 ];
+
+declare type ActionData = {
+	activityId: number,
+	ownerTypeId: number,
+	ownerId: number,
+	categoryId: ?number,
+	canAddItems: boolean,
+};
 
 export class Activity extends Base
 {
@@ -50,8 +65,9 @@ export class Activity extends Base
 				activityId: recordId,
 				ownerTypeId,
 				ownerId,
-			}
-		}
+			},
+		};
+
 		return Ajax.runAction(
 			this.getDeleteTagActionMethod(),
 			deleteTagActionCfg,
@@ -181,7 +197,7 @@ export class Activity extends Base
 
 	#showMoveToSelectorDialog(
 		itemElement: ConfigurableItem,
-		actionData: { activityId: Number, ownerTypeId: Number, ownerId: Number, categoryId: ?Number },
+		actionData: ActionData,
 	): void
 	{
 		if (!ALLOWED_MOVE_TO_ITEM_TYPES.includes(itemElement.getType()))
@@ -215,6 +231,11 @@ export class Activity extends Base
 		this.#moveToSelectorDialog.show();
 	}
 
+	onBeforeItemClearLayout(item: ConfigurableItem): void
+	{
+		this.#moveToSelectorDialog?.hide();
+	}
+
 	#getActivityEditor(): BX.CrmActivityEditor
 	{
 		return BX.CrmActivityEditor.getDefault();
@@ -222,21 +243,33 @@ export class Activity extends Base
 
 	#createSelectorDialog(
 		dialogTargetElement: HTMLElement,
-		actionData: { activityId: Number, ownerTypeId: Number, ownerId: Number, categoryId: ?Number },
+		actionData: ActionData,
 	): void
 	{
+		let dialogEntityId = BX.CrmEntityType.resolveName(actionData.ownerTypeId);
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(actionData.ownerTypeId))
+		{
+			dialogEntityId = BX.CrmEntityType.names.dynamic;
+		}
+
 		const applyButton = new ApplyButton({
-			color: ButtonColor.PRIMARY,
-			size: ButtonSize.SMALL,
+			useAirDesign: true,
+			style: AirButtonStyle.FILLED,
+			size: ButtonSize.MEDIUM,
+			color: null,
 			round: true,
 			onclick: () => {
 				this.#runMoveAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, targetItem);
 				this.#moveToSelectorDialog.hide();
 			},
 		});
+
 		const cancelButton = new CancelButton({
-			size: ButtonSize.SMALL,
+			useAirDesign: true,
+			style: AirButtonStyle.OUTLINE,
+			size: ButtonSize.MEDIUM,
 			round: true,
+			color: null,
 			onclick: (): void => {
 				targetItem = null;
 				this.#moveToSelectorDialog.deselectAll();
@@ -244,13 +277,12 @@ export class Activity extends Base
 			},
 		});
 
-		let targetItem: Item = null;
+		const createAndApplyButton: Button | null = actionData.canAddItems
+			? this.#getCreateAndApplyButton(actionData, dialogEntityId)
+			: null
+		;
 
-		let dialogEntityId = BX.CrmEntityType.resolveName(actionData.ownerTypeId);
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(actionData.ownerTypeId))
-		{
-			dialogEntityId = BX.CrmEntityType.names.dynamic;
-		}
+		let targetItem: Item = null;
 
 		this.#moveToSelectorDialog = new Dialog({
 			targetNode: dialogTargetElement,
@@ -273,10 +305,17 @@ export class Activity extends Base
 				},
 			}],
 			events: {
-				'Item:onSelect': (event: BaseEvent): void => {
+				'Item:onBeforeSelect': (event: BaseEvent): void => {
 					const { item } = event.getData();
 					if (item)
 					{
+						if (item.getId() === actionData.ownerId)
+						{
+							event.preventDefault();
+
+							return;
+						}
+
 						targetItem = item;
 						this.#moveToSelectorDialog.getSelectedItems().forEach((row: Item) => {
 							if (
@@ -287,22 +326,113 @@ export class Activity extends Base
 								row.deselect();
 							}
 						});
+
 						applyButton.setDisabled(false);
+						createAndApplyButton?.setDisabled(true);
 					}
 				},
-				'Item:onDeselect': (): void => applyButton.setDisabled(true),
+				'Item:onDeselect': (): void => {
+					applyButton.setDisabled(true);
+					createAndApplyButton?.setDisabled(false);
+				},
 			},
 			footer: [
 				applyButton.setDisabled(true).render(),
 				cancelButton.render(),
+				createAndApplyButton?.render(),
 			],
 			footerOptions: {
 				containerStyles: {
 					display: 'flex',
 					'justify-content': 'center',
+					gap: '12px',
+					background: 'white',
+					height: 'auto',
+					padding: '18px 0',
 				},
 			},
 		});
+	}
+
+	#getCreateAndApplyButton(
+		actionData: ActionData,
+		dialogEntityId: string,
+	): Button
+	{
+		const newItemUrl = Router.Instance.getItemDetailUrl(actionData.ownerTypeId, 0, actionData.categoryId);
+
+		return new CreateButton({
+			style: AirButtonStyle.PLAIN,
+			useAirDesign: true,
+			size: ButtonSize.MEDIUM,
+			round: true,
+			disabled: newItemUrl === null,
+			color: null,
+			onclick: (): void => {
+				if (newItemUrl === null)
+				{
+					return;
+				}
+
+				this.#openItemCreateSlider(String(newItemUrl), actionData, dialogEntityId);
+			},
+		});
+	}
+
+	#openItemCreateSlider(newItemUrl: Uri, actionData: ActionData, dialogEntityId: string): void
+	{
+		let runMoveActionForNewItem = null;
+
+		BX.Crm.Page.openSlider(String(newItemUrl), {
+			events: {
+				onOpen: ({ slider }): void => {
+					runMoveActionForNewItem = this.#getRunMoveActionForNewItemCallback(slider, actionData, dialogEntityId);
+
+					BX.Crm.EntityEvent.subscribe(runMoveActionForNewItem);
+				},
+				onClose: (): void => {
+					BX.Crm.EntityEvent.unsubscribe(runMoveActionForNewItem);
+				},
+			},
+		});
+	}
+
+	#getRunMoveActionForNewItemCallback(
+		slider,
+		actionData: ActionData,
+		dialogEntityId: string,
+	): Function
+	{
+		const runMoveActionForNewItem = (eventName, eventData) => {
+			if (eventName !== 'onCrmEntityCreate' || eventData.entityTypeId !== actionData.ownerTypeId)
+			{
+				return;
+			}
+
+			const newItemEntityEditor = slider.getWindow().BX?.Crm?.EntityEditor?.getDefault();
+			if (Type.isNil(newItemEntityEditor))
+			{
+				return;
+			}
+
+			const isItemCreatedInCurrentSlider = newItemEntityEditor.getEntityId() === eventData.entityId;
+			if (!isItemCreatedInCurrentSlider)
+			{
+				return;
+			}
+
+			const item = new Item({
+				id: eventData.entityId,
+				entityId: dialogEntityId,
+			});
+
+			this.#runMoveAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, item);
+			this.#moveToSelectorDialog.hide();
+
+			BX.Crm.EntityEvent.unsubscribe(runMoveActionForNewItem);
+		};
+
+		return runMoveActionForNewItem;
 	}
 
 	#runMoveAction(activityId: Number, sourceEntityTypeId: Number, sourceEntityId: Number, targetItem: ?Item): void

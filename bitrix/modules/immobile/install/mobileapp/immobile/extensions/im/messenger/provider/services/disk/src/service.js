@@ -44,15 +44,15 @@ jn.define('im/messenger/provider/services/disk/service', (require, exports, modu
 		}
 
 		/**
-		 * @param {ChatId} chatId
+		 * @param {MessageId} messageId
 		 * @param {FileId} fileId
 		 * @returns {Promise}
 		 */
-		transcribe({ chatId, fileId })
+		transcribe({ messageId, fileId })
 		{
-			if (!chatId)
+			if (!messageId)
 			{
-				return Promise.reject(new Error(`${this.constructor.name}.transcribe: chatId not found`));
+				return Promise.reject(new Error(`${this.constructor.name}.transcribe: messageId not found`));
 			}
 
 			if (!fileId)
@@ -60,7 +60,7 @@ jn.define('im/messenger/provider/services/disk/service', (require, exports, modu
 				return Promise.reject(new Error(`${this.constructor.name}.transcribe: fileId not found`));
 			}
 
-			const data = { chatId, fileId };
+			const data = { messageId, fileId };
 
 			return runAction(RestMethod.imV2DiskFileTranscribe, { data });
 		}

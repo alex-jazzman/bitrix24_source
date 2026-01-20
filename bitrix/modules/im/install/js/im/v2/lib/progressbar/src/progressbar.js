@@ -10,7 +10,7 @@ type UploadState = {
 	size: number
 };
 
-const EVENT_NAMESPACE = 'BX.Messenger.v2.CallBackground.ProgressBar';
+const EVENT_NAMESPACE = 'BX.Call.Component.v2.ProgressBar';
 const SIZE_LOWER_THRESHOLD = 1024 * 1024 * 2;
 const CONTAINER_WIDTH_LOWER_THRESHOLD = 240;
 const CONTAINER_HEIGHT_LOWER_THRESHOLD = 54;

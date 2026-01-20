@@ -1,0 +1,94 @@
+<?php
+
+$MESS['CRM_EE_RECURRING_MODE_TITLE_DEAL'] = 'Повторять сделку';
+$MESS['CRM_EE_RECURRING_MODE_TITLE_SMART_INVOICE'] = 'Повторять счёт';
+$MESS['CRM_EE_RECURRING_MODE_TITLE_DYNAMIC'] = 'Повторять элемент';
+$MESS['CRM_EE_RECURRING_MODE_ITEM_NONE'] = 'Не повторять';
+$MESS['CRM_EE_RECURRING_MODE_ITEM_MULTIPLE'] = 'Регулярно';
+$MESS['CRM_EE_RECURRING_MODE_ITEM_SINGLE'] = 'Один раз';
+
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_TITLE'] = 'Когда повторять';
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_ITEM_DAY'] = 'Ежедневно';
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_ITEM_WEEK'] = 'Еженедельно';
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_ITEM_MONTH'] = 'Ежемесячно';
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_ITEM_YEAR'] = 'Ежегодно';
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_ITEM_CUSTOM'] = 'Свой интервал';
+
+$MESS['CRM_EE_RECURRING_MULTIPLE_TYPE_CUSTOM_TITLE'] = 'Период повторения';
+
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_TITLE_DEAL'] = 'Завершить повторение сделки';
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_TITLE_SMART_INVOICE'] = 'Завершить повторение счёта';
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_TITLE_DYNAMIC'] = 'Завершить повторение элемента';
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_ITEM_NO'] = 'не завершать';
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_ITEM_DATE'] = 'в заданную дату';
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_ITEM_TIMES'] = 'после заданного количества повторений';
+
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_ITEM_DATE_FIELD_TITLE'] = 'Дата завершения';
+$MESS['CRM_EE_RECURRING_MULTIPLE_LIMIT_ITEM_TIMES_FIELD_TITLE'] = 'Количество повторений';
+
+$MESS['CRM_EE_RECURRING_PERIOD_ITEM_DAY'] = 'День';
+$MESS['CRM_EE_RECURRING_PERIOD_ITEM_WEEK'] = 'Неделя';
+$MESS['CRM_EE_RECURRING_PERIOD_ITEM_MONTH'] = 'Месяц';
+$MESS['CRM_EE_RECURRING_PERIOD_ITEM_YEAR'] = 'Год';
+
+$MESS['CRM_EE_RECURRING_MODE_SINGLE_FIELDS_PREFIX'] = 'за';
+$MESS['CRM_EE_RECURRING_MODE_SINGLE_FIELDS_DATE_PREFIX'] = 'до';
+
+$MESS['CRM_EE_RECURRING_MODE_SINGLE_FIELDS_PERIOD_DAY'] = 'дней';
+$MESS['CRM_EE_RECURRING_MODE_SINGLE_FIELDS_PERIOD_WEEK'] = 'недель';
+$MESS['CRM_EE_RECURRING_MODE_SINGLE_FIELDS_PERIOD_MONTH'] = 'месяцев';
+
+$MESS['CRM_EE_RECURRING_DATE_FIELDS_TITLE_DEAL'] = 'Продолжительность сделки';
+$MESS['CRM_EE_RECURRING_DATE_FIELDS_TITLE_SMART_INVOICE'] = 'Срок оплаты счёта';
+$MESS['CRM_EE_RECURRING_DATE_FIELDS_TITLE_DYNAMIC'] = 'Продолжительность элемента';
+$MESS['CRM_EE_RECURRING_OFFSET_DATE_BEGIN_TITLE_DEAL'] = 'Начать сделку позже даты создания';
+$MESS['CRM_EE_RECURRING_OFFSET_DATE_BEGIN_TITLE_SMART_INVOICE'] = 'Выставить счёт позже даты создания';
+$MESS['CRM_EE_RECURRING_OFFSET_DATE_BEGIN_TITLE_DYNAMIC'] = 'Начать элемент позже даты создания';
+
+$MESS['CRM_EE_RECURRING_DATES_SECTION_FIELD_DATE_CREATE_DEAL'] = 'Дата создания первой сделки';
+$MESS['CRM_EE_RECURRING_DATES_SECTION_FIELD_DATE_CREATE_SMART_INVOICE'] = 'Дата создания первого счёта';
+$MESS['CRM_EE_RECURRING_DATES_SECTION_FIELD_DATE_CREATE_DYNAMIC'] = 'Дата создания первого элемента';
+
+$MESS['CRM_EE_RECURRING_BEGINDATE_TYPE_TITLE'] = 'Прибавить к дате создания';
+
+$MESS['CRM_EE_RECURRING_CLOSEDATE_TYPE_TITLE_DEAL'] = 'Период завершения сделки после создания';
+$MESS['CRM_EE_RECURRING_CLOSEDATE_TYPE_TITLE_SMART_INVOICE'] = 'Период оплаты счёта после создания';
+$MESS['CRM_EE_RECURRING_CLOSEDATE_TYPE_TITLE_DYNAMIC'] = 'Период завершения элемента после создания';
+
+$MESS['CRM_EE_RECURRING_EMAIL_TITLE_SMART_INVOICE'] = "Отправка счёта по e-mail";
+
+$MESS['CRM_EE_RECURRING_EMAIL_SECTION_IS_ENABLED'] = 'Отправлять счёт автоматически';
+$MESS['CRM_EE_RECURRING_EMAIL_TEMPLATE_FIELD'] = 'Почтовый шаблон';
+$MESS['CRM_EE_RECURRING_EMAIL_TEMPLATE_FIELD_PLACEHOLDER'] = 'Не выбран';
+$MESS['CRM_EE_RECURRING_EMAIL_DOCUMENT_FIELD_SMART_INVOICE'] = 'Печатная форма счёта';
+$MESS['CRM_EE_RECURRING_EMAIL_DOCUMENT_FIELD_PLACEHOLDER'] = 'Не выбрана';
+$MESS['CRM_EE_RECURRING_EMAIL_SENDER_FIELD'] = 'Отправитель';
+$MESS['CRM_EE_RECURRING_EMAIL_SENDER_FIELD_PLACEHOLDER'] = 'Не выбран';
+$MESS['CRM_EE_RECURRING_EMAIL_COMMUNICATIONS_FIELD'] = 'Получатели';
+$MESS['CRM_EE_RECURRING_EMAIL_NEW_TEMPLATE'] = 'Добавить новый шаблон';
+$MESS['CRM_EE_RECURRING_EMAIL_NEW_SENDER'] = 'Добавить отправителя';
+$MESS['CRM_EE_RECURRING_EMAIL_SHOW_TEMPLATES_LIST'] = 'Открыть все шаблоны';
+$MESS['CRM_EE_RECURRING_EMAIL_ERROR'] = 'Не удалось загрузить данные. Попробуйте ещё раз или обратитесь к администратору вашего Битрикс24';
+$MESS['CRM_EE_RECURRING_CATEGORY_TITLE'] = 'Воронка';
+$MESS['CRM_EE_RECURRING_CATEGORY_TITLE_WITHOUT_PERMISSIONS'] = 'Скрытая воронка';
+
+$MESS['CRM_EE_RECURRING_EMAIL_BIND_CLIENT'] = 'Добавить получателя';
+
+$MESS['CRM_EE_RECURRING_EMAIL_TEMPLATE_TAB_TITLE'] = 'Почтовые шаблоны';
+$MESS['CRM_EE_RECURRING_EMAIL_DOCUMENT_TAB_TITLE_SMART_INVOICE'] = 'Печатные формы счёта';
+$MESS['CRM_EE_RECURRING_EMAIL_SENDER_TAB_TITLE'] = 'Отправители';
+$MESS['CRM_EE_RECURRING_EMAIL_TO_EMAIL_TAB_TITLE'] = 'Получатели';
+
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_TEMPLATE_TITLE'] = 'Здесь будут ваши почтовые шаблоны';
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_TEMPLATE_SUBTITLE_SMART_INVOICE'] = 'Добавьте первый шаблон, чтобы отправлять по нему письма со счетами';
+
+$MESS['CRM_EE_RECURRING_EMAIL_DOCUMENT_ADD'] = 'Добавить новую форму';
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_DOCUMENT_TITLE_SMART_INVOICE'] = 'Здесь будут ваши печатные формы счетов';
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_DOCUMENT_SUBTITLE_SMART_INVOICE'] = 'Добавьте первую печатную форму счёта, чтобы прикрепить её к письму';
+
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_SENDER_TITLE'] = 'Здесь будут отправители';
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_SENDER_SUBTITLE_SMART_INVOICE'] = 'Добавьте первый адрес отправителя, с которого нужно отправлять счета';
+
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_TO_EMAIL_TITLE'] = 'Здесь будут получатели';
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_TO_EMAIL_SUBTITLE_SMART_INVOICE'] = 'Добавьте первый адрес получателя, которому нужно отправить счёт';
+$MESS['CRM_EE_RECURRING_EMAIL_EMPTY_STATE_TO_EMAIL_SUBTITLE_SMART_INVOICE_NEW'] = 'Чтобы добавить получателей, сохраните шаблон счёта';

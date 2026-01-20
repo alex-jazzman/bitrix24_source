@@ -91,7 +91,9 @@ BX.Kanban.Column = function(options)
 
 	this.pagination = new BX.Kanban.Pagination(this);
 
-	this.handleScrollWithThrottle =  BX.Runtime.throttle(this.handleScroll, 100, this);
+	this.handleScrollWithThrottle = BX.Runtime.throttle(this.handleScroll, 100, this);
+
+	BX.Event.EventEmitter.subscribe('Kanban.Grid:onRender', this.onGridRender.bind(this));
 };
 
 BX.Kanban.Column.DEFAULT_COLOR = "ace9fb";
@@ -1868,7 +1870,35 @@ BX.Kanban.Column.prototype =
 	{
 		this.getContainer().classList.remove("main-kanban-column-target-shown");
 		this.getDragTarget().style.removeProperty("height");
-	}
+	},
+
+	onGridRender(event)
+	{
+		const columns = event.getData()[0].getColumns();
+		const column = columns.find((el) => el.id === this.id);
+
+		this.addTitleHint(column?.layout.nameInner);
+	},
+
+	addTitleHint(element)
+	{
+		if (!element)
+		{
+			return;
+		}
+
+		const hintObject = element.closest('.main-kanban-column-title-info');
+		delete hintObject.dataset.hintInit;
+		delete hintObject.dataset.hint;
+		delete hintObject.dataset.hintNoIcon;
+
+		if (element.scrollWidth > element.clientWidth)
+		{
+			hintObject.dataset.hint = element.textContent;
+			hintObject.dataset.hintNoIcon = '';
+			BX.UI.Hint.initNode(hintObject);
+		}
+	},
 };
 
 

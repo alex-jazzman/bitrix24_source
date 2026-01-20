@@ -18,6 +18,10 @@ jn.define('im/messenger/const/error', (require, exports, module) => {
 			maxPin: 'MAX_PINNED_CHATS_ERROR',
 		},
 		networkError: 'NETWORK_ERROR',
+		reaction: {
+			reactionNotFound: 'REACTION_NOT_FOUND',
+			reactionAlreadySet: 'REACTION_ALREADY_SET',
+		},
 	};
 
 	const ErrorCode = {

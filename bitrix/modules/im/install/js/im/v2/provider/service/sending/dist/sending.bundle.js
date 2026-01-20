@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,im_v2_lib_utils,im_v2_lib_logger,im_v2_lib_rest,im_v2_application_core,im_v2_const,im_v2_provider_service_message) {
+(function (exports,main_core,main_core_events,im_v2_lib_utils,im_v2_lib_logger,im_v2_lib_rest,im_v2_application_core,im_v2_const,im_v2_lib_stickerManager,im_v2_provider_service_message) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -12,6 +12,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _sendAndProcessMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAndProcessMessage");
 	var _prepareMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessage");
 	var _prepareMessageWithFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithFiles");
+	var _prepareMessageWithSticker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithSticker");
 	var _preparePrompt = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePrompt");
 	var _handlePagination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePagination");
 	var _addMessageToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addMessageToModels");
@@ -35,6 +36,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _logSendErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("logSendErrors");
 	var _clearLastMessageViews = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearLastMessageViews");
 	var _sendForwardRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendForwardRequest");
+	var _prepareCopilotMessageParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareCopilotMessageParams");
+	var _prepareAiAssistantMessageParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareAiAssistantMessageParams");
 	class SendingService {
 	  static getInstance() {
 	    if (!this.instance) {
@@ -43,6 +46,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return this.instance;
 	  }
 	  constructor() {
+	    Object.defineProperty(this, _prepareAiAssistantMessageParams, {
+	      value: _prepareAiAssistantMessageParams2
+	    });
+	    Object.defineProperty(this, _prepareCopilotMessageParams, {
+	      value: _prepareCopilotMessageParams2
+	    });
 	    Object.defineProperty(this, _sendForwardRequest, {
 	      value: _sendForwardRequest2
 	    });
@@ -112,6 +121,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _preparePrompt, {
 	      value: _preparePrompt2
 	    });
+	    Object.defineProperty(this, _prepareMessageWithSticker, {
+	      value: _prepareMessageWithSticker2
+	    });
 	    Object.defineProperty(this, _prepareMessageWithFiles, {
 	      value: _prepareMessageWithFiles2
 	    });
@@ -166,6 +178,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dialogId: message.dialogId
 	    });
 	    return Promise.resolve();
+	  }
+	  async sendMessageWithSticker(params) {
+	    const {
+	      stickerParams
+	    } = params;
+	    if (!main_core.Type.isPlainObject(stickerParams)) {
+	      return;
+	    }
+	    im_v2_lib_logger.Logger.warn('SendingService: sendMessage with sticker', params);
+	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessageWithSticker)[_prepareMessageWithSticker](params);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _processMessageSending)[_processMessageSending](message);
 	  }
 	  async forwardMessages(params) {
 	    const {
@@ -286,6 +309,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    unread: false,
 	    sending: true
 	  };
+	  const copilotParams = babelHelpers.classPrivateFieldLooseBase(this, _prepareCopilotMessageParams)[_prepareCopilotMessageParams](dialogId);
+	  const aiAssistantParams = babelHelpers.classPrivateFieldLooseBase(this, _prepareAiAssistantMessageParams)[_prepareAiAssistantMessageParams](dialogId);
 	  return {
 	    text,
 	    dialogId,
@@ -294,6 +319,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    replyId,
 	    forwardIds,
 	    viewedByOthers: babelHelpers.classPrivateFieldLooseBase(this, _needToSetAsViewed)[_needToSetAsViewed](dialogId),
+	    ...copilotParams,
+	    ...aiAssistantParams,
 	    ...defaultFields
 	  };
 	}
@@ -309,6 +336,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    params: {
 	      FILE_ID: fileIds
 	    }
+	  };
+	}
+	function _prepareMessageWithSticker2(params) {
+	  const {
+	    stickerParams
+	  } = params;
+	  if (!main_core.Type.isPlainObject(stickerParams)) {
+	    throw new TypeError('SendingService: sendMessageWithSticker: no stickerParams provided');
+	  }
+	  return {
+	    ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params),
+	    componentId: im_v2_const.MessageComponent.sticker,
+	    stickerParams
 	  };
 	}
 	function _preparePrompt2(params) {
@@ -346,13 +386,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  var _message$params;
 	  const hasMessageText = main_core.Type.isStringFilled(message.text);
 	  const hasMessageFile = main_core.Type.isArrayFilled((_message$params = message.params) == null ? void 0 : _message$params.FILE_ID);
-	  if (hasMessageText || hasMessageFile) {
+	  const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
+	  if (hasMessageText || hasMessageFile || hasMessageSticker) {
 	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/update', {
 	      id: message.dialogId,
 	      fields: {
 	        messageId: message.temporaryId
 	      }
 	    });
+	  }
+	  if (hasMessageSticker) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/stickers/setStickersFromMessages', [message]);
 	  }
 	}
 	function _sendMessageToServer2(message) {
@@ -369,6 +413,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  if (message.copilot) {
 	    fields.copilot = message.copilot;
+	  }
+	  if (message.aiAssistant) {
+	    fields.aiAssistant = message.aiAssistant;
+	  }
+	  if (message.stickerParams) {
+	    fields.stickerParams = {
+	      stickerId: message.stickerParams.id,
+	      packId: message.stickerParams.packId,
+	      packType: message.stickerParams.packType
+	    };
 	  }
 	  const queryData = {
 	    dialogId: message.dialogId.toString(),
@@ -500,7 +554,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!message) {
 	      return;
 	    }
-	    preparedMessages.push({
+	    const prepared = {
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage]({
 	        dialogId,
 	        text: message.text,
@@ -511,7 +565,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      attach: message.attach,
 	      isDeleted: message.isDeleted,
 	      files: message.files
-	    });
+	    };
+	    const isSticker = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/isStickerMessage'](messageId);
+	    if (isSticker) {
+	      const stickerKey = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/getStickerKeyByMessageId'](messageId) || '';
+	      const {
+	        id,
+	        packId,
+	        packType
+	      } = new im_v2_lib_stickerManager.StickerManager().parseStickerKey(stickerKey);
+	      const stickerData = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/getStickerByMessageId'](messageId);
+	      prepared.stickerParams = {
+	        id,
+	        packId,
+	        packType,
+	        ...stickerData
+	      };
+	    }
+	    preparedMessages.push(prepared);
 	  });
 	  return preparedMessages;
 	}
@@ -607,9 +678,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return Promise.resolve();
 	}
+	function _prepareCopilotMessageParams2(dialogId) {
+	  const isReasoningEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
+	  if (!isReasoningEnabled) {
+	    return {};
+	  }
+	  return {
+	    copilot: {
+	      reasoning: 'Y'
+	    }
+	  };
+	}
+	function _prepareAiAssistantMessageParams2(dialogId) {
+	  const isAiAssistant = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
+	  if (!isAiAssistant) {
+	    return {};
+	  }
+	  const mcpAuthId = im_v2_application_core.Core.getStore().getters['aiAssistant/getMcpAuthId'];
+	  if (!mcpAuthId) {
+	    return {};
+	  }
+	  return {
+	    aiAssistant: {
+	      mcpAuthId
+	    }
+	  };
+	}
 	SendingService.instance = null;
 
 	exports.SendingService = SendingService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
 //# sourceMappingURL=sending.bundle.js.map

@@ -6,10 +6,10 @@ import { Core } from 'im.v2.application.core';
 import { ActionByRole, ChatType, RestMethod } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { BaseMenu } from 'im.v2.lib.menu';
-import { CallManager } from 'im.v2.lib.call';
 import { runAction } from 'im.v2.lib.rest';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Analytics } from 'call.lib.analytics';
+import { CallManager } from 'call.lib.call-manager';
 
 import { CallTypes } from 'call.const';
 

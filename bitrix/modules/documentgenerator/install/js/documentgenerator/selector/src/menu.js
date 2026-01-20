@@ -1,10 +1,10 @@
-import {ajax as Ajax, Type, Loc, Runtime} from 'main.core';
-import {Loader} from 'main.loader';
-import {PopupMenu, PopupWindow} from 'main.popup';
-import {Template} from "./template";
-import {Document} from "./document";
+import { Document as DocumentFromPreview } from 'documentgenerator.preview';
+import { ajax as Ajax, Loc, Runtime, Type } from 'main.core';
+import { Loader } from 'main.loader';
+import { PopupMenu, PopupWindow } from 'main.popup';
+import { Document } from './document';
 
-import 'documentpreview';
+import { Template } from './template';
 
 import './menu.css';
 
@@ -69,7 +69,7 @@ export class Menu
 			{
 				this.progress = true;
 				this.showLoader();
-				BX.DocumentGenerator.Document.askAboutUsingPreviousDocumentNumber(this.provider, template.getId(), this.value, (previousNumber) =>
+				DocumentFromPreview.askAboutUsingPreviousDocumentNumber(this.provider, template.getId(), this.value, (previousNumber) =>
 				{
 					const data = {
 						templateId: template.getId(),
@@ -111,6 +111,7 @@ export class Menu
 				{
 					this.progress = false;
 					this.hideLoader();
+					resolve();
 				});
 			}
 			else
@@ -174,21 +175,33 @@ export class Menu
 			{
 				node = this.node;
 			}
-			this.getTemplates().then((templates) =>
-			{
-				PopupMenu.show(this.getPopupMenuId(), node, this.prepareTemplatesList(templates, (object) =>
-				{
-					const menu = PopupMenu.getMenuById(this.getPopupMenuId());
-					if(menu)
+			this.getTemplates().then((templates) => {
+				PopupMenu.show(
+					this.getPopupMenuId(),
+					node,
+					this.prepareTemplatesList(
+						templates,
+						(object) => {
+							const menu = PopupMenu.getMenuById(this.getPopupMenuId());
+							if (menu)
+							{
+								menu.destroy();
+							}
+
+							resolve(object);
+						},
+					),
 					{
-						menu.destroy();
-					}
-					resolve(object);
-				}), {
-					offsetLeft: 0,
-					offsetTop: 0,
-					closeByEsc: true,
-				});
+						offsetLeft: 0,
+						offsetTop: 0,
+						closeByEsc: true,
+						cacheable: false,
+						events: {
+							// nothing selected
+							onClose: () => resolve(),
+						},
+					},
+				);
 			}).catch((error) =>
 			{
 				if(error !== 'loading')

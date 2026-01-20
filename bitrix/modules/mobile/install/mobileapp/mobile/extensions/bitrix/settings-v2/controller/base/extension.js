@@ -2,6 +2,9 @@
  * @module settings-v2/controller/base
  */
 jn.define('settings-v2/controller/base', (require, exports, module) => {
+	const { Alert, makeButton, makeCancelButton } = require('alert');
+	const { Loc } = require('loc');
+
 	class BaseSettingController
 	{
 		constructor(props)
@@ -16,6 +19,11 @@ jn.define('settings-v2/controller/base', (require, exports, module) => {
 
 			/** @type {function} */
 			this.onChange = null;
+			this.onCancel = null;
+
+			this.onChangeAlertTitle = props.onChangeAlertTitle ?? Loc.getMessage('SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_TITLE');
+			this.onChangeAlertDescription = props.onChangeAlertDescription ?? Loc.getMessage('SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_DESCRIPTION');
+			this.onChangeAlertOkButton = props.onChangeAlertOkButton ?? null;
 		}
 
 		/**
@@ -46,6 +54,39 @@ jn.define('settings-v2/controller/base', (require, exports, module) => {
 			this.onChange = func;
 
 			return this;
+		}
+
+		/**
+		 * @public
+		 * @param {function} func
+		 * @returns {BaseSettingController}
+		 */
+		setOnCancel(func)
+		{
+			this.onCancel = func;
+
+			return this;
+		}
+
+		/**
+		 * @public
+		 * @param {function} onConfirm
+		 * @returns {BaseSettingController}
+		 */
+		showOnChangeAlert(onConfirm)
+		{
+			Alert.confirm(
+				this.onChangeAlertTitle,
+				this.onChangeAlertDescription,
+				[
+					makeButton(this.onChangeAlertOkButton, async () => {
+						onConfirm();
+					}),
+					makeCancelButton(() => {
+						this.onCancel?.();
+					}),
+				],
+			);
 		}
 	}
 

@@ -1,0 +1,21 @@
+.complex-block-port-add-point {
+	position: relative;
+	left: -9px;
+	flex-shrink: 0;
+	margin-top: auto;
+	padding: 5px 0;
+}
+
+.complex-block-port-add-point.--right {
+	left: auto;
+	right: -9px;
+	align-self: flex-end;
+}
+
+.complex-block-port-add-point.--highlighted circle {
+	stroke: #4a9dff;
+}
+
+.complex-block-port-add-point.--highlighted rect {
+	fill: #4A9dff;
+}

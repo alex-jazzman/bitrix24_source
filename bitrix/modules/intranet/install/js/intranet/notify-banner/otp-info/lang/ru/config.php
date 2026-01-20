@@ -1,0 +1,21 @@
+<?php
+$MESS['NOTIFY_BANNER_INFO_WARNING_BLOCK'] = 'Каждый день происходит всё больше автоматических кибератак на компании. Утечка информации грозит финансовыми и репутационными рисками.';
+$MESS['NOTIFY_BANNER_INFO_DESC_BLOCK'] = 'С двухфакторной аутентификацией мошенники не смогут войти в ваш аккаунт, даже если узнают пароль. Так вы сохраните личные и корпоративные данные в безопасности.';
+$MESS['NOTIFY_BANNER_INFO_REQ_BLOCK'] = 'Администратор вашего Битрикс24 обновил настройки безопасности. C <b>#END_DATE#</b> вход в аккаунт возможен только с подтверждением через мобильное приложение';
+$MESS['NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE'] = 'C <b>#END_DATE#</b> вход в аккаунт возможен только с подтверждением через мобильное приложение';
+$MESS['NOTIFY_BANNER_INFO_EXIST_BLOCK'] = 'У вас уже включена усиленная защита аккаунта.';
+$MESS['NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1'] = 'Защитить ваш Битрикс24 от мошенников стало намного  проще. Больше не нужно вводить коды — подтверждайте вход одним касанием в мобильном приложении.';
+$MESS['NOTIFY_BANNER_INFO_NEW_OTP_BLOCK'] = 'Теперь защитить ваш Битрикс24 от мошенников ещё проще. Больше не нужно вводить код. Подтверждайте вход через мобильное приложение Битрикс24 — это быстро и удобно.';
+$MESS['NOTIFY_BANNER_INFO_ALL_EMPLOYEE_BLOCK'] = 'Если хотя бы один сотрудник не использует для входа второй фактор, это ставит под угрозу все данные в вашем Битрикс24. Какие могут быть последствия:';
+$MESS['NOTIFY_BANNER_INFO_IS_PROJECT_BLOCK'] = 'Двухфакторная аутентификация — часть проекта <b>Безопасность персональных данных</b>, который включает полный комплекс решений для надёжной защиты информации.';
+$MESS['NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE'] = 'Включите <span class="intranet-otp-motivating-popup__title--accent">двухфакторную аутентификацию</span>, чтобы защитить данные компании от утечки';
+$MESS['NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE'] = 'Включите <span class="intranet-otp-motivating-popup__title--accent">новую двухфакторную аутентификацию.</span> Подтверждайте вход без кода';
+$MESS['NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1'] = 'Включите [SPAN]новую двухфакторную аутентификацию[/SPAN] и подтверждайте вход без кода';
+$MESS['NOTIFY_BANNER_INFO_DEF_TITLE'] = 'Защитите персональные данные от утечки. Включите <span class="intranet-otp-motivating-popup__title--accent">двухфакторную аутентификацию</span> для всех сотрудников';
+$MESS['NOTIFY_BANNER_INFO_MORE_BTN'] = 'Подробнее';
+$MESS['NOTIFY_BANNER_INFO_ENABLE_BTN'] = 'Включить';
+$MESS['NOTIFY_BANNER_INFO_ENABLE_ALL_BTN'] = 'Включить для всех';
+$MESS['NOTIFY_BANNER_INFO_LATER_BTN'] = 'Напомнить позже';
+$MESS['NOTIFY_BANNER_INFO_LEAK_OPT'] = 'Утечка конфиденциальной информации';
+$MESS['NOTIFY_BANNER_INFO_FIN_OPT'] = 'Финансовые и репутационные риски';
+$MESS['NOTIFY_BANNER_INFO_LEGAL_OPT'] = 'Юридическая ответственность';

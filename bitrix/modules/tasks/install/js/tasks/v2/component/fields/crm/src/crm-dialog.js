@@ -1,76 +1,61 @@
 import { Extension } from 'main.core';
-import type { Store } from 'ui.vue3.vuex';
-import type { Item } from 'ui.entity-selector';
 
 import { Core } from 'tasks.v2.core';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
+import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
 import { CrmMappers } from 'tasks.v2.provider.service.crm-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { EntitySelectorDialog, type Item, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import type { CrmItemModel } from 'tasks.v2.model.crm-items';
 
-const crmIntegration = Extension.getSettings('tasks.v2.component.fields.crm').crmIntegration;
-const dynamicTypeIds = Object.entries(crmIntegration)
-	.filter(([entityId, enabled]) => enabled === 'Y' && entityId.startsWith('DYNAMIC_'))
-	.map(([entityId]) => Number(entityId.slice(8)))
-;
+type Params = {
+	targetNode: HTMLElement,
+	taskId: TaskId,
+	onClose: Function,
+};
 
-class CrmDialog
+const dialogs: { [taskId: TaskId]: EntitySelectorDialog } = {};
+
+export const crmDialog = new class
 {
-	#taskId: number | string;
-	#dialog: EntitySelectorDialog;
-	#onUpdateOnce: Function | null = null;
-	#onCloseOnce: Function | null = null;
+	#taskId: TaskId;
+	#onClose: Function | null;
 
-	setTaskId(taskId: number | string): CrmDialog
+	init(taskId: TaskId): void
 	{
 		this.#taskId = taskId;
-
-		return this;
+		// eslint-disable-next-line no-unused-expressions
+		this.#dialog;
 	}
 
-	showTo(targetNode: HTMLElement): void
+	show(params: Params): void
 	{
-		this.#dialog ??= this.#createDialog();
+		this.#taskId = params.taskId;
+		this.#onClose = params.onClose;
+
 		this.#dialog.selectItemsByIds(this.#items);
-		this.#dialog.showTo(targetNode);
+		this.#dialog.showTo(params.targetNode);
 	}
 
-	onUpdateOnce(callback: Function): void
+	get #dialog(): EntitySelectorDialog
 	{
-		this.#onUpdateOnce = callback;
-	}
+		dialogs[this.#taskId] ??= this.#createDialog();
 
-	onCloseOnce(callback: Function): CrmDialog
-	{
-		this.#onCloseOnce = callback;
-
-		return this;
+		return dialogs[this.#taskId];
 	}
 
 	#createDialog(): EntitySelectorDialog
 	{
-		let changed = false;
-		const handleChanged = (): void => {
-			changed = true;
-		};
+		const { crmIntegration } = Extension.getSettings('tasks.v2.component.fields.crm');
+		const settings = idUtils.isTemplate(this.#taskId) ? crmIntegration?.template : crmIntegration?.task;
 
-		const handleClose = async (): Promise<void> => {
-			if (changed)
-			{
-				void this.#handleItemChange();
-
-				changed = false;
-			}
-
-			this.#onCloseOnce?.();
-			this.#onCloseOnce = null;
-		};
+		const dynamicTypeIds = Object.entries(settings ?? {})
+			.filter(([entityId, enabled]) => enabled === 'Y' && entityId.startsWith('DYNAMIC_'))
+			.map(([entityId]) => Number(entityId.slice(8)))
+		;
 
 		return new EntitySelectorDialog({
 			context: 'tasks-card',
-			multiple: true,
 			enableSearch: true,
 			entities: [
 				EntitySelectorEntity.Deal,
@@ -90,53 +75,39 @@ class CrmDialog
 			})),
 			preselectedItems: this.#items,
 			events: {
-				'Item:onSelect': handleChanged,
-				'Item:onDeselect': handleChanged,
-				onHide: this.#clearOnUpdateOnce,
-				onDestroy: this.#clearOnUpdateOnce,
-				onLoad: this.#insertSelectedCrmItems,
+				onLoad: this.#fillStore,
 			},
 			popupOptions: {
 				events: {
-					onClose: handleClose,
+					onClose: (): void => {
+						const items = this.#fillStore();
+
+						const crmItemIds = items.map(({ id }) => id);
+						void taskService.update(this.#taskId, { crmItemIds });
+
+						this.#onClose?.();
+					},
 				},
 			},
 		});
 	}
 
-	async #handleItemChange(): Promise<void>
-	{
-		const crmItems = await this.#insertSelectedCrmItems();
-
-		this.#updateTask(crmItems.map(({ id }) => id));
-	}
-
-	#insertSelectedCrmItems = async (): Promise<CrmItemModel[]> => {
+	#fillStore = (): CrmItemModel[] => {
 		const crmItems = this.#dialog.getSelectedItems().map((item: Item) => this.#mapItemToModel(item));
 
-		await this.#insertCrmItems(crmItems);
+		void Core.getStore().dispatch(`${Model.CrmItems}/upsertMany`, crmItems);
 
 		return crmItems;
 	};
 
-	#updateTask(crmItemIds: string[]): void
-	{
-		void taskService.update(
-			this.#taskId,
-			{ crmItemIds },
-		);
-
-		this.#onUpdateOnce?.();
-		this.#clearOnUpdateOnce();
-	}
-
 	#mapItemToModel(item: Item): CrmItemModel
 	{
 		const entityInfo = item.getCustomData().get('entityInfo');
+		const id = item.getId();
 
 		return {
 			id: CrmMappers.mapId(entityInfo.type, item.getId()),
-			entityId: item.getId(),
+			entityId: Number.isInteger(id) ? id : Number(id.split(':')[1]),
 			type: item.getEntityId(),
 			typeName: entityInfo.typeNameTitle,
 			title: item.getTitle(),
@@ -144,29 +115,8 @@ class CrmDialog
 		};
 	}
 
-	#clearOnUpdateOnce = (): void => {
-		this.#onUpdateOnce = null;
-	};
-
 	get #items(): ItemId[]
 	{
-		return this.#task.crmItemIds?.map((id) => CrmMappers.splitId(id)) ?? [];
+		return taskService.getStoreTask(this.#taskId).crmItemIds?.map((id) => CrmMappers.splitId(id)) ?? [];
 	}
-
-	get #task(): TaskModel
-	{
-		return this.$store.getters[`${Model.Tasks}/getById`](this.#taskId);
-	}
-
-	async #insertCrmItems(crmItems: CrmItemModel[]): Promise<void>
-	{
-		await this.$store.dispatch(`${Model.CrmItems}/upsertMany`, crmItems);
-	}
-
-	get $store(): Store
-	{
-		return Core.getStore();
-	}
-}
-
-export const crmDialog = new CrmDialog();
+}();

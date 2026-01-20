@@ -367,7 +367,9 @@
 					},
 				}),
 			),
-			!onFilePreviewMenuClick && onDeleteAttachmentItem && Image({
+			!onFilePreviewMenuClick
+			&& onDeleteAttachmentItem
+			&& Image({
 				testId: 'pinnedFileDetach',
 				svg: {
 					content: attachmentCloseIcon,

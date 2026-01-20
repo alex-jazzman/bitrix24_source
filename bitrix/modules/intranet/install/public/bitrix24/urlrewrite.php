@@ -797,12 +797,6 @@ $arUrlRewrite = array(
 		"PATH" => "/timeman/worktime.php",
 	),
 	array(
-		"CONDITION" => "#^/crm/ml/#",
-		"RULE" => "",
-		"ID" => "bitrix:crm.ml",
-		"PATH" => "/crm/ml/index.php",
-	),
-	array(
 		"CONDITION" => "#^/knowledge/group/#",
 		"RULE" => "",
 		"ID" => "bitrix:landing.pub",

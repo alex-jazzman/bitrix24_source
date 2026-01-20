@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_COUNTERS_CHAT_BUTTON"] = "Міндеттер чаттары";
 $MESS["TASKS_COUNTER_EXPIRED"] = "Мерзімі өтіп кеткен";
 $MESS["TASKS_COUNTER_MORE"] = "Тағы";
 $MESS["TASKS_COUNTER_MY"] = "Менің:";

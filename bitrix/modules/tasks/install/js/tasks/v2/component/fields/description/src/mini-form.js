@@ -1,14 +1,14 @@
-import { Runtime, Event, Type } from 'main.core';
+import type { TextEditor } from 'ui.text-editor';
 import { Outline } from 'ui.icon-set.api.vue';
-import { TextEditor, TextEditorComponent } from 'ui.text-editor';
+import 'ui.icon-set.outline';
 
-import { TaskModel } from 'tasks.v2.model.tasks';
-import { Model } from 'tasks.v2.const';
-import { taskService } from 'tasks.v2.provider.service.task-service';
+import { Core } from 'tasks.v2.core';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import { descriptionTextEditor, type DescriptionTextEditor } from './description-text-editor';
+import { EntityTextArea, EntityTextTypes, entityTextEditor, type EntityTextEditor } from 'tasks.v2.component.entity-text';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { DescriptionTextArea } from './description-text-area';
+import { DescriptionMixin } from './description-mixin';
+import { CheckList } from './actions/check-list';
 import { Copilot } from './actions/copilot';
 import { Attach } from './actions/attach';
 import { Mention } from './actions/mention';
@@ -20,89 +20,90 @@ import './description.css';
 export const MiniForm = {
 	name: 'TaskDescriptionMiniForm',
 	components: {
-		TextEditorComponent,
+		CheckList,
 		Copilot,
 		Attach,
 		Mention,
 		FullDescription,
-		DescriptionTextArea,
+		EntityTextArea,
+	},
+	mixins: [
+		DescriptionMixin,
+	],
+	inject: {
+		task: {},
+		isEdit: {},
 	},
 	props: {
 		taskId: {
 			type: [Number, String],
 			required: true,
 		},
-		isSlotShown: {
+		isSheetShown: {
 			type: Boolean,
 			required: true,
 		},
 	},
-	emits: ['expand', 'closeEdit'],
-	setup(props): { fileService: FileService, descriptionTextEditor: DescriptionTextEditor }
+	emits: ['expand', 'change', 'filesChange', 'close'],
+	setup(props): { task: TaskModel, fileService: FileService, entityTextEditor: EntityTextEditor }
 	{
 		return {
 			Outline,
+			EntityTextTypes,
 			fileService: fileService.get(props.taskId),
-			descriptionTextEditor: descriptionTextEditor.get(props.taskId),
+			entityTextEditor: entityTextEditor.get(props.taskId),
 		};
 	},
 	data(): Object
 	{
 		return {
 			isNeedTeleport: false,
-			hasChanges: false,
-			closed: false,
 		};
 	},
 	computed: {
-		task(): TaskModel
+		readonly(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		taskDescription(): string
-		{
-			return this.task.description ?? '';
+			return !this.task.rights.edit;
 		},
 		editor(): TextEditor
 		{
-			return this.descriptionTextEditor.getEditor();
+			return this.entityTextEditor.getEditor();
+		},
+		isDiskModuleInstalled(): boolean
+		{
+			return Core.getParams().features.disk;
+		},
+		isCopilotEnabled(): boolean
+		{
+			return Core.getParams().features.isCopilotEnabled;
 		},
 	},
 	watch: {
-		isSlotShown(newValue): void
+		isSheetShown(newValue): void
 		{
 			this.handleTeleport(newValue);
 		},
 	},
-	async created(): Promise<void>
-	{
-		this.saveDebounced = Runtime.debounce(this.handleSave, 30000, this);
-
-		Event.bind(window, 'beforeunload', this.handleSave);
-	},
-	mounted(): void
-	{
-		if (!Type.isStringFilled(this.taskDescription))
-		{
-			this.focusToEnd();
-		}
-	},
-	async beforeUnmount(): Promise<void>
-	{
-		Event.unbind(window, 'beforeunload', this.handleSave);
-
-		await this.handleSave();
-
-		this.closed = true;
-	},
 	methods: {
-		focusToEnd(): void
-		{
-			this.editor.focus(null, { defaultSelection: 'rootEnd' });
-		},
 		handleExpand(): void
 		{
 			this.$emit('expand');
+		},
+		handleCopilotButtonClick(): void
+		{
+			if (!this.isCopilotEnabled)
+			{
+				return;
+			}
+
+			this.editor.focus(
+				() => {
+					this.editor.dispatchCommand(
+						BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND,
+					);
+				},
+				{ defaultSelection: 'rootEnd' },
+			);
 		},
 		handleMentionButtonClick(): void
 		{
@@ -122,50 +123,18 @@ export const MiniForm = {
 				onHideCallback: this.onFileBrowserClose,
 			});
 		},
-		handleEditorChange(): void
+		handleTeleport(isSheetShown): void
 		{
-			this.hasChanges = this.taskDescription !== this.getEditorText();
-
-			void this.saveDebounced();
-		},
-		async handleAddButtonClick(): Promise<void>
-		{
-			await this.save();
-		},
-		getEditorText(): string | null
-		{
-			return this.editor?.getText()
-				.replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '')
-				.trim()
-			;
-		},
-		async handleSave(): Promise<void>
-		{
-			if (this.closed || !this.hasChanges || !this.editor)
-			{
-				return;
-			}
-
-			await this.save();
-
-			this.hasChanges = false;
-		},
-		async save(): Promise<void>
-		{
-			await taskService.update(
-				this.taskId,
-				{ description: this.editor.getText() },
-			);
-		},
-		handleTeleport(isSlotShown): void
-		{
-			if (isSlotShown === true)
+			if (isSheetShown === true)
 			{
 				setTimeout(() => {
 					this.isNeedTeleport = true;
+					this.editor.setVisualOptions({ blockSpaceInline: 'var(--ui-space-stack-xl)' });
 				}, 100);
 
-				this.editor.setVisualOptions({ blockSpaceInline: 0 });
+				setTimeout(() => {
+					this.editor.focus(null, { defaultSelection: 'rootEnd' });
+				}, 300);
 			}
 			else
 			{
@@ -187,19 +156,31 @@ export const MiniForm = {
 				tabindex="-1"
 			>
 				<Teleport :to="isNeedTeleport ? '#descriptionTextAreaDestination' : undefined" :disabled="!isNeedTeleport">
-					<DescriptionTextArea
-						:taskId="taskId"
+					<EntityTextArea
+						:entityId="taskId"
+						:entityType="EntityTextTypes.Task"
+						:readonly
+						:removeFromServer="!isEdit"
+						@change="$emit('change')"
+						@filesChange="$emit('filesChange')"
 						ref="descriptionTextArea"
-						@change="handleEditorChange"
-						@filesChange="handleEditorChange"
 					/>
 				</Teleport>
 				<div class="tasks-card-description-footer-container">
 					<div class="tasks-card-description-footer">
 						<div class="tasks-card-description-action-list">
-							<Copilot />
-							<Attach ref="attach" @click="handleAttachButtonClick"/>
+							<Copilot v-if="isCopilotEnabled" @click="handleCopilotButtonClick"/>
+							<Attach
+								v-if="isDiskModuleInstalled"
+								ref="attach"
+								@click="handleAttachButtonClick"
+							/>
 							<Mention @click="handleMentionButtonClick"/>
+							<CheckList
+								v-if="isCopilotEnabled"
+								:loading="isAiCommandProcessing"
+								@click="handleCheckListButtonClick"
+							/>
 						</div>
 						<div
 							class="tasks-card-description-footer-buttons"

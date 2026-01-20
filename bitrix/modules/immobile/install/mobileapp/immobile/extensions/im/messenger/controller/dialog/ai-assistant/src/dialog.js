@@ -4,12 +4,19 @@
  * @module im/messenger/controller/dialog/ai-assistant/dialog
  */
 jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, exports, module) => {
-	const { AiAssistantButtonType, EventType, DialogWidgetType } = require('im/messenger/const');
+	const {
+		AiAssistantButtonType,
+		EventType,
+		DialogWidgetType,
+	} = require('im/messenger/const');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { NotifyPanelManager } = require('im/messenger/controller/dialog/lib/notify-panel-manager');
+	const { MCPButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/const/buttons');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const { AiAssistantMessageMenu } = require('im/messenger/controller/dialog/ai-assistant/component/message-menu');
 
@@ -76,6 +83,13 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			return false;
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
+		checkCanRecordVideo() {
+			return false;
+		}
+
 		subscribeViewEvents()
 		{
 			super.subscribeViewEvents();
@@ -134,6 +148,25 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			const articleCode = '25754438';
 			logger.log('Dialog.footnoteTapHandler, articleCode:', articleCode);
 			helpdesk.openHelpArticle(articleCode, 'helpdesk');
+		}
+
+		getAssistantButtons()
+		{
+			if (Feature.isAiAssistantMCPSelectorAvailable)
+			{
+				return [MCPButton];
+			}
+
+			return [];
+		}
+
+		sendAnalyticsOpenDialog()
+		{
+			super.sendAnalyticsOpenDialog();
+
+			AnalyticsService.getInstance().sendOpenAiAssistantDialog({
+				dialogId: this.dialogId,
+			});
 		}
 	}
 

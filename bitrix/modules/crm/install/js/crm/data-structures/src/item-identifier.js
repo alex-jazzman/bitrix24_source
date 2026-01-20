@@ -1,3 +1,4 @@
+import type { JsonObject } from 'main.core';
 import { Text } from 'main.core';
 
 export class ItemIdentifier
@@ -66,5 +67,13 @@ export class ItemIdentifier
 		}
 
 		return this.hash === another.hash;
+	}
+
+	toJSON(): JsonObject
+	{
+		return {
+			entityTypeId: this.entityTypeId,
+			entityId: this.entityId,
+		};
 	}
 }

@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/task/create-new/responsible
+ * @module tasks/layout/task/create-new/src/responsible
  */
-jn.define('tasks/layout/task/create-new/responsible', (require, exports, module) => {
+jn.define('tasks/layout/task/create-new/src/responsible', (require, exports, module) => {
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
 	const { Color, Indent } = require('tokens');
@@ -9,6 +9,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 	const { Haptics } = require('haptics');
 	const { UserName } = require('layout/ui/user/user-name');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Ellipsize } = require('utils/enums/style');
 	const { showToast, Position } = require('toast');
 	const { AnalyticsEvent } = require('analytics');
 
@@ -133,6 +134,8 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 
 			return UserName({
 				...textParams,
+				numberOfLines: 1,
+				ellipsize: Ellipsize.END.toString(),
 				style: {
 					flexShrink: 1,
 					marginLeft: Indent.M.toNumber(),
@@ -217,6 +220,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 				},
 				createOptions: {
 					enableCreation: !(env.isCollaber || env.extranet),
+					useCustomCreationElement: true,
 					analytics: new AnalyticsEvent().setSection('tasks'),
 					getParentLayout: () => selectorWidget,
 				},

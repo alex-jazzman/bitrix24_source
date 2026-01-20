@@ -12,9 +12,9 @@ $rnd = $component->randString();
 
 $arParams['PROPS']['VIDEO_MUTE'] = ($arParams['PROPS']['VIDEO_MUTE'] ?? '') == 'Y' ? 'muted' : '';
 $arParams['PROPS']['STREAM_MUTE'] = ($arParams['PROPS']['STREAM_MUTE'] ?? '') == 'Y' ? '1' : '0';
-$arParams['AUTOPLAY'] = $arParams['INDEX'] == '0' ? '&autoplay=1' : '';
-$arParams['PROPS']['HEADING_FONT_SIZE'] = intval($arParams['PROPS']['HEADING_FONT_SIZE']);
-$arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE'] = intval($arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE']);
+$arParams['AUTOPLAY'] = isset($arParams['INDEX']) && $arParams['INDEX'] == '0' ? '&autoplay=1' : '';
+$arParams['PROPS']['HEADING_FONT_SIZE'] = intval($arParams['PROPS']['HEADING_FONT_SIZE'] ?? 0);
+$arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE'] = intval($arParams['PROPS']['ANNOUNCEMENT_FONT_SIZE'] ?? 0);
 $arParams['PROPS']['HEADING_BG_OPACITY'] = isset($arParams['PROPS']['HEADING_BG_OPACITY']) ? intval($arParams['PROPS']['HEADING_BG_OPACITY']) : 100;
 
 $arParams['PROPS']['OVERLAY_COLOR'] = hexdec(mb_substr(($arParams['PROPS']['OVERLAY_COLOR'] ?? ''), 0, 2)).','
@@ -22,27 +22,27 @@ $arParams['PROPS']['OVERLAY_COLOR'] = hexdec(mb_substr(($arParams['PROPS']['OVER
 	.hexdec(mb_substr(($arParams['PROPS']['OVERLAY_COLOR'] ?? ''), 4, 2)).','
 	.abs(100 - intval($arParams['PROPS']['OVERLAY_OPACITY'] ?? 0))/100;
 
-$arParams['PROPS']['HEADING_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'], 0, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'], 2, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'], 4, 2)).','
-	.abs(100 - $arParams['PROPS']['HEADING_BG_OPACITY'])/100;
+$arParams['PROPS']['HEADING_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'] ?? '', 0, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR'] ?? '', 2, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['HEADING_BG_COLOR']?? '', 4, 2)).','
+	.abs(100 - $arParams['PROPS']['HEADING_BG_OPACITY'] ?? 0)/100;
 
-$arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'], 0, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'], 2, 2)).','
-	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'], 4, 2)).','
-	.abs(100 - intval($arParams['PROPS']['ANNOUNCEMENT_BG_OPACITY']))/100;
+$arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] = hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] ?? '', 0, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] ?? '', 2, 2)).','
+	.hexdec(mb_substr($arParams['PROPS']['ANNOUNCEMENT_BG_COLOR'] ?? '', 4, 2)).','
+	.abs(100 - intval($arParams['PROPS']['ANNOUNCEMENT_BG_OPACITY'] ?? 0))/100;
 
 $arParams['PROPS']['BUTTON_BG_COLOR'] = hexdec(mb_substr(($arParams['PROPS']['BUTTON_BG_COLOR'] ?? ''), 0, 2)).','
 	.hexdec(mb_substr(($arParams['PROPS']['BUTTON_BG_COLOR'] ?? ''), 2, 2)).','
 	.hexdec(mb_substr(($arParams['PROPS']['BUTTON_BG_COLOR'] ?? ''), 4, 2));
 
-$arParams['PROPS']['PRESET'] = intval($arParams['PROPS']['PRESET']);
-$animation = $arParams['PROPS']['ANIMATION'] == 'Y' ? ' data-duration="'.intval($arParams['PROPS']['ANIMATION_DURATION']).'" data-delay="'.intval($arParams['PROPS']['ANIMATION_DELAY']).'"' : '';
-$playClass = $arParams['PROPS']['ANIMATION'] == 'Y' ? ' play-caption' : '';
-$mobileHide = $arParams['PROPS']['ANNOUNCEMENT_MOBILE_HIDE'] == 'Y' ? ' hidden-xs' : '';
+$arParams['PROPS']['PRESET'] = intval($arParams['PROPS']['PRESET'] ?? 0);
+$animation = isset($arParams['PROPS']['ANIMATION']) && $arParams['PROPS']['ANIMATION'] == 'Y' ? ' data-duration="'.intval($arParams['PROPS']['ANIMATION_DURATION']).'" data-delay="'.intval($arParams['PROPS']['ANIMATION_DELAY']).'"' : '';
+$playClass = isset($arParams['PROPS']['ANIMATION']) && $arParams['PROPS']['ANIMATION'] == 'Y' ? ' play-caption' : '';
+$mobileHide = isset($arParams['PROPS']['ANNOUNCEMENT_MOBILE_HIDE']) && $arParams['PROPS']['ANNOUNCEMENT_MOBILE_HIDE'] == 'Y' ? ' hidden-xs' : '';
 
 $id = '';
-if ($arParams['PROPS']['BACKGROUND'] == 'stream')
+if (isset($arParams['PROPS']['BACKGROUND']) && $arParams['PROPS']['BACKGROUND'] == 'stream')
 {
 	if (mb_strpos($arParams['PROPS']['STREAM'], 'watch?') !== false && ($v = mb_strpos($arParams['PROPS']['STREAM'], 'v=')) !== false)
 	{
@@ -58,18 +58,18 @@ if ($arParams['PROPS']['BACKGROUND'] == 'stream')
 	}
 }
 
-if (is_array($arParams['PROPS']['HEADING']))
+if (isset($arParams['PROPS']['HEADING']) && is_array($arParams['PROPS']['HEADING']))
 {
-	$headingText = $arParams['PROPS']['HEADING']['CODE'];
+	$headingText = $arParams['PROPS']['HEADING']['CODE'] ?? '';
 }
 else
 {
-	$headingText = $arParams['PROPS']['HEADING'];
-	$announcementText = $arParams['PROPS']['ANNOUNCEMENT'];
+	$headingText = $arParams['PROPS']['HEADING'] ?? '';
+	$announcementText = $arParams['PROPS']['ANNOUNCEMENT'] ?? '';
 }
 ?>
 
-<? if ($arParams['CASUAL_PROPERTIES']['TYPE'] == 'template'): ?>
+<? if (isset($arParams['CASUAL_PROPERTIES']['TYPE']) && $arParams['CASUAL_PROPERTIES']['TYPE'] == 'template'): ?>
 <div class="bx-slider-preset-<?=$arParams['PROPS']['PRESET']?>">
 	<? if ($arParams['PROPS']['LINK_URL'] != '' && !isset($arParams['PREVIEW'])): ?>
 		<a href="<?=$arParams['PROPS']['LINK_URL']?>" title="<?=$arParams['PROPS']['LINK_TITLE']?>" target="<?=$arParams['PROPS']['LINK_TARGET']?>" style="display:block;">
@@ -153,11 +153,11 @@ else
 	</script>
 </div>
 <? else: ?>
-	<? if ($arParams['CASUAL_PROPERTIES']['URL'] != '' && !isset($arParams['PREVIEW'])): ?>
+	<? if (!empty($arParams['CASUAL_PROPERTIES']['URL']) && !isset($arParams['PREVIEW'])): ?>
 		<a href="<?=$arParams['CASUAL_PROPERTIES']['URL']?>" title="<?=$arParams['CASUAL_PROPERTIES']['ALT']?>" target="<?=$arParams['CASUAL_PROPERTIES']['URL_TARGET']?>" style="display:block;">
 	<? endif ?>
-	<img src="<?=$arParams['FILES']['CASUAL_IMG']['SRC']?>" class="center-block img-responsive">
-	<? if ($arParams['CASUAL_PROPERTIES']['URL'] != '' && !isset($arParams['PREVIEW'])): ?>
+	<img src="<?=$arParams['FILES']['CASUAL_IMG']['SRC'] ?? ''?>" class="center-block img-responsive" alt="">
+	<? if (!empty($arParams['CASUAL_PROPERTIES']['URL']) && !isset($arParams['PREVIEW'])): ?>
 		</a>
 	<? endif ?>
 <? endif ?>

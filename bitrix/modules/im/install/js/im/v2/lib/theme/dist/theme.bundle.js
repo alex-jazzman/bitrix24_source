@@ -67,9 +67,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SpecialBackgroundId = {
 	  collab: 'collab',
 	  martaAI: 'martaAI',
-	  copilot: 'copilot'
+	  copilot: 'copilot',
+	  notifications: 'notifications'
 	};
 	const COPILOT_BACKGROUND_ID = 4;
+	const NOTIFICATIONS_BACKGROUND_ID = 11;
 	const SpecialBackground = {
 	  [SpecialBackgroundId.collab]: {
 	    color: '#76c68b',
@@ -81,12 +83,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.aiAssistant
 	  },
-	  [SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID]
+	  [SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID],
+	  [SpecialBackgroundId.notifications]: {
+	    color: '#fafcfd',
+	    type: ThemeType.light,
+	    pattern: ThemePattern.default
+	  }
 	};
 	const ImageFileByBackgroundId = {
 	  [SpecialBackgroundId.collab]: 'collab-v2',
 	  [SpecialBackgroundId.martaAI]: 'ai-assistant',
-	  [SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString()
+	  [SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString(),
+	  [SpecialBackgroundId.notifications]: NOTIFICATIONS_BACKGROUND_ID.toString()
 	};
 
 	const IMAGE_FOLDER_PATH = '/bitrix/js/im/images/chat-v2-background';

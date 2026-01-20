@@ -12,10 +12,10 @@ type SlideConfig = {
 	innerImage: string,
 	innerTitle: string,
 	innerDescription: string,
-	buttons: Array<ButtonConfig>,
+	buttons: Array<SlideButtonConfig>,
 };
 
-type ButtonConfig = {
+type SlideButtonConfig = {
 	text: string,
 	className: string,
 	onClickClose: ?boolean,
@@ -30,6 +30,18 @@ type Slide = {
 
 type StepPosition = 'left' | 'right'; // it's bottom by default
 
+type Highlighter = {
+	target: string;
+	radius?: number;
+}
+
+type ScrollBehavior = 'auto' | 'smooth';
+type ScrollPosition = 'top' | 'center' | 'bottom' | 'nearest';
+type Autoscroll = {
+	behavior?: ScrollBehavior,
+	position: ScrollPosition, // top|center|bottom|nearest,
+}
+
 type StepConfig = {
 	id: string,
 	title: string,
@@ -43,7 +55,19 @@ type StepConfig = {
 	articleAnchor?: string,
 	infoHelperCode: ?string,
 	ignoreIfTargetNotFound: ?boolean,
+	buttons: ?Array<StepButtonConfig>,
+	highlighter?: Highlighter,
+	autoscroll?: Autoscroll,
+	iconSrc?: string,
 }
+
+type StepButtonConfig = {
+	text: string,
+	onclick: {
+		code: ?string,
+		closeAfterClick: ?boolean,
+	},
+};
 
 type Step = {
 	id: string,
@@ -51,15 +75,19 @@ type Step = {
 	text: string,
 	position: ?StepPosition,
 	target: ?string,
+	highlighter?: Highlighter,
+	autoscroll?: Autoscroll,
 }
 
 type Option = {
 	showOverlayFromFirstStep?: boolean,
+	skipShownPopupCheck?: boolean,
 	hideTourOnMissClick?: boolean,
 	numberOfViewsLimit:	number,
 	isNumberOfViewsExceeded?: boolean,
 	disableBannerDispatcher?: boolean,
 	additionalTourIdsForDisable?: Array<string>,
+	canShowWithoutTarget?: boolean,
 	...
 }
 
@@ -76,6 +104,7 @@ class ActionViewMode
 	#closeOptionCategory: string;
 
 	#isViewHappened: boolean = false;
+	#autoscroll: ?Autoscroll = null;
 
 	constructor({ slides, steps, options, closeOptionCategory, closeOptionName })
 	{
@@ -209,6 +238,10 @@ class ActionViewMode
 				article: stepConfig.article,
 				articleAnchor: stepConfig.articleAnchor ?? null,
 				infoHelperCode: stepConfig.infoHelperCode,
+				buttons: stepConfig.buttons,
+				highlighter: stepConfig.highlighter ?? null,
+				autoscroll: stepConfig.autoscroll ?? null,
+				iconSrc: stepConfig.iconSrc ?? null,
 			};
 
 			if (stepConfig.useDynamicTarget)
@@ -218,7 +251,7 @@ class ActionViewMode
 			}
 			else
 			{
-				const target = document.querySelector(stepConfig.target);
+				const target = this.#getAvailableTarget(stepConfig.target);
 				if (target && Dom.style(target, 'display') !== 'none')
 				{
 					step.target = stepConfig.target;
@@ -226,7 +259,8 @@ class ActionViewMode
 				else if (Type.isArrayFilled(stepConfig.reserveTargets))
 				{
 					const isFound = stepConfig.reserveTargets.some((reserveTarget) => {
-						if (document.querySelector(reserveTarget))
+						const reserveTargetElement = this.#getAvailableTarget(reserveTarget);
+						if (reserveTargetElement && Dom.style(reserveTargetElement, 'display') !== 'none')
 						{
 							step.target = reserveTarget;
 
@@ -315,8 +349,40 @@ class ActionViewMode
 
 	#runGuide(guide: Object, onDone: Function = null): void
 	{
-		this.#onGuideFinish(guide, onDone);
-		guide.showNextStep();
+		let canShowGuide = !this.#isAnyPopupShown();
+		const { target } = guide.steps[0];
+
+		if (canShowGuide && Type.isStringFilled(target))
+		{
+			canShowGuide = this.#getAvailableTarget(target) !== null;
+		}
+
+		if (canShowGuide)
+		{
+			this.#onGuideFinish(guide, onDone);
+
+			void this.#onBeforeShow(guide)
+				.then(() => {
+					guide.showNextStep();
+				})
+			;
+		}
+		else
+		{
+			onDone();
+		}
+	}
+
+	#getAvailableTarget(target: ?string): HTMLElement
+	{
+		if (!Type.isStringFilled(target))
+		{
+			return null;
+		}
+
+		const targetNode = document.querySelector(target);
+
+		return Type.isDomNode(targetNode) ? targetNode : null;
 	}
 
 	#getDefaultStepEventName(stepId: string): string
@@ -356,7 +422,7 @@ class ActionViewMode
 	{
 		const { disableBannerDispatcher = false } = this.#options;
 
-		if (PopupManager && PopupManager.isAnyPopupShown())
+		if (this.#isAnyPopupShown())
 		{
 			return;
 		}
@@ -413,7 +479,7 @@ class ActionViewMode
 				return; // do not allow many guides at the same time
 			}
 
-			if (PopupManager && PopupManager.isAnyPopupShown())
+			if (this.#isAnyPopupShown())
 			{
 				return;
 			}
@@ -442,6 +508,11 @@ class ActionViewMode
 		});
 	}
 
+	#isAnyPopupShown(): boolean
+	{
+		return PopupManager?.isAnyPopupShown();
+	}
+
 	#showGuide(guide: UIGuide): void
 	{
 		if (guide.steps.length > 1 || this.#options.showOverlayFromFirstStep)
@@ -456,9 +527,102 @@ class ActionViewMode
 
 	createGuideInstance(Guide, steps: Array<Step>, onEvents: boolean): Object
 	{
-		return new Guide({
+		const guide = new Guide({
 			onEvents,
-			steps,
+			canShowWithoutTarget: this.#options.canShowWithoutTarget ?? false,
+			steps: steps.map((step) => {
+				let highlighter = null;
+				if (Type.isPlainObject(step.highlighter))
+				{
+					highlighter = step.highlighter;
+					// eslint-disable-next-line no-param-reassign
+					delete step.highlighter;
+				}
+
+				if (Type.isPlainObject(step.autoscroll))
+				{
+					this.#autoscroll = step.autoscroll;
+					// eslint-disable-next-line no-param-reassign
+					delete step.autoscroll;
+				}
+
+				return {
+					...step,
+					// why here and not in prepareSteps?
+					// we need a guide instance reference
+					buttons: step.buttons?.map((button) => {
+						return {
+							text: button.text,
+							event: () => {
+								if (Type.isStringFilled(button.onclick?.code))
+								{
+									// eslint-disable-next-line no-eval
+									eval(button.onclick.code);
+								}
+
+								if (button.onclick?.closeAfterClick)
+								{
+									guide.close();
+								}
+							},
+						};
+					}),
+					events: {
+						onShow: (event) => {
+							const { data } = event;
+							if (!data)
+							{
+								return;
+							}
+
+							// custom air design for single step tours. Remove after ui implemented
+							if (data.guide.steps.length === 1)
+							{
+								let airClassList = 'crm-whats-new-slide-air';
+								if (Type.isArrayFilled(data.guide.steps[0].buttons))
+								{
+									airClassList += ' --with-buttons';
+								}
+
+								if (Type.isStringFilled(data.guide.steps[0].iconSrc))
+								{
+									airClassList += ' --with-icon';
+								}
+
+								Dom.addClass(data.guide.getPopup().getPopupContainer(), airClassList);
+							}
+
+							if (!highlighter)
+							{
+								return;
+							}
+
+							void BX.Runtime.loadExtension('ui.system.highlighter').then(() => {
+								document.querySelectorAll(highlighter.target).forEach((item) => {
+									const element = Tag.render`<span class="ui-highlighter"></span>`;
+
+									if (Type.isNumber(highlighter.radius))
+									{
+										Dom.style(element, '--ui-highlighter-radius', `${highlighter.radius}px`);
+									}
+
+									Dom.append(element, item);
+								});
+							});
+						},
+						onClose: () => {
+							if (!highlighter)
+							{
+								return;
+							}
+
+							document.querySelectorAll(highlighter.target).forEach((item) => {
+								Dom.remove(item.querySelector('.ui-highlighter'));
+							});
+						},
+					},
+				};
+			}),
 			events: {
 				onFinish: () => {
 					if (this.#slides.length === 0)
@@ -467,6 +631,175 @@ class ActionViewMode
 					}
 				},
 			},
+		});
+
+		return guide;
+	}
+
+	#onBeforeShow(guide: UIGuide): Promise<void>
+	{
+		if (!Type.isPlainObject(this.#autoscroll))
+		{
+			return Promise.resolve();
+		}
+
+		const step = guide.steps[0];
+		const targetNode = this.#getAvailableTarget(step.target);
+		if (targetNode === null || this.#isVisibleTargetNode(targetNode))
+		{
+			return Promise.resolve();
+		}
+
+		let parentScrolledContainer = window;
+		let parent = targetNode.parentElement;
+
+		while (parent)
+		{
+			const style = window.getComputedStyle(parent);
+			const overflowY = style.overflowY;
+
+			if (
+				(overflowY === 'auto' || overflowY === 'scroll')
+				&& parent.scrollHeight >= parent.clientHeight
+			)
+			{
+				parentScrolledContainer = parent;
+				break;
+			}
+
+			parent = parent.parentElement;
+		}
+
+		return new Promise((resolve) => {
+			const scrollTop = this.#getTargetNodeScrollTop(targetNode, parentScrolledContainer);
+
+			if (this.#autoscroll.behavior === 'smooth' && 'scrollTo' in parentScrolledContainer)
+			{
+				void this
+					.#scrollToWithPromise(parentScrolledContainer, { top: scrollTop, behavior: 'smooth' })
+					.then(() => {
+						resolve();
+					})
+				;
+			}
+			else
+			{
+				parent.scrollTop = scrollTop;
+				guide.getPopup().adjustPosition({ forceBindPosition: true });
+				resolve();
+			}
+		});
+	}
+
+	#isVisibleTargetNode(targetNode: HTMLElement): boolean
+	{
+		const rect = targetNode.getBoundingClientRect();
+
+		return rect.top >= 0
+			&& rect.left >= 0
+			&& rect.bottom >= 0
+			&& rect.bottom <= ((window.innerHeight || document.documentElement.clientHeight) - 200)
+			&& rect.right <= ((window.innerWidth || document.documentElement.clientWidth) - 200)
+		;
+	}
+
+	#getTargetNodeScrollTop(targetNode: HTMLElement, parentScrolledContainer: HTMLElement): number
+	{
+		const elementTop = targetNode.offsetTop;
+		const elementHeight = targetNode.offsetHeight;
+		const containerHeight = parentScrolledContainer.clientHeight;
+
+		const block = this.#autoscroll.position ?? 'auto';
+
+		const getMaxScrollTop = (scrollTop: number) => {
+			return Math.max(0, Math.min(scrollTop, parentScrolledContainer.scrollHeight - containerHeight));
+		};
+
+		let scrollTop = parentScrolledContainer.scrollTop;
+
+		if (block === 'start')
+		{
+			return getMaxScrollTop(elementTop);
+		}
+
+		if (block === 'center')
+		{
+			return getMaxScrollTop(elementTop + elementHeight / 2 - containerHeight / 2);
+		}
+
+		if (block === 'end')
+		{
+			return getMaxScrollTop(elementTop + elementHeight - containerHeight);
+		}
+
+		const currentViewTop = parentScrolledContainer.scrollTop;
+		const currentViewBottom = currentViewTop + containerHeight;
+
+		if (elementTop < currentViewTop)
+		{
+			scrollTop = elementTop;
+		}
+		else if (elementTop + elementHeight > currentViewBottom)
+		{
+			scrollTop = elementTop + elementHeight - containerHeight;
+		}
+
+		return getMaxScrollTop(scrollTop);
+	}
+
+	#scrollToWithPromise(element: HTMLElement, options: Object): Promise<void>
+	{
+		return new Promise((resolve) => {
+			const targetTop = options.top ?? element.scrollTop;
+			const targetLeft = options.left ?? element.scrollLeft;
+			const behavior = options.behavior ?? 'auto';
+			const tolerance = 1;
+
+			if (behavior === 'auto')
+			{
+				element.scrollTo(options);
+				resolve();
+
+				return;
+			}
+
+			let lastTop = element.scrollTop;
+			let lastLeft = element.scrollLeft;
+			let stationaryFrames = 0;
+
+			const isClose = (a: number, b: number): boolean => Math.abs(a - b) <= tolerance;
+
+			const checkScrollEnd = () => {
+				const currentTop = element.scrollTop;
+				const currentLeft = element.scrollLeft;
+
+				const reachedTarget = isClose(currentTop, targetTop) && isClose(currentLeft, targetLeft);
+				const stoppedMoving = isClose(currentTop, lastTop) && isClose(currentLeft, lastLeft);
+
+				if (reachedTarget && stoppedMoving)
+				{
+					stationaryFrames++;
+					if (stationaryFrames >= 2)
+					{
+						resolve();
+
+						return;
+					}
+				}
+				else
+				{
+					stationaryFrames = 0;
+				}
+
+				lastTop = currentTop;
+				lastLeft = currentLeft;
+
+				requestAnimationFrame(checkScrollEnd);
+			};
+
+			element.scrollTo(options);
+
+			requestAnimationFrame(checkScrollEnd);
 		});
 	}
 

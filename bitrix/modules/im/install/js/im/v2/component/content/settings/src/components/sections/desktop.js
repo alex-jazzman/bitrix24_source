@@ -1,4 +1,6 @@
+import { Analytics } from 'im.v2.lib.analytics';
 import { DesktopApi, DesktopFeature, DesktopSettingsKey } from 'im.v2.lib.desktop-api';
+import { showDesktopConfirm, showDesktopRestartConfirm } from 'im.v2.lib.confirm';
 import { Settings } from 'im.v2.const';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { SettingsService } from 'im.v2.provider.service.settings';
@@ -11,6 +13,10 @@ export const DesktopSection = {
 	components: { CheckboxOption },
 	computed:
 	{
+		twoWindowMode(): boolean
+		{
+			return DesktopApi.isTwoWindowMode();
+		},
 		autoStartDesktop(): boolean
 		{
 			return DesktopApi.getAutostartStatus();
@@ -41,6 +47,32 @@ export const DesktopSection = {
 	},
 	methods:
 	{
+		async onTwoWindowModeChange(newValue: boolean)
+		{
+			DesktopApi.setTwoWindowMode(newValue);
+
+			if (newValue)
+			{
+				Analytics.getInstance().desktopMode.onSettingsTwoWindowEnable();
+			}
+			else
+			{
+				Analytics.getInstance().desktopMode.onSettingsOneWindowEnable();
+			}
+
+			if (!DesktopApi.isFeatureSupported(DesktopFeature.restart.id))
+			{
+				void showDesktopConfirm();
+
+				return;
+			}
+
+			const userChoice = await showDesktopRestartConfirm();
+			if (userChoice === true)
+			{
+				DesktopApi.restart();
+			}
+		},
 		onAutoStartDesktopChange(newValue: boolean)
 		{
 			DesktopApi.setAutostartStatus(newValue);
@@ -85,6 +117,11 @@ export const DesktopSection = {
 				<div class="bx-im-settings-section-content__block_title">
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_STARTUP') }}
 				</div>
+<!--				<CheckboxOption-->
+<!--					:value="twoWindowMode"-->
+<!--					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_TWO_WINDOW_MODE_V2')"-->
+<!--					@change="onTwoWindowModeChange"-->
+<!--				/>-->
 				<CheckboxOption
 					:value="autoStartDesktop"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_AUTO_START')"

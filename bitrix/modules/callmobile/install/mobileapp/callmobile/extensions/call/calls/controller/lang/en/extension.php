@@ -1,4 +1,9 @@
 <?php
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CHANNEL_NAME"] = "Active Bitrix24 call";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CONTENT_TEXT"] = "Call ##CALL_NUMBER#";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_HANGUP_BUTTON_TEXT"] = "End call";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_MUTE_BUTTON_TEXT"] = "Mute";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_UNMUTE_BUTTON_TEXT"] = "Unmute";
 $MESS["CALLMOBILE_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_F"] = "#NAME# granted you permission to unmute mic, enable camera and screen sharing.";
 $MESS["CALLMOBILE_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_M"] = "#NAME# granted you permission to unmute mic, enable camera and screen sharing.";
 $MESS["CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_F"] = "#NAME# revoked your permission to unmute mic, enable camera and screen sharing.";
@@ -7,6 +12,7 @@ $MESS["CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_CAM_HINT"] = "#NAME# revoked permiss
 $MESS["CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_MIC_HINT"] = "#NAME# revoked permission to unmute mic. Tap \"Raise\" to request access.";
 $MESS["CALLMOBILE_DEFAULT_NAME_OF_MODERATOR"] = "The host";
 $MESS["CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT"] = "You are now on a different call. Disconnect from that call to start a new one.";
+$MESS["CALLMOBILE_MESSAGE_VPN_IS_ACTIVE"] = "Consider disabling VPN if you're experiencing quality issues.";
 $MESS["CALLMOBILE_SECURITY_KEY_CHANGED"] = "Your Bitrix24 administrator modified the security key.[break]Restart the app to resume the call.";
 $MESS["CALLMOBILE_USER_ALLOW_TURN_ON_CAM_F"] = "#NAME# granted permission to enable cameras.";
 $MESS["CALLMOBILE_USER_ALLOW_TURN_ON_CAM_M"] = "#NAME# granted permission to enable cameras.";

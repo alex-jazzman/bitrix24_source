@@ -3,6 +3,7 @@ import { Type } from 'main.core';
 import { Model } from 'booking.const';
 import { resourceCreationWizardService } from 'booking.provider.service.resource-creation-wizard-service';
 import { BaseFields } from './base-fields/base-fields';
+import { ServicesSkus } from './services-skus/services-skus';
 import { ScheduleTypes } from './schedule-types/schedule-types';
 import { Integration } from './integration/integration';
 import { WorkTime } from './work-time/work-time';
@@ -10,6 +11,7 @@ import { SlotLength } from './slot-length/slot-length';
 
 import type { SlotRange } from 'booking.model.resources';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
+import type { UploaderFile } from 'ui.uploader.core';
 
 import 'ui.forms';
 import 'ui.layout-form';
@@ -19,6 +21,7 @@ import './resource-settings-card.css';
 
 const { mapGetters: mapResourceGetters, mapActions, mapMutations } = createNamespacedHelpers('resource-creation-wizard');
 
+// @vue/component
 export const ResourceSettingsCard = {
 	name: 'ResourceSettingsCard',
 	components: {
@@ -26,7 +29,78 @@ export const ResourceSettingsCard = {
 		ScheduleTypes,
 		WorkTime,
 		SlotLength,
+		ServicesSkus,
 		Integration,
+	},
+	data(): Object
+	{
+		return {
+			selectedSlotLength: 60,
+			initialTimezone: '',
+		};
+	},
+	computed: {
+		...mapGetters({
+			timezone: `${Model.Interface}/timezone`,
+		}),
+		...mapResourceGetters({
+			resource: 'getResource',
+			companyScheduleSlots: 'getCompanyScheduleSlots',
+			isCompanyScheduleAccess: 'isCompanyScheduleAccess',
+			companyScheduleUrl: 'companyScheduleUrl',
+			isGlobalSchedule: 'isGlobalSchedule',
+		}),
+		resourceName(): string
+		{
+			return this.resource.name;
+		},
+		resourceType(): Object
+		{
+			const resourceType: ?ResourceTypeModel = this.$store
+				.getters[`${Model.ResourceTypes}/getById`](this.resource.typeId)
+			;
+
+			return {
+				typeId: this.resource.typeId,
+				typeName: resourceType?.name,
+			};
+		},
+		resourceDescription(): string
+		{
+			return this.resource.description ?? '';
+		},
+		resourceAvatarUrl(): string
+		{
+			return this.resource.avatar?.url ?? '';
+		},
+		slotRanges(): SlotRange[]
+		{
+			return this.resource.slotRanges;
+		},
+		defaultSlotRange(): SlotRange
+		{
+			return this.companyScheduleSlots[0];
+		},
+		slotSize(): number
+		{
+			const slotRange: SlotRange = this.resource.slotRanges?.[0];
+
+			return slotRange?.slotSize ?? 60;
+		},
+		isMain: {
+			get(): boolean
+			{
+				return this.resource.isMain;
+			},
+			set(isMain: boolean)
+			{
+				this.updateResource({ isMain });
+			},
+		},
+		isEditForm(): boolean
+		{
+			return this.resource.id !== null;
+		},
 	},
 	created(): void
 	{
@@ -41,16 +115,10 @@ export const ResourceSettingsCard = {
 
 		this.updateSlotRanges(slotRanges);
 	},
-	data(): Object
-	{
-		return {
-			selectedSlotLength: 60,
-			initialTimezone: '',
-		};
-	},
 	methods: {
 		...mapActions([
 			'updateResource',
+			'setResourceAvatarFile',
 			'setInvalidResourceName',
 			'setInvalidResourceType',
 		]),
@@ -71,6 +139,28 @@ export const ResourceSettingsCard = {
 			if (typeId)
 			{
 				this.setInvalidResourceType(false);
+			}
+		},
+		updateResourceDescription(description): void
+		{
+			this.updateResource({ description });
+		},
+		updateResourceAvatarFile(avatarFile: UploaderFile | null): void
+		{
+			if (avatarFile)
+			{
+				this.setResourceAvatarFile(avatarFile.getBinary());
+				this.updateResource({
+					avatar: {
+						id: null,
+						url: avatarFile.getPreviewUrl(),
+					},
+				});
+			}
+			else
+			{
+				this.setResourceAvatarFile(null);
+				this.updateResource({ avatar: null });
 			}
 		},
 		updateSlotRanges(slotRanges: SlotRange[]): void
@@ -120,70 +210,20 @@ export const ResourceSettingsCard = {
 			return slotRanges[0]?.timezone;
 		},
 	},
-	computed: {
-		...mapGetters({
-			timezone: `${Model.Interface}/timezone`,
-		}),
-		...mapResourceGetters({
-			resource: 'getResource',
-			companyScheduleSlots: 'getCompanyScheduleSlots',
-			isCompanyScheduleAccess: 'isCompanyScheduleAccess',
-			companyScheduleUrl: 'companyScheduleUrl',
-			isGlobalSchedule: 'isGlobalSchedule',
-		}),
-		resourceName(): string
-		{
-			return this.resource.name;
-		},
-		resourceType(): Object
-		{
-			const resourceType: ?ResourceTypeModel = this.$store
-				.getters[`${Model.ResourceTypes}/getById`](this.resource.typeId)
-			;
-
-			return {
-				typeId: this.resource.typeId,
-				typeName: resourceType?.name,
-			};
-		},
-		slotRanges(): SlotRange[]
-		{
-			return this.resource.slotRanges;
-		},
-		defaultSlotRange(): SlotRange
-		{
-			return this.companyScheduleSlots[0];
-		},
-		slotSize(): number
-		{
-			const slotRange: SlotRange = this.resource.slotRanges?.[0];
-
-			return slotRange?.slotSize ?? 60;
-		},
-		isMain: {
-			get(): boolean
-			{
-				return this.resource.isMain;
-			},
-			set(isMain: boolean)
-			{
-				this.updateResource({ isMain });
-			},
-		},
-		isEditForm(): boolean
-		{
-			return this.resource.id !== null;
-		},
-	},
 	template: `
 		<div class="resource-settings-card">
 			<BaseFields
 				data-id="brcw-resource-settings-base"
 				:initialResourceName="resourceName"
 				:initialResourceType="resourceType"
+				:initialResourceDescription="resourceDescription"
+				:initialResourceAvatarUrl="resourceAvatarUrl"
 				@nameUpdate="updateResourceName"
 				@typeUpdate="updateResourceType"
+				@descriptionUpdate="updateResourceDescription"
+				@avatarFileUpdate="updateResourceAvatarFile"
 			/>
+			<ServicesSkus/>
 			<ScheduleTypes
 				data-id="brcw-resource-settings-schedule-types"
 				v-model="isMain"

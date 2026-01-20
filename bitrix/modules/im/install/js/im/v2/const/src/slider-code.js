@@ -4,4 +4,5 @@ export const SliderCode = {
 	autoDeleteDisabled: 'limit_auto_delete_messages_off',
 	collabInviteOff: 'limit_v2_socialnetwork_collab_invite_off',
 	collabDisabled: 'socialnetwork_collab_off',
+	buyMarketPlus: 'limit_subscription_market_access_buy_marketplus',
 };

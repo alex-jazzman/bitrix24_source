@@ -20,6 +20,7 @@
 	scrollbar-width: none;
 	height: 100%;
 	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-2xl);
 }
 
 .tasks-check-list-content.--preview {
@@ -35,12 +36,16 @@
 	margin-top: auto;
 }
 
+.tasks-check-list-footer > :only-child {
+	margin-left: auto;
+}
+
 .tasks-check-list-footer.--popup {
 	padding: 25px 24px 8px 24px;
 }
 
 .tasks-check-list-footer.--sheet {
-	padding: 10px 24px 0 24px;
+	padding: 25px 24px 0 24px;
 }
 
 .tasks-check-list-footer.--preview {
@@ -89,8 +94,9 @@
 }
 
 .check-list-stub-title {
-	font-size: var(--ui-font-size-3xl);
-	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-normal);
+	letter-spacing: var(--ui-letter-spacing-l);
 	color: var(--ui-color-base-2);
 	text-align: center;
 }
@@ -103,13 +109,14 @@
 }
 
 .check-list-stub-icon {
-	width: 330px;
-	height: 162px;
+	width: 424px;
+	height: 210px;
 	background: url('./empty-stub.png') center / contain no-repeat;
 }
 
 .check-list-stub-btn {
-	margin-top: 30px;
+	font-size: var(--ui-font-size-2xl);
+	margin-top: 20px;
 }
 
 .tasks-check-list-list-transition-content {

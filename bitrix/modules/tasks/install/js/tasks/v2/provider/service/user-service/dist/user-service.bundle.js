@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
+(function (exports,main_core,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
 	'use strict';
 
 	function mapDtoToModel(userDto) {
@@ -15,6 +15,16 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    type: userDto.type
 	  };
 	}
+	function mapModelToDto(user) {
+	  return {
+	    id: user.id,
+	    name: user.name,
+	    image: {
+	      src: user.image
+	    },
+	    type: user.type
+	  };
+	}
 
 	var _getUnloadedIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUnloadedIds");
 	class UserService {
@@ -24,7 +34,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    });
 	  }
 	  getUrl(id) {
-	    return `/company/personal/user/${id}/`;
+	    const settings = main_core.Extension.getSettings('tasks.v2.application.task-card');
+	    const urlTemplate = settings.userDetailUrlTemplate;
+	    if (!urlTemplate) {
+	      return `/company/personal/user/${id}/`;
+	    }
+	    return urlTemplate.replace('#USER_ID#', String(id));
 	  }
 	  async list(ids) {
 	    const unloadedIds = babelHelpers.classPrivateFieldLooseBase(this, _getUnloadedIds)[_getUnloadedIds](ids);
@@ -32,7 +47,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return;
 	    }
 	    try {
-	      const data = await tasks_v2_lib_apiClient.apiClient.post('User.list', {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.UserList, {
 	        ids: unloadedIds
 	      });
 	      const users = data.map(user => mapDtoToModel(user));
@@ -58,11 +73,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	const userService = new UserService();
 
 	const UserMappers = {
-	  mapDtoToModel
+	  mapDtoToModel,
+	  mapModelToDto
 	};
 
 	exports.UserMappers = UserMappers;
 	exports.userService = userService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
 //# sourceMappingURL=user-service.bundle.js.map

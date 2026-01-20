@@ -13,9 +13,16 @@ type SettingField = {
 }
 
 type Props = {
-	sourceFields: { id: number, title: string, type: string, code: string | null, active: boolean },
+	sourceFields: {
+		id: number,
+		title: string,
+		type: string,
+		code: string | null,
+		active: boolean,
+		isSupportMapping: boolean | null,
+	},
 	fieldsConfig: { [key: string]: SettingField[] },
-	supportedDatabases: { code: string; name: string }[],
+	supportedDatabases: { code: string; name: string; isSupportMapping: boolean }[],
 	closeAfterCreate: boolean,
 }
 
@@ -146,15 +153,19 @@ class ExternalConnectionForm
 				entityId: 'biconnector-external-connection',
 				title: database.name,
 				tabs: 'connections',
+				customData: {
+					isSupportMapping: database.isSupportMapping ?? false,
+				},
 			})),
 			events: {
 				'Item:onSelect': (event) => {
 					const item = event.getData().item;
 					const selectedDatabaseCode = item.getId();
 					const selectedDatabaseName = item.getTitle();
+					const isSupportMapping = item.getCustomData().get('isSupportMapping');
 
 					button.textContent = Text.encode(selectedDatabaseName);
-					this.#onChangeType({ target: { value: selectedDatabaseCode } });
+					this.#onChangeType({ target: { value: selectedDatabaseCode, isSupportMapping } });
 				},
 			},
 			entities: [{
@@ -213,10 +224,12 @@ class ExternalConnectionForm
 	#onChangeType(event)
 	{
 		const value = event.target.value;
+		const isSupportMapping = event.target.isSupportMapping;
 
 		const connector = this.#props.supportedDatabases.find((database) => database.code === value);
 		this.#props.sourceFields.code = value;
 		this.#props.sourceFields.type = connector.type ?? null;
+		this.#props.sourceFields.isSupportMapping = isSupportMapping;
 		Dom.clean(this.#node.querySelector('.hint-wrapper'));
 		this.#initHint();
 		Dom.clean(this.#node.querySelector('.fields-wrapper'));
@@ -361,7 +374,10 @@ class ExternalConnectionForm
 			});
 	}
 
-	#showSaveSuccessPopup(connection: { id: any, name: string, type: string }, supersetIsReady: boolean)
+	#showSaveSuccessPopup(
+		connection: { id: any, name: string, type: string, isSupportMapping: boolean},
+		supersetIsReady: boolean,
+	)
 	{
 		let popup: ?Popup = null;
 
@@ -395,6 +411,7 @@ class ExternalConnectionForm
 			ImportSlider.open(sourceType, 0, {
 				connectionId: connection.id,
 				connectionType: connection.type,
+				connectionIsSupportMapping: connection.isSupportMapping ?? false,
 			});
 		});
 

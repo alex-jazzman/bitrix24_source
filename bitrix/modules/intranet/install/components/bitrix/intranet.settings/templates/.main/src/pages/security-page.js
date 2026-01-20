@@ -1,4 +1,4 @@
-import { Loc, Tag, Event, Dom, Type} from 'main.core';
+import { ajax as Ajax, Loc, Tag, Event, Dom, Type} from 'main.core';
 import 'ui.forms';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
@@ -7,8 +7,8 @@ import { Section, Row } from 'ui.section';
 import { Checker, Selector, SingleChecker, UserSelector, TextInput, FieldFactory } from 'ui.form-elements.view';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Popup } from 'main.popup';
-import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage, DescriptionField } from 'ui.form-elements.field';
-import { Counter } from 'ui.cnt';
+import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage, ErrorCollection, DescriptionField } from 'ui.form-elements.field';
+import { PushOtp } from 'intranet.notify-banner.push-otp';
 
 export class SecurityPage extends BaseSettingsPage
 {
@@ -20,7 +20,7 @@ export class SecurityPage extends BaseSettingsPage
 	{
 		super();
 		this.titlePage = Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_SECURITY');
-		this.descriptionPage = Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY');
+		this.descriptionPage = Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_SECURITY_MSGVER_2');
 	}
 
 	getType(): string
@@ -72,7 +72,7 @@ export class SecurityPage extends BaseSettingsPage
 			parent: section,
 		});
 
-		if (this.hasValue('SECURITY_OTP') && this.hasValue('SEND_OTP_PUSH'))
+		if (this.hasValue('SECURITY_OTP'))
 		{
 			const securityOtpCheckerRow = new Row({
 				content: this.#getOTPChecker().render(),
@@ -92,31 +92,64 @@ export class SecurityPage extends BaseSettingsPage
 				row: securityOtpPeriodSelectorRow,
 				parent: section,
 			});
+			let securityOtpMessageChatCheckerRow = null;
 
-			const switcherWrapper = Tag.render`
-				<div class="settings-switcher-wrapper">
-					<div class="settings-security-message-switcher"/>
-				</div>
-			`;
-			new SingleChecker({
-				switcher: new Switcher({
-					node: switcherWrapper.querySelector('.settings-security-message-switcher'),
-					inputName: 'SEND_OTP_PUSH',
-					checked: this.getValue('SEND_OTP_PUSH'),
-					size: SwitcherSize.small,
-				}),
-			});
-			const securityOtpMessageChatCheckerRow = new Row({
-				content: switcherWrapper,
-				isHidden: !this.#getOTPChecker().isChecked(),
-			});
-			switcherWrapper.append(Tag.render`<span class="settings-switcher-title">${
-				Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT')
-			}</span>`);
-			new SettingsRow({
-				row: securityOtpMessageChatCheckerRow,
-				parent: section,
-			});
+			if (this.hasValue('SEND_OTP_PUSH'))
+			{
+				const switcherWrapper = Tag.render`
+					<div class="settings-switcher-wrapper">
+						<div class="settings-security-message-switcher"/>
+					</div>
+				`;
+				new SingleChecker({
+					switcher: new Switcher({
+						node: switcherWrapper.querySelector('.settings-security-message-switcher'),
+						inputName: 'SEND_OTP_PUSH',
+						checked: this.getValue('SEND_OTP_PUSH'),
+						size: SwitcherSize.small,
+					}),
+				});
+				securityOtpMessageChatCheckerRow = new Row({
+					content: switcherWrapper,
+					isHidden: this.#isPushOtpProvider() || !this.#getOTPChecker().isChecked(),
+				});
+				switcherWrapper.append(Tag.render`<span class="settings-switcher-title">${
+					Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT')
+				}</span>`);
+				new SettingsRow({
+					row: securityOtpMessageChatCheckerRow,
+					parent: section,
+				});
+			}
+
+			if (this.hasValue('SECURITY_OTP_NEED_PUSH_OTP_BANNER') && this.getValue('SECURITY_OTP_NEED_PUSH_OTP_BANNER'))
+			{
+				const newOtpBanner = (new PushOtp({
+					title: Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TITLE'),
+					text: Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TEXT'),
+					clickEnableBtn: () => {
+						this.getAnalytic()?.addEventEnablePushOtp();
+						Ajax.runAction('intranet.v2.Otp.activePushOtp').then(() => {
+							this.reload();
+							this.#otpChecker = null;
+						}, (response) => {
+							if (response.status === 'error')
+							{
+								ErrorCollection.showSystemError(response.errors[0].message);
+							}
+						});
+					},
+				})).render();
+
+				const securityOtpBannerNewOtpRow = new Row({
+					content: newOtpBanner,
+				});
+
+				new SettingsRow({
+					row: securityOtpBannerNewOtpRow,
+					parent: section,
+				});
+			}
 
 			EventEmitter.subscribe(
 				this.#getOTPChecker().switcher,
@@ -140,13 +173,13 @@ export class SecurityPage extends BaseSettingsPage
 					{
 						Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 						securityOtpPeriodSelectorRow.show();
-						securityOtpMessageChatCheckerRow.show();
+						securityOtpMessageChatCheckerRow?.show();
 					}
 					else
 					{
 						Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 						securityOtpPeriodSelectorRow.hide();
-						securityOtpMessageChatCheckerRow.hide();
+						securityOtpMessageChatCheckerRow?.hide();
 					}
 				},
 			);
@@ -239,7 +272,7 @@ export class SecurityPage extends BaseSettingsPage
 		}
 
 		this.#otpSelector = new Selector({
-			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD'),
+			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD_MSGVER_1'),
 			name: 'SECURITY_OTP_DAYS',
 			items: this.getValue('SECURITY_OTP_DAYS').ITEMS,
 			current: this.getValue('SECURITY_OTP_DAYS').CURRENT,
@@ -251,7 +284,7 @@ export class SecurityPage extends BaseSettingsPage
 	#getOTPDescription(): BX.UI.Alert
 	{
 		return new BX.UI.Alert({
-			text: this.#getOTPDescriptionText(),
+			text: this.#isPushOtpProvider() ? this.#getPushOTPDescriptionText() : this.#getOldOTPDescriptionText(),
 			inline: true,
 			size: BX.UI.Alert.Size.SMALL,
 			color: BX.UI.Alert.Color.PRIMARY,
@@ -259,17 +292,60 @@ export class SecurityPage extends BaseSettingsPage
 		});
 	}
 
-	#getOTPDescriptionText(): string
+	#getPushOTPDescriptionText(): string
+	{
+		if (this.#isHighPromoteModePushOtp())
+		{
+			return `
+				${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_HIGH_MODE', {
+					'[HELP_LINK]': '<a class="ui-section__link" target="_blank" href="/settings/support.php">', 
+					'[/HELP_LINK]': '</a>',
+					'[BR]': '</br></br>'
+				})}
+				</br></br>
+				<span class="settings-section-description-focus-text --security-info">
+					<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
+						${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+					</a>
+				</span>
+			`;
+		}
+
+		return `
+			${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP', {'[BR]': '</br></br>'})}
+			</br></br>
+			<span class="settings-section-description-focus-text --security-info">
+				${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_WARNING', {'[SPAN]': '<span>', '[/SPAN]': '</span>'})}
+				</br></br>
+				<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
+					${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+				</a>
+			</span>
+		`;
+	}
+
+	#isPushOtpProvider(): boolean
+	{
+		return this.hasValue('SECURITY_PUSH_OTP_PROVIDER_DEFAULT') && this.getValue('SECURITY_PUSH_OTP_PROVIDER_DEFAULT');
+	}
+
+	#isHighPromoteModePushOtp(): boolean
+	{
+		return this.#isPushOtpProvider() && this.hasValue('SECURITY_PUSH_OTP_PROVIDE_HIGH') && this.getValue('SECURITY_PUSH_OTP_PROVIDE_HIGH');
+	}
+
+	#getOldOTPDescriptionText(): string
 	{
 		return `
-		${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_FIRST')}
-		</br></br>
-		<span class="settings-section-description-focus-text --security-info">
-			${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_SECOND')}
-			<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
-				${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
-			</a>
-		</span>`;
+			${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_FIRST')}
+			</br></br>
+			<span class="settings-section-description-focus-text --security-info">
+				${Loc.getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_SECOND')}
+				<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=17728602')">
+					${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+				</a>
+			</span>
+		`;
 	}
 
 	#buildAccessIPSection(): ?SettingsSection

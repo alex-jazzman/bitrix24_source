@@ -20,6 +20,7 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 		taskRemoved,
 		tasksRead,
 	} = require('tasks/statemanager/redux/slices/tasks');
+	const { get, removeResults, selectResultById } = require('tasks/statemanager/redux/slices/tasks-results-v2');
 	const { reactionAdded, reactionChanged, reactionCancelled } = require('statemanager/redux/slices/reactions');
 
 	class PullListener
@@ -27,6 +28,7 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 		/**
 		 * @param options {{
 		 *     taskId: String|Number,
+		 *     isChatFeatureEnabled: boolean,
 		 *     callbacks: Object<String, Function>,
 		 * }}
 		 */
@@ -37,6 +39,7 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 			this.taskId = options.taskId;
 			this.userId = Number(env.userId);
 			this.callbacks = options.callbacks;
+			this.isChatFeatureEnabled = options.isChatFeatureEnabled;
 
 			this.unsubscribeCallbacks = [];
 			this.commentsCountToSkip = 0;
@@ -296,19 +299,65 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 			});
 		}
 
-		#onTaskResultAdded()
+		#onTaskResultAdded(data)
 		{
+			if (this.isChatFeatureEnabled)
+			{
+				return this.#getTaskResultData(data.result.id);
+			}
+
 			return this.#callEmptyHandler();
 		}
 
-		#onTaskResultUpdated()
+		#onTaskResultUpdated(data)
 		{
+			if (this.isChatFeatureEnabled)
+			{
+				const resultId = data.result.id;
+				const result = selectResultById(store.getState(), resultId);
+
+				if (result)
+				{
+					return this.#getTaskResultData(resultId);
+				}
+
+				return new Promise((resolve, reject) => {
+					reject();
+				});
+			}
+
 			return this.#callEmptyHandler();
 		}
 
-		#onTaskResultRemoved()
+		#onTaskResultRemoved(data)
 		{
+			if (this.isChatFeatureEnabled)
+			{
+				return new Promise((resolve, reject) => {
+					dispatch(
+						removeResults({
+							taskId: this.#task.id,
+							resultIds: [data.result.id],
+						}),
+					);
+					reject();
+				});
+			}
+
 			return this.#callEmptyHandler();
+		}
+
+		#getTaskResultData(resultId)
+		{
+			return new Promise((resolve, reject) => {
+				dispatch(
+					get({
+						resultId,
+						taskId: this.#task.id,
+					}),
+				);
+				reject();
+			});
 		}
 
 		#onTaskTimerStarted()

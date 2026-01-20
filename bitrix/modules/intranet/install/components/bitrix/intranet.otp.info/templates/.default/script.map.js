@@ -1,0 +1,1 @@
+{"version":3,"file":"script.map.js","names":["BX","namespace","Intranet","Otp","closePopup","name","num","userOptions","save","PopupWindowManager","getCurrentPopup","close"],"sources":["script.js"],"mappings":"AAAAA,GAAGC,UAAU,mBAEbD,GAAGE,SAASC,IAAM,CACjB,UAAAC,CAAWC,EAAMC,GAEhBN,GAAGO,YAAYC,KAAK,WAAY,YAAaH,EAAMC,GAEnDN,GAAGS,mBAAmBC,kBAAkBC,OACzC","ignoreList":[]}

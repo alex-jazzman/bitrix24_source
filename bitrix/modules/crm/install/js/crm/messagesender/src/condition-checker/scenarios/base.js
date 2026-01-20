@@ -97,6 +97,7 @@ export class Base implements Scenario
 	async getLineId(): Promise<number | null>
 	{
 		return new Promise((resolve) => {
+			const connectorId = this.getOpenLineCode();
 			const ajaxParameters = {
 				connectorId: this.getOpenLineCode(),
 				withConnector: true,
@@ -106,7 +107,18 @@ export class Base implements Scenario
 				.then(({ data }) => {
 					if (Type.isArrayFilled(data))
 					{
-						const { lineId } = data[data.length - 1];
+						let lineId = data[data.length - 1].lineId;
+
+						const openLineItemsList = this.openLineItems[connectorId]?.list ?? null;
+						if (openLineItemsList)
+						{
+							const selectedItem = openLineItemsList.find((item) => item.selected) ?? null;
+							if (selectedItem)
+							{
+								lineId = selectedItem.id;
+							}
+						}
+
 						resolve(lineId);
 
 						return;

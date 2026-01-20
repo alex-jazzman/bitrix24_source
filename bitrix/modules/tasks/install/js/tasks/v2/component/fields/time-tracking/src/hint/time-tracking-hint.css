@@ -1,0 +1,35 @@
+.tasks-time-tracking-hint {
+	display: flex;
+	flex-direction: row;
+	gap: 12px;
+	width: 100%;
+}
+
+.tasks-time-tracking-hint-content {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	width: 100%;
+}
+
+.tasks-time-tracking-hint-title {
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-size-3xl);
+	letter-spacing: -0.1px;
+	color: var(--ui-color-base-white-fixed);
+}
+
+.tasks-time-tracking-hint-text {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-white-fixed);
+}
+
+.tasks-time-tracking-invoice-hint-icon {
+	width: 98px;
+	height: 93px;
+	background: url('./tasks-time-tracking-invoice-hint.png') no-repeat center center;
+	background-size: contain;
+}

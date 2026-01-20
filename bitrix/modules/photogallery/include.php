@@ -1,10 +1,12 @@
-<?
-##############################################
-# Bitrix Site Manager IBlock                 #
-# Copyright (c) 2002-2007 Bitrix             #
-# https://www.bitrixsoft.com                 #
-# mailto:admin@bitrixsoft.com                #
-##############################################
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage photogallery
+ * @copyright 2001-2025 Bitrix
+ */
+
 CModule::AddAutoloadClasses(
 	"photogallery",
 	array(

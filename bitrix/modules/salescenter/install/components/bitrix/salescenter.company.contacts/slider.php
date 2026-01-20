@@ -15,6 +15,11 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -22,6 +27,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => 'bitrix:salescenter.company.contacts',
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

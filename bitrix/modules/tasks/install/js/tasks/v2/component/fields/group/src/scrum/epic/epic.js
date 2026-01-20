@@ -1,15 +1,14 @@
 import { Runtime } from 'main.core';
-
-import { hint, type HintParams } from 'ui.vue3.directives.hint';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { TextXs } from 'ui.system.typography.vue';
+import { BLine } from 'ui.system.skeleton.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { tooltip } from 'tasks.v2.component.elements.hint';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { EntitySelectorDialog } from 'tasks.v2.lib.entity-selector-dialog';
 import { Color } from 'tasks.v2.lib.color';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { groupService } from 'tasks.v2.provider.service.group-service';
 import type { EpicModel } from 'tasks.v2.model.epics';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -18,26 +17,27 @@ import './epic.css';
 // @vue/component
 export const Epic = {
 	components: {
+		TextXs,
 		BIcon,
+		BLine,
 	},
-	directives: { hint },
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
 		};
 	},
+	data(): Object
+	{
+		return {
+			hasScrumInfo: groupService.hasScrumInfo(this.taskId),
+		};
+	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		epic(): ?EpicModel
 		{
 			return this.$store.getters[`${Model.Epics}/getById`](this.task.epicId);
@@ -73,21 +73,14 @@ export const Epic = {
 
 			return new Color(this.epic.color).isDark();
 		},
-		tooltip(): Function
-		{
-			return (): HintParams => tooltip({
-				text: this.loc('TASKS_V2_GROUP_EPIC_HINT'),
-				popupOptions: {
-					offsetLeft: this.$el.offsetWidth / 2,
-				},
-			});
-		},
+	},
+	async mounted(): Promise<void>
+	{
+		await groupService.getScrumInfo(this.taskId);
+
+		this.hasScrumInfo = groupService.hasScrumInfo(this.taskId);
 	},
 	methods: {
-		handleClick(): void
-		{
-			this.showDialog();
-		},
 		showDialog(): void
 		{
 			this.handleEpicSelectedDebounced ??= Runtime.debounce(this.handleEpicSelected, 10, this);
@@ -130,29 +123,30 @@ export const Epic = {
 				});
 			}
 
-			void taskService.update(
-				this.taskId,
-				{
-					epicId: item?.getId() ?? 0,
-				},
-			);
+			void taskService.update(this.taskId, {
+				epicId: item?.getId() ?? 0,
+			});
 		},
 	},
 	template: `
 		<div
-			v-hint="tooltip"
-			class="tasks-field-group-scrum-epic"
+			v-if="hasScrumInfo"
+			class="tasks-field-epic"
 			:class="{ '--dark': isDarkColor, '--filled': epic }"
 			:style="{
 				'--epic-color': epicColor,
 				'--epic-background': backgroundColor,
 			}"
-			@click="handleClick"
+			:title="epic?.title"
+			@click="showDialog"
 		>
-			<span class="tasks-field-group-scrum-epic-title">
-				{{ epic?.title || loc('TASKS_V2_GROUP_EPIC_EMPTY') }}
-			</span>
+			<TextXs className="tasks-field-epic-title">
+				{{ epic?.title || loc('TASKS_V2_GROUP_CHOOSE_EPIC') }}
+			</TextXs>
 			<BIcon :name="Outline.CHEVRON_DOWN_S"/>
+		</div>
+		<div v-else class="tasks-field-epic-loader">
+			<BLine :width="80" :height="10"/>
 		</div>
 	`,
 };

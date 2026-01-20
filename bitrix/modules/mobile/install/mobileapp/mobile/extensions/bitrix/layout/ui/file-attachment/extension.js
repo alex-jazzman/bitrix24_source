@@ -29,7 +29,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 
 			this.throttledOnAddButtonClick = throttle(this.onAddButtonClick, 500, this);
 
-			this.layoutWidget.on('onViewHidden', () => this.handleViewHidden());
+			this.layoutWidget.on('onViewRemoved', () => this.handleViewRemoved());
 		}
 
 		componentWillReceiveProps(props)
@@ -37,9 +37,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			this.state.attachments = props.attachments;
 		}
 
-		handleViewHidden()
+		handleViewRemoved()
 		{
-			this.props.onViewHidden?.();
+			this.props.onViewRemoved?.();
 		}
 
 		onChangeAttachments(attachments)
@@ -211,8 +211,16 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 				uri = file.url;
 			}
 
+			const {
+				attachmentFileIconFolder,
+				attachmentCloseIcon,
+				styles,
+				showName,
+				onFilePreviewMenuClick,
+			} = this.props;
+
 			const onDeleteFile = () => this.onDeleteFile(file.id);
-			const onDeleteAttachmentItem = this.props.onDeleteAttachmentItem ? onDeleteFile : null;
+			const onDeleteAttachmentItem = this.props.onDeleteAttachmentItem && !file.readOnly ? onDeleteFile : null;
 
 			return UI.File({
 				onDeleteAttachmentItem,
@@ -223,13 +231,14 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 				name: file.name,
 				isLoading: file.isUploading || false,
 				hasError: file.hasError || false,
-				attachmentCloseIcon: this.props.attachmentCloseIcon,
-				attachmentFileIconFolder: this.props.attachmentFileIconFolder,
-				styles: this.props.styles,
+				readOnly: file.readOnly || false,
+				attachmentCloseIcon,
+				attachmentFileIconFolder,
+				styles,
 				files: this.state.attachments,
-				showName: this.props.showName ?? true,
+				showName: showName ?? true,
 				textLines: 2,
-				onFilePreviewMenuClick: this.props.onFilePreviewMenuClick,
+				onFilePreviewMenuClick,
 			});
 		}
 

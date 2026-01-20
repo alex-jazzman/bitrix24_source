@@ -36,6 +36,17 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/string-fiel
 			});
 		}
 
+		renderViewModeFieldMultipleValues()
+		{
+			const { value } = this.state;
+			if (!Array.isArray(value) || value.length === 0)
+			{
+				return null;
+			}
+
+			return this.renderViewModeFieldValue(value.join(', '), 0);
+		}
+
 		getDefaultValue()
 		{
 			return '';

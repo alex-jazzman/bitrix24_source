@@ -107,7 +107,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<UserListPopup
 				:showPopup="showMoreUsers"
 				:userIds="addedUsers.restUsers"
-				:contextDialogId="dialogId"
 				:bindElement="$refs.addedUsersLink || {}"
 				:withAngle="false"
 				:forceTop="true"

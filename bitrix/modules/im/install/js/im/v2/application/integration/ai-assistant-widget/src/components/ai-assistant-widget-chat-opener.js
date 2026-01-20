@@ -1,4 +1,5 @@
 import 'im.v2.css.classes';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { ChatService } from 'im.v2.provider.service.chat';
 
@@ -43,6 +44,8 @@ export const AiAssistantWidgetChatOpener = {
 			}
 
 			await this.loadChat();
+			Analytics.getInstance().aiAssistant.onOpenWidget(this.dialog);
+			Analytics.getInstance().aiAssistant.onOpenChatAI(this.dialog, true);
 		},
 		async loadChat()
 		{
@@ -61,7 +64,7 @@ export const AiAssistantWidgetChatOpener = {
 		},
 	},
 	template: `
-		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container">
+		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container --ui-context-content-light">
 			<AiAssistantWidgetChatContent :dialogId="dialogId" :withSidebar="false"/>
 		</div>
 	`,

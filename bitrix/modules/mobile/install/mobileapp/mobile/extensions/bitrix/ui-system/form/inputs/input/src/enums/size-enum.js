@@ -21,7 +21,7 @@ jn.define('ui-system/form/inputs/input/src/enums/size-enum', (require, exports, 
 				paddingVertical: Indent.M,
 			},
 			container: {
-				borderRadius: Component.elementMCorner,
+				borderRadius: Component.inputLCorner,
 			},
 			label: {
 				typography: Text5,
@@ -37,7 +37,7 @@ jn.define('ui-system/form/inputs/input/src/enums/size-enum', (require, exports, 
 				paddingVertical: Indent.M,
 			},
 			container: {
-				borderRadius: Component.elementMCorner,
+				borderRadius: Component.inputMCorner,
 			},
 			label: {
 				typography: Text5,
@@ -53,7 +53,7 @@ jn.define('ui-system/form/inputs/input/src/enums/size-enum', (require, exports, 
 				paddingVertical: Indent.S,
 			},
 			container: {
-				borderRadius: Component.elementSCorner,
+				borderRadius: Component.inputSCorner,
 			},
 			label: {
 				typography: Text6,

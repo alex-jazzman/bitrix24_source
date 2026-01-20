@@ -13,7 +13,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return {
 	      id: 0,
 	      title: '',
-	      color: ''
+	      color: '',
+	      systemType: ''
 	    };
 	  }
 	}

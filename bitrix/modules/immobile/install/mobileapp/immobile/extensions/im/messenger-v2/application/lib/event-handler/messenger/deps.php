@@ -7,5 +7,6 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/controller/dialog/chat',
 		'im:messenger/lib/clear-database-handler',
+		'im:messenger-v2/application/lib/component-request-handler',
 	],
 ];

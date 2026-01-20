@@ -26,6 +26,8 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		handOn: 'hand_on',
 		clickChat: 'click_chat',
 		aiRecordStart: 'ai_record_start',
+		openTab: 'open_tab',
+		openSlider: 'open_slider',
 	});
 
 	const AnalyticsTool = Object.freeze({
@@ -36,12 +38,19 @@ jn.define('call/const/analytics', (require, exports, module) => {
 	const AnalyticsCategory = Object.freeze({
 		call: 'call',
 		callsOperations: 'calls_operations',
+		callFollowup: 'call_followup',
 	});
 
 	const AnalyticsType = Object.freeze({
 		private: 'private',
 		group: 'group',
 		videoconf: 'videoconf',
+		about: 'about',
+		efficiency: 'grade',
+		agreements: 'notes',
+		insights: 'ai_call_quality',
+		summary: 'followup',
+		transcribation: 'transcript',
 	});
 
 	const AnalyticsSection = Object.freeze({

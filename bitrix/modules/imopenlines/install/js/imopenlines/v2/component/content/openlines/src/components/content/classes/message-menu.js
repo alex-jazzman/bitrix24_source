@@ -2,16 +2,17 @@ import { MessageMenu } from 'im.v2.lib.menu';
 
 import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
 
-const MenuSectionCode = Object.freeze({
-	main: 'main',
-	select: 'select',
-});
+const MenuSectionCode = {
+	main: 'first',
+	select: 'second',
+	third: 'third',
+};
 
 export class OpenLinesMessageMenu extends MessageMenu
 {
 	getMenuItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
 			this.getReplyItem(),
 			this.getCopyItem(),
 			this.getMarkItem(),
@@ -19,20 +20,24 @@ export class OpenLinesMessageMenu extends MessageMenu
 			this.getFavoriteItem(),
 			this.getDownloadFileItem(),
 			this.getEditItem(),
+		];
+
+		const secondGroupItems = [
 			this.getDeleteItem(),
+			this.getSelectItem(),
 		];
 
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
+			...this.groupItems(firstGroupItems, MenuSectionCode.first),
+			...this.groupItems(secondGroupItems, MenuSectionCode.second),
 		];
 	}
 
 	getMenuGroups(): MenuSectionOptions[]
 	{
 		return [
-			{ code: MenuSectionCode.main },
-			{ code: MenuSectionCode.select },
+			{ code: MenuSectionCode.first },
+			{ code: MenuSectionCode.second },
 		];
 	}
 }

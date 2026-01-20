@@ -2,7 +2,6 @@ import {Type} from 'main.core';
 
 import {AbstractCall} from './abstract_call';
 import {
-	CallEngine,
 	EndpointDirection,
 	UserState,
 	Quality,
@@ -13,16 +12,21 @@ import {
 	Provider,
 	DisconnectReason,
 } from './engine';
-import {Call, CALL_STATE, MediaStreamsKinds, RecorderStatus} from '../call_api.js';
-import {View} from '../view/view';
+import {
+	Call,
+	CALL_STATE,
+	MediaStreamsKinds,
+	RecorderStatus,
+	CloudRecordStatus,
+} from '../call_api.js';
 import { MediaRenderer } from '../view/media-renderer';
 import {SimpleVAD} from './simple_vad'
 import {Hardware} from '../call_hardware';
 import Util from '../util'
 
-import {Event} from 'main.core';
 import { UnsupportedBrowserFeatures } from './unsupported_features_in_browsers';
-
+import { CallCommonRecordState, CallCommonRecordType, CallCloudRecord } from '../call_common_record';
+import { CallStreamManager } from '../media-stream-manager';
 
 /**
  * Implements Call interface
@@ -52,7 +56,7 @@ const clientEvents = {
 	cameraState: 'Call::cameraState',
 	videoPaused: 'Call::videoPaused',
 	screenState: 'Call::screenState',
-	recordState: 'Call::recordState',
+	commonRecordState: 'Call::commonRecordState',
 	emotion: 'Call::emotion',
 	customMessage: 'Call::customMessage',
 	usersInvited: 'Call::usersInvited',
@@ -71,13 +75,6 @@ const BitrixCallEvent = {
 	onCallConference: 'BitrixCall::onCallConference'
 };
 
-const MediaKinds = {
-	[MediaStreamsKinds.Camera]: 'video',
-	[MediaStreamsKinds.Microphone]: 'audio',
-	[MediaStreamsKinds.Screen]: 'sharing',
-	[MediaStreamsKinds.ScreenAudio]: 'sharingAudio',
-};
-
 const invitePeriod = 30000;
 const reinvitePeriod = 5500;
 
@@ -86,8 +83,16 @@ const reinvitePeriod = 5500;
 export class BitrixCall extends AbstractCall
 {
 	static Event = BitrixCallEvent
-	peers: { [key: number]: Peer }
-	localVAD: ?SimpleVAD
+	peers: { [key: number]: Peer };
+	localVAD: ?SimpleVAD;
+
+	#isCloudRecordFeaturesEnabled: false;
+	#cloudRecordState;
+
+	#recorderState;
+	#recorderStateHasChange;
+
+	#isFirefox: Boolean;
 
 	constructor(config)
 	{
@@ -112,15 +117,6 @@ export class BitrixCall extends AbstractCall
 		this.direction = EndpointDirection.SendRecv;
 		this.floorRequestActive = false;
 
-		this.recordState = {
-			state: View.RecordState.Stopped,
-			userId: 0,
-			date: {
-				start: null,
-				pause: []
-			},
-		};
-
 		this.microphoneLevelInterval = null;
 
 		this.initPeers();
@@ -137,12 +133,17 @@ export class BitrixCall extends AbstractCall
 			'Call::switchTrackRecordStatus': this.#onPullEventSwitchTrackRecordStatus,
 		};
 
-		this._recorderState = RecorderStatus.UNAVAILABLE;
-		this._recorderStateHasChange = false;
+		this.#isCloudRecordFeaturesEnabled = true;
+
+		this.#recorderState = RecorderStatus.UNAVAILABLE;
+		this.#recorderStateHasChange = false;
 		this._isCopilotFeaturesEnabled = true;
-		this._isRecordWhenCopilotActivePopupAlreadyShow = false;
 		this._isBoostExpired = false;
-	};
+
+		this.#isFirefox = BX.browser.IsFirefox();
+
+		this.#cloudRecordState = CloudRecordStatus.NONE;
+	}
 
 	get provider()
 	{
@@ -156,17 +157,17 @@ export class BitrixCall extends AbstractCall
 
 	get isCopilotInitialized()
 	{
-		return this._recorderState !== RecorderStatus.UNAVAILABLE || this._recorderStateHasChange;
+		return this.#recorderState !== RecorderStatus.UNAVAILABLE || this.#recorderStateHasChange;
 	}
 
 	get isCopilotActive()
 	{
-		return this._recorderState === RecorderStatus.ENABLED;
+		return this.#recorderState === RecorderStatus.ENABLED;
 	}
 
 	get isCopilotDisabled()
 	{
-		return this._recorderState === RecorderStatus.DESTROYED;
+		return this.#recorderState === RecorderStatus.DESTROYED;
 	}
 
 	get isBoostExpired()
@@ -195,16 +196,22 @@ export class BitrixCall extends AbstractCall
 		}
 	}
 
-	get isRecordWhenCopilotActivePopupAlreadyShow()
+	/**
+	 * @group CommonRecord
+	 */
+	get isCloudRecordFeaturesEnabled()
 	{
-		return this._isRecordWhenCopilotActivePopupAlreadyShow;
+		return this.#isCloudRecordFeaturesEnabled;
 	}
 
-	set isRecordWhenCopilotActivePopupAlreadyShow(isRecordWhenCopilotActivePopupAlreadyShow)
+	/**
+	 * @group CommonRecord
+	 */
+	set isCloudRecordFeaturesEnabled(isCloudRecordFeaturesEnabled)
 	{
-		if (isRecordWhenCopilotActivePopupAlreadyShow !== this._isRecordWhenCopilotActivePopupAlreadyShow)
+		if (isCloudRecordFeaturesEnabled !== this.#isCloudRecordFeaturesEnabled)
 		{
-			this._isRecordWhenCopilotActivePopupAlreadyShow = isRecordWhenCopilotActivePopupAlreadyShow;
+			this.#isCloudRecordFeaturesEnabled = isCloudRecordFeaturesEnabled;
 		}
 	}
 
@@ -365,7 +372,7 @@ export class BitrixCall extends AbstractCall
 
 			if (this.muted)
 			{
-				this.BitrixCall.disableAudio();
+				this.BitrixCall.disableAudio({ calledFrom: 'setMuted' });
 			}
 			else
 			{
@@ -373,7 +380,7 @@ export class BitrixCall extends AbstractCall
 				{
 					this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 				}
-				this.BitrixCall.enableAudio();
+				this.BitrixCall.enableAudio({ calledFrom: 'setMuted' });
 			}
 		}
 	};
@@ -420,6 +427,8 @@ export class BitrixCall extends AbstractCall
 		{
 			return;
 		}
+
+		const canSwitchDevice = Boolean(this.cameraId);
 		this.cameraId = cameraId;
 
 		if (this.BitrixCall)
@@ -427,6 +436,12 @@ export class BitrixCall extends AbstractCall
 			if (!cameraId)
 			{
 				this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Camera);
+
+				return;
+			}
+
+			if (!canSwitchDevice)
+			{
 				return;
 			}
 
@@ -436,32 +451,27 @@ export class BitrixCall extends AbstractCall
 			}
 
 			this.BitrixCall.switchActiveVideoDevice(this.cameraId)
-				.then(() =>
-				{
+				.then(() => {
 					if (Hardware.isCameraOn)
 					{
 						this.runCallback('onUpdateLastUsedCameraId');
 
 						if (this.BitrixCall.isVideoPublished() && this.canChangeMediaDevices())
 						{
-							this.BitrixCall.getLocalVideo()
-								.then(track => {
-									const mediaRenderer = new MediaRenderer({
-										kind: 'video',
-										track,
-									});
-									this.runCallback(CallEvent.onLocalMediaReceived, {
-										mediaRenderer,
-										tag: 'main',
-										stream: mediaRenderer.stream,
-									});
-								})
-								.finally(() => {
-									if (this.BitrixCall.isVideoPublished())
-									{
-										this.#setPublishingState(MediaStreamsKinds.Camera, false);
-									}
-								});
+							const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
+							const kind = Util.MediaKind[MediaStreamsKinds.Camera];
+							const mediaRenderer = new MediaRenderer({ kind, track });
+
+							this.runCallback(CallEvent.onLocalMediaReceived, {
+								mediaRenderer,
+								tag: 'main',
+								stream: mediaRenderer.stream,
+							});
+
+							if (this.BitrixCall.isVideoPublished())
+							{
+								this.#setPublishingState(MediaStreamsKinds.Camera, false);
+							}
 						}
 						else if (!this.canChangeMediaDevices())
 						{
@@ -495,6 +505,7 @@ export class BitrixCall extends AbstractCall
 			return;
 		}
 
+		const canSwitchDevice = Boolean(this.microphoneId);
 		this.microphoneId = microphoneId;
 
 		if (this.BitrixCall)
@@ -502,38 +513,40 @@ export class BitrixCall extends AbstractCall
 			if (!microphoneId)
 			{
 				this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Microphone);
+
+				return;
+			}
+
+			if (!canSwitchDevice)
+			{
 				return;
 			}
 
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
-			this.#onEndpointVoiceEnd({userId: this.userId});
+			this.#onEndpointVoiceEnd({ userId: this.userId });
 
 			this.BitrixCall.switchActiveAudioDevice(this.microphoneId)
-				.then(() =>
-				{
-					this.BitrixCall.getLocalAudio()
-						.then(track => {
-							this.#onMicAccessResult({
-								result: true,
-								stream: new MediaStream([track]),
-							})
-						});
+				.then(() => {
+					const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Microphone);
+					this.#onMicAccessResult({
+						result: true,
+						stream: new MediaStream([track]),
+					});
 				})
-				.catch((e) =>
-				{
-					this.log(e);
-					console.error(e);
+				.catch((error) => {
+					this.log(error);
+					console.error(error);
 					this.runCallback(CallEvent.onUserMicrophoneState, {
 						userId: this.userId,
 						microphoneState: false,
-					})
+					});
 				})
 				.finally(() => {
 					this.#setPublishingState(MediaStreamsKinds.Microphone, false);
 
 					if (Hardware.isMicrophoneMuted && !this.canChangeMediaDevices())
 					{
-						this.BitrixCall.disableAudio();
+						this.BitrixCall.disableAudio({ calledFrom: 'setMicrophoneId' });
 					}
 				});
 		}
@@ -541,13 +554,26 @@ export class BitrixCall extends AbstractCall
 
 	setRecorderState(state)
 	{
-		if (!this.BitrixCall || this._recorderState === state)
+		if (!this.BitrixCall || this.#recorderState === state)
 		{
 			return;
 		}
 
 		this.BitrixCall.setRecorderState(state);
-	};
+	}
+
+	/**
+	 * @group CommonRecord
+	 */
+	setCloudRecordState(state, kind = null)
+	{
+		if (!this.BitrixCall || this.#cloudRecordState === state)
+		{
+			return;
+		}
+
+		this.BitrixCall.setCloudRecordState(state, kind);
+	}
 
 	#setPublishingState(deviceType, publishing)
 	{
@@ -599,6 +625,11 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.raiseHand(requestActive);
 	};
 
+	updateUserData(userData: Object): void
+	{
+		this.BitrixCall.updateUserData(userData);
+	}
+
 	turnOffAllParticipansStream(options)
 	{
 		this.BitrixCall.turnOffAllParticipansStream(options);
@@ -619,21 +650,23 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.changeSettings(options);
 	};
 
-	sendRecordState(recordState)
+	/**
+	 * @group CommonRecord
+	 * @param { Object } commonRecordState
+	 * @param { string } commonRecordState.action
+	 * @param { string } commonRecordState.type
+	 * @param { Date } commonRecordState.date
+	 * @param { boolean } force
+	 */
+	sendLocalRecordState(commonRecordState, force = false)
 	{
-		recordState.senderId = this.userId;
-
-		if (!this.#changeRecordState(recordState))
+		if (!force && !this.updateCommonRecordState({ ...commonRecordState, senderId: this.userId }))
 		{
 			return;
 		}
 
-		this.runCallback(CallEvent.onUserRecordState, {
-			userId: this.userId,
-			recordState: this.recordState
-		})
-		this.signaling.sendRecordState(this.userId, this.recordState);
-	};
+		this.signaling.sendLocalRecordState(this.userId, this.commonRecordState);
+	}
 
 	sendCustomMessage(message, repeatOnConnect)
 	{
@@ -990,12 +1023,11 @@ export class BitrixCall extends AbstractCall
 					roomId: this.uuid,
 					userId: this.userId,
 					userRole: this.userRole,
-					mediaServerUrl: this.connectionData.mediaServerUrl,
-					roomData: this.connectionData.roomData,
-					videoBitrate: 1000000,
+					videoBitrate: 1_000_000,
 					videoSimulcast: true,
 					audioDeviceId: this.microphoneId,
 					videoDeviceId: this.cameraId,
+					...this.connectionData,
 				});
 			}
 			catch (e)
@@ -1037,7 +1069,7 @@ export class BitrixCall extends AbstractCall
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 		}
-		this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
+		this.BitrixCall.enableAudio({ calledFrom: 'onCallConnected', disabled: Hardware.isMicrophoneMuted });
 
 		if (Hardware.isCameraOn)
 		{
@@ -1047,7 +1079,7 @@ export class BitrixCall extends AbstractCall
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
 			}
-			this.BitrixCall.enableVideo({calledFrom: 'onCallConnected'});
+			this.BitrixCall.enableVideo({ calledFrom: 'onCallConnected' });
 		}
 
 		if (this.videoAllowedFrom == UserMnemonic.none)
@@ -1100,13 +1132,14 @@ export class BitrixCall extends AbstractCall
 		this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
 		this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
 		this.BitrixCall.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
+		this.BitrixCall.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
 		this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
 		this.BitrixCall.on('Reconnected', this.#onCallReconnected);
 		this.BitrixCall.on('ReconnectingFailed', this.#onCallReconnectingFailed);
 		this.BitrixCall.on('Disconnected', this.#onCallDisconnected);
 		// if (Util.shouldCollectStats())
 		// {
-			this.BitrixCall.on('CallStatsReceived', this.#onCallStatsReceived);
+		this.BitrixCall.on('CallStatsReceived', this.#onCallStatsReceived);
 		// }
 		this.BitrixCall.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
 		this.BitrixCall.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
@@ -1137,13 +1170,14 @@ export class BitrixCall extends AbstractCall
 			this.BitrixCall.on('VoiceStarted', BX.DoNothing);
 			this.BitrixCall.on('VoiceEnded', BX.DoNothing);
 			this.BitrixCall.on('RecorderStatusChanged', BX.DoNothing);
+			this.BitrixCall.on('CloudRecordStatusChanged', BX.DoNothing);
 			this.BitrixCall.on('Reconnecting', BX.DoNothing);
 			this.BitrixCall.on('Reconnected', BX.DoNothing);
 			this.BitrixCall.on('ReconnectingFailed', BX.DoNothing);
 			this.BitrixCall.on('Disconnected', BX.DoNothing);
 			// if (Util.shouldCollectStats())
 			// {
-				this.BitrixCall.on('CallStatsReceived', BX.DoNothing);
+			this.BitrixCall.on('CallStatsReceived', BX.DoNothing);
 			// }
 			this.BitrixCall.on('UpdatePacketLoss', BX.DoNothing);
 			this.BitrixCall.on('ConnectionQualityChanged', BX.DoNothing);
@@ -1260,65 +1294,6 @@ export class BitrixCall extends AbstractCall
 		})
 	};
 
-	#changeRecordState(params)
-	{
-		if (params.action !== View.RecordState.Started && this.recordState.userId != params.senderId)
-		{
-			return false;
-		}
-
-		if (params.action === View.RecordState.Started)
-		{
-			if (this.recordState.state !== View.RecordState.Stopped)
-			{
-				return false;
-			}
-
-			this.recordState.state = View.RecordState.Started;
-			this.recordState.userId = params.senderId;
-			this.recordState.date.start = params.date;
-			this.recordState.date.pause = [];
-		}
-		else if (params.action === View.RecordState.Paused)
-		{
-			if (this.recordState.state !== View.RecordState.Started)
-			{
-				return false;
-			}
-
-			this.recordState.state = View.RecordState.Paused;
-			this.recordState.date.pause.push(
-				{start: params.date, finish: null}
-			);
-		}
-		else if (params.action === View.RecordState.Resumed)
-		{
-			if (this.recordState.state !== View.RecordState.Paused)
-			{
-				return false;
-			}
-
-			this.recordState.state = View.RecordState.Started;
-			const pauseElement = this.recordState.date.pause.find(function (element)
-			{
-				return element.finish === null;
-			});
-			if (pauseElement)
-			{
-				pauseElement.finish = params.date;
-			}
-		}
-		else if (params.action === View.RecordState.Stopped)
-		{
-			this.recordState.state = View.RecordState.Stopped;
-			this.recordState.userId = 0;
-			this.recordState.date.start = null;
-			this.recordState.date.pause = [];
-		}
-
-		return true;
-	};
-
 	#onNoAnswer()
 	{
 		if (this.ready && !this.isAnyoneParticipating())
@@ -1365,17 +1340,22 @@ export class BitrixCall extends AbstractCall
 		const callInstanceId = params.callInstanceId;
 		const peer = this.peers[senderId];
 
-		if (params.code === 603)
-		{
-			this.runCallback(CallEvent.onUserStateChanged, { userId: senderId, callId: params.callId, state: UserState.Declined });
-		}
-
 		if (this.userId === senderId && callInstanceId && this.instanceId !== callInstanceId)
 		{
 			// Call declined by the same user elsewhere
 			this.runCallback(CallEvent.onLeave, { local: false });
 
 			return;
+		}
+
+		if (params.code === 603 && (peer?.calculatedState === UserState.Connected || peer?.calculatedState === UserState.Connecting))
+		{
+			return;
+		}
+
+		if (params.code === 603 && this.userId !== senderId)
+		{
+			this.runCallback(CallEvent.onUserStateChanged, { userId: senderId, callId: params.callId, state: UserState.Declined });
 		}
 
 		if (!peer || (peer.participant && !callInstanceId))
@@ -1391,11 +1371,7 @@ export class BitrixCall extends AbstractCall
 
 		if (!peer.participant)
 		{
-			if (params.code == 603)
-			{
-				peer.setDeclined(true);
-			}
-			else if (params.code == 486)
+			if (params.code == 486)
 			{
 				peer.setBusy(true);
 				console.warn(`user ${senderId} is busy`);
@@ -1421,89 +1397,81 @@ export class BitrixCall extends AbstractCall
 		});
 	}
 
-	#onLocalMediaRendererAdded = (e) =>
-	{
-		const kind = MediaKinds[e];
+	#onLocalMediaRendererAdded = (mediaStreamsKind) => {
+		const kind = Util.MediaKind[mediaStreamsKind];
 		if (!kind)
 		{
-			this.log(`Wrong kind for local mediaRenderer: ${e}`);
+			this.log(`Wrong kind for local mediaRenderer: ${mediaStreamsKind}`);
+
 			return;
 		}
 
 		this.log('__onLocalMediaRendererAdded', kind);
 
 		const isNotSupportDevicesListBeforeStream = UnsupportedBrowserFeatures.isNotSupportDevicesListBeforeStream;
+		let track = null;
+		let mediaRenderer = null;
 
-		switch (e) {
+		switch (mediaStreamsKind)
+		{
 			case MediaStreamsKinds.Camera:
-				this.BitrixCall.getLocalVideo()
-					.then((track) =>
-					{
-						if (!this.videoEnabled)
-						{
-							return;
-						}
-						const mediaRenderer = new MediaRenderer({
-							kind,
-							track,
-						});
-						this.runCallback(CallEvent.onLocalMediaReceived, {
-							mediaRenderer,
-							tag: 'main',
-							stream: mediaRenderer.stream,
-						});
-
-						if (isNotSupportDevicesListBeforeStream)
-						{
-							this.runCallback(CallEvent.onGetUserMediaEnded, {});
-						}
-					});
-				break;
-			case MediaStreamsKinds.Screen:
-				this.log("Screen shared");
-				this.screenShared = true;
-				this.waitingLocalScreenShare = false;
-
-				this.BitrixCall.getLocalScreen()
-					.then((tracks) =>
-					{
-						const mediaRenderer = new MediaRenderer({
-							kind,
-							track: tracks.video,
-						});
-						this.runCallback(CallEvent.onLocalMediaReceived, {
-							mediaRenderer,
-							tag: 'screen',
-							stream: new MediaStream(),
-						});
-					});
-				break;
-			case MediaStreamsKinds.Microphone:
-				if (!this.BitrixCall)
+				if (!this.videoEnabled)
 				{
 					return;
 				}
-				this.signaling.sendMicrophoneState(true);
-				this.BitrixCall.getLocalAudio()
-					.then((track) =>
-					{
-						this.#setPublishingState(MediaStreamsKinds.Microphone, false);
-						this.#onMicAccessResult({
-							result: true,
-							stream: new MediaStream([track]),
-						});
 
-						if (isNotSupportDevicesListBeforeStream)
-						{
-							this.runCallback(CallEvent.onGetUserMediaEnded, {});
-						}
-					});
+				track = CallStreamManager.getLocalStream(mediaStreamsKind);
+				mediaRenderer = new MediaRenderer({ kind, track });
+
+				this.runCallback(CallEvent.onLocalMediaReceived, {
+					mediaRenderer,
+					tag: 'main',
+					stream: mediaRenderer.stream,
+				});
+
+				if (isNotSupportDevicesListBeforeStream)
+				{
+					this.runCallback(CallEvent.onGetUserMediaEnded, {});
+				}
+				break;
+
+			case MediaStreamsKinds.Screen:
+				this.log('Screen shared');
+				this.screenShared = true;
+				this.waitingLocalScreenShare = false;
+
+				track = CallStreamManager.getLocalStream(mediaStreamsKind);
+				mediaRenderer = new MediaRenderer({ kind, track });
+
+				this.runCallback(CallEvent.onLocalMediaReceived, {
+					mediaRenderer,
+					tag: 'screen',
+					stream: mediaRenderer.stream,
+				});
+				break;
+
+			case MediaStreamsKinds.Microphone:
+				this.signaling.sendMicrophoneState(true);
+				this.#setPublishingState(mediaStreamsKind, false);
+
+				track = CallStreamManager.getLocalStream(mediaStreamsKind);
+				this.#onMicAccessResult({
+					result: true,
+					stream: new MediaStream([track]),
+				});
+
+				if (isNotSupportDevicesListBeforeStream)
+				{
+					this.runCallback(CallEvent.onGetUserMediaEnded, {});
+				}
 
 				if (Hardware.isMicrophoneMuted) // task-597518
 				{
-					this.BitrixCall.disableAudio();
+					this.BitrixCall?.disableAudio({ calledFrom: 'onLocalMediaRendererAdded' });
 				}
 				break;
+
+			default:
 		}
 	};
 
@@ -1529,7 +1497,7 @@ export class BitrixCall extends AbstractCall
 
 	#onLocalMediaRendererEnded = (e, interrupted) =>
 	{
-		const kind = MediaKinds[e];
+		const kind = Util.MediaKind[e];
 		if (!kind)
 		{
 			this.log(`Wrong kind for mediaRenderer: ${e}`);
@@ -1559,6 +1527,16 @@ export class BitrixCall extends AbstractCall
 	#onGetUserMediaStarted = (options) =>
 	{
 		this.getUserMediaFulfilled = false;
+
+		if (options.video)
+		{
+			this.signaling.sendCameraState(false);
+		}
+
+		if (options.audio)
+		{
+			this.signaling.sendMicrophoneState(false);
+		}
 	};
 
 	#onGetUserMediaSuccess = (options) =>
@@ -1576,7 +1554,7 @@ export class BitrixCall extends AbstractCall
 
 	#onBeforeLocalMediaRendererRemoved = (e) =>
 	{
-		const kind = MediaKinds[e];
+		const kind = Util.MediaKind[e];
 		if (!kind)
 		{
 			this.log(`Wrong kind for mediaRenderer: ${e}`);
@@ -1604,6 +1582,7 @@ export class BitrixCall extends AbstractCall
 				});
 				break;
 			case MediaStreamsKinds.Microphone:
+				this.runCallback(CallEvent.onLocalMediaStopped, { kind });
 				this.#setPublishingState(MediaStreamsKinds.Microphone, false);
 				this.signaling.sendMicrophoneState(false);
 				break;
@@ -1630,7 +1609,7 @@ export class BitrixCall extends AbstractCall
 	{
 		if (p && t)
 		{
-			const kind = MediaKinds[t.source];
+			const kind = Util.MediaKind[t.source];
 			if (!kind)
 			{
 				this.log(`Wrong kind for mediaRenderer: ${t.source}`);
@@ -1674,7 +1653,9 @@ export class BitrixCall extends AbstractCall
 					break;
 			}
 
-			console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
+			console.log(`[RemoteMediaAdded]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}`);
+			const cameraStateInfo = t.source === MediaStreamsKinds.Camera ? `, cameraState: ${!p?.isMutedVideo}` : '';
+			Util.sendLog({ description: `[RemoteMediaAdded]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}${cameraStateInfo}` });
 		}
 	};
 
@@ -1682,7 +1663,7 @@ export class BitrixCall extends AbstractCall
 	{
 		if (p && t) // sometimes track could be 'undefined'
 		{
-			const kind = MediaKinds[t.source];
+			const kind = Util.MediaKind[t.source];
 			if (!kind)
 			{
 				this.log(`Wrong kind for mediaRenderer: ${t.source}`);
@@ -1710,7 +1691,9 @@ export class BitrixCall extends AbstractCall
 				});
 			}
 
-			console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${MediaKinds[t.source]}`)
+			console.log(`[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}`);
+			const cameraStateInfo = t.source === MediaStreamsKinds.Camera ? ', cameraState: false' : '';
+			Util.sendLog({ description: `[RemoteMediaRemoved]: UserId: ${p.userId}, source: ${Util.MediaKind[t.source]}${cameraStateInfo}` });
 		}
 	};
 
@@ -1803,9 +1786,9 @@ export class BitrixCall extends AbstractCall
 		peer.participant = p;
 		peer.setReady(true);
 
-		if (this.recordState.state !== View.RecordState.Stopped && this.recordState.userId === this.userId)
+		if (this.commonRecordState.state !== CallCommonRecordState.Stopped && this.commonRecordState.userId === this.userId)
 		{
-			this.signaling.sendRecordState(this.userId, this.recordState);
+			this.signaling.sendLocalRecordState(this.userId, this.commonRecordState);
 		}
 	};
 
@@ -1817,7 +1800,7 @@ export class BitrixCall extends AbstractCall
 			for (const type in MediaStreamsKinds)
 			{
 				const source = MediaStreamsKinds[type];
-				const kind = MediaKinds[source];
+				const kind = Util.MediaKind[source];
 				const e = {
 					mediaRenderer: new MediaRenderer({
 						kind,
@@ -1887,7 +1870,7 @@ export class BitrixCall extends AbstractCall
 				for (let type in MediaStreamsKinds)
 				{
 					const source = MediaStreamsKinds[type];
-					const kind = MediaKinds[source];
+					const kind = Util.MediaKind[source];
 					const e = {
 						mediaRenderer: new MediaRenderer({
 							kind,
@@ -1910,7 +1893,7 @@ export class BitrixCall extends AbstractCall
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 		}
-		this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
+		this.BitrixCall.enableAudio({ calledFrom: 'onCallConnected', disabled: Hardware.isMicrophoneMuted });
 
 		//this.signaling.sendCameraState(Hardware.isCameraOn);
 		if (Hardware.isCameraOn)
@@ -1934,6 +1917,11 @@ export class BitrixCall extends AbstractCall
 		else if (Type.isArray(this.videoAllowedFrom))
 		{
 			this.signaling.sendShowUsers(this.videoAllowedFrom);
+		}
+
+		if (this.commonRecordState.userId === this.userId)
+		{
+			this.sendLocalRecordState({ action: this.commonRecordState.state, userId: this.userId }, true);
 		}
 
 		this.BitrixCall.raiseHand(this.floorRequestActive);
@@ -2080,6 +2068,10 @@ export class BitrixCall extends AbstractCall
 				else if (report.kind === 'audio')
 				{
 					usersToSendReports[report.userId][report.source] = report;
+					if (this.#isFirefox && report.bitrate === 0 && report.prevBitrate === 0 && !this.muted)
+					{
+						this.#onLocalMediaRendererEnded(MediaStreamsKinds.Microphone);
+					}
 				}
 			}
 		});
@@ -2192,11 +2184,11 @@ export class BitrixCall extends AbstractCall
 				screenState: message.screenState === "Y"
 			});
 		}
-		else if (eventName === clientEvents.recordState)
+		else if (eventName === clientEvents.commonRecordState)
 		{
-			this.runCallback(CallEvent.onUserRecordState, {
+			this.runCallback(CallEvent.onUserCommonRecordState, {
 				userId: message.senderId,
-				recordState: message.recordState
+				commonRecordState: message.commonRecordState,
 			});
 		}
 		else if (eventName === clientEvents.emotion)
@@ -2338,24 +2330,138 @@ export class BitrixCall extends AbstractCall
 		});
 	};
 
-	#onEndpointVoiceEnd = (p) =>
-	{
+	#onEndpointVoiceEnd = (p) => {
 		this.runCallback(CallEvent.onUserVoiceStopped, {
 			userId: p.userId,
 		});
-	}
+	};
 
-	#onRecorderStatusChanged = (status) => {
-		const ignoreError = status.code === RecorderStatus.DESTROYED || status.code === RecorderStatus.UNAVAILABLE;
-		const error = ignoreError ? '' : status.errMsg;
-		this._recorderState = error ? this._recorderState : status.code;
-		const isCopilotActive = this._recorderState === RecorderStatus.ENABLED;
-		this._recorderStateHasChange = true;
+	/**
+	 * @param {Object} status
+	 * @param {RecorderStatus} status.code
+	 * @param {string} status.errMsg
+	 */
+	#onRecorderStatusChanged = ({ code, errMsg }) => {
+		const ignoreError = [RecorderStatus.DESTROYED, RecorderStatus.UNAVAILABLE].includes(code);
+		const error = ignoreError ? '' : errMsg;
+		this.#recorderState = error ? this.#recorderState : code;
+		const isCopilotActive = this.#recorderState === RecorderStatus.ENABLED;
+		this.#recorderStateHasChange = true;
 
 		this.runCallback(CallEvent.onRecorderStatusChanged, {
+			code,
 			error,
-			status: isCopilotActive,
+			isCopilotActive,
 		});
+	};
+
+	/**
+	 * @group CommonRecord
+	 */
+
+	/**
+	 * @typedef { Object } CloudRecordStatusPause
+	 * @property { string } start
+	 * @property { string } end
+	 */
+
+	/**
+	 * @typedef { Object } CloudRecordStatusDate
+	 * @property { string } start
+	 * @property { CloudRecordStatusPause[] } pauses
+	 */
+
+	/**
+	 * @param {Object} status
+	 * @param {number} status.code
+	 * @param {string} status.errMsg
+	 * @param {string} status.initiatorUserID
+	 * @param {string} status.userID
+	 * @param {number} status.kind
+	 * @param {boolean} status.justJoined
+	 * @param {CloudRecordStatusDate} status.date
+	 */
+	#onCloudRecordStatusChanged = (status) => {
+		if (Util.isCloudRecordLogEnabled())
+		{
+			console.warn(`CloudRecord: videoRecorderStatus`, status);
+		}
+
+		const { code, errMsg, initiatorUserID, userID, kind, date, justJoined } = status;
+
+		const userId = Number(userID);
+		const initiatorId = Number(initiatorUserID);
+		const pauses = (date.pauses ?? []).map(({ start, end }) => ({ start: new Date(start), finish: end ? new Date(end) : null }));
+		const recordType = kind === 1 ? CallCommonRecordType.Audio : CallCommonRecordType.Video;
+
+		this.#cloudRecordState = errMsg ? this.#cloudRecordState : code;
+
+		if (errMsg)
+		{
+			if (Util.isCloudRecordLogEnabled())
+			{
+				console.error(`CloudRecord: videoRecorderStatus errMsg`, errMsg);
+			}
+
+			this.runCallback(CallEvent.onCloudRecordStatusChanged, {
+				code: CloudRecordStatus.STOPPED,
+				userId,
+				initiatorId,
+				justJoined,
+				commonRecordState: { ...this.commonRecordState },
+			});
+		}
+		else
+		{
+			switch (code)
+			{
+				case CloudRecordStatus.STARTED:
+				case CloudRecordStatus.PAUSED:
+				{
+					this.commonRecordState.state = code === CloudRecordStatus.STARTED
+						? CallCommonRecordState.Started
+						: CallCommonRecordState.Paused;
+					this.commonRecordState.type = recordType;
+					this.commonRecordState.userId = initiatorId;
+					this.commonRecordState.date.start = new Date(date.start);
+					this.commonRecordState.date.pause = pauses;
+
+					break;
+				}
+
+				case CloudRecordStatus.STOPPED:
+				case CloudRecordStatus.DESTROYED:
+				{
+					this.commonRecordState.state = code === CloudRecordStatus.STOPPED
+						? CallCommonRecordState.Stopped
+						: CallCommonRecordState.Destroyed;
+					this.commonRecordState.type = CallCommonRecordType.None;
+					this.commonRecordState.userId = 0;
+					this.commonRecordState.date.start = null;
+					this.commonRecordState.date.pause = [];
+
+					break;
+				}
+
+				default:
+				{
+					if (Util.isCloudRecordLogEnabled())
+					{
+						console.error(`Unknown record status: ${status}`);
+					}
+
+					break;
+				}
+			}
+
+			this.runCallback(CallEvent.onCloudRecordStatusChanged, {
+				code,
+				userId,
+				initiatorId,
+				justJoined,
+				commonRecordState: { ...this.commonRecordState },
+			});
+		}
 	};
 
 	sendTelemetryEvent(eventName)
@@ -2450,13 +2556,16 @@ class Signaling
 		});
 	};
 
-	sendRecordState(userId, recordState)
+	/**
+	 * @group CommonRecord
+	 */
+	sendLocalRecordState(userId, commonRecordState)
 	{
-		this.#sendMessage(clientEvents.recordState, {
+		this.#sendMessage(clientEvents.commonRecordState, {
 			senderId: userId,
-			recordState: recordState
+			commonRecordState,
 		});
-	};
+	}
 
 	sendCustomMessage(message, repeatOnConnect)
 	{
@@ -2763,6 +2872,7 @@ class Peer
 	{
 		if (this.stream)
 		{
+			Util.sendLog({ description: 'Stop peer media stream' });
 			Util.stopMediaStream(this.stream);
 			this.stream = null;
 		}

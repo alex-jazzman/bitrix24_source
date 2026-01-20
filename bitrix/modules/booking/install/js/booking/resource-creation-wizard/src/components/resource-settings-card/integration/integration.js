@@ -1,14 +1,15 @@
 import { Loc } from 'main.core';
-
 import { Set as IconSet } from 'ui.icon-set.api.vue';
+
 import { TextLayout } from '../text-layout/text-layout';
 import { TitleLayout } from '../title-layout/title-layout';
 import { IntegrationCalendar } from './components/calendar/integration-calendar';
 
 import './integration.css';
 
+// @vue/component
 export const Integration = {
-	name: 'Integration',
+	name: 'ResourceIntegration',
 	components: {
 		TitleLayout,
 		TextLayout,
@@ -25,7 +26,7 @@ export const Integration = {
 		};
 	},
 	template: `
-		<div class="ui-form resource-creation-wizard__form-settings">
+		<div class="ui-form resource-creation-wizard__form-settings" data-id="brcw-resource-settings-integrations">
 			<TitleLayout
 				:title="title"
 				:iconType="titleIconType"

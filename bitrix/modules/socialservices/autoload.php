@@ -1,10 +1,11 @@
 <?php
 
 $arClasses = array(
+	"CSocServDescription" => "classes/general/descriptions.php",
 	"CSocServAuthManager" => "classes/general/authmanager.php",
-	"CSocServAuthDB" => "classes/mysql/authmanager.php",
-	"CSocServUtil" => "classes/general/authmanager.php",
-	"CSocServAuth" => "classes/general/authmanager.php",
+	"CSocServAuthDB" => "classes/general/socservauthdb.php",
+	"CSocServUtil" => "classes/general/socservutil.php",
+	"CSocServAuth" => "classes/general/socservauth.php",
 	"CSocServOAuthTransport" => "classes/general/oauthtransport.php",
 	"CBitrix24NetOAuthInterface" => "classes/general/bitrix24net.php",
 	"CSocServBitrix24Net" => "classes/general/bitrix24net.php",
@@ -36,7 +37,7 @@ $arClasses = array(
 	"COffice365OAuthInterfaceBeta" => "classes/general/office365.php",
 	"CSocServOdnoklassniki" => "classes/general/odnoklassniki.php",
 	"COpenIDClient" => "classes/general/openidclient.php",
-	"CSocServMessage" => "classes/mysql/authmanager.php",
+	"CSocServMessage" => "classes/general/socservmessage.php",
 	"CSocServBitrixOAuth" => "classes/general/bitrix24.php",
 	"CBitrixOAuthInterface" => "classes/general/bitrix24.php",
 	"CBitrixPHPAppTransport" => "classes/general/bitrix24.php",

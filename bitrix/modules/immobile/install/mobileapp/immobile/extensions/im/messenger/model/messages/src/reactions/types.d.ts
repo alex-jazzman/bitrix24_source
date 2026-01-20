@@ -1,14 +1,6 @@
 import { MessengerModel, PayloadData } from '../../../base';
 
-export enum ReactionType {
-	like = 'like',
-	kiss = 'kiss',
-	laugh = 'laugh',
-	wonder = 'wonder',
-	cry = 'cry',
-	angry = 'angry',
-	facepalm = 'facepalm',
-}
+export type ReactionType = string;
 
 export type RawReaction = {
 	dialogId: string,
@@ -34,13 +26,20 @@ type ReactionsModelSetReactionPayload = {
 	messageId: number,
 	userId: number,
 	reaction: ReactionType,
+	actionName?: string,
 }
+
+type ReactionsModelSetReactionSilentPayload = ReactionsModelSetReactionPayload;
 
 type ReactionsModelRemoveReactionPayload = {
 	messageId: number,
 	userId: number,
 	reaction: ReactionType,
+	actionName?: string,
 }
+
+type ReactionsModelRemoveReactionSilentPayload = ReactionsModelRemoveReactionPayload;
+
 
 type ReactionsDeleteByChatIdPayload = {
 	chatId: number
@@ -71,7 +70,9 @@ export type ReactionsModelActions =
 	| 'messagesModel/reactionsModel/setFromLocalDatabase'
 	| 'messagesModel/reactionsModel/setFromPullEvent'
 	| 'messagesModel/reactionsModel/setReaction'
+	| 'messagesModel/reactionsModel/setReactionSilent'
 	| 'messagesModel/reactionsModel/removeReaction'
+	| 'messagesModel/reactionsModel/removeReactionSilent'
 	| 'messagesModel/reactionsModel/deleteByChatId'
 
 
@@ -108,7 +109,9 @@ export interface ReactionsAddData extends PayloadData
 
 export type ReactionsUpdateWithIdActions =
 	'setReaction'
+	| 'setReactionSilent'
 	| 'removeReaction'
+	| 'removeReactionSilent'
 	;
 export interface ReactionsUpdateWithIdData extends PayloadData
 {

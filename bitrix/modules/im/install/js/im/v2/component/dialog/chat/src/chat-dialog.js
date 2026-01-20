@@ -301,11 +301,11 @@ export const ChatDialog = {
 		},
 		showLoadingBar(): void
 		{
-			EventEmitter.emit(EventType.dialog.showLoadingBar, { dialogId: this.dialogId });
+			this.getEmitter().emit(EventType.dialog.showLoadingBar, { dialogId: this.dialogId });
 		},
 		hideLoadingBar(): void
 		{
-			EventEmitter.emit(EventType.dialog.hideLoadingBar, { dialogId: this.dialogId });
+			this.getEmitter().emit(EventType.dialog.hideLoadingBar, { dialogId: this.dialogId });
 		},
 		async goToMessageContext(messageId: number, params: { position: string } = {}): void
 		{
@@ -869,12 +869,13 @@ export const ChatDialog = {
 		subscribeToEvents()
 		{
 			EventEmitter.subscribe(EventType.dialog.scrollToBottom, this.onScrollToBottom);
-			EventEmitter.subscribe(EventType.dialog.goToMessageContext, this.onGoToMessageContext);
 			EventEmitter.subscribe(EventType.call.onFold, this.onCallFold);
-			EventEmitter.subscribe(EventType.dialog.showForwardPopup, this.onShowForwardPopup);
-			EventEmitter.subscribe(EventType.dialog.showQuoteButton, this.onShowQuoteButton);
-			EventEmitter.subscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
-			EventEmitter.subscribe(EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+
+			this.getEmitter().subscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			this.getEmitter().subscribe(EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+			this.getEmitter().subscribe(EventType.dialog.goToMessageContext, this.onGoToMessageContext);
+			this.getEmitter().subscribe(EventType.dialog.showForwardPopup, this.onShowForwardPopup);
+			this.getEmitter().subscribe(EventType.dialog.showQuoteButton, this.onShowQuoteButton);
 
 			Event.bind(window, 'focus', this.onWindowFocus);
 			Event.bind(window, 'blur', this.onWindowBlur);
@@ -882,12 +883,13 @@ export const ChatDialog = {
 		unsubscribeFromEvents()
 		{
 			EventEmitter.unsubscribe(EventType.dialog.scrollToBottom, this.onScrollToBottom);
-			EventEmitter.unsubscribe(EventType.dialog.goToMessageContext, this.onGoToMessageContext);
 			EventEmitter.unsubscribe(EventType.call.onFold, this.onCallFold);
-			EventEmitter.unsubscribe(EventType.dialog.showForwardPopup, this.onShowForwardPopup);
-			EventEmitter.unsubscribe(EventType.dialog.showQuoteButton, this.onShowQuoteButton);
-			EventEmitter.unsubscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
-			EventEmitter.unsubscribe(EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+
+			this.getEmitter().unsubscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			this.getEmitter().unsubscribe(EventType.dialog.onMessageIsNotVisible, this.onMessageIsNotVisible);
+			this.getEmitter().unsubscribe(EventType.dialog.goToMessageContext, this.onGoToMessageContext);
+			this.getEmitter().unsubscribe(EventType.dialog.showForwardPopup, this.onShowForwardPopup);
+			this.getEmitter().unsubscribe(EventType.dialog.showQuoteButton, this.onShowQuoteButton);
 
 			Event.unbind(window, 'focus', this.onWindowFocus);
 			Event.unbind(window, 'blur', this.onWindowBlur);
@@ -895,6 +897,10 @@ export const ChatDialog = {
 		getContainer(): ?HTMLElement
 		{
 			return this.$refs.container;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

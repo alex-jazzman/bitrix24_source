@@ -197,6 +197,14 @@ $toolsManager = Container::getInstance()->getIntranetToolsManager();
 $availabilityManager = AvailabilityManager::getInstance();
 $isQuoteAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote);
 
+$userIds = array_merge(
+	array_column($arResult['LEAD'], 'ASSIGNED_BY_ID'),
+	array_column($arResult['LEAD'], 'MODIFY_BY'),
+	array_column($arResult['LEAD'], 'CREATED_BY'),
+	array_column($arResult['LEAD'], 'MOVED_BY'),
+);
+$userRender = \Bitrix\Crm\Grid\Render\User\ClickableUser::createByUserIds($userIds);
+
 foreach($arResult['LEAD'] as $sKey => $arLead)
 {
 	$arActivityMenuItems = [];
@@ -586,12 +594,12 @@ js,
 			'COMMENTS' => htmlspecialcharsback($arLead['COMMENTS'] ?? ''),
 			'ADDRESS' => nl2br($arLead['ADDRESS'] ?? ''),
 			'ASSIGNED_BY' => isset($arLead['~ASSIGNED_BY_ID']) && $arLead['~ASSIGNED_BY_ID'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml([
-					'PREFIX' => "LEAD_{$arLead['~ID']}_RESPONSIBLE",
-					'USER_ID' => $arLead['~ASSIGNED_BY_ID'],
-					'USER_NAME'=> $arLead['ASSIGNED_BY'],
-					'USER_PROFILE_URL' => $arLead['PATH_TO_USER_PROFILE']
-				])
+				? $userRender->render(
+					$arLead['~ASSIGNED_BY_ID'],
+					'ASSIGNED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
 				: '',
 			'STATUS_DESCRIPTION' => nl2br($arLead['STATUS_DESCRIPTION'] ?? ''),
 			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION'] ?? ''),
@@ -628,34 +636,34 @@ js,
 			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? null,
 			'WEBFORM_ID' => $webformId,
 			'CREATED_BY' => isset($arLead['~CREATED_BY']) && isset($arLead['CREATED_BY_FORMATTED_NAME']) && $arLead['~CREATED_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "LEAD_{$arLead['~ID']}_CREATOR",
-						'USER_ID' => $arLead['~CREATED_BY'],
-						'USER_NAME'=> $arLead['CREATED_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_CREATOR'],
-					)
+				? $userRender->render(
+					$arLead['~CREATED_BY'],
+					'CREATED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
 				)
 				: '',
 			'MOVED_BY' => isset($arLead['~MOVED_BY']) && isset($arLead['MOVED_BY_FORMATTED_NAME']) && $arLead['~MOVED_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml([
-					'PREFIX' => "DEAL_{$arLead['~ID']}_MOVED",
-					'USER_ID' => $arLead['~MOVED_BY'],
-					'USER_NAME' => $arLead['MOVED_BY_FORMATTED_NAME'],
-					'USER_PROFILE_URL' => $arLead['PATH_TO_USER_MOVED'],
-				])
-				: '',
-			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && isset($arLead['MODIFY_BY_FORMATTED_NAME']) && $arLead['~MODIFY_BY'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "LEAD_{$arLead['~ID']}_MODIFIER",
-						'USER_ID' => $arLead['~MODIFY_BY'],
-						'USER_NAME'=> $arLead['MODIFY_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_MODIFIER']
-					)
+				? $userRender->render(
+					$arLead['~MOVED_BY'],
+					'MOVED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
 				)
 				: '',
-			'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Lead, $arLead['ID'], $arLead['~OBSERVERS'] ?? []),
+			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && isset($arLead['MODIFY_BY_FORMATTED_NAME']) && $arLead['~MODIFY_BY'] > 0
+				? $userRender->render(
+					$arLead['~MODIFY_BY'],
+					'MODIFY_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
+			'OBSERVERS' => CCrmViewHelper::renderObservers(
+				$arResult['GRID_ID'],
+				$arResult['DB_FILTER'],
+				$arLead['~OBSERVERS'] ?? [],
+			),
 		) + CCrmViewHelper::RenderListMultiFields($arLead, "LEAD_{$arLead['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::LeadName, 'ENTITY_ID' => $arLead['ID']))) + $arResult['LEAD_UF'][$sKey]
 	);
 

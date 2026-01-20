@@ -7,4 +7,4 @@ $MESS["TASKS_COUNTER_OTHER"] = "Другие:";
 $MESS["TASKS_COUNTER_OTHER_TASKS"] = "Другие задачи: #TITLE#";
 $MESS["TASKS_COUNTER_MORE"] = "Ещё";
 $MESS["TASKS_COUNTER_READ_ALL"] = "Прочитать все";
-?>
+$MESS['TASKS_COUNTERS_CHAT_BUTTON'] = 'Чаты задач';

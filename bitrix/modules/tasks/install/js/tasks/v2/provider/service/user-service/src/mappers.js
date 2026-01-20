@@ -10,3 +10,13 @@ export function mapDtoToModel(userDto: UserDto): UserModel
 		type: userDto.type,
 	};
 }
+
+export function mapModelToDto(user: UserModel): UserDto
+{
+	return {
+		id: user.id,
+		name: user.name,
+		image: { src: user.image },
+		type: user.type,
+	};
+}

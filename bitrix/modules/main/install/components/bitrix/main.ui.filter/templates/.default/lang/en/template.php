@@ -6,6 +6,7 @@ $MESS["MAIN_UI_FILTER__ADDITIONAL_FILTER_PLACEHOLDER_HOW"] = "How does this fiel
 $MESS["MAIN_UI_FILTER__ADDITIONAL_FILTER_PLACEHOLDER_IS_EMPTY"] = "Empty";
 $MESS["MAIN_UI_FILTER__ADD_FIELD"] = "Add field";
 $MESS["MAIN_UI_FILTER__ADD_FILTER"] = "Save filter";
+$MESS["MAIN_UI_FILTER__ADMIN_PRESET_INFO"] = "This filter was added by your Bitrix24 administrator. You cannot edit or delete it.";
 $MESS["MAIN_UI_FILTER__BUTTON_CANCEL"] = "Cancel";
 $MESS["MAIN_UI_FILTER__BUTTON_SAVE"] = "Save";
 $MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL_CHECKBOX"] = "Apply for all users";

@@ -25,6 +25,11 @@ $asset->addJs('/bitrix/js/main/utils.js');
 $asset->addJs('/bitrix/js/main/popup_menu.js');
 $asset->addJs('/bitrix/js/crm/common.js');
 $asset->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load([
+	'crm.grid.field.clickable-user',
+]);
+
+echo \Bitrix\Crm\Tour\Grid\GridImprovements::getInstance()->build();
 
 $gridID = isset($arParams['~GRID_ID']) ? $arParams['~GRID_ID'] : '';
 $prefix = $gridID;
@@ -51,6 +56,8 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest() && ($arParams['~HIDE_FILTER'] 
 		$disableNavigationBar = isset($arParams['~DISABLE_NAVIGATION_BAR']) ? $arParams['~DISABLE_NAVIGATION_BAR'] : 'N';
 	}
 	$filterParams = isset($arParams['~FILTER_PARAMS']) ? $arParams['~FILTER_PARAMS'] : array();
+
+	?><div><?
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
 		$arParams['~FILTER_TEMPLATE'] ?? 'title',
@@ -74,6 +81,7 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest() && ($arParams['~HIDE_FILTER'] 
 		$component,
 		array('HIDE_ICONS' => 'Y')
 	);
+	?></div><?
 }
 //endregion
 
@@ -204,4 +212,3 @@ if(is_array($extensionConfig))
 		);
 	</script><?
 }
-?>

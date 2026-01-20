@@ -1,13 +1,24 @@
 <?php
 $MESS["TASKS_V2_STATUS_COMPLETED"] = "Орындалды";
 $MESS["TASKS_V2_STATUS_COMPLETED_AT"] = "#DATE# #TIME# орындалды";
+$MESS["TASKS_V2_STATUS_COMPLETED_AT_MSGVER_1"] = "Аяқталды #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_COMPLETED_MSGVER_1"] = "Аяқталды";
+$MESS["TASKS_V2_STATUS_COMPLETE_ACTION"] = "Аяқтау";
 $MESS["TASKS_V2_STATUS_CREATED_AT"] = "#DATE# #TIME# қойылды";
 $MESS["TASKS_V2_STATUS_DEFERRED"] = "Кейінге қалдырылды";
 $MESS["TASKS_V2_STATUS_DEFERRED_AT"] = "#DATE# #TIME# кейінге қалдырылған";
+$MESS["TASKS_V2_STATUS_DEFER_ACTION"] = "Кейінге қалдыру";
 $MESS["TASKS_V2_STATUS_IN_PROGRESS"] = "Орындалып жатыр";
 $MESS["TASKS_V2_STATUS_IN_PROGRESS_FROM"] = "#DATE# #TIME# орындалып жатыр";
+$MESS["TASKS_V2_STATUS_NEEDS_CONTROL_HINT"] = "Аяқталғаннан кейін бақылау мүмкіндігі бар міндет";
+$MESS["TASKS_V2_STATUS_PAUSE_ACTION"] = "Тоқтата тұру";
 $MESS["TASKS_V2_STATUS_PENDING"] = "Орындалуын күтуде";
 $MESS["TASKS_V2_STATUS_PENDING_FROM"] = "#DATE# #TIME# орындалуын күтіп тұр";
+$MESS["TASKS_V2_STATUS_RENEW_ACTION"] = "Жұмысқа қайтару";
+$MESS["TASKS_V2_STATUS_RESUME_ACTION"] = "Қайта бастау";
+$MESS["TASKS_V2_STATUS_START_ACTION"] = "Орындауды бастау";
 $MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED"] = "Тексеруде";
 $MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM"] = "#DATE# #TIME# тексеруде";
+$MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM_MSGVER_1"] = "#DATE# #TIME# бастап бақылауды күтуде";
+$MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_MSGVER_1"] = "Бақылауды күтуде";
 $MESS["TASKS_V2_STATUS_TITLE"] = "Мәртебесі";

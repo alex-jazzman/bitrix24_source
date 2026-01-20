@@ -11,6 +11,7 @@
 	const shouldOpenComments = BX.componentParameters.get('SHOULD_OPEN_COMMENTS', false);
 	const analyticsLabel = BX.componentParameters.get('analyticsLabel') || {};
 	const isFlowToolDisabled = BX.componentParameters.get('IS_FLOW_TOOL_DISABLED', false);
+	const isChatFeatureEnabled = BX.componentParameters.get('IS_CHAT_FEATURE_ENABLED', false);
 
 	tariffPlanRestrictionsReady()
 		.then(() => {
@@ -24,6 +25,7 @@
 						shouldOpenComments,
 						analyticsLabel,
 						isFlowToolDisabled,
+						isChatFeatureEnabled,
 					}),
 				);
 			});

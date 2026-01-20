@@ -59,15 +59,6 @@ if (!$arResult['IFRAME'])
 	<?
 }
 
-if (!empty($arResult['CONFIG_MENU']) && is_countable($arResult['CONFIG_MENU']) && count($arResult['CONFIG_MENU']) > 1)
-{
-	$APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrappermenu', '', [
-		'ITEMS' => $arResult['CONFIG_MENU'],
-		'TITLE' => Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_MENU_TITLE'),
-		'RELOAD_PAGE_AFTER_SAVE' => true
-	]);
-}
-
 foreach ($arResult['CONFIG_MENU'] as $key => $menuItem)
 {
 	$className = ($key === $arResult['MENU_TAB'] ? 'imconnector-page-show' : 'imconnector-page-hide imconnector-hidden-page');

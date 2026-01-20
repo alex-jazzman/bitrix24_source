@@ -7,6 +7,7 @@
 jn.define('im/messenger/model/users/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { BotCode } = require('im/messenger/const');
 	const { validate } = require('im/messenger/model/users/validator');
 	const { userDefaultElement } = require('im/messenger/model/users/default-element');
 
@@ -149,6 +150,16 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				}
 
 				return userModel.botData.backgroundId ?? null;
+			},
+
+			/**
+			 * @function usersModel/getCopilotData
+			 * @return {UsersModelState|undefined}
+			 */
+			getCopilotData: (state) => () => {
+				return Object.values(state.collection).find((user) => {
+					return user?.botData?.code === BotCode.copilot;
+				});
 			},
 		},
 		actions: {

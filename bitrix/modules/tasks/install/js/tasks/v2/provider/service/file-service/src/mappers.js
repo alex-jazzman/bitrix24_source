@@ -15,6 +15,7 @@ export function mapDtoToModel(fileDto: FileDto): UploaderFileInfo
 		isVideo: fileDto.isVideo,
 		treatImageAsFile: fileDto.treatImageAsFile,
 		downloadUrl: fileDto.downloadUrl,
+		previewUrl: fileDto.serverPreviewUrl,
 		serverPreviewUrl: fileDto.serverPreviewUrl,
 		serverPreviewWidth: fileDto.serverPreviewWidth,
 		serverPreviewHeight: fileDto.serverPreviewHeight,

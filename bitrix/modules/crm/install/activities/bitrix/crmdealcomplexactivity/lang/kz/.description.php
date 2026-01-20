@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_COMPLEX_ACTIVITY_DEAL_NAME"] = "Мәміле";

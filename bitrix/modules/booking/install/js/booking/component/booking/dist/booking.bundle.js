@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,booking_component_notePopup,ui_vue3_vuex,booking_component_clientPopup,ui_vue3_directives_hint,ui_iconSet_main,ui_iconSet_api_vue,ui_iconSet_crm,booking_const,booking_lib_limit,booking_lib_dealHelper,main_core,main_popup,booking_component_popup) {
+(function (exports,booking_component_notePopup,booking_lib_currencyFormat,ui_vue3_vuex,booking_component_clientPopup,ui_vue3_directives_hint,ui_iconSet_main,ui_iconSet_api_vue,ui_iconSet_crm,booking_const,booking_lib_limit,booking_lib_dealHelper,main_core,main_popup,booking_component_popup) {
 	'use strict';
 
 	// @vue/component
@@ -199,12 +199,10 @@ this.BX.Booking = this.BX.Booking || {};
 	const Profit = {
 	  name: 'Profit',
 	  props: {
-	    /**
-	     * @type {DealData}
-	     */
-	    deal: {
-	      type: Object,
-	      default: null
+	    /** @type {SkuModel[]} */
+	    skus: {
+	      type: Array,
+	      default: Array
 	    },
 	    className: {
 	      type: [Object, String, Array],
@@ -215,14 +213,32 @@ this.BX.Booking = this.BX.Booking || {};
 	      default: null
 	    }
 	  },
+	  computed: {
+	    totalPrice() {
+	      return this.skus.reduce((acc, sku) => {
+	        const priceNum = Number(sku == null ? void 0 : sku.price);
+	        return acc + (Number.isFinite(priceNum) ? priceNum : 0);
+	      }, 0);
+	    },
+	    hasSkus() {
+	      return this.skus.length > 0;
+	    },
+	    currencyId() {
+	      var _this$skus$;
+	      return this.hasSkus ? (_this$skus$ = this.skus[0]) == null ? void 0 : _this$skus$.currencyId : '';
+	    },
+	    formattedTotalPrice() {
+	      return this.currencyId ? booking_lib_currencyFormat.currencyFormat.format(this.currencyId, this.totalPrice) : '';
+	    }
+	  },
 	  template: `
 		<div
-			v-if="deal"
+			v-if="hasSkus"
 			class="booking--booking-base-profit"
 			:class="className"
-			:data-profit="deal.data.opportunity"
+			:dataProfit="totalPrice"
 			v-bind="$props.dataAttributes"
-			v-html="deal.data.formattedOpportunity"
+			v-html="formattedTotalPrice"
 		></div>
 	`
 	};
@@ -469,5 +485,5 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.CrmButton = CrmButton;
 	exports.DisabledPopup = DisabledPopup;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.Vue3.Vuex,BX.Booking.Component,BX.Vue3.Directives,BX,BX.UI.IconSet,BX,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Lib,BX,BX.Main,BX.Booking.Component));
+}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.Booking.Lib,BX.Vue3.Vuex,BX.Booking.Component,BX.Vue3.Directives,BX,BX.UI.IconSet,BX,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Lib,BX,BX.Main,BX.Booking.Component));
 //# sourceMappingURL=booking.bundle.js.map

@@ -8,6 +8,10 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
+	const {
+		MessageHelper,
+		StickerHelper,
+	} = require('im/messenger/lib/helper');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserQuote } = require('im/messenger/lib/parser/functions/quote');
 	const { parserCall } = require('im/messenger/lib/parser/functions/call');
@@ -97,10 +101,13 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
 			}
 
+			const helper = MessageHelper.createByModel(modelMessage, messageFiles);
+
 			return this.simplify({
 				text: modelMessage.text,
 				attach: modelMessage.params && modelMessage.params.ATTACH ? modelMessage.params.ATTACH : false,
 				files: messageFiles,
+				sticker: Boolean(helper?.isSticker),
 			});
 		},
 
@@ -123,6 +130,8 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				showIconIfEmptyText = true,
 				showPhraseMessageWasDeleted = true,
 				showFilePrefix = false,
+				sticker = false,
+				isReplaceNewLine = true,
 			} = config;
 
 			if (!Type.isString(text))
@@ -130,16 +139,20 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				text = Type.isNumber(text) ? text.toString() : '';
 			}
 
-			if (!text)
+			if (!text || sticker)
 			{
-				text = parserEmoji.addIconToShortText({ text, attach, files, showFilePrefix });
+				text = parserEmoji.addIconToShortText({ text, attach, files, showFilePrefix, sticker });
 
 				return text.trim();
 			}
 
 			text = text.trim();
 
-			text = parserCommon.simplifyNewLine(text, '\n');
+			if (isReplaceNewLine)
+			{
+				text = parserCommon.simplifyNewLine(text, '\n');
+			}
+
 			text = parserSlashCommand.simplify(text);
 			text = parserQuote.simplifyArrowQuote(text);
 			text = parserQuote.simplifyQuote(text);
@@ -155,7 +168,12 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserImage.simplifyImage(text);
 			text = parserUrl.simplify(text);
 			text = parserDisk.simplify(text);
-			text = parserCommon.simplifyNewLine(text);
+
+			if (isReplaceNewLine)
+			{
+				text = parserCommon.simplifyNewLine(text);
+			}
+
 			text = parserEmoji.addIconToShortText({
 				text,
 				attach,
@@ -183,11 +201,16 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			return text;
 		},
 
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @return {*}
+		 */
 		prepareQuote(modelMessage)
 		{
 			const {
 				id,
 				params,
+				stickerParams,
 			} = modelMessage;
 			let {
 				text,
@@ -195,6 +218,17 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			const attach = params.ATTACH || false;
 			const files = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
+			const helper = MessageHelper.createByModel(modelMessage, files);
+
+			if (helper?.isSticker)
+			{
+				text = StickerHelper.createImgBBCode(stickerParams);
+			}
+
+			if (helper?.isDeletedSticker)
+			{
+				text = Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_DELETED_STICKER');
+			}
 
 			text = text.trim();
 

@@ -351,7 +351,7 @@ if (check_bitrix_sessid())
 					}
 					elseif ($_POST["mode"] == "deadline" && isset($_POST["deadline"]))
 					{
-						$arFields["DEADLINE"] = $_POST["deadline"] ? $_POST["deadline"] : false;
+						$arFields["DEADLINE"] = $_POST["deadline"] ? $_POST["deadline"] : 0;
 					}
 					elseif ($_POST["mode"] == "priority" && in_array((int)$_POST["priority"], array_values(Priority::getAll()), true))
 					{
@@ -780,7 +780,13 @@ if (check_bitrix_sessid())
 	catch (Exception $e)
 	{
 		if ($jsonReply === null)
-			$jsonReply = array('status' => 'failure');
+		{
+			$jsonReply = [
+				'status' => 'failure',
+				'message' => $e->getMessage(),
+				'code' => $e->getCode(),
+			];
+		}
 	}
 
 	if ($jsonReply !== null)

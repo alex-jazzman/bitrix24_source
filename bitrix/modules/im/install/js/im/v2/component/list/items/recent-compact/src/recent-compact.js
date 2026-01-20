@@ -1,25 +1,27 @@
+import 'im.v2.css.tokens';
+
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { LegacyRecentService } from 'im.v2.provider.service.recent';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { Messenger } from 'im.public';
-import 'im.v2.css.tokens';
 
 import { CompactNavigation } from './components/compact-navigation';
 import { RecentItem } from './components/recent-item';
-import { ActiveCall } from './components/active-call';
 import { EmptyState } from './components/empty-state';
+import { CompactActiveCallList } from './components/compact-active-call-list';
 
 import './css/recent-list.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem, ImModelCallItem } from 'im.v2.model';
 
 // @vue/component
 export const RecentList = {
 	name: 'RecentList',
-	components: { RecentItem, ActiveCall, EmptyState, CompactNavigation },
+	components: { RecentItem, EmptyState, CompactNavigation, CompactActiveCallList },
 	emits: ['chatClick'],
 	data(): JsonObject
 	{
@@ -82,7 +84,7 @@ export const RecentList = {
 	},
 	async created()
 	{
-		this.contextMenuManager = new RecentMenu();
+		this.contextMenuManager = new RecentMenu({ emitter: this.getEmitter() });
 
 		this.managePreloadedList();
 
@@ -142,6 +144,10 @@ export const RecentList = {
 
 			return this.service;
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -150,14 +156,7 @@ export const RecentList = {
 	template: `
 		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container">
 			<CompactNavigation />
-			<div v-if="activeCalls.length > 0" class="bx-im-list-recent-compact__calls_container">
-				<ActiveCall
-					v-for="activeCall in activeCalls"
-					:key="activeCall.dialogId"
-					:item="activeCall"
-					@click="onClick"
-				/>
-			</div>
+			<CompactActiveCallList @click="onClick" />
 			<div class="bx-im-list-recent-compact__scroll-container">
 				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent-compact__pinned_container">
 					<RecentItem

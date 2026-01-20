@@ -32,6 +32,7 @@ $arClasses = array(
 	"CBPTaskService" => "classes/general/taskservice.php",
 	"CBPTaskResult" => "classes/general/taskservice.php",
 	"CBPTrackingService" => "classes/general/trackingservice.php",
+	'CBPTrackingServiceResult' => 'classes/general/trackingservice.php',
 	"CBPTrackingType" => "classes/general/trackingservice.php",
 	"CBPVirtualDocument" => "classes/general/virtualdocument.php",
 	"CBPWorkflow" => "classes/general/workflow.php",

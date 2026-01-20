@@ -46,16 +46,6 @@ export const PORT_POSITION = {
 	LEFT: 'left',
 };
 
-export const CONNECTION_VIEW_TYPE = {
-	BEZIER: 'bezier',
-	SMOOTHSTEP: 'smoothstep',
-};
-
-export const NEW_CONNECTION_VIEW_TYPE = {
-	BEZIER: 'bezier',
-	LINE: 'line',
-};
-
 export const ANIMATED_TYPES: { [string]: AnimationItemTypes } = {
 	BLOCK: 'block',
 	CONNECTION: 'connection',

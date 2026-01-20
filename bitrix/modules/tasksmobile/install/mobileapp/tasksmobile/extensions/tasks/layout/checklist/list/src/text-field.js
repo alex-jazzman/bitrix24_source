@@ -12,12 +12,15 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 	 */
 	class ItemTextField extends LayoutComponent
 	{
+		#itemText = '';
+
 		constructor(props)
 		{
 			super(props);
 
 			this.textInputRef = null;
 			this.cursorPosition = 0;
+			this.#itemText = this.getValue();
 
 			this.#initState(props);
 		}
@@ -57,22 +60,17 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		};
 
-		handleOnChange = (title) => {
+		handleOnChange = (text) => {
 			const { onChangeText } = this.props;
+			this.#itemText = text;
 
-			if (onChangeText)
-			{
-				onChangeText(title);
-			}
+			onChangeText?.(text, this.isFocused());
 		};
 
 		handleOnSubmit = () => {
 			const { onSubmit } = this.props;
 
-			if (onSubmit)
-			{
-				onSubmit();
-			}
+			onSubmit?.();
 		};
 
 		handleOnLinkClick = ({ url }) => {
@@ -261,7 +259,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		getTextValue()
 		{
-			return this.textInputRef.getTextValue();
+			return this.#itemText;
 		}
 
 		setSelection()

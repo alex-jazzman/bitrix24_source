@@ -462,7 +462,11 @@ BX.ready(function ()
 	var instance = new BXCrmActivityEmail({
 		activityId: <?=intval($activity['ID'] ?? null) ?>,
 		formId: '<?=\CUtil::jsEscape($formId) ?>',
-		calendarLink: '<?= $activity['CALENDAR_SHARING_URL'] ?>'
+		calendarLink: '<?= $activity['CALENDAR_SHARING_URL'] ?>',
+		analytics: {
+			source: 'crm',
+			action: '<?= $activity['__message_type']  === 'FWD' ? 'forward' : 'compose_button' ?>',
+		},
 	});
 
 	setTimeout(function ()

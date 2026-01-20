@@ -1,17 +1,18 @@
-// @vue/component
-
 import { Text } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
-import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import { BIcon as Icon, Set as IconSet, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
+import 'ui.icon-set.outline';
 
-import { Model } from 'booking.const';
+import { LimitFeatureId, Model } from 'booking.const';
 import { isRealId } from 'booking.lib.is-real-id';
+import { limit } from 'booking.lib.limit';
 import { BookingAnalytics } from 'booking.lib.analytics';
 import { waitListService } from 'booking.provider.service.wait-list-service';
 
 import './waitlist.css';
 
+// @vue/component
 export const Waitlist = {
 	name: 'BookingActionsPopupWaitlist',
 	components: {
@@ -23,17 +24,24 @@ export const Waitlist = {
 			required: true,
 		},
 	},
+	setup(): Object
+	{
+		return {
+			IconSet,
+			Outline,
+		};
+	},
 	computed: {
 		...mapGetters({
 			getBookingById: `${Model.Bookings}/getById`,
 		}),
-		clockIcon(): string
-		{
-			return IconSet.BLACK_CLOCK;
-		},
 		disabled(): boolean
 		{
 			return !isRealId(this.bookingId);
+		},
+		featureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingWaitlist;
 		},
 	},
 	methods: {
@@ -41,6 +49,13 @@ export const Waitlist = {
 		{
 			if (this.disabled)
 			{
+				return;
+			}
+
+			if (!this.featureEnabled)
+			{
+				void limit.show(LimitFeatureId.Waitlist);
+
 				return;
 			}
 
@@ -69,9 +84,17 @@ export const Waitlist = {
 	template: `
 		<div
 			class="booking--booking-actions-popup__item-waitlist-btn --end"
-			:class="{'--disabled': disabled}"
-			@click="toWaitList">
-			<Icon :name="clockIcon" :size="20" color="var(--ui-color-palette-gray-60)"/>
+			:class="{
+				'--disabled': disabled,
+				'--locked': !featureEnabled,
+			}"
+			@click="toWaitList"
+		>
+			<Icon
+				:name="featureEnabled ? IconSet.BLACK_CLOCK : Outline.LOCK_S"
+				:size="20"
+				:color="featureEnabled ? 'var(--ui-color-gray-60)': 'var(--ui-color-gray-40)'"
+			/>
 			<div class="booking-actions-popup__item-waitlist-label">
 				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_LIST') }}
 			</div>

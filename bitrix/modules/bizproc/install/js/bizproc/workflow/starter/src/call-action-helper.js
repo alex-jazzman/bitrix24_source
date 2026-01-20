@@ -72,6 +72,11 @@ export class CallActionHelper
 		{
 			this.#defaultData.document_id = data.complexDocumentId.documentId;
 		}
+
+		if (!Type.isNil(data.triggerType))
+		{
+			this.#defaultData.trigger_type = data.triggerType;
+		}
 	}
 
 	get #hasAjaxUrl(): boolean

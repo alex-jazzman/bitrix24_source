@@ -98,5 +98,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 		}
 	}
 
-	module.exports = { ChipButtonDesign };
+	module.exports = {
+		ChipButtonDesign: ChipButtonDesign.export(),
+	};
 });

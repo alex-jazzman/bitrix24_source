@@ -628,6 +628,16 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 
 			return false;
 		}
+
+		/**
+		 * @public
+		 * @param {number} checklistId
+		 * @return {CheckListFlatTree|null}
+		 */
+		getChecklistById(checklistId)
+		{
+			return this.checklistsMap.get(checklistId) || null;
+		}
 	}
 
 	ChecklistController.defaultProps = {

@@ -1,0 +1,22 @@
+.booking-actions-popup-info--skus-info-popup--footer {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+	padding: var(--ui-space-stack-md) 0;
+	margin: 0 var(--ui-space-inline-md2);
+	border-top: 1px solid var(--ui-color-base-10);
+}
+
+.booking-actions-popup-info--skus-info-popup--footer__total-text {
+	color: var(--ui-color-text-primary);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-actions-popup-info--skus-info-popup--footer__total-price {
+	color: var(--ui-color-text-primary);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+}

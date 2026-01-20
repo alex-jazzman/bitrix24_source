@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'assets/icons',
-		'crm:mail/opener',
+		'mail:opener',
 		'crm:timeline/scheduler/providers/base',
 		'crm:type',
 	],

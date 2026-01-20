@@ -1,0 +1,26 @@
+
+/* normalize */
+
+.bui-clock {
+	margin: 0;
+}
+
+/* normalize end */
+
+
+.bui-clock {
+	display: flex;
+	align-items: flex-end;
+}
+.bui-clock__value {
+	font-size: 16px;
+	font-weight: 500;
+	color: var(--ui-color-base-1);
+	font-variant-numeric: tabular-nums;
+}
+.bui-clock__value:not(:last-of-type)::after {
+	content: ':';
+}
+.bui-clock__value.bui-clock__value_hours {}
+.bui-clock__value.bui-clock__value_minutes {}
+.bui-clock__value.bui-clock__value_seconds {}

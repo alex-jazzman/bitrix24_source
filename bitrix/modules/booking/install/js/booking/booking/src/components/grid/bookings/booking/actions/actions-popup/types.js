@@ -11,6 +11,7 @@ export type ActionsPopupAction = $ReadOnly<{
 	overbooking: 'overbooking',
 	remove: 'remove',
 	waitList: 'waitList',
+	skus: 'bookingSkusInfo',
 }>;
 
 export type ActionsPopupOptions = {

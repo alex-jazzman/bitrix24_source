@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { ChatType, MessageComponent } from 'im.v2.const';
+import { ChatType, DataAttribute, MessageComponent } from 'im.v2.const';
 
 // noinspection ES6PreferShortImport
 import { MessageMenu } from './classes/message-base';
@@ -12,9 +12,15 @@ import { AiAssistantMessageMenu } from './classes/ai-assistant';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { MessageMenuContext } from 'im.v2.lib.menu';
+import type { ApplicationContext } from 'im.v2.const';
 
 type MenuCheckFunction = (context: MessageMenuContext) => boolean;
 type MessageType = $Values<typeof MessageComponent>;
+type OpenMenuPayload = {
+	messageContext: MessageMenuContext,
+	applicationContext: ApplicationContext,
+	target: HTMLElement
+};
 
 export class MessageMenuManager
 {
@@ -40,13 +46,14 @@ export class MessageMenuManager
 		this.#registerDefaultMenus();
 	}
 
-	openMenu(context: MessageMenuContext, bindElement: HTMLElement): void
+	openMenu(payload: OpenMenuPayload): void
 	{
-		this.#destroyMenuInstance();
+		this.destroyMenuInstance();
 
-		const MenuClass = this.#resolveMenuClass(context);
-		this.#menuInstance = new MenuClass();
-		this.#menuInstance.openMenu(context, bindElement);
+		const { messageContext, target, applicationContext } = payload;
+		const MenuClass = this.#resolveMenuClass(messageContext);
+		this.#menuInstance = new MenuClass(applicationContext);
+		this.#menuInstance.openMenu(messageContext, target);
 	}
 
 	registerMenuByCallback(callback: MenuCheckFunction, menuClass: MessageMenu): void
@@ -57,6 +64,22 @@ export class MessageMenuManager
 	unregisterMenuByCallback(callback: MenuCheckFunction): void
 	{
 		this.#customMenuByCallback.delete(callback);
+	}
+
+	destroyMenuInstance(): void
+	{
+		if (!this.#menuInstance)
+		{
+			return;
+		}
+
+		this.#menuInstance.destroy();
+		this.#menuInstance = null;
+	}
+
+	shouldUseNativeContextMenu(target: HTMLElement): boolean
+	{
+		return Boolean(target.closest(`[${DataAttribute.useNativeContextMenu}]`));
 	}
 
 	registerMenuByMessageType(messageType: MessageType, menuClass: MessageMenu): void
@@ -160,16 +183,5 @@ export class MessageMenuManager
 	#getMenuForMessageType(messageType: MessageType): MessageMenu
 	{
 		return this.#menuByMessageType.get(messageType);
-	}
-
-	#destroyMenuInstance(): void
-	{
-		if (!this.#menuInstance)
-		{
-			return;
-		}
-
-		this.#menuInstance.destroy();
-		this.#menuInstance = null;
 	}
 }

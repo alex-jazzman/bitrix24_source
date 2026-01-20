@@ -1,7 +1,6 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Registration error";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INVALID_OAUTH_ACCESS_TOKEN"] = "Cannot manage public page because access was lost. You have to reconnect to your public page.";
-$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_CATALOG"] = "Product catalog";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_OPEN_LINES"] = "Open Channels";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED_MSGVER_1"] = "The \"External Messenger Connectors\" module is not installed.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_ACTIVE_CONNECTOR"] = "This connector is inactive.";

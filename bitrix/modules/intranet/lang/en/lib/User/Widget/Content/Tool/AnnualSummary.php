@@ -1,0 +1,2 @@
+<?php
+$MESS["INTRANET_USER_WIDGET_CONTENT_TOOL_ANNUAL_SUMMARY_TITLE"] = "Your Bitrix24 Year in Review";

@@ -1,0 +1,4 @@
+<?php
+$MESS['CRM_RECURRING_MAIL_DEFAULT_EMAIL_SUBJECT'] = 'Счёт #ACCOUNT_NUMBER#';
+$MESS['CRM_RECURRING_MAIL_INVALID_EMAIL'] = 'Неверный формат e-mail адреса получателя';
+$MESS['CRM_RECURRING_MAIL_EMPTY_BODY_MESSAGE'] = '[без текста]';

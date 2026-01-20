@@ -15,6 +15,8 @@ import type { User as ImModelUser } from '../type/user';
 type UsersState = {
 	collection: {[userId: string]: ImModelUser},
 	absentList: string[],
+	absentCheckInterval: number,
+	isCurrentUserAdmin: boolean,
 };
 
 const UserPositionByType = {
@@ -43,6 +45,7 @@ export class UsersModel extends BuilderModel
 			collection: {},
 			absentList: [],
 			absentCheckInterval: null,
+			isCurrentUserAdmin: false,
 		};
 	}
 
@@ -59,7 +62,6 @@ export class UsersModel extends BuilderModel
 			color: Color.base,
 			workPosition: '',
 			gender: 'M',
-			isAdmin: false,
 			type: UserType.user,
 			network: false,
 			connector: false,
@@ -79,6 +81,8 @@ export class UsersModel extends BuilderModel
 				personalPhone: '',
 				innerPhone: '',
 			},
+			email: '',
+			website: '',
 		};
 	}
 
@@ -87,7 +91,7 @@ export class UsersModel extends BuilderModel
 	{
 		return {
 			/** @function users/get */
-			get: (state) => (userId, getTemporary = false) => {
+			get: (state: UsersState) => (userId, getTemporary = false) => {
 				const user = state.collection[userId];
 
 				if (!getTemporary && !user)
@@ -107,7 +111,7 @@ export class UsersModel extends BuilderModel
 				return this.getElementState(params);
 			},
 			/** @function users/getList */
-			getList: (state) => (userList) => {
+			getList: (state: UsersState) => (userList) => {
 				const result = [];
 
 				if (!Array.isArray(userList))
@@ -129,7 +133,7 @@ export class UsersModel extends BuilderModel
 				return result;
 			},
 			/** @function users/hasBirthday */
-			hasBirthday: (state) => (rawUserId) => {
+			hasBirthday: (state: UsersState) => (rawUserId) => {
 				const userId = Number.parseInt(rawUserId, 10);
 
 				const user = state.collection[userId];
@@ -141,7 +145,7 @@ export class UsersModel extends BuilderModel
 				return user.isBirthday;
 			},
 			/** @function users/hasVacation */
-			hasVacation: (state) => (rawUserId) => {
+			hasVacation: (state: UsersState) => (rawUserId) => {
 				const userId = Number.parseInt(rawUserId, 10);
 
 				const user = state.collection[userId];
@@ -153,7 +157,7 @@ export class UsersModel extends BuilderModel
 				return user.isAbsent;
 			},
 			/** @function users/getLastOnline */
-			getLastOnline: (state) => (rawUserId) => {
+			getLastOnline: (state: UsersState) => (rawUserId) => {
 				const userId = Number.parseInt(rawUserId, 10);
 
 				const user = state.collection[userId];
@@ -165,7 +169,7 @@ export class UsersModel extends BuilderModel
 				return Utils.user.getLastDateText(user);
 			},
 			/** @function users/getPosition */
-			getPosition: (state) => (rawUserId) => {
+			getPosition: (state: UsersState) => (rawUserId) => {
 				const userId = Number.parseInt(rawUserId, 10);
 				const user: ImModelUser = state.collection[userId];
 				const isSupportBot = Core.getStore().getters['users/bots/isSupport'](userId);
@@ -181,6 +185,10 @@ export class UsersModel extends BuilderModel
 				}
 
 				return UserPositionByType[user.type] ?? UserPositionByType.default;
+			},
+			/** @function users/isCurrentUserAdmin */
+			isCurrentUserAdmin: (state: UsersState) => {
+				return state.isCurrentUserAdmin;
 			},
 		};
 	}
@@ -266,27 +274,35 @@ export class UsersModel extends BuilderModel
 					fields: this.formatFields(payload),
 				});
 			},
+			/** @function users/setCurrentUserAdminStatus */
+			setCurrentUserAdminStatus: (store, isAdmin: boolean) => {
+				store.commit('setCurrentUserAdminStatus', isAdmin);
+			},
 		};
 	}
 
 	getMutations(): MutationTree
 	{
 		return {
-			add: (state, payload) => {
+			add: (state: UsersState, payload) => {
 				// eslint-disable-next-line no-param-reassign
 				state.collection[payload.id] = payload.fields;
 
 				UserStatusManager.getInstance().onUserUpdate(payload.fields);
 			},
-			update: (state, payload) => {
+			update: (state: UsersState, payload) => {
 				// eslint-disable-next-line no-param-reassign
 				state.collection[payload.id] = { ...state.collection[payload.id], ...payload.fields };
 
 				UserStatusManager.getInstance().onUserUpdate(payload.fields);
 			},
-			delete: (state, payload) => {
+			delete: (state: UsersState, payload) => {
 				// eslint-disable-next-line no-param-reassign
 				delete state.collection[payload.id];
+			},
+			setCurrentUserAdminStatus: (state: UsersState, isAdmin: boolean) => {
+				// eslint-disable-next-line no-param-reassign
+				state.isCurrentUserAdmin = isAdmin;
 			},
 		};
 	}

@@ -9,9 +9,10 @@ return [
 	'js' => 'dist/crm-service.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'tasks.v2.const',
 		'tasks.v2.core',
+		'tasks.v2.const',
 		'tasks.v2.lib.api-client',
+		'tasks.v2.lib.id-utils',
 	],
 	'skip_core' => true,
 ];

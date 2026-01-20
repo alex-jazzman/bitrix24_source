@@ -773,10 +773,8 @@
 /*endregion*/
 
 .crm-entity-product-list-add-block {
-	background: #fff;
-	margin-bottom: 4px;
-	height: 57px;
-	padding: 0 9px;
+	margin-bottom: 24px;
+	padding: 0;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -1108,4 +1106,33 @@ select.crm-entity-product-control-select-field:hover {
 	border-bottom: 1px dashed #2067b0;
 	cursor: pointer;
 	text-decoration: none !important;
+}
+
+.crm-entity-product-list-wrapper-top-panel-left-buttons {
+	display: flex;
+	gap: 12px
+}
+
+.crm-entity-product-list-setting-button {
+	height: 28px;
+	width: 34px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-sm);
+
+}
+
+.crm-entity-product-list-setting-button {
+	height: 28px;
+	width: 34px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-sm);
+
 }

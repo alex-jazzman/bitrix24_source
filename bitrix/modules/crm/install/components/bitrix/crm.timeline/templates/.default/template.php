@@ -118,6 +118,11 @@ if (
 		->build()
 	;
 
+	echo (\Bitrix\Crm\Tour\CopilotInOpenLine::getInstance())
+		->setEntityTypeId($entityTypeId)
+		->build()
+	;
+
 	$autostartSettings = FillFieldsSettings::get($entityTypeId, $categoryId);
 	if (
 		$autostartSettings->isAutostartTranscriptionOnlyOnFirstCallWithRecording()
@@ -165,6 +170,8 @@ if ($arResult['BIZPROC_AVAILABLE'])
 	echo \Bitrix\Crm\Tour\Bizproc\WorkflowTaskAddInTimeline::getInstance()->build();
 	echo \Bitrix\Crm\Tour\Bizproc\WorkflowTaskCompletedInTimeline::getInstance()->build();
 }
+
+echo \Bitrix\Crm\Tour\NotificationsForcedSms::getInstance()->build();
 
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
@@ -218,7 +225,7 @@ if (!empty($arResult['ERRORS']))
 						'ENTITY_TYPE_ID' => $entityTypeId,
 						'ENTITY_ID' => $arResult['ENTITY_ID'],
 						'ENTITY_CATEGORY_ID' => $categoryId,
-						'ENTITY_CONFIG_SCOPE' => $arParams['ENTITY_CONFIG_SCOPE'] ?? EntityEditorConfigScope::UNDEFINED,
+						'ENTITY_CONFIG_SCOPE' => $arParams['ENTITY_CONFIG_SCOPE'],
 						'READ_ONLY' => $arResult['READ_ONLY'] ?? false,
 						'EXTRAS' => [
 							'IS_MY_COMPANY' => $arResult['EXTRAS']['IS_MY_COMPANY'] ?? 'N',
@@ -495,7 +502,6 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_FASTEN_LIMIT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_FASTEN_LIMIT_MESSAGE_MSGVER_1")?>',
 				"CRM_TIMELINE_EMPTY_COMMENT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_EMPTY_COMMENT_MESSAGE")?>',
 				"CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE")?>',
-				"CRM_TIMELINE_SCORING_TITLE_2": '<?=GetMessageJS("CRM_TIMELINE_SCORING_TITLE_2")?>',
 				"CRM_TIMELINE_DETAILS": '<?=GetMessageJS("CRM_TIMELINE_DETAILS")?>',
 				"CRM_TIMELINE_COLLAPSE": '<?=GetMessageJS("CRM_TIMELINE_COLLAPSE")?>',
 				"CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY")?>',

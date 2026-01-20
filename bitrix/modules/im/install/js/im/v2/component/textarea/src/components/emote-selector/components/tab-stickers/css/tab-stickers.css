@@ -1,0 +1,25 @@
+.bx-im-stickers-tab__container {
+	flex-grow: 1;
+}
+
+.bx-im-stickers-pack-list__container {
+	border-radius: 16px 16px 0 0;
+	box-sizing: border-box;
+	height: 320px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 0 4px 4px 4px;
+	background-color: var(--im-emote-selector__background-tab-color);
+}
+
+.bx-im-stickers-header__container {
+	display: flex;
+	align-items: center;
+	height: 50px;
+	box-sizing: border-box;
+	padding: 0 8px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	gap: 8px;
+	scrollbar-gutter: stable;
+}

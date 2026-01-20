@@ -99,7 +99,7 @@
 }
 
 .select-label-recommended {
-	font: 8px var(--ui-font-family-open-sans);
+	font: 8px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	color: #2FC6F6;

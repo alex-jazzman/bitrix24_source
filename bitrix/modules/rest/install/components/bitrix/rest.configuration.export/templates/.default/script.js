@@ -169,7 +169,6 @@
 						{
 							this.finish();
 						}
-						console.log('ajax:',response);
 					},
 					this
 				)

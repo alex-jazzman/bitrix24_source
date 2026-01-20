@@ -10,7 +10,6 @@ use Bitrix\Sign\Callback;
 use Bitrix\Sign\Service\Sign\Document\GroupService;
 use Bitrix\Sign\Service\CounterService;
 use Bitrix\Sign\Util;
-use Bitrix\Sign\Type;
 
 return [
 	'controllers' => [
@@ -59,6 +58,8 @@ return [
 			'in' => 'https://sign.bitrix24.com',
 			'co' => 'https://sign.bitrix24.com',
 			'mx' => 'https://sign.bitrix24.com',
+			'ar' => 'https://sign.bitrix24.com',
+			'ae' => 'https://sign.bitrix24.com',
 		],
 		'readonly' => true,
 	],
@@ -92,6 +93,8 @@ return [
 			'in' => 'https://www.bitrix24.in',
 			'co' => 'https://www.bitrix24.co',
 			'mx' => 'https://www.bitrix24.mx',
+			'ar' => 'https://www.bitrix24.ae',
+			'ae' => 'https://www.bitrix24.ae',
 		],
 		'readonly' => true,
 	],
@@ -123,6 +126,8 @@ return [
 			'in' => true,
 			'co' => true,
 			'mx' => true,
+			'ar' => true,
+			'ae' => true,
 		],
 		'readonly' => true,
 	],
@@ -154,6 +159,8 @@ return [
 			'in' => false,
 			'co' => false,
 			'mx' => false,
+			'ar' => false,
+			'ae' => false,
 		],
 		'readonly' => true,
 	],
@@ -185,6 +192,8 @@ return [
 			'in' => true,
 			'co' => true,
 			'mx' => true,
+			'ar' => true,
+			'ae' => true,
 		],
 		'readonly' => true,
 	],
@@ -216,6 +225,8 @@ return [
 			'in' => true,
 			'co' => true,
 			'mx' => true,
+			'ar' => true,
+			'ae' => true,
 		],
 		'readonly' => true,
 	],
@@ -640,6 +651,23 @@ return [
 			],
 			'sign.service.provider.visibility' => [
 				'className' => Service\Providers\ProviderVisibilityService::class,
+			],
+			'sign.service.api.b2e.company' => [
+				'className' => Service\Api\B2e\CompanyService::class,
+				'constructorParams' => static function() {
+					return [
+						'api' => Service\Container::instance()->getApiService(),
+						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer(),
+					];
+				},
+			],
+			'sign.service.b2e.company' => [
+				'className' => Service\B2e\CompanyService::class,
+				'constructorParams' => static function() {
+					return [
+						'apiCompanyService' => Service\Container::instance()->getApiCompanyService(),
+					];
+				},
 			],
 		]
 	],

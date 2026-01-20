@@ -13,7 +13,7 @@ $result = [];
 if(
 	$arResult['userField']['EDIT_IN_LIST'] === 'Y'
 	&&
-	$arResult['userField']['ENTITY_VALUE_ID'] < 1
+	(!isset($arResult['userField']['ENTITY_VALUE_ID']) || $arResult['userField']['ENTITY_VALUE_ID'] < 1)
 	&&
 	$arResult['userField']['SETTINGS']['DEFAULT_VALUE']['TYPE'] === DateType::TYPE_NOW
 )
@@ -32,7 +32,7 @@ if(
 else if(
 	$arResult['userField']['EDIT_IN_LIST'] === 'Y'
 	&&
-	$arResult['userField']['ENTITY_VALUE_ID'] < 1
+	(!isset($arResult['userField']['ENTITY_VALUE_ID']) || $arResult['userField']['ENTITY_VALUE_ID'] < 1)
 	&&
 	$arResult['userField']['SETTINGS']['DEFAULT_VALUE']['TYPE'] !== DateType::TYPE_NONE
 )

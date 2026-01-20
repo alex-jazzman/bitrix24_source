@@ -134,6 +134,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		activityDate: Math.ceil(activityDate / 1000),
 		isExpired: selectIsExpired({ ...oldTaskState, deadline }),
 		isConsideredForCounterChange: true,
+		deadlineChangesLeft: Type.isNumber(oldTaskState.deadlineChangesLeft)
+			? oldTaskState.deadlineChangesLeft - 1 : oldTaskState.deadlineChangesLeft,
 	});
 
 	const updateDeadlinePending = (state, action) => {
@@ -887,6 +889,21 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 	const readAllForProjectFulfilled = (state, action) => unregisterRegistryChanges(action.meta.requestId);
 
+	const updateResultsCount = (state, action) => {
+		const { taskId } = action.meta.arg;
+		const { map } = action.payload.data;
+		const task = state.entities[taskId];
+
+		tasksAdapter.upsertOne(state, {
+			...task,
+			resultsCount: Object.keys(map).length,
+		});
+	};
+
+	const taskResultTailFulfilled = (state, action) => updateResultsCount(state, action);
+
+	const taskResultGetAllFulfilled = (state, action) => updateResultsCount(state, action);
+
 	const taskResultFetchedFulfilled = (state, action) => {
 		const { taskId } = action.meta.arg;
 		const { results } = action.payload.data;
@@ -1045,6 +1062,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		readAllForRoleFulfilled,
 		readAllForProjectPending,
 		readAllForProjectFulfilled,
+		taskResultTailFulfilled,
+		taskResultGetAllFulfilled,
 		taskResultFetchedFulfilled,
 		taskResultCreatedFulfilled,
 		taskResultRemovedFulfilled,

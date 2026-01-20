@@ -53,7 +53,7 @@ export const MarketAppsPanel = {
 			<div v-if="isEmptyState" class="bx-im-market-apps-panel__empty-state-container">
 				<div class="bx-im-market-apps-panel__empty-state-icon"></div>
 				<div class="bx-im-market-apps-panel__empty-state-text">
-					{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE') }}
+					{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_1') }}
 				</div>
 				<div class="bx-im-market-apps-panel__empty-state-button"></div>
 			</div>

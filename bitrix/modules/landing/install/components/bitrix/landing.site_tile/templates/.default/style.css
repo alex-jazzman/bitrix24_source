@@ -2223,6 +2223,11 @@
 	color: #dfe0e3;
 	letter-spacing: -.05px;
 	opacity: 0;
+	max-width: 390px;
+}
+
+.landing-site_title-popup-desc p {
+	margin: 0;
 }
 
 .popup-window.--animation-first-step .landing-site_title-popup-desc {

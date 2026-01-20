@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_designTokens,ui_fonts_opensans,im_eventHandler,im_component_dialog,im_component_textarea,ui_switcher,ui_vue_components_smiles,main_core,ui_forms,im_lib_cookie,call_core,im_component_callFeedback,im_lib_desktop,ui_vue,im_lib_logger,im_lib_utils,im_const,main_core_events,ui_vue_vuex,main_popup,im_lib_clipboard,ui_dialogs_messagebox) {
+(function (exports,ui_designTokens,ui_fonts_opensans,im_eventHandler,im_component_dialog,im_component_textarea,ui_switcher,ui_vue_components_smiles,main_core,ui_forms,im_lib_cookie,call_core,call_component_callFeedback,im_lib_desktop,ui_vue,im_lib_logger,im_lib_utils,im_v2_lib_utils,im_const,call_const,main_core_events,ui_vue_vuex,main_popup,im_lib_clipboard,ui_dialogs_messagebox) {
 	'use strict';
 
 	var ConferenceTextareaHandler = /*#__PURE__*/function (_TextareaHandler) {
@@ -106,7 +106,7 @@ this.BX = this.BX || {};
 	    return {
 	      bars: [],
 	      barDisabledColor: 'rgba(255,255,255,0.42)',
-	      barEnabledColor: '#2FC6F6'
+	      barEnabledColor: '#1CAE6A'
 	    };
 	  },
 	  watch: {
@@ -421,45 +421,42 @@ this.BX = this.BX || {};
 	      return this.conference.common.error;
 	    },
 	    bitrix24only: function bitrix24only() {
-	      return this.errorCode === im_const.ConferenceErrorCode.bitrix24only;
+	      return this.errorCode === call_const.ConferenceErrorCode.bitrix24only;
 	    },
 	    detectIntranetUser: function detectIntranetUser() {
-	      return this.errorCode === im_const.ConferenceErrorCode.detectIntranetUser;
+	      return this.errorCode === call_const.ConferenceErrorCode.detectIntranetUser;
 	    },
 	    userLimitReached: function userLimitReached() {
-	      return this.errorCode === im_const.ConferenceErrorCode.userLimitReached;
+	      return this.errorCode === call_const.ConferenceErrorCode.userLimitReached;
 	    },
 	    kickedFromCall: function kickedFromCall() {
-	      return this.errorCode === im_const.ConferenceErrorCode.kickedFromCall;
+	      return this.errorCode === call_const.ConferenceErrorCode.kickedFromCall;
 	    },
 	    wrongAlias: function wrongAlias() {
-	      return this.errorCode === im_const.ConferenceErrorCode.wrongAlias;
+	      return this.errorCode === call_const.ConferenceErrorCode.wrongAlias;
 	    },
 	    conferenceFinished: function conferenceFinished() {
-	      return this.errorCode === im_const.ConferenceErrorCode.finished;
+	      return this.errorCode === call_const.ConferenceErrorCode.finished;
 	    },
 	    unsupportedBrowser: function unsupportedBrowser() {
-	      return this.errorCode === im_const.ConferenceErrorCode.unsupportedBrowser;
+	      return this.errorCode === call_const.ConferenceErrorCode.unsupportedBrowser;
 	    },
 	    missingMicrophone: function missingMicrophone() {
-	      return this.errorCode === im_const.ConferenceErrorCode.missingMicrophone;
+	      return this.errorCode === call_const.ConferenceErrorCode.missingMicrophone;
 	    },
 	    unsafeConnection: function unsafeConnection() {
-	      return this.errorCode === im_const.ConferenceErrorCode.unsafeConnection;
+	      return this.errorCode === call_const.ConferenceErrorCode.unsafeConnection;
 	    },
 	    noSignalFromCamera: function noSignalFromCamera() {
-	      return this.errorCode === im_const.ConferenceErrorCode.noSignalFromCamera;
+	      return this.errorCode === call_const.ConferenceErrorCode.noSignalFromCamera;
 	    },
 	    userLeftCall: function userLeftCall() {
-	      return this.errorCode === im_const.ConferenceErrorCode.userLeftCall;
+	      return this.errorCode === call_const.ConferenceErrorCode.userLeftCall;
 	    },
 	    showFeedback: function showFeedback() {
-	      console.warn('this.$Bitrix.Application.get()', this.$Bitrix.Application.get());
-	      console.warn('this.$Bitrix.Application.get().showFeedback', this.$Bitrix.Application.get().showFeedback);
 	      return this.$Bitrix.Application.get().showFeedback;
 	    },
 	    callDetails: function callDetails() {
-	      console.warn('this.$Bitrix.Application.get().callDetails', this.$Bitrix.Application.get().callDetails);
 	      return this.$Bitrix.Application.get().callDetails;
 	    },
 	    isExternalUser: function isExternalUser() {
@@ -508,7 +505,7 @@ this.BX = this.BX || {};
 	      }, 1500);
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-error-wrap\">\n\t\t\t<template v-if=\"bitrix24only\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-b24only\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_B24_ONLY'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"detectIntranetUser\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-intranet\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_PLEASE_LOG_IN'] }}</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-buttons\">\n\t\t\t\t\t\t\t<button @click=\"redirectToAuthorize\" class=\"ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-error-button-authorize\">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AUTHORIZE'] }}</button>\n\t\t\t\t\t\t\t<button @click=\"continueAsGuest\" class=\"ui-btn ui-btn-sm bx-im-component-call-error-button-as-guest\">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AS_GUEST'] }}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"userLimitReached\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-full\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_USER_LIMIT'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"kickedFromCall\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-kicked\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_KICKED'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"wrongAlias || conferenceFinished\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-finished\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_FINISHED'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"unsupportedBrowser\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-browser\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_UNSUPPORTED_BROWSER'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_DETAILS'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"missingMicrophone\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_MIC'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"unsafeConnection\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-https\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_HTTPS'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"noSignalFromCamera\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_SIGNAL_FROM_CAMERA'] }}</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-buttons\">\n\t\t\t\t\t\t\t<button @click=\"reloadPage\" class=\"ui-btn ui-btn-sm ui-btn-no-caps\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_RELOAD'] }}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"userLeftCall\">\n\t\t\t\t<template v-if=\"!callFeedbackSent && showFeedback\">\n\t\t\t\t\t<bx-im-component-call-feedback @feedbackSent=\"onFeedbackSent\" :callDetails=\"callDetails\" :darkMode=\"true\"/>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">\n\t\t\t\t\t\t\t\t<span v-if=\"isFinishedByOrganizer\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ERROR_ORGANIZER_FINISHED_CONFERENCE'] }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ERROR_USER_LEFT_THE_CALL'] }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<br />\n\t\t\t\t\t\t\t\t<a v-if=\"!isExternalUser\" href=\"/\" class=\"bx-im-component-call-error-link\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_RETURN_TO_PORTAL'] }}</a>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-error-wrap\">\n\t\t\t<template v-if=\"bitrix24only\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-b24only\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_B24_ONLY'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"detectIntranetUser\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-intranet\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_PLEASE_LOG_IN'] }}</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-buttons\">\n\t\t\t\t\t\t\t<button @click=\"redirectToAuthorize\" class=\"bx-im-component-call-error-button-authorize\">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AUTHORIZE'] }}</button>\n\t\t\t\t\t\t\t<button @click=\"continueAsGuest\" class=\"bx-im-component-call-error-button-as-guest\">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AS_GUEST'] }}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"userLimitReached\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-full\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_USER_LIMIT'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"kickedFromCall\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-kicked\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_KICKED'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"wrongAlias || conferenceFinished\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-finished\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_FINISHED'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_CREATE_OWN'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"unsupportedBrowser\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-browser\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_UNSUPPORTED_BROWSER'] }}</div>\n\t\t\t\t\t\t<template v-if=\"!isMobile()\">\n\t\t\t\t\t\t\t<a @click.prevent=\"openHelpArticle\" class=\"bx-im-component-call-error-more-link\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_DETAILS'] }}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"missingMicrophone\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_MIC'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"unsafeConnection\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-icon bx-im-component-call-error-icon-https\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_HTTPS'] }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"noSignalFromCamera\">\n\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_SIGNAL_FROM_CAMERA'] }}</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-buttons\">\n\t\t\t\t\t\t\t<button @click=\"reloadPage\" class=\"bx-im-component-call-error-button-reload\">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_RELOAD'] }}</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"userLeftCall\">\n\t\t\t\t<template v-if=\"!callFeedbackSent && showFeedback\">\n\t\t\t\t\t<bx-im-component-call-feedback @feedbackSent=\"onFeedbackSent\" :callDetails=\"callDetails\" :darkMode=\"true\"/>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-im-component-call-error-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-error-content\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-error-text\">\n\t\t\t\t\t\t\t\t<span v-if=\"isFinishedByOrganizer\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ERROR_ORGANIZER_FINISHED_CONFERENCE'] }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ERROR_USER_LEFT_THE_CALL'] }}\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<br />\n\t\t\t\t\t\t\t\t<a v-if=\"!isExternalUser\" href=\"/\" class=\"bx-im-component-call-error-link\">{{ localize['BX_IM_COMPONENT_CALL_ERROR_RETURN_TO_PORTAL'] }}</a>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t</div>\n\t"
 	};
 
 	var OrientationDisabled = {
@@ -699,29 +696,30 @@ this.BX = this.BX || {};
 	              });
 	            case 6:
 	              devices = _context2.sent;
+	              _this.getApplication().callView.showButtons(['camera', 'microphone']);
 	              _this.getApplication().callView.unblockButtons(devices);
-	              _context2.next = 16;
+	              _context2.next = 17;
 	              break;
-	            case 10:
-	              _context2.prev = 10;
+	            case 11:
+	              _context2.prev = 11;
 	              _context2.t0 = _context2["catch"](1);
 	              if (!(_context2.t0.name === NOT_ALLOWED_ERROR_CODE)) {
-	                _context2.next = 15;
+	                _context2.next = 16;
 	                break;
 	              }
 	              _this.showMessageBox(_this.localize['BX_IM_COMPONENT_CALL_NOT_ALLOWED_ERROR']);
 	              return _context2.abrupt("return", false);
-	            case 15:
-	              _this.showMessageBox(_this.localize['BX_IM_COMPONENT_CALL_HARDWARE_ERROR']);
 	            case 16:
-	              _context2.prev = 16;
+	              _this.showMessageBox(_this.localize['BX_IM_COMPONENT_CALL_HARDWARE_ERROR']);
+	            case 17:
+	              _context2.prev = 17;
 	              BX.Call.Hardware.getCurrentDeviceList();
-	              return _context2.finish(16);
-	            case 19:
+	              return _context2.finish(17);
+	            case 20:
 	            case "end":
 	              return _context2.stop();
 	          }
-	        }, _callee2, null, [[1, 10, 16, 19]]);
+	        }, _callee2, null, [[1, 11, 17, 20]]);
 	      }))();
 	    },
 	    setPermissionsRequestedFlag: function setPermissionsRequestedFlag() {
@@ -744,7 +742,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-call-permissions-container\">\n\t\t\t<template v-if=\"!skipRequest\">\n\t\t\t\t<div class=\"bx-im-component-call-permissions-text\">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_TEXT'] }}</div>\n\t\t\t\t<button @click=\"requestPermissions\" class=\"ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-permissions-button\">\n\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ENABLE_DEVICES_BUTTON'] }}\n\t\t\t\t</button>\n\t\t\t\t<slot></slot>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-im-component-call-permissions-text\">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_LOADING'] }}</div>\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-wait bx-im-component-call-permissions-button\">\n\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_BUTTON'] }}\n\t\t\t\t</button>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-permissions-container\">\n\t\t\t<template v-if=\"!skipRequest\">\n\t\t\t\t<div class=\"bx-im-component-call-permissions-text\">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_TEXT'] }}</div>\n\t\t\t\t<button @click=\"requestPermissions\" class=\"bx-im-component-call-permissions-button\">\n\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_ENABLE_DEVICES_BUTTON'] }}\n\t\t\t\t</button>\n\t\t\t\t<slot></slot>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-im-component-call-permissions-text\">{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_LOADING'] }}</div>\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-wait bx-im-component-call-permissions-button\">\n\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_PERMISSIONS_BUTTON'] }}\n\t\t\t\t</button>\n\t\t\t</template>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -900,6 +898,7 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div :class=\"containerClasses\">\n\t\t\t<template v-if=\"compactMode\">\n\t\t\t\t<div class=\"bx-im-component-call-info-title-container\">\n\t\t\t\t\t<div class=\"bx-im-component-call-info-logo\"></div>\n\t\t\t\t\t<div class=\"bx-im-component-call-info-title\">{{ conferenceTitle }}</div>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-info-speakers\">{{ formattedPresentersList }}</div>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-im-component-call-info-logo\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-info-title\">{{ conferenceTitle }}</div>\n\t\t\t  \t<div v-if=\"isBroadcast\" class=\"bx-im-component-call-info-speakers\">{{ formattedPresentersList }}</div>\t\n\t\t\t</template>\n\t\t\t<div :class=\"conferenceStatusClasses\">{{ conferenceStatusText }}</div>\n\t\t</div>\n\t"
 	};
 
+	function _regeneratorRuntime$1() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$1 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var UserForm = {
@@ -950,16 +949,16 @@ this.BX = this.BX || {};
 	      return ui_vue.BitrixVue.getFilteredPhrases('BX_IM_COMPONENT_CALL_');
 	    },
 	    videoModeButtonClasses: function videoModeButtonClasses() {
-	      var classes = ['ui-btn', 'ui-btn-sm', 'ui-btn-primary', 'bx-im-component-call-join-video'];
+	      var classes = ['bx-im-component-call-join-video'];
 	      if (!this.getApplication().hardwareInited) {
-	        classes.push('ui-btn-disabled');
+	        classes.push('disabled');
 	      }
 	      return classes;
 	    },
 	    audioModeButtonClasses: function audioModeButtonClasses() {
-	      var classes = ['ui-btn', 'ui-btn-sm', 'bx-im-component-call-join-audio'];
+	      var classes = ['bx-im-component-call-join-audio'];
 	      if (!this.getApplication().hardwareInited) {
-	        classes.push('ui-btn-disabled');
+	        classes.push('disabled');
 	      }
 	      return classes;
 	    }
@@ -980,32 +979,62 @@ this.BX = this.BX || {};
 	      this.getApplication().startCall(video);
 	    },
 	    joinConference: function joinConference(_ref2) {
-	      var video = _ref2.video;
-	      if (this.user.extranet && !this.userHasRealName) {
-	        this.setNewName();
-	      }
-	      if (!this.conferenceStarted) {
-	        main_core_events.EventEmitter.emit(im_const.EventType.conference.waitForStart);
-	        this.getApplication().setUserReadyToJoin();
-	        this.getApplication().setJoinType(video);
-	      } else {
-	        var viewerMode = this.isBroadcast && !this.isCurrentUserPresenter;
-	        im_lib_logger.Logger.warn('ready to join call', video, viewerMode);
-	        if (viewerMode) {
-	          this.getApplication().joinCall(this.getApplication().preCall.id, this.getApplication().preCall.uuid, {
-	            joinAsViewer: true
-	          });
-	        } else {
-	          this.getApplication().joinCall(this.getApplication().preCall.id, this.getApplication().preCall.uuid, {
-	            video: video
-	          });
-	        }
-	      }
+	      var _this = this;
+	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee() {
+	        var video, viewerMode;
+	        return _regeneratorRuntime$1().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              video = _ref2.video;
+	              if (!(_this.user.extranet && !_this.userHasRealName)) {
+	                _context.next = 4;
+	                break;
+	              }
+	              _context.next = 4;
+	              return _this.setNewName();
+	            case 4:
+	              if (!_this.conferenceStarted) {
+	                main_core_events.EventEmitter.emit(im_const.EventType.conference.waitForStart);
+	                _this.getApplication().setUserReadyToJoin();
+	                _this.getApplication().setJoinType(video);
+	              } else {
+	                viewerMode = _this.isBroadcast && !_this.isCurrentUserPresenter;
+	                im_lib_logger.Logger.warn('ready to join call', video, viewerMode);
+	                if (viewerMode) {
+	                  _this.getApplication().joinCall(_this.getApplication().preCall.id, _this.getApplication().preCall.uuid, {
+	                    joinAsViewer: true
+	                  });
+	                } else {
+	                  _this.getApplication().joinCall(_this.getApplication().preCall.id, _this.getApplication().preCall.uuid, {
+	                    video: video
+	                  });
+	                }
+	              }
+	            case 5:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }, _callee);
+	      }))();
 	    },
 	    setNewName: function setNewName() {
-	      if (this.userNewName.length > 0) {
-	        this.getApplication().renameGuest(this.userNewName.trim());
-	      }
+	      var _this2 = this;
+	      return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee2() {
+	        return _regeneratorRuntime$1().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              if (!(_this2.userNewName.length > 0)) {
+	                _context2.next = 3;
+	                break;
+	              }
+	              _context2.next = 3;
+	              return _this2.getApplication().renameGuest(_this2.userNewName);
+	            case 3:
+	            case "end":
+	              return _context2.stop();
+	          }
+	        }, _callee2);
+	      }))();
 	    },
 	    getApplication: function getApplication() {
 	      return this.$Bitrix.Application.get();
@@ -1014,7 +1043,7 @@ this.BX = this.BX || {};
 	      return im_lib_utils.Utils.platform.isBitrixDesktop();
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-form\">\n\t\t\t<template v-if=\"user && userHasRealName\">\n\t\t\t\t<template v-if=\"!user.extranet\">\n\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-title\">\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_INTRANET_NAME_TITLE'] }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-content\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-content-left\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-text\">{{ user.name }}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<template v-if=\"!isDesktop()\">\n\t\t\t\t\t\t\t\t<a :href=\"logoutLink\" class=\"bx-im-component-call-intranet-name-logout\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_INTRANET_LOGOUT'] }}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"user.extranet\">\n\t\t\t\t\t<div class=\"bx-im-component-call-guest-name-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-guest-name-text\">{{ user.name }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!-- New guest, need to specify name -->\n\t\t\t<template v-else-if=\"user && !userHasRealName\">\n\t\t\t\t<input\n\t\t\t\t\tv-model=\"userNewName\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t:placeholder=\"localize['BX_IM_COMPONENT_CALL_NAME_PLACEHOLDER']\"\n\t\t\t\t\tclass=\"bx-im-component-call-name-input\"\n\t\t\t\t\tref=\"nameInput\"\n\t\t\t\t/>\n\t\t\t</template>\n\t\t\t<!-- Buttons -->\n\t\t\t<template v-if=\"user\">\n\t\t\t\t<!-- Broadcast mode -->\n\t\t\t\t<template v-if=\"isBroadcast\">\n\t\t\t\t\t<!-- Speaker can start conference -->\n\t\t\t\t\t<template v-if=\"isCurrentUserPresenter && !conferenceStarted\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Speakers can join with audio/video -->\n\t\t\t\t\t<template v-else-if=\"conferenceStarted && isCurrentUserPresenter\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Others can join as viewers -->\n\t\t\t\t\t<template v-else-if=\"!isCurrentUserPresenter\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-join-video\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<!-- End broadcast mode -->\n\t\t\t\t<template v-else-if=\"!isBroadcast\">\n\t\t\t\t\t<!-- Intranet user can start conference -->\n\t\t\t\t\t<template v-if=\"!user.extranet && !conferenceStarted\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Others can join -->\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!--End normal (not broadcast) mode-->\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-form\">\n\t\t\t<template v-if=\"user && userHasRealName\">\n\t\t\t\t<template v-if=\"!user.extranet\">\n\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-title\">\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_INTRANET_NAME_TITLE'] }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-content\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-content-left\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-intranet-name-text\">{{ user.name }}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<template v-if=\"!isDesktop()\">\n\t\t\t\t\t\t\t\t<a :href=\"logoutLink\" class=\"bx-im-component-call-intranet-name-logout\">\n\t\t\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_INTRANET_LOGOUT'] }}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"user.extranet\">\n\t\t\t\t\t<div class=\"bx-im-component-call-guest-name-container\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-guest-name-text\">{{ user.name }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!-- New guest, need to specify name -->\n\t\t\t<template v-else-if=\"user && !userHasRealName\">\n\t\t\t\t<input\n\t\t\t\t\tv-model.trim=\"userNewName\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t:placeholder=\"localize['BX_IM_COMPONENT_CALL_NAME_PLACEHOLDER']\"\n\t\t\t\t\tclass=\"bx-im-component-call-name-input\"\n\t\t\t\t\tref=\"nameInput\"\n\t\t\t\t/>\n\t\t\t</template>\n\t\t\t<!-- Buttons -->\n\t\t\t<template v-if=\"user\">\n\t\t\t\t<!-- Broadcast mode -->\n\t\t\t\t<template v-if=\"isBroadcast\">\n\t\t\t\t\t<!-- Speaker can start conference -->\n\t\t\t\t\t<template v-if=\"isCurrentUserPresenter && !conferenceStarted\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Speakers can join with audio/video -->\n\t\t\t\t\t<template v-else-if=\"conferenceStarted && isCurrentUserPresenter\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Others can join as viewers -->\n\t\t\t\t\t<template v-else-if=\"!isCurrentUserPresenter\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\tclass=\"bx-im-component-call-join-video\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<!-- End broadcast mode -->\n\t\t\t\t<template v-else-if=\"!isBroadcast\">\n\t\t\t\t\t<!-- Intranet user can start conference -->\n\t\t\t\t\t<template v-if=\"!user.extranet && !conferenceStarted\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"startConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_START_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<!-- Others can join -->\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: true})\"\n\t\t\t\t\t\t\t:class=\"videoModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_VIDEO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"joinConference({video: false})\"\n\t\t\t\t\t\t\t:class=\"audioModeButtonClasses\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_JOIN_WITH_AUDIO'] }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!--End normal (not broadcast) mode-->\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1054,7 +1083,7 @@ this.BX = this.BX || {};
 	      return this.$Bitrix.Application.get();
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-right-header\">\n\t\t\t<div class=\"bx-im-component-call-right-header-left\">\n\t\t\t\t<div @click=\"onCloseChat\" class=\"bx-im-component-call-right-header-close\" :title=\"localize['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-right-header-title\">{{ localize['BX_IM_COMPONENT_CALL_CHAT_TITLE'] }}</div>\n\t\t\t</div>\n\t\t\t<template v-if=\"showTotalCounter\">\n\t\t\t\t<div @click=\"onTotalCounterClick\" class=\"bx-im-component-call-right-header-right bx-im-component-call-right-header-all-chats\">\n\t\t\t\t\t<div class=\"bx-im-component-call-right-header-all-chats-title\">{{ localize['BX_IM_COMPONENT_CALL_ALL_CHATS'] }}</div>\n\t\t\t\t\t<div class=\"bx-im-component-call-right-header-all-chats-counter\">{{ messageCount }}</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-right-header\">\n\t\t\t<div class=\"bx-im-component-call-right-header-left\">\n\t\t\t\t<div @click=\"onCloseChat\" class=\"bx-im-component-call-right-header-close\" :title=\"localize['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-right-header-title\">{{ localize['BX_IM_COMPONENT_CALL_CHAT_TITLE'] }}</div>\n \n\t\t\t</div>\n\t\t\t<template v-if=\"showTotalCounter\">\n\t\t\t\t<div @click=\"onTotalCounterClick\" class=\"bx-im-component-call-right-header-right bx-im-component-call-right-header-all-chats\">\n\t\t\t\t\t<div class=\"bx-im-component-call-right-header-all-chats-title\">{{ localize['BX_IM_COMPONENT_CALL_ALL_CHATS'] }}</div>\n\t\t\t\t\t<div class=\"bx-im-component-call-right-header-all-chats-counter\">{{ messageCount }}</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1076,7 +1105,7 @@ this.BX = this.BX || {};
 	    }
 	  })),
 	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-call-wait-container\">\n\t\t\t<div class=\"bx-im-component-call-wait-logo\"></div>\n\t\t\t<div class=\"bx-im-component-call-wait-title\">{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_TITLE'] }}</div>\n\t\t\t<div class=\"bx-im-component-call-wait-user-counter\">\n\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_USER_COUNT'] }} {{ userCounter }}\n\t\t\t</div>\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-wait-container\">\n\t\t\t<div class=\"bx-im-component-call-wait-main\">\n\t\t\t\t<div class=\"bx-im-component-call-wait-logo\"></div>\n\t\t\t\t<div class=\"bx-im-component-call-wait-title\">{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_TITLE'] }}</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-wait-user-counter\">\n\t\t\t\t{{ localize['BX_IM_COMPONENT_CALL_WAIT_START_USER_COUNT'] }} {{ userCounter }}\n\t\t\t</div>\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1094,7 +1123,7 @@ this.BX = this.BX || {};
 	      newName: '',
 	      renameRequested: false,
 	      menuId: 'bx-messenger-context-popup-external-data',
-	      onlineStates: [im_const.ConferenceUserState.Ready, im_const.ConferenceUserState.Connected]
+	      onlineStates: [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected]
 	    };
 	  },
 	  computed: _objectSpread$7({
@@ -1151,12 +1180,14 @@ this.BX = this.BX || {};
 	    },
 	    // end statuses
 	    formattedSubtitle: function formattedSubtitle() {
-	      var subtitles = [];
-	      if (this.user.id === this.chatOwner) {
-	        subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OWNER'));
-	      }
+	      var subtitle = '';
+	      var role = this.$Bitrix.Loc.getMessage(this.user.id === this.chatOwner ? 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OWNER' : 'BX_IM_COMPONENT_CALL_USER_LIST_STATUS_PARTICIPANT');
 	      if (this.user.id === this.currentUser) {
-	        subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_CURRENT_USER'));
+	        subtitle = this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_CURRENT_USER_MSGVER_1', {
+	          '#ROLE#': role
+	        });
+	      } else {
+	        subtitle = role;
 	      }
 
 	      // if (!this.user.extranet && !this.user.isOnline)
@@ -1164,7 +1195,7 @@ this.BX = this.BX || {};
 	      // 	subtitles.push(this.$Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_STATUS_OFFLINE'));
 	      // }
 
-	      return subtitles.join(', ');
+	      return subtitle;
 	    },
 	    isMenuNeeded: function isMenuNeeded() {
 	      return this.getMenuItems.length > 0;
@@ -1302,19 +1333,28 @@ this.BX = this.BX || {};
 	      }
 	      return style;
 	    },
+	    avatarInnerText: function avatarInnerText() {
+	      if (!this.user.avatar && !this.user.extranet) {
+	        return im_v2_lib_utils.Utils.text.getFirstLetters(this.user.name).toUpperCase();
+	      }
+	      return '';
+	    },
 	    isCallStatusPanelNeeded: function isCallStatusPanelNeeded() {
 	      if (this.isBroadcast) {
-	        return this.conference.common.state === im_const.ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
+	        return this.conference.common.state === call_const.ConferenceStateType.call && this.isUserInCall && this.isUserPresenter;
 	      } else {
-	        return this.conference.common.state === im_const.ConferenceStateType.call && this.isUserInCall;
+	        return this.conference.common.state === call_const.ConferenceStateType.call && this.isUserInCall;
 	      }
+	    },
+	    callMenuIconClasses: function callMenuIconClasses() {
+	      return ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-menu'];
 	    },
 	    callLeftIconClasses: function callLeftIconClasses() {
 	      var classes = ['bx-im-component-call-user-list-item-icons-icon bx-im-component-call-user-list-item-icons-left'];
 	      if (this.userCallStatus.floorRequestState) {
-	        classes.push('bx-im-component-call-user-list-item-icons-floor-request');
+	        classes.push('bx-im-component-call-user-list-item-icons-floor-request visible');
 	      } else if (this.userCallStatus.screenState) {
-	        classes.push('bx-im-component-call-user-list-item-icons-screen');
+	        classes.push('bx-im-component-call-user-list-item-icons-screen visible');
 	      }
 	      return classes;
 	    },
@@ -1340,6 +1380,13 @@ this.BX = this.BX || {};
 	      var classes = ['bx-im-component-call-user-list-item-body'];
 	      if (!this.isUserInCall) {
 	        classes.push('bx-im-component-call-user-list-item-body-offline');
+	      }
+	      return classes;
+	    },
+	    itemClasses: function itemClasses() {
+	      var classes = ['bx-im-component-call-user-list-item'];
+	      if (this.user.id === this.chatOwner) {
+	        classes.push('bx-im-component-call-user-list-item-owner');
 	      }
 	      return classes;
 	    }
@@ -1372,6 +1419,12 @@ this.BX = this.BX || {};
 	      }
 	      this.menuPopup = main_popup.MenuManager.create({
 	        id: this.menuId,
+	        className: 'bx-conference-user-list-item-context-menu',
+	        background: '#00428F',
+	        contentBackground: '#00428F',
+	        darkMode: true,
+	        contentBorderRadius: '6px',
+	        borderRadius: '6px',
 	        bindElement: this.$refs['user-menu'],
 	        items: this.menuItems,
 	        events: {
@@ -1430,7 +1483,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  //language=Vue
-	  template: "\n\t\t<div class=\"bx-im-component-call-user-list-item\">\n\t\t\t<!-- Avatar -->\n\t\t\t<div :class=\"avatarWrapClasses\">\n\t\t\t\t<div :class=\"avatarClasses\" :style=\"avatarStyle\"></div>\n\t\t\t</div>\n\t\t\t<!-- Body -->\n\t\t\t<div :class=\"bodyClasses\">\n\t\t\t\t<!-- Introduce yourself blinking mode -->\n\t\t\t\t<template v-if=\"!renameMode && isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div @click=\"onRenameStart\" class=\"bx-im-component-call-user-list-introduce-yourself\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-introduce-yourself-text\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_INTRODUCE_YOURSELF') }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Rename mode -->\n\t\t\t\t<template v-else-if=\"renameMode\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-container\">\n\t\t\t\t\t\t\t<div @click=\"renameMode = false\" class=\"bx-im-component-call-user-list-change-name-cancel\"></div>\n\t\t\t\t\t\t\t<input @keydown=\"onRenameKeyDown\" @focus=\"onFocus\" @blur=\"onBlur\" v-model=\"newName\" :ref=\"'rename-input'\" type=\"text\" class=\"bx-im-component-call-user-list-change-name-input\">\n\t\t\t\t\t\t\t<div v-if=\"!renameRequested\" @click=\"changeName\" class=\"bx-im-component-call-user-list-change-name-confirm\"></div>\n\t\t\t\t\t\t\t<div v-else class=\"bx-im-component-call-user-list-change-name-loader\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-loader-icon\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"!renameMode && !isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name-wrap\">\n\t\t\t\t\t\t\t<!-- Name -->\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name\">{{ user.name }}</div>\n\t\t\t\t\t\t\t<!-- Status subtitle -->\n\t\t\t\t\t\t\t<div v-if=\"formattedSubtitle !== ''\" class=\"bx-im-component-call-user-list-item-name-subtitle\">{{ formattedSubtitle }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- Context menu icon -->\n\t\t\t\t\t\t<div v-if=\"menuItems.length > 0 && !isMobile\" @click=\"openMenu\" ref=\"user-menu\" class=\"bx-im-component-call-user-list-item-menu\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"isCallStatusPanelNeeded\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-icons\">\n\t\t\t\t\t\t<div :class=\"callLeftIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callCenterIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callRightIconClasses\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"itemClasses\">\n\t\t\t<!-- Avatar -->\n\t\t\t<div :class=\"avatarWrapClasses\">\n\t\t\t\t<div :class=\"avatarClasses\" :style=\"avatarStyle\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-avatar-inner-text\" v-if=\"avatarInnerText\">{{ avatarInnerText }}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<!-- Body -->\n\t\t\t<div :class=\"bodyClasses\">\n\t\t\t\t<!-- Introduce yourself blinking mode -->\n\t\t\t\t<template v-if=\"!renameMode && isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div @click=\"onRenameStart\" class=\"bx-im-component-call-user-list-introduce-yourself\">\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-introduce-yourself-text\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USER_LIST_INTRODUCE_YOURSELF') }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Rename mode -->\n\t\t\t\t<template v-else-if=\"renameMode\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-container\">\n\t\t\t\t\t\t\t<div @click=\"renameMode = false\" class=\"bx-im-component-call-user-list-change-name-cancel\"></div>\n\t\t\t\t\t\t\t<input @keydown=\"onRenameKeyDown\" @focus=\"onFocus\" @blur=\"onBlur\" v-model=\"newName\" :ref=\"'rename-input'\" type=\"text\" class=\"bx-im-component-call-user-list-change-name-input\">\n\t\t\t\t\t\t\t<div v-if=\"!renameRequested\" @click=\"changeName\" class=\"bx-im-component-call-user-list-change-name-confirm\"></div>\n\t\t\t\t\t\t\t<div v-else class=\"bx-im-component-call-user-list-change-name-loader\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-change-name-loader-icon\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"!renameMode && !isGuestWithDefaultName\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-body-left\">\n\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name-wrap\">\n\t\t\t\t\t\t\t<!-- Name -->\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-name\">{{ user.name }}</div>\n\t\t\t\t\t\t\t<!-- Status subtitle -->\n\t\t\t\t\t\t\t<div v-if=\"formattedSubtitle !== ''\" class=\"bx-im-component-call-user-list-item-name-subtitle\">{{ formattedSubtitle }}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-if=\"isCallStatusPanelNeeded\">\n\t\t\t\t\t<div class=\"bx-im-component-call-user-list-item-icons\">\n\t\t\t\t\t\t<!-- Context menu icon -->\n\t\t\t\t\t\t<div :class=\"callMenuIconClasses\" v-if=\"menuItems.length > 0 && !isMobile\" @click=\"openMenu\" ref=\"user-menu\"></div>\n\t\t\t\t\t\t<div :class=\"callLeftIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callCenterIconClasses\"></div>\n\t\t\t\t\t\t<div :class=\"callRightIconClasses\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$8(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1471,7 +1524,7 @@ this.BX = this.BX || {};
 	    usersList: function usersList() {
 	      var _this = this;
 	      var users = this.conference.common.users.filter(function (user) {
-	        return !_this.presentersList.includes(user) && _this.call.users[user] && [im_const.ConferenceUserState.Ready, im_const.ConferenceUserState.Connected].includes(_this.call.users[user].state);
+	        return !_this.presentersList.includes(user) && _this.call.users[user] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(_this.call.users[user].state);
 	      });
 	      return babelHelpers.toConsumableArray(users).sort(this.userSortFunction);
 	    },
@@ -1574,7 +1627,7 @@ this.BX = this.BX || {};
 	    },
 	    onUserMenuInsertName: function onUserMenuInsertName(_ref3) {
 	      var user = _ref3.user;
-	      if (this.rightPanelMode === im_const.ConferenceRightPanelMode.hidden || this.rightPanelMode === im_const.ConferenceRightPanelMode.users) {
+	      if (this.rightPanelMode === call_const.ConferenceRightPanelMode.hidden || this.rightPanelMode === call_const.ConferenceRightPanelMode.users) {
 	        this.getApplication().toggleChat();
 	      }
 	      this.$nextTick(function () {
@@ -1665,10 +1718,10 @@ this.BX = this.BX || {};
 	      if (this.call.users[userB] && (this.call.users[userB].floorRequestState || this.call.users[userB].screenState)) {
 	        return 1;
 	      }
-	      if (this.call.users[userA] && [im_const.ConferenceUserState.Ready, im_const.ConferenceUserState.Connected].includes(this.call.users[userA].state)) {
+	      if (this.call.users[userA] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[userA].state)) {
 	        return -1;
 	      }
-	      if (this.call.users[userB] && [im_const.ConferenceUserState.Ready, im_const.ConferenceUserState.Connected].includes(this.call.users[userB].state)) {
+	      if (this.call.users[userB] && [call_const.ConferenceUserState.Ready, call_const.ConferenceUserState.Connected].includes(this.call.users[userB].state)) {
 	        return 1;
 	      }
 	      return 0;
@@ -1734,6 +1787,12 @@ this.BX = this.BX || {};
 	      }
 	      this.menuPopup = main_popup.MenuManager.create({
 	        id: 'bx-im-component-call-user-list-header-popup',
+	        className: 'bx-conference-user-list-context-menu',
+	        background: '#00428F',
+	        contentBackground: '#00428F',
+	        darkMode: true,
+	        contentBorderRadius: '6px',
+	        borderRadius: '6px',
 	        bindElement: this.$refs['user-list-header-menu'],
 	        items: this.getMenuItems(),
 	        events: {
@@ -1813,7 +1872,7 @@ this.BX = this.BX || {};
 	      return this.$Bitrix.Application.get();
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-im-component-call-right-header\">\n\t\t\t<div class=\"bx-im-component-call-right-header-left\">\n\t\t\t\t<div @click=\"onCloseUsers\" class=\"bx-im-component-call-right-header-close\" :title=\"$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t<div class=\"bx-im-component-call-right-header-title\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-right-header-right\">\n\t\t\t\t<div @click=\"openMenu\" class=\"bx-im-component-call-user-list-header-more\" ref=\"user-list-header-menu\"></div>\t\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-component-call-user-list-header\">\n\t\t\t<div class=\"bx-im-component-call-user-list-header-top-actions\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-left\">\n\t\t\t\t\t<div @click=\"onCloseUsers\" class=\"bx-im-component-call-user-list-header-close\" :title=\"$Bitrix.Loc.getMessage['BX_IM_COMPONENT_CALL_CHAT_CLOSE_TITLE']\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-right\">\n\t\t\t\t\t<div @click=\"openMenu\" class=\"bx-im-component-call-user-list-header-more\" ref=\"user-list-header-menu\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-component-call-user-list-header-users-summary\">\n\t\t\t\t<div class=\"bx-im-component-call-user-list-header-title\">{{ $Bitrix.Loc.getMessage('BX_IM_COMPONENT_CALL_USERS_LIST_TITLE') }}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$a(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1876,7 +1935,7 @@ this.BX = this.BX || {};
 	  },
 	  mounted: function mounted() {
 	    if (!this.isHttps()) {
-	      this.getApplication().setError(im_const.ConferenceErrorCode.unsafeConnection);
+	      this.getApplication().setError(call_const.ConferenceErrorCode.unsafeConnection);
 	    }
 	    if (!this.passwordChecked) {
 	      main_core_events.EventEmitter.emit(im_const.EventType.conference.setPasswordFocus);
@@ -1893,7 +1952,7 @@ this.BX = this.BX || {};
 	      return im_const.EventType;
 	    },
 	    RightPanelMode: function RightPanelMode() {
-	      return im_const.ConferenceRightPanelMode;
+	      return call_const.ConferenceRightPanelMode;
 	    },
 	    userId: function userId() {
 	      return this.application.common.userId;
@@ -1931,7 +1990,7 @@ this.BX = this.BX || {};
 	      return result;
 	    },
 	    userListStyles: function userListStyles() {
-	      if (this.rightPanelMode !== im_const.ConferenceRightPanelMode.split) {
+	      if (this.rightPanelMode !== call_const.ConferenceRightPanelMode.split) {
 	        return {};
 	      }
 	      return {
@@ -1948,7 +2007,7 @@ this.BX = this.BX || {};
 	      return result;
 	    },
 	    chatStyles: function chatStyles() {
-	      if (this.rightPanelMode !== im_const.ConferenceRightPanelMode.split) {
+	      if (this.rightPanelMode !== call_const.ConferenceRightPanelMode.split) {
 	        return {};
 	      }
 	      return {
@@ -1959,7 +2018,7 @@ this.BX = this.BX || {};
 	      return this.conference.common.showChat;
 	    },
 	    isPreparationStep: function isPreparationStep() {
-	      return this.conference.common.state === im_const.ConferenceStateType.preparation;
+	      return this.conference.common.state === call_const.ConferenceStateType.preparation;
 	    },
 	    isBroadcast: function isBroadcast() {
 	      return this.conference.common.isBroadcast;
@@ -2032,7 +2091,7 @@ this.BX = this.BX || {};
 	    },
 	    rightPanelMode: function rightPanelMode(newValue) {
 	      var _this2 = this;
-	      if (newValue === im_const.ConferenceRightPanelMode.chat || newValue === im_const.ConferenceRightPanelMode.split) {
+	      if (newValue === call_const.ConferenceRightPanelMode.chat || newValue === call_const.ConferenceRightPanelMode.split) {
 	        this.$nextTick(function () {
 	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
 	            chatId: _this2.chatId
@@ -2172,8 +2231,8 @@ this.BX = this.BX || {};
 	      return this.$Bitrix.Application.get();
 	    } /* endregion 03. Helpers */
 	  },
-	  template: "\n\t<div :class=\"wrapClasses\">\n\t\t<div :class=\"callComponentClasses\">\n\t\t\t<div class=\"bx-im-component-call-left\">\n\t\t\t\t<div id=\"bx-im-component-call-container\" :class=\"callContainerClasses\"></div>\n\t\t\t\t<div v-if=\"isPreparationStep\" class=\"bx-im-component-call-left-preparation\" v-show=\"!hasErrorInCall\">\n\t\t\t\t\t<!-- Step 1: Errors page -->\n\t\t\t\t\t<Error v-if=\"errorCode\"/>\n\t\t\t\t\t<!-- Step 2: Password page -->\n\t\t\t\t\t<PasswordCheck v-else-if=\"!passwordChecked\"/>\n\t\t\t\t\t<template v-else-if=\"!errorCode && passwordChecked\">\n\t\t\t\t\t\t<!-- Step 3: Loading page -->\n\t\t\t\t\t\t<LoadingStatus v-if=\"!userInited\"/>\n\t\t\t\t\t\t<template v-else-if=\"userInited\">\n\t\t\t\t\t\t\t<!-- BROADCAST MODE -->\n\t\t\t\t\t\t  \t<template v-if=\"isBroadcast\">\n\t\t\t\t\t\t  \t\t<template v-if=\"!isDesktop() && !permissionsRequested && isCurrentUserPresenter\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<RequestPermissions>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</RequestPermissions>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Skip permissions request for desktop and show button with loader  -->\n\t\t\t\t\t\t\t\t<template v-if=\"isDesktop() && (!permissionsRequested || !user) && isCurrentUserPresenter\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<RequestPermissions :skipRequest=\"true\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Step 5: Page with video and mic check -->\n\t\t\t\t\t\t\t\t<div v-if=\"permissionsRequested || !isCurrentUserPresenter\" class=\"bx-im-component-call-video-step-container\">\n\t\t\t\t\t\t\t\t\t<!-- Compact conference info -->\n\t\t\t\t\t\t\t\t\t<ConferenceInfo :compactMode=\"true\"/>\n\t\t\t\t\t\t\t\t\t<CheckDevices v-if=\"isCurrentUserPresenter\" />\n\t\t\t\t\t\t\t\t\t<!-- Bottom part of interface -->\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-bottom-container\">\n\t\t\t\t\t\t\t\t\t\t<UserForm v-if=\"!waitingForStart\"/>\n\t\t\t\t\t\t\t\t\t\t<WaitingForStart v-else>\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</WaitingForStart>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<!-- END BROADCAST MODE -->\n\t\t\t\t\t\t\t<!-- NORMAL MODE (NOT BROADCAST) -->\n\t\t\t\t\t\t  \t<template v-else-if=\"!isBroadcast\">\n\t\t\t\t\t\t\t\t<!-- Step 4: Permissions page -->\n\t\t\t\t\t\t\t\t<template v-if=\"!isDesktop() && !permissionsRequested\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</RequestPermissions>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Skip permissions request for desktop and show button with loader  -->\n\t\t\t\t\t\t\t\t<template v-if=\"isDesktop() && (!permissionsRequested || !user)\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<RequestPermissions :skipRequest=\"true\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Step 5: Page with video and mic check -->\n\t\t\t\t\t\t\t\t<div v-else-if=\"permissionsRequested\" class=\"bx-im-component-call-video-step-container\">\n\t\t\t\t\t\t\t\t\t<!-- Compact conference info -->\n\t\t\t\t\t\t\t\t\t<ConferenceInfo :compactMode=\"true\"/>\n\t\t\t\t\t\t\t\t\t<CheckDevices/>\n\t\t\t\t\t\t\t\t\t<!-- Bottom part of interface -->\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-bottom-container\">\n\t\t\t\t\t\t\t\t\t\t<UserForm v-if=\"!waitingForStart\"/>\n\t\t\t\t\t\t\t\t\t\t<WaitingForStart v-else>\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</WaitingForStart>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<!-- END NORMAL MODE (NOT BROADCAST) -->\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<template v-if=\"userInited && !errorCode\">\n\t\t\t\t<transition :name=\"!isMobile()? 'videoconf-chat-slide': ''\">\n\t\t\t\t\t<div v-show=\"rightPanelMode !== RightPanelMode.hidden\" class=\"bx-im-component-call-right\">\n\t\t\t\t\t\t<!-- Start users list -->\n\t\t\t\t\t\t<div v-show=\"rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.users\" :class=\"userListClasses\" :style=\"userListStyles\">\n\t\t\t\t\t\t\t<UserListHeader />\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-right-users\">\n\t\t\t\t\t\t\t\t<UserList />\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- End users list -->\n\t\t\t\t\t\t<!-- Start chat -->\n\t\t\t\t\t\t<div v-show=\"rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.chat\" :class=\"chatClasses\" :style=\"chatStyles\">\n\t\t\t\t\t\t\t<!-- Resize handler -->\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"rightPanelMode === RightPanelMode.split\"\n\t\t\t\t\t\t\t\t@mousedown=\"onChatStartDrag\"\n\t\t\t\t\t\t\t\tclass=\"bx-im-component-call-right-bottom-resize-handle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<ChatHeader />\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-right-chat\">\n\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t:userId=\"userId\"\n\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-im-component-call-smiles\">\n\t\t\t\t\t\t\t\t\t<ConferenceSmiles\n\t\t\t\t\t\t\t\t\t\tv-if=\"conference.common.showSmiles\"\n\t\t\t\t\t\t\t\t\t\t@selectSmile=\"onSmilesSelectSmile\"\n\t\t\t\t\t\t\t\t\t\t@selectSet=\"onSmilesSelectSet\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t\t<div v-if=\"user\" class=\"bx-im-component-call-textarea\">\n\t\t\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t\t\t:userId=\"userId\"\n\t\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t\t\t:enableFile=\"true\"\n\t\t\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t\t\t:autoFocus=\"true\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- End chat -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</template>\n\t\t</div>\n\t</div>\n\t"
+	  template: "\n\t<div :class=\"wrapClasses\">\n\t\t<div :class=\"callComponentClasses\">\n\t\t\t<div class=\"bx-im-component-call-left\">\n\t\t\t\t<div id=\"bx-im-component-call-container\" :class=\"callContainerClasses\"></div>\n\t\t\t\t<div v-if=\"isPreparationStep\" class=\"bx-im-component-call-left-preparation\" v-show=\"!hasErrorInCall\">\n\t\t\t\t\t<!-- Step 1: Errors page -->\n\t\t\t\t\t<Error v-if=\"errorCode\"/>\n\t\t\t\t\t<!-- Step 2: Password page -->\n\t\t\t\t\t<PasswordCheck v-else-if=\"!passwordChecked\"/>\n\t\t\t\t\t<template v-else-if=\"!errorCode && passwordChecked\">\n\t\t\t\t\t\t<!-- Step 3: Loading page -->\n\t\t\t\t\t\t<LoadingStatus v-if=\"!userInited\"/>\n\t\t\t\t\t\t<template v-else-if=\"userInited\">\n\t\t\t\t\t\t\t<!-- BROADCAST MODE -->\n\t\t\t\t\t\t  \t<template v-if=\"isBroadcast\">\n\t\t\t\t\t\t  \t\t<template v-if=\"!isDesktop() && !permissionsRequested && isCurrentUserPresenter\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<RequestPermissions>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</RequestPermissions>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Skip permissions request for desktop and show button with loader  -->\n\t\t\t\t\t\t\t\t<template v-if=\"isDesktop() && (!permissionsRequested || !user) && isCurrentUserPresenter\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions :skipRequest=\"true\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Step 5: Page with video and mic check -->\n\t\t\t\t\t\t\t\t<div v-if=\"permissionsRequested || !isCurrentUserPresenter\" class=\"bx-im-component-call-video-step-container\">\n\t\t\t\t\t\t\t\t\t<!-- Compact conference info -->\n\t\t\t\t\t\t\t\t\t<ConferenceInfo :compactMode=\"true\"/>\n\t\t\t\t\t\t\t\t\t<CheckDevices v-if=\"isCurrentUserPresenter\" />\n\t\t\t\t\t\t\t\t\t<!-- Bottom part of interface -->\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-bottom-container\">\n\t\t\t\t\t\t\t\t\t\t<UserForm v-if=\"!waitingForStart\"/>\n\t\t\t\t\t\t\t\t\t\t<WaitingForStart v-else>\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</WaitingForStart>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<!-- END BROADCAST MODE -->\n\t\t\t\t\t\t\t<!-- NORMAL MODE (NOT BROADCAST) -->\n\t\t\t\t\t\t  \t<template v-else-if=\"!isBroadcast\">\n\t\t\t\t\t\t\t\t<!-- Step 4: Permissions page -->\n\t\t\t\t\t\t\t\t<template v-if=\"!isDesktop() && !permissionsRequested\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions>\n\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t</RequestPermissions>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Skip permissions request for desktop and show button with loader  -->\n\t\t\t\t\t\t\t\t<template v-if=\"isDesktop() && (!permissionsRequested || !user)\">\n\t\t\t\t\t\t\t\t\t<ConferenceInfo/>\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-info-separator\"></div>\n\t\t\t\t\t\t\t\t\t<RequestPermissions :skipRequest=\"true\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<!-- Step 5: Page with video and mic check -->\n\t\t\t\t\t\t\t\t<div v-else-if=\"permissionsRequested\" class=\"bx-im-component-call-video-step-container\">\n\t\t\t\t\t\t\t\t\t<!-- Compact conference info -->\n\t\t\t\t\t\t\t\t\t<ConferenceInfo :compactMode=\"true\"/>\n\t\t\t\t\t\t\t\t\t<CheckDevices/>\n\t\t\t\t\t\t\t\t\t<!-- Bottom part of interface -->\n\t\t\t\t\t\t\t\t\t<div class=\"bx-im-component-call-bottom-container\">\n\t\t\t\t\t\t\t\t\t\t<UserForm v-if=\"!waitingForStart\"/>\n\t\t\t\t\t\t\t\t\t\t<WaitingForStart v-else>\n\t\t\t\t\t\t\t\t\t\t\t<template v-if=\"isMobile()\">\n\t\t\t\t\t\t\t\t\t\t\t\t<MobileChatButton/>\n\t\t\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t\t</WaitingForStart>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<!-- END NORMAL MODE (NOT BROADCAST) -->\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<template v-if=\"userInited && !errorCode\">\n\t\t\t\t<transition :name=\"!isMobile()? 'videoconf-chat-slide': ''\">\n\t\t\t\t\t<div v-show=\"rightPanelMode !== RightPanelMode.hidden\" class=\"bx-im-component-call-right\">\n\t\t\t\t\t\t<!-- Start users list -->\n\t\t\t\t\t\t<div v-show=\"rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.users\" :class=\"userListClasses\" :style=\"userListStyles\">\n\t\t\t\t\t\t\t<UserListHeader />\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-right-users\">\n\t\t\t\t\t\t\t\t<UserList />\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- End users list -->\n\t\t\t\t\t\t<!-- Start chat -->\n\t\t\t\t\t\t<div v-show=\"rightPanelMode === RightPanelMode.split || rightPanelMode === RightPanelMode.chat\" :class=\"chatClasses\" :style=\"chatStyles\">\n\t\t\t\t\t\t\t<!-- Resize handler -->\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"rightPanelMode === RightPanelMode.split\"\n\t\t\t\t\t\t\t\t@mousedown=\"onChatStartDrag\"\n\t\t\t\t\t\t\t\tclass=\"bx-im-component-call-right-bottom-resize-handle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t\t<ChatHeader />\n\t\t\t\t\t\t\t<div class=\"bx-im-component-call-right-chat\">\n\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t:userId=\"userId\"\n\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-im-component-call-smiles\">\n\t\t\t\t\t\t\t\t\t<ConferenceSmiles\n\t\t\t\t\t\t\t\t\t\tv-if=\"conference.common.showSmiles\"\n\t\t\t\t\t\t\t\t\t\t@selectSmile=\"onSmilesSelectSmile\"\n\t\t\t\t\t\t\t\t\t\t@selectSet=\"onSmilesSelectSet\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t\t<div v-if=\"user\" class=\"bx-im-component-call-textarea\">\n\t\t\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t\t\t:userId=\"userId\"\n\t\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t\t\t:enableFile=\"true\"\n\t\t\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t\t\t:autoFocus=\"true\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<!-- End chat -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</template>\n\t\t</div>\n\t</div>\n\t"
 	});
 
-}((this.BX.Messenger = this.BX.Messenger || {}),BX,BX,BX.Messenger.EventHandler,BX.Messenger,window,BX.UI,window,BX,BX,BX.Messenger.Lib,BX.Call,BX.Messenger,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Const,BX.Event,BX,BX.Main,BX.Messenger.Lib,BX.UI.Dialogs));
+}((this.BX.Messenger = this.BX.Messenger || {}),BX,BX,BX.Messenger.EventHandler,BX.Messenger,window,BX.UI,window,BX,BX,BX.Messenger.Lib,BX.Call,BX.Call.Component,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.v2.Lib,BX.Messenger.Const,BX.Call.Const,BX.Event,BX,BX.Main,BX.Messenger.Lib,BX.UI.Dialogs));
 //# sourceMappingURL=conference-public.bundle.js.map

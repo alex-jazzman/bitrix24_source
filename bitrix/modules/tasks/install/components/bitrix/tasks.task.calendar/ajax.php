@@ -1,7 +1,9 @@
 <?php
 
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Control\Task;
@@ -26,8 +28,17 @@ class TasksTaskCalendarAjaxController extends \Bitrix\Main\Engine\Controller
 			return false;
 		}
 
-		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, $taskId))
+		if (
+			!TaskAccessController::can(
+				$this->userId,
+				ActionDictionary::ACTION_TASK_DEADLINE,
+				$taskId,
+				['DEADLINE' => $deadline],
+			)
+		)
 		{
+			$this->addError(new Error(Loc::getMessage('TASKS_TC_TASKS_DEADLINE_ACCESS_DEADLINE')));
+
 			return false;
 		}
 

@@ -9,6 +9,7 @@ export const ActionByRole = Object.freeze({
 	rename: 'rename',
 	send: 'send',
 	deleteOthersMessage: 'deleteOthersMessage',
+	deleteCompleteOwnMessage: 'deleteCompleteOwnMessage',
 	userList: 'userList',
 	changeOwner: 'changeOwner',
 	changeManagers: 'changeManagers',

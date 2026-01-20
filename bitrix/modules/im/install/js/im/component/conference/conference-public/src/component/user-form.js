@@ -71,22 +71,22 @@ const UserForm = {
 		},
 		videoModeButtonClasses()
 		{
-			const classes = ['ui-btn', 'ui-btn-sm', 'ui-btn-primary', 'bx-im-component-call-join-video'];
+			const classes = ['bx-im-component-call-join-video'];
 
 			if (!this.getApplication().hardwareInited)
 			{
-				classes.push('ui-btn-disabled');
+				classes.push('disabled');
 			}
 
 			return classes;
 		},
 		audioModeButtonClasses()
 		{
-			const classes = ['ui-btn', 'ui-btn-sm', 'bx-im-component-call-join-audio'];
+			const classes = ['bx-im-component-call-join-audio'];
 
 			if (!this.getApplication().hardwareInited)
 			{
-				classes.push('ui-btn-disabled');
+				classes.push('disabled');
 			}
 
 			return classes;
@@ -103,11 +103,11 @@ const UserForm = {
 		{
 			this.getApplication().startCall(video);
 		},
-		joinConference({ video })
+		async joinConference({ video })
 		{
 			if (this.user.extranet && !this.userHasRealName)
 			{
-				this.setNewName();
+				await this.setNewName();
 			}
 
 			if (!this.conferenceStarted)
@@ -133,11 +133,11 @@ const UserForm = {
 				}
 			}
 		},
-		setNewName()
+		async setNewName()
 		{
 			if (this.userNewName.length > 0)
 			{
-				this.getApplication().renameGuest(this.userNewName.trim());
+				await this.getApplication().renameGuest(this.userNewName);
 			}
 		},
 		getApplication()
@@ -178,7 +178,7 @@ const UserForm = {
 			<!-- New guest, need to specify name -->
 			<template v-else-if="user && !userHasRealName">
 				<input
-					v-model="userNewName"
+					v-model.trim="userNewName"
 					type="text"
 					:placeholder="localize['BX_IM_COMPONENT_CALL_NAME_PLACEHOLDER']"
 					class="bx-im-component-call-name-input"
@@ -223,7 +223,7 @@ const UserForm = {
 					<template v-else-if="!isCurrentUserPresenter">
 						<button
 							@click="joinConference({video: false})"
-							class="ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-join-video"
+							class="bx-im-component-call-join-video"
 						>
 							{{ localize['BX_IM_COMPONENT_CALL_JOIN'] }}
 						</button>

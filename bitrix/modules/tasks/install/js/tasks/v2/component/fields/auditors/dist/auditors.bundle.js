@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_core,tasks_v2_core,tasks_v2_provider_service_taskService,ui_entitySelector,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_component_elements_participantList,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_userSelectorDialog) {
+(function (exports,tasks_v2_component_elements_participants,main_core,tasks_v2_const,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit,tasks_v2_lib_userSelectorDialog,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const auditorsMeta = Object.freeze({
@@ -11,59 +11,54 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  title: main_core.Loc.getMessage('TASKS_V2_AUDITORS_TITLE')
 	});
 
-	const AuditorsMixin = {
-	  methods: {
-	    update(users) {
-	      this.insertUsers(users);
-	      this.updateTask(users.map(({
-	        id
-	      }) => id));
-	    },
-	    insertUsers(users) {
-	      void tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Users}/upsertMany`, users);
-	    },
-	    updateTask(auditorsIds) {
-	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	        auditorsIds
-	      });
-	    }
-	  }
-	};
-
 	// @vue/component
 	const Auditors = {
 	  name: 'TaskAuditors',
 	  components: {
-	    ParticipantList: tasks_v2_component_elements_participantList.ParticipantList
+	    Participants: tasks_v2_component_elements_participants.Participants
 	  },
-	  mixins: [AuditorsMixin],
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {}
+	  },
+	  setup() {
+	    return {
+	      auditorsMeta
+	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    users() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Users}/getByIds`](this.task.auditorsIds);
-	    },
 	    dataset() {
 	      return {
 	        'data-task-id': this.taskId,
 	        'data-task-field-id': auditorsMeta.id,
 	        'data-task-field-value': this.task.auditorsIds.join(',')
 	      };
+	    },
+	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.stakeholder.available;
+	    },
+	    featureId() {
+	      return tasks_v2_core.Core.getParams().restrictions.stakeholder.featureId;
+	    }
+	  },
+	  methods: {
+	    update(auditorsIds) {
+	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	        auditorsIds
+	      });
 	    }
 	  },
 	  template: `
-		<ParticipantList
-			:taskId="taskId"
-			context="auditors"
-			:users="users"
-			:dataset="dataset"
+		<Participants
+			:taskId
+			:context="auditorsMeta.id"
+			:userIds="task.auditorsIds"
+			:canAdd="task.rights.addAuditors"
+			:canRemove="task.rights.edit"
+			:dataset
+			:isLocked
+			:featureId
+			useRemoveAll
 			@update="update"
 		/>
 	`
@@ -72,69 +67,55 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	// @vue/component
 	const AuditorsChip = {
 	  components: {
-	    Chip: tasks_v2_component_elements_chip.Chip
+	    Chip: ui_system_chip_vue.Chip
 	  },
-	  mixins: [AuditorsMixin],
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {}
 	  },
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      auditorsMeta
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    preselected() {
-	      return this.task.auditorsIds.map(id => ['user', id]);
-	    },
 	    design() {
-	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent;
+	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, auditorsMeta.id);
+	      return this.task.filledFields[auditorsMeta.id];
 	    },
-	    readonly() {
-	      return !this.task.rights.edit;
+	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.stakeholder.available;
 	    }
-	  },
-	  unmounted() {
-	    var _this$selector;
-	    (_this$selector = this.selector) == null ? void 0 : _this$selector.destroy();
 	  },
 	  methods: {
 	    handleClick() {
-	      var _this$selector2;
 	      if (this.isSelected) {
 	        this.highlightField();
 	        return;
 	      }
-	      (_this$selector2 = this.selector) != null ? _this$selector2 : this.selector = new tasks_v2_lib_userSelectorDialog.UserSelectorDialog({
-	        taskId: this.taskId,
-	        preselected: this.preselected,
-	        dialogOptions: tasks_v2_component_elements_participantList.participantMeta.dialogOptions(this.taskId, 'auditors'),
-	        events: {
-	          onHide: () => {
-	            const users = this.selector.getDialog().getSelectedItems().map(item => ({
-	              id: item.getId(),
-	              name: item.getTitle(),
-	              image: item.getAvatar()
-	            }));
-	            if (!this.isSelected && users.length > 0) {
-	              this.highlightField();
-	            }
-	            this.update(users);
-	          }
-	        }
+	      if (this.isLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: tasks_v2_core.Core.getParams().restrictions.stakeholder.featureId,
+	          bindElement: this.$el
+	        });
+	        return;
+	      }
+	      void tasks_v2_lib_userSelectorDialog.usersDialog.show({
+	        targetNode: this.$el,
+	        ids: this.task.auditorsIds,
+	        onClose: this.handleClose
 	      });
-	      this.selector.selectItemsByIds(this.preselected);
-	      this.selector.show(this.$el);
+	    },
+	    handleClose(auditorsIds) {
+	      if (!this.isSelected && auditorsIds.length > 0) {
+	        this.highlightField();
+	      }
+	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	        auditorsIds
+	      });
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(auditorsMeta.id);
@@ -142,9 +123,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			v-if="isSelected || task.rights.addAuditors"
+			:design
 			:icon="Outline.OBSERVER"
+			:lock="isLocked"
 			:text="loc('TASKS_V2_AUDITORS_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="auditorsMeta.id"
@@ -158,5 +140,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.AuditorsChip = AuditorsChip;
 	exports.auditorsMeta = auditorsMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.UI.EntitySelector,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Const,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=auditors.bundle.js.map

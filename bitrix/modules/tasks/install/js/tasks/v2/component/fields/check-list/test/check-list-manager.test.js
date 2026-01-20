@@ -509,6 +509,123 @@ describe('CheckListManager', () => {
 			});
 		});
 
+		describe('resortItemsBeforeIndex', () => {
+			let mockUpdateFn;
+			let updateCalls;
+
+			beforeEach(() => {
+				updateCalls = [];
+				mockUpdateFn = (updates) => {
+					updateCalls.push(...updates);
+				};
+			});
+
+			it('should reset sortIndex to sequential values starting from 0 for items <= specified index', () => {
+				const items = [
+					createCheckListItem(0, { id: 'item1', sortIndex: 0 }),
+					createCheckListItem(0, { id: 'item2', sortIndex: 1 }),
+					createCheckListItem(0, { id: 'item3', sortIndex: 2 }),
+					createCheckListItem(0, { id: 'item4', sortIndex: 3 }),
+				];
+
+				const manager = new CheckListManager({
+					computed: { checkLists: () => items }
+				});
+
+				manager.resortItemsBeforeIndex(0, 2, mockUpdateFn);
+
+				assert.strictEqual(updateCalls.length, 3);
+				assert.strictEqual(updateCalls[0].id, 'item1');
+				assert.strictEqual(updateCalls[0].sortIndex, 0);
+				assert.strictEqual(updateCalls[1].id, 'item2');
+				assert.strictEqual(updateCalls[1].sortIndex, 1);
+				assert.strictEqual(updateCalls[2].id, 'item3');
+				assert.strictEqual(updateCalls[2].sortIndex, 2);
+			});
+
+			it('should handle empty items list', () => {
+				const manager = new CheckListManager({
+					computed: { checkLists: () => [] }
+				});
+
+				manager.resortItemsBeforeIndex(0, 1, mockUpdateFn);
+
+				assert.strictEqual(updateCalls.length, 0);
+			});
+
+			it('should not update if no items match condition', () => {
+				const items = [
+					createCheckListItem(0, { id: 'item1', sortIndex: 3 }),
+					createCheckListItem(0, { id: 'item2', sortIndex: 4 }),
+				];
+
+				const manager = new CheckListManager({
+					computed: { checkLists: () => items }
+				});
+
+				manager.resortItemsBeforeIndex(0, 0, mockUpdateFn);
+				assert.strictEqual(updateCalls.length, 0);
+			});
+
+			it('should work with nested levels', () => {
+				const parent = createCheckListItem(0, { id: 'parent' });
+				const children = [
+					createCheckListItem('parent', { id: 'child1', sortIndex: 0 }),
+					createCheckListItem('parent', { id: 'child2', sortIndex: 1 }),
+					createCheckListItem('parent', { id: 'child3', sortIndex: 2 }),
+				];
+
+				const manager = new CheckListManager({
+					computed: { checkLists: () => [parent, ...children] }
+				});
+
+				manager.resortItemsBeforeIndex('parent', 1, mockUpdateFn);
+
+				assert.strictEqual(updateCalls.length, 2);
+				assert.strictEqual(updateCalls[0].id, 'child1');
+				assert.strictEqual(updateCalls[0].sortIndex, 0);
+				assert.strictEqual(updateCalls[1].id, 'child2');
+				assert.strictEqual(updateCalls[1].sortIndex, 1);
+			});
+
+			it('should maintain original order', () => {
+				const items = [
+					createCheckListItem(0, { id: 'item1', sortIndex: 0, title: 'A' }),
+					createCheckListItem(0, { id: 'item2', sortIndex: 1, title: 'B' }),
+					createCheckListItem(0, { id: 'item3', sortIndex: 2, title: 'C' }),
+				];
+
+				const manager = new CheckListManager({
+					computed: { checkLists: () => items }
+				});
+
+				manager.resortItemsBeforeIndex(0, 2, mockUpdateFn);
+
+				assert.strictEqual(updateCalls[0].title, 'A');
+				assert.strictEqual(updateCalls[1].title, 'B');
+				assert.strictEqual(updateCalls[2].title, 'C');
+			});
+
+			it('should handle items with non-sequential indexes', () => {
+				const items = [
+					createCheckListItem(0, { id: 'item1', sortIndex: 5 }),
+					createCheckListItem(0, { id: 'item2', sortIndex: 10 }),
+					createCheckListItem(0, { id: 'item3', sortIndex: 15 }),
+				];
+
+				const manager = new CheckListManager({
+					computed: { checkLists: () => items }
+				});
+
+				manager.resortItemsBeforeIndex(0, 15, mockUpdateFn);
+
+				assert.strictEqual(updateCalls.length, 3);
+				assert.strictEqual(updateCalls[0].sortIndex, 0);
+				assert.strictEqual(updateCalls[1].sortIndex, 1);
+				assert.strictEqual(updateCalls[2].sortIndex, 2);
+			});
+		});
+
 		describe('resortItemsAfterIndex', () => {
 			let mockUpdateFn;
 			let updateCalls;
@@ -601,24 +718,6 @@ describe('CheckListManager', () => {
 
 				assert.strictEqual(updateCalls[0].title, 'B');
 				assert.strictEqual(updateCalls[1].title, 'C');
-			});
-
-			it('should handle gaps in sortIndex', () => {
-				const items = [
-					createCheckListItem(0, { id: 'item1', sortIndex: 0 }),
-					createCheckListItem(0, { id: 'item2', sortIndex: 1 }),
-					createCheckListItem(0, { id: 'item3', sortIndex: 3 }),
-				];
-
-				const manager = new CheckListManager({
-					computed: { checkLists: () => items }
-				});
-
-				manager.resortItemsAfterIndex(0, 1, mockUpdateFn);
-
-				assert.strictEqual(updateCalls.length, 2);
-				assert.strictEqual(updateCalls[0].sortIndex, 2);
-				assert.strictEqual(updateCalls[1].sortIndex, 4);
 			});
 		});
 

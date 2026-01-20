@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,tasks_v2_lib_apiClient) {
+(function (exports,tasks_v2_lib_apiClient,tasks_v2_const) {
 	'use strict';
 
 	const openComments = async taskId => {
@@ -22,7 +22,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	async function getLegacyCommentsByTaskId(id) {
 	  try {
 	    var _data$html;
-	    const data = await tasks_v2_lib_apiClient.apiClient.post('LegacyComment.get', {
+	    const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.LegacyCommentGet, {
 	      task: {
 	        id
 	      }
@@ -36,5 +36,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.openComments = openComments;
 
-}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.Tasks.V2.Lib,BX.Tasks.V2.Const));
 //# sourceMappingURL=open-comments.bundle.js.map

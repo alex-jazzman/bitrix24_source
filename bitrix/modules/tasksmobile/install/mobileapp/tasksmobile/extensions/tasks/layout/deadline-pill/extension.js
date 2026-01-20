@@ -11,17 +11,17 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 	const { withPressed, transparent } = require('utils/color');
 	const { Moment } = require('utils/date');
 	const { PropTypes } = require('utils/validation');
-	const { showToast } = require('toast');
-	const { Haptics } = require('haptics');
-	const { Icon } = require('assets/icons');
 	const {
 		selectByTaskIdOrGuid,
 		selectIsCompleted,
 		selectActions,
 		updateDeadline,
+		selectCanChangeDeadlineWithoutLimitation,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { TaskStatus } = require('tasks/enum');
 	const { Text5 } = require('ui-system/typography/text');
+	const store = require('statemanager/redux/store');
+	const { Type } = require('type');
 
 	/**
 	 * @class DeadlinePillView
@@ -111,7 +111,13 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 
 		renderChevron()
 		{
-			if (!this.props.canChange)
+			if (
+				!selectCanChangeDeadlineWithoutLimitation(store.getState(), this.props.id)
+				&& (
+					!this.props.canChange
+					|| (Type.isNumber(this.props.deadlineChangesLeft) && this.props.deadlineChangesLeft <= 0)
+				)
+			)
 			{
 				return null;
 			}
@@ -132,30 +138,20 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 
 		onDeadlineClick()
 		{
-			if (!this.props.canChange)
-			{
-				Haptics.notifyWarning();
-				showToast({
-					message: Loc.getMessage('M_TASKS_DENIED_UPDATEDEADLINE'),
-					iconName: Icon.LOCK.getIconName(),
-				}, layout);
-
-				return;
-			}
-
 			const currentDeadline = (this.props.deadline ? this.props.deadline * 1000 : null);
+			const { id, onChange, task } = this.props;
 
-			(new DeadlinePicker({ canSetNoDeadline: true }))
-				.show(currentDeadline)
-				.then((deadline) => {
+			(new DeadlinePicker({ canSetNoDeadline: true, task }))
+				.checkCanOpen()
+				.then((datePicker) => datePicker.show({
+					deadline: currentDeadline,
+				}))
+				.then(({ deadline, reason }) => {
 					if (deadline !== currentDeadline)
 					{
 						executeIfOnline(() => {
-							this.props.updateDeadline({ deadline, taskId: this.props.id });
-							if (this.props.onChange)
-							{
-								this.props.onChange(deadline);
-							}
+							this.props.updateDeadline({ reason, deadline, taskId: id });
+							onChange?.(deadline);
 						});
 					}
 				})
@@ -241,6 +237,9 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 			isCompleted: selectIsCompleted(task),
 			canChange: selectActions({ task }).updateDeadline,
 			status: task.status,
+			maxDeadlineChangeDate: task.maxDeadlineChangeDate,
+			deadlineChangesLeft: task.deadlineChangesLeft,
+			task,
 		};
 	};
 

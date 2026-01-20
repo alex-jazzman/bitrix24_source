@@ -23,10 +23,10 @@ jn.define('more-menu/ui/panel', (require, exports, module) => {
 				style: {
 					margin: Indent.XL3.toNumber(),
 					marginBottom: 0,
-					borderColor: Color.bgSeparatorSecondary.toHex(),
+					backgroundColor: Color.bgContentSecondaryInvert.toHex(),
 				},
 				design: CardDesign.PRIMARY,
-				border: true,
+				border: false,
 				excludePaddingSide: {
 					left: true,
 					right: true,
@@ -45,7 +45,7 @@ jn.define('more-menu/ui/panel', (require, exports, module) => {
 				title && Text2({
 					testId: `${testId}_panel_title`,
 					text: title,
-					color: Color.base1.toHex(),
+					color: Color.base1,
 					style: {
 						marginHorizontal: Indent.S.toNumber(),
 					},

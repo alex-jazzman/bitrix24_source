@@ -29,3 +29,80 @@
 .crm-whats-new-slide-buttons {
 	padding: 19px 0 12px;
 }
+
+
+/* @todo custom air design for single step tours. Remove after ui implemented */
+.crm-whats-new-slide-air.popup-window-ui-tour.--with-buttons .ui-tour-popup {
+	padding-bottom: 0;
+	padding-right: 27px;
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour .popup-window-buttons {
+	padding: 0 27px 22px 19px;
+	justify-content: center;
+	display: flex;
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour.--with-icon .popup-window-buttons {
+	padding-left: 118px;
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour .popup-window-button {
+	width: 100%;
+	max-width: 400px;
+	border-radius: 10px;
+	border: 0 solid rgba(255, 255, 255, 0.14);
+	background: rgba(255, 255, 255, 0.16);
+	backdrop-filter: blur(12px);
+	text-transform: none;
+	font-size: var(--ui-font-size-md, 14px);
+	transition: opacity .3s;
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour .popup-window-button:hover {
+	opacity: .9;
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour {
+	background: var(--ui-color-bg-content-inapp, #085dc1);
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour .ui-tour-popup-title,
+.crm-whats-new-slide-air.popup-window-ui-tour .ui-tour-popup-text,
+.crm-whats-new-slide-air.popup-window-ui-tour .ui-tour-popup-footer,
+.crm-whats-new-slide-air.popup-window-ui-tour .ui-tour-popup-link {
+	color: var(--ui-color-base-8, #fff);
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour .popup-window-angly .popup-window-angly--arrow {
+	background-color: var(--ui-color-bg-content-inapp, #085dc1);
+}
+
+.crm-whats-new-slide-air.popup-window-ui-tour .ui-tour-popup-condition-top::after,
+.crm-whats-new-slide-air.popup-window-ui-tour .ui-tour-popup-condition-bottom::after {
+	content: none;
+}
+
+.crm-whats-new-slide-air .ui-tour-popup-icon {
+	width: 80px;
+	height: auto;
+	background-position: top;
+	background-size: contain;
+	margin-top: 10px;
+	margin-right: 19px;
+	margin-left: 6px;
+}
+
+.crm-whats-new-slide-air .ui-btn{
+	--ui-btn-padding: 0 19px;
+	--ui-btn-padding-right: 12px;
+	--ui-btn-min-width: 80px;
+	--ui-btn-height: var(--ui-btn-size-md);
+	--ui-btn-font-size: var(--ui-font-size-xs);
+}
+
+.crm-whats-new-tour-icon-container {
+	display: grid;
+	grid-template-columns: 100px auto;
+	align-items: center;
+}

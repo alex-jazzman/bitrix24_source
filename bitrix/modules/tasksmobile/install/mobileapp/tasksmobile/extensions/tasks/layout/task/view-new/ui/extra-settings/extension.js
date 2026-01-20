@@ -155,31 +155,31 @@ jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, mod
 		const task = selectByTaskIdOrGuid(state, taskId);
 		const items = [
 			{
-				id: 'allowChangeDeadline',
-				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_CHANGE_DEADLINE_TITLE'),
-				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_CHANGE_DEADLINE_SUBTITLE'),
-				enabled: task?.allowChangeDeadline || false,
-			},
-			{
-				id: 'isMatchWorkTime',
-				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_MATCH_WORK_TIME_TITLE'),
-				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_MATCH_WORK_TIME_SUBTITLE'),
-				enabled: task?.isMatchWorkTime || false,
-				featureId: FeatureId.WORK_TIME_MATCH,
-			},
-			{
 				id: 'isResultRequired',
-				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_RESULT_REQUIRED_TITLE'),
-				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_RESULT_REQUIRED_SUBTITLE'),
+				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_RESULT_REQUIRED_TITLE_MSGVER_1'),
+				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_RESULT_REQUIRED_SUBTITLE_MSGVER_1'),
 				enabled: task?.isResultRequired || false,
 				featureId: FeatureId.RESULT_REQUIREMENT,
 			},
 			{
 				id: 'allowTaskControl',
 				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_TASK_CONTROL_TITLE'),
-				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_TASK_CONTROL_SUBTITLE'),
+				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_TASK_CONTROL_SUBTITLE_MSGVER_1'),
 				enabled: task?.allowTaskControl || false,
 				featureId: FeatureId.TASK_CONTROL,
+			},
+			{
+				id: 'allowChangeDeadline',
+				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_CHANGE_DEADLINE_TITLE_MSGVER_1'),
+				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_ALLOW_CHANGE_DEADLINE_SUBTITLE'),
+				enabled: task?.allowChangeDeadline || false,
+			},
+			{
+				id: 'isMatchWorkTime',
+				title: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_MATCH_WORK_TIME_TITLE'),
+				subtitle: Loc.getMessage('M_TASKS_EXTRA_SETTINGS_IS_MATCH_WORK_TIME_SUBTITLE_MSGVER_1'),
+				enabled: task?.isMatchWorkTime || false,
+				featureId: FeatureId.WORK_TIME_MATCH,
 			},
 		];
 

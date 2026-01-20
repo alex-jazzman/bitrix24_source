@@ -1,8 +1,7 @@
 .bx-im-message-keyboard__container {
 	display: flex;
 	flex-wrap: wrap;
-	width: max-content;
-	max-width: 500px;
+	width: fit-content;
 }
 
 .bx-im-content-chat__container.--center-align .bx-im-message-base__wrap.--self .bx-im-keyboard__container {

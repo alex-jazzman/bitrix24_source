@@ -36,28 +36,6 @@ if(typeof(BX.CrmDealStageManager) === "undefined")
 		};
 	BX.CrmDealStageManager.messages = {};
 }
-if(typeof(BX.CrmDealRecurringStageManager) === "undefined")
-{
-	BX.CrmDealRecurringStageManager = function() {};
-
-	BX.CrmDealRecurringStageManager.prototype =
-		{
-			getInfos: function(typeId)
-			{
-				return [];
-			},
-			getMessage: function(name)
-			{
-				return "";
-			},
-			prepareDialogControls: function(dialog)
-			{
-				return null;
-			}
-		};
-
-	BX.CrmDealRecurringStageManager.current = new BX.CrmDealRecurringStageManager();
-}
 if(typeof(BX.CrmLeadStatusManager) === "undefined")
 {
 	BX.CrmLeadStatusManager = function()
@@ -1099,7 +1077,7 @@ if (BX.Type.isUndefined(BX.CrmProgressManager))
 				case BX.CrmEntityType.enumeration.deal:
 					return BX.CrmDealStageManager.current;
 				case BX.CrmEntityType.enumeration.dealrecurring:
-					return BX.CrmDealRecurringStageManager.current;
+					return BX.CrmDealStageManager.current;
 				case BX.CrmEntityType.enumeration.quote:
 					return BX.CrmQuoteStatusManager.current;
 				case BX.CrmEntityType.enumeration.lead:
@@ -1973,7 +1951,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.ChangeStageEvent.createDefault(
 							type
 						)
-						.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_DETAILS)
+						.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_LIST)
 						.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_STAGE_BAR_BUTTON)
 						.buildData();
 				}

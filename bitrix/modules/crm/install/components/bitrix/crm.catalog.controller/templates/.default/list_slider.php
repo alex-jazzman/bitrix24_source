@@ -1,9 +1,16 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-	die();
 
-/** @var \CBitrixComponentTemplate $this  */
-/** @var \CrmCatalogControllerComponent $component */
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/**
+ * @var \CBitrixComponentTemplate $this
+ * @var \CrmCatalogControllerComponent $component
+ * @global \Cmain $APPLICATION
+ * @var array $arResult
+ */
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
@@ -18,9 +25,10 @@ $APPLICATION->IncludeComponent(
 			'URL_BUILDER' => $arResult['URL_BUILDER'],
 			'USE_NEW_CARD' => $arResult['USE_NEW_CARD'],
 			'LIST_MODE' => $arResult['URL_BUILDER']->getListMode(),
+			'CREATE_BTN_ITEMS' => $arResult['CREATE_BTN_ITEMS'],
 		],
 		'USE_PADDING' => false,
-		'USE_UI_TOOLBAR' => 'N',
+		'USE_UI_TOOLBAR' => $arResult['SHOW_TOOLBAR'] ? 'Y' : 'N',
 	],
 	$component,
 	['HIDE_ICONS' => 'Y']

@@ -69,7 +69,7 @@ export const TaskChatOpener = {
 		},
 	},
 	template: `
-		<div class="bx-im-messenger__scope bx-im-task-chat-opener__container">
+		<div class="bx-im-messenger__scope bx-im-task-chat-opener__container --ui-context-content-light">
 			<TaskChatContent :dialogId="dialogId" />
 		</div>
 	`,

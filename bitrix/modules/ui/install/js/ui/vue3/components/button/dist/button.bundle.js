@@ -11,6 +11,14 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	const Button = {
 	  name: 'UiButton',
 	  props: {
+	    id: {
+	      type: String,
+	      default: ''
+	    },
+	    idKey: {
+	      type: String,
+	      default: ''
+	    },
 	    class: {
 	      type: String,
 	      default: undefined
@@ -58,10 +66,6 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    dropdown: Boolean,
 	    wide: Boolean,
 	    collapsed: Boolean,
-	    id: {
-	      type: String,
-	      default: ''
-	    },
 	    type: {
 	      type: String,
 	      required: false,
@@ -118,7 +122,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      default: false
 	    }
 	  },
-	  emits: ['click'],
+	  emits: ['click', 'clickSecondary'],
 	  data() {
 	    return {
 	      isMounted: false
@@ -239,8 +243,11 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  },
 	  created() {
 	    const button = new ui_buttons.Button({
-	      id: this.id,
+	      id: this.idKey || this.id,
 	      className: this.class,
+	      props: {
+	        id: this.id
+	      },
 	      text: this.text,
 	      link: this.link,
 	      tag: this.tag,

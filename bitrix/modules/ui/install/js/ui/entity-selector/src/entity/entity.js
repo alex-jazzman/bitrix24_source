@@ -26,6 +26,7 @@ export default class Entity
 	searchFields: OrderedArray<SearchField> = null;
 	dynamicLoad: boolean = false;
 	dynamicSearch: boolean = false;
+	dynamicSearchMatchMode: 'all' | 'exact' = 'exact';
 	substituteEntityId: string = null;
 	searchCacheLimits: RegExp[] = [];
 	filters: Map<string, EntityFilter> = new Map();
@@ -82,6 +83,7 @@ export default class Entity
 		this.setSearchable(options.searchable);
 		this.setDynamicLoad(options.dynamicLoad);
 		this.setDynamicSearch(options.dynamicSearch);
+		this.setDynamicSearchMatchMode(options.dynamicSearchMatchMode);
 		this.setSearchFields(options.searchFields);
 		this.setSearchCacheLimits(options.searchCacheLimits);
 	}
@@ -371,6 +373,19 @@ export default class Entity
 		{
 			this.dynamicSearch = flag;
 		}
+	}
+
+	setDynamicSearchMatchMode(mode: 'all' | 'exact'): void
+	{
+		if (mode === 'all' || mode === 'exact')
+		{
+			this.dynamicSearchMatchMode = mode;
+		}
+	}
+
+	getDynamicSearchMatchMode(): 'all' | 'exact'
+	{
+		return this.dynamicSearchMatchMode;
 	}
 
 	getFilters(): EntityFilter[]

@@ -1,5 +1,5 @@
-(function()
-{
+jn.define('call/calls/logger', (require, exports, module) => {
+
 	class CallLogger
 	{
 		constructor(serviceUrl, token)
@@ -160,5 +160,7 @@
 		}
 	}
 
-	window.CallLogger = CallLogger;
-})();
+	module.exports = {
+		CallLogger,
+	};
+});

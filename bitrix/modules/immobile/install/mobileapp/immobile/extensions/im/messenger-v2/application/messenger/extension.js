@@ -19,6 +19,7 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { Anchors } = require('im/messenger/lib/anchors');
+	const { CopilotManager } = require('im/messenger/lib/copilot');
 
 	const { MessengerCore } = require('im/messenger-v2/core/messenger');
 	const { MessengerHeaderController } = require('im/messenger-v2/controller/messenger-header');
@@ -38,9 +39,10 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 	const { RecentManager } = require('im/messenger-v2/controller/recent/manager');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { MessengerCounters } = require('im/messenger/lib/counters/tab-counters/messenger');
+	const { MessageQueueRequestManager } = require('im/messenger-v2/application/lib/message-queue-request-manager');
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger-v2/application/lib/update-notifier');
 
-	const mobileRevision = 21; // sync with im/lib/revision.php. TODO: move value to some config?
+	const mobileRevision = 22; // sync with im/lib/revision.php. TODO: move value to some config?
 
 	/**
 	 * @class Messenger
@@ -58,6 +60,7 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 			this.logger.log('destructor');
 
 			this.pullHandlerLauncher?.unsubscribeEvents();
+			this.recentManager?.destructor();
 			this.unsubscribeEvents();
 			this.pushManager?.destructor();
 			this.promotion?.destruct();
@@ -87,7 +90,6 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 			try
 			{
 				await this.initCore();
-				this.initEmitter();
 				this.initPushManager();
 				await this.pushManager.fillDatabaseFromPush();
 				this.initServices();
@@ -96,6 +98,8 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 				this.initPlanLimitsUpdater();
 				this.initRefresher();
 				await this.initCurrentUser();
+				await this.initQueueRequests();
+				await this.initCopilotUser();
 				await enableMessengerApi();
 			}
 			catch (error)
@@ -168,12 +172,6 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 			this.storeManager = this.core.getStoreManager();
 		}
 
-		initEmitter()
-		{
-			const emitter = new JNEventEmitter();
-			serviceLocator.add('emitter', emitter);
-		}
-
 		initServices()
 		{
 			this.chatInitService = new MessengerInitService({ actionName: RestMethod.immobileMessengerLoad });
@@ -243,13 +241,23 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 			}
 		}
 
+		async initQueueRequests()
+		{
+			await MessageQueueRequestManager.getInstance().initQueueRequests();
+		}
+
+		async initCopilotUser()
+		{
+			await CopilotManager.fillStore();
+		}
+
 		initManagers()
 		{
 			this.visibilityManager = VisibilityManager.getInstance();
 			this.callManager = CallManager.getInstance();
 			this.callManager.subscribeMessengerInitEvent();
 
-			this.promotion = new Promotion();
+			this.promotion = Promotion.getInstance();
 			this.communication = new Communication();
 			this.anchors = new Anchors();
 

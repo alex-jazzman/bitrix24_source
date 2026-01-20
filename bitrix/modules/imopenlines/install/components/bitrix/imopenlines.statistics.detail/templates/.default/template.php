@@ -128,6 +128,7 @@ $APPLICATION->IncludeComponent(
 			['NAME' => '100', 'VALUE' => '100'],
 		],
 		'TOTAL_ROWS_COUNT' => $arResult['ROWS_COUNT'],
+		'TOTAL_ROWS_COUNT_HTML' => $arResult['TOTAL_ROWS_COUNT_HTML'],
 		'AJAX_MODE' => 'Y',
 		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
@@ -136,7 +137,40 @@ $APPLICATION->IncludeComponent(
 	$component,
 	['HIDE_ICONS' => 'Y']
 );
+?>
+<script>
+	BX.ready(function() {
+		BX.namespace('BX.OpenLinesComponent');
 
+		BX.OpenLinesComponent.getTotalCount = function(gridId) {
+			const countElement = BX(gridId + '_row_count');
+			if (!countElement) return;
+
+			const params = JSON.parse(countElement.dataset.params);
+
+			BX.ajax.runComponentAction(params.componentName, params.actionName, {
+				mode: 'class',
+				data: params.data
+			})
+				.then(response => {
+					if (response.data !== undefined)
+					{
+						countElement.textContent = response.data;
+					}
+					else
+					{
+						countElement.textContent = 'N/A';
+					}
+				})
+				.catch(error => {
+					countElement.textContent = 'Error';
+					console.error('[OpenLines] AJAX error:', error);
+				});
+		};
+	});
+
+</script>
+<?php
 \Bitrix\Imopenlines\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
 UI\Extension::load([
 	'ui.entity-selector',

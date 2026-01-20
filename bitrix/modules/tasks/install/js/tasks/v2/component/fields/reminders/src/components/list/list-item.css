@@ -1,0 +1,58 @@
+.tasks-field-reminders-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-md);
+	height: 62px;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.tasks-field-reminders-row:last-child {
+	border-bottom: none;
+}
+
+.tasks-field-reminders-column {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	white-space: nowrap;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-reminders-column .ui-text {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.tasks-field-reminders-column.--via {
+	width: 5%;
+}
+
+.tasks-field-reminders-column.--date {
+	width: 35%;
+}
+
+.tasks-field-reminders-column.--recipients {
+	flex: 1;
+}
+
+.tasks-field-reminders-column.--action {
+	min-width: 52px;
+	margin-left: auto;
+	gap: var(--ui-space-inline-sm);
+}
+
+.tasks-field-reminders-column.--action .ui-icon-set {
+	cursor: pointer;
+}
+
+.tasks-field-reminders-to {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	display: flex;
+	background: var(--ui-color-accent-soft-blue-2);
+	border-radius: 1in;
+	margin-right: var(--ui-space-inline-xs);
+	padding: 1px;
+}

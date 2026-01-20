@@ -114,9 +114,9 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 		 */
 		get #gratitudeImageUri()
 		{
-			const { name } = this.props;
+			const { feedId } = this.props;
 
-			return name ? GratitudeIcon.getSvgUriByName(name) : '';
+			return feedId ? GratitudeIcon.getSvgUriByFeedId(feedId) : '';
 		}
 
 		/**
@@ -305,6 +305,7 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 			createdAt,
 			relatedPostId: postId,
 			title,
+			feedId,
 		} = gratitude;
 
 		return {
@@ -313,6 +314,7 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 			title,
 			postId,
 			createdAt,
+			feedId,
 		};
 	};
 

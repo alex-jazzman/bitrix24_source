@@ -1,12 +1,8 @@
 import { Messenger } from 'im.public';
-import { GetParameter, NavigationMenuItem } from 'im.v2.const';
+import { GetParameter } from 'im.v2.const';
 
 export const Router = {
-	init()
-	{
-		Router.checkGetParams();
-	},
-	checkGetParams(): void
+	handleGetParams(): void
 	{
 		const urlParams = new URLSearchParams(window.location.search);
 		if (urlParams.has(GetParameter.openNotifications))
@@ -48,10 +44,7 @@ export const Router = {
 		else if (urlParams.has(GetParameter.openChannel))
 		{
 			const dialogId = urlParams.get(GetParameter.openChannel);
-			void Messenger.openNavigationItem({
-				id: NavigationMenuItem.channel,
-				entityId: dialogId,
-			});
+			void Messenger.openChannel(dialogId);
 		}
 		else if (urlParams.has(GetParameter.openCollab))
 		{

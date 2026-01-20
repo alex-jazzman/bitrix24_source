@@ -1,24 +1,18 @@
 import { Text } from 'main.core';
-import { computed } from 'ui.vue3';
 import { mapGetters } from 'ui.vue3.vuex';
 import { hint } from 'ui.vue3.directives.hint';
-import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import { BIcon as Icon, Set as IconSet, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.main';
+import 'ui.icon-set.outline';
 
-import { Model } from 'booking.const';
+import { Model, LimitFeatureId } from 'booking.const';
 import { limit } from 'booking.lib.limit';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { BookingAnalytics } from 'booking.lib.analytics';
 import { ClientData } from 'booking.model.clients';
 import type { BookingModel, DealData } from 'booking.model.bookings';
-import 'ui.icon-set.main';
 
 import './overbooking.css';
-
-type OverbookingData = {
-	plusIcon: string,
-	plusIconSize: number,
-	plusIconColor: string,
-};
 
 // @vue/component
 export const Overbooking = {
@@ -44,18 +38,11 @@ export const Overbooking = {
 		},
 	},
 	emits: ['close'],
-	setup(props): OverbookingData
+	setup(): Object
 	{
-		const plusIcon = IconSet.PLUS_20;
-		const plusIconSize = 20;
-		const plusIconColor = computed((): string => {
-			return props.disabled ? 'var(--ui-color-palette-gray-20)' : 'var(--ui-color-palette-gray-60)';
-		});
-
 		return {
-			plusIcon,
-			plusIconSize,
-			plusIconColor,
+			Outline,
+			IconSet,
 		};
 	},
 	computed: {
@@ -70,6 +57,10 @@ export const Overbooking = {
 		{
 			return this.getBookingById(this.bookingId);
 		},
+		featureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingOverbooking;
+		},
 		hasOverbookingHint(): Object | undefined
 		{
 			if (!this.disabled)
@@ -80,6 +71,20 @@ export const Overbooking = {
 			return {
 				text: this.loc('BB_ACTIONS_POPUP_OVERBOOKING_DISABLED_HINT'),
 			};
+		},
+		iconColor(): string
+		{
+			if (this.disabled)
+			{
+				return 'var(--ui-color-palette-gray-20)';
+			}
+
+			if (!this.featureEnabled)
+			{
+				return 'var(--ui-color-gray-40)';
+			}
+
+			return 'var(--ui-color-palette-gray-60)';
 		},
 		clients(): ClientData[]
 		{
@@ -106,9 +111,9 @@ export const Overbooking = {
 				return;
 			}
 
-			if (!this.isFeatureEnabled)
+			if (!this.featureEnabled || !this.isFeatureEnabled)
 			{
-				limit.show();
+				void limit.show(LimitFeatureId.Overbooking);
 
 				return;
 			}
@@ -147,12 +152,19 @@ export const Overbooking = {
 		<div
 			v-hint="hasOverbookingHint"
 			class="booking-actions-popup__item-overbooking-button"
-			:class="{'--disabled': disabled}"
+			:class="{
+				'--disabled': disabled,
+				'--locked': !featureEnabled,
+			}"
 			role="button"
 			tabindex="0"
 			@click="addOverbooking"
 		>
-			<Icon :name="plusIcon" :size="plusIconSize" :color="plusIconColor"/>
+			<Icon
+				:name="featureEnabled ? IconSet.PLUS_20 : Outline.LOCK_S"
+				:size="20"
+				:color="iconColor"
+			/>
 			<div class="booking-actions-popup__item-overbooking-label">
 				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_LABEL') }}
 			</div>

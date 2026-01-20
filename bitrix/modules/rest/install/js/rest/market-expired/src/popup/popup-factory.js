@@ -44,6 +44,7 @@ export class PopupFactory
 				olWidgetCode: this.config.olWidgetCode,
 				type: this.config.type,
 				expireDays: this.config.expireDays,
+				isRenamedMarket: this.config.isRenamedMarket,
 			});
 		}
 
@@ -103,7 +104,7 @@ export class PopupFactory
 				return new DiscountEarSubscription({
 					discountPercentage: discountConfig.percentage,
 					termsUrl: discountConfig.termsUrl,
-					marketLabel: this.config.isRenamedMarket ? '' : '_MARKET_PLUS',
+					isRenamedMarket: this.config.isRenamedMarket,
 				});
 
 			case PopupCategory.TRANSITION:

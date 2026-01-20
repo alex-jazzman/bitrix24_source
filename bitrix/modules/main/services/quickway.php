@@ -120,23 +120,33 @@ function getRedisStorage(array $config): ?\Redis
 		$config['timeout'] ?? 0,
 		null,
 		0,
-		$config['readTimeout'] ?? 0
+		$config['readTimeout'] ?? 0,
 	];
 
-	$result = $connection->pconnect(...$params);
+	$persistent = (bool)($config['persistent'] ?? false);
+	if ($persistent)
+	{
+		$result = $connection->pconnect(...$params);
+	}
+	else
+	{
+		$result = $connection->connect(...$params);
+	}
 
 	if ($result)
 	{
 		if (isset($config['compression']) || defined('\Redis::COMPRESSION_LZ4'))
 		{
 			$connection->setOption(\Redis::OPT_COMPRESSION, $config['compression'] ?? \Redis::COMPRESSION_LZ4);
-			$connection->setOption(\Redis::OPT_COMPRESSION_LEVEL, $config['compression_level'] ?? \Redis::COMPRESSION_ZSTD_MAX);
+			$connection->setOption(\Redis::OPT_COMPRESSION_LEVEL,
+				$config['compression_level'] ?? \Redis::COMPRESSION_ZSTD_MAX);
 		}
 
-		if (isset($config['serializer']) || defined('\Redis::SERIALIZER_IGBINARY'))
-		{
-			$connection->setOption(\Redis::OPT_SERIALIZER, $config['serializer'] ?? \Redis::SERIALIZER_IGBINARY);
-		}
+		$serializer = $config['serializer'] ?? (defined('\Redis::SERIALIZER_IGBINARY')
+			? \Redis::SERIALIZER_IGBINARY
+			: \Redis::SERIALIZER_PHP)
+		;
+		$connection->setOption(\Redis::OPT_SERIALIZER, $serializer);
 	}
 
 	return $result ? $connection : null;
@@ -297,12 +307,17 @@ catch (\JsonException $e)
 	return;
 }
 
-if ($_GET['action'] === 'disk.api.file.showPreview' && isset($storedData['preview']))
+$previewActions = [
+	'disk.api.file.showPreview',
+	'ui.fileuploader.preview',
+];
+$isPreview = in_array($_GET['action'], $previewActions, true);
+if ($isPreview && isset($storedData['preview']))
 {
 	$storedData = $storedData['preview'];
 }
 
-$accelRedirectPath = $storedData['path'];
+$accelRedirectPath = rawurldecode($storedData['path']);
 $contentType = $storedData['contentType'];
 $expirationTime = $storedData['expirationTime'];
 $dir = $storedData['dir'];
@@ -317,12 +332,19 @@ if (time() > $expirationTime)
 
 $requestedWidth = isset($_GET['width']) ? (int)$_GET['width'] : 0;
 $requestedHeight = isset($_GET['height']) ? (int)$_GET['height'] : 0;
+if ($isPreview)
+{
+	$defaultWidth = 300;
+	$defaultHeight = 300;
+	$requestedWidth = $requestedWidth > 0 ? $requestedWidth : $defaultWidth;
+	$requestedHeight = $requestedHeight > 0 ? $requestedHeight : $defaultHeight;
+}
 $originalWidth = (int)$storedData['width'] ?: 0;
 $originalHeight = (int)$storedData['height'] ?: 0;
 
 // Resize the image only if a smaller version than the original is needed.
 if (
-    $requestedWidth > 0 && $requestedHeight > 0
+	$requestedWidth > 0 && $requestedHeight > 0
 	&& ($requestedWidth < $originalWidth || $requestedHeight < $originalHeight)
 )
 {
@@ -335,8 +357,7 @@ if (
 	}
 	else
 	{
-		$encodedDir = rawurlencode($dir);
-		$delimiterPosition = strpos($accelRedirectPath, $encodedDir);
+		$delimiterPosition = strpos($accelRedirectPath, $dir);
 		if ($delimiterPosition === false)
 		{
 			return;
@@ -350,17 +371,17 @@ if (
 			[],
 			false,
 			[0 => ['name' => 'sharpen', 'precision' => 15]],
-			true
+			true,
 		];
 		$resizeDir = md5(serialize($defaultResizeFilter));
 
-		$accelRedirectPath = $partBeforeDir . rawurlencode("resize_cache/{$bFileId}/{$resizeDir}/") . $dirAndRest;
-		$accelRedirectPath = '/upload/resize_cache/c' . $accelRedirectPath;
+		$accelRedirectPath = "{$partBeforeDir}resize_cache/{$bFileId}/{$resizeDir}/{$dirAndRest}";
+		$accelRedirectPath = "/upload/resize_cache/c{$accelRedirectPath}";
 	}
 }
 
 header('X-Accel-Buffering: no');
-header('X-Accel-Redirect: ' . $accelRedirectPath);
+header('X-Accel-Redirect: ' . rawurlencode($accelRedirectPath));
 header('Content-Type: ' . $contentType);
 if ($attachmentName)
 {

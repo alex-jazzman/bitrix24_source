@@ -20,10 +20,10 @@ Loc::loadMessages(__DIR__. '/template.php');
 Loc::loadMessages(__FILE__);
 
 
-$overview = $arResult['OVERVIEW'] instanceof AI\Outcome\Overview ? $arResult['OVERVIEW'] : null;
-$insights = $arResult['INSIGHTS'] instanceof AI\Outcome\Insights ? $arResult['INSIGHTS'] : null;
-$summary = $arResult['SUMMARY'] instanceof AI\Outcome\Summary ? $arResult['SUMMARY'] : null;
-$transcribe = $arResult['TRANSCRIBE'] instanceof AI\Outcome\Transcription ? $arResult['TRANSCRIBE'] : null;
+$overview = $arResult['OVERVIEW'] ?? [];
+$insights = $arResult['INSIGHTS'] ?? [];
+$summary = $arResult['SUMMARY'] ?? [];
+$transcribe = $arResult['TRANSCRIBE'] ?? [];
 $track = !empty($arResult['RECORD']) ? $arResult['RECORD'] : null;
 
 \Bitrix\Main\UI\Extension::load([
@@ -82,14 +82,14 @@ if(count($jsMessagesCodes) >0 )
 			<h2 class="bx-call-component-call-ai__slider-title">
 				<?= Loc::getMessage('CALL_COMPONENT_COPILOT_DETAIL_TITLE') ?>
 			</h2>
-			<h3 class="bx-call-component-call-ai__resume-title"><?= $overview?->topic ?></h3>
+			<h3 class="bx-call-component-call-ai__resume-title"><?= $overview['topic'] ?></h3>
 
 			<p class="bx-call-component-call-ai__resume-description">
 				<?
-				if ($overview?->agenda)
+				if ($overview['agenda'])
 				{
-					echo $overview->agenda?->explanation . '<br>';
-					echo $overview->agenda?->quote;
+					echo $overview['agenda']['explanation']. '<br>';
+					echo $overview['agenda']['quote'];
 				}
 				?>
 			</p>
@@ -105,12 +105,12 @@ if(count($jsMessagesCodes) >0 )
 				<div class="bx-call-component-call-ai__time-container">
 					<div class="bx-call-component-call-ai__time-icon --clock"></div>
 					<div class="bx-call-component-call-ai__time-value"><?= $arResult['CALL_START_TIME'] ?>
-					<?
-					if ($arResult['CALL_END_TIME'])
-					{
-						echo ' - '. $arResult['CALL_END_TIME'];
-					}
-					?>
+						<?
+						if ($arResult['CALL_END_TIME'])
+						{
+							echo ' - '. $arResult['CALL_END_TIME'];
+						}
+						?>
 					</div>
 					<?
 					if ($arResult['CALL_DURATION'])
@@ -148,7 +148,7 @@ if(count($jsMessagesCodes) >0 )
 			<!--	data-tab-id must be the same as the corresponding id bx-call-component-call-ai__tab-content		-->
 			<div class="bx-call-component-call-ai__tab-title --active" data-tab-id="TabGrade" data-tab-name="grade">
 				<?= Loc::getMessage('CALL_COMPONENT_GRADE') ?>
-				<span class="bx-call-component-call-ai__grade-tab-value"><?= $overview->efficiencyValue ?>%</span>
+				<span class="bx-call-component-call-ai__grade-tab-value"><?= $overview['efficiencyValue'] ?>%</span>
 			</div>
 			<div class="bx-call-component-call-ai__tab-title" data-tab-id="TabAgreements" data-tab-name="notes"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS') ?></div>
 			<div class="bx-call-component-call-ai__tab-title" data-tab-id="TabRecommendations" data-tab-name="ai_call_quality"><?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_V2') ?></div>
@@ -160,124 +160,124 @@ if(count($jsMessagesCodes) >0 )
 			<div class="bx-call-component-call-ai__tab-content-wrapper">
 				<!--	id from data-tab-id	-->
 				<div id="TabGrade" class="bx-call-component-call-ai__tab-details --grade">
-				<?
-				if ($overview->efficiencyValue >= 0)
-				{
-					// use --success when >75% or --failure
-					$state = $overview->efficiencyValue > 75 ? '--success' : '--failure';
-					$stateShort = match ($overview->efficiencyValue)
+					<?
+					if ($overview['efficiencyValue'] >= 0)
 					{
-						50 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_50'),
-						75 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_75'),
-						100 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_100'),
-						default => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_0'),
-					};
-					if ($overview->isExceptionMeeting)
-					{
-						$recommendation = Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING', [
-							'#MEETING_TYPE#' => $overview->meetingDetails?->type ?? Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING_DAILY')
-						]);
-					}
-					else
-					{
-						$recommendation = match ($overview->efficiencyValue)
+						// use --success when >75% or --failure
+						$state = $overview['efficiencyValue'] > 75 ? '--success' : '--failure';
+						$stateShort = match ($overview['efficiencyValue'])
 						{
-							75 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_75'),
-							100 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_100'),
-							default => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_0'),
+							50 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_50'),
+							75 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_75'),
+							100 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_100'),
+							default => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_0'),
 						};
-					}
-					?>
+						if ($overview['isExceptionMeeting'])
+						{
+							$recommendation = Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING', [
+								'#MEETING_TYPE#' => $overview['meetingDetails']['type'] ?? Loc::getMessage('CALL_COMPONENT_EXCEPTION_MEETING_DAILY')
+							]);
+						}
+						else
+						{
+							$recommendation = match ($overview['efficiencyValue'])
+							{
+								75 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_75'),
+								100 => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_100'),
+								default => Loc::getMessage('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_0'),
+							};
+						}
+						?>
 
-					<div class="bx-call-component-call-ai__grade-stats">
-						<h4 class="bx-call-component-call-ai__tab-details-title"><?= Loc::getMessage('CALL_COMPONENT_GRADE') ?></h4>
+						<div class="bx-call-component-call-ai__grade-stats">
+							<h4 class="bx-call-component-call-ai__tab-details-title"><?= Loc::getMessage('CALL_COMPONENT_GRADE') ?></h4>
 
-						<div class="bx-call-component-call-ai__grade-value-wrapper" data-efficiency-value="<?= $overview->efficiencyValue ?>">
-							<div id="bx-call-component-call-ai__grade-chart" class="bx-call-component-call-ai__grade-chart-wrapper"></div>
-							<p class="bx-call-component-call-ai__grade-value">
-								<?= $overview->efficiencyValue ?><span class="bx-call-component-call-ai__grade-value-symbol">%</span>
-							</p>
+							<div class="bx-call-component-call-ai__grade-value-wrapper" data-efficiency-value="<?= $overview['efficiencyValue'] ?>">
+								<div id="bx-call-component-call-ai__grade-chart" class="bx-call-component-call-ai__grade-chart-wrapper"></div>
+								<p class="bx-call-component-call-ai__grade-value">
+									<?= $overview['efficiencyValue'] ?><span class="bx-call-component-call-ai__grade-value-symbol">%</span>
+								</p>
+							</div>
 						</div>
-					</div>
 
 					<div class="bx-call-component-call-ai__grade-description">
 						<span class="bx-call-component-call-ai__resume-comment"><?= $recommendation ?></span>
 
-						<ul class="bx-call-component-call-ai__list">
+							<ul class="bx-call-component-call-ai__list">
 
-							<?
-							// #1
-							$disable = '';
-							if ($overview->isExceptionMeeting)
-							{
-								//$disable = (bool)$overview->efficiency?->agendaClearlyStated?->value ? '' : '--disable';
-								$disable = '--disable';
-							}
-							$state = (bool)$overview->efficiency?->agendaClearlyStated?->value ? '--success' : '--failure';
-							?>
-							<li class="bx-call-component-call-ai__list-item <?= $disable?>">
-								<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
-								<span class="bx-call-component-call-ai__list-item-text <?= $state ?>">
+								<?
+								// #1
+								$disable = '';
+								if ($overview['isExceptionMeeting'])
+								{
+									//$disable = (bool)$overview['efficiency']['agendaClearlyStated'] ? '' : '--disable';
+									$disable = '--disable';
+								}
+								$state = (bool)$overview['efficiency']['agendaClearlyStated'] ? '--success' : '--failure';
+								?>
+								<li class="bx-call-component-call-ai__list-item <?= $disable?>">
+									<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
+									<span>
 									<?= Loc::getMessage('CALL_COMPONENT_EFFICIENCY_AGENDA_CLEARLY') ?>
 								</span>
-							</li>
+								</li>
 
-							<?
-							// #2
-							$state = (bool)$overview->efficiency?->agendaItemsCovered?->value ? '--success' : '--failure';
-							?>
-							<li class="bx-call-component-call-ai__list-item">
-								<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
-								<span class="bx-call-component-call-ai__list-item-text <?= $state ?>">
+								<?
+								// #2
+								$state = (bool)$overview['efficiency']['agendaItemsCovered'] ? '--success' : '--failure';
+								?>
+								<li class="bx-call-component-call-ai__list-item">
+									<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
+									<span>
 									<?= Loc::getMessage('CALL_COMPONENT_EFFICIENCY_AGENDA_COVERED_V2') ?>
 								</span>
-							</li>
+								</li>
 
-							<?
-							// #3
-							$disable = '';
-							if ($overview->isExceptionMeeting)
-							{
-								//$disable = (bool)$overview->efficiency?->conclusionsAndActionsOutlined?->value ? '' : '--disable';
-								$disable = '--disable';
-							}
-							$state = (bool)$overview->efficiency?->conclusionsAndActionsOutlined?->value ? '--success' : '--failure';
-							?>
-							<li class="bx-call-component-call-ai__list-item <?= $disable?>">
-								<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
-								<span class="bx-call-component-call-ai__list-item-text <?= $state ?>">
+								<?
+								// #3
+								$disable = '';
+								if ($overview['isExceptionMeeting'])
+								{
+									//$disable = (bool)$overview['efficiency']['conclusionsAndActionsOutlined'] ? '' : '--disable';
+									$disable = '--disable';
+								}
+								$state = (bool)$overview['efficiency']['conclusionsAndActionsOutlined'] ? '--success' : '--failure';
+								?>
+								<li class="bx-call-component-call-ai__list-item <?= $disable?>">
+									<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
+									<span>
 									<?= Loc::getMessage('CALL_COMPONENT_EFFICIENCY_AGENDA_CONCLUSIONS') ?>
 								</span>
-							</li>
+								</li>
 
-							<?
-							// #4
-							$state = '--success';
-							if ($overview?->calendar)
-							{
-								$state = $overview->calendar->overhead ? '--failure' : '--success';
-							}
-							?>
-							<li class="bx-call-component-call-ai__list-item">
-								<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
-								<span class="bx-call-component-call-ai__list-item-text <?= $state ?>">
+								<?
+								// #4
+								$state = '--success';
+								if ($overview['calendar'])
+								{
+									$state = $overview['calendar']['overhead'] ? '--failure' : '--success';
+								}
+								?>
+								<li class="bx-call-component-call-ai__list-item">
+									<span class="bx-call-component-call-ai__list-item-icon <?= $state ?>"></span>
+									<span>
 									<?= Loc::getMessage('CALL_COMPONENT_EFFICIENCY_AGENDA_TIME_EXCEED') ?>
 								</span>
-							</li>
-						</ul>
-					</div>
-				<?
-				}
-				?>
+								</li>
+							</ul>
+						</div>
+						<?
+					}
+					?>
 				</div>
 
 				<div id="TabAgreements" class="bx-call-component-call-ai__tab-details --agreements">
 					<h4 class="bx-call-component-call-ai__tab-details-title"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS') ?></h4>
 
 					<?
-					if ($overview?->agreements || $overview?->meetings || $overview?->tasks || $overview?->actionItems)
+					if ($overview['agreements'] || $overview['meetings'] || $overview['tasks'] || $overview['actionItems'])
 					{
-						if ($overview?->agreements)
+						if ($overview['agreements'])
 						{
 							?>
 							<div class="bx-call-component-call-ai__recommendations-container --result">
@@ -285,11 +285,11 @@ if(count($jsMessagesCodes) >0 )
 
 								<ol class="bx-call-component-call-ai__result-list">
 									<?
-									foreach ($overview->agreements as $row)
+									foreach ($overview['agreements'] as $row)
 									{
 										?>
 										<li class="bx-call-component-call-ai__result-list-item">
-											<?= $row->agreement ?>
+											<?= $row['agreement'] ?>
 										</li>
 										<?
 									}
@@ -298,7 +298,7 @@ if(count($jsMessagesCodes) >0 )
 							</div>
 							<?
 						}
-						if ($overview?->actionItems)
+						if ($overview['actionItems'])
 						{
 							?>
 							<div class="bx-call-component-call-ai__recommendations-container --task">
@@ -306,19 +306,19 @@ if(count($jsMessagesCodes) >0 )
 
 								<ol class="bx-call-component-call-ai__result-list">
 									<?
-									foreach ($overview->actionItems as $row)
+									foreach ($overview['actionItems'] as $row)
 									{
 										?>
 										<li class="bx-call-component-call-ai__result-list-item">
 											<div class="bx-call-component-call-ai__result-list-item-container">
 												<p class="bx-call-component-call-ai__task-description">
-													<?= $row->actionItem ?>
+													<?= $row['actionItem'] ?>
 												</p>
 												<!--		use data for parameters		-->
 												<span
 													class="bx-call-component-call-ai__task-button"
 													data-user-id="<?= $arResult['CURRENT_USER_ID'] ?>"
-													data-description="<?= htmlspecialcharsbx($row->actionItemMentionLess) ?>"
+													data-description="<?= htmlspecialcharsbx($row['actionItemMentionLess']) ?>"
 													data-auditors=""
 													title="<?= Loc::getMessage('CALL_COMPONENT_TASK_CREATE') ?>"
 												></span>
@@ -331,7 +331,7 @@ if(count($jsMessagesCodes) >0 )
 							</div>
 							<?
 						}
-						if ($overview?->tasks)
+						if ($overview['tasks'])
 						{
 							?>
 							<div class="bx-call-component-call-ai__recommendations-container --task">
@@ -339,19 +339,19 @@ if(count($jsMessagesCodes) >0 )
 
 								<ol class="bx-call-component-call-ai__result-list">
 									<?
-									foreach ($overview->tasks as $row)
+									foreach ($overview['tasks'] as $row)
 									{
 										?>
 										<li class="bx-call-component-call-ai__result-list-item">
 											<div class="bx-call-component-call-ai__result-list-item-container">
 												<p class="bx-call-component-call-ai__task-description">
-													<?= $row->task ?>
+													<?= $row['task'] ?>
 												</p>
 												<!--		use data for parameters		-->
 												<span
 													class="bx-call-component-call-ai__task-button"
 													data-user-id="<?= $arResult['CURRENT_USER_ID'] ?>"
-													data-description="<?= htmlspecialcharsbx($row->taskMentionLess) ?>"
+													data-description="<?= htmlspecialcharsbx($row['taskMentionLess']) ?>"
 													data-auditors=""
 													title="<?= Loc::getMessage('CALL_COMPONENT_TASK_CREATE') ?>"
 												></span>
@@ -364,7 +364,7 @@ if(count($jsMessagesCodes) >0 )
 							</div>
 							<?
 						}
-						if ($overview?->meetings)
+						if ($overview['meetings'])
 						{
 							?>
 							<div class="bx-call-component-call-ai__recommendations-container --meetings">
@@ -372,20 +372,20 @@ if(count($jsMessagesCodes) >0 )
 
 								<ol class="bx-call-component-call-ai__result-list">
 									<?
-									foreach ($overview->meetings as $row)
+									foreach ($overview['meetings'] as $row)
 									{
 										?>
 										<li class="bx-call-component-call-ai__result-list-item">
 											<div class="bx-call-component-call-ai__result-list-item-container">
 												<p class="bx-call-component-call-ai__meetings-description">
-													<?= $row->meeting ?>
+													<?= $row['meeting'] ?>
 												</p>
 												<!--		use data for parameters		-->
 												<span
 													class="bx-call-component-call-ai__meetings-button"
 													data-meeting-id=""
 													data-meeting-type=""
-													data-meeting-description="<?= htmlspecialcharsbx($row->meetingMentionLess) ?>"
+													data-meeting-description="<?= htmlspecialcharsbx($row['meetingMentionLess']) ?>"
 													title="<?= Loc::getMessage('CALL_COMPONENT_MEETING_CREATE') ?>"
 												></span>
 											</div>
@@ -408,109 +408,108 @@ if(count($jsMessagesCodes) >0 )
 
 				<div id="TabRecommendations" class="bx-call-component-call-ai__tab-details --insights">
 					<h4 class="bx-call-component-call-ai__tab-details-title"><?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_V2') ?></h4>
-
 					<div class="bx-call-component-call-ai__details-content-wrapper">
-					<?
-
-					if (
-						$insights?->insights
-						|| $insights?->meetingStrengths
-						|| $insights?->meetingWeaknesses
-						|| $insights?->speechStyleInfluence
-						|| $insights?->engagementLevel
-						|| $insights?->areasOfResponsibility
-						|| $insights?->finalRecommendations
-					)
-					{
-						if ($insights?->insights)
-						{
-							foreach ($insights->insights as $row)
-							{
-								?>
-								<p class="bx-call-component-call-ai__recommendations">
-									<?= $row->detailedInsight ?>
-								</p>
-								<?
-							}
-						}
-
-						if ($insights?->meetingStrengths)
-						{
-							?>
-							<div class="bx-call-component-call-ai-resume-block">
-								<div class="bx-call-component-call-ai-resume-block__header">
-									<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_STRENGTH') ?>
-								</div>
-								<?
-								foreach ($insights->meetingStrengths as $row)
-								{
-									?>
-									<p class="bx-call-component-call-ai__recommendations">
-										<?= $row->strengthTitle ?>. <?= $row->strengthExplanation ?>
-									</p>
-									<?
-								}
-								?>
-							</div>
-							<?
-						}
+						<?
 
 						if (
-							$insights?->meetingWeaknesses
-							|| $insights?->speechStyleInfluence
-							|| $insights?->engagementLevel
-							|| $insights?->areasOfResponsibility
+							$insights['insights']
+							|| $insights['meetingStrengths']
+							|| $insights['meetingWeaknesses']
+							|| $insights['speechStyleInfluence']
+							|| $insights['engagementLevel']
+							|| $insights['areasOfResponsibility']
+							|| $insights['finalRecommendations']
 						)
 						{
-							?>
-							<div class="bx-call-component-call-ai-resume-block">
-								<div class="bx-call-component-call-ai-resume-block__header">
-									<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_WEAKNESS') ?>
-								</div>
-								<?
-								foreach ($insights->meetingWeaknesses as $row)
+							if ($insights['insights'])
+							{
+								foreach ($insights['insights'] as $row)
 								{
 									?>
 									<p class="bx-call-component-call-ai__recommendations">
-										<?= $row->weaknessTitle ?>. <?= $row->weaknessExplanation ?>
+										<?= $row['detailedInsight'] ?>
 									</p>
 									<?
 								}
-								foreach (['speechStyleInfluence', 'engagementLevel', 'areasOfResponsibility'] as $field)
-								{
-									if ($insights?->{$field})
+							}
+
+							if ($insights['meetingStrengths'])
+							{
+								?>
+								<div class="bx-call-component-call-ai-resume-block">
+									<div class="bx-call-component-call-ai-resume-block__header">
+										<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_STRENGTH') ?>
+									</div>
+									<?
+									foreach ($insights['meetingStrengths'] as $row)
 									{
 										?>
 										<p class="bx-call-component-call-ai__recommendations">
-											<?= $insights->{$field} ?>
+											<?= $row['strengthTitle'] ?>. <?= $row['strengthExplanation'] ?>
 										</p>
 										<?
 									}
-								}
-								?>
-							</div>
-							<?
-						}
-
-						if ($insights?->finalRecommendations)
-						{
-							?>
-							<div class="bx-call-component-call-ai-resume-block">
-								<div class="bx-call-component-call-ai-resume-block__header">
-									<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_FINAL_RECOMMENDATIONS') ?>
+									?>
 								</div>
-								<p class="bx-call-component-call-ai__recommendations">
-									<?= $insights->finalRecommendations ?>
-								</p>
-							</div>
-							<?
+								<?
+							}
+
+							if (
+								$insights['meetingWeaknesses']
+								|| $insights['speechStyleInfluence']
+								|| $insights['engagementLevel']
+								|| $insights['areasOfResponsibility']
+							)
+							{
+								?>
+								<div class="bx-call-component-call-ai-resume-block">
+									<div class="bx-call-component-call-ai-resume-block__header">
+										<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_WEAKNESS') ?>
+									</div>
+									<?
+									foreach ($insights['meetingWeaknesses'] as $row)
+									{
+										?>
+										<p class="bx-call-component-call-ai__recommendations">
+											<?= $row['weaknessTitle'] ?>. <?= $row['weaknessExplanation'] ?>
+										</p>
+										<?
+									}
+									foreach (['speechStyleInfluence', 'engagementLevel', 'areasOfResponsibility'] as $field)
+									{
+										if ($insights[$field])
+										{
+											?>
+											<p class="bx-call-component-call-ai__recommendations">
+												<?= $insights[$field] ?>
+											</p>
+											<?
+										}
+									}
+									?>
+								</div>
+								<?
+							}
+
+							if ($insights['finalRecommendations'])
+							{
+								?>
+								<div class="bx-call-component-call-ai-resume-block">
+									<div class="bx-call-component-call-ai-resume-block__header">
+										<?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_FINAL_RECOMMENDATIONS') ?>
+									</div>
+									<p class="bx-call-component-call-ai__recommendations">
+										<?= $insights['finalRecommendations'] ?>
+									</p>
+								</div>
+								<?
+							}
 						}
-					}
-					else
-					{
-						?><div class="bx-call-component-call-ai__result-empty-state"><?= Loc::getMessage('CALL_COMPONENT_EMPTY_INSIGHTS'); ?></div><?
-					}
-					?>
+						else
+						{
+							?><div class="bx-call-component-call-ai__result-empty-state"><?= Loc::getMessage('CALL_COMPONENT_EMPTY_INSIGHTS'); ?></div><?
+						}
+						?>
 					</div>
 				</div>
 
@@ -518,64 +517,64 @@ if(count($jsMessagesCodes) >0 )
 					<h4 class="bx-call-component-call-ai__tab-details-title"><?= Loc::getMessage('CALL_COMPONENT_SUMMARY') ?></h4>
 
 					<div class="bx-call-component-call-ai__details-content-wrapper">
-					<?
+						<?
 
-					if ($summary?->summary || $overview?->detailedTakeaways)
-					{
-						if (!empty($track['REL_URL']))
+						if ($summary || $overview['detailedTakeaways'])
 						{
-							?>
-							<div class="bx-call-component-call-ai__call-audio-wrapper">
-								<div
-									id="bx-call-component-call-ai__call-audio-record-TabSummary"
-									class="bx-call-component-call-ai__call-audio-record"
-									data-audio-id="TabSummary" data-audio-src="<?= $track['REL_URL'] ?>"
-								></div>
-							</div>
-							<?
-						}
-
-						if ($overview?->detailedTakeaways)
-						{
-							?>
-							<div class="bx-call-component-call-ai-resume-block">
-								<p class="bx-call-component-call-ai-resume-block__description">
-									<?= $overview->detailedTakeaways ?>
-								</p>
-							</div>
-							<?
-						}
-						?>
-						<div class="bx-call-component-call-ai__resume-block-wrapper">
-							<?
-							foreach ($summary->summary as $row)
+							if (!empty($track['REL_URL']))
 							{
-							?>
+								?>
+								<div class="bx-call-component-call-ai__call-audio-wrapper">
+									<div
+										id="bx-call-component-call-ai__call-audio-record-TabSummary"
+										class="bx-call-component-call-ai__call-audio-record"
+										data-audio-id="TabSummary" data-audio-src="<?= $track['REL_URL'] ?>"
+									></div>
+								</div>
+								<?
+							}
+
+							if ($overview['detailedTakeaways'])
+							{
+								?>
 								<div class="bx-call-component-call-ai-resume-block">
-									<div class="bx-call-component-call-ai-resume-block__title">
+									<p class="bx-call-component-call-ai-resume-block__description">
+										<?= $overview['detailedTakeaways'] ?>
+									</p>
+								</div>
+								<?
+							}
+							?>
+							<div class="bx-call-component-call-ai__resume-block-wrapper">
+								<?
+								foreach ($summary as $row)
+								{
+									?>
+									<div class="bx-call-component-call-ai-resume-block">
+										<div class="bx-call-component-call-ai-resume-block__title">
 										<span class="bx-call-component-call-ai-resume-block__time bx-call-component-call-ai__time-code"
 											  data-audio-id="TabSummary"
 										>
-											<?= $row->start ?>—<?= $row->end ?>
+											<?= $row['start'] ?>—<?= $row['end'] ?>
 										</span>
-										<span class="bx-call-component-call-ai-resume-block__name"><?= $row->title ?></span>
+											<span class="bx-call-component-call-ai-resume-block__name"><?= $row['title'] ?></span>
+										</div>
+										<p class="bx-call-component-call-ai-resume-block__description">
+											<?= $row['summary'] ?>
+										</p>
 									</div>
-									<p class="bx-call-component-call-ai-resume-block__description">
-										<?= $row->summary ?>
-									</p>
-								</div>
+									<?
+								}
+								?>
+							</div>
 							<?
-							}
-							?>
-						</div>
-						<?
-					}
-					else
-					{
-						?><div class="bx-call-component-call-ai__result-empty-state"><?= Loc::getMessage('CALL_COMPONENT_EMPTY_SUMMARY'); ?></div><?
-					}
+						}
+						else
+						{
+							?><div class="bx-call-component-call-ai__result-empty-state"><?= Loc::getMessage('CALL_COMPONENT_EMPTY_SUMMARY'); ?></div><?
+						}
 
-					?>
+						?>
 					</div>
 				</div>
 
@@ -583,51 +582,51 @@ if(count($jsMessagesCodes) >0 )
 					<h4 class="bx-call-component-call-ai__tab-details-title"><?= Loc::getMessage('CALL_COMPONENT_TRANSCRIPTIONS') ?></h4>
 
 					<div class="bx-call-component-call-ai__details-content-wrapper">
-					<?
+						<?
 
-					if ($transcribe?->transcriptions)
-					{
-						if (!empty($track['REL_URL']))
+						if ($transcribe)
 						{
-							?>
-							<div class="bx-call-component-call-ai__call-audio-wrapper">
-								<div
-									id="bx-call-component-call-ai__call-audio-record-TabTranscriptions"
-									class="bx-call-component-call-ai__call-audio-record"
-									data-audio-id="TabTranscriptions" data-audio-src="<?= $track['REL_URL'] ?>"
-								></div>
+							if (!empty($track['REL_URL']))
+							{
+								?>
+								<div class="bx-call-component-call-ai__call-audio-wrapper">
+									<div
+										id="bx-call-component-call-ai__call-audio-record-TabTranscriptions"
+										class="bx-call-component-call-ai__call-audio-record"
+										data-audio-id="TabTranscriptions" data-audio-src="<?= $track['REL_URL'] ?>"
+									></div>
 
-								<div class="bx-call-component-call-ai__audio-disclaimer-wrapper">
-									<div class="bx-call-component-call-ai__audio-disclaimer-icon"></div>
-									<span class="bx-call-component-call-ai__call-audio-disclaimer"><?= Loc::getMessage('CALL_COMPONENT_AUDIO_DISCLAIMER') ?></span>
+									<div class="bx-call-component-call-ai__audio-disclaimer-wrapper">
+										<div class="bx-call-component-call-ai__audio-disclaimer-icon"></div>
+										<span class="bx-call-component-call-ai__call-audio-disclaimer"><?= Loc::getMessage('CALL_COMPONENT_AUDIO_DISCLAIMER') ?></span>
+									</div>
 								</div>
-							</div>
-							<?
-						}
-						foreach ($transcribe->transcriptions as $row)
-						{
-							?>
-							<div class="bx-call-component-call-ai-decryption-block">
-								<p class="bx-call-component-call-ai-decryption-block__description">
+								<?
+							}
+							foreach ($transcribe as $row)
+							{
+								?>
+								<div class="bx-call-component-call-ai-decryption-block">
+									<p class="bx-call-component-call-ai-decryption-block__description">
 									<span
 										class="bx-call-component-call-ai-decryption-block__time bx-call-component-call-ai__time-code"
 										data-audio-id="TabTranscriptions"
 									>
-										<?= $row->start ?>—<?= $row->end ?>
+										<?= $row['start'] ?>—<?= $row['end'] ?>
 									</span>
-									<span class="bx-call-component-call-ai-decryption-block__name"><?= $row->user ?>:</span>
-									<?= $row->text ?>
-								</p>
-							</div>
-							<?
+										<span class="bx-call-component-call-ai-decryption-block__name"><?= $row['user'] ?>:</span>
+										<?= $row['text'] ?>
+									</p>
+								</div>
+								<?
+							}
 						}
-					}
-					else
-					{
-						?><div class="bx-call-component-call-ai__result-empty-state"><?= Loc::getMessage('CALL_COMPONENT_EMPTY_TRANSCRIPTIONS'); ?></div><?
-					}
+						else
+						{
+							?><div class="bx-call-component-call-ai__result-empty-state"><?= Loc::getMessage('CALL_COMPONENT_EMPTY_TRANSCRIPTIONS'); ?></div><?
+						}
 
-					?>
+						?>
 					</div>
 				</div>
 			</div>

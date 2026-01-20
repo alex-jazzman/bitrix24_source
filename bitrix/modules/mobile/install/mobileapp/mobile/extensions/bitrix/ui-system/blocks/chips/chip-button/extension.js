@@ -7,8 +7,9 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	const { Type } = require('type');
 	const { mergeImmutable } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
-	const { SpinnerLoader, SpinnerDesign } = require('layout/ui/loaders/spinner');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { PropTypes } = require('utils/validation');
+	const { SpinnerLoader, SpinnerDesign } = require('layout/ui/loaders/spinner');
 	const { ChipButtonDesign } = require('ui-system/blocks/chips/chip-button/src/design-enum');
 	const { ChipButtonMode } = require('ui-system/blocks/chips/chip-button/src/mode-enum');
 	const { ChipButtonSize } = require('ui-system/blocks/chips/chip-button/src/size-enum');
@@ -31,6 +32,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 * @property {boolean} [disabled=false]
 	 * @property {ChipButtonMode} [mode=ChipButtonMode.SOLID]
 	 * @property {ChipButtonDesign} [design=ChipButtonDesign.PRIMARY]
+	 * @property {ChipButtonSize} [size=ChipButtonSize.M]
 	 * @property {Ellipsize} [ellipsize]
 	 * @property {BadgeStatus | BadgeCounter} [badge]
 	 * @property {Avatar | AvatarStack} [avatar]
@@ -64,10 +66,8 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		initStyle(props)
 		{
-			const { compact } = props;
-
-			this.design = this.getDesign(props);
-			this.size = compact ? ChipButtonSize.SMALL : ChipButtonSize.NORMAL;
+			this.design = this.#getDesign(props);
+			this.size = this.#getSize(props);
 		}
 
 		#renderText()
@@ -100,7 +100,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		#renderLeftContent()
 		{
-			const hasLeftContent = this.hasText() || this.hasContent();
+			const hasLeftContent = !this.#emptyContent();
 
 			if (this.isLoading() && this.getLoaderPosition().isLeft())
 			{
@@ -283,9 +283,8 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 				justifyContent: 'center',
 				height: this.size.getHeight(),
 				borderRadius: this.#getBorderRadius(),
-				paddingLeft: this.#getInternalPadding(Direction.LEFT),
-				paddingRight: this.#getInternalPadding(Direction.RIGHT),
-				paddingHorizontal: Indent.L.toNumber(),
+				paddingLeft: this.#getInternalPadding(Direction.LEFT).toNumber(),
+				paddingRight: this.#getInternalPadding(Direction.RIGHT).toNumber(),
 				backgroundColor: this.getBackgroundColor(),
 				...chipStyle,
 			};
@@ -293,13 +292,18 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		/**
 		 * @param {string} direction
-		 * @return {number}
+		 * @return {Indent}
 		 */
 		#getInternalPadding(direction)
 		{
 			if (this.isOnlyIcon())
 			{
-				return this.size.getIconIndents();
+				return this.size.getIndent(direction, 'icon');
+			}
+
+			if (this.#isOnlyAvatar())
+			{
+				return this.size.getIndent(direction, 'avatar');
 			}
 
 			if (this.isDropdown() && direction === Direction.RIGHT)
@@ -366,7 +370,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			);
 		}
 
-		getDesign(props)
+		#getDesign(props)
 		{
 			const { design, mode, disabled } = props;
 
@@ -382,6 +386,9 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			return finalDesign.getStyle(mode);
 		}
 
+		/**
+		 * @returns {SpinnerDesign}
+		 */
 		#getLoaderDesign()
 		{
 			const { loaderDesign } = this.props;
@@ -389,6 +396,21 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			const spinnerDesign = SpinnerDesign.resolveByColor(backgroundColor);
 
 			return SpinnerDesign.resolve(loaderDesign, spinnerDesign);
+		}
+
+		/**
+		 * @returns {ChipButtonSize}
+		 */
+		#getSize(props)
+		{
+			const { size, compact } = props;
+
+			if (compact)
+			{
+				return ChipButtonSize.S;
+			}
+
+			return ChipButtonSize.resolve(size, ChipButtonSize.M);
 		}
 
 		getBackgroundColor()
@@ -448,11 +470,24 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			return 20;
 		}
 
+		#isOnlyAvatar()
+		{
+			return this.hasAvatar() && !this.#hasIcon() && this.#emptyContent();
+		}
+
 		isOnlyIcon()
 		{
-			return (this.hasLeftIcon() || this.isDropdown() || this.hasAvatar())
-				&& !this.hasText()
-				&& !this.hasContent();
+			return this.#hasIcon() && this.#emptyContent();
+		}
+
+		#hasIcon()
+		{
+			return this.hasLeftIcon() || this.isDropdown();
+		}
+
+		#emptyContent()
+		{
+			return !this.hasText() && !this.hasContent();
 		}
 
 		isRounded()
@@ -543,6 +578,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		onLongClick: PropTypes.func,
 		onLayout: PropTypes.func,
 		icon: PropTypes.instanceOf(Icon),
+		size: PropTypes.instanceOf(ChipButtonSize),
 		design: PropTypes.instanceOf(ChipButtonDesign),
 		mode: PropTypes.instanceOf(ChipButtonMode),
 		ellipsize: PropTypes.instanceOf(Ellipsize),

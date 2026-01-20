@@ -10127,13 +10127,13 @@ this.BX = this.BX || {};
 	})(typeof window === "object" && typeof window.protobuf === 'object' && window.protobuf || typeof self === "object" && typeof self.protobuf === 'object' && self.protobuf || typeof protobuf === 'object' && protobuf);
 
 	// Protobuf message models
-	const Response = protobuf.roots['push-server'].Response;
-	const ResponseBatch = protobuf.roots['push-server'].ResponseBatch;
-	const Request = protobuf.roots['push-server'].Request;
-	const RequestBatch = protobuf.roots['push-server'].RequestBatch;
-	const IncomingMessagesRequest = protobuf.roots['push-server'].IncomingMessagesRequest;
-	const IncomingMessage = protobuf.roots['push-server'].IncomingMessage;
-	const Receiver = protobuf.roots['push-server'].Receiver;
+	const Response = window.protobuf.roots['push-server'].Response;
+	const ResponseBatch = window.protobuf.roots['push-server'].ResponseBatch;
+	const Request = window.protobuf.roots['push-server'].Request;
+	const RequestBatch = window.protobuf.roots['push-server'].RequestBatch;
+	const IncomingMessagesRequest = window.protobuf.roots['push-server'].IncomingMessagesRequest;
+	const IncomingMessage = window.protobuf.roots['push-server'].IncomingMessage;
+	const Receiver = window.protobuf.roots['push-server'].Receiver;
 
 	class ProtobufCodec {
 	  constructor(options) {

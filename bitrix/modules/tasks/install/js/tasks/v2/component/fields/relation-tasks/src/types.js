@@ -1,15 +1,14 @@
-import type { RelationTasksDialog } from 'tasks.v2.lib.relation-tasks-dialog';
 import type { RelationService } from 'tasks.v2.provider.service.relation-service';
 
-export type RelationMeta = {
+export type RelationFieldMeta = {
 	id: string,
 	icon: string,
 	idsField: string,
 	containsField: string,
-	title: string,
-	chipTitle: string,
-	hint: string,
-	countLoc: string,
+	getTitle: (isTemplate: boolean) => string,
+	getChipTitle: (isTemplate: boolean) => string,
+	getCountLoc: (isTemplate: boolean) => string,
+	getHint: (isTemplate: boolean) => string,
 	service: RelationService,
-	dialog: RelationTasksDialog,
+	right: string,
 };

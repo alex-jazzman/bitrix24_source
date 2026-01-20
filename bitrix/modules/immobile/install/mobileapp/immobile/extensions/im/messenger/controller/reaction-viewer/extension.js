@@ -2,13 +2,15 @@
  * @module im/messenger/controller/reaction-viewer
  */
 jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) => {
+	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { ReactionListView } = require('layout/ui/reaction-list');
+	const { ReactionListView } = require('layout/ui/reaction/list');
 
 	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { RestMethod, EventType, ReactionType } = require('im/messenger/const');
+	const { RestMethod, EventType } = require('im/messenger/const');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 
 	let isWidgetOpen = false;
 	/**
@@ -45,6 +47,7 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 		constructor(props)
 		{
 			this.lastId = null;
+			this.currentActionParams = {};
 			this.viewWidget = null;
 			this.messageId = props.messageId;
 			this.dialogId = props.dialogId;
@@ -57,16 +60,36 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 		get reactionOrderMap()
 		{
 			const reactionOrderMap = new Map();
-			Object.values(ReactionType).forEach((reaction, index) => {
+			const availableReactionCollection = ReactionAssetsManager.getInstance().getAvailableReactions();
+
+			[...availableReactionCollection].forEach((reaction, index) => {
 				reactionOrderMap.set(reaction, index);
 			});
 
 			return reactionOrderMap;
 		}
 
-		sortReactionsByType(reactions) {
+		sortReactions(reactions) {
 			return reactions.sort((a, b) => {
-				return this.reactionOrderMap.get(a.reactionId) - this.reactionOrderMap.get(b.reactionId);
+				const countA = Type.isArrayFilled(a.userIds) ? a.userIds.length : 0;
+				const countB = Type.isArrayFilled(b.userIds) ? b.userIds.length : 0;
+
+				if (countA !== countB)
+				{
+					return countB - countA;
+				}
+
+				if (a.reactionId < b.reactionId)
+				{
+					return -1;
+				}
+
+				if (a.reactionId > b.reactionId)
+				{
+					return 1;
+				}
+
+				return 0;
 			});
 		}
 
@@ -81,7 +104,7 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 					return { reactionId, userIds: [...Array.from({ length: counter }).keys()] };
 				});
 
-			const reactions = this.sortReactionsByType(rawReactions);
+			const reactions = this.sortReactions(rawReactions);
 
 			return {
 				scrollPanelProps: {
@@ -93,12 +116,21 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 						loadItems: RestMethod.imV2ChatMessageReactionTail,
 					},
 					itemTypeWithRedux: false,
+					useCache: false,
+					needCloneActionParams: false,
 					actionResponseAdapter: this.actionResponseAdapter,
 					actionParams: this.buildActionParams,
+					onBeforeReloadAction: this.onBeforeReloadAction,
 					onBeforeItemsRender: this.onBeforeItemsRender,
 					itemsLoadLimit: this.requestLimit,
 				},
 			};
+		}
+
+		onBeforeReloadAction()
+		{
+			this.lastId = null;
+			this.buildActionParams(this.selectedTab);
 		}
 
 		/**
@@ -119,16 +151,16 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 				filter.reaction = selectedTab;
 			}
 
-			return {
-				loadItems: {
-					messageId: this.messageId,
-					limit: this.requestLimit,
-					order: {
-						id: 'ASC',
-					},
-					filter,
+			this.currentActionParams.loadItems = {
+				messageId: this.messageId,
+				limit: this.requestLimit,
+				order: {
+					id: 'ASC',
 				},
+				filter,
 			};
+
+			return this.currentActionParams;
 		}
 
 		/**
@@ -169,14 +201,17 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 
 			adaptedResponse.data.items = reactions
 				.map((reaction) => ({
-					id: reaction.userId,
-					reactionId: reaction.reaction.toLowerCase(),
+					id: reaction.id,
+					userId: reaction.userId,
+					reactionId: reaction.reaction,
 					dateCreate: this.formatDate(reaction.dateCreate),
 					user: userEntities[reaction.userId],
 				}));
 
 			const sortedReactions = reactions.sort((a, b) => a.reactionId - b.reactionId);
 			this.lastId = sortedReactions[sortedReactions.length - 1]?.id ?? null;
+
+			this.buildActionParams(this.selectedTab);
 
 			return adaptedResponse;
 		}
@@ -219,6 +254,7 @@ jn.define('im/messenger/controller/reaction-viewer', (require, exports, module) 
 			this.buildViewProps = this.buildViewProps.bind(this);
 			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
 			this.unsubscribeExternalEvents = this.unsubscribeExternalEvents.bind(this);
+			this.onBeforeReloadAction = this.onBeforeReloadAction.bind(this);
 		}
 
 		subscribeExternalEvents()

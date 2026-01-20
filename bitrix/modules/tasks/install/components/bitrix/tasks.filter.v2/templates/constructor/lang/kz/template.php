@@ -11,7 +11,6 @@ $MESS["TASKS_FIELD_META:DEADLINE_TS"] = "Соңғы мерзім";
 $MESS["TASKS_FIELD_META:END_DATE_PLAN_TS"] = "Жоспарлан. аяқталу күні";
 $MESS["TASKS_FIELD_META:START_DATE_PLAN_TS"] = "Жоспарлан. басталу күні";
 $MESS["TASKS_FIELD_PRIORITY_V2"] = "Маңыздылық";
-$MESS["TASKS_FIELD_RESPOSNSIBLE"] = "Жауапты";
 $MESS["TASKS_FIELD_STATUS"] = "Мәртебе";
 $MESS["TASKS_FIELD_TITLE"] = "Атауы";
 $MESS["TASKS_FILTERV2_CONSTRUCTOR_BTN_ADD_CONDITION"] = "Шартты қосу";

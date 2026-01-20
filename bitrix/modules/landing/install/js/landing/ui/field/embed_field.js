@@ -25,7 +25,7 @@
 		data.placeholder = BX.Landing.Loc.getMessage('LANDING_EMBED_ERROR_TEXT');
 		data.description =
 			data.description
-			|| "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage('LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION')+"</span>";
+			|| "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage('LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_MSGVER_1')+"</span>";
 
 		BX.Landing.UI.Field.Text.apply(this, arguments);
 

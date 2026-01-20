@@ -1,0 +1,2 @@
+<?php
+$MESS["MOBILE_CALL_COPILOT_COMPONENT_TITLE"] = "CoPilot Follow-Up";

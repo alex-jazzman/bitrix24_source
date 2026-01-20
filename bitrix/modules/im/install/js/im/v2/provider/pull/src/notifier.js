@@ -91,8 +91,7 @@ export class NotifierPullHandler
 			return false;
 		}
 
-		const messageWithoutNotification = !params.notify || params.message?.params?.NOTIFY === 'N';
-		if (messageWithoutNotification || !this.#shouldShowToUser(params) || this.#desktopWillShowNotification())
+		if (!this.#shouldShowToUser(params) || this.#desktopWillShowNotification())
 		{
 			return false;
 		}
@@ -176,7 +175,16 @@ export class NotifierPullHandler
 			return true;
 		}
 
-		const dialog = this.store.getters['chats/get'](params.dialogId, true);
+		const { notify, message, dialogId } = params;
+
+		const messageParams = message?.params;
+		const isNotificationDisabled = !notify || messageParams?.NOTIFY === 'N';
+		if (isNotificationDisabled)
+		{
+			return false;
+		}
+
+		const dialog = this.store.getters['chats/get'](dialogId, true);
 		const isMuted = dialog.muteList.includes(Core.getUserId());
 
 		return !this.#isUserDnd() && !isMuted;

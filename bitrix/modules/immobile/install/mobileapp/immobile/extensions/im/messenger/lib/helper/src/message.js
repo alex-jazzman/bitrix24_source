@@ -10,6 +10,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		UrlGetParameter,
 		MessageComponent,
 		MessageParams,
+		TranscriptStatus,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -44,6 +45,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent.generalChannelCreationMessage,
 		MessageComponent.channelCreationMessage,
 		MessageComponent.vote,
+		MessageComponent.sticker,
 	]);
 
 	const customMessages = new Set([
@@ -174,8 +176,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isDeleted()
 		{
-			return this.messageModel.params?.IS_DELETED === 'Y'
-				|| this.isEmpty;
+			return this.messageModel.params?.IS_DELETED === 'Y';
 		}
 
 		get isError()
@@ -187,6 +188,27 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isForward()
 		{
 			return !Type.isUndefined(this.messageModel?.forward.id);
+		}
+
+		get isVideoNote()
+		{
+			return this.files.length === 1 && this.files[0].isVideoNote;
+		}
+
+		get isVideoNoteText()
+		{
+			if (
+				!Feature.isVideoNoteTranscriptionAvailable
+				|| !this.isVideoNote
+				|| !Type.isArrayFilled(this.messageModel.params?.FILE_ID)
+			)
+			{
+				return false;
+			}
+
+			const transcriptModel = this.#store.getters['filesModel/transcriptModel/getById'](this.files[0].id);
+
+			return !Type.isNull(transcriptModel) && transcriptModel.status !== TranscriptStatus.ready;
 		}
 
 		get isWithAttach()
@@ -219,7 +241,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		get isMediaGallery()
 		{
-			if (!this.isGallery)
+			if (!this.isGallery || this.isVideoNote)
 			{
 				return false;
 			}
@@ -234,7 +256,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		get isFileGallery()
 		{
-			if (!this.isGallery || this.isMediaGallery)
+			if (!this.isGallery || this.isMediaGallery || this.isVideoNote)
 			{
 				return false;
 			}
@@ -249,7 +271,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isVideo()
 		{
-			if (!this.isWithFile)
+			if (!this.isWithFile || this.isVideoNote)
 			{
 				return false;
 			}
@@ -315,6 +337,16 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isVote()
 		{
 			return this.getComponentId() === MessageComponent.vote;
+		}
+
+		get isSticker()
+		{
+			return Type.isStringFilled(this.messageModel.stickerParams?.uri);
+		}
+
+		get isDeletedSticker()
+		{
+			return Type.isNull(this.messageModel.stickerParams?.uri);
 		}
 
 		get isCustom()
@@ -403,6 +435,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isAiAssistant()
 		{
 			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
+		}
+
+		get isCopilot()
+		{
+			return this.getComponentId() === MessageParams.ComponentId.CopilotMessage;
 		}
 
 		/**

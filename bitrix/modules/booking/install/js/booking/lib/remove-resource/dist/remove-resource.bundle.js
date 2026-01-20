@@ -1,11 +1,11 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,ui_notification,booking_const,booking_core,booking_provider_service_resourcesService,main_core,ui_dialogs_messagebox,main_popup) {
+(function (exports,ui_notification,booking_const,booking_core,booking_provider_service_resourcesService,main_core,main_popup,ui_dialogs_messagebox) {
 	'use strict';
 
 	class RemoveConfirmation {
-	  static confirmDelete() {
+	  static confirmDelete(resourceId) {
 	    return new Promise(resolve => {
 	      const messageBox = ui_dialogs_messagebox.MessageBox.create({
 	        title: main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE_TITLE'),
@@ -13,8 +13,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        modal: true,
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
 	        popupOptions: {
-	          className: 'booking-resource-remove-confirmation',
-	          minHeight: 135,
+	          id: `booking-resource-remove-confirm-${resourceId}`,
 	          closeByEsc: true,
 	          closeIcon: true,
 	          closeIconSize: main_popup.CloseIconSize.LARGE
@@ -32,7 +31,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      messageBox.show();
 	    });
 	  }
-	  static confirmMoveFutureBooking() {
+	  static confirmMoveFutureBooking(resourceId) {
 	    return new Promise(resolve => {
 	      const messageBox = ui_dialogs_messagebox.MessageBox.create({
 	        title: main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_MOVE_FUTURE_BOOKINGS_TITLE'),
@@ -41,9 +40,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        noCaption: main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_MOVE_FUTURE_BOOKINGS_NO'),
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	        popupOptions: {
-	          className: 'booking-resource-remove-confirmation booking-resource-remove-confirmation-move-bookings --air',
-	          minHeight: 176,
-	          minWidth: 418,
+	          id: `booking-resource-remove-confirm-move-future-booking-${resourceId}`,
 	          closeByEsc: true,
 	          closeIcon: true,
 	          closeIconSize: main_popup.CloseIconSize.LARGE
@@ -70,9 +67,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        noCaption: main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_AFTER_MOVE_FUTURE_BOOKINGS_NO'),
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	        popupOptions: {
-	          id: `booking-resource-remove-confirmation-${resource.id}`,
-	          className: 'booking-resource-remove-confirmation booking-resource-remove-confirmation-after-clear --air',
-	          minHeight: 176,
+	          id: `booking-resource-remove-confirmation-after-move-future-bookings-${resource.id}`,
 	          closeByEsc: true,
 	          closeIcon: true,
 	          closeIconSize: main_popup.CloseIconSize.LARGE
@@ -176,7 +171,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    await babelHelpers.classPrivateFieldLooseBase(this, _cancelRemovingResource)[_cancelRemovingResource]();
 	    const hasFutureBookings = await booking_provider_service_resourcesService.resourceService.hasFutureBookings(babelHelpers.classPrivateFieldLooseBase(this, _resourceId)[_resourceId]);
 	    if (hasFutureBookings) {
-	      const shouldMoveFutureBookings = await RemoveConfirmation.confirmMoveFutureBooking();
+	      const shouldMoveFutureBookings = await RemoveConfirmation.confirmMoveFutureBooking(babelHelpers.classPrivateFieldLooseBase(this, _resourceId)[_resourceId]);
 	      if (shouldMoveFutureBookings) {
 	        await booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/setDeletingResourceFilter`, {
 	          resourceId: babelHelpers.classPrivateFieldLooseBase(this, _resourceId)[_resourceId]
@@ -187,7 +182,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      }
 	      return;
 	    }
-	    const isDeletionConfirmed = await RemoveConfirmation.confirmDelete();
+	    const isDeletionConfirmed = await RemoveConfirmation.confirmDelete(babelHelpers.classPrivateFieldLooseBase(this, _resourceId)[_resourceId]);
 	    if (isDeletionConfirmed) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _runCancellableDeletion)[_runCancellableDeletion]();
 	    }
@@ -255,5 +250,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.RemoveResource = RemoveResource;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.Booking.Const,BX.Booking,BX.Booking.Provider.Service,BX,BX.UI.Dialogs,BX.Main));
+}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.Booking.Const,BX.Booking,BX.Booking.Provider.Service,BX,BX.Main,BX.UI.Dialogs));
 //# sourceMappingURL=remove-resource.bundle.js.map

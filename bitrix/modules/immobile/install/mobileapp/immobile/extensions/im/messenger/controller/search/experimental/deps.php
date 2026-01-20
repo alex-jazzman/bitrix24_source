@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'utils/string',
 		'selector/entity',
 		'selector/providers/base',

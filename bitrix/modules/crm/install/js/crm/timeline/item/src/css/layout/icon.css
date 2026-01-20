@@ -182,6 +182,10 @@
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__whatsapp-icon.svg');
 }
 
+.crm-timeline__card_icon.--code-telegram i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__telegram-icon.svg');
+}
+
 .crm-timeline__card_icon.--code-zoom i {
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__zoom-icon.svg');
 }
@@ -224,10 +228,6 @@
 
 .crm-timeline__card_icon.--code-clock i {
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__clock.svg');
-}
-
-.crm-timeline__card_icon.--code-open-line-incoming-message i {
-	mask-image: url('../../images/timeline-card-icons/crm-timeline__open_line_message.svg');
 }
 
 .crm-timeline__card_icon.--code-view i {

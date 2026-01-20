@@ -164,7 +164,7 @@ $feedFrame->end();
 				<span><?=floor($stateTimer/3600)?></span>:<span><?=str_pad(floor($stateTimer/60) % 60, 2, "0", STR_PAD_LEFT)?></span>:<span><?=str_pad($stateTimer % 60, 2, "0", STR_PAD_LEFT)?></span>
 			</div>
 			<div class="mobile-timeman-control-timing" data-bx-timeman="pause-block">
-				<div class="mobile-timeman-control-timing-title"><span><?=GetMessage("TM_PAUSE")?></span></div>
+				<div class="mobile-timeman-control-timing-title"><span><?=GetMessage("TM_PAUSE_TITLE")?></span></div>
 				<div class="mobile-timeman-control-timing-time" data-bx-timeman="pause-timer">
 					<span><?=floor($pauseTimer/3600)?></span>:<span><?=str_pad(floor($pauseTimer/60) % 60, 2, "0", STR_PAD_LEFT)?></span>:<span><?=str_pad($pauseTimer % 60, 2, "0", STR_PAD_LEFT)?></span>
 				</div>
@@ -191,7 +191,7 @@ $feedFrame->end();
 		</div>
 		<div class="mobile-timeman-control">
 			<input type="submit" class="mobile-button mobile-button-create" data-bx-timeman="start-button" value="<?=GetMessage("TM_START")?>" />
-			<input type="submit" class="mobile-button mobile-button-create" data-bx-timeman="resume-button" value="<?=GetMessage("TM_RESUME")?>" />
+			<input type="submit" class="mobile-button mobile-button-create" data-bx-timeman="resume-button" value="<?=GetMessage("TM_RESUME_MSGVER_1")?>" />
 			<input type="submit" class="mobile-button" data-bx-timeman="pause-button" value="<?=GetMessage("TM_PAUSE")?>" />
 			<input type="submit" class="mobile-button mobile-button-decline" data-bx-timeman="stop-button" value="<?=GetMessage("TM_FINISH")?>" />
 		</div>
@@ -205,6 +205,8 @@ $feedFrame->end();
 		TM_MENU_STOP1 : '<?=GetMessageJS("TM_MENU_STOP1")?>',
 		TM_MENU_EDIT : '<?=GetMessageJS("TM_MENU_EDIT")?>',
 		TM_MENU_REPORT : '<?=GetMessageJS("TM_MENU_REPORT")?>',
+		TM_RESUME_MSGVER_1 : '<?=GetMessageJS("TM_RESUME_MSGVER_1")?>',
+		TM_RESUME_MSGVER_2 : '<?=GetMessageJS("TM_RESUME_MSGVER_2")?>',
 		PULLDOWN_PULL : '<?=GetMessageJS('PULLDOWN_PULL')?>',
 		PULLDOWN_DOWN : '<?=GetMessageJS('PULLDOWN_DOWN')?>',
 		PULLDOWN_LOADING : '<?=GetMessageJS('PULLDOWN_LOADING')?>'

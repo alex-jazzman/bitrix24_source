@@ -12,3 +12,8 @@ export interface showSpotlightOptions {
 	},
 	setHandler?: () => any,
 }
+
+export type PromotionCallbackData = {
+	read?: boolean,
+	promoId?: string,
+}

@@ -3,6 +3,8 @@
  */
 jn.define('ui-system/layout/area/src/top', (require, exports, module) => {
 	const { Component, Color, Indent } = require('tokens');
+	const { mergeImmutable } = require('utils/object');
+	const { PropTypes } = require('utils/validation');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 
 	/**
@@ -19,6 +21,7 @@ jn.define('ui-system/layout/area/src/top', (require, exports, module) => {
 		const {
 			title,
 			excludePaddingSide = {},
+			...restProps
 		} = props;
 
 		const { horizontal } = excludePaddingSide;
@@ -30,7 +33,7 @@ jn.define('ui-system/layout/area/src/top', (require, exports, module) => {
 		};
 
 		return View(
-			{ style },
+			mergeImmutable(restProps, { style }),
 			BBCodeText({
 				size: 4,
 				value: title,

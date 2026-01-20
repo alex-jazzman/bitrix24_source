@@ -1,0 +1,23 @@
+<?php
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_TITLE'] = 'Настройки задачи';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_TITLE_HINT'] = 'Применяются ко всем задачам, которые вы создаёте';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_BTN_CANCEL'] = 'Отмена';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_BTN_SAVE'] = 'Сохранить';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_LABEL'] = 'Проконтролировать задачу после завершения';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_HINT'] = 'Завершенная задача придёт на контроль к постановщику. Он сможет её проверить и закрыть или вернуть на доработку';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_LABEL'] = 'Автоматически указывать крайний срок в новых задачах';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_PERIOD_HOUR'] = 'часов';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_PERIOD_DAY'] = 'дней';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_PERIOD_WEEK'] = 'недель';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_PERIOD_MONTH'] = 'месяцев';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINES_LABEL'] = 'Разрешить исполнителю менять крайний срок';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_REASON_LABEL'] = 'Запрашивать причину';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_REASON_HINT'] = 'При смене срока исполнитель должен будет указать причину в комментарии';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_LIMIT_LABEL'] = 'Ограничить';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_LIMIT_BY_DATE'] = 'по дате';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_LIMIT_BY_COUNT'] = 'по количеству';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_BEFORE'] = 'до [date/]';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_NOT_GREATER_THAN'] = 'не более [count/] раз';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_WORK_TIME_LABEL'] = 'Пропускать выходные дни';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_WORK_TIME_HINT'] = 'Крайний срок автоматически передвинется, если выпадет на выходной или праздничный день';
+$MESS['TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL'] = 'Автоматически завершать задачу при завершении подзадач и наоборот';

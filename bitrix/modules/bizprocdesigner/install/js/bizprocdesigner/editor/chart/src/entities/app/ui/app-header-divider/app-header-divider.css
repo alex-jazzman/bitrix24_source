@@ -1,0 +1,6 @@
+.editor-chart-app-header-divider
+{
+	height: 16px;
+	width: 1px;
+	background-color: var(--ui-color-base-6);
+}

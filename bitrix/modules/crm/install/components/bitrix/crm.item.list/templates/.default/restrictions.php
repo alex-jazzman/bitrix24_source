@@ -9,11 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		BX.ready(function() {
 			<?=$arResult['restriction']->prepareInfoHelperScript();?>;
 			var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
-			if(slider)
-			{
-				slider.close();
-			}
-			else
+			if(!slider)
 			{
 				BX.addCustomEvent("SidePanel.Slider:onCloseComplete", function(event) {
 					location.href = "/crm/deal/";

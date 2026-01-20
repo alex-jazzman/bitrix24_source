@@ -1,16 +1,21 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Messenger } from 'im.public';
 import { EventType, KeyboardButtonAction } from 'im.v2.const';
 import { SendingService } from 'im.v2.provider.service.sending';
 import { PhoneManager } from 'im.v2.lib.phone';
 import { Notifier } from 'im.v2.lib.notifier';
 
+import type { EventEmitter } from 'main.core.events';
+import type { ApplicationContext } from 'im.v2.const';
 import type { ActionEvent } from '../types/events';
+
+type ActionConfig = {
+	[$Values<typeof KeyboardButtonAction>]: (payload: string) => void,
+};
 
 export class ActionManager
 {
 	#dialogId: string;
+	#emitter: EventEmitter;
 	#actionHandlers: ActionConfig = {
 		[KeyboardButtonAction.send]: this.#sendMessage.bind(this),
 		[KeyboardButtonAction.put]: this.#insertText.bind(this),
@@ -19,9 +24,11 @@ export class ActionManager
 		[KeyboardButtonAction.dialog]: this.#openChat.bind(this),
 	};
 
-	constructor(dialogId)
+	constructor(payload: { dialogId: string, context: ApplicationContext })
 	{
+		const { dialogId, context: { emitter } } = payload;
 		this.#dialogId = dialogId;
+		this.#emitter = emitter;
 	}
 
 	handleAction(event: ActionEvent): void
@@ -46,7 +53,7 @@ export class ActionManager
 
 	#insertText(payload: string): void
 	{
-		EventEmitter.emit(EventType.textarea.insertText, {
+		this.#emitter.emit(EventType.textarea.insertText, {
 			text: payload,
 			dialogId: this.#dialogId,
 		});
@@ -54,7 +61,7 @@ export class ActionManager
 
 	#startCall(payload: string): void
 	{
-		PhoneManager.getInstance().startCall(payload);
+		void PhoneManager.getInstance().startCall(payload);
 	}
 
 	#copyText(payload: string): void
@@ -67,6 +74,6 @@ export class ActionManager
 
 	#openChat(payload: string): void
 	{
-		Messenger.openChat(payload);
+		void Messenger.openChat(payload);
 	}
 }

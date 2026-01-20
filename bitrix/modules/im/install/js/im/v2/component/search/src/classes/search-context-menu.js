@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Utils } from 'im.v2.lib.utils';
@@ -9,19 +8,25 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { EventType, SidebarDetailBlock, UserType } from 'im.v2.const';
 
 import type { MenuItemOptions } from 'ui.system.menu';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelUser } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class SearchContextMenu extends BaseMenu
 {
 	callManager: CallManager;
+	emitter: EventEmitter;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
 		super();
 
 		this.id = 'im-chat-search-context-menu';
 		this.callManager = CallManager.getInstance();
 		this.permissionManager = PermissionManager.getInstance();
+
+		const { emitter } = applicationContext;
+		this.emitter = emitter;
 	}
 
 	getMenuItems(): MenuItemOptions | null[]
@@ -79,7 +84,7 @@ export class SearchContextMenu extends BaseMenu
 					await Messenger.openChat(this.context.dialogId);
 				}
 
-				EventEmitter.emit(EventType.sidebar.open, {
+				this.emitter.emit(EventType.sidebar.open, {
 					panel: SidebarDetailBlock.chatsWithUser,
 					standalone: true,
 					dialogId: this.context.dialogId,

@@ -1,0 +1,29 @@
+.editor-chart-logo-title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+.editor-chart-logo-title__company-name {
+	font-weight: var(--ui-font-weight-medium);
+	/* todo: replace with token when available */
+	font-size: 19px;
+	line-height: 26px;
+	letter-spacing: var(--ui-letter-spacing-s);
+	text-align: center;
+	color: var(--ui-color-base-black-fixed);
+	max-width: 350px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-logo-title__tool-name {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-2xl);
+	line-height: 26px;
+	letter-spacing: 0;
+	text-align: center;
+	vertical-align: middle;
+	color: var(--ui-color-base-3);
+}

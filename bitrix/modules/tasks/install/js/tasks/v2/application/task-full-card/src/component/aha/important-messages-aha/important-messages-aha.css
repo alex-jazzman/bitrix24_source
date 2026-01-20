@@ -1,0 +1,32 @@
+.tasks-important-messages-aha-container {
+	display: flex;
+	flex-direction: row;
+	padding: 0;
+	min-height: 129px;
+}
+
+.tasks-important-messages-aha-icon {
+	flex-shrink: 0;
+	width: 121px;
+	min-height: 129px;
+	background: url('./important-messages-aha.png') no-repeat center center;
+	border-radius: 18px;
+	background-size: cover;
+	align-self: stretch;
+}
+
+.tasks-important-messages-aha-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	padding: var(--ui-space-inset-lg);
+	flex: 1;
+}
+
+.tasks-important-messages-aha-info-text {
+	color: var(--ui-color-base-white-fixed);
+}
+
+.bx-im-send-panel__container.element-highlight .bx-im-content-chat__textarea_container {
+	z-index: 1;
+}

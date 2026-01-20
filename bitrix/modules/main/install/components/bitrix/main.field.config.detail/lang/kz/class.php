@@ -4,3 +4,6 @@ $MESS["MAIN_FIELD_CONFIG_DETAIL_FIELD_NOT_FOUND_ERROR"] = "Пайдалануш�
 $MESS["MAIN_FIELD_CONFIG_DETAIL_NO_ENTITY_ID_ERROR"] = "Мән түрі көрсетілмеген";
 $MESS["MAIN_FIELD_CONFIG_DETAIL_TITLE_ADD"] = "Жаңа өріс";
 $MESS["MAIN_FIELD_CONFIG_DETAIL_TITLE_EDIT"] = "Өрісті редакциялау";
+$MESS["MAIN_FIELD_CONFIG_TOOLTIP_ALL_LANGUAGES"] = "Ишаралар";
+$MESS["MAIN_FIELD_CONFIG_TOOLTIP_TEXT"] = "Ишара мәтіні";
+$MESS["MAIN_FIELD_CONFIG_TOOLTIP_TEXT_MULTILANG"] = "Ишара мәтіні (#LANGUAGE_NAME#)";

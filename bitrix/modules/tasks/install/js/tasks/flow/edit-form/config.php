@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/edit-form.bundle.css',
 	'js' => 'dist/edit-form.bundle.js',
 	'rel' => [
+		'main.sidepanel',
 		'main.popup',
 		'ui.buttons',
 		'tasks.wizard',
@@ -20,6 +21,7 @@ return [
 		'main.core',
 		'ui.form-elements.view',
 		'ui.lottie',
+		'ui.dialogs.messagebox',
 		'ui.sidepanel-content',
 		'ui.forms',
 		'ui.hint',

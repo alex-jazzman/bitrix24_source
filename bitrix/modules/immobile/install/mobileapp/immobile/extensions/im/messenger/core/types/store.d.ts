@@ -25,9 +25,11 @@ import { VoteModelActions, VoteModelMutation } from "../../model/messages/src/vo
 import {
 	AnchorModelActions,
 	AnchorModelMutation,
-	AnchorMessengerModel
+	AnchorMessengerModel,
+	AnchorModelActionParams,
 } from "../../model/anchor/src/types";
 import { TranscriptModelMutation, TranscriptModelActions } from "../../model/files/src/transcript/types";
+import {StickerPackActionParams, StickerPackActions, StickerPackMutation} from "../../model/sticker-pack/src/types";
 
 export type MessengerStoreActions =
 	FilesModelActions
@@ -52,6 +54,7 @@ export type MessengerStoreActions =
 	| VoteModelActions
 	| AnchorModelActions
 	| TranscriptModelActions
+	| StickerPackActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -76,9 +79,20 @@ export type MessengerStoreMutation =
 	| VoteModelMutation
 	| AnchorModelMutation
 	| TranscriptModelMutation
+	| StickerPackMutation
+
+export type AllActionParams =
+	StickerPackActionParams
+	& AnchorModelActionParams
+;
+
+export type ParamsForAction<T extends MessengerStoreActions> =
+	T extends keyof AllActionParams
+		? AllActionParams[T]
+		: any;
 
 type MessengerCoreStore = {
-	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,
+	dispatch<T extends MessengerStoreActions>(actionName: T, params?: ParamsForAction<T>) : Promise<any>,
 	getters: any,
 	state: { // use it only for testing!!!
 		messagesModel: ReturnType<MessagesMessengerModel['state']>,

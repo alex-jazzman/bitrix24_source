@@ -5,6 +5,7 @@ import type { JsonObject } from 'main.core';
 // @vue/component
 export const ScrollWithGradient = {
 	name: 'ScrollWithGradient',
+	expose: ['getContainer'],
 	props:
 	{
 		containerMaxHeight: {
@@ -53,6 +54,10 @@ export const ScrollWithGradient = {
 	},
 	methods:
 	{
+		getContainer(): HTMLElement
+		{
+			return this.$refs['scroll-container'];
+		},
 		onScroll(event: Event)
 		{
 			this.$emit('scroll', event);

@@ -491,9 +491,12 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 						counter: btn.counter,
 						selected: btn.selected,
 						onClick: btn.onClick,
+						renderCustomContent: btn.renderCustomContent,
+						ahaMoment: btn.ahaMoment,
 						style: {
 							marginLeft: index === 0 ? Indent.XL3.toNumber() : 0,
 							marginRight: primaryActionButtons.length - 1 === index ? Indent.XL3.toNumber() : 0,
+							...btn.style,
 						},
 					})),
 				),

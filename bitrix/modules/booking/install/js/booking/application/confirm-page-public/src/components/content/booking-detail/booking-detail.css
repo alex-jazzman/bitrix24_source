@@ -1,0 +1,38 @@
+.booking-confirm-page__booking-detail_border {
+	padding: 16px 20px;
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.94);
+	border-radius: var(--ui-border-radius-xs);
+	border: 1px var(--ui-color-tag-9) solid;
+	flex-direction: column; justify-content: center;
+	align-items: flex-start;
+	gap: 6px;
+	display: flex;
+	align-self: stretch;
+}
+
+.booking-confirm-page__booking-detail_title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-confirm-page__booking-detail_line {
+	width: 300px;
+	height: 1px;
+	background: var(--ui-color-palette-gray-10);
+	margin-top:4px;
+	margin-bottom:4px;
+}
+
+@media only screen and (max-width: 390px) {
+	.booking-confirm-page__booking-detail_line {
+		width: 270px;
+	}
+}
+
+.booking-confirm-page__booking-detail_resource {
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 10px;
+	display: inline-flex;
+}

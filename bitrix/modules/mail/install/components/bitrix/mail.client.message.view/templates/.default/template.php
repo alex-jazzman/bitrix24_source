@@ -27,6 +27,24 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pa
 $emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage();
 
 $message = $arResult['MESSAGE'];
+
+$source = $_REQUEST['source'];
+$openedSource = null;
+if ($source)
+{
+	$openedSource = Helper\Message::getAnalyticsSourceByType($source) ?? $source;
+}
+
+$urlParams = [
+	'IFRAME' => $_REQUEST['IFRAME'],
+	'IFRAME_TYPE' => $_REQUEST['IFRAME_TYPE'],
+];
+
+if ($openedSource)
+{
+	$urlParams['source'] = $openedSource;
+}
+
 ob_start();
 ?>
 
@@ -63,10 +81,7 @@ BX.ready(function ()
 		<? endif ?>
 		pathNew: '<?=\CUtil::jsEscape(\CHTTP::urlAddParams(
 			$arParams['~PATH_TO_MAIL_MSG_NEW'],
-			array(
-				'IFRAME' => $_REQUEST['IFRAME'],
-				'IFRAME_TYPE' => $_REQUEST['IFRAME_TYPE'],
-			)
+			$urlParams,
 		)) ?>',
 		pathList: '<?=\CUtil::jsEscape(\CComponentEngine::makePathFromTemplate(
 			$arParams['~PATH_TO_MAIL_MSG_LIST'],
@@ -203,6 +218,33 @@ $renderBindLink = function ($item)
 </div>
 
 <script>
+
+	<?php if (!empty($arResult['ANALYTICS'])): ?>
+	(() => {
+		const analyticsData = {
+			tool: 'mail',
+			category: 'mail_operations',
+			event: 'mail_view',
+			type: 'mail',
+			c_section: '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE']) ?>',
+		}
+
+		if (analyticsData.c_section === 'mail')
+		{
+			const slider = BX.SidePanel.Instance.getTopSlider();
+			if (slider)
+			{
+				const c_sub_section = slider.getData().get('analytics')?.source_dir || null;
+				if (c_sub_section)
+				{
+					analyticsData.c_sub_section = c_sub_section.toLowerCase();
+				}
+			}
+		}
+
+		BX.UI.Analytics.sendData(analyticsData);
+	})();
+	<?php endif;?>
 
 BX.message({
 	EMAILS_LIMIT_TO_SEND_MESSAGE: '<?=$emailsLimitToSendMessage?>',

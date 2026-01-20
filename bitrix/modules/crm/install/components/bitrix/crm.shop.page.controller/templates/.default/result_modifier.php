@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
-$selfFolderUrl = "/shop/settings/";
+$selfFolderUrl = SITE_DIR . "shop/settings/";
 
 $arResult['CRM_ADMIN_PAGE_CONTROLLER_PARAMS'] = [
 	"SEF_MODE" => "Y",

@@ -1,0 +1,23 @@
+.annual-summary-page .main-wrapper
+{
+	display: none;
+}
+
+.annual-summary-page {
+	background-color: unset;
+	background-image: image-set(
+		url(/bitrix/images/intranet/annual-summary/background.png) 1x,
+		url(/bitrix/images/intranet/annual-summary/background@2x.png) 2x
+	);
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+@media (max-width: 767px) {
+	.annual-summary-page {
+		background-image: image-set(
+			url(/bitrix/images/intranet/annual-summary/background-mobile.png) 1x,
+			url(/bitrix/images/intranet/annual-summary/background-mobile@2x.png) 2x
+		);
+	}
+}

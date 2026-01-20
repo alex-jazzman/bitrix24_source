@@ -9,7 +9,11 @@ return [
 		'statemanager/redux/slices/whats-new',
 		'tokens',
 		'more-menu/analytics',
-		'more-menu/ui/profile-button',
 		'utils/validation',
+		'ui-system/layout/card',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+		'ui-system/blocks/badges/counter',
+		'apptheme',
 	],
 ];

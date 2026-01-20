@@ -1,0 +1,60 @@
+.tasks-time-tracking-list-row.--item {
+	padding: 20px 18px;
+}
+
+.tasks-time-tracking-list-item-view {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+}
+
+.tasks-time-tracking-list-item-view-time {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+.tasks-time-tracking-list-item-view-text .ui-text {
+	color: var(--ui-color-base-2);
+}
+
+.tasks-time-tracking-list-column {
+	display: flex;
+	justify-content: left;
+	align-items: center;
+	overflow: hidden;
+	white-space: nowrap;
+	min-height: 24px;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.tasks-time-tracking-list-column .ui-text {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.tasks-time-tracking-list-column.--date {
+	min-width: 28%;
+	box-sizing: border-box;
+}
+
+.tasks-time-tracking-list-column.--time {
+	min-width: 14%;
+	box-sizing: border-box;
+}
+
+.tasks-time-tracking-list-column.--author {
+	flex: 1;
+}
+
+.tasks-time-tracking-list-column.--action {
+	min-width: 52px;
+	margin-left: auto;
+	gap: var(--ui-space-inline-sm);
+}
+
+.tasks-time-tracking-list-column.--action .ui-icon-set {
+	cursor: pointer;
+}

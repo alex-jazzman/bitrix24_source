@@ -1,6 +1,7 @@
 <?php
 $MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_3"] = "Delete departments from company structure. This action cannot be undone.";
 $MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_3"] = "Change department's name, description and parent department.";
+$MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_SETTINGS_EDIT"] = "Give or revoke permission to be involved in workflows and work reports.";
 $MESS["HINT_HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_2"] = "Add only the employees currently registered in your Bitrix24, without permission to invite new ones.";
 $MESS["HINT_HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT_MSGVER_2"] = "Remove selected employees from department.";
 $MESS["HINT_HUMAN_RESOURCES_STRUCTURE_VIEW"] = "View departments and employees in company structure.";
@@ -18,6 +19,7 @@ $MESS["HUMAN_RESOURCES_DEPARTMENT_COLLAB_EDIT"] = "Manage department collabs";
 $MESS["HUMAN_RESOURCES_DEPARTMENT_CREATE_MSGVER_2"] = "Add new departments";
 $MESS["HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_2"] = "Delete departments";
 $MESS["HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_2"] = "Edit departments";
+$MESS["HUMAN_RESOURCES_DEPARTMENT_SETTINGS_EDIT"] = "Edit auxiliary administrative duties";
 $MESS["HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_3"] = "Add employees to department";
 $MESS["HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT_MSGVER_1"] = "Remove employees from department";
 $MESS["HUMAN_RESOURCES_FIRE_EMPLOYEE"] = "Dismiss employee from Bitrix24";

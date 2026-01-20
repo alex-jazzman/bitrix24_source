@@ -35,11 +35,18 @@ export class SidebarPullHandler
 			return;
 		}
 
-		void this.userManager.setUsersToModel(Object.values(params.users));
+		const { chatId, users, newUsers, relations } = params;
+		void this.userManager.setUsersToModel(Object.values(users));
+
+		const usersToAdd = newUsers.filter((userId) => {
+			const { isHidden } = relations.find((relation) => relation.userId === userId);
+
+			return !isHidden;
+		});
 
 		void this.store.dispatch('sidebar/members/set', {
-			chatId: params.chatId,
-			users: params.newUsers,
+			chatId,
+			users: usersToAdd,
 		});
 	}
 

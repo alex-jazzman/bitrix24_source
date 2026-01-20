@@ -14,6 +14,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { MediaGalleryMessage } = require('im/messenger/lib/element/dialog/message/media-gallery');
 	const { AudioMessage } = require('im/messenger/lib/element/dialog/message/audio');
 	const { VideoMessage } = require('im/messenger/lib/element/dialog/message/video');
+	const { VideoNoteMessage } = require('im/messenger/lib/element/dialog/message/video-note');
+	const { VideoNoteTextMessage } = require('im/messenger/lib/element/dialog/message/video-note-text');
 	const { FileMessage } = require('im/messenger/lib/element/dialog/message/file');
 	const { FileGalleryMessage } = require('im/messenger/lib/element/dialog/message/file-gallery');
 	const { SystemTextMessage } = require('im/messenger/lib/element/dialog/message/system-text');
@@ -35,6 +37,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { VoteMessageFactory } = require('im/messenger/lib/element/dialog/message/vote/factory');
 	const { VoteMessageHandler } = require('im/messenger/lib/element/dialog/message/vote/handler');
 	const { AiAssistantMessage } = require('im/messenger/lib/element/dialog/message/ai-assistant');
+	const { StickerMessage } = require('im/messenger/lib/element/dialog/message/sticker');
+	const { DeletedStickerMessage } = require('im/messenger/lib/element/dialog/message/deleted-sticker');
 
 	module.exports = {
 		Message,
@@ -45,6 +49,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		MediaGalleryMessage,
 		AudioMessage,
 		VideoMessage,
+		VideoNoteMessage,
+		VideoNoteTextMessage,
 		FileMessage,
 		FileGalleryMessage,
 		SystemTextMessage,
@@ -68,5 +74,7 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		VoteMessageFactory,
 		VoteMessageHandler,
 		AiAssistantMessage,
+		StickerMessage,
+		DeletedStickerMessage,
 	};
 });

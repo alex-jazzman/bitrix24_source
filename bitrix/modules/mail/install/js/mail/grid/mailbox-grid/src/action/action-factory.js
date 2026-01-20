@@ -1,8 +1,10 @@
 import type { BaseAction, BaseActionType } from './base-action';
 import { SyncAction } from './sync-action';
+import { OpenSettingsAction } from './open-settings-action';
 
 const actionMap = new Map([
 	[SyncAction.getActionId(), SyncAction],
+	[OpenSettingsAction.getActionId(), OpenSettingsAction],
 ]);
 
 export class ActionFactory

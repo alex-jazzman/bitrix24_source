@@ -40,6 +40,7 @@ type CopilotTextControllerOptions = {
 	copilotMenuEvents: CopilotMenuEvents;
 	analytics: CopilotAnalytics;
 	showResultInCopilot: ?boolean;
+	menuForceTop: ?boolean;
 }
 
 export class CopilotTextController extends EventEmitter
@@ -70,6 +71,7 @@ export class CopilotTextController extends EventEmitter
 	#currentRole: Role;
 	#rolesDialog: RolesDialogType;
 	#showResultInCopilot: ?boolean;
+	#menuForceTop: boolean = true;
 
 	#inputFieldContainerClickEventHandler: Function;
 	#inputFieldSubmitEventHandler: Function;
@@ -100,6 +102,7 @@ export class CopilotTextController extends EventEmitter
 		this.#copilotMenuEvents = options.copilotMenuEvents;
 		this.#analytics = options.analytics;
 		this.#showResultInCopilot = options.showResultInCopilot;
+		this.#menuForceTop = options.menuForceTop ?? true;
 
 		this.#inputFieldContainerClickEventHandler = this.#handleInputContainerClickEvent.bind(this);
 		this.#inputFieldSubmitEventHandler = this.#handleInputFieldSubmitEvent.bind(this);
@@ -587,7 +590,7 @@ export class CopilotTextController extends EventEmitter
 				canGoOutFromTop: this.#readonly === false,
 				highlightFirstItemAfterShow: this.#readonly === true,
 			},
-			forceTop: true,
+			forceTop: this.#menuForceTop,
 			cacheable: false,
 
 		});
@@ -1092,6 +1095,7 @@ export class CopilotTextController extends EventEmitter
 				highlightFirstItemAfterShow: true,
 				clearHighlightAfterType: false,
 			},
+			forceTop: this.#menuForceTop,
 		});
 
 		this.#errorMenu.setBindElement(this.#copilotContainer, {
@@ -1133,6 +1137,7 @@ export class CopilotTextController extends EventEmitter
 				highlightFirstItemAfterShow: true,
 			},
 			cacheable: false,
+			forceTop: this.#menuForceTop,
 		});
 	}
 

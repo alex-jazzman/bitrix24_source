@@ -49,7 +49,7 @@ $MESS["SECURITY_SITE_CHECKER_BITRIX_TMP_DIR_RECOMMENDATION"] = <<<'html'
 Необходимо определить константу "BX_TEMPORARY_FILES_DIRECTORY" в "bitrix/php_interface/dbconn.php" с указанием необходимого пути.<br>
 Выполните следующие шаги:<br>
 1. Выберите директорию вне корня проекта. Например, это может быть "/home/bitrix/tmp/www"<br>
-2. Создайте ее. Для этого выполните следующую комманду:
+2. Создайте ее. Для этого выполните следующую команду:
 <pre>
 mkdir -p -m 700 /полный/путь/к/директории
 </pre>

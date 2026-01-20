@@ -14,13 +14,10 @@ export const CheckListPopup = {
 	components: {
 		Popup,
 	},
-	inheritAttrs: false,
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		taskId: {},
 	},
+	inheritAttrs: false,
 	emits: ['show', 'close', 'resize'],
 	setup(): Object
 	{
@@ -33,7 +30,7 @@ export const CheckListPopup = {
 		{
 			return `tasks-check-list-popup-${this.taskId}`;
 		},
-		popupOptions(): PopupOptions
+		options(): PopupOptions
 		{
 			return {
 				className: 'tasks-check-list-popup',
@@ -50,7 +47,7 @@ export const CheckListPopup = {
 					closeAnimationType: 'animation',
 				},
 				events: {
-					onClose: this.handleClose.bind(this),
+					onClose: this.handleClose,
 				},
 			};
 		},
@@ -86,10 +83,14 @@ export const CheckListPopup = {
 	mounted(): void
 	{
 		Event.bind(window, 'resize', this.resize);
+
+		Event.bind(document, 'keydown', this.handleKeyDown, { capture: true });
 	},
 	beforeUnmount(): void
 	{
 		Event.unbind(window, 'resize', this.resize);
+
+		Event.unbind(document, 'keydown', this.handleKeyDown, { capture: true });
 	},
 	methods: {
 		resize(): void
@@ -116,13 +117,19 @@ export const CheckListPopup = {
 
 			this.$emit('close');
 		},
+		handleKeyDown(event: KeyboardEvent): void
+		{
+			if (event.key === 'Escape')
+			{
+				this.$emit('close');
+
+				event.stopPropagation();
+			}
+		},
 	},
 	template: `
-		<Popup :options="popupOptions" ref="childComponent">
-			<slot
-				:handleShow="handleShow"
-				:handleClose="handleClose"
-			></slot>
+		<Popup :options ref="childComponent">
+			<slot :handleShow="handleShow" :handleClose="handleClose"/>
 		</Popup>
 	`,
 };

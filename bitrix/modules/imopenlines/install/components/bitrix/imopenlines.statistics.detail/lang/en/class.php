@@ -1,5 +1,7 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to view statistics.";
+$MESS["OL_COMPONENT_COUNT_ROW_ALL"] = "Total:";
+$MESS["OL_COMPONENT_COUNT_ROW_SHOW"] = "Show quantity";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
 $MESS["OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE"] = "Open Channel conversation custom fields";
 $MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Are you sure you want to proceed?";

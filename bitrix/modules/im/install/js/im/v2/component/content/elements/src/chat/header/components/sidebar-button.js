@@ -1,7 +1,8 @@
 import { Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const SidebarButton = {
@@ -27,15 +28,19 @@ export const SidebarButton = {
 		{
 			if (this.isSidebarOpened)
 			{
-				EventEmitter.emit(EventType.sidebar.close, { panel: '' });
+				this.getEmitter().emit(EventType.sidebar.close, { panel: '' });
 
 				return;
 			}
 
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.main,
 				dialogId: this.dialogId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

@@ -1,6 +1,7 @@
-import { Event, Text, Type } from 'main.core';
+import { Dom, Event, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { type MenuItemOptions, MenuManager } from 'main.popup';
+import { Button, ButtonState, SplitButton } from 'ui.buttons';
 import { Converter } from './converter';
 import { EntitySelector } from './entity-selector';
 import type { Scheme } from './scheme';
@@ -20,6 +21,7 @@ export class SchemeSelector
 	#menuId: string;
 	#isAutoConversionEnabled: boolean;
 	#analytics: {c_element?: string} = {};
+	#waiting: boolean = false;
 
 	constructor(
 		converter: Converter,
@@ -109,6 +111,11 @@ export class SchemeSelector
 
 	#handleContainerClick()
 	{
+		if (this.#waiting)
+		{
+			return;
+		}
+
 		const event = new BaseEvent({
 			data: {
 				isCanceled: false,
@@ -120,13 +127,57 @@ export class SchemeSelector
 		{
 			this.#converter.setAnalyticsElement(this.#analytics.c_element);
 
-			this.#converter.convert(this.#entityId);
+			this.setWaiting();
+			void this.#converter
+				.convert(this.#entityId)
+				.finally(() => this.setWaiting(false))
+			;
 		}
+	}
+
+	setWaiting(waiting: boolean = true)
+	{
+		this.#waiting = waiting;
+		const button = this.#getButtonContainer();
+
+		if (!button)
+		{
+			return;
+		}
+
+		if (waiting)
+		{
+			Dom.addClass(button, ButtonState.WAITING);
+		}
+		else
+		{
+			Dom.removeClass(button, ButtonState.WAITING);
+		}
+	}
+
+	#getButtonContainer(): ?HTMLElement
+	{
+		if (Dom.hasClass(this.#container, Button.BASE_CLASS)
+			|| Dom.hasClass(this.#container, SplitButton.BASE_CLASS))
+		{
+			return this.#container;
+		}
+
+		if (Dom.hasClass(this.#container.parentNode, Button.BASE_CLASS)
+			|| Dom.hasClass(this.#container.parentNode, SplitButton.BASE_CLASS))
+		{
+			return this.#container.parentNode;
+		}
+
+		return null;
 	}
 
 	#handleMenuButtonClick()
 	{
-		this.#showMenu();
+		if (!this.#waiting)
+		{
+			this.#showMenu();
+		}
 	}
 
 	#showMenu()

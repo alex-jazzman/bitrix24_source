@@ -30,7 +30,7 @@ class HumanResources extends CModule
 			'main' => [
 				'OnAfterUserUpdate' => [UserEventHandler::class, 'onAfterUserUpdate',],
 				'OnAfterUserDelete' => [UserEventHandler::class, 'onAfterUserDelete',],
-				'OnAfterUserAdd' => [UserEventHandler::class, 'onAfterUserAdd',],
+				'OnAfterUserAdd' => [UserEventHandler::class, 'onAfterUserAdd', 9],
 				'OnAuthProvidersBuildList' => ['\Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider', 'getProviders',],
 			],
 			'humanresources' => [
@@ -170,7 +170,8 @@ class HumanResources extends CModule
 					$eventCode,
 					$this->MODULE_ID,
 					$callback[0],
-					$callback[1]
+					$callback[1],
+					$callback[2] ?? 100,
 				);
 			}
 		}

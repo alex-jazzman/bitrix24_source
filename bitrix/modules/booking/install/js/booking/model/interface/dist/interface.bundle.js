@@ -100,7 +100,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      embedItems: this.getVariable('embedItems', []),
 	      animationPause: false,
 	      createdFromEmbedBookings: {},
-	      createdFromEmbedWaitListItems: {}
+	      createdFromEmbedWaitListItems: {},
+	      menuOpenedForBookingKey: this.getVariable('menuOpenedForBookingKey', ''),
+	      enabledFeature: this.getVariable('enabledFeature', {}),
+	      shouldShowWhatsAppEmergency: false
 	    };
 	  }
 
@@ -222,6 +225,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      mousePosition: state => state.mousePosition,
 	      /** @function interface/isCurrentSenderAvailable */
 	      isCurrentSenderAvailable: state => state.isCurrentSenderAvailable,
+	      /** @function interface/shouldShowWhatsAppEmergency */
+	      shouldShowWhatsAppEmergency: state => state.shouldShowWhatsAppEmergency,
 	      /** @function interface/getColliding */
 	      getColliding: (state, getters) => {
 	        return (resourceId, excludedBookingIds) => {
@@ -276,6 +281,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/isWaitListItemCreatedFromEmbed */
 	      isWaitListItemCreatedFromEmbed: state => id => {
 	        return id in state.createdFromEmbedWaitListItems;
+	      },
+	      /** @function interface/isMenuOpenedForBooking */
+	      isMenuOpenedForBooking: state => (bookingId, resourceId) => {
+	        return state.menuOpenedForBookingKey === `${bookingId}-${resourceId}`;
+	      },
+	      /** @function interface/isMenuOpenedForWaitListItem */
+	      isMenuOpenedForWaitListItem: state => waitListItemId => {
+	        return state.menuOpenedForWaitListItem === waitListItemId;
 	      }
 	    };
 	  }
@@ -456,6 +469,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      setIsCurrentSenderAvailable: (store, isCurrentSenderAvailable) => {
 	        store.commit('setIsCurrentSenderAvailable', isCurrentSenderAvailable);
 	      },
+	      /** @function interface/setShouldShowWhatsAppEmergency */
+	      setShouldShowWhatsAppEmergency: (store, shouldShowWhatsAppEmergency) => {
+	        store.commit('setShouldShowWhatsAppEmergency', shouldShowWhatsAppEmergency);
+	      },
 	      /** @function interface/setIsFeatureEnabled */
 	      setIsFeatureEnabled: (store, isFeatureEnabled) => {
 	        store.commit('setIsFeatureEnabled', isFeatureEnabled);
@@ -497,6 +514,20 @@ this.BX.Booking = this.BX.Booking || {};
 	        if (embedItems.length > 0) {
 	          commit('addCreatedFromEmbedWaitListItem', id);
 	        }
+	      },
+	      /** @function interface/setMenuOpenedForBooking */
+	      setMenuOpenedForBooking: (store, {
+	        bookingId,
+	        resourceId
+	      }) => {
+	        store.commit('setMenuOpenedForBooking', {
+	          bookingId,
+	          resourceId
+	        });
+	      },
+	      /** @function interface/setMenuOpenedForWaitListItem */
+	      setMenuOpenedForWaitListItem: (store, waitListItemId) => {
+	        store.commit('setMenuOpenedForWaitListItem', waitListItemId);
 	      }
 	    };
 	  }
@@ -632,6 +663,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      setIsCurrentSenderAvailable: (state, isCurrentSenderAvailable) => {
 	        state.isCurrentSenderAvailable = isCurrentSenderAvailable;
 	      },
+	      setShouldShowWhatsAppEmergency: (state, shouldShowWhatsAppEmergency) => {
+	        state.shouldShowWhatsAppEmergency = shouldShowWhatsAppEmergency;
+	      },
 	      setIsFeatureEnabled: (state, isFeatureEnabled) => {
 	        state.isFeatureEnabled = isFeatureEnabled;
 	      },
@@ -664,6 +698,15 @@ this.BX.Booking = this.BX.Booking || {};
 	          return;
 	        }
 	        state.createdFromEmbedWaitListItems[id] = id;
+	      },
+	      setMenuOpenedForBooking: (state, {
+	        bookingId,
+	        resourceId
+	      }) => {
+	        state.menuOpenedForBookingKey = `${bookingId}-${resourceId}`;
+	      },
+	      setMenuOpenedForWaitListItem: (state, waitListItemId) => {
+	        state.menuOpenedForWaitListItem = waitListItemId;
 	      }
 	    };
 	  }

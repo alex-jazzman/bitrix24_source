@@ -45,15 +45,14 @@ jn.define('ui-system/blocks/banners/safety-banner/src/center-banner', (require, 
 					testId: getTestId('image'),
 					resizeMode: 'contain',
 					style: {
-						height: 108,
-						width: 108,
+						height: 120,
+						width: 120,
 					},
 				}),
 				Text5({
 					text: description,
 					color: Color.base2,
 					style: {
-						marginTop: Indent.XL2.toNumber(),
 						textAlign: 'center',
 					},
 				}),

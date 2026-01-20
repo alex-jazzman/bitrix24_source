@@ -2,8 +2,12 @@
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Loader;
 use Bitrix\Security\Mfa\Otp;
+use Bitrix\Security\Mfa\OtpType;
 use Bitrix\Security\Mfa\RecoveryCodesTable;
+use Bitrix\Security\Controller\PushOtp;
+use Bitrix\Mobile\Deeplink;
 
 /**
  * @global CUser $USER
@@ -54,21 +58,22 @@ if (
 	));
 }
 
+$post = $request->getPostList();
 
-switch($request->getPost('action'))
+switch ($post['action'])
 {
-	case 'get_vew_params':
-		response(array(
-			'status' => 'ok',
-			'data' => getViewParams($userId, $request->getPost('type'))
-		));
+	case 'get_view_params':
+		$result = getViewParams($userId, $post['type']);
+		response($result);
+		break;
+
+	case 'get_push_params':
+		$result = getPushParams($userId);
+		response($result);
 		break;
 
 	case 'check_activate':
-		if (
-			$request->getPost('secret') === null
-			|| $request->getPost('sync1') === null
-		)
+		if ($post['secret'] === null || $post['sync1'] === null)
 		{
 			$result = array(
 				'status' => 'error',
@@ -80,18 +85,21 @@ switch($request->getPost('action'))
 			$fields = array(
 				'ACTIVE' => 'Y',
 				'USER_ID' => $userId,
-				'SECRET' => $_POST['secret'],
-				'TYPE' => $_POST['type'],
+				'SECRET' => $post['secret'],
+				'TYPE' => $post['type'],
 				'INIT_PARAMS' => [],
-				'SYNC1' => $_POST['sync1'],
-				'SYNC2' => $_POST['sync2'] ?? '',
+				'SYNC1' => $post['sync1'],
+				'SYNC2' => $post['sync2'] ?? '',
 			);
 
-			if ($_POST['type'] === Otp::TYPE_TOTP)
+			if ($post['type'] === OtpType::Totp->value)
 			{
-				$fields['INIT_PARAMS'] = [
-					'startTimestamp' => (int)($_POST['startTimestamp'] ?? 0),
-				];
+				$fields['INIT_PARAMS']['startTimestamp'] = (int)($post['startTimestamp'] ?? 0);
+			}
+
+			if (!empty($post['deviceInfo']))
+			{
+				$fields['INIT_PARAMS']['deviceInfo'] = $post['deviceInfo'];
 			}
 
 			$result = checkAndActivate($fields);
@@ -101,12 +109,12 @@ switch($request->getPost('action'))
 		break;
 
 	case 'deactivate':
-		$result = deactivate($userId, $request->getPost('days'));
+		$result = deactivate($userId, $post['days']);
 		response($result);
 		break;
 
 	case 'deffer':
-		$result = deffer($userId, $request->getPost('days'));
+		$result = deffer($userId, $post['days']);
 		response($result);
 		break;
 
@@ -116,7 +124,7 @@ switch($request->getPost('action'))
 		break;
 
 	case 'get_recovery_codes':
-		$result = getRecoveryCodes($userId, $request->getPost('allow_regenerate') === 'Y');
+		$result = getRecoveryCodes($userId, $post['allow_regenerate'] === 'Y');
 		response($result);
 		break;
 
@@ -137,22 +145,55 @@ function response($result)
 	CMain::FinalActions(Json::encode($result));
 }
 
-function getViewParams($userId, $type = null)
+function getViewParams($userId, $type)
 {
+	$data = [];
+
 	$otp = Otp::getByUser($userId);
 	$otp->regenerate();
 	if ($type)
-		$otp->setType($type);
+	{
+		$otp->setType(OtpType::from($type));
+	}
 
-	$result = array();
-	$result['secret'] = $otp->getHexSecret();
-	$result['type'] = $otp->getType();
-	$result['appSecret'] = $otp->getAppSecret();
-	$result['appSecretSpaced'] = trim(chunk_split($result['appSecret'], 4, ' '));
-	$result['provisionUri'] = $otp->getProvisioningUri();
-	$result['isTwoCodeRequired'] = $otp->getAlgorithm()->isTwoCodeRequired();
+	$data['type'] = $otp->getType()->value;
+	$data['secret'] = $otp->getHexSecret();
+	$data['appSecret'] = $otp->getAppSecret();
+	$data['appSecretSpaced'] = trim(chunk_split($data['appSecret'], 4, ' '));
+	$data['provisionUri'] = $otp->getProvisioningUri();
+	$data['isTwoCodeRequired'] = $otp->getAlgorithm()->isTwoCodeRequired();
 
-	return $result;
+	return [
+		'status' => 'ok',
+		'data' => $data,
+	];
+}
+
+function getPushParams($userId)
+{
+	$data = [];
+
+	if (Otp::isPushPossible())
+	{
+		$config = PushOtp::getPullConfig();
+
+		$data['pullConfig'] = $config['pullConfig'];
+
+		Loader::includeModule("mobile");
+
+		$link = 'pushOtpInit/' . $config['channelTag'];
+		$data['mobileAppUri'] = Deeplink::getAuthLink($link, $userId, 600);
+
+		return [
+			'status' => 'ok',
+			'data' => $data,
+		];
+	}
+
+	return [
+		'status' => 'error',
+		'error' => 'PUSH_OTP_DISABLED'
+	];
 }
 
 function checkAndActivate($fields)
@@ -172,7 +213,7 @@ function checkAndActivate($fields)
 
 		$otp
 			->regenerate($binarySecret)
-			->setType($fields['TYPE'])
+			->setType(OtpType::from($fields['TYPE']))
 			->setInitParams($fields['INIT_PARAMS'])
 			->syncParameters($fields['SYNC1'], $fields['SYNC2'])
 			->save()
@@ -307,18 +348,22 @@ function getRecoveryCodes($userId, $isRegenerationAllowed = false)
 	}
 
 	if (empty($normalizedCodes) && $isRegenerationAllowed)
+	{
 		return regenerateRecoveryCodes($userId);
-	else
-		return array(
-			'status' => 'ok',
-			'codes' => $normalizedCodes
-		);
+	}
+
+	return array(
+		'status' => 'ok',
+		'codes' => $normalizedCodes
+	);
 }
 
 function regenerateRecoveryCodes($userId)
 {
 	if (!Otp::getByUser($userId)->isActivated())
+	{
 		ShowError('OTP inactive');
+	}
 
 	CUserOptions::SetOption('security', 'recovery_codes_generated', time());
 	RecoveryCodesTable::regenerateCodes($userId);

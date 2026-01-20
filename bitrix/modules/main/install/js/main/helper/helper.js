@@ -32,6 +32,7 @@ BX.Helper =
 		this.helpUrl = params.helpUrl || '';
 		this.notifyNum = params.notifyNum || '';
 		this.isAdmin = (params.isAdmin && params.isAdmin === 'Y') ? 'Y' : 'N';
+		this.isNewHelpdesk = params.isNewHelpdesk && params.isNewHelpdesk === 'Y';
 
 		if(this.openBtn)
 		{
@@ -150,7 +151,7 @@ BX.Helper =
 				promise.fulfill(this.getContent());
 				return promise;
 			}.bind(this),
-			width: 860,
+			width: this.isNewHelpdesk ? null : 860,
 			cacheable: false,
 			zIndex: sliderOptions.zIndex || null,
 			events: {

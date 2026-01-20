@@ -1,7 +1,10 @@
-import { mapGetters } from 'ui.vue3.vuex';
+import { Text } from 'main.core';
+
+import { Core } from 'tasks.v2.core';
+import { EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
-import { Model } from 'tasks.v2.const';
 import { DropZone } from 'tasks.v2.component.drop-zone';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { DescriptionEditor } from './description-editor';
 
@@ -15,63 +18,63 @@ export const DescriptionSheet = {
 		DescriptionEditor,
 		DropZone,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
+		sheetBindProps: {
+			type: Object,
 			required: true,
 		},
-		isShown: {
-			type: Boolean,
-			required: true,
-		},
-		doOpenInEditMode: {
+		enableSaveButton: {
 			type: Boolean,
 			default: false,
 		},
-		getBindElement: {
-			type: Function,
-			default: null,
-		},
-		getTargetContainer: {
-			type: Function,
-			default: null,
-		},
 	},
-	emits: ['show', 'close'],
+	emits: ['close'],
+	setup(): { task: TaskModel }
+	{
+		return {
+			EntityTypes,
+		};
+	},
+	data(): void
+	{
+		return {
+			uniqueKey: Text.getRandom(),
+		};
+	},
 	computed: {
-		...mapGetters({
-			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
-		}),
-	},
-	watch: {
-		titleFieldOffsetHeight(): void
+		bottomSheetContainer(): HTMLElement | null
 		{
-			this.$refs.bottomSheet?.adjustPosition();
+			return document.getElementById(`b24-bottom-sheet-${this.uniqueKey}`) || null;
 		},
-	},
-	methods: {
-		handleShow(): void
+		isDiskModuleInstalled(): boolean
 		{
-			this.$emit('show');
+			return Core.getParams().features.disk;
 		},
 	},
 	template: `
 		<BottomSheet
-			v-if="isShown"
-			:isExpanded="true"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="bottomSheet"
+			isExpanded
+			:padding="0"
+			:popupPadding="0"
+			:sheetBindProps
+			:uniqueKey
+			@close="$emit('close')"
 		>
 			<DescriptionEditor
-				ref="editorComponent"
-				:taskId="taskId"
-				:doOpenInEditMode="doOpenInEditMode"
-				:isExpanded="true"
-				@show="handleShow"
+				:taskId
+				:enableSaveButton
 				@close="$emit('close')"
 			/>
-			<DropZone :taskId="taskId"/>
+			<DropZone
+				v-if="isDiskModuleInstalled && task.rights.edit"
+				:container="bottomSheetContainer || {}"
+				:entityId="taskId"
+				:entityType="EntityTypes.Task"
+			/>
 		</BottomSheet>
 	`,
 };

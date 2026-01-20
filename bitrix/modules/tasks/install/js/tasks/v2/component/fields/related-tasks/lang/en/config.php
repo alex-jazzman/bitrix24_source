@@ -1,0 +1,5 @@
+<?php
+$MESS["TASKS_V2_RELATED_TASKS_ADD"] = "Add related task";
+$MESS["TASKS_V2_RELATED_TASKS_TITLE"] = "Related tasks";
+$MESS["TASKS_V2_RELATED_TASKS_TITLE_CHIP"] = "Related tasks";
+$MESS["TASKS_V2_RELATED_TASKS_TITLE_COUNT"] = "Related tasks: #COUNT#";

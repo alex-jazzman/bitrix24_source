@@ -38,7 +38,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const COMPANY_LAYOUT_NUMBER = 2;
 	const CREATE = 'create';
 
-	const { CRM_COMPANY, CRM_CONTACT } = EntitySelectorFactoryType;
+	const { CRM_COMPANY, CRM_CONTACT, USER } = EntitySelectorFactoryType;
 
 	const SELECTOR_TYPES_BY_ID = {
 		[TypeId.Contact]: CRM_CONTACT,
@@ -715,9 +715,12 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 			this.currentEntities = prevEntityList;
 
+			const addPermission = this.checkPermissions(selectorType, 'add');
+
 			const selector = EntitySelectorFactory.createByType(selectorType, {
 				createOptions: {
-					enableCreation: this.checkPermissions(selectorType, 'add'),
+					enableCreation: addPermission,
+					useCustomCreationElement: selectorType === USER,
 				},
 				provider: this.makeClientSelectorProvider(selectorType),
 				initSelectedIds: this.selectedIds(this.currentEntities),

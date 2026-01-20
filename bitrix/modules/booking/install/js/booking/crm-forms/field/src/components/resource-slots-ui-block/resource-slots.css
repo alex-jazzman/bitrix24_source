@@ -44,7 +44,7 @@
 	padding: 14px 12px;
 	cursor: pointer;
 	border-radius: 8px;
-	width: 70px;
+	min-width: 70px;
 	transition: background-color 200ms;
 }
 
@@ -72,4 +72,5 @@
 
 .booking--crm-forms--time-selector-block-header__button {
 	flex-shrink: 0;
+	padding-top: 16px;
 }

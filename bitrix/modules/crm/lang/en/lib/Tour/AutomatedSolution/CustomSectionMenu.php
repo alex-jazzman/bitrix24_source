@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_TOUR_AUTOMATED_SOLUTION_CUSTOM_SECTION_MENU_BUTTON"] = "OK";
+$MESS["CRM_TOUR_AUTOMATED_SOLUTION_CUSTOM_SECTION_MENU_TEXT"] = "Automated solution consolidates your department's SPAs. Use this menu for quick navigation.";
+$MESS["CRM_TOUR_AUTOMATED_SOLUTION_CUSTOM_SECTION_MENU_TITLE"] = "Your SPAs";

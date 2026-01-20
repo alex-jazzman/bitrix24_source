@@ -14,6 +14,7 @@ jn.define('im/messenger/const/file-type', (require, exports, module) => {
 		image: 'image',
 		audio: 'audio',
 		video: 'video',
+		videoNote: 'videoNote',
 		code: 'code',
 		call: 'call',
 		attach: 'attach',

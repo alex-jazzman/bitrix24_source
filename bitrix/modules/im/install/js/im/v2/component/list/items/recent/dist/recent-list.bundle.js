@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service_recent,im_v2_lib_menu,im_v2_lib_draft,im_v2_component_elements_listLoadingState,im_v2_component_list_items_elements_inputActionIndicator,im_v2_lib_dateFormatter,im_v2_lib_channel,main_date,im_v2_lib_parser,call_application_conference,im_v2_component_elements_chatTitle,im_v2_lib_call,call_lib_analytics,ui_iconSet_api_vue,im_public,im_v2_lib_createChat,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_feature,im_v2_lib_invite,im_v2_component_list_items_elements_emptyState,main_core,im_v2_lib_utils,main_core_events,im_v2_application_core,im_v2_const) {
+(function (exports,im_v2_component_list_items_elements_inputActionIndicator,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,im_v2_lib_channel,main_date,im_v2_lib_parser,ui_iconSet_api_vue,im_public,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_feature,im_v2_lib_invite,call_component_activeCallList,main_core,im_v2_application_core,im_v2_const,main_core_events,im_v2_component_elements_listLoadingState,im_v2_lib_createChat,im_v2_lib_draft,im_v2_lib_menu,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_component_list_items_elements_emptyState) {
 	'use strict';
 
 	const HiddenTitleByChatType = {
@@ -481,145 +481,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	// @vue/component
-	const ActiveCall = {
-	  name: 'ActiveCall',
-	  components: {
-	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
-	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
-	    ChatButton: im_v2_component_elements_button.ChatButton
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['click'],
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
-	    ButtonIcon: () => im_v2_component_elements_button.ButtonIcon,
-	    activeCall() {
-	      return this.item;
-	    },
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.activeCall.dialogId, true);
-	    },
-	    isConference() {
-	      return this.dialog.type === im_v2_const.ChatType.videoconf;
-	    },
-	    preparedName() {
-	      return main_core.Text.decode(this.activeCall.name);
-	    },
-	    anotherDeviceColorScheme() {
-	      return {
-	        backgroundColor: 'transparent',
-	        borderColor: '#bbde4d',
-	        iconColor: '#525c69',
-	        textColor: '#525c69',
-	        hoverColor: 'transparent'
-	      };
-	    },
-	    isTabWithActiveCall() {
-	      return this.$store.getters['recent/calls/hasActiveCall']() && Boolean(this.getCallManager().hasCurrentCall());
-	    },
-	    hasJoined() {
-	      return this.activeCall.state === im_v2_const.RecentCallStatus.joined;
-	    }
-	  },
-	  methods: {
-	    async onJoinClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.call.onJoinFromRecentItem);
-	      if (this.isConference) {
-	        call_lib_analytics.Analytics.getInstance().onJoinConferenceClick({
-	          callId: this.activeCall.call.id
-	        });
-	        const hasThisActiveConference = await call_application_conference.ConferenceChannel.getInstance().sendRequest(this.dialog.public.code);
-	        if (hasThisActiveConference.some(call => call)) {
-	          return;
-	        }
-	        im_public.Messenger.openConference({
-	          code: this.dialog.public.code
-	        });
-	        return;
-	      }
-	      const hasThisActiveCall = await this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
-	      if (hasThisActiveCall.some(call => call)) {
-	        return;
-	      }
-	      this.getCallManager().joinCall(this.activeCall.call.id, this.activeCall.call.uuid, this.activeCall.dialogId);
-	    },
-	    onBackToCallClick() {
-	      if (this.isConference) {
-	        call_application_conference.ConferenceChannel.getInstance().sendRequest(this.dialog.public.code);
-	        return;
-	      }
-	      this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
-	    },
-	    onLeaveCallClick() {
-	      this.getCallManager().leaveCurrentCall();
-	    },
-	    onClick(event) {
-	      const recentItem = this.$store.getters['recent/get'](this.activeCall.dialogId);
-	      if (!recentItem) {
-	        return;
-	      }
-	      this.$emit('click', {
-	        item: recentItem,
-	        $event: event
-	      });
-	    },
-	    returnToCall() {
-	      if (this.activeCall.state !== im_v2_const.RecentCallStatus.joined) {
-	        return;
-	      }
-	      this.getCallManager().unfoldCurrentCall();
-	    },
-	    getCallManager() {
-	      return im_v2_lib_call.CallManager.getInstance();
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div :data-id="activeCall.dialogId" class="bx-im-list-recent-item__wrap bx-im-list-recent-active-call-item__wrap">
-			<div @click="onClick" class="bx-im-list-recent-item__container bx-im-list-recent-active-call__container">
-				<div class="bx-im-list-recent-item__avatar_container">
-					<ChatAvatar 
-						:avatarDialogId="activeCall.dialogId" 
-						:contextDialogId="activeCall.dialogId" 
-						:size="AvatarSize.XL" 
-					/>
-				</div>
-				<div class="bx-im-list-recent-item__content_container">
-					<div class="bx-im-list-recent-active-call__title_container">
-						<ChatTitle :text="preparedName" />
-						<div class="bx-im-list-recent-active-call__title_icon"></div>
-					</div>
-					<div v-if="!hasJoined" class="bx-im-list-recent-active-call__actions_container">
-						<div class="bx-im-list-recent-active-call__actions_item --join">
-							<ChatButton @click.stop="onJoinClick" :size="ButtonSize.M" :color="ButtonColor.Success" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_JOIN')" />
-						</div>
-					</div>
-					<div v-else-if="hasJoined && isTabWithActiveCall" class="bx-im-list-recent-active-call__actions_container">
-						<div class="bx-im-list-recent-active-call__actions_item --return">
-							<ChatButton @click.stop="returnToCall" :size="ButtonSize.M" :color="ButtonColor.Success" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_RETURN')" />
-						</div>
-					</div>
-					<div v-else-if="hasJoined && !isTabWithActiveCall" class="bx-im-list-recent-active-call__actions_container">
-						<div class="bx-im-list-recent-active-call__actions_item --another-device">
-							<ChatButton :size="ButtonSize.M" @click.stop="onBackToCallClick" :customColorScheme="anotherDeviceColorScheme" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE')" />
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
 	const DefaultTitleByChatType = {
 	  [im_v2_const.ChatType.chat]: main_core.Loc.getMessage('IM_LIST_RECENT_CREATE_CHAT_DEFAULT_TITLE'),
 	  [im_v2_const.ChatType.videoconf]: main_core.Loc.getMessage('IM_LIST_RECENT_CREATE_CONFERENCE_DEFAULT_TITLE'),
@@ -808,6 +669,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	// @vue/component
+	const ActiveCallList = {
+	  name: 'ActiveCallList',
+	  props: {
+	    listIsScrolled: {
+	      type: Boolean,
+	      required: true
+	    }
+	  },
+	  emits: ['onCallClick'],
+	  computed: {
+	    componentToRender() {
+	      return call_component_activeCallList.ActiveCallList;
+	    }
+	  },
+	  template: `
+		<component v-if="componentToRender" :is="componentToRender" :listIsScrolled="listIsScrolled" @onCallClick="$emit('onCallClick', $event)" />
+	`
+	};
+
 	class BroadcastManager extends main_core_events.EventEmitter {
 	  static getInstance() {
 	    if (!this.instance) {
@@ -881,12 +762,181 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	// @vue/component
+	const RecentUnreadList = {
+	  name: 'RecentUnreadList',
+	  components: {
+	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
+	    RecentItem,
+	    ActiveCallList,
+	    CreateChat,
+	    EmptyState,
+	    RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+	  },
+	  emits: ['chatClick'],
+	  data() {
+	    return {
+	      isLoading: false,
+	      isLoadingNextPage: false,
+	      listIsScrolled: false,
+	      isCreatingChat: false
+	    };
+	  },
+	  computed: {
+	    collection() {
+	      return this.getUnreadRecentService().getCollection();
+	    },
+	    isEmptyCollection() {
+	      return this.collection.length === 0;
+	    },
+	    preparedItems() {
+	      return [...this.collection].sort((a, b) => {
+	        const firstDate = this.$store.getters['recent/getSortDate'](a.dialogId);
+	        const secondDate = this.$store.getters['recent/getSortDate'](b.dialogId);
+	        return secondDate - firstDate;
+	      });
+	    },
+	    activeCalls() {
+	      return this.$store.getters['recent/calls/get'];
+	    },
+	    pinnedItems() {
+	      return this.preparedItems.filter(item => {
+	        return item.pinned === true;
+	      });
+	    },
+	    generalItems() {
+	      return this.preparedItems.filter(item => {
+	        return item.pinned === false;
+	      });
+	    }
+	  },
+	  async created() {
+	    this.contextMenuManager = new im_v2_lib_menu.RecentMenu({
+	      emitter: this.getEmitter()
+	    });
+	    this.initLikeManager();
+	    this.initCreateChatManager();
+	    this.isLoading = true;
+	    await this.getUnreadRecentService().loadFirstPage({
+	      ignorePreloadedItems: true
+	    });
+	    this.isLoading = false;
+	    void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
+	  },
+	  beforeUnmount() {
+	    this.contextMenuManager.destroy();
+	    this.destroyLikeManager();
+	    this.destroyCreateChatManager();
+	  },
+	  methods: {
+	    async onScroll(event) {
+	      this.listIsScrolled = event.target.scrollTop > 0;
+	      this.getUnreadRecentService().hasMoreItemsToLoad = true;
+	      this.contextMenuManager.close();
+	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.getUnreadRecentService().hasMoreItemsToLoad) {
+	        return;
+	      }
+	      this.isLoadingNextPage = true;
+	      await this.getUnreadRecentService().loadNextPage();
+	      this.isLoadingNextPage = false;
+	    },
+	    onClick(item) {
+	      this.$emit('chatClick', item.dialogId);
+	    },
+	    onRightClick(item, event) {
+	      if (im_v2_lib_utils.Utils.key.isCombination(event, 'Alt+Shift')) {
+	        return;
+	      }
+	      const context = {
+	        dialogId: item.dialogId,
+	        recentItem: item,
+	        compactMode: false
+	      };
+	      const positionTarget = {
+	        left: event.clientX,
+	        top: event.clientY
+	      };
+	      this.contextMenuManager.openMenu(context, positionTarget);
+	      event.preventDefault();
+	    },
+	    onCallClick({
+	      item,
+	      $event
+	    }) {
+	      this.onClick(item, $event);
+	    },
+	    initLikeManager() {
+	      this.likeManager = new LikeManager();
+	      this.likeManager.init();
+	    },
+	    destroyLikeManager() {
+	      this.likeManager.destroy();
+	    },
+	    initCreateChatManager() {
+	      if (im_v2_lib_createChat.CreateChatManager.getInstance().isCreating()) {
+	        this.isCreatingChat = true;
+	      }
+	      this.onCreationStatusChange = event => {
+	        this.isCreatingChat = event.getData();
+	      };
+	      im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.creationStatusChange, this.onCreationStatusChange);
+	    },
+	    destroyCreateChatManager() {
+	      im_v2_lib_createChat.CreateChatManager.getInstance().unsubscribe(im_v2_lib_createChat.CreateChatManager.events.creationStatusChange, this.onCreationStatusChange);
+	    },
+	    getUnreadRecentService() {
+	      if (!this.service) {
+	        this.service = im_v2_provider_service_recent.UnreadRecentService.getInstance();
+	      }
+	      return this.service;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-list-recent__container">
+			<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick"/>
+			<CreateChat v-if="isCreatingChat" />
+			<LoadingState v-if="isLoading" />
+			<div v-else @scroll="onScroll" class="bx-im-list-recent__scroll-container">
+				<RecentEmptyState
+					v-if="isEmptyCollection" 
+					:title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE')"
+				/>
+				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent__pinned_container">
+					<RecentItem
+						v-for="item in pinnedItems"
+						:key="item.dialogId"
+						:item="item"
+						@click="onClick(item, $event)"
+						@click.right="onRightClick(item, $event)"
+					/>
+				</div>
+				<div class="bx-im-list-recent__general_container">
+					<RecentItem
+						v-for="item in generalItems"
+						:key="item.dialogId"
+						:item="item"
+						@click="onClick(item, $event)"
+						@click.right="onRightClick(item, $event)"
+					/>
+				</div>
+				<LoadingState v-if="isLoadingNextPage" />
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const RecentList = {
 	  name: 'RecentList',
 	  components: {
 	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
 	    RecentItem,
-	    ActiveCall,
+	    ActiveCallList,
 	    CreateChat,
 	    EmptyState
 	  },
@@ -947,7 +997,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  async created() {
-	    this.contextMenuManager = new im_v2_lib_menu.RecentMenu();
+	    this.contextMenuManager = new im_v2_lib_menu.RecentMenu({
+	      emitter: this.getEmitter()
+	    });
 	    this.initBroadcastManager();
 	    this.initLikeManager();
 	    this.initCreateChatManager();
@@ -1042,24 +1094,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return this.service;
 	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
 		<div class="bx-im-list-recent__container">
-			<div v-if="activeCalls.length > 0" class="bx-im-list-recent__calls_container" :class="{'--with-shadow': listIsScrolled}">
-				<ActiveCall
-					v-for="activeCall in activeCalls"
-					:key="activeCall.dialogId"
-					:item="activeCall"
-					@click="onCallClick"
-				/>
-			</div>
+			<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick"/>
 			<CreateChat v-if="isCreatingChat" />
 			<LoadingState v-if="isLoading && !firstPageLoaded" />
 			<div v-else @scroll="onScroll" class="bx-im-list-recent__scroll-container">
-				<EmptyState v-if="isEmptyCollection" />
+				<EmptyState 
+					v-if="isEmptyCollection"
+				/>
 				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent__pinned_container">
 					<RecentItem
 						v-for="item in pinnedItems"
@@ -1086,6 +1136,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 	exports.RecentItem = RecentItem;
+	exports.RecentUnreadList = RecentUnreadList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.Application,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Call.Lib,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX?.Messenger?.v2?.Component?.List??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Call?.Component??{},BX??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.List??{}));
 //# sourceMappingURL=recent-list.bundle.js.map

@@ -7,6 +7,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { ObjectUtils, Normalizer } = require('im/messenger/lib/utils');
 	const { clone } = require('utils/object');
+	const { withCurrentDomain } = require('utils/url');
 
 	function validate(messageData)
 	{
@@ -135,7 +136,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 
 		if (Type.isPlainObject(message.params) || Type.isArray(message.params))
 		{
-			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(message.params);
+			const { params, fileIds, attach, richLinkId, keyboard, stickerParams } = validateParams(message.params);
 			result.params = params;
 			result.files = fileIds;
 
@@ -152,6 +153,11 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			if (Type.isUndefined(result.keyboard))
 			{
 				result.keyboard = keyboard;
+			}
+
+			if (Type.isUndefined(result.stickerParams))
+			{
+				result.stickerParams = stickerParams;
 			}
 		}
 
@@ -246,6 +252,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 		let attach = [];
 		let keyboard = [];
 		let richLinkId = null;
+		let stickerParams = null;
 
 		Object.entries(rawParams).forEach(([key, value]) => {
 			if (key === 'COMPONENT_ID' && Type.isStringFilled(value))
@@ -289,13 +296,28 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 				richLinkId = value[0] ? Number(value[0]) : null;
 				params.URL_ID = value;
 			}
+			else if (key === 'STICKER_PARAMS')
+			{
+				const preparedValue = ObjectUtils.convertKeysToCamelCase(clone(value));
+				params.STICKER_PARAMS = preparedValue;
+
+				stickerParams = {
+					id: preparedValue.id,
+					type: preparedValue.type,
+					packId: preparedValue.packId,
+					packType: preparedValue.packType,
+					uri: withCurrentDomain(preparedValue.uri),
+					height: preparedValue.height,
+					width: preparedValue.width,
+				};
+			}
 			else
 			{
 				params[key] = value;
 			}
 		});
 
-		return { params, fileIds, attach, richLinkId, keyboard };
+		return { params, fileIds, attach, richLinkId, keyboard, stickerParams };
 	}
 
 	module.exports = {

@@ -10,7 +10,7 @@ const warningStore = new WarningStore();
 const aliasStore = new Map();
 
 const globalTarget = {
-	GLOBAL_TARGET: 'GLOBAL_TARGET' // this key only for debugging purposes
+	GLOBAL_TARGET: 'GLOBAL_TARGET', // this key only for debugging purposes
 };
 eventStore.add(globalTarget, { maxListeners: 25 });
 
@@ -33,11 +33,11 @@ export default class EventEmitter
 		this[isEmitterProperty] = true;
 
 		let target = this;
-		if (Object.getPrototypeOf(this) === EventEmitter.prototype && args.length > 0) //new EventEmitter(obj) case
+		if (Object.getPrototypeOf(this) === EventEmitter.prototype && args.length > 0)
 		{
 			if (!Type.isObject(args[0]))
 			{
-				throw new TypeError(`The "target" argument must be an object.`);
+				throw new TypeError('The "target" argument must be an object.');
 			}
 
 			target = args[0];
@@ -77,8 +77,7 @@ export default class EventEmitter
 		Object.setPrototypeOf(emitter, targetProto);
 		Object.setPrototypeOf(target, emitter);
 
-		Object.getOwnPropertyNames(EventEmitter.prototype).forEach(method => {
-
+		Object.getOwnPropertyNames(EventEmitter.prototype).forEach((method) => {
 			if (['constructor'].includes(method))
 			{
 				return;
@@ -86,7 +85,7 @@ export default class EventEmitter
 
 			emitter[method] = function(...args) {
 				return EventEmitter.prototype[method].apply(target, args);
-			}
+			};
 		});
 	}
 
@@ -117,7 +116,7 @@ export default class EventEmitter
 		options?: {
 			compatMode?: boolean,
 			useGlobalNaming?: boolean
-		}
+		},
 	): void
 	{
 		if (Type.isString(target))
@@ -130,13 +129,13 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		eventName = this.normalizeEventName(eventName);
 		if (!Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		listener = this.normalizeListener(listener);
@@ -152,7 +151,6 @@ export default class EventEmitter
 			console.error(`You cannot subscribe the same "${fullEventName}" event listener twice.`);
 		}
 		else
-		{
 			if (listeners)
 			{
 				listeners.set(
@@ -160,9 +158,9 @@ export default class EventEmitter
 					{
 						listener,
 						options,
-						sort: this.getNextSequenceValue()
-					}
-				)
+						sort: this.getNextSequenceValue(),
+					},
+				);
 			}
 			else
 			{
@@ -171,13 +169,12 @@ export default class EventEmitter
 					{
 						listener,
 						options,
-						sort: this.getNextSequenceValue()
-					}
+						sort: this.getNextSequenceValue(),
+					},
 				]]);
 
 				eventsMap.set(fullEventName, listeners);
 			}
-		}
 
 		const maxListeners = this.getMaxListeners(target, eventName);
 		if (listeners.size > maxListeners)
@@ -229,7 +226,6 @@ export default class EventEmitter
 		aliases = Type.isPlainObject(aliases) ? EventEmitter.normalizeAliases(aliases) : {};
 
 		Object.keys(options).forEach((eventName) => {
-
 			const listener = EventEmitter.normalizeListener(options[eventName]);
 			eventName = EventEmitter.normalizeEventName(eventName);
 
@@ -242,7 +238,7 @@ export default class EventEmitter
 			{
 				EventEmitter.subscribe(this, eventName, listener, { compatMode: compatMode === true });
 			}
-		})
+		});
 	}
 
 	/**
@@ -255,7 +251,7 @@ export default class EventEmitter
 	static subscribeOnce(
 		target: Object,
 		eventName: string,
-		listener: (event: BaseEvent) => void
+		listener: (event: BaseEvent) => void,
 	): void
 	{
 		if (Type.isString(target))
@@ -267,13 +263,13 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		eventName = this.normalizeEventName(eventName);
 		if (!Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		listener = this.normalizeListener(listener);
@@ -335,7 +331,7 @@ export default class EventEmitter
 		listener: (event: BaseEvent) => void,
 		options?: {
 			useGlobalNaming?: boolean
-		}
+		},
 	): void
 	{
 		if (Type.isString(target))
@@ -348,7 +344,7 @@ export default class EventEmitter
 		eventName = this.normalizeEventName(eventName);
 		if (!Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		listener = this.normalizeListener(listener);
@@ -399,7 +395,7 @@ export default class EventEmitter
 		eventName?: string,
 		options?: {
 			useGlobalNaming?: boolean
-		}
+		},
 	): void
 	{
 		if (Type.isString(target))
@@ -416,7 +412,7 @@ export default class EventEmitter
 				options = Type.isPlainObject(options) ? options : {};
 				const fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
 				targetInfo.eventsMap.delete(fullEventName);
-				targetInfo.onceMap.delete(fullEventName)
+				targetInfo.onceMap.delete(fullEventName);
 			}
 		}
 		else if (Type.isNil(eventName))
@@ -457,7 +453,7 @@ export default class EventEmitter
 			cloneData?: boolean,
 			thisArg?: Object,
 			useGlobalNaming?: boolean
-		}
+		},
 	): Array
 	{
 		if (Type.isString(target))
@@ -470,13 +466,13 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		eventName = this.normalizeEventName(eventName);
 		if (!Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		options = Type.isPlainObject(options) ? options : {};
@@ -493,23 +489,21 @@ export default class EventEmitter
 		}
 
 		const listeners = [...globalListeners.values(), ...targetListeners.values()];
-		listeners.sort(function(a, b) {
+		listeners.sort((a, b) => {
 			return a.sort - b.sort;
 		});
 
 		const preparedEvent = this.prepareEvent(target, fullEventName, event);
 		const result = [];
 
-		for (let i = 0; i < listeners.length; i++)
+		for (const { listener, options: listenerOptions } of listeners)
 		{
 			if (preparedEvent.isImmediatePropagationStopped())
 			{
 				break;
 			}
 
-			const { listener, options: listenerOptions } = listeners[i];
-
-			//A previous listener could remove a current listener.
+			// A previous listener could remove a current listener.
 			if (globalListeners.has(listener) || targetListeners.has(listener))
 			{
 				let listenerResult;
@@ -517,13 +511,13 @@ export default class EventEmitter
 				{
 					let params = [];
 					const compatData = preparedEvent.getCompatData();
-					if (compatData !== null)
+					if (compatData === null)
 					{
-						params = options.cloneData === true ? Runtime.clone(compatData) : compatData
+						params = [preparedEvent];
 					}
 					else
 					{
-						params = [preparedEvent];
+						params = options.cloneData === true ? Runtime.clone(compatData) : compatData;
 					}
 
 					const context = Type.isUndefined(options.thisArg) ? target : options.thisArg;
@@ -531,10 +525,9 @@ export default class EventEmitter
 				}
 				else
 				{
-					listenerResult =
-						Type.isUndefined(options.thisArg)
-							? listener(preparedEvent)
-							: listener.call(options.thisArg, preparedEvent)
+					listenerResult =						Type.isUndefined(options.thisArg)
+						? listener(preparedEvent)
+						: listener.call(options.thisArg, preparedEvent)
 					;
 				}
 
@@ -556,8 +549,8 @@ export default class EventEmitter
 		if (this.getEventNamespace() === null)
 		{
 			console.warn(
-				'The instance of BX.Event.EventEmitter is supposed to have an event namespace. ' +
-				'Use emitter.setEventNamespace() to make events more unique.'
+				'The instance of BX.Event.EventEmitter is supposed to have an event namespace. '
+				+ 'Use emitter.setEventNamespace() to make events more unique.',
 			);
 		}
 
@@ -602,8 +595,8 @@ export default class EventEmitter
 		if (this.getEventNamespace() === null)
 		{
 			console.warn(
-				'The instance of BX.Event.EventEmitter is supposed to have an event namespace. ' +
-				'Use emitter.setEventNamespace() to make events more unique.'
+				'The instance of BX.Event.EventEmitter is supposed to have an event namespace. '
+				+ 'Use emitter.setEventNamespace() to make events more unique.',
 			);
 		}
 
@@ -658,7 +651,7 @@ export default class EventEmitter
 	{
 		let target = this.GLOBAL_TARGET;
 		let eventName = null;
-		let count = undefined;
+		let count;
 
 		if (args.length === 1)
 		{
@@ -682,18 +675,18 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		if (eventName !== null && !Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		if (!Type.isNumber(count) || count < 0)
 		{
 			throw new TypeError(
-				`The value of "count" is out of range. It must be a non-negative number. Received ${count}.`
+				`The value of "count" is out of range. It must be a non-negative number. Received ${count}.`,
 			);
 		}
 
@@ -743,7 +736,7 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		const targetInfo = eventStore.get(target);
@@ -918,17 +911,17 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		if (eventName !== null && !Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		if (!Type.isNumber(increment))
 		{
-			throw new TypeError(`The value of "increment" must be a number.`);
+			throw new TypeError('The value of "increment" must be a number.');
 		}
 
 		return [target, eventName, increment];
@@ -949,13 +942,13 @@ export default class EventEmitter
 
 		if (!Type.isObject(target))
 		{
-			throw new TypeError(`The "target" argument must be an object.`);
+			throw new TypeError('The "target" argument must be an object.');
 		}
 
 		eventName = this.normalizeEventName(eventName);
 		if (!Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		const targetInfo = eventStore.get(target);
@@ -965,6 +958,7 @@ export default class EventEmitter
 		}
 
 		const fullEventName = this.resolveEventName(eventName, target);
+
 		return targetInfo.eventsMap.get(fullEventName) || new Map();
 	}
 
@@ -986,7 +980,7 @@ export default class EventEmitter
 	{
 		if (!Type.isStringFilled(eventName))
 		{
-			throw new TypeError(`The "eventName" argument must be a string.`);
+			throw new TypeError('The "eventName" argument must be a string.');
 		}
 
 		return EventEmitter.makeFullEventName(this.getEventNamespace(), eventName);
@@ -1003,7 +997,7 @@ export default class EventEmitter
 		Object.keys(aliases).forEach((alias) => {
 			aliasStore.set(alias, {
 				eventName: aliases[alias].eventName,
-				namespace: aliases[alias].namespace
+				namespace: aliases[alias].namespace,
 			});
 		});
 
@@ -1018,7 +1012,7 @@ export default class EventEmitter
 	{
 		if (!Type.isPlainObject(aliases))
 		{
-			throw new TypeError(`The "aliases" argument must be an object.`);
+			throw new TypeError('The "aliases" argument must be an object.');
 		}
 
 		const result = Object.create(null);
@@ -1026,20 +1020,20 @@ export default class EventEmitter
 		{
 			if (!Type.isStringFilled(alias))
 			{
-				throw new TypeError(`The alias must be an non-empty string.`);
+				throw new TypeError('The alias must be an non-empty string.');
 			}
 
 			const options = aliases[alias];
 			if (!options || !Type.isStringFilled(options.eventName) || !Type.isStringFilled(options.namespace))
 			{
-				throw new TypeError(`The alias options must set the "eventName" and the "namespace".`);
+				throw new TypeError('The alias options must set the "eventName" and the "namespace".');
 			}
 
 			alias = this.normalizeEventName(alias);
 
 			result[alias] = {
 				eventName: options.eventName,
-				namespace: options.namespace
+				namespace: options.namespace,
 			};
 		}
 
@@ -1126,7 +1120,7 @@ export default class EventEmitter
 		if (!Type.isFunction(listener))
 		{
 			throw new TypeError(
-				`The "listener" argument must be of type Function. Received type ${typeof listener}.`
+				`The "listener" argument must be of type Function. Received type ${typeof listener}.`,
 			);
 		}
 

@@ -53,7 +53,8 @@ $notifyData = array_merge(\Bitrix\UI\InfoHelper::getParameters(), [
 			notifyData: <?= CUtil::PhpToJSObject($notifyData) ?>,
 			notifyUrl: '<?= $arResult["HELPDESK_URL"] . "/widget2/notify.php" ?>',
 			helpUrl: '<?= $arResult["HELPDESK_URL"] ?>',
-			runtimeUrl: '//helpdesk.bitrix24.ru/widget/hero/runtime.js'
+			runtimeUrl: '//helpdesk.bitrix24.ru/widget/hero/runtime.js',
+			isNewHelpdesk: '<?= \Bitrix\Main\Config\Option::get('intranet', 'isNewHelpdesk', 'N') === 'Y' ? 'Y' : 'N' ?>',
 		});
 
 		<?php if ($arResult['OPEN_HELPER_AFTER_PAGE_LOADING']): ?>

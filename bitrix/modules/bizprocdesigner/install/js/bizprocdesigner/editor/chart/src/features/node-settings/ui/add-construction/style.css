@@ -1,0 +1,8 @@
+.add-construction {
+	font-size: 14px;
+	line-height: normal;
+	color: var(--ui-color-palette-gray-70);
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}

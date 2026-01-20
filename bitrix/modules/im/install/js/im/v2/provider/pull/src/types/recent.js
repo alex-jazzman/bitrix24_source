@@ -1,3 +1,5 @@
+import { RecentType } from 'im.v2.const';
+
 import type { RawChat, RawFile, RawUser, RawMessage } from './common';
 
 export type RecentUpdateParams = {
@@ -12,6 +14,16 @@ export type RecentUpdateParams = {
 
 export type UserShowInRecentParams = {
 	items: UserShowInRecentItem[],
+};
+
+export type RecentHideParams = {
+	chatId: number,
+	dialogId: string,
+	lines: boolean,
+	recentConfigToHide: {
+		chatId: number,
+		sections: $Values<typeof RecentType>[],
+	}
 };
 
 type UserShowInRecentItem = {

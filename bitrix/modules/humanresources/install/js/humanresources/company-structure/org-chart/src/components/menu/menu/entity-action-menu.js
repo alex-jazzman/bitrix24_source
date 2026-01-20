@@ -3,9 +3,7 @@ import { AbstractActionMenu } from '../abstract-action-menu';
 import { AddDepartmentMenuItem } from '../items/department/add-department-menu-item';
 import { EditDepartmentMenuItem } from '../items/department/edit-department-menu-item';
 import { RemoveDepartmentMenuItem } from '../items/department/remove-department-menu-item';
-import { TeamRightsMenuItem } from '../items/department/team-rights-menu-item';
 import { AddEmployeeMenuItem } from '../items/employees/add-employee-menu-item';
-import { EditEmployeesMenuItem } from '../items/department/edit-employees-menu-item';
 import { MoveEmployeeMenuItem } from '../items/employees/move-employee-menu-item';
 import { UserInviteMenuItem } from '../items/employees/user-invite-menu-item';
 

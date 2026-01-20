@@ -84,7 +84,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST["submit"]) && (!isset($
 	else
 		$arResult["ERROR_MESSAGE"][] = GetMessage("MF_SESS_EXP");
 }
-elseif(isset($_REQUEST["success"]) && $_REQUEST["success"] == $arResult["PARAMS_HASH"])
+elseif(isset($_REQUEST["success"]) && $_REQUEST["success"] === $arResult["PARAMS_HASH"])
 {
 	$arResult["OK_MESSAGE"] = $arParams["OK_TEXT"];
 }

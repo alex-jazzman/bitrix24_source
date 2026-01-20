@@ -15,7 +15,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  ExpandGrid: 'expand_grid',
 	  SelectResources: 'select_resources',
 	  CyclePopup: 'cycle_popup',
-	  SearchNavigation: 'search_navigation'
+	  SearchNavigation: 'search_navigation',
+	  IntegrationMapsYa: 'integration_maps_ya'
 	});
 
 	const HelpDesk = Object.freeze({
@@ -26,6 +27,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  ResourceIntegrationSettings: {
 	    code: '23661822',
 	    anchorCode: 'calen'
+	  },
+	  ResourceBaseFields: {
+	    code: '23661822',
+	    anchorCode: ''
 	  },
 	  ResourceType: {
 	    code: '23661822',
@@ -62,6 +67,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  ResourceNotificationFeedback: {
 	    code: '23661926',
 	    anchorCode: 'feed'
+	  },
+	  ResourceTariffInfo: {
+	    code: '23661926',
+	    anchorCode: ''
 	  },
 	  AhaSelectResources: {
 	    code: '23661972',
@@ -106,6 +115,14 @@ this.BX.Booking = this.BX.Booking || {};
 	  WaitListDescription: {
 	    code: '24846212',
 	    anchorCode: ''
+	  },
+	  ResourceYandexIntegration: {
+	    code: '26922108',
+	    anchorCode: ''
+	  },
+	  ResourceYandexIntegrationServices: {
+	    code: '26922108',
+	    anchorCode: 'serv'
 	  }
 	});
 
@@ -143,7 +160,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  Resource: 'resource',
 	  Room: 'room',
 	  User: 'user',
-	  ResourceType: 'resource-type'
+	  ResourceType: 'resource-type',
+	  Product: 'product'
 	});
 
 	const EntitySelectorTab = Object.freeze({
@@ -159,13 +177,23 @@ this.BX.Booking = this.BX.Booking || {};
 
 	const EventName = Object.freeze({
 	  CloseWizard: 'booking:resource-creation-wizard:close',
+	  CloseYandexIntegrationWizard: 'booking:yandex-integration-wizard:close',
+	  CloseSkuResourcesEditor: 'booking:sku-resources-editor:close',
 	  CreateBookings: 'booking:booking:create',
 	  DeleteBooking: 'booking:booking:delete',
-	  UpdateBooking: 'booking:booking:update'
+	  UpdateBooking: 'booking:booking:update',
+	  StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation'
 	});
 
 	const Limit = Object.freeze({
 	  ResourcesDialog: 20
+	});
+	const LimitFeatureId = Object.freeze({
+	  CalendarIntegration: 'booking_calendar',
+	  MultiResources: 'booking_multi',
+	  NotificationsSettings: 'booking_notifications_settings',
+	  Overbooking: 'booking_overbooking',
+	  Waitlist: 'booking_waitlist'
 	});
 
 	const Model = Object.freeze({
@@ -181,10 +209,13 @@ this.BX.Booking = this.BX.Booking || {};
 	  MessageStatus: 'message-status',
 	  Notifications: 'notifications',
 	  ResourceCreationWizard: 'resource-creation-wizard',
+	  YandexIntegrationWizard: 'yandex-integration-wizard',
 	  ResourceTypes: 'resourceTypes',
 	  Resources: 'resources',
 	  WaitList: 'wait-list',
-	  Filter: 'filter'
+	  Filter: 'filter',
+	  SaleChannels: 'sale-channels',
+	  SkuResourcesEditor: 'sku-resources-editor'
 	});
 
 	const Module = Object.freeze({
@@ -233,6 +264,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  WaitListExpanded: 'wait_list_expanded',
 	  CalendarExpanded: 'calendar_expanded',
 	  NotificationsExpanded: 'notificationsExpanded',
+	  whatsAppEmergencyNotified: 'whatsapp_emergency_notified',
 	  // AhaMoments
 	  AhaBanner: 'aha_banner',
 	  AhaTrialBanner: 'aha_trial_banner',
@@ -244,7 +276,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  AhaExpandGrid: 'aha_expand_grid',
 	  AhaSelectResources: 'aha_select_resources',
 	  AhaCyclePopup: 'aha_cycle_popup',
-	  AhaSearchNavigation: 'aha_search_navigation'
+	  AhaSearchNavigation: 'aha_search_navigation',
+	  AhaIntegrationMapsYa: 'aha_integration_maps_ya'
 	});
 
 	const NotificationChannel = Object.freeze({
@@ -269,7 +302,23 @@ this.BX.Booking = this.BX.Booking || {};
 	});
 
 	const ResourceEntityType = Object.freeze({
-	  Calendar: 'calendar'
+	  Calendar: 'calendar',
+	  Sku: 'sku'
+	});
+
+	const IntegrationMapItemCode = Object.freeze({
+	  YANDEX: 'yandex',
+	  GIS: 'gis'
+	});
+	const IntegrationMapItemStatus = Object.freeze({
+	  CONNECTED: 'connected',
+	  NOT_CONNECTED: 'not_connected',
+	  IN_PROGRESS: 'in_progress'
+	});
+
+	const SkuResourcesEditorTab = Object.freeze({
+	  Skus: 'SkusView',
+	  Resources: 'ResourcesView'
 	});
 
 	const AnalyticsTool = Object.freeze({
@@ -316,6 +365,7 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.EntityTypeId = EntityTypeId;
 	exports.EventName = EventName;
 	exports.Limit = Limit;
+	exports.LimitFeatureId = LimitFeatureId;
 	exports.Model = Model;
 	exports.Module = Module;
 	exports.NotificationFieldsMap = NotificationFieldsMap;
@@ -325,6 +375,9 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.DraggedElementKind = DraggedElementKind;
 	exports.VisitStatus = VisitStatus;
 	exports.ResourceEntityType = ResourceEntityType;
+	exports.IntegrationMapItemCode = IntegrationMapItemCode;
+	exports.IntegrationMapItemStatus = IntegrationMapItemStatus;
+	exports.SkuResourcesEditorTab = SkuResourcesEditorTab;
 	exports.AnalyticsTool = AnalyticsTool;
 	exports.AnalyticsCategory = AnalyticsCategory;
 	exports.AnalyticsEvent = AnalyticsEvent;

@@ -1,0 +1,44 @@
+.bizproc-setuptemplateactivity-delimiter-field {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 5px;
+	padding: 0 6px;
+}
+
+.bizproc-setuptemplateactivity-delimiter-field .ui-ctl-container {
+	flex-grow: 1;
+}
+
+.bizproc-setuptemplateactivity-delimiter-field__label {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-setuptemplateactivity-delimiter-field__controls {
+	padding-top: 21px;
+}
+
+.bizproc-setuptemplateactivity-delimiter-field__delete-icon {
+	cursor: pointer;
+}
+
+.bizproc-setuptemplateactivity-delimiter-field__delete-icon:hover {
+	background-color: var(--ui-color-accent-main-primary-alt);
+}
+
+#bizprocSetupTemplateActivityElement > .ui-ctl-after.ui-ctl-icon-clear {
+	pointer-events: all;
+}
+
+#bizprocSetupTemplateActivityElement .ui-ctl-after[class*=ui-ctl-icon-] {
+	pointer-events: all;
+}
+
+#bizprocSetupTemplateActivityElement > .ui-ctl-icon-angle.ui-ctl-after[class*=ui-ctl-icon-angle],
+#bizprocSetupTemplateActivityElement .ui-ctl-icon-angle.ui-ctl-after[class*=ui-ctl-icon-angle] {
+	display: block !important;
+}

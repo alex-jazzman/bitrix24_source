@@ -41,11 +41,22 @@
     color: var(--ui-link-color);
 }
 
+.crm-type-grid-custom-section-title {
+	display: inline-flex;
+	align-items: center;
+}
+
+.crm-type-grid-custom-section-title .ui-icon-set {
+	--ui-icon-set__icon-color: #0154C8;
+	opacity: .3;
+}
+
 .crm-type-list-wrapper .crm-type-grid-custom-section-wrapper {
 	padding: 3px 7px;
 	border-radius: 14px;
 	cursor: pointer;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
 }
 
 .crm-type-list-wrapper .crm-type-grid-custom-section-wrapper.crm-type-grid-custom-section-active {
@@ -54,6 +65,11 @@
 
 .crm-type-list-wrapper .crm-type-grid-custom-section-wrapper.crm-type-grid-custom-section-inactive:hover {
 	background: #C0EDFD;
+}
+
+.crm-type-list-wrapper .crm-type-grid-custom-section-wrapper span {
+	display: inline-flex;
+	align-items: center;
 }
 
 .crm-type-grid-filter-remove {

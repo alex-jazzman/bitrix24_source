@@ -1,4 +1,4 @@
-import type { SlotRange, IntegrationCalendarType } from 'booking.model.resources';
+import type { SlotRange, IntegrationCalendarType, Skus } from 'booking.model.resources';
 
 export type ResourceDto = {
 	id: number | null,
@@ -7,6 +7,10 @@ export type ResourceDto = {
 	},
 	name: string,
 	description: string | null,
+	avatar: {
+		id: number | null,
+		url: string | null,
+	} | null,
 	isMain: boolean,
 	isPrimary: boolean,
 	isDeleted: boolean,
@@ -47,4 +51,16 @@ export type ResourceDto = {
 
 	// integrationCalendar
 	entities: IntegrationCalendarType[],
+
+	// skus
+	skus: Skus[],
+	skusYandex: Skus[],
 };
+
+export type ResourceDtoWithFile = ResourceDto & {
+	avatar: {
+		id: number | null,
+		url: string | null,
+		encodedFile: string | null,
+	} | null,
+}

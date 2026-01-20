@@ -12,6 +12,8 @@ type AvatarButtonOptions = {
 	skeleton: Object,
 	signDocumentsCounter: number,
 	signDocumentsPullEventName: string,
+	verifyPhoneCounter: boolean,
+	verifyPhonePullEventName: string,
 	workTimeAvailable: boolean,
 	workTimeState: string,
 	workTimeAction: string,
@@ -29,10 +31,10 @@ export class AvatarButton
 		this.#avatarWrapper = document.querySelector('[data-id="bx-avatar-widget"]');
 		this.#setEventHandlerForChangeAvatar();
 
-		if (this.#options.signDocumentsCounter > 0)
+		if (this.#options.signDocumentsCounter > 0 || this.#options.verifyPhoneCounter)
 		{
 			this.#showCounter();
-			this.#setEventHandlerForUpdateCounter();
+			this.#setEventHandlersForUpdateCounter();
 		}
 
 		if (this.#options.workTimeAvailable)
@@ -185,11 +187,16 @@ export class AvatarButton
 			return new Counter({
 				color: Counter.Color.DANGER,
 				size: Counter.Size.MEDIUM,
-				value: this.#options.signDocumentsCounter,
+				value: this.#calculateCounterValue(),
 				useAirDesign: true,
 				style: CounterStyle.FILLED_ALERT,
 			});
 		});
+	}
+
+	static #calculateCounterValue(): number
+	{
+		return this.#options.signDocumentsCounter + (this.#options.verifyPhoneCounter ? 1 : 0);
 	}
 
 	static #getWorkTimeState(): WorkTimeStateIcon
@@ -202,27 +209,51 @@ export class AvatarButton
 		});
 	}
 
-	static #setEventHandlerForUpdateCounter(): void
+	static #setEventHandlersForUpdateCounter(): void
 	{
-		PULL.subscribe({
-			moduleId: 'sign',
-			command: this.#options.signDocumentsPullEventName,
-			callback: (params) => {
-				if (!Type.isNumber(params?.needActionCount))
-				{
-					return;
-				}
+		if (this.#options.signDocumentsCounter > 0)
+		{
+			PULL.subscribe({
+				moduleId: 'sign',
+				command: this.#options.signDocumentsPullEventName,
+				callback: (params) => {
+					if (!Type.isNumber(params?.needActionCount))
+					{
+						return;
+					}
 
-				if (params?.needActionCount > 0)
-				{
-					this.#getCounter().update(params.needActionCount);
-				}
-				else
-				{
-					this.#getCounter().destroy();
-				}
-			},
-		});
+					if (params?.needActionCount > 0)
+					{
+						this.#options.signDocumentsCounter = params.needActionCount;
+						this.#getCounter().update(this.#calculateCounterValue());
+					}
+					else if (!this.#options.verifyPhoneCounter)
+					{
+						this.#options.signDocumentsCounter = 0;
+						this.#getCounter().destroy();
+					}
+				},
+			});
+		}
+
+		if (this.#options.verifyPhoneCounter)
+		{
+			PULL.subscribe({
+				moduleId: 'intranet',
+				command: this.#options.verifyPhonePullEventName,
+				callback: () => {
+					this.#options.verifyPhoneCounter = false;
+					if (this.#options.signDocumentsCounter <= 0)
+					{
+						this.#getCounter().destroy();
+					}
+					else
+					{
+						this.#getCounter().update(this.#calculateCounterValue());
+					}
+				},
+			});
+		}
 	}
 
 	static #setEventHandlerForChangeAvatar(): void

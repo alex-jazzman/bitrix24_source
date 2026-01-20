@@ -12,10 +12,12 @@ export class EntitySelectorDialog extends Dialog
 		const options = {
 			tagSelectorOptions: {
 				maxHeight: minTagSelectorHeight * 2,
+				textBoxWidth: '50%',
 			},
+			height: Math.max(minHeight, dialogOptions.height ?? (window.innerHeight / 2 - minTagSelectorHeight * 2)),
 			...dialogOptions,
-			height: Math.max(minHeight, dialogOptions.height ?? (window.innerHeight / 2 - minTagSelectorHeight)),
 			offsetAnimation: false,
+			compactView: true,
 		};
 
 		super(options);
@@ -25,6 +27,8 @@ export class EntitySelectorDialog extends Dialog
 	{
 		this.getPopup();
 		this.setTargetNode(targetNode);
+		this.getPopup().bringToFront();
+		this.unfreeze();
 		this.show();
 	}
 
@@ -58,11 +62,6 @@ export class EntitySelectorDialog extends Dialog
 				item.setDeselectable(false);
 			}
 		});
-	}
-
-	getItemsByIds(items: ItemId[]): Item[]
-	{
-		return this.getItems().filter((item: Item) => this.#inIds(item, items));
 	}
 
 	#inIds(item: Item, items: ItemId[]): boolean

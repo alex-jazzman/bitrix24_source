@@ -941,18 +941,18 @@ JS,
 	];
 
 	$developerMenuItems[] = [
-		"title" => "AppRatingManager test tool",
+		"title" => "Manual testing tools",
 		"color" => '#8590a2',
 		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
 		"hidden" => false,
 		"attrs" => [
-			"id" => "appratingmanager.testing.tool",
+			"id" => "testing.tools",
 			"onclick" => <<<JS
 				ComponentHelper.openLayout({
-					name: 'appratingmanager.testing.tool',
+					name: 'testing.tools',
 					object: 'layout',
 					widgetParams: {
-						title: 'AppRatingManager test tool'
+						title: 'Manual testing tools'
 					}
 				});
 JS,

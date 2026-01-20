@@ -1,9 +1,9 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 /**
@@ -473,7 +473,7 @@ $tabControl->BeginNextTab();
 				$arType = $event_type_ref[$str_EVENT_NAME];
 				$type_DESCRIPTION = htmlspecialcharsbx($arType["DESCRIPTION"]);
 				$type_NAME = htmlspecialcharsbx($arType["NAME_WITHOUT_EVENT_NAME"]);
-				?><input type="hidden" name="EVENT_NAME" value="<? echo $str_EVENT_NAME?>"><a href="type_edit.php?EVENT_NAME=<? echo $str_EVENT_NAME?>"><?echo $type_NAME?></a> [<? echo $str_EVENT_NAME?>]<?
+				?><input type="hidden" name="EVENT_NAME" value="<? echo $str_EVENT_NAME?>">[<a href="type_edit.php?EVENT_NAME=<?= $str_EVENT_NAME?>&amp;lang=<?= LANGUAGE_ID?>"><?= $str_EVENT_NAME?></a>] <?= $type_NAME?> <?
 			}
 			else
 			{

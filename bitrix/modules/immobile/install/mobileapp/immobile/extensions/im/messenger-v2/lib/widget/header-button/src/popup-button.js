@@ -25,8 +25,8 @@ jn.define('im/messenger-v2/lib/widget/header-button/popup-button', (require, exp
 		{
 			this.id = options.id;
 			this.title = options.title;
+			this.getTitle = options.getTitle;
 			this.callback = options.callback;
-
 			this.sectionCode = Type.isStringFilled(options.sectionCode) ? options.sectionCode : 'general';
 			this.iconName = Type.isStringFilled(options.iconName) ? options.iconName : '';
 			this.shouldShow = Type.isFunction(options.shouldShow) ? options.shouldShow : async () => true;
@@ -36,7 +36,7 @@ jn.define('im/messenger-v2/lib/widget/header-button/popup-button', (require, exp
 		{
 			return {
 				id: this.id,
-				title: this.title,
+				title: Type.isFunction(this.getTitle) ? this.getTitle() : this.title,
 				iconName: this.iconName,
 				sectionCode: this.sectionCode,
 				callback: this.callback,

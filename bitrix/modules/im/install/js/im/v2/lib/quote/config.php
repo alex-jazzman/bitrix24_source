@@ -14,7 +14,6 @@ return [
 	'css' => './dist/quote.bundle.css',
 	'rel' => [
 		'main.core',
-		'main.core.events',
 		'im.v2.lib.copilot',
 		'im.v2.application.core',
 		'im.v2.const',

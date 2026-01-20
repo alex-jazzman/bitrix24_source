@@ -1,11 +1,11 @@
-import {MessagesAutoDeleteConfigs} from "../../../pull/base/types/message";
-import {UserRole} from "../../../../model/users/src/types";
-import {DialogType} from "../../../../model/dialogues/src/types";
+import { MessagesAutoDeleteConfigs } from '../../../pull/base/types/message';
+import { UserRole } from '../../../../model/users/src/types';
+import { DialogType } from '../../../../model/dialogues/src/types';
 import {
 	ChatsCopilotDataItem,
 	CopilotRoleData,
-	MessageCopilotDataItem
-} from "../../../../model/dialogues/src/copilot/types";
+	MessageCopilotDataItem,
+} from '../../../../model/dialogues/src/copilot/types';
 
 declare type SyncListResult = {
 	chatSync: {
@@ -13,7 +13,7 @@ declare type SyncListResult = {
 		addedRecent: Record<string, number> | [],
 		completeDeletedChats: Record<string, number> | [],
 		deletedChats: Record<string, number> | [],
-	}
+	},
 	chats: Array<SyncRawChat>,
 	copilot: null | CopilotSyncData,
 	dialogIds: Record<number, string> | [],
@@ -21,7 +21,7 @@ declare type SyncListResult = {
 		lastServerDate: string | null, // null only when the log is empty on server
 		hasMore: boolean,
 		lastId: number | null,
-	}
+	},
 	files: Array<SyncRawFile>,
 	reactions: Array<SyncRawReaction>,
 	messages: Array<SyncRawMessage>,
@@ -35,7 +35,7 @@ declare type SyncListResult = {
 	pinSync: {
 		addedPins: Record<number, number> | [],
 		deletedPins: Record<number, number> | [],
-	}
+	},
 	pins: Array<SyncRawPin>,
 
 	recentItems: Array<SyncRawRecentItem>,
@@ -49,7 +49,7 @@ export type SyncRequestResultReceivedEvent = {
 }
 
 export type CopilotSyncData = {
-	aiProvider: string
+	aiProvider: string,
 	chats: Array<ChatsCopilotDataItem> | null,
 	messages: Array<MessageCopilotDataItem> | null,
 	roles: Record<string, CopilotRoleData> | null,
@@ -65,7 +65,7 @@ export type SyncRawMessage = {
 		userId: number,
 		chatTitle: string | null,
 		chatType: DialogType,
-	}
+	},
 	id: number,
 	isSystem: boolean,
 	params: Object | [],
@@ -111,7 +111,7 @@ export type SyncRawChat = {
 	messageType: string,
 	muteList: number[],
 	name: string,
-	optionalParams: []
+	optionalParams: [],
 	owner: number,
 	parentChatId: number,
 	parentMessageId: number,
@@ -122,10 +122,10 @@ export type SyncRawChat = {
 		manageUi: UserRole,
 		manageSettings: UserRole,
 		manageMessages: UserRole
-	}
+	},
 	public: string,
 	role: string,
-	type: DialogType
+	type: DialogType,
 	unreadId: number,
 	userCounter: number
 };
@@ -194,7 +194,7 @@ export type SyncRawUser = {
 		isHidden: boolean,
 		isSupportOpenline: boolean,
 		type: string,
-	}
+	},
 	color: string,
 	connector: boolean,
 	departments: Array<number>,

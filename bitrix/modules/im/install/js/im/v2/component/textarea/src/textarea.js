@@ -2,8 +2,10 @@ import 'ui.icon-set.outline';
 import { Extension, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 
 import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType, Color } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { DraftManager } from 'im.v2.lib.draft';
@@ -18,14 +20,15 @@ import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey
 import { Textarea } from 'im.v2.lib.textarea';
 import { InputAction } from 'im.v2.lib.input-action';
 import { SendButton } from 'im.v2.component.elements.send-button';
-import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
+import { MessageManager } from 'im.v2.lib.message';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { InputSenderService } from './classes/input-sender-service';
 import { ResizeDirection, ResizeManager } from './classes/resize-manager';
 import { AudioInput } from './components/audio-input/audio-input';
 import { SmileSelector } from './components/smile-selector/smile-selector';
+import { EmoteSelector } from './components/emote-selector/emote-selector';
 import { UploadMenu } from './components/upload-menu/upload-menu';
 import { UploadPreviewPopup } from './components/upload-preview/upload-preview-popup';
 import { MentionPopup } from './components/mention/mention-popup';
@@ -37,9 +40,9 @@ import './css/textarea.css';
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 import type { InsertTextEvent, InsertMentionEvent } from 'im.v2.const';
-import type { ForwardedEntityConfig, PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
+import type { PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
 
-const MESSAGE_ACTION_PANELS = new Set([PanelType.edit, PanelType.reply, PanelType.forward, PanelType.forwardEntity]);
+const MESSAGE_ACTION_PANELS = new Set([PanelType.edit, PanelType.reply, PanelType.forward]);
 const TextareaHeight = {
 	max: 400,
 	min: 22,
@@ -51,6 +54,7 @@ export const ChatTextarea = {
 	components: {
 		UploadMenu,
 		SmileSelector,
+		EmoteSelector,
 		SendButton,
 		UploadPreviewPopup,
 		MentionPopup,
@@ -134,10 +138,6 @@ export const ChatTextarea = {
 		{
 			return this.panelType === PanelType.forward;
 		},
-		forwardEntityMode(): boolean
-		{
-			return this.panelType === PanelType.forwardEntity;
-		},
 		editMode(): boolean
 		{
 			return this.panelType === PanelType.edit;
@@ -148,7 +148,7 @@ export const ChatTextarea = {
 		},
 		isDisabled(): boolean
 		{
-			return this.text.trim() === '' && !this.editMode && !this.forwardMode && !this.forwardEntityMode;
+			return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 		},
 		textareaPlaceholder(): string
 		{
@@ -199,6 +199,18 @@ export const ChatTextarea = {
 		{
 			return this.$refs.textarea === document.activeElement;
 		},
+		areStickersAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.stickersAvailable);
+		},
+		showSmileSelector(): boolean
+		{
+			return this.withSmileSelector && !this.areStickersAvailable;
+		},
+		showEmoteSelector(): boolean
+		{
+			return this.withSmileSelector && this.areStickersAvailable;
+		},
 	},
 	watch:
 	{
@@ -220,18 +232,17 @@ export const ChatTextarea = {
 		void this.restorePanel();
 		this.initSendingService();
 
-		EventEmitter.subscribe(EventType.textarea.insertMention, this.onInsertMention);
-		EventEmitter.subscribe(EventType.textarea.insertText, this.onInsertText);
-		EventEmitter.subscribe(EventType.textarea.editMessage, this.onEditMessage);
-		EventEmitter.subscribe(EventType.textarea.replyMessage, this.onReplyMessage);
-		EventEmitter.subscribe(EventType.textarea.forwardEntity, this.onForwardEntity);
-		EventEmitter.subscribe(EventType.textarea.sendMessage, this.onSendMessage);
-		EventEmitter.subscribe(EventType.textarea.insertForward, this.onInsertForward);
-		EventEmitter.subscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
-		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
-		EventEmitter.subscribe(EventType.dialog.closeComments, this.onCloseComments);
-
 		EventEmitter.subscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+
+		this.getEmitter().subscribe(EventType.textarea.sendMessage, this.onSendMessage);
+		this.getEmitter().subscribe(EventType.textarea.insertText, this.onInsertText);
+		this.getEmitter().subscribe(EventType.textarea.insertMention, this.onInsertMention);
+		this.getEmitter().subscribe(EventType.textarea.insertForward, this.onInsertForward);
+		this.getEmitter().subscribe(EventType.textarea.editMessage, this.onEditMessage);
+		this.getEmitter().subscribe(EventType.textarea.replyMessage, this.onReplyMessage);
+		this.getEmitter().subscribe(EventType.dialog.closeComments, this.onCloseComments);
+		this.getEmitter().subscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+		this.getEmitter().subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 	},
 	mounted()
 	{
@@ -248,18 +259,18 @@ export const ChatTextarea = {
 	{
 		this.resizeManager.destroy();
 		this.unbindUploadingService();
-		EventEmitter.unsubscribe(EventType.textarea.insertMention, this.onInsertMention);
-		EventEmitter.unsubscribe(EventType.textarea.insertText, this.onInsertText);
-		EventEmitter.unsubscribe(EventType.textarea.editMessage, this.onEditMessage);
-		EventEmitter.unsubscribe(EventType.textarea.replyMessage, this.onReplyMessage);
-		EventEmitter.unsubscribe(EventType.textarea.forwardEntity, this.onForwardEntity);
-		EventEmitter.unsubscribe(EventType.textarea.sendMessage, this.onSendMessage);
-		EventEmitter.unsubscribe(EventType.textarea.insertForward, this.onInsertForward);
-		EventEmitter.unsubscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
-		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
-		EventEmitter.unsubscribe(EventType.dialog.closeComments, this.onCloseComments);
 
 		EventEmitter.unsubscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+
+		this.getEmitter().unsubscribe(EventType.textarea.sendMessage, this.onSendMessage);
+		this.getEmitter().unsubscribe(EventType.textarea.insertMention, this.onInsertMention);
+		this.getEmitter().unsubscribe(EventType.textarea.insertText, this.onInsertText);
+		this.getEmitter().unsubscribe(EventType.textarea.insertForward, this.onInsertForward);
+		this.getEmitter().unsubscribe(EventType.textarea.editMessage, this.onEditMessage);
+		this.getEmitter().unsubscribe(EventType.textarea.replyMessage, this.onReplyMessage);
+		this.getEmitter().unsubscribe(EventType.dialog.closeComments, this.onCloseComments);
+		this.getEmitter().unsubscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+		this.getEmitter().unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 	},
 	methods:
 	{
@@ -288,7 +299,7 @@ export const ChatTextarea = {
 			this.clear();
 			this.getDraftManager().clearDraft(this.dialogId);
 			this.focus();
-			EventEmitter.emit(EventType.textarea.onAfterSendMessage);
+			this.getEmitter().emit(EventType.textarea.onAfterSendMessage);
 		},
 		handlePanelAction(text: string)
 		{
@@ -304,10 +315,6 @@ export const ChatTextarea = {
 					forwardIds: this.panelContext.messagesIds,
 				});
 				SoundNotificationManager.getInstance().playOnce(SoundType.send);
-			}
-			else if (this.forwardEntityMode)
-			{
-				console.error('sending forwarded entity message');
 			}
 			else if (this.replyMode)
 			{
@@ -407,14 +414,6 @@ export const ChatTextarea = {
 			this.focus();
 
 			this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-		},
-		async openForwardEntityPanel(entityConfig: ForwardedEntityConfig)
-		{
-			this.panelType = PanelType.forwardEntity;
-			this.panelContext.messageId = 0;
-			this.panelContext.entityConfig = entityConfig;
-			this.clear();
-			this.focus();
 		},
 		toggleMarketPanel()
 		{
@@ -588,8 +587,8 @@ export const ChatTextarea = {
 		{
 			event.preventDefault();
 			const lastOwnMessageId = this.$store.getters['messages/getLastOwnMessageId'](this.dialog.chatId);
-			const isForward = this.$store.getters['messages/isForward'](lastOwnMessageId);
-			if (lastOwnMessageId && !isForward)
+			const isEditable = MessageManager.isEditable(lastOwnMessageId);
+			if (isEditable)
 			{
 				this.openEditPanel(lastOwnMessageId);
 			}
@@ -672,15 +671,6 @@ export const ChatTextarea = {
 				return;
 			}
 			this.openReplyPanel(messageId);
-		},
-		onForwardEntity(event: BaseEvent<{ dialogId: string, entityConfig: ForwardedEntityConfig }>)
-		{
-			const { dialogId, entityConfig } = event.getData();
-			if (this.dialogId !== dialogId)
-			{
-				return;
-			}
-			this.openForwardEntityPanel(entityConfig);
 		},
 		onInsertForward(event: BaseEvent<{ messagesIds: number[], dialogId: string }>)
 		{
@@ -785,7 +775,10 @@ export const ChatTextarea = {
 				mentions = {},
 			} = await this.getDraftManager().getDraft(this.dialogId);
 
-			this.mentionManager = new MentionManager(this.$refs.textarea);
+			this.mentionManager = new MentionManager({
+				textareaElement: this.$refs.textarea,
+				context: { emitter: this.getEmitter() },
+			});
 			this.mentionManager.setMentionReplacements(mentions);
 
 			this.mentionManager.subscribe(MentionManagerEvents.showMentionPopup, (event) => {
@@ -934,6 +927,10 @@ export const ChatTextarea = {
 		{
 			this.restoreTextareaHeight();
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 	},
 	template: `
 		<div class="bx-im-send-panel__scope bx-im-send-panel__container --ui-context-content-light">
@@ -981,10 +978,15 @@ export const ChatTextarea = {
 							@click="onMarketIconClick"
 						/>
 						<SmileSelector
-							v-if="withSmileSelector"
+							v-if="showSmileSelector"
+							:dialogId="dialogId"
+						/>
+						<EmoteSelector
+							v-if="showEmoteSelector"
 							:dialogId="dialogId"
 						/>
 						<AudioInput
+							:dialogId="dialogId"
 							@inputStart="onAudioInputStart"
 							@inputResult="onAudioInputResult"
 						/>

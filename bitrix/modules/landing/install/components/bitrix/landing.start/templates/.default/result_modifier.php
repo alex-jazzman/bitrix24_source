@@ -157,6 +157,7 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 	$metrika = new Metrika\Metrika(
 		Metrika\Categories::getBySiteType($arParams['TYPE']),
 		Metrika\Events::openMarket,
+		Metrika\Tools::getBySiteType($arParams['TYPE']),
 	);
 	if (
 		$this->getPageName() === 'site_show'

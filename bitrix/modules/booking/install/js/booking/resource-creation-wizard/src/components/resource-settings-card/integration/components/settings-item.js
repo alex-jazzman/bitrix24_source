@@ -1,10 +1,10 @@
-import { ErrorMessage } from '../../error-message/error-message';
+import { UiErrorMessage } from 'booking.component.ui-error-message';
 
 // @vue/component
 export const SettingsItem = {
 	name: 'IntegrationSettingsItem',
 	components: {
-		ErrorMessage,
+		UiErrorMessage,
 	},
 	props: {
 		title: {
@@ -31,7 +31,7 @@ export const SettingsItem = {
 				</div>
 			</div>
 			<slot/>
-			<ErrorMessage v-if="errorMessage" :message="errorMessage"/>
+			<UiErrorMessage v-if="errorMessage" :message="errorMessage"/>
 		</div>
 	`,
 };

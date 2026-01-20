@@ -340,4 +340,17 @@ return [
 		],
 		'readonly' => true,
 	],
+	'aiassistant.marta' => [
+		'value' => [
+			'agents' => [
+				Bitrix\HumanResources\Integration\AiAssistant\Agents\DepartmentAgent::class,
+				Bitrix\HumanResources\Integration\AiAssistant\Agents\TeamAgent::class,
+			],
+			'toolSets' => [
+				Bitrix\HumanResources\Integration\AiAssistant\ToolSets\DepartmentToolSet::class,
+				Bitrix\HumanResources\Integration\AiAssistant\ToolSets\TeamToolSet::class,
+			],
+		],
+		'readonly' => true,
+	],
 ];

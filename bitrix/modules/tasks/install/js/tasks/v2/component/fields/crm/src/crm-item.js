@@ -1,12 +1,15 @@
+import { Runtime } from 'main.core';
 import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { TextMd } from 'ui.system.typography.vue';
 import { BMenu, type MenuItemOptions, type MenuOptions } from 'ui.system.menu.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
+import { Core } from 'tasks.v2.core';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
-import { hrefClick } from 'tasks.v2.lib.href-click';
+import { CrmMappers } from 'tasks.v2.provider.service.crm-service';
 import type { CrmItemModel } from 'tasks.v2.model.crm-items';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import './crm.css';
 
@@ -18,24 +21,20 @@ export const CrmItem = {
 		RichLoc,
 		BMenu,
 	},
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
+	},
 	props: {
-		/**
-		 * @type CrmItemModel
-		 */
+		/** @type CrmItemModel */
 		item: {
 			type: Object,
 			required: true,
 		},
-		isEdit: {
-			type: Boolean,
-			required: true,
-		},
-		readonly: {
-			type: Boolean,
-			required: true,
-		},
 	},
 	emits: ['edit', 'clear'],
+	setup(): { task: TaskModel } {},
 	data(): Object
 	{
 		return {
@@ -43,7 +42,14 @@ export const CrmItem = {
 		};
 	},
 	computed: {
-
+		isLocked(): boolean
+		{
+			return !Core.getParams().restrictions.crmIntegration.available;
+		},
+		readonly(): boolean
+		{
+			return !this.task.rights.edit;
+		},
 		menuOptions(): MenuOptions
 		{
 			return {
@@ -63,7 +69,7 @@ export const CrmItem = {
 					dataset: {
 						id: 'tasks-crm-menu-open',
 					},
-					onClick: () => hrefClick(this.item.link),
+					onClick: () => BX.SidePanel.Instance.emulateAnchorClick(this.item.link),
 				},
 				{
 					title: this.loc('TASKS_V2_CRM_EDIT'),
@@ -71,6 +77,7 @@ export const CrmItem = {
 					dataset: {
 						id: 'tasks-crm-menu-edit',
 					},
+					isLocked: this.isLocked,
 					onClick: () => this.$emit('edit'),
 				},
 				{
@@ -84,6 +91,19 @@ export const CrmItem = {
 			];
 		},
 	},
+	async mounted(): Promise<void>
+	{
+		const { EntityMiniCard } = await Runtime.loadExtension('crm.mini-card');
+
+		const card = new EntityMiniCard({
+			bindElement: this.$refs.pill.$el,
+			entityTypeId: CrmMappers.getEntityTypeId(this.item.id),
+			entityId: this.item.entityId,
+		});
+
+		const scrollContainer = document.querySelector(`[data-task-card-scroll="${this.taskId}"]`);
+		card.getMiniCard().popup().setTargetContainer(scrollContainer);
+	},
 	methods: {
 		prepareTitle(item: CrmItemModel): string
 		{
@@ -96,7 +116,7 @@ export const CrmItem = {
 		{
 			if (!this.isEdit)
 			{
-				hrefClick(this.item.link);
+				BX.SidePanel.Instance.emulateAnchorClick(this.item.link);
 
 				return;
 			}
@@ -117,8 +137,10 @@ export const CrmItem = {
 		<div class="tasks-field-crm-item-container">
 			<HoverPill
 				class="tasks-field-crm-item"
-				:withClear="!readonly && !isEdit"
-				:readonly="readonly"
+				:withClear="!isEdit"
+				textOnly
+				:readonly
+				:active="isMenuShown"
 				ref="pill"
 				@click.stop="handleClick"
 				@clear="clear"

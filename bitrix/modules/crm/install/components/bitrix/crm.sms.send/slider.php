@@ -19,10 +19,12 @@ $APPLICATION->IncludeComponent(
 			'IS_PROVIDER_FIXED' => $request->getPost('isProviderFixed'),
 			'CAN_USE_BITRIX24_PROVIDER' => $request->getPost('canUseBitrix24Provider'),
 			'IS_EDITABLE' => $request->getPost('isEditable'),
-			'TEMPLATE_CODE' => $request->getPost('templateCode'),
-			'TEMPLATE_PLACEHOLDERS' => $request->getPost('templatePlaceholders'),
+			'SIGNED_TEMPLATE' => $request->get('signedTemplate'),
+			'MESSAGE_SENDER_SCENE_ID' => $request->getPost('messageSenderSceneId'),
+			'ANALYTICS' => $request->getPost('analytics'),
 		],
 		'USE_UI_TOOLBAR' => 'Y',
+		'USE_PADDING' => false
 	]
 );
 

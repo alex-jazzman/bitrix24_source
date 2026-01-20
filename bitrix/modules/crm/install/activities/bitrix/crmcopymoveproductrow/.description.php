@@ -43,11 +43,11 @@ if (Loader::includeModule('crm'))
 	{
 		$arActivityDescription['EXCLUDED'] = true;
 	}
-	elseif (isset($documentType) && $documentType[0] === 'crm')
+	else
 	{
-		if (CCrmBizProcHelper::isDynamicEntityWithProducts(CCrmOwnerType::ResolveID((string)$documentType[2])))
-		{
-			$arActivityDescription['FILTER']['INCLUDE'][] = ['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class];
-		}
+		$arActivityDescription['FILTER']['INCLUDE'] = array_merge(
+			$arActivityDescription['FILTER']['INCLUDE'],
+			CCrmBizProcHelper::getDynamicDocumentTypesWithProducts()
+		);
 	}
 }

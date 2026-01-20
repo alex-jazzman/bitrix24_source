@@ -3,12 +3,14 @@
  */
 jn.define('tasks/deadline-picker', (require, exports, module) => {
 	const { Alert } = require('alert');
-	const { downloadImages } = require('asset-manager');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Loc } = require('loc');
 	const { Moment } = require('utils/date');
 	const { dayOfWeekMonth, fullDate } = require('utils/date/formats');
 	const { CalendarSettings } = require('tasks/task/calendar');
+	const { Icon } = require('assets/icons');
+	const { ReasonWidget } = require('tasks/deadline-picker/reason-widget');
+	const { DeadlineRestrictions } = require('tasks/deadline-picker/deadline-restrictions');
 
 	const PickerItemType = {
 		TODAY: 'TODAY',
@@ -21,8 +23,7 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 	};
 
 	const PickerSectionCode = {
-		PREDEFINED: 'PREDEFINED',
-		CUSTOM: 'CUSTOM',
+		GENERAL: 'GENERAL',
 	};
 
 	class DeadlinePicker
@@ -31,6 +32,32 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		{
 			this.parentWidget = (params.parentWidget || PageManager);
 			this.canSetNoDeadline = BX.prop.getBoolean(params, 'canSetNoDeadline', false);
+			this.task = BX.prop.getObject(params, 'task', {});
+
+			this.restrictions = new DeadlineRestrictions({ task: params.task });
+
+			this.contextMenuLayout = null;
+		}
+
+		checkCanOpen()
+		{
+			return new Promise((resolve, reject) => {
+				const { isReadOnly, toastCode } = this.restrictions.isReadOnly();
+
+				if (isReadOnly)
+				{
+					this.restrictions.showToastByCode({
+						toastCode,
+						layout: this.contextMenuLayout || this.parentWidget,
+					});
+
+					reject();
+
+					return;
+				}
+
+				resolve(this);
+			});
 		}
 
 		/**
@@ -38,10 +65,13 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		 * @param {number} deadline
 		 * @returns {Promise}
 		 */
-		show(deadline)
+		show({ deadline } = {})
 		{
 			return new Promise((resolve, reject) => {
-				this.getItems(deadline, resolve, reject)
+				this.resolve = resolve;
+				this.reject = reject;
+
+				this.getItems(deadline)
 					.then((items) => {
 						new ContextMenu({
 							params: {
@@ -51,7 +81,16 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 							},
 							actions: items,
 							onCancel: () => reject(),
-						}).show(this.parentWidget);
+						})
+							.show(this.parentWidget)
+							.then((contextMenuLayout) => {
+								this.contextMenuLayout = contextMenuLayout;
+
+								contextMenuLayout.on('onViewHidden', () => {
+									this.contextMenuLayout = null;
+								});
+							})
+							.catch(console.error);
 					})
 					.catch(console.error)
 				;
@@ -61,23 +100,20 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		/**
 		 * @private
 		 * @param {number} deadline
-		 * @param {function} onDeadlineSelect
-		 * @param {function} onCancel
 		 * @returns {Promise<[Array]>}
 		 */
-		async getItems(deadline, onDeadlineSelect, onCancel)
+		async getItems(deadline)
 		{
 			await CalendarSettings.loadSettings();
 
 			return [
-				...this.getPredefinedItems(deadline, onDeadlineSelect),
+				...this.getPredefinedItems(deadline),
 				{
 					id: PickerItemType.CUSTOM,
-					sectionCode: PickerSectionCode.CUSTOM,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_CUSTOM_DATE'),
-					data: {
-						svgUri: iconMap[PickerItemType.CUSTOM],
-					},
+					divider: true,
+					rightIcon: Icon.CALENDAR_WITH_SLOTS,
 					onClickCallback: () => {
 						dialogs.showDatePicker(
 							{
@@ -89,11 +125,11 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 							(eventName, ts) => {
 								if (eventName === 'onPick' && ts)
 								{
-									onDeadlineSelect(ts);
+									this.onDeadlineSelect(ts);
 								}
 								else
 								{
-									onCancel();
+									this.reject();
 								}
 							},
 						);
@@ -105,70 +141,78 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		/**
 		 * @private
 		 * @param {number} deadline
-		 * @param {function} onDeadlineSelect
 		 * @returns {array}
 		 */
-		getPredefinedItems(deadline, onDeadlineSelect)
+		getPredefinedItems(deadline)
 		{
 			const predefinedItemValues = this.getPredefinedItemValues(CalendarSettings);
 			const predefinedItems = [
 				{
 					id: PickerItemType.TODAY,
-					sectionCode: PickerSectionCode.PREDEFINED,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_TODAY'),
 					onClickCallback: () => {
 						return this.checkForDateConfirm(
 							PickerItemType.TODAY,
 							predefinedItemValues.get(PickerItemType.TODAY),
-							onDeadlineSelect,
 							CalendarSettings,
 						);
 					},
 				},
 				{
 					id: PickerItemType.TOMORROW,
-					sectionCode: PickerSectionCode.PREDEFINED,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_TOMORROW'),
 					onClickCallback: () => {
 						return this.checkForDateConfirm(
 							PickerItemType.TOMORROW,
 							predefinedItemValues.get(PickerItemType.TOMORROW),
-							onDeadlineSelect,
 							CalendarSettings,
 						);
 					},
 				},
 				{
 					id: PickerItemType.THIS_WEEK,
-					sectionCode: PickerSectionCode.PREDEFINED,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_WEEK_END'),
-					onClickCallback: () => onDeadlineSelect(predefinedItemValues.get(PickerItemType.THIS_WEEK)),
+					onClickCallback: () => this.onDeadlineSelect(predefinedItemValues.get(PickerItemType.THIS_WEEK)),
 				},
 				{
 					id: PickerItemType.NEXT_WEEK_START,
-					sectionCode: PickerSectionCode.PREDEFINED,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_NEXT_WEEK_START'),
-					onClickCallback: () => onDeadlineSelect(predefinedItemValues.get(PickerItemType.NEXT_WEEK_START)),
+					onClickCallback: () => this.onDeadlineSelect(predefinedItemValues.get(PickerItemType.NEXT_WEEK_START)),
 				},
 				{
 					id: PickerItemType.NEXT_WEEK_END,
-					sectionCode: PickerSectionCode.PREDEFINED,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_NEXT_WEEK_END'),
-					onClickCallback: () => onDeadlineSelect(predefinedItemValues.get(PickerItemType.NEXT_WEEK_END)),
+					onClickCallback: () => this.onDeadlineSelect(predefinedItemValues.get(PickerItemType.NEXT_WEEK_END)),
 				},
 				{
 					id: PickerItemType.NO_DEADLINE,
-					sectionCode: PickerSectionCode.PREDEFINED,
+					sectionCode: PickerSectionCode.GENERAL,
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_NO_DEADLINE'),
-					onClickCallback: () => onDeadlineSelect(predefinedItemValues.get(PickerItemType.NO_DEADLINE)),
+					onClickCallback: () => this.onDeadlineSelect(predefinedItemValues.get(PickerItemType.NO_DEADLINE)),
 				},
 			];
 
 			return Object.values(predefinedItems)
-				.filter((item) => (
-					(this.canSetNoDeadline && item.id === PickerItemType.NO_DEADLINE)
-					|| predefinedItemValues.get(item.id)
-				))
+				.filter((item) => {
+					if (item.id === PickerItemType.NO_DEADLINE)
+					{
+						return this.canSetNoDeadline;
+					}
+
+					const itemValue = predefinedItemValues.get(item.id);
+
+					if (!itemValue)
+					{
+						return false;
+					}
+
+					return !this.restrictions.isDeadlineRestrictedByMaxDate(itemValue);
+				})
 				.map((item) => {
 					const itemValue = predefinedItemValues.get(item.id);
 
@@ -254,6 +298,44 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 			}
 
 			return values;
+		}
+
+		/**
+		 * @private
+		 * @param {number} deadline
+		 * @returns {Promise<{deadline: number|null, reason: string|null}>}
+		 */
+		async onDeadlineSelect(deadline)
+		{
+			if (this.restrictions.isDeadlineRestrictedByMaxDate(deadline))
+			{
+				DeadlineRestrictions.showMaxDateRestrictionToast({
+					maxDeadlineChangeDate: this.task.maxDeadlineChangeDate,
+					layout: this.contextMenuLayout || this.parentWidget,
+				});
+
+				return this.reject();
+			}
+
+			if (this.restrictions.isReasonRequired())
+			{
+				return new ReasonWidget({
+					canReasonBeEmpty: false,
+				})
+					.show({ layout: this.contextMenuLayout || this.parentWidget })
+					.then((changeReason) => this.resolve({
+						deadline,
+						reason: changeReason,
+					}))
+					.catch((err) => {
+						this.reject(err);
+					});
+			}
+
+			return this.resolve({
+				deadline,
+				reason: null,
+			});
 		}
 
 		/**
@@ -350,17 +432,16 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		 * @private
 		 * @param {string} itemId
 		 * @param {number} itemValue
-		 * @param {function} onDeadlineSelect
 		 * @param {Calendar} calendarSettings
 		 * @returns {Promise}
 		 */
-		async checkForDateConfirm(itemId, itemValue, onDeadlineSelect, calendarSettings)
+		async checkForDateConfirm(itemId, itemValue, calendarSettings)
 		{
 			const itemValueDate = new Date(itemValue);
 
 			if (!calendarSettings.isHolidayInLocal(itemValueDate) && !calendarSettings.isWeekendInLocal(itemValueDate))
 			{
-				onDeadlineSelect(itemValue);
+				await this.onDeadlineSelect(itemValue);
 
 				return { closeMenu: true };
 			}
@@ -368,9 +449,9 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 			const confirmedValue = await this.showDateConfirm(itemId, itemValue, calendarSettings);
 			if (confirmedValue)
 			{
-				onDeadlineSelect(confirmedValue);
+				await this.onDeadlineSelect(confirmedValue);
 
-				return { closeMenu: true };
+				return { closeMenu: !this.restrictions.isDeadlineRestrictedByMaxDate(confirmedValue) };
 			}
 
 			return { closeMenu: false };
@@ -419,12 +500,6 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 			});
 		}
 	}
-
-	const iconPrefix = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/deadline-picker/images/`;
-	const iconMap = {
-		[PickerItemType.CUSTOM]: `${iconPrefix}custom.svg`,
-	};
-	setTimeout(() => downloadImages(Object.values(iconMap)), 1000);
 
 	module.exports = { DeadlinePicker, PickerItemType };
 });

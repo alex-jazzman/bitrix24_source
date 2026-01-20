@@ -6,6 +6,7 @@ import { RestMethod, ChatType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { UuidManager } from 'im.v2.lib.uuid';
 import { runAction } from 'im.v2.lib.rest';
+import { CounterClearActionsByChatType, CounterClearActionsDefault } from 'im.v2.lib.counter';
 
 import type { ImModelChat, ImModelRecentItem } from 'im.v2.model';
 
@@ -31,15 +32,34 @@ export class ReadService
 		this.#restClient = Core.getRestClient();
 	}
 
+	readAllByType(type: $Values<typeof ChatType>)
+	{
+		const counterClearActions = CounterClearActionsByChatType[type];
+
+		if (counterClearActions)
+		{
+			counterClearActions.forEach((actionName) => {
+				void this.#store.dispatch(actionName, { type });
+			});
+		}
+
+		runAction(RestMethod.imV2ChatReadAllByType, {
+			data: { type },
+		}).catch(([error]) => {
+			console.error('ReadService: readAllByType error', error);
+		});
+	}
+
 	readAll(): void
 	{
 		Logger.warn('ReadService: readAll');
-		void this.#store.dispatch('chats/clearCounters');
-		void this.#store.dispatch('recent/clearUnread');
+		CounterClearActionsDefault.forEach((actionName) => {
+			void this.#store.dispatch(actionName);
+		});
 
-		return this.#restClient.callMethod(RestMethod.imV2ChatReadAll)
-			.catch((result: RestResult) => {
-				console.error('ReadService: readAll error', result.error());
+		runAction(RestMethod.imV2ChatReadAll)
+			.catch(([error]) => {
+				console.error('ReadService: readAll error', error);
 			});
 	}
 

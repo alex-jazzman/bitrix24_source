@@ -108,18 +108,6 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				// alarm
 				return 0;
 			}
-			const commentInfo = this.store.getters['commentModel/getByMessageId'](postId);
-			const messageModel = this.store.getters['messagesModel/getById'](postId);
-			const currentUserId = serviceLocator.get('core').getUserId();
-
-			this.store.dispatch('commentModel/setComments', {
-				messageId: postId,
-				dialogId: dialog.dialogId,
-				chatId: dialog.chatId,
-				lastUserIds: [],
-				messageCount: dialog.messageCount,
-				isUserSubscribed: commentInfo?.isUserSubscribed ?? Number(messageModel.authorId) === Number(currentUserId),
-			});
 
 			return dialog.dialogId;
 		}
@@ -256,7 +244,8 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions: extractor.getReactions(),
 			});
-			const commentPromise = this.store.dispatch('commentModel/setComments', extractor.getCommentInfo());
+
+			const commentPromise = this.updateCommentModel(extractor);
 
 			const messages = await this.contextCreator
 				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
@@ -292,6 +281,32 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 			}
 
 			return extractor.getChatId();
+		}
+
+		/**
+		 * @private
+		 * @param {ChatDataExtractor} extractor
+		 */
+		async updateCommentModel(extractor)
+		{
+			const dialogData = extractor.getMainChat();
+			const isComment = dialogData.type === DialogType.comment;
+			if (!isComment)
+			{
+				return this.store.dispatch('commentModel/setComments', extractor.getCommentInfo());
+			}
+
+			const { parentMessageId: postId, dialogId, chatId } = dialogData.parentMessageId;
+			const commentInfo = this.store.getters['commentModel/getByMessageId'](postId);
+			const messageModel = this.store.getters['messagesModel/getById'](postId);
+			const currentUserId = serviceLocator.get('core').getUserId();
+
+			return this.store.dispatch('commentModel/updateComment', {
+				messageId: postId,
+				dialogId,
+				chatId,
+				isUserSubscribed: commentInfo?.isUserSubscribed ?? Number(messageModel.authorId) === Number(currentUserId),
+			});
 		}
 
 		/**

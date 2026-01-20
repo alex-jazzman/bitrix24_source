@@ -2,7 +2,7 @@
  * @module user-profile/common-tab/src/block/header/view
  */
 jn.define('user-profile/common-tab/src/block/header/view', (require, exports, module) => {
-	const { Avatar, AvatarEntityType } = require('ui-system/blocks/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { connect } = require('statemanager/redux/connect');
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { H3 } = require('ui-system/typography/heading');
@@ -23,6 +23,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 	const { BadgeButton, BadgeButtonDesign, BadgeButtonSize } = require('ui-system/blocks/badges/button');
 	const { AvatarPicker } = require('avatar-picker');
 	const { Alert } = require('alert');
+	const { ProfileUserCard } = require('user-profile/common-tab/src/block/header/user-card');
 
 	/**
 	 * @typedef {Object} HeaderProps
@@ -90,34 +91,9 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 						...editStyles,
 					},
 				},
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-						},
-					},
-					this.#renderAvatar(),
-					this.#renderTextContent(),
-				),
+				this.#renderProfileUserCard(),
 				!isEditMode && this.#renderButtons(),
 			);
-		}
-
-		#getAvatarEntityType()
-		{
-			const { isCollaber, isExtranet } = this.props;
-
-			if (isCollaber)
-			{
-				return AvatarEntityType.COLLAB;
-			}
-
-			if (isExtranet)
-			{
-				return AvatarEntityType.EXTRANET;
-			}
-
-			return AvatarEntityType.USER;
 		}
 
 		#renderAvatar = () => {
@@ -126,10 +102,9 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			const avatarProps = {
 				testId: this.getTestId(`avatar-edit-${isEditMode}`),
 				size: 84,
-				accent: !isEditMode,
+				accent: false,
 				onClick: this.#onAvatarClick,
 				uri: image?.previewUrl ?? null,
-				entityType: this.#getAvatarEntityType(),
 			};
 
 			return View(
@@ -214,7 +189,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 		#renderStatusIcon()
 		{
 			const { status } = this.props;
-			const size = 30;
+			const size = 26;
 
 			return View(
 				{
@@ -479,6 +454,65 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			const { id } = this.props;
 
 			return String(id) === String(env.userId);
+		}
+
+		#renderProfileUserCard()
+		{
+			const {
+				id,
+				name,
+				fullName,
+				avatar,
+				avatarSizeOriginal,
+				avatarSize100,
+				isExtranet,
+				isCollaber,
+				workPosition,
+				status,
+				currentTheme,
+				GMTString,
+				lastSeenDate,
+				onVacationDateTo,
+				personalGender,
+
+				isEditMode,
+			} = this.props;
+
+			if (isEditMode)
+			{
+				return View(
+					{
+						style: {
+							flexDirection: 'row',
+						},
+					},
+					this.#renderAvatar(),
+					this.#renderTextContent(),
+				);
+			}
+
+			return new ProfileUserCard({
+				testId: this.getTestId('profile-user-card'),
+				user: {
+					id,
+					name,
+					fullName,
+					avatar,
+					avatarSizeOriginal,
+					avatarSize100,
+					isExtranet,
+					isCollaber,
+					workPosition,
+				},
+				currentTheme,
+				status,
+				GMTString,
+				lastSeenDate,
+				onVacationDateTo,
+				personalGender,
+				onAvatarClick: this.#onAvatarClick,
+				clickable: false,
+			});
 		}
 	}
 

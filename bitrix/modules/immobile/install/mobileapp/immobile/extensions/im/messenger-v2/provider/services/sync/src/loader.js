@@ -43,10 +43,10 @@ jn.define('im/messenger-v2/provider/services/sync/loader', (require, exports, mo
 		 */
 		async loadPage(params)
 		{
-			const syncRequestOptions = this.prepareRequestOptions(params);
-
 			try
 			{
+				const syncRequestOptions = this.prepareRequestOptions(params);
+
 				this.logger.log('loadPage request data:', syncRequestOptions);
 				const result = await runAction(RestMethod.imV2SyncList, { data: syncRequestOptions });
 				this.logger.info('loadPage result:', result);

@@ -3,12 +3,11 @@
  */
 jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, exports, module) => {
 	const { Type } = require('type');
-	const { unique } = require('utils/array');
 	const { NavigationTabId } = require('im/messenger/const');
-	const { RecentEventType } = require('im/messenger-v2/controller/recent/const');
 	const { BaseRecentService } = require('im/messenger-v2/controller/recent/service/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnchorMutationHandler } = require('im/messenger-v2/controller/recent/service/vuex/lib/handlers/anchor');
+	const { CounterMutationHandler } = require('im/messenger-v2/controller/recent/service/vuex/lib/handlers/counter');
 
 	/**
 	 * @implements {IVuexService}
@@ -21,6 +20,7 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 			this.logger.log('onInit');
 
 			this.anchor = new AnchorMutationHandler(this.recentLocator, this.logger);
+			this.counter = new CounterMutationHandler(this.recentLocator, this.logger);
 			this.#subscribeStoreMutation();
 		}
 
@@ -43,8 +43,8 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
-				.on('counterModel/set', this.counterSetHandler)
-				.on('counterModel/delete', this.counterDeleteHandler)
+				.on('counterModel/set', this.counter.setHandler)
+				.on('counterModel/delete', this.counter.deleteHandler)
 				.on('anchorModel/add', this.anchor.addHandler)
 				.on('anchorModel/delete', this.anchor.deleteHandler)
 				.on('anchorModel/deleteMany', this.anchor.deleteManyHandler)
@@ -158,8 +158,7 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 			}
 
 			this.recentLocator.get('render').setItems(firstPageItems);
-			this.recentLocator.get('render').renderInstant();
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
+			void this.recentLocator.get('render').renderInstant();
 		};
 
 		/**
@@ -177,7 +176,6 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 			}
 
 			this.recentLocator.get('render').deleteItems([{ id: itemId }]);
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
 		};
 
 		/**
@@ -212,7 +210,6 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 			}
 
 			this.recentLocator.get('render').deleteItems([{ id: itemId }]);
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
 		};
 
 		/**
@@ -269,61 +266,11 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 		}
 
 		/**
-		 * @param {MutationPayload<CounterSetData, CounterSetActions>} payload
-		 */
-		counterSetHandler = ({ payload }) => {
-			this.logger.log('counterSetHandler', payload);
-			const { counterList } = payload.data;
-			const chatIdList = this.#extractChatIdFromCounterStates(counterList);
-			const recentItems = this.#getRecentItemsByChatIdList(chatIdList);
-			if (!Type.isArrayFilled(recentItems))
-			{
-				this.logger.log('counterSetHandler recent items not found. skip mutation', payload);
-
-				return;
-			}
-
-			const recentItemsToUpdate = this.#filterByTaskCollection(recentItems, (item) => item.id);
-			if (!Type.isArrayFilled(recentItemsToUpdate))
-			{
-				return;
-			}
-
-			this.#updateItems(recentItemsToUpdate);
-		};
-
-		/**
-		 * @param {MutationPayload<CounterDeleteData, CounterDeleteActions>} payload
-		 */
-		counterDeleteHandler = ({ payload }) => {
-			if (payload.actionName !== 'clear')
-			{
-				return;
-			}
-			const { chatIdList } = payload.data;
-
-			const recentItems = this.#getRecentItemsByChatIdList(chatIdList);
-			if (!Type.isArrayFilled(recentItems))
-			{
-				return;
-			}
-
-			const recentItemsToUpdate = this.#filterByTaskCollection(recentItems, (item) => item.id);
-			if (!Type.isArrayFilled(recentItemsToUpdate))
-			{
-				return;
-			}
-
-			this.#updateItems(recentItemsToUpdate);
-		};
-
-		/**
 		 * @param {Array<RecentModelState>} items
 		 */
 		#updateItems(items)
 		{
 			this.recentLocator.get('render').upsertItems(items);
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
 		}
 
 		/**
@@ -345,34 +292,6 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/task', (require, expor
 
 				return id && taskCollection.has(id);
 			});
-		}
-
-		/**
-		 * @param {Array<number>} chatIdList
-		 * @return {Array<RecentModelState>}
-		 */
-		#getRecentItemsByChatIdList(chatIdList)
-		{
-			return this.storeManager.store.getters['recentModel/getByChatIdList'](chatIdList);
-		}
-
-		/**
-		 * @param {Array<CounterModelState>} counterStateList
-		 * @return {Array<number>}
-		 */
-		#extractChatIdFromCounterStates(counterStateList)
-		{
-			if (!Type.isArrayFilled(counterStateList))
-			{
-				return [];
-			}
-
-			const rawChatIdList = counterStateList
-				.map((counterState) => counterState.chatId)
-				.filter(Boolean)
-			;
-
-			return unique(rawChatIdList);
 		}
 	}
 

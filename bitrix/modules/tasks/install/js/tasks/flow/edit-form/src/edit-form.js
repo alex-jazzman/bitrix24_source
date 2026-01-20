@@ -1,5 +1,6 @@
 import { ajax, Event, Loc, Tag, Text, Type, Runtime } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { SliderEvent } from 'main.sidepanel';
 import { Popup } from 'main.popup';
 import { Button, ButtonState } from 'ui.buttons';
 import { Wizard } from 'tasks.wizard';
@@ -8,6 +9,7 @@ import { AboutPage } from './pages/about-page';
 import { SettingsPage } from './pages/settings-page';
 import { ControlPage } from './pages/control-page';
 import { Lottie } from 'ui.lottie';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import flowfLottieIconInfo from '../lottie/tasks-flow-info-icon.json';
 import 'ui.sidepanel-content';
 import 'ui.forms';
@@ -70,11 +72,13 @@ export class EditForm extends EventEmitter
 	#saveChangesButton: Button;
 
 	#flow: Flow;
+	#flowInitial: Flow;
 
 	#flowLottieAnimation: any = null;
 	#lottieIconContainer: HTMLElement;
 
 	#pageChanging: boolean = false;
+	#isCloseConfirmed: boolean = false;
 
 	constructor(params: Params = {})
 	{
@@ -159,6 +163,8 @@ export class EditForm extends EventEmitter
 
 				this.#pages.forEach((page) => page.setFlow(this.#flow));
 
+				this.#flowInitial = structuredClone(this.#flow);
+
 				return this.#render();
 			},
 			width: SLIDER_WIDTH,
@@ -172,10 +178,7 @@ export class EditForm extends EventEmitter
 						this.#wizard.initHints();
 					});
 				},
-				onClose: () => {
-					this.#wizard.hideHints();
-					this.emit('afterClose');
-				},
+				onClose: (event) => this.#onCloseHandler(event),
 			},
 		});
 	}
@@ -289,6 +292,36 @@ export class EditForm extends EventEmitter
 		this.#wizard.update();
 	}
 
+	#onCloseHandler(event: SliderEvent): void
+	{
+		if (this.#isCloseConfirmed || !this.#isDataChanged())
+		{
+			return;
+		}
+
+		event.denyAction();
+
+		MessageBox.show({
+			useAirDesign: true,
+			title: Loc.getMessage('TASKS_FLOW_EDIT_FORM_ONCLOSE_POPUP_TITLE'),
+			message: Loc.getMessage('TASKS_FLOW_EDIT_FORM_ONCLOSE_POPUP_MESSAGE'),
+			buttons: MessageBoxButtons.OK_CANCEL,
+			okCaption: Loc.getMessage('TASKS_FLOW_EDIT_FORM_ONCLOSE_POPUP_OK_CAPTION'),
+			onOk: (dialog) => {
+				dialog.close();
+				this.#wizard.hideHints();
+				this.emit('afterClose');
+				this.#isCloseConfirmed = true;
+				this.slider.close();
+			},
+		});
+	}
+
+	#isDataChanged(): boolean
+	{
+		return JSON.stringify(this.#getFlow()) !== JSON.stringify(this.#flowInitial);
+	}
+
 	#saveFlowAction(): void
 	{
 		if (this.#hasIncorrectData())
@@ -332,6 +365,7 @@ export class EditForm extends EventEmitter
 
 				this.emit('afterSave', flowData);
 
+				this.#isCloseConfirmed = true;
 				this.slider.close(false, () => {
 					if (flowData.trialFeatureEnabled)
 					{

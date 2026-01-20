@@ -56,28 +56,7 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 				onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
 				allowedIn: ['#root', '#shadowRoot'],
 				canBeEmpty: false,
-				onNotAllowedChildren: ({ node, children }): BBCodeElementNode => {
-					const notAllowedChildren: Set<string> = new Set(['#tab', '#linebreak']);
-					const bePropagated: Array<BBCodeContentNode> = [];
-					children.forEach((child: BBCodeContentNode) => {
-						if (
-							notAllowedChildren.has(child.getName())
-							|| (
-								child.getName() === '#text'
-								&& /^\s+$/.test(child.getContent())
-							)
-						)
-						{
-							child.remove();
-						}
-						else
-						{
-							bePropagated.push(child);
-						}
-					});
-
-					node.propagateChild(...bePropagated);
-				},
+				onNotAllowedChildren: BBCodeTagScheme.stripFormatting,
 			}),
 			new BBCodeTagScheme({
 				name: ['*'],
@@ -112,12 +91,14 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 				allowedChildren: ['tr'],
 				stringify: BBCodeTagScheme.defaultBlockStringifier,
 				onParse: BBCodeTagScheme.defaultOnBlockParseHandler,
+				onNotAllowedChildren: BBCodeTagScheme.stripFormatting,
 				allowedIn: ['#root', 'td', 'th', 'quote', 'spoiler'],
 				canBeEmpty: false,
 			}),
 			new BBCodeTagScheme({
 				name: 'tr',
 				allowedChildren: ['th', 'td'],
+				onNotAllowedChildren: BBCodeTagScheme.stripFormatting,
 				allowedIn: ['table'],
 				canBeEmpty: false,
 			}),

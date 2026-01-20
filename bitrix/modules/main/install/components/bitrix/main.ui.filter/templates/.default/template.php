@@ -39,12 +39,6 @@ global $USER;
 
 $arParams["CONFIG"] = $component->prepareConfig();
 $currentPreset = $arResult["CURRENT_PRESET"];
-$isCurrentPreset = (
-		!isset($currentPreset["ID"])
-		|| ($currentPreset["ID"] !== "default_filter" && $currentPreset["ID"] !== "tmp_filter")
-		|| ($currentPreset["ID"] === "default_filter" && $currentPreset["FIELDS_COUNT"] > 0)
-		|| ($currentPreset["ID"] === "tmp_filter" && $currentPreset["FIELDS_COUNT"] > 0)
-);
 
 if (!empty($arResult["TARGET_VIEW_ID"]))
 {
@@ -214,6 +208,7 @@ $cancelSettingsButton = new Button([
 						<? foreach ($arResult["PRESETS"] as $key => $preset) : ?>
 							<div class="main-ui-filter-sidebar-item<?=(isset($arResult["CURRENT_PRESET"]["ID"]) && $preset["ID"] === $arResult["CURRENT_PRESET"]["ID"]) ? " main-ui-filter-current-item" : ""?><?
 							?><?=$preset["ID"] === "default_filter" || $preset["ID"] === "tmp_filter" ? " main-ui-hide" : ""?><?
+							?><?=($preset["COMMON_PRESET"] ?? false) ? " main-ui-filter-admin-preset" : ""?><?
 							?><?=!empty($preset["IS_PINNED"]) && $arParams["CONFIG"]["DEFAULT_PRESET"] ? " main-ui-item-pin" : ""?>" data-id="<?=htmlspecialcharsbx($preset["ID"])?>"<?
 							?><?=!empty($preset["IS_PINNED"]) && $arParams["CONFIG"]["DEFAULT_PRESET"] ? " title=\"".Loc::getMessage("MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET")."\"" : " "?>>
 								<span class="main-ui-item-icon main-ui-filter-icon-grab" title="<?=Loc::getMessage("MAIN_UI_FILTER__DRAG_TITLE")?>"></span>
@@ -222,11 +217,16 @@ $cancelSettingsButton = new Button([
 									<input type="text" placeholder="<?=Loc::getMessage("MAIN_UI_FILTER__FILTER_NAME_PLACEHOLDER")?>" value="<?=HtmlFilter::encode($preset["TITLE"], ENT_COMPAT, false)?>" class="main-ui-filter-sidebar-item-input">
 									<span class="main-ui-item-icon main-ui-filter-icon-pin" title="<?=Loc::getMessage("MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET")?>"></span>
 								</span>
+								<? if ($preset["COMMON_PRESET"] ?? false) : ?>
+									<span class="main-ui-filter-admin-preset-icon" title="<?=Loc::getMessage("MAIN_UI_FILTER__ADMIN_PRESET_INFO")?>"></span>
+								<? endif; ?>
 								<? if ($arParams["CONFIG"]["DEFAULT_PRESET"]) : ?>
 									<span class="main-ui-item-icon main-ui-filter-icon-pin" title="<?=Loc::getMessage("MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET")?>"></span>
 								<? endif; ?>
-								<span class="main-ui-item-icon main-ui-filter-icon-edit" title="<?=Loc::getMessage("MAIN_UI_FILTER__EDIT_PRESET_TITLE")?>"></span>
-								<span class="main-ui-item-icon main-ui-delete" title="<?=Loc::getMessage("MAIN_UI_FILTER__REMOVE_PRESET")?>"></span>
+								<? if (true) : ?>
+									<span class="main-ui-item-icon main-ui-filter-icon-edit" title="<?=Loc::getMessage("MAIN_UI_FILTER__EDIT_PRESET_TITLE")?>"></span>
+									<span class="main-ui-item-icon main-ui-delete" title="<?=Loc::getMessage("MAIN_UI_FILTER__REMOVE_PRESET")?>"></span>
+								<? endif; ?>
 								<div class="main-ui-filter-edit-mask"></div>
 							</div>
 						<? endforeach; ?>

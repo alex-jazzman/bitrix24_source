@@ -5,6 +5,7 @@ import { DashboardOwnerField } from './dashboard-owner-field';
 import { DeleteSupersetField } from './delete-superset-field';
 import { ClearCacheField } from './clear-cache-field';
 import { DashboardGroupsField } from './dashboard-groups-field';
+import { DashboardLanguageField } from './dashboard-language-field';
 
 export {
 	DateFilterField,
@@ -14,4 +15,5 @@ export {
 	DashboardGroupsField,
 	DeleteSupersetField,
 	ClearCacheField,
+	DashboardLanguageField,
 };

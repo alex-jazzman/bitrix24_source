@@ -1,0 +1,244 @@
+.mail_massconnect__employee-list_header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.mail_massconnect__utility-block_container,
+.mail_massconnect__employee-list_added-employees_show-button {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.mail_massconnect__utility-block_container {
+	margin: 30px 0 0 0;
+}
+
+.mail_massconnect__fixing-errors-hint_container {
+	margin: 20px 0 0 0;
+	background-color: var(--ui-color-palette-red-15);
+	border-radius: var(--ui-border-radius-md);
+	border: 1px solid var(--ui-color-palette-red-30);
+	padding: 4px 12px 4px 8px;
+}
+
+.mail_massconnect__fixing-errors-hint_image {
+	width: 32px;
+	height: 30px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-image: url('img/employees-error.webp');
+}
+
+.mail_massconnect__fixing-errors-hint_container {
+	display: flex;
+	flex-direction: row;
+	gap: 4px;
+	align-items: center;
+}
+
+.mail_massconnect__fixing-errors-hint_text {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-sm);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.mail_massconnect__fixing-errors-hint_link {
+	color: var(--ui-color-text-alert);
+	font-size: var(--ui-font-size-sm);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	border-bottom: 1px rgba(255, 87, 82, 0.28) dashed;
+}
+
+.mail_massconnect__employee-list_header_buttons {
+	display: flex;
+	flex-direction: row;
+	gap: var(--ui-space-stack-sm);
+}
+
+.fade-delete-all-button-enter-from,
+.fade-delete-all-button-leave-to {
+	opacity: 0;
+	transform: translateX(10px);
+}
+
+.fade-delete-all-button-enter-to,
+.fade-delete-all-button-leave-from {
+	opacity: 1;
+	transform: translateX(0);
+}
+
+.fade-delete-all-button-enter-active,
+.fade-delete-all-button-leave-active {
+	transition: all 0.2s ease-out;
+}
+
+.mail_massconnect__employee-list_table {
+	display: flex;
+	flex-direction: column;
+}
+
+.mail_massconnect__employee-list_table_header, .mail_massconnect__employee-list_table_row {
+	display: flex;
+	align-items: center;
+	border-bottom: 1px solid #f0f2f5;
+	padding: 17px 0;
+}
+
+.mail_massconnect__employee-list_table_header {
+	padding-bottom: 12px;
+	margin: 18px 0 0 0;
+}
+
+.mail_massconnect__employee-list_table_row:last-child {
+	border-bottom: none;
+}
+
+.mail_massconnect__employee-list_table_cell {
+	box-sizing: border-box;
+	padding: 0 8px;
+}
+
+.mail_massconnect__employee-list_table_cell:last-child {
+	padding-right: 0;
+}
+
+.mail_massconnect__employee-list_table_cell.--name {
+	width: 30%;
+}
+
+.mail_massconnect__employee-list_table_cell.--email,
+.mail_massconnect__employee-list_table_cell.--login,
+.mail_massconnect__employee-list_table_cell.--password {
+	width: 23.33%;
+}
+
+/* When the login column is hidden, adjust the width of the other columns */
+.mail_massconnect__employee-list_table.--login-hidden .mail_massconnect__employee-list_table_cell {
+	width: 33.333%;
+}
+
+.mail_massconnect__employee-list_table.--login-hidden .--login {
+	display: none;
+}
+
+.mail_massconnect__employee-list_table_header .mail_massconnect__employee-list_table_cell {
+	font-size: 13px;
+	color: #828b95;
+	font-weight: 500;
+}
+
+.mail_massconnect__employee-list_table_employee-info {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border-radius: 12px;
+	cursor: default;
+	transition: background-color 0.3s ease;
+	padding: 2px 6px 2px 3px;
+}
+
+.mail_massconnect__employee-list_table_employee-info:hover {
+	background-color: rgba(0, 0, 0, 0.03);
+}
+
+.mail_massconnect__employee-list_table_employee-avatar {
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background-size: cover;
+	background-position: center;
+	flex-shrink: 0;
+	padding: 1px;
+}
+
+.mail_massconnect__employee-list_table_employee-name {
+	font-size: var(--ui-font-size-lg);
+	color: #333;
+}
+
+.mail_massconnect__employee-list_table_input {
+	border: none;
+	background: none;
+	outline: none;
+	width: 100%;
+	font-family: inherit;
+	font-size: 14px;
+	color: #333;
+	padding: 4px 2px;
+	box-sizing: border-box;
+}
+
+.mail_massconnect__employee-list_table_input::placeholder {
+	color: #a8b4bd;
+	font-weight: 400;
+}
+
+.mail_massconnect__employee-list_info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	padding: 10px 0;
+}
+
+.mail_massconnect__employee-list_info_actions,
+.mail_massconnect__employee-list_added-employees_show-button-text {
+	cursor: pointer;
+	user-select: none;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+	color: var(--ui-color-palette-gray-50);
+	border-bottom: 1px dashed rgba(168, 173, 180, 0.28);
+}
+
+.mail_massconnect__employee-list_info_actions {
+	margin-left: auto;
+}
+
+.mail_massconnect__employee-list_info_actions-icon,
+.mail_massconnect__employee-list_added-employees_show-button-icon {
+	cursor: pointer;
+	user-select: none;
+}
+
+.mail_massconnect__employee-list_added-employees_show-button-icon {
+	margin-right: auto;
+}
+
+.mail_massconnect__employee-list_info {
+	cursor: pointer;
+	user-select: none;
+	margin-left: auto;
+}
+
+.mail_massconnect__employee-list_table_delete-btn-container {
+	width: 0;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.mail_massconnect__employee-list_table_employee-info:hover .mail_massconnect__employee-list_table_delete-btn-container {
+	opacity: 1;
+}
+
+.mail_massconnect__employee-list_table_delete-btn-container .ui-btn.--air.mail_massconnect__employee-list_table_delete-employee {
+	position: relative;
+	width: 22px;
+	height: 22px;
+	min-width: 22px;
+	margin-top: -18px;
+	margin-left: -5px;
+}
+
+.mail_massconnect__employee-list_added-employees_container .mail_massconnect__employee-list_table_header {
+	margin: 0;
+}

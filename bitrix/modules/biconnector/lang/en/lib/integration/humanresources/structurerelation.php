@@ -1,0 +1,17 @@
+<?php
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_ID"] = "Subdepartment ID";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_ID_FULL"] = "The ID of the subdepartment.";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE"] = "Subdepartment";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE_FULL"] = "The ID and name of the subdepartment.";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE_NAME"] = "Subdepartment name";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_CHILD_NODE_NAME_FULL"] = "Subdepartment name.";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_DEPTH"] = "Nesting level";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_DEPTH_FULL"] = "The nesting level of the subdepartment in the parent department's hierarchy.";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_ID"] = "Unique key";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_ID"] = "Parent department ID";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_ID_FULL"] = "The ID of the parent department.";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE"] = "Parent department";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE_FULL"] = "The ID and name of the parent department.";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE_NAME"] = "Parent department name";
+$MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE_NAME_FULL"] = "Parent department name.";
+$MESS["HR_BIC_STRUCTURE_RELATION_TABLE"] = "Department structure";

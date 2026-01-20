@@ -13,6 +13,11 @@ import 'ui.design-tokens';
 
 const View = BX.UI.EntityEditorUserFieldFileView;
 
+declare type ViewSettings = {
+	isAllowSwitchView: boolean,
+	viewId: ?string,
+};
+
 // @vue/component
 export const SelectableViewWidget: BitrixVueComponentProps = {
 	name: 'SelectableViewWidget',
@@ -28,17 +33,17 @@ export const SelectableViewWidget: BitrixVueComponentProps = {
 			type: Array,
 			required: true,
 		},
-		viewId: {
-			type: [String, null],
-			required: false,
-			default: null,
+		viewSettings: {
+			/** @type ViewSettings */
+			type: Object,
+			required: true,
 		},
 	},
 
 	data(): Object
 	{
 		return {
-			currentViewId: this.viewId ?? View.default().id,
+			currentViewId: this.viewSettings.viewId ?? View.default().id,
 			views: View.getAll(),
 		};
 	},
@@ -69,7 +74,7 @@ export const SelectableViewWidget: BitrixVueComponentProps = {
 	// language=Vue
 	template: `
 		<div class="main-file-field-selectable-view">
-			<div class="main-file-field-selectable-view__view-selector-container">
+			<div v-if="viewSettings.isAllowSwitchView" class="main-file-field-selectable-view__view-selector-container">
 				<ViewSelector :views="views" :view-id="currentViewId" :on-change="handleViewChange" />
 			</div>
 			<div class="main-file-field-selectable-view__file-list-container">

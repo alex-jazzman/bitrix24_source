@@ -1,0 +1,25 @@
+.tasks-field-users-footer {
+	display: flex;
+	margin-top: 8px;
+	align-items: center;
+	min-height: 20px;
+}
+
+.tasks-field-users-footer.--inline {
+	margin: 0 0 0 6px;
+}
+
+.tasks-field-users-more {
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-md);
+	cursor: pointer;
+}
+
+.tasks-field-users-more:hover {
+	color: var(--ui-color-base-3);
+}
+
+.tasks-field-users-more.--remove {
+	border-bottom: 1px dashed;
+	margin-left: auto;
+}

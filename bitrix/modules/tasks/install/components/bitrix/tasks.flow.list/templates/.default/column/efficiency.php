@@ -57,10 +57,12 @@ if (!function_exists('renderEfficiencyColumn'))
 			$isShouldShowBoostPopup = false;
 			$isAdviceFetching = false;
 			$isAdviceErrorOccurred = false;
+			$isShouldShowRateLimitPopup = false;
 
 			if (!$isAdviceExists)
 			{
 				$isShouldShowBoostPopup = $adviceInfo['STATUS'] === CollectedDataStatus::LIMIT_EXCEEDED;
+				$isShouldShowRateLimitPopup = $adviceInfo['STATUS'] === CollectedDataStatus::RATE_LIMIT_EXCEEDED;
 
 				$isAdviceFetching = in_array(
 					$adviceInfo['STATUS'],
@@ -86,10 +88,26 @@ if (!function_exists('renderEfficiencyColumn'))
 					);";
 
 					break;
+
+				 case $isShouldShowRateLimitPopup:
+					 $onCopilotIconClick = "BX.Tasks.Flow.CopilotAdviceErrorPopup.show(
+						this, 
+						BX.Tasks.Flow.CopilotAdviceErrorTypes.RateLimit
+					);";
+
+					 break;
+
 				case $isShouldShowBoostPopup:
-					$onCopilotIconClick = "BX.loadExt('baas.store').then(function(exports) {
-						BX.Baas.Store.Widget.getInstance().bind(this).show();
-					}.bind(this));";
+					$onCopilotIconClick = "BX.Runtime.loadExtension('baas.store')
+						.then(({ ServiceWidget }) => {
+							if (ServiceWidget)
+							{
+								ServiceWidget.getInstanceByCode('ai_copilot_token').bind(this).show();
+							}
+						})
+						.catch((e) => {
+							console.error(e);
+						});";
 
 					break;
 				case $isAdviceExists:

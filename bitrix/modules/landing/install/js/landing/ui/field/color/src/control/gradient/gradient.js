@@ -1,13 +1,13 @@
-import {Event, Tag, Text, Dom, Loc} from 'main.core';
-import {Popup, PopupManager} from 'main.popup';
-import {BaseEvent} from "main.core.events";
-import BaseControl from "../base_control/base_control";
-import Colorpicker from "../colorpicker/colorpicker";
+import { Event, Tag, Text, Dom, Loc } from 'main.core';
+import { Popup, PopupManager } from 'main.popup';
+import { BaseEvent } from 'main.core.events';
+import BaseControl from '../base_control/base_control';
+import Colorpicker from '../colorpicker/colorpicker';
 import Preset from '../../layout/preset/preset';
 
 import 'ui.fonts.opensans';
 import './css/gradient.css';
-import GradientValue from "../../gradient_value";
+import GradientValue from '../../gradient_value';
 import ColorValue from '../../color_value';
 
 export default class Gradient extends BaseControl
@@ -27,15 +27,19 @@ export default class Gradient extends BaseControl
 	{
 		super();
 		this.setEventNamespace('BX.Landing.UI.Field.Color.Gradient');
-		this.popupId = 'gradient_popup_' + Text.getRandom();
+
+		this.options = options;
+		this.options.hexPreviewMode = true;
+
+		this.popupId = `gradient_popup_${Text.getRandom()}`;
 		this.popupTargetContainer = options.contentRoot;
 
-		this.colorpickerFrom = new Colorpicker(options);
+		this.colorpickerFrom = new Colorpicker(this.options);
 		this.colorpickerFrom.subscribe('onChange', (event) => {
 			this.onColorChange(event.getData().color, null);
 		});
 
-		this.colorpickerTo = new Colorpicker(options);
+		this.colorpickerTo = new Colorpicker(this.options);
 		this.colorpickerTo.subscribe('onChange', (event) => {
 			this.onColorChange(null, event.getData().color);
 		});
@@ -106,12 +110,12 @@ export default class Gradient extends BaseControl
 		{
 			if (value.getType() === GradientValue.TYPE_LINEAR)
 			{
-				value.setValue({type: GradientValue.TYPE_RADIAL});
+				value.setValue({ type: GradientValue.TYPE_RADIAL });
 				Gradient.disableButton(this.getRotateButton());
 			}
 			else
 			{
-				value.setValue({type: GradientValue.TYPE_LINEAR});
+				value.setValue({ type: GradientValue.TYPE_LINEAR });
 				Gradient.enableButton(this.getRotateButton());
 			}
 			this.setValue(value);
@@ -206,7 +210,7 @@ export default class Gradient extends BaseControl
 					forceLeft: true,
 				},
 				offsetLeft: 15,
-				angle: {offset: -5},
+				angle: { offset: -5 },
 				padding: 0,
 				contentPadding: 7,
 				content: this.getPopupContent(),
@@ -235,13 +239,16 @@ export default class Gradient extends BaseControl
 			Dom.clean(this.getPresetContainer());
 			Dom.append(this.preset.getLayout(), this.getPresetContainer());
 		}
+
 		return Tag.render`
 			<div class="landing-ui-field-color-gradient">
-				${this.getPresetContainer()}
-				<div class="landing-ui-field-color-gradient-container">
-					<div class="landing-ui-field-color-gradient-from">${this.colorpickerFrom.getLayout()}</div>
-					${this.getPopupButton()}
-					<div class="landing-ui-field-color-gradient-to">${this.colorpickerTo.getLayout()}</div>
+				<div class="landing-ui-field-color-gradient-container-main">
+					${this.getPresetContainer()}
+					<div class="landing-ui-field-color-gradient-container">
+						<div class="landing-ui-field-color-gradient-from">${this.colorpickerFrom.getLayout()}</div>
+						${this.getPopupButton()}
+						<div class="landing-ui-field-color-gradient-to">${this.colorpickerTo.getLayout()}</div>
+					</div>
 				</div>
 				<div class="landing-ui-field-color-gradient-switch-type-container">
 					${this.getSwitchTypeButton()}
@@ -277,7 +284,8 @@ export default class Gradient extends BaseControl
 				<span
 					class="landing-ui-field-color-gradient-switch-type"
 					title="${Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_SWITCH_TYPE')}"
-				></span>`;
+				></span>
+			`;
 		});
 	}
 
@@ -288,7 +296,8 @@ export default class Gradient extends BaseControl
 				<span
 					class="landing-ui-field-color-gradient-rotate"
 					title="${Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_ROTATE')}"
-				></span>`;
+				></span>
+			`;
 		});
 	}
 
@@ -299,7 +308,8 @@ export default class Gradient extends BaseControl
 				<span
 					class="landing-ui-field-color-gradient-swap"
 					title="${Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_SWAP')}"
-				></span>`;
+				></span>
+			`;
 		});
 	}
 
@@ -341,7 +351,7 @@ export default class Gradient extends BaseControl
 				from: this.colorpickerFrom.getValue(),
 				to: this.colorpickerTo.getValue(),
 				angle: rotate,
-				type: type,
+				type,
 			});
 		});
 	}
@@ -357,7 +367,7 @@ export default class Gradient extends BaseControl
 
 			this.unsetActive();
 
-			Dom.style(this.getContainerLayout(), 'background', (new GradientValue).getStyleString());
+			Dom.style(this.getContainerLayout(), 'background', (new GradientValue()).getStyleString());
 
 			Gradient.disableButton(this.getRotateButton());
 			Gradient.disableButton(this.getSwitchTypeButton());
@@ -380,7 +390,7 @@ export default class Gradient extends BaseControl
 			Gradient.enableButton(this.getSwapButton());
 			if (value.getType() === GradientValue.TYPE_RADIAL)
 			{
-				Gradient.disableButton(this.getRotateButton())
+				Gradient.disableButton(this.getRotateButton());
 				this.getSwitchTypeButton().innerText = Loc.getMessage('LANDING_FIELD_COLOR-GRADIENT_DO_LINEAR');
 			}
 			else
@@ -396,7 +406,7 @@ export default class Gradient extends BaseControl
 	onChange(event: ?BaseEvent)
 	{
 		this.cache.delete('value');
-		this.emit('onChange', {gradient: this.getValue()});
+		this.emit('onChange', { gradient: this.getValue() });
 	}
 
 	setActive(): void

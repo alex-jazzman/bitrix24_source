@@ -10,6 +10,7 @@ $MESS["SALESCENTER_SP_CASHBOX_MEASURE_HINT"] = "Өлшем бірлігі сат
 $MESS["SALESCENTER_SP_CASHBOX_OFD_OPTION_OTHER"] = "Басқа";
 $MESS["SALESCENTER_SP_CASHBOX_OFD_SETTINGS"] = "ФДО баптаулары";
 $MESS["SALESCENTER_SP_CASHBOX_OFD_TITLE"] = "ФДО";
+$MESS["SALESCENTER_SP_CASHBOX_VAT_22_ATTENTION"] = "2026 жылғы 1 қаңтардан бастап ҚҚС мөлшерлемесі 20%-дан 22%-ға дейін артады. 22% ҚҚС өрісінде #CODE# кодын көрсетіңіз";
 $MESS["SALESCENTER_SP_CASHBOX_VAT_ATTENTION"] = "Назар аударыңыз, егер сіз ҚҚС төлеушісі болмасаңыз, онда \"ҚҚС-сыз [0%]\" мөлшерлемесінің мәні \"ҚҚС-сыз [әдепкі бойынша]\" мәнімен сәйкес келуі керек";
 $MESS["SALESCENTER_SP_CASHBOX_VAT_HINT"] = "Салық мөлшерлемесінің мәні сатып алушыларды хабардар ету үшін кассалық чекке жіберіледі";
 $MESS["SALESCENTER_SP_CONNECT_COMPANY_DETAILS_INN"] = "СТН #INN#";

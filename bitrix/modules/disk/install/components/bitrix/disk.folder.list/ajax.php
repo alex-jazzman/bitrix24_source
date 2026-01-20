@@ -2,7 +2,6 @@
 
 use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\Configuration;
-use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Document\SessionTerminationServiceFactory;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
@@ -1293,10 +1292,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					if ($result->isSuccess())
 					{
 						$unifiedLinkAccessChanged = true;
-						if ($isBoard)
-						{
-							BoardService::kickUnallowedUsers($object);
-						}
 					}
 					else
 					{
@@ -1330,7 +1325,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					'PARENT_ID' => null,
 				),
 			));
-			$needToOverwrite = $needToDelete = $needToAdd = $deletedOrChangedSharingItems = array();
+			$needToOverwrite = $needToDelete = $needToAdd = array();
 			while($sharingRow = $query->fetch())
 			{
 				if(isset($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]))
@@ -1419,28 +1414,12 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						/** @var \Bitrix\Disk\Sharing $sharingModel */
 						$sharingModel = Sharing::buildFromArray($sharingRow);
 						$sharingModel->changeTaskName($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]);
-
-						if ($isBoard)
-						{
-							Application::getInstance()->addBackgroundJob(
-								function () use ($object) {
-									BoardService::kickUnallowedUsers($object);
-								}
-							);
-						}
 					}
 					else
 					{
-						$sharingUpdateResult = SharingTable::update($sharingRow['ID'], array(
+						SharingTable::update($sharingRow['ID'], array(
 							'TASK_NAME' => $newExtendedRightsReformat[$sharingRow['TO_ENTITY']],
 						));
-
-						$isSharingTypeToUser = (int)$sharingRow['TYPE'] === SharingTable::TYPE_TO_USER;
-						$isChangedAccessToRead = $newExtendedRightsReformat[$sharingRow['TO_ENTITY']] === $rightsManager::TASK_READ;
-						if ($isChangedAccessToRead && $isSharingTypeToUser && $sharingUpdateResult->isSuccess())
-						{
-							$deletedOrChangedSharingItems[] = Sharing::buildFromRow($sharingRow);
-						}
 					}
 				}
 
@@ -1459,23 +1438,20 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 				foreach(Sharing::getModelList(array('filter' => array('ID' => $ids))) as $sharing)
 				{
-					if($sharing->delete($currentUserId))
-					{
-						$deletedOrChangedSharingItems[] = $sharing;
-					}
+					$sharing->delete($currentUserId);
 				}
 			}
 
 			Application::getInstance()->addBackgroundJob(
-				function () use ($object, $deletedOrChangedSharingItems) {
-					$this->terminateAllSessionsForChangedOrDeletedSharingItems($object->getId(), $deletedOrChangedSharingItems);
-				}
+				function () use ($object) {
+					$this->terminateSessionsWithInsufficientRights($object);
+				},
 			);
 
 			if ($isFolder)
 			{
 				/** @var Folder $object */
-				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext, $deletedOrChangedSharingItems);
+				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext);
 			}
 
 			$this->sendJsonSuccessResponse([
@@ -1485,78 +1461,63 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		else
 		{
 			//user delete all sharing
-			$deletedSharingItems = [];
-			foreach($object->getRealObject()->getSharingsAsReal() as $sharing)
+			foreach ($object->getRealObject()->getSharingsAsReal() as $sharing)
 			{
-				if ($sharing->delete($currentUserId))
-				{
-					$deletedSharingItems[] = $sharing;
-				}
+				$sharing->delete($currentUserId);
 			}
 
 			Application::getInstance()->addBackgroundJob(
-				function () use ($object, $deletedSharingItems, $isBoard) {
-					$this->terminateAllSessionsForChangedOrDeletedSharingItems($object->getId(), $deletedSharingItems);
-					if ($isBoard)
-					{
-						BoardService::kickUnallowedUsers($object);
-					}
-				}
+				function () use ($object) {
+					$this->terminateSessionsWithInsufficientRights($object);
+				},
 			);
 
 			if ($isFolder)
 			{
 				/** @var Folder $object */
-				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext, $deletedSharingItems);
+				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext);
 			}
 
 			$this->sendJsonSuccessResponse();
 		}
 	}
 
-	protected function terminateSessionsForAllBoardsInFolder(Folder $object, SecurityContext $securityContext, array $deletedOrChangedSharingItems)
+	protected function terminateSessionsForAllBoardsInFolder(Folder $object, SecurityContext $securityContext): void
 	{
-		$objectsInFolder = $object->getDescendants($securityContext);
+		$objectsInFolder = $object->getDescendants($securityContext, [
+			'filter' => [
+				'=TYPE' => ObjectTable::TYPE_FILE,
+				'=TYPE_FILE' => TypeFile::FLIPCHART,
+			],
+		]);
+
 		$boardsInFolder = [];
 		foreach ($objectsInFolder as $descObject)
 		{
-			if ($descObject->getRealObject() instanceof File && $descObject->getRealObject()->getTypeFile() == TypeFile::FLIPCHART)
-			{
-				$boardsInFolder[] = $descObject->getRealObject();
-			}
+			$boardsInFolder[] = $descObject->getRealObject();
 		}
+
 		if ($boardsInFolder)
 		{
 			Application::getInstance()->addBackgroundJob(
-				function () use ($boardsInFolder, $deletedOrChangedSharingItems) {
+				function () use ($boardsInFolder) {
 					foreach ($boardsInFolder as $board)
 					{
-						$this->terminateAllSessionsForChangedOrDeletedSharingItems($board->getId(), $deletedOrChangedSharingItems);
-						BoardService::kickUnallowedUsers($board);
+						$this->terminateSessionsWithInsufficientRights($board);
 					}
-				}
+				},
 			);
 		}
 	}
 
 	/**
-	 * @param int $objectId
-	 * @param Sharing[] $sharingItems
+	 * @param BaseObject $object
 	 * @return void
 	 */
-	private function terminateAllSessionsForChangedOrDeletedSharingItems(int $objectId, array $sharingItems): void
+	private function terminateSessionsWithInsufficientRights(BaseObject $object): void
 	{
-		$userIds = [];
-		foreach ($sharingItems as $deletedSharing)
-		{
-			if ($deletedSharing->isToUser())
-			{
-				[,$userId] = Sharing::parseEntityValue($deletedSharing->getToEntity());
-				$userIds[] = $userId;
-			}
-		}
-		$sessionTerminationService = (new SessionTerminationServiceFactory($objectId, $userIds))->create();
-		$sessionTerminationService->terminateAllSessions();
+		$sessionTerminationService = (new SessionTerminationServiceFactory($object))->create();
+		$sessionTerminationService->terminateSessionsWithInsufficientRights();
 	}
 
 	protected function processActionCopyTo($objectId, $targetObjectId)

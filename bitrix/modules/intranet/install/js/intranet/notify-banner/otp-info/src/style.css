@@ -1,0 +1,100 @@
+.intranet-otp-motivating-popup__content {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+}
+
+.intranet-otp-motivating-popup__main-content {
+	width: 448px;
+}
+
+.intranet-otp-motivating-popup__title {
+	color: var(--ui-color-base-1);
+}
+
+.intranet-otp-motivating-popup__title--accent {
+	color: var(--ui-color-accent-main-primary-alt);
+}
+
+.intranet-otp-motivating-popup__text-wrapper {
+	margin-top: 24px;
+	gap: 18px;
+	display: flex;
+	flex-direction: column;
+}
+
+.intranet-otp-motivating-popup__text {
+	margin: 0;
+	color: var(--ui-color-base-2);
+}
+
+.intranet-otp-motivating-popup__link {
+	margin-top: 4px;
+	display: inline-block;
+	color: var(--ui-color-accent-main-link);
+}
+
+.intranet-otp-motivating-popup__list {
+	color: var(--ui-color-accent-main-alert);
+	margin: 0;
+	gap: 14px;
+	display: flex;
+	flex-direction: column;
+}
+
+.intranet-otp-motivating-popup__list {
+	list-style: none;
+	padding-left: 0;
+}
+
+.intranet-otp-motivating-popup__list-item {
+	padding: 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.intranet-otp-motivating-popup__list-item .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+	--ui-icon-set__icon-size: 18px;
+}
+
+.intranet-otp-motivating-popup .ui-alert {
+	margin-top: 18px;
+	margin-bottom: 0;
+}
+
+.intranet-otp-motivating-popup .ui-alert-danger {
+	background-color: var(--ui-color-accent-soft-red-3);
+	border-radius: 12px;
+	border: solid 1px var(--ui-color-accent-soft-red-1);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.intranet-otp-motivating-popup .ui-alert-danger::before {
+	content: '';
+	vertical-align: middle;
+	display: inline-block;
+	min-width: 48px;
+	width: 48px;
+	height: 48px;
+	background: url('../images/redAlert.png') no-repeat center;
+	background-size: 100%;
+}
+
+.intranet-otp-motivating-popup .ui-alert-message {
+	color: var(--ui-color-base-1);
+}
+
+.intranet-otp-motivating-popup__animation {
+	width: 286px;
+	height: 400px;
+}
+
+.intranet-otp-motivating-popup .popup-window-buttons {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+}

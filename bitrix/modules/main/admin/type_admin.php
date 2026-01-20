@@ -224,7 +224,7 @@ foreach($resultList as $resultItem)
 	$row =& $lAdmin->AddRow($f_ID, $resultItem, "type_edit.php?EVENT_NAME=".$f_ID, Loc::getMessage("type_admin_edit_title1"));
 	$row->AddViewField("ID", implode("<br />", $arr));
 	$row->AddViewField("LID", implode("<br />", array_intersect($arLID, $resultItem['LID'])));
-	$row->AddViewField("EVENT_NAME", "<a href=\"type_edit.php?EVENT_NAME=".$f_ID."\">".$f_ID."</a>");
+	$row->AddViewField("EVENT_NAME", "<a href=\"type_edit.php?EVENT_NAME=".$f_ID."&amp;lang=" . LANGUAGE_ID . "\">".$f_ID."</a>");
 	$row->AddViewField("NAME", htmlspecialcharsEx($resultItem['NAME']));
 	$row->AddViewField("EVENT_TYPE", ($resultItem['EVENT_TYPE'] == EventTypeTable::TYPE_SMS? "SMS" : "Email"));
 	$row->AddViewField("DESCRIPTION", htmlspecialcharsEx($resultItem['DESCRIPTION']));
@@ -233,7 +233,7 @@ foreach($resultList as $resultItem)
 	{
 		foreach ($resultItem['TEMPLATES'] as $k)
 		{
-			$templates[$k] = "<a href=\"".BX_ROOT."/admin/message_edit.php?ID=".intval($k)."&lang=".LANGUAGE_ID."\">".intval($k)."</a>";
+			$templates[$k] = "<a href=\"".BX_ROOT."/admin/message_edit.php?ID=".intval($k)."&amp;lang=".LANGUAGE_ID."\">".intval($k)."</a>";
 		}
 	}
 	$row->AddViewField("TEMPLATES", implode("<br />", $templates));

@@ -9,6 +9,7 @@ export { SidebarModel } from './sidebar/sidebar';
 export { MarketModel } from './market/market';
 export { CountersModel } from './counters/counters';
 export { CopilotModel } from './copilot/copilot';
+export { AiAssistantModel } from './ai-assistant/ai-assistant';
 
 export { formatFieldsWithConfig } from './utils/validate';
 export type { FieldsConfig } from './utils/validate';
@@ -19,7 +20,6 @@ export { prepareDraft, prepareInvitation } from './recent/format/format-function
 export type {
 	Chat as ImModelChat,
 	CollabInfo as ImModelCollabInfo,
-	CollabEntityInfo as ImModelCollabEntityInfo,
 } from './type/chat';
 export type { InputActionState, ChatInputActions as ImModelInputActions } from './chats/nested-modules/input-actions';
 export type { User as ImModelUser, Bot as ImModelBot } from './type/user';
@@ -31,6 +31,7 @@ export type {
 export type { CallItem as ImModelCallItem } from './type/call-item';
 export type {
 	Notification as ImModelNotification,
+	NotificationParams as ImModelNotificationParams,
 	NotificationButton as ImModelNotificationButton,
 } from './type/notification';
 export type { RecentItem as ImModelRecentItem } from './type/recent-item';
@@ -52,4 +53,7 @@ export type {
 export type { SidebarMultidialogItem as ImModelSidebarMultidialogItem } from './type/sidebar/multidialog';
 export type { SidebarFileTab as ImModelSidebarFileTab } from './type/sidebar/file-tab';
 export type { Anchor as ImModelAnchor } from './type/anchor';
+export type { TariffRestrictions as ImModelTariffRestrictions } from './application/nested-modules/tariff-restrictions/tariff-restrictions';
 export type { Transcription as ImModelTranscription } from './type/file';
+export type { Call, CallAssociatedEntity } from './type/call';
+export type { Sticker as ImModelSticker, StickerPack as ImModelStickerPack } from './type/sticker';

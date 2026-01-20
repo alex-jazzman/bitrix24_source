@@ -5,14 +5,21 @@ import { Utils } from 'im.v2.lib.utils';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction, type RunActionError } from 'im.v2.lib.rest';
 import { Core } from 'im.v2.application.core';
-import { EventType, RestMethod, DialogScrollThreshold, ChatType } from 'im.v2.const';
+import { EventType, RestMethod, DialogScrollThreshold, ChatType, MessageComponent } from 'im.v2.const';
+import { StickerManager } from 'im.v2.lib.sticker-manager';
 import { MessageService } from 'im.v2.provider.service.message';
 
 import type { Store } from 'ui.vue3.vuex';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-import type { PlainMessageParams, CopilotMessageParams, FileMessageParams, PreparedMessage } from './types/sending';
+import type {
+	PlainMessageParams,
+	CopilotMessageParams,
+	FileMessageParams,
+	PreparedMessage,
+	StickerMessageParams,
+} from './types/sending';
 
-export type { ForwardedEntityConfig, PanelContext, PanelContextWithMultipleIds } from './types/sending';
+export type { PanelContext, PanelContextWithMultipleIds } from './types/sending';
 
 export class SendingService
 {
@@ -71,6 +78,21 @@ export class SendingService
 		});
 
 		return Promise.resolve();
+	}
+
+	async sendMessageWithSticker(params: StickerMessageParams): void
+	{
+		const { stickerParams } = params;
+
+		if (!Type.isPlainObject(stickerParams))
+		{
+			return;
+		}
+
+		Logger.warn('SendingService: sendMessage with sticker', params);
+		const message: PreparedMessage = this.#prepareMessageWithSticker(params);
+
+		void this.#processMessageSending(message);
 	}
 
 	async forwardMessages(params: PlainMessageParams): Promise
@@ -198,6 +220,9 @@ export class SendingService
 			sending: true,
 		};
 
+		const copilotParams = this.#prepareCopilotMessageParams(dialogId);
+		const aiAssistantParams = this.#prepareAiAssistantMessageParams(dialogId);
+
 		return {
 			text,
 			dialogId,
@@ -206,6 +231,8 @@ export class SendingService
 			replyId,
 			forwardIds,
 			viewedByOthers: this.#needToSetAsViewed(dialogId),
+			...copilotParams,
+			...aiAssistantParams,
 			...defaultFields,
 		};
 	}
@@ -221,6 +248,21 @@ export class SendingService
 		return {
 			...this.#prepareMessage(params),
 			params: { FILE_ID: fileIds },
+		};
+	}
+
+	#prepareMessageWithSticker(params: StickerMessageParams): PreparedMessage
+	{
+		const { stickerParams } = params;
+		if (!Type.isPlainObject(stickerParams))
+		{
+			throw new TypeError('SendingService: sendMessageWithSticker: no stickerParams provided');
+		}
+
+		return {
+			...this.#prepareMessage(params),
+			componentId: MessageComponent.sticker,
+			stickerParams,
 		};
 	}
 
@@ -267,13 +309,19 @@ export class SendingService
 	{
 		const hasMessageText: boolean = Type.isStringFilled(message.text);
 		const hasMessageFile: boolean = Type.isArrayFilled(message.params?.FILE_ID);
+		const hasMessageSticker: boolean = Type.isPlainObject(message.stickerParams);
 
-		if (hasMessageText || hasMessageFile)
+		if (hasMessageText || hasMessageFile || hasMessageSticker)
 		{
 			void this.#store.dispatch('recent/update', {
 				id: message.dialogId,
 				fields: { messageId: message.temporaryId },
 			});
+		}
+
+		if (hasMessageSticker)
+		{
+			void this.#store.dispatch('messages/stickers/setStickersFromMessages', [message]);
 		}
 	}
 
@@ -300,6 +348,20 @@ export class SendingService
 		if (message.copilot)
 		{
 			fields.copilot = message.copilot;
+		}
+
+		if (message.aiAssistant)
+		{
+			fields.aiAssistant = message.aiAssistant;
+		}
+
+		if (message.stickerParams)
+		{
+			fields.stickerParams = {
+				stickerId: message.stickerParams.id,
+				packId: message.stickerParams.packId,
+				packType: message.stickerParams.packType,
+			};
 		}
 
 		const queryData = {
@@ -429,13 +491,24 @@ export class SendingService
 				return;
 			}
 
-			preparedMessages.push({
+			const prepared = {
 				...this.#prepareMessage({ dialogId, text: message.text, tempMessageId: uuid, replyId: message.replyId }),
 				forward: this.#prepareForwardParams(messageId),
 				attach: message.attach,
 				isDeleted: message.isDeleted,
 				files: message.files,
-			});
+			};
+
+			const isSticker = this.#store.getters['messages/stickers/isStickerMessage'](messageId);
+			if (isSticker)
+			{
+				const stickerKey = this.#store.getters['messages/stickers/getStickerKeyByMessageId'](messageId) || '';
+				const { id, packId, packType } = new StickerManager().parseStickerKey(stickerKey);
+				const stickerData = this.#store.getters['messages/stickers/getStickerByMessageId'](messageId);
+				prepared.stickerParams = { id, packId, packType, ...stickerData };
+			}
+
+			preparedMessages.push(prepared);
 		});
 
 		return preparedMessages;
@@ -549,5 +622,33 @@ export class SendingService
 		}
 
 		return Promise.resolve();
+	}
+
+	#prepareCopilotMessageParams(dialogId: string): { copilot?: { reasoning: boolean } }
+	{
+		const isReasoningEnabled = Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
+		if (!isReasoningEnabled)
+		{
+			return {};
+		}
+
+		return { copilot: { reasoning: 'Y' } };
+	}
+
+	#prepareAiAssistantMessageParams(dialogId: string): { aiAssistant?: { mcpAuthId: number } }
+	{
+		const isAiAssistant = Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
+		if (!isAiAssistant)
+		{
+			return {};
+		}
+
+		const mcpAuthId = Core.getStore().getters['aiAssistant/getMcpAuthId'];
+		if (!mcpAuthId)
+		{
+			return {};
+		}
+
+		return { aiAssistant: { mcpAuthId } };
 	}
 }

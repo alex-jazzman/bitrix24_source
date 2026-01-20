@@ -18,9 +18,19 @@ export const UserAvatar = {
 			type: String,
 			default: UserAvatarSize.S,
 		},
+		borderColor: {
+			type: String,
+			default: undefined,
+		},
+	},
+	computed: {
+		normalizedSrc(): string
+		{
+			return this.src === null ? '' : this.src;
+		},
 	},
 	watch: {
-		src(): void
+		normalizedSrc(): void
 		{
 			this.render();
 		},
@@ -32,20 +42,20 @@ export const UserAvatar = {
 	methods: {
 		render(): void
 		{
+			const isExternal = this.type === 'collaber' || this.type === 'extranet';
+
 			this.avatar?.getContainer()?.remove();
-			const AvatarClass = this.type === 'collaber' ? AvatarRoundGuest : AvatarBase;
+			const AvatarClass = isExternal ? AvatarRoundGuest : AvatarBase;
 			this.avatar = new (AvatarClass)({
 				size: UserAvatarSizeMap[this.size],
-				picPath: this.src,
-				baseColor: '#858D95',
+				picPath: encodeURI(this.normalizedSrc),
+				baseColor: isExternal ? null : '#858D95',
+				borderColor: this.borderColor,
 			});
 			this.avatar.renderTo(this.$refs.container);
 		},
 	},
 	template: `
-		<div
-			ref="container"
-			class="b24-user-avatar"
-		></div>
+		<div class="b24-user-avatar" ref="container"/>
 	`,
 };

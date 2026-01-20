@@ -6,6 +6,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { ButtonDesign, ButtonSize, Button } = require('ui-system/form/buttons/button');
+	const { Link4, LinkDesign, LinkMode } = require('ui-system/blocks/link');
 	const { Indent, Color } = require('tokens');
 	const { getTabsRunActionExecutor } = require('user-profile/api');
 	const { TabsCacheManager } = require('user-profile/common-tab/src/cache-manager');
@@ -21,9 +22,10 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 	const { ajaxPublicErrorHandler } = require('error');
 	const { TabType } = require('user-profile/const');
 	const { confirmClosing } = require('alert');
-	const { AvaMenu } = require('ava-menu');
-	const { withCurrentDomain } = require('utils/url');
 	const { FieldChangeManager } = require('user-profile/common-tab/src/field-change-manager');
+	const { OnboardingBase, CaseName } = require('onboarding');
+	const { isCloudAccount, openDeleteDialog } = require('user/account');
+	const { UserProfileAnalytics } = require('user-profile/analytics');
 
 	const CloseEditActions = {
 		SAVE_AND_EXIT: 'save_and_exit',
@@ -70,17 +72,24 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 		async componentDidMount()
 		{
-			const { parentWidget, canUpdate } = this.props;
+			const { parentWidget, canUpdate, ownerId, data } = this.props;
 
 			if (canUpdate)
 			{
 				parentWidget.setRightButtons([
 					{
 						type: 'edit',
+						badgeCode: 'profile_edit',
 						testId: this.getTestId('edit-button'),
 						callback: () => this.#activateEditMode(),
 					},
 				]);
+
+				void OnboardingBase.tryToShow(CaseName.ON_PROFILE_SHOULD_BE_FILLED, {
+					targetRef: 'profile_edit',
+					ownerId,
+					commonFields: data.commonFields,
+				});
 			}
 
 			Keyboard.on(Keyboard.Event.Hidden, () => this.#updateSaveButtonState());
@@ -191,6 +200,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 						withScroll: false,
 					},
 					...this.blocks,
+					this.#renderDeleteProfileButton(),
 				),
 			);
 		}
@@ -214,6 +224,33 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 				cacheManager: this.cacheManager,
 				onChange: this.onFieldChange,
 				onFocus: this.onFieldFocus,
+			});
+		}
+
+		#renderDeleteProfileButton()
+		{
+			const { ownerId, parentWidget } = this.props;
+			const { isEditMode } = this.state;
+
+			if (
+				Number(ownerId) !== Number(env.userId)
+				|| !isEditMode
+				|| !isCloudAccount()
+			)
+			{
+				return null;
+			}
+
+			return Link4({
+				style: {
+					marginTop: Indent.XL2.toNumber(),
+					marginBottom: (Application.getPlatform() === 'ios' ? 0 : Indent.XL4.toNumber()),
+					alignSelf: 'center',
+				},
+				design: LinkDesign.ALERT,
+				mode: LinkMode.DASH,
+				text: Loc.getMessage('M_PROFILE_DELETE'),
+				onClick: () => openDeleteDialog(parentWidget),
 			});
 		}
 
@@ -267,6 +304,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 				parentWidget.setRightButtons([
 					{
 						type: 'edit',
+						badgeCode: 'profile_edit',
 						testId: this.getTestId('edit-button'),
 						callback: () => this.#activateEditMode(),
 					},
@@ -398,10 +436,10 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			NotifyManager.hideLoadingIndicator(isSuccess);
 			if (isSuccess)
 			{
+				UserProfileAnalytics.sendEditContactInfo(this.fieldsManager.getChangedCommonFieldsIds());
 				this.fieldsManager.clear();
 				this.#updateFields(data);
 				await this.#deactivateEditMode();
-				this.#updateCurrentUserInfoInAvaMenu(data);
 			}
 			else
 			{
@@ -410,30 +448,6 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 			return isSuccess;
 		};
-
-		#updateCurrentUserInfoInAvaMenu(data)
-		{
-			const { ownerId } = this.props;
-			const { users } = data;
-			if (Number(ownerId) !== Number(env.userId) || !Type.isArrayFilled(users))
-			{
-				return;
-			}
-
-			const userData = users.find((user) => Number(user.id) === Number(ownerId));
-			if (!userData)
-			{
-				return;
-			}
-
-			const uri = withCurrentDomain(userData.avatarSize100);
-			AvaMenu.setUserInfo({
-				title: userData.fullName,
-				avatar: {
-					uri,
-				},
-			});
-		}
 
 		#updateFields(data)
 		{

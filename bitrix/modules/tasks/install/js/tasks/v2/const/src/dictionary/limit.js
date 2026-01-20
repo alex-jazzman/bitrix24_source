@@ -1,3 +1,4 @@
 export const Limit = Object.freeze({
-	RelationList: 3,
+	RelationList: 10,
+	Results: 3,
 });

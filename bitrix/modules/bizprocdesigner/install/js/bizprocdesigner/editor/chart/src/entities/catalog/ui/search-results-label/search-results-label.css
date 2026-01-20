@@ -1,0 +1,38 @@
+.editor-chart-search-results-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+	padding: 3px 0;
+    /* padding: 0 0 6px 0; */
+    overflow: hidden;
+}
+
+.editor-chart-search-results-label.--collapsed {
+	justify-content: center;
+}
+
+.editor-chart-search-results-label__icon {
+	opacity: 0.4;
+}
+
+.editor-chart-search-results-label__count {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+    font-weight: normal;
+    color: var(--ui-color-gray-50);
+    text-align: left;
+    white-space: nowrap;
+    padding-bottom: 5px;
+}
+
+.editor-chart-search-results-label__location {
+	margin: 0;
+    padding-right: 3px;
+	font-size: var(--ui-font-size-sm);
+    font-weight: normal;
+    color: var(--ui-color-gray-50);
+    text-align: right;
+    white-space: nowrap;
+    padding-bottom: 5px;
+}

@@ -8,11 +8,14 @@ return [
 	'css' => 'dist/status-service.bundle.css',
 	'js' => 'dist/status-service.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'tasks.v2.core',
 		'tasks.v2.const',
+		'tasks.v2.lib.scrum-manager',
 		'tasks.v2.lib.api-client',
+		'tasks.v2.lib.id-utils',
 		'tasks.v2.provider.service.task-service',
+		'tasks.v2.provider.service.result-service',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

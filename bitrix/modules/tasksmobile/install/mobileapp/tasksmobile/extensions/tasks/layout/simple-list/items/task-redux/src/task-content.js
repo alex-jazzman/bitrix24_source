@@ -27,11 +27,20 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 	const { TimeTrackingTimerIcon } = require('tasks/layout/fields/time-tracking/timer');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Loc } = require('loc');
+	const { Onboarding, CaseName } = require('tasks/onboarding');
 
 	class TaskContent extends PureComponent
 	{
-		containerRef = null;
-		isBlinking = false;
+		constructor(props)
+		{
+			super(props);
+
+			this.containerRef = null;
+			this.isBlinking = false;
+			this.counterRef = null;
+			this.showCounterOnboarding = this.showCounterOnboarding.bind(this);
+			this.subscribedEvents = new Set();
+		}
 
 		shouldComponentUpdate(nextProps, nextState)
 		{
@@ -41,6 +50,26 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			}
 
 			return super.shouldComponentUpdate(nextProps, nextState);
+		}
+
+		componentDidUpdate(prevProps, prevState)
+		{
+			if (this.task?.isCompleted && this.task?.status !== TaskStatus.SUPPOSEDLY_COMPLETED)
+			{
+				BX.postComponentEvent('TasksDashboard::onSupposedlyCompletedTaskAppeared', [this.task]);
+			}
+
+			if (!this.subscribedEvents.has('UI.SimpleList::onAllItemsPositionStable'))
+			{
+				BX.addCustomEvent('UI.SimpleList::onAllItemsPositionStable', this.showCounterOnboarding);
+				this.subscribedEvents.add('UI.SimpleList::onAllItemsPositionStable');
+			}
+		}
+
+		componentWillUnmount()
+		{
+			this.subscribedEvents.clear();
+			BX.removeCustomEvent('UI.SimpleList::onAllItemsPositionStable', this.showCounterOnboarding);
 		}
 
 		get task()
@@ -390,6 +419,12 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 						style: {
 							marginLeft: Indent.M.getValue(),
 						},
+						ref: (ref) => {
+							if (ref)
+							{
+								this.counterRef = ref;
+							}
+						},
 					},
 					CounterView(
 						counter.value,
@@ -487,6 +522,15 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				}),
 			);
 		}
+
+		showCounterOnboarding = () => {
+			if (this.counterRef)
+			{
+				void Onboarding.tryToShow(CaseName.UNREAD_TASKS_COUNTERS, {
+					targetRef: this.counterRef,
+				});
+			}
+		};
 
 		get styles()
 		{

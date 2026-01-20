@@ -188,7 +188,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 		 */
 		drawParticipantsItems(userIdList)
 		{
-			const result = [];
+			const result = this.getFixedItems();
 
 			userIdList.forEach((itemId) => {
 				const item = this.prepareItemForDrawing(itemId);

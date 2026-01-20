@@ -18,6 +18,7 @@ $MESS["TAB_NAME_CALENDAR_SHORT"] = "Календарь";
 $MESS["TAB_NAME_PROJECTS"] = "Проекты";
 $MESS["TAB_NAME_PROJECTS_SHORT"] = "Проекты";
 
+$MESS["TAB_NAME_MAIL"] = "Почта";
 $MESS["TAB_NAME_CRM"] = "CRM";
 $MESS["TAB_NAME_TERMINAL"] = "Терминал";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Складской учёт";
@@ -51,5 +52,5 @@ $MESS['TAB_NAME_DISK'] = 'Файлы';
 $MESS['TAB_DISK_NAVIGATION_TAB_RECENT'] = 'Недавние';
 $MESS['TAB_DISK_NAVIGATION_TAB_MY_FILES'] = 'Мои файлы';
 $MESS['TAB_DISK_NAVIGATION_TAB_COMPANY_FILES'] = 'Файлы компании';
-
+$MESS['TAB_NAME_CALL_LIST'] = 'Звонки';
 $MESS["TAB_NAME_TERMINAL_MENU_TITLE"] = "Платёжный терминал";

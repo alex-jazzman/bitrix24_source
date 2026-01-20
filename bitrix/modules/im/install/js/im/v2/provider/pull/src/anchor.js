@@ -25,16 +25,17 @@ export class AnchorPullHandler
 		this.store.dispatch('messages/anchors/removeAnchor', { anchor });
 	}
 
-	handleDeleteAllAnchors(): void
+	handleDeleteAnchors(payload: { chatIds: number[] }): void
 	{
-		this.store.dispatch('messages/anchors/removeAllAnchors');
+		const { chatIds } = payload;
+
+		chatIds.forEach((chatId) => {
+			void this.store.dispatch('messages/anchors/removeChatAnchors', chatId);
+		});
 	}
 
 	handleDeleteChatAnchors(payload: DeleteChatAnchorsParams): void
 	{
-		this.store.dispatch('messages/anchors/removeChatAnchors', {
-			chatId: payload.chatId,
-			userId: payload.userId,
-		});
+		this.store.dispatch('messages/anchors/removeChatAnchors', payload.chatId);
 	}
 }

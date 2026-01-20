@@ -16,6 +16,7 @@
 
 .tasks-field-group-title {
 	line-height: 18px;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	color: var(--ui-color-base-2);
@@ -32,7 +33,6 @@
 
 	position: relative;
 	display: flex;
-	margin-top: 10px;
 	max-width: -webkit-max-content;
 	max-width: max-content;
 	font-weight: var(--ui-font-weight-medium);
@@ -57,6 +57,7 @@
 .tasks-field-group-stage-text {
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tasks-field-group-stage.--dark .tasks-field-group-stage-text {
@@ -89,26 +90,86 @@
 }
 
 .tasks-field-group-stage-loader {
-	margin-top: 10px;
 	position: relative;
 	display: flex;
 	align-items: center;
 	height: 27px;
 }
 
-.tasks-field-group-scrum {
+.tasks-field-epic {
+	overflow: hidden;
+	margin-right: 10px;
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	margin-top: 10px;
-	font-size: var(--ui-font-size-xs);
-	font-weight: var(--ui-font-weight-medium);
-	color: var(--ui-color-base-4);
+	max-width: -webkit-max-content;
+	max-width: max-content;
+	padding: 3px 3px 3px 10px;
+	border-radius: var(--ui-border-radius-xs);
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+	background: var(--ui-color-base-7);
+	cursor: pointer;
 }
 
-.tasks-field-group-scrum-loader {
-	margin-top: 10px;
-	position: relative;
+.tasks-field-epic.--filled {
+	--epic-color: #00C0D5;
+	--epic-background: #00BFD51A;
+	background: var(--epic-background);
+}
+
+.tasks-field-epic.--dark {
+	color: var(--epic-color);
+}
+
+.tasks-field-epic-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tasks-field-epic .ui-icon-set {
+	margin-left: 3px;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-epic.--dark .ui-icon-set {
+	--ui-icon-set__icon-color: var(--epic-color);
+}
+
+.tasks-field-epic-loader {
+	display: flex;
+	align-items: center;
+	height: 26px;
+}
+
+.tasks-field-story-points {
+	display: flex;
+	align-items: center;
+	min-height: 26px;
+}
+
+.tasks-field-story-points-text {
+	padding: 2px 10px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-radius: 1in;
+	background: var(--ui-color-base-7);
+	cursor: text;
+}
+
+.tasks-field-story-points.--filled .tasks-field-story-points-text {
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-story-points-input {
+	flex: 1;
+	padding: 4px 6px;
+	border: var(--ui-border-width-thin) solid var(--ui-color-accent-main-link);
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.tasks-field-story-points-loader {
 	display: flex;
 	align-items: center;
 	height: 26px;
@@ -167,66 +228,4 @@
 	text-overflow: ellipsis;
 	color: var(--ui-color-base-2);
 	font-size: var(--ui-font-size-md);
-}
-
-.tasks-field-group-scrum-epic {
-	flex: 1;
-	overflow: hidden;
-	margin-right: 10px;
-	display: flex;
-	align-items: center;
-	max-width: -webkit-max-content;
-	max-width: max-content;
-	padding: 3px 3px 3px 10px;
-	border-radius: var(--ui-border-radius-xs);
-	color: var(--ui-color-base-1);
-	background: var(--ui-color-base-7);
-	cursor: pointer;
-}
-
-.tasks-field-group-scrum-epic.--filled {
-	--epic-color: #00C0D5;
-	--epic-background: #00BFD51A;
-	background: var(--epic-background);
-}
-
-.tasks-field-group-scrum-epic.--dark {
-	color: var(--epic-color);
-}
-
-.tasks-field-group-scrum-epic-title {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.tasks-field-group-scrum-epic .ui-icon-set {
-	margin-left: 3px;
-	--ui-icon-set__icon-size: 20px;
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
-}
-
-.tasks-field-group-scrum-epic.--dark .ui-icon-set {
-	--ui-icon-set__icon-color: var(--epic-color);
-}
-
-.tasks-field-group-scrum-story-points {
-	padding: 2px 10px;
-	max-width: 30px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	border-radius: 1in;
-	background: var(--ui-color-base-7);
-	cursor: text;
-}
-
-.tasks-field-group-scrum-story-points.--filled {
-	background: var(--ui-color-accent-soft-blue-3);
-	color: var(--ui-color-accent-main-primary);
-}
-
-.tasks-field-group-scrum-story-points-input {
-	width: 38px;
-	padding: 4px 6px;
-	border: var(--ui-border-width-thin) solid var(--ui-color-accent-main-link);
-	border-radius: var(--ui-border-radius-xs);
 }

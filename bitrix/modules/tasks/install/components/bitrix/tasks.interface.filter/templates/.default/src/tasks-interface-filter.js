@@ -9,6 +9,7 @@ type Params = {
 	isV2Form: boolean,
 	groupId?: number,
 	analytics: Object,
+	isScrum: boolean,
 };
 
 export class TasksInterfaceFilter
@@ -32,10 +33,17 @@ export class TasksInterfaceFilter
 		}
 
 		const button = ButtonManager.createFromNode(this.#params.createNode);
-		button.getMainButton().bindEvent('click', () => BX.Tasks.V2.Application.TaskCard.showCompactCard({
-			groupId: this.#params.groupId,
-			analytics: this.#params.analytics,
-		}));
+
+		const loadCard = top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
+		button.getMainButton().bindEvent('click', async () => {
+			const { TaskCard } = await loadCard;
+
+			TaskCard.showCompactCard({
+				groupId: this.#params.groupId,
+				analytics: this.#params.analytics,
+				...(this.#params.isScrum ? { deadlineTs: 0 } : {}),
+			});
+		});
 	}
 
 	#initRoles(): void

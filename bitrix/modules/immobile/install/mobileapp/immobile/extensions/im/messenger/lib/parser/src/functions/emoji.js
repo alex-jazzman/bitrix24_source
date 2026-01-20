@@ -22,6 +22,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 				attach,
 				files,
 				showFilePrefix = true,
+				sticker = false,
 			} = config;
 
 			if (Type.isArray(files) && files.length > 0)
@@ -45,6 +46,10 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			)
 			{
 				text = this.getTextForAttach(text, attach);
+			}
+			else if (sticker === true)
+			{
+				text = this.getTextForSticker();
 			}
 
 			return text.trim();
@@ -95,6 +100,10 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			else if (file.type === FileType.audio)
 			{
 				return this.getEmojiTextForFileType(textResult, FileEmojiType.audio, showFilePrefix);
+			}
+			else if (file.isVideoNote)
+			{
+				return this.getEmojiTextForFileType(textResult, FileEmojiType.videoNote, showFilePrefix);
 			}
 			else if (file.type === FileType.video)
 			{
@@ -166,6 +175,11 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 
 			return `${text} ${attachDescription}`.trim();
 		},
+
+		getTextForSticker()
+		{
+			return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_STICKER')}]`;
+		}
 	};
 
 	module.exports = {

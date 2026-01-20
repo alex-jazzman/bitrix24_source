@@ -15,6 +15,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 $isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
+$isAllowedGroup = \Bitrix\Tasks\V2\FormV2Feature::isOn('', (int)($arParams['GROUP_ID'] ?? 0));
+$isScrumProject = (bool)($arResult['IS_SCRUM_PROJECT'] ?? false);
 
 Loader::includeModule('ui');
 Extension::load([
@@ -32,7 +34,7 @@ Extension::load([
 
 if ($isV2Form)
 {
-	Extension::load('tasks.v2.application.task-card');
+	Extension::load(['tasks.v2.application.task-card']);
 }
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -50,8 +52,7 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 	include(__DIR__ . '/filter_selector.php');
 }
 
-$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-$relationToId = $request->get('relationToId');
+$relationToId = $arResult['relationToId'] ?? 0;
 
 $showCreateButton = (int)$arParams['MENU_GROUP_ID'] === 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] !== 'N';
 if (!$relationToId && $showCreateButton)
@@ -121,6 +122,23 @@ if (!$relationToId && $arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 			isV2Form: <?= $isV2Form ? 'true' : 'false' ?>,
 			groupId,
 			analytics,
+			isScrum: <?= $isScrumProject ? 'true' : 'false' ?>,
 		});
+
+		const isV2Form = <?= $isV2Form ? 'true' : 'false' ?>;
+		const isAllowedGroup = <?= $isAllowedGroup ? 'true' : 'false' ?>;
+
+		const loadedExtensions = ['tasks.v2.application.task-card'];
+		if (isV2Form)
+		{
+			loadedExtensions.push('tasks.v2.application.task-compact-card');
+		}
+
+		if (isAllowedGroup)
+		{
+			loadedExtensions.push('tasks.v2.application.task-full-card');
+		}
+
+		top.BX.Runtime.loadExtension(loadedExtensions);
 	})
 </script>

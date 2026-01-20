@@ -348,7 +348,7 @@ if ($arParams["SHOW_SECTION_TEMPLATES"] === "Y")
 		"URL" => $tasksLink.'templates/'.$strIframe,
 		"ID" => "view_templates",
 		"IS_ACTIVE" => $arParams["MARK_TEMPLATES"] === "Y",
-		'IS_DISABLED' => $isCollaber ? false : true,
+		'IS_DISABLED' => $isCollaber,
 	);
 }
 $hideRecycleBin = $arParams['SHOW_SECTION_RECYCLEBIN'] ?? 'Y';
@@ -359,7 +359,7 @@ if ($hideRecycleBin !== 'N' && Loader::includeModule('recyclebin'))
 		"URL" => $tasksLink . RouteDictionary::RECYCLEBIN_SUFFIX . $strIframe,
 		"ID" => 'view_recyclebin',
 		"IS_ACTIVE" => isset($arParams['MARK_RECYCLEBIN']) && $arParams['MARK_RECYCLEBIN'] === 'Y',
-		'IS_DISABLED' => false,
+		'IS_DISABLED' => $isCollaber,
 	];
 }
 

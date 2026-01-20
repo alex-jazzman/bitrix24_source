@@ -1,19 +1,18 @@
-import {Type, Loc} from 'main.core';
-import {BaseEvent} from "main.core.events";
+import { Type, Loc } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 
 import isHex from '../internal/is-hex';
 import isRgbString from '../internal/is-rgb-string';
 import isHslString from '../internal/is-hsl-string';
 import isGradientString from '../internal/is-gradient-string';
-import {isCssVar} from '../internal/css-var';
+import { isCssVar } from '../internal/css-var';
 
-import Color from "./color";
-import Gradient from "../control/gradient/gradient";
+import Color from './color';
+import Gradient from '../control/gradient/gradient';
 import Preset from '../layout/preset/preset';
 
-import GradientValue from "../gradient_value";
-import {IColorValue} from '../types/i_color_value';
-import Opacity from '../control/opacity/opacity';
+import GradientValue from '../gradient_value';
+import { IColorValue } from '../types/i_color_value';
 
 export default class BgColor extends Color
 {
@@ -49,14 +48,11 @@ export default class BgColor extends Color
 		});
 
 		const value = this.getValue();
-		if (value !== null && value instanceof GradientValue)
+		if (value !== null && value instanceof GradientValue && this.gradient.getPreset().isPresetValue(value))
 		{
-			if (this.gradient.getPreset().isPresetValue(value))
-			{
-				this.colorSet.getPreset().unsetActive();
-				this.gradient.getPreset().setActiveValue(value);
-				this.gradient.unsetColorpickerActive();
-			}
+			this.colorSet.getPreset().unsetActive();
+			this.gradient.getPreset().setActiveValue(value);
+			this.gradient.unsetColorpickerActive();
 		}
 	}
 
@@ -157,17 +153,17 @@ export default class BgColor extends Color
 			{
 				return null;
 			}
-			else if (this.activeControl === this.gradient)
+
+			if (this.activeControl === this.gradient)
 			{
 				const gradValue = this.gradient.getValue();
+
 				return (gradValue === null)
 					? gradValue
 					: gradValue.setOpacity(this.opacity.getValue().getOpacity());
 			}
-			else
-			{
-				return super.getValue();
-			}
+
+			return super.getValue();
 		});
 	}
 }

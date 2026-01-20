@@ -15,6 +15,7 @@ export default class Options
 	static isCustomPresetRestricted = false;
 	static settingsPath = null;
 	static isMainPageEnabled = false;
+	static isMessengerEmbedded = false;
 
 	static availablePresetTools = null;
 	static inviteDialogLink = null;

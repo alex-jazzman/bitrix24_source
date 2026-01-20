@@ -5,15 +5,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/videoplayer.bundle.css',
-	'js' => 'dist/videoplayer.bundle.js',
+	'css' => 'dist/registry.bundle.css',
+	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
 		'ui.fonts.opensans',
 		'main.polyfill.intersectionobserver',
-		'ui.vue3.directives.lazyload',
-		'im.v2.component.animation',
+		'ui.icon-set.api.vue',
 		'im.v2.lib.utils',
+		'im.v2.component.animation',
+		'main.core.events',
+		'im.v2.const',
 	],
 	'skip_core' => true,
 ];

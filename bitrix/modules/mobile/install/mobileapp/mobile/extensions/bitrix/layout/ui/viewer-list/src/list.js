@@ -148,6 +148,7 @@ jn.define('layout/ui/viewer-list/src/list', (require, exports, module) => {
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.parentWidget,
+				analyticsSection: 'ui_viewer_list',
 			});
 		}
 	}

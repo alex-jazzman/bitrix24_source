@@ -29,9 +29,7 @@ export default {
 				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
 					? Status.complete
 					: Status.current,
-				title: this.$root.$app.options.templateMode === 'view'
-					? Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHIPMENT_VIEW')
-					: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT_SHIPMENT'),
+				title: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 			},
 			delivery: {
 				status: this.$root.$app.options.deliveryList.isInstalled

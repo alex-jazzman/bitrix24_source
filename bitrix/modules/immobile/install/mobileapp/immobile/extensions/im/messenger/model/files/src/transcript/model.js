@@ -42,7 +42,7 @@ jn.define('im/messenger/model/files/transcript/model', (require, exports, module
 			hasTranscriptText: (state, getters) => (fileId) => {
 				const transcript = getters.getById(fileId);
 
-				return Type.isStringFilled(transcript?.text);
+				return Type.isStringFilled(transcript?.text) && transcript.status !== TranscriptStatus.error;
 			},
 		},
 		actions: {
@@ -123,6 +123,30 @@ jn.define('im/messenger/model/files/transcript/model', (require, exports, module
 			},
 
 			/**
+			 * @function filesModel/transcriptModel/setReadyStatus
+			 * @param {MessengerStore<MessengerModel<TranscriptModelCollection>>} store
+			 * @param {FileId} payload.fileId
+			 */
+			setReadyStatus: (store, payload) => {
+				const { fileId } = payload;
+				const transcript = clone(store.getters.getById(fileId));
+
+				if (Type.isNull(transcript))
+				{
+					return;
+				}
+
+				transcript.status = TranscriptStatus.ready;
+
+				store.commit('update', {
+					actionName: 'setReadyStatus',
+					data: {
+						transcriptList: [transcript],
+					},
+				});
+			},
+
+			/**
 			 * @function filesModel/transcriptModel/toggleText
 			 * @param {MessengerStore<MessengerModel<TranscriptModelCollection>>} store
 			 * @param {FileId} payload.fileId
@@ -131,7 +155,7 @@ jn.define('im/messenger/model/files/transcript/model', (require, exports, module
 				const { fileId } = payload;
 				const transcript = clone(store.getters.getById(fileId));
 
-				if (!Type.isStringFilled(transcript?.text))
+				if (!Type.isStringFilled(transcript?.text) || transcript?.status === TranscriptStatus.error)
 				{
 					return;
 				}

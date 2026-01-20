@@ -5,33 +5,33 @@ export type { Template };
 
 export class SignersListApi
 {
-	deleteSignersList(listId: number): Promise<void>
+	deleteSignersList(listId: number, notifyError: boolean = true): Promise<void>
 	{
-		return post('sign.api_v1.b2e.signers.deleteList', { listId });
+		return post('sign.api_v1.b2e.signers.deleteList', { listId }, notifyError);
 	}
 
-	copySignersList(listId: number): Promise<void>
+	copySignersList(listId: number, notifyError: boolean = true): Promise<void>
 	{
-		return post('sign.api_v1.b2e.signers.copyList', { listId });
+		return post('sign.api_v1.b2e.signers.copyList', { listId }, notifyError);
 	}
 
-	deleteSignersFromList(listId: number, userIds: number[]): Promise<void>
+	deleteSignersFromList(listId: number, userIds: number[], notifyError: boolean = true): Promise<void>
 	{
-		return post('sign.api_v1.b2e.signers.deleteSignersFromList', { listId, userIds });
+		return post('sign.api_v1.b2e.signers.deleteSignersFromList', { listId, userIds }, notifyError);
 	}
 
-	createList(title: string): Promise<void>
+	createList(title: string, notifyError: boolean = true): Promise<void>
 	{
-		return post('sign.api_v1.b2e.signers.createList', { title });
+		return post('sign.api_v1.b2e.signers.createList', { title }, notifyError);
 	}
 
-	renameList(listId: number, title: string): Promise<void>
+	renameList(listId: number, title: string, notifyError: boolean = true): Promise<void>
 	{
-		return post('sign.api_v1.b2e.signers.renameList', { listId, title });
+		return post('sign.api_v1.b2e.signers.renameList', { listId, title }, notifyError);
 	}
 
-	addSignersToList(listId: number, members: Array<Object>, excludeRejected: boolean = true): Promise<void>
+	addSignersToList(listId: number, members: Array<Object>, excludeRejected: boolean = true, notifyError: boolean = true): Promise<void>
 	{
-		return post('sign.api_v1.b2e.signers.addSignersToList', { listId, members, excludeRejected });
+		return post('sign.api_v1.b2e.signers.addSignersToList', { listId, members, excludeRejected }, notifyError);
 	}
 }

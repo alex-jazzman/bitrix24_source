@@ -15,16 +15,16 @@ export const DatePlanDate = {
 			default: false,
 		},
 	},
-	computed: {
-		dateFormatted(): string
-		{
-			return calendar.formatDateTime(this.dateTs, { forceYear: true });
-		},
+	setup(): Object
+	{
+		return {
+			calendar,
+		};
 	},
 	template: `
-		<div class="tasks-field-date-plan-date-container">
-			<HoverPill :readonly="readonly">
-				<div class="tasks-field-date-plan-date">{{ dateFormatted }}</div>
+		<div>
+			<HoverPill textOnly :readonly>
+				<div>{{ calendar.formatDateTime(dateTs, { forceYear: true }) }}</div>
 			</HoverPill>
 		</div>
 	`,

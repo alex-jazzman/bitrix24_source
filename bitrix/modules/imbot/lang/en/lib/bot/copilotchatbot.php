@@ -5,6 +5,7 @@ $MESS["IMBOT_COPILOT_AGREEMENT_RESTRICTION_USER"] = "CoPilot is not available un
 $MESS["IMBOT_COPILOT_BOT_NAME"] = "CoPilot";
 $MESS["IMBOT_COPILOT_ERROR_LIMIT_BAAS"] = "You're out of free training queries. You can upgrade by purchasing [URL=#LINK#]CoPilot credits[/URL].";
 $MESS["IMBOT_COPILOT_ERROR_NETWORK_MSGVER_1"] = "Request to AI provider timed out. Please try again later.";
+$MESS["IMBOT_COPILOT_INPUT_ACTION_THINKING"] = "CoPilot is thinking...";
 $MESS["IMBOT_COPILOT_JOB_FAIL_MSGVER_1"] = "Request to AI provider timed out. Please try again later.";
 $MESS["IMBOT_COPILOT_RESTRICTION"] = "Cannot invite CoPilot to the chat.";
 $MESS["IMBOT_COPILOT_TARIFF_RESTRICTION"] = "This feature is not available on your plan. Please upgrade to the plan that includes CoPilot feature.";

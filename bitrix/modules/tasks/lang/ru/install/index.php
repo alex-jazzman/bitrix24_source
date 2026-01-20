@@ -16,4 +16,5 @@ $MESS["TASKS_UNINSTALL_COMPLETE"] = "Удаление завершено.";
 $MESS["TASKS_INSTALL_BACK"] = "Вернуться в управление модулями";
 $MESS["COPY_PUBLIC_FILES"] = "Скопировать публичные файлы и шаблон для сайта";
 $MESS["TASKS_CONVERT_AND_USE_NEW"] = "Конвертировать задачи и переключиться на использование Задач 2.0";
+$MESS['TASKS_MODULE_INSTALL_ERROR_DEPENDENCIES'] = "Установка модуля невозможна.\r\nДля корректной работы необходимы следующие модули: #MODULES#";
 ?>

@@ -36,8 +36,7 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/common', (r
 			;
 
 			this.renderedButton = {};
-			this.recentCollectionSize = null;
-			this.subscribeEvents();
+			this.itemCollectionSize = null;
 		}
 
 		async onUiReady(ui)
@@ -49,6 +48,27 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/common', (r
 
 		// region public interface
 
+		subscribeEvents()
+		{
+			this.recentLocator.get('emitter')
+				.on(
+					RecentEventType.render.itemCollectionSizeChanged,
+					this.itemCollectionSizeChangedHandler,
+				)
+			;
+		}
+
+		redraw()
+		{
+			const size = this.recentLocator.get('render').getItemCollectionSize();
+			void this.itemCollectionSizeChangedHandler(size);
+		}
+
+		// endregion public interface
+
+		/**
+		 * @private
+		 */
 		async renderButton()
 		{
 			if (!this.checkShouldShowButton())
@@ -59,6 +79,9 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/common', (r
 			void this.setFloatingButtonIfNeeded(this.createButton());
 		}
 
+		/**
+		 * @private
+		 */
 		async renderAccentButton()
 		{
 			if (!this.checkShouldShowButton())
@@ -67,21 +90,6 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/common', (r
 			}
 
 			void this.setFloatingButtonIfNeeded(this.createAccentButton());
-		}
-
-		// endregion public interface
-
-		/**
-		 * @private
-		 */
-		subscribeEvents()
-		{
-			this.recentLocator.get('emitter')
-				.on(
-					RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded,
-					this.updateUIByRecentCollectionSizeIfNeededHandler,
-				)
-			;
 		}
 
 		/**
@@ -97,18 +105,17 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/common', (r
 		 * @private
 		 * @return {Promise<void>}
 		 */
-		updateUIByRecentCollectionSizeIfNeededHandler = async () => {
-			this.logger.log('updateUIByRecentCollectionSizeIfNeededHandler');
-			const tabId = this.recentLocator.get('id');
-			const recentCollectionSize = this.store.getters['recentModel/getCollectionSizeByTabId'](tabId);
-			if (recentCollectionSize === this.recentCollectionSize)
+		itemCollectionSizeChangedHandler = async (itemCollectionSize) => {
+			this.logger.log('itemCollectionSizeChangedHandler', itemCollectionSize);
+
+			if (itemCollectionSize === this.itemCollectionSize)
 			{
-				this.logger.log('updateUIByRecentCollectionSizeIfNeededHandler skipped');
+				this.logger.log('itemCollectionSizeChangedHandler skipped');
 
 				return;
 			}
 
-			if (recentCollectionSize > 0)
+			if (itemCollectionSize > 0)
 			{
 				await this.renderButton();
 			}
@@ -117,8 +124,8 @@ jn.define('im/messenger-v2/controller/recent/service/floating-button/common', (r
 				await this.renderAccentButton();
 			}
 
-			this.recentCollectionSize = recentCollectionSize;
-			this.logger.log('updateUIByRecentCollectionSizeIfNeededHandler complete');
+			this.itemCollectionSize = itemCollectionSize;
+			this.logger.log('itemCollectionSizeChangedHandler complete');
 		};
 
 		/**

@@ -1,0 +1,785 @@
+.intranet-year-results-popup {
+	background: none;
+	box-shadow: none;
+}
+
+.intranet-year-results-popup__content {
+	display: flex;
+	gap: 18px;
+	position: relative;
+	align-items: center;
+}
+
+@media (max-height: 800px) {
+	.intranet-year-results-popup__content {
+		transform: scale(0.9);
+		transform-origin: center;
+	}
+}
+
+@media (max-width: 767px) {
+	.intranet-year-results-popup__content {
+		transform: scale(0.9);
+		transform-origin: center;
+	}
+}
+
+.intranet-year-results-popup__header {
+	position: absolute;
+	display: flex;
+	width: 100%;
+	top: 0;
+	justify-content: space-between;
+}
+
+@media (max-width: 767px) {
+	.intranet-year-results-popup__header {
+		display: none;
+	}
+}
+
+.intranet-year-results-popup__sidepanel-wrapper {
+	width: 38px;
+}
+
+@media (max-width: 767px) {
+	.intranet-year-results-popup__sidepanel-wrapper {
+		display: none;
+	}
+}
+
+.intranet-year-results-popup__user {
+	display: flex;
+	flex-direction: row-reverse;
+	width: 34px;
+}
+
+.intranet-year-results-popup__slide-wrapper {
+	overflow: hidden;
+	width: 450px;
+	height: 800px;
+	position: relative;
+}
+
+.intranet-year-results-popup__slide {
+	overflow-x: hidden;
+	overflow-y: auto;
+	height: 800px;
+	max-height: 100svh;
+	max-width: 100vw;
+	width: 450px;
+	box-sizing: border-box;
+	border-radius: 30px;
+	padding: 30px 20px 30px 30px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	position: absolute;
+	color: var(--ui-color-white-base);
+	background: radial-gradient(
+			200% 100% at bottom right,
+			#3DFCF9,
+			#08A6FF,
+			#006DFF
+	);
+	transform: translateY(0) scale(1);
+	transition: transform 1s;
+	transform-origin: bottom;
+}
+
+.intranet-year-results-popup__slide--start .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-start.png) 1x,
+			url(../images/year-results-bg-start@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-start.png) 1x,
+			url(../images/year-results-bg-start@2x.png) 2x
+	);
+	height: 391px;
+	width: 127px;
+}
+
+.intranet-year-results-popup__slide--start {
+	color: var(--ui-color-white-base);
+	background: linear-gradient(
+			-165deg,
+			#6732FF,
+			#143AFF,
+			#08A6FF,
+			#2FEC6F
+	);
+}
+
+.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-base.png) 1x,
+			url(../images/year-results-character-base@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-base.png) 1x,
+			url(../images/year-results-character-base@2x.png) 2x
+	);
+	height: 506px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--reaction {
+	color: var(--ui-color-white-base);
+	background: radial-gradient(
+			200% 130% at top left,
+			#FF893B,
+			#FF893B,
+			#FFE055
+	);
+}
+
+.intranet-year-results-popup__slide--reaction .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-heart.png) 1x,
+			url(../images/year-results-bg-heart@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-heart.png) 1x,
+			url(../images/year-results-bg-heart@2x.png) 2x
+	);
+	height: 417px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--reaction.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-reaction.png) 1x,
+			url(../images/year-results-character-reaction@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-reaction.png) 1x,
+			url(../images/year-results-character-reaction@2x.png) 2x
+	);
+	height: 463px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--deal {
+	color: var(--ui-color-white-base);
+	background: linear-gradient(
+			#143AFF 10%,
+			#08A6FF 70%,
+			#A5E4FF 110%
+	);
+}
+
+.intranet-year-results-popup__slide--deal .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-blue-spiral.png) 1x,
+			url(../images/year-results-bg-blue-spiral@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-blue-spiral.png) 1x,
+			url(../images/year-results-bg-blue-spiral@2x.png) 2x
+	);
+	height: 471px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--deal.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-deal.png) 1x,
+			url(../images/year-results-character-deal@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-deal.png) 1x,
+			url(../images/year-results-character-deal@2x.png) 2x
+	);
+	height: 536px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--task {
+	color: #12112F;
+	background: radial-gradient(
+			130% 120% at top right,
+			#E2FF60,
+			#CCF31E,
+			#2FEC6F
+	);
+}
+
+.intranet-year-results-popup__slide--task .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-check-mark.png) 1x,
+			url(../images/year-results-bg-check-mark@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-check-mark.png) 1x,
+			url(../images/year-results-bg-check-mark@2x.png) 2x
+	);
+	height: 430px;
+	width: 448px;
+}
+
+.intranet-year-results-popup__slide--task.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-task.png) 1x,
+			url(../images/year-results-character-task@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-task.png) 1x,
+			url(../images/year-results-character-task@2x.png) 2x
+	);
+	height: 534px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--message .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-chat.png) 1x,
+			url(../images/year-results-bg-chat@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-chat.png) 1x,
+			url(../images/year-results-bg-chat@2x.png) 2x
+	);
+	height: 338px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--message.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-message.png) 1x,
+			url(../images/year-results-character-message@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-message.png) 1x,
+			url(../images/year-results-character-message@2x.png) 2x
+	);
+	height: 508px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--board {
+	color: var(--ui-color-white-base);
+	background: radial-gradient(
+			250% 120% at bottom right,
+			#FF893B,
+			#FF49C1,
+			#FF893B
+	);
+}
+
+.intranet-year-results-popup__slide--board .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-meatball.png) 1x,
+			url(../images/year-results-bg-meatball@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-meatball.png) 1x,
+			url(../images/year-results-bg-meatball@2x.png) 2x
+	);
+	height: 351px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--board.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-board.png) 1x,
+			url(../images/year-results-character-board@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-board.png) 1x,
+			url(../images/year-results-character-board@2x.png) 2x
+	);
+	height: 502px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--workflow {
+	color: #12112F;
+	background: radial-gradient(
+			250% 120% at bottom right,
+			#DEF3FF 10%,
+			#A5E4FF 70%,
+			#08A6FF
+	);
+}
+
+.intranet-year-results-popup__slide--workflow .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-spiral.png) 1x,
+			url(../images/year-results-bg-spiral@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-spiral.png) 1x,
+			url(../images/year-results-bg-spiral@2x.png) 2x
+	);
+	height: 537px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--workflow.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-workflow.png) 1x,
+			url(../images/year-results-character-workflow@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-workflow.png) 1x,
+			url(../images/year-results-character-workflow@2x.png) 2x
+	);
+	height: 502px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--site {
+	color: var(--ui-color-white-base);
+	background: linear-gradient(
+			#6732FF 20%,
+			#8E5BFF 90%,
+			#FF49C1 110%
+	);
+}
+
+.intranet-year-results-popup__slide--site .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-cursor-pink.png) 1x,
+			url(../images/year-results-bg-cursor-pink@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-cursor-pink.png) 1x,
+			url(../images/year-results-bg-cursor-pink@2x.png) 2x
+	);
+	height: 341px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--site.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-site.png) 1x,
+			url(../images/year-results-character-site@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-site.png) 1x,
+			url(../images/year-results-character-site@2x.png) 2x
+	);
+	height: 479px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--collab {
+	color: #12112F;
+	background: radial-gradient(
+			160% 90% at bottom right,
+			#3DFCF9,
+			#2FEC6F,
+			#CCF31E
+	);
+}
+
+.intranet-year-results-popup__slide--collab .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-green-ball.png) 1x,
+			url(../images/year-results-bg-green-ball@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-green-ball.png) 1x,
+			url(../images/year-results-bg-green-ball@2x.png) 2x
+	);
+	height: 381px;
+	width: 410px;
+}
+
+.intranet-year-results-popup__slide--collab.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-collab.png) 1x,
+			url(../images/year-results-character-collab@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-collab.png) 1x,
+			url(../images/year-results-character-collab@2x.png) 2x
+	);
+	height: 493px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--channel {
+	color: var(--ui-color-white-base);
+	background: radial-gradient(
+			200% 100% at bottom right,
+			#FF893B,
+			#FF49C1,
+			#6732FF
+	);
+}
+
+.intranet-year-results-popup__slide--channel .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-pink-bell.png) 1x,
+			url(../images/year-results-bg-pink-bell@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-pink-bell.png) 1x,
+			url(../images/year-results-bg-pink-bell@2x.png) 2x
+	);
+	height: 423px;
+	width: 353px;
+}
+
+.intranet-year-results-popup__slide--channel.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-channel.png) 1x,
+			url(../images/year-results-character-channel@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-channel.png) 1x,
+			url(../images/year-results-character-channel@2x.png) 2x
+	);
+	height: 512px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--copilot {
+	color: var(--ui-color-white-base);
+	background: radial-gradient(
+			200% 100% at top left,
+			#FF893B,
+			#FF49C1,
+			#BE52FF
+	);
+}
+
+.intranet-year-results-popup__slide--copilot .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-pink-star.png) 1x,
+			url(../images/year-results-bg-pink-star@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-pink-star.png) 1x,
+			url(../images/year-results-bg-pink-star@2x.png) 2x
+	);
+	height: 571px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--copilot.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-copilot.png) 1x,
+			url(../images/year-results-character-copilot@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-copilot.png) 1x,
+			url(../images/year-results-character-copilot@2x.png) 2x
+	);
+	height: 508px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--checkin .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-bg-cursor.png) 1x,
+			url(../images/year-results-bg-cursor@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-bg-cursor.png) 1x,
+			url(../images/year-results-bg-cursor@2x.png) 2x
+	);
+	height: 471px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide--checkin.intranet-year-results-popup__slide--character .intranet-year-results-popup__slide-image {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-image: -webkit-image-set(
+			url(../images/year-results-character-checkin.png) 1x,
+			url(../images/year-results-character-checkin@2x.png) 2x
+	);
+	background-image: image-set(
+			url(../images/year-results-character-checkin.png) 1x,
+			url(../images/year-results-character-checkin@2x.png) 2x
+	);
+	height: 548px;
+	width: 450px;
+}
+
+.intranet-year-results-popup__slide-content {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 20px;
+	position: relative;
+	font-family: var(--ui-font-family-montserrat);
+}
+
+.intranet-year-results-popup__description-container {
+	padding: 30px 0;
+	display: flex;
+	gap: 20px;
+	flex-direction: column;
+}
+
+.intranet-year-results-popup__description {
+	margin: 0;
+	font-size: 27px;
+	line-height: 36px;
+	font-weight: 500;
+}
+
+.intranet-year-results-popup__description--character {
+	font-size: 18px;
+	line-height: 24px;
+	margin-top: 20px;
+}
+
+.intranet-year-results-popup__subtitle {
+	font-size: 18px;
+	line-height: 24px;
+	margin-top: 0;
+	margin-bottom: 20px;
+	font-weight: 500;
+}
+
+.intranet-year-results-popup__postscript {
+	margin: 0;
+	font-size: 18px;
+	line-height: 24px;
+	opacity: 0.7;
+}
+
+.intranet-year-results-popup__title {
+	font-size: 40px;
+	line-height: 40px;
+	font-weight: 700;
+	margin: 0;
+	word-break: break-word;
+}
+
+.intranet-year-results-popup__title--bold {
+	font-size: 50px;
+	line-height: 50px;
+}
+
+.intranet-year-results-popup__slide--character .intranet-year-results-popup__title--bold {
+	font-size: 44px;
+	line-height: 44px;
+}
+
+@media (max-width: 767px) {
+	.intranet-year-results-popup__slide--character .intranet-year-results-popup__title--bold {
+		font-size: 40px;
+		line-height: 40px;
+	}
+}
+
+.intranet-year-results-popup__logo {
+	width: 223px;
+	height: 90px;
+	background-color: var(--ui-color-background-primary);
+	-webkit-mask-image: url(/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-white.svg);
+	mask-image: url(/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-white.svg);
+	-webkit-mask-position: center;
+	        mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	        mask-size: contain;
+}
+
+.intranet-year-results-popup__slide--task .intranet-year-results-popup__logo,
+.intranet-year-results-popup__slide--workflow .intranet-year-results-popup__logo,
+.intranet-year-results-popup__slide--collab .intranet-year-results-popup__logo {
+	background-color: #12112F;
+}
+
+.intranet-year-results-popup__slide--screenshot {
+	z-index: -1;
+	padding-top: 68px;
+}
+
+.intranet-year-results-popup__slide--screenshot .intranet-year-results-popup__logo {
+	-webkit-mask: unset;
+	        mask: unset;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-color: unset;
+	background-image: url(../images/year-results-logo-white.png);
+}
+
+.intranet-year-results-popup__slide--screenshot.intranet-year-results-popup__slide--task .intranet-year-results-popup__logo,
+.intranet-year-results-popup__slide--screenshot.intranet-year-results-popup__slide--workflow .intranet-year-results-popup__logo,
+.intranet-year-results-popup__slide--screenshot.intranet-year-results-popup__slide--collab .intranet-year-results-popup__logo {
+	-webkit-mask: unset;
+	        mask: unset;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-color: unset;
+	background-image: url(../images/year-results-logo-dark.png);
+}
+
+.intranet-year-results-popup__slide-footer {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.intranet-year-results-popup__footer-button {
+	--ui-btn-background: #CCF31E !important;
+	--ui-btn-color: #12112F !important;
+	border-radius: 32px !important;
+	font-size: 24px !important;
+	min-height: 63px;
+	line-height: 24px;
+	font-weight: 700;
+}
+
+.intranet-year-results-popup__footer-button .ui-btn-text-inner {
+	overflow: visible !important;
+}
+
+.intranet-year-results-popup__footer-button--white {
+	--ui-btn-background: #FFFFFF !important;
+}
+
+.intranet-year-results-popup__slide--screenshot .intranet-year-results-popup__footer-button {
+	display: none;
+}
+
+.intranet-year-results-popup__slide.intranet-year-results-popup__slide--slide-out-left {
+	transform: translateX(-480px) scale(0.83);
+}
+
+.intranet-year-results-popup__slide.intranet-year-results-popup__slide--slide-out-right {
+	transform: translateX(480px) scale(0.83);
+}
+
+.intranet-year-results-popup__show-animation {
+	animation: show-animation 1.2s;
+}
+
+@keyframes show-animation {
+	0% { opacity: 0; transform: scale(0.83); }
+	50% { opacity: 0; transform: scale(0.83); }
+	100% { transform: scale(1); }
+}
+
+.intranet-year-results-popup__show-animation .ui-btn.--ui-context-edge-dark {
+	opacity: 0;
+}
+
+.intranet-year-results-popup__show-animation-end .ui-btn.--ui-context-edge-dark {
+	opacity: 1;
+	transition: opacity 0.3s ease-in;
+}
+
+.intranet-year-results-popup__progress-bar {
+	width: 100%;
+	display: flex;
+	gap: 10px;
+}
+
+.intranet-year-results-popup__slide--screenshot .intranet-year-results-popup__progress-bar {
+	display: none;
+}
+
+.intranet-year-results-popup__progress-bar-step {
+	height: 4px;
+	background-color: var(--ui-color-background-primary);
+	opacity: 0.2;
+	flex-grow: 1;
+}
+
+.intranet-year-results-popup__progress-bar-step--active {
+	opacity: 1;
+}
+
+.intranet-year-results-popup__navigation-button {
+	--ui-btn-custom-background: unset;
+}

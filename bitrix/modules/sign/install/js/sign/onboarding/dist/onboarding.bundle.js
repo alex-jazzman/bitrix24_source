@@ -113,7 +113,7 @@ this.BX = this.BX || {};
 	        className: `sign__b2e-onboarding-signing-test-banner-button ${options.showTariffSlider ? 'sign-b2e-js-tarriff-slider-trigger' : ''}`,
 	        events: options.showTariffSlider ? {} : {
 	          click: () => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _openSigningSlider)[_openSigningSlider](options);
+	            babelHelpers.classPrivateFieldLooseBase(this, _openSigningSlider)[_openSigningSlider]();
 	          }
 	        }
 	      });
@@ -225,7 +225,7 @@ this.BX = this.BX || {};
 	      events: options.showTariffSlider ? {} : {
 	        click: () => {
 	          popup.close();
-	          babelHelpers.classPrivateFieldLooseBase(this, _openSigningSlider)[_openSigningSlider](options);
+	          babelHelpers.classPrivateFieldLooseBase(this, _openSigningSlider)[_openSigningSlider]();
 	        }
 	      }
 	    }));
@@ -328,13 +328,13 @@ this.BX = this.BX || {};
 	  });
 	  return icon.render();
 	}
-	function _openSigningSlider2(options) {
+	function _openSigningSlider2() {
 	  BX.SidePanel.Instance.open('onboarding-signing-slider', {
 	    width: 750,
 	    contentCallback: () => {
 	      const containerId = 'onboarding-signing-slider-container';
 	      const container = main_core.Tag.render(_t5 || (_t5 = _`<div id="${0}"></div>`), containerId);
-	      const onboardingSignSettings = new sign_v2_b2e_signSettingsOnboarding.B2EOnboardingSignSettings(containerId, Boolean(options.hasCompanies));
+	      const onboardingSignSettings = new sign_v2_b2e_signSettingsOnboarding.B2EOnboardingSignSettings();
 	      onboardingSignSettings.renderToContainer(container);
 	      return container;
 	    }

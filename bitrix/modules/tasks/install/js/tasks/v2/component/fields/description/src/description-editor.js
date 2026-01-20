@@ -1,15 +1,17 @@
 import { Type } from 'main.core';
 
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { TextEditor } from 'ui.text-editor';
 import { Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
 
-import { TaskModel } from 'tasks.v2.model.tasks';
-import { Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import { descriptionTextEditor, type DescriptionTextEditor } from './description-text-editor';
+import { entityTextEditor, type EntityTextEditor } from 'tasks.v2.component.entity-text';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { DescriptionTextArea } from './description-text-area';
+import { DescriptionMixin } from './description-mixin';
+import { CheckList } from './actions/check-list';
 import { Copilot } from './actions/copilot';
 import { Attach } from './actions/attach';
 import { Mention } from './actions/mention';
@@ -22,40 +24,54 @@ export const DescriptionEditor = {
 	components: {
 		BIcon,
 		UiButton,
+		CheckList,
 		Copilot,
 		Attach,
 		Mention,
-		DescriptionTextArea,
+	},
+	mixins: [
+		DescriptionMixin,
+	],
+	inject: {
+		task: {},
 	},
 	props: {
 		taskId: {
 			type: [Number, String],
 			required: true,
 		},
+		enableSaveButton: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['close', 'show'],
-	setup(props): { fileService: FileService, descriptionTextEditor: DescriptionTextEditor }
+	setup(props): { task: TaskModel, fileService: FileService, entityTextEditor: EntityTextEditor }
 	{
 		return {
 			ButtonSize,
 			ButtonColor,
 			Outline,
 			fileService: fileService.get(props.taskId),
-			descriptionTextEditor: descriptionTextEditor.get(props.taskId),
+			entityTextEditor: entityTextEditor.get(props.taskId),
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		readonly(): boolean
 		{
 			return !this.task.rights.edit;
 		},
 		editor(): TextEditor
 		{
-			return this.descriptionTextEditor.getEditor();
+			return this.entityTextEditor.getEditor();
+		},
+		isDiskModuleInstalled(): boolean
+		{
+			return Core.getParams().features.disk;
+		},
+		isCopilotEnabled(): boolean
+		{
+			return Core.getParams().features.isCopilotEnabled;
 		},
 	},
 	mounted(): void
@@ -68,13 +84,25 @@ export const DescriptionEditor = {
 		}
 	},
 	methods: {
-		handleClose(): void
-		{
-			this.$emit('close');
-		},
 		focusToEnd(): void
 		{
 			this.editor.focus(null, { defaultSelection: 'rootEnd' });
+		},
+		handleCopilotButtonClick(): void
+		{
+			if (!this.isCopilotEnabled)
+			{
+				return;
+			}
+
+			this.editor.focus(
+				() => {
+					this.editor.dispatchCommand(
+						BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND,
+					);
+				},
+				{ defaultSelection: 'rootEnd' },
+			);
 		},
 		handleMentionButtonClick(): void
 		{
@@ -107,23 +135,36 @@ export const DescriptionEditor = {
 				</div>
 				<BIcon
 					:name="Outline.CROSS_L"
-					:hoverable="true"
+					hoverable
 					class="tasks-card-description-field-icon"
 					@click="handleClose"
 				/>
 			</div>
 			<div class="tasks-card-description-editor-wrapper" id="descriptionTextAreaDestination"/>
-			<div v-if="!readonly" class="tasks-card-description-footer" ref="descriptionActions">
+			<div v-if="!readonly" class="tasks-card-description-editor-footer" ref="descriptionActions">
 				<div class="tasks-card-description-action-list">
-					<Copilot />
-					<Attach ref="attach" @click="handleAttachButtonClick"/>
+					<Copilot
+						v-if="isCopilotEnabled"
+						@click="handleCopilotButtonClick"
+					/>
+					<Attach
+						v-if="isDiskModuleInstalled"
+						ref="attach"
+						@click="handleAttachButtonClick"
+					/>
 					<Mention @click="handleMentionButtonClick"/>
+					<CheckList
+						v-if="isCopilotEnabled"
+						:loading="isAiCommandProcessing"
+						@click="handleCheckListButtonClick"
+					/>
 				</div>
 				<div class="tasks-card-description-footer-buttons">
 					<UiButton
 						:text="loc('TASKS_V2_DESCRIPTION_BUTTON_SAVE')"
 						:size="ButtonSize.MEDIUM"
 						:color="ButtonColor.PRIMARY"
+						:disabled="!enableSaveButton"
 						@click="handleClose"
 					/>
 				</div>

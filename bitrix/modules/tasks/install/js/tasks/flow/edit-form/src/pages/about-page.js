@@ -101,8 +101,8 @@ export class AboutPage extends FormPage
 		const interval = this.#layout.plannedCompletionTimeIntervalSelector?.getInterval();
 
 		return {
-			name: flowData.name ?? this.#layout.flowName?.getValue().trim(),
-			description: flowData.description ?? this.#layout.flowDescription?.getValue(),
+			name: flowData.name ?? this.#layout.flowName?.getValue().trim() ?? '',
+			description: flowData.description ?? this.#layout.flowDescription?.getValue() ?? '',
 			taskCreators: flowData.taskCreators ?? this.#getTasksCreatorsFromSelector(),
 			plannedCompletionTime: flowData.plannedCompletionTime ?? (plannedCompletionTimeValue * intervalDuration || 0),
 			matchSchedule: flowData.matchSchedule ?? this.#isShortInterval(interval),

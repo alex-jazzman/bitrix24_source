@@ -2,7 +2,6 @@
 $MESS["INTASK_FROM_DATE_TLP"] = "#DATE# бастап";
 $MESS["INTASK_LIST_EMPTY"] = "Міндеттер әзірше жоқ";
 $MESS["INTASK_NO_DATE_TLP"] = "орындау аралығы орнатылмаған";
-$MESS["INTASK_TASKASSIGNEDTO"] = "Жауапты";
 $MESS["INTASK_TASKASSIGNEDTO_V2"] = "Орындаушы";
 $MESS["INTASK_TASKPRIORITY"] = "Басымдық";
 $MESS["INTASK_TASKSTATUS"] = "Мәртебе";

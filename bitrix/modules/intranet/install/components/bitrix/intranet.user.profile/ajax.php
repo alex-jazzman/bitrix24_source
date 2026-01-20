@@ -493,6 +493,11 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			foreach ($fieldsView as $field)
 			{
 				$newFieldsView[] = $field["VALUE"];
+
+				if ($field['VALUE'] === 'UF_DEPARTMENT')
+				{
+					$newFieldsView[] = 'DEPARTMENT';
+				}
 			}
 		}
 		Option::set("intranet", "user_profile_view_fields", implode(",", $newFieldsView), SITE_ID);

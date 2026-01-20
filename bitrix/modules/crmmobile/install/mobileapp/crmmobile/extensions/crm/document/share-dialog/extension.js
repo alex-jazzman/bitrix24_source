@@ -382,7 +382,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 			});
 
 			prepareBody().then(async (body) => {
-				const { MailOpener } = await requireLazy('crm:mail/opener');
+				const { MailOpener } = await requireLazy('mail:opener');
 
 				MailOpener.openSend({
 					subject,

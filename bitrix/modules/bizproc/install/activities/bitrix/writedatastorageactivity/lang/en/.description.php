@@ -1,0 +1,4 @@
+<?php
+$MESS["BIZPROC_STORAGE_CATEGORY"] = "Storage";
+$MESS["BIZPROC_WRITE_DATA_ACTIVITY_DESCRIPTION"] = "Writes data to storage.";
+$MESS["BIZPROC_WRITE_DATA_ACTIVITY_NAME"] = "Write data";

@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	"ui.notification"
 ]);
 
-$APPLICATION->SetTitle( \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_PAGE_TITLE'));
+$APPLICATION->SetTitle( \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_PAGE_TITLE', [], 'ru'));
 
 $this->SetViewTarget('below_pagetitle', 100);
 $APPLICATION->IncludeComponent(
@@ -22,12 +22,12 @@ $APPLICATION->IncludeComponent(
 	[
 		'views' => [
 			'features' => [
-				'title' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_MENU_FEATURE'),
+				'title' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_MENU_FEATURE', [], 'ru'),
 				'url' => '/crm/configs/?expert&expertMode=features',
 				'isActive' => $arResult['mode'] === 'features',
 			],
 			'tours' => [
-				'title' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_MENU_TOUR'),
+				'title' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_MENU_TOUR', [], 'ru'),
 				'url' => '/crm/configs/?expert&expertMode=tours',
 				'isActive' => $arResult['mode'] === 'tours',
 			]
@@ -43,7 +43,7 @@ $this->EndViewTarget();
 <script>
 	BX.ready(() => {
 		BX.message(<?=\Bitrix\Main\Web\Json::encode([
-			'crmLinkCopiedToClipboard' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_LINK_COPIED')
+			'crmLinkCopiedToClipboard' => \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_LINK_COPIED', [], 'ru')
 		])?>)
 	})
 </script>

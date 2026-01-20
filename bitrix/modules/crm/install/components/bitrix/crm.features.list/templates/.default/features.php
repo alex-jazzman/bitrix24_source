@@ -24,7 +24,7 @@ include('toolbar.php');
 			<div>
 				<?=htmlspecialcharsbx($feature['name'])?>
 				<?php if($feature['secretLink'] ?? null):?>
-				<span class="crm-features-list-item-copy" data-url="<?=htmlspecialcharsbx($feature['secretLink'])?>" title="<?=htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_COPY_LINK'))?>"></span>
+				<span class="crm-features-list-item-copy" data-url="<?=htmlspecialcharsbx($feature['secretLink'])?>" title="<?=htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_LIST_COPY_LINK', [], 'ru'))?>"></span>
 				<?php endif?>
 			</div>
 			<div class="crm-features-list-item-id"><?=htmlspecialcharsbx($feature['id'])?></div>

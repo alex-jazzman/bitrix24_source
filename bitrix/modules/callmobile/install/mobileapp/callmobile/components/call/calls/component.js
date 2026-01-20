@@ -1,12 +1,18 @@
 /**
  * @bxjs_lang_path component.php
  */
-
+/*
+* @module call/calls/component
+*/
 // region Constants
 (function ()
 {
 	const { CallsCardController } = jn.require('call/calls-card');
 	const { CallController } = jn.require('call/calls/controller');
+	const { CallEngine } = jn.require('call/calls/engine');
+	const { CCallUtil } = jn.require('call/calls/engine');
+	const { TokenManager } = jn.require('call/calls/call-token-manager');
+	const { VIClientWrapper } = jn.require('call/calls/voximplant');
 
 	const Sound = {
 		incoming: "incoming",

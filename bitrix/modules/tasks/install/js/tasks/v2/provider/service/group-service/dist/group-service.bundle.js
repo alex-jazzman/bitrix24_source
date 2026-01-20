@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
+(function (exports,tasks_v2_core,tasks_v2_const,tasks_v2_lib_apiClient,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	function mapDtoToModel(groupDto) {
@@ -22,19 +22,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  return {
 	    id: stageDto.id,
 	    title: stageDto.title,
-	    color: stageDto.color
+	    color: stageDto.color,
+	    systemType: stageDto.systemType,
+	    sort: stageDto.sort
 	  };
 	}
 
-	var _scrumInfoCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrumInfoCache");
+	var _scrumInfoPromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrumInfoPromises");
 	var _groupInfoPromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("groupInfoPromises");
 	class GroupService {
 	  constructor() {
-	    Object.defineProperty(this, _scrumInfoCache, {
+	    Object.defineProperty(this, _scrumInfoPromises, {
 	      writable: true,
-	      value: {
-	        0: true
-	      }
+	      value: {}
 	    });
 	    Object.defineProperty(this, _groupInfoPromises, {
 	      writable: true,
@@ -46,7 +46,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return `/workgroups/group/${id}/`;
 	    }
 	    try {
-	      return tasks_v2_lib_apiClient.apiClient.post('Group.Url.get', {
+	      return tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.GroupUrlGet, {
 	        group: {
 	          id,
 	          type
@@ -59,7 +59,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	  async getStages(id) {
 	    try {
-	      const data = await tasks_v2_lib_apiClient.apiClient.post('Group.Stage.list', {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.GroupStageList, {
 	        group: {
 	          id
 	        }
@@ -78,7 +78,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	  async getGroup(id) {
 	    try {
-	      const data = await tasks_v2_lib_apiClient.apiClient.post('Group.get', {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.GroupGet, {
 	        group: {
 	          id
 	        }
@@ -93,27 +93,30 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	  async getScrumInfo(taskId) {
 	    if (this.hasScrumInfo(taskId)) {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId];
 	      return;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoCache)[_scrumInfoCache][taskId] = true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId] = new Resolvable();
 	    try {
 	      var _data$epic;
-	      const data = await tasks_v2_lib_apiClient.apiClient.post('Scrum.getTaskInfo', {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.ScrumGetTaskInfo, {
 	        taskId
 	      });
-	      await Promise.all([tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Epics}/upsert`, data.epic), tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: taskId,
-	        fields: {
-	          storyPoints: data.storyPoints,
-	          epicId: (_data$epic = data.epic) == null ? void 0 : _data$epic.id
-	        }
+	      await Promise.all([tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Epics}/upsert`, data.epic), tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+	        storyPoints: data.storyPoints,
+	        epicId: (_data$epic = data.epic) == null ? void 0 : _data$epic.id
 	      })]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId].resolve();
 	    } catch (error) {
 	      console.error('GroupService: getScrumInfo error', error);
 	    }
 	  }
+	  setHasScrumInfo(taskId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId] = new Resolvable();
+	    babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId].resolve();
+	  }
 	  hasScrumInfo(taskId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoCache)[_scrumInfoCache][taskId];
+	    return Number.isInteger(taskId) && taskId > 0 ? taskId in babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises] : true;
 	  }
 	  async getGroupInfo(groupId) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _groupInfoPromises)[_groupInfoPromises][groupId]) {
@@ -169,5 +172,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.GroupMappers = GroupMappers;
 	exports.groupService = groupService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=group-service.bundle.js.map

@@ -1,0 +1,35 @@
+.bx-im-stickers-header__item {
+	--im-stickers__sticker-header-size: 36px;
+
+	width: var(--im-stickers__sticker-header-size);
+	height: var(--im-stickers__sticker-header-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	padding: 4px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.bx-im-stickers-header__item:hover,
+.bx-im-stickers-header__item.--active {
+	background-color: rgba(var(--im-color-palette-black-solid-rgb), 0.05);
+}
+
+.bx-im-stickers-header__item img {
+	width: 100%;
+	height: 100%;
+}
+
+.bx-im-stickers-header-shimmer__container {
+	display: flex;
+	gap: 8px;
+}
+
+.bx-im-stickers-header__shimmer {
+	--im-stickers__sticker-header-shimmer-size: 28px;
+
+	width: var(--im-stickers__sticker-header-shimmer-size);
+	height: var(--im-stickers__sticker-header-shimmer-size);
+}

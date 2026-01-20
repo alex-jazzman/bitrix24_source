@@ -18,10 +18,6 @@ export const TaskItem = {
 			type: Object,
 			required: true,
 		},
-		contextDialogId: {
-			type: String,
-			required: true,
-		},
 		searchQuery: {
 			type: String,
 			default: '',
@@ -113,12 +109,10 @@ export const TaskItem = {
 					<ChatAvatar 
 						:size="AvatarSize.XS"
 						:avatarDialogId="taskAuthorDialogId"
-						:contextDialogId="contextDialogId"
 					/>
 					<div class="bx-im-sidebar-task-item__forward-small-icon bx-im-sidebar__forward-small-icon"></div>
 					<ChatAvatar 
-						:avatarDialogId="taskResponsibleDialogId" 
-						:contextDialogId="contextDialogId" 
+						:avatarDialogId="taskResponsibleDialogId"
 						:size="AvatarSize.XS" 
 					/>
 					<div class="bx-im-sidebar-task-item__status-text" :class="statusColorClass">

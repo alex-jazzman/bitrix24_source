@@ -1,7 +1,7 @@
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import { Runtime, type JsonObject } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
@@ -18,6 +18,8 @@ import { SearchItem } from './elements/search-item';
 import { SearchService } from '../classes/search-service';
 
 import './css/chat-search.css';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const ForwardSearch = {
@@ -90,11 +92,11 @@ export const ForwardSearch = {
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
 		this.recentListItems = getRecentListItems({ withFakeUsers: true });
 
-		EventEmitter.subscribe(EventType.search.keyPressed, this.onKeyPressed);
+		this.getEmitter().subscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.search.keyPressed, this.onKeyPressed);
+		this.getEmitter().unsubscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
 	methods: {
 		startSearch(query: string)
@@ -186,6 +188,10 @@ export const ForwardSearch = {
 				dialogId: firstItem.dialogId,
 				nativeEvent: keyboardEvent,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(key: string): string
 		{

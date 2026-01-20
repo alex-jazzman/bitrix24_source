@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Feature } = require('feature');
 	const { NavigationLoader } = require('navigation-loader');
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, get, set, clone, isEqual } = require('utils/object');
@@ -22,6 +23,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		'ui-system/form/buttons/floating-action-button',
 	);
 	const { Type } = require('type');
+	const { AhaMoment } = require('ui-system/popups/aha-moment');
+	const { Logger, LogType } = require('utils/logger');
 
 	const isGetConnectionStatusSupported = Type.isFunction(device?.getConnectionStatus);
 
@@ -38,6 +41,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		cache: 'cache',
 		ajax: 'ajax',
 	};
+
+	const logger = new Logger([
+		LogType.WARN,
+	]);
 
 	/**
 	 * @class StatefulList
@@ -57,6 +64,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.layoutRightButtons = null;
 			this.menuProps = null;
 			this.floatingButton = null;
+			this.floatingButtonPointerRef = null;
+			this.fabSpotlightId = null;
 
 			this.menuButtons = this.getValue(props, 'menuButtons', []);
 			this.needInitMenu = this.getValue(props, 'needInitMenu', true);
@@ -64,7 +73,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.state = this.getInitialState();
 			this.state.itemType = this.getValue(props, 'itemType', ListItemType.BASE);
 			this.state.itemFactory = this.getValue(props, 'itemFactory', ListItemsFactory);
-			this.state.actionParams = this.getValue(props, 'actionParams', {});
+			this.state.actionParams = this.getValue(props, 'actionParams', {}, props?.needCloneActionParams);
 			this.state.itemParams = this.getValue(props, 'itemParams', {});
 			this.state.itemActions = this.getValue(props, 'itemActions', []);
 			this.state.forcedShowSkeleton = this.getValue(props, 'forcedShowSkeleton', true);
@@ -72,6 +81,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.actionResponseAdapter = Type.isFunction(props.actionResponseAdapter)
 				? props.actionResponseAdapter
 				: (response) => response
+			;
+			this.onBeforeReloadAction = Type.isFunction(props.onBeforeReloadAction)
+				? props.onBeforeReloadAction
+				: () => {}
 			;
 			this.loadItemsHandler = this.loadItems.bind(this);
 			this.reloadList = this.reloadList.bind(this);
@@ -202,7 +215,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		{
 			if (newProps.actionParams)
 			{
-				this.state.actionParams = this.getValue(newProps, 'actionParams');
+				this.state.actionParams = this.getValue(newProps, 'actionParams', {}, newProps?.needCloneActionParams);
 			}
 
 			this.needInitMenu = this.getValue(newProps, 'needInitMenu', true);
@@ -316,14 +329,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
-						const adaptedResponse = this.actionResponseAdapter(response);
-
 						clearTimeout(this.requestRenderTimeout);
 
 						const serverResponseTime = Date.now() - requestStartTime;
 						const remainingTime = useCache ? 0 : Math.max(300 - serverResponseTime, 0);
 
 						this.requestRenderTimeout = setTimeout(() => {
+							const adaptedResponse = this.actionResponseAdapter(response);
 							if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 							{
 								this.props.actionCallbacks.loadItems(adaptedResponse?.data, renderType.ajax, config);
@@ -652,7 +664,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			{
 				preparedUpdateItems.forEach((item) => onItemUpdated(item));
 			}
-
 			return true;
 		}
 
@@ -1006,6 +1017,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			this.setState(this.getInitialState(initialStateParams), () => {
 				this.initSearchBar();
+				this.onBeforeReloadAction();
 				this.loadItems(DEFAULT_BLOCK_PAGE, false, loadItemsParams);
 
 				if (this.simpleList)
@@ -1170,6 +1182,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						onNotViewableHandler: this.props.onNotViewableHandler,
 						changeItemsOperations: this.props.changeItemsOperations,
 					}),
+					this.isShowFloatingButton() && !this.fabSpotlightId && this.renderFloatingButtonPointer(),
 				),
 			);
 		}
@@ -1255,6 +1268,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return;
 			}
 
+			if (!this.fabSpotlightId)
+			{
+				this.fabSpotlightId = this.getFabSpotlightId();
+			}
+
 			const { onFloatingButtonClick, onFloatingButtonLongClick } = this.props;
 
 			this.floatingButton = FloatingActionButton({
@@ -1263,7 +1281,151 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				parentLayout: this.layout,
 				onClick: onFloatingButtonClick,
 				onLongClick: onFloatingButtonLongClick,
+				...this.fabSpotlightId
+					? { spotlightIds: { fab: this.fabSpotlightId } }
+					: {},
 			});
+		}
+
+		getFabSpotlightId()
+		{
+			if (!Feature.canUseSpotlightIds())
+			{
+				return null;
+			}
+
+			const spotlightIds = this.props.spotlightIds ?? {};
+
+			return spotlightIds?.fab ?? null;
+		}
+
+		renderFloatingButtonPointer()
+		{
+			return View(
+				{
+					style: {
+						height: 1,
+						width: 1,
+						opacity: 0,
+						position: 'absolute',
+						bottom: 75,
+						right: 52,
+					},
+					ref: (ref) => {
+						if (ref)
+						{
+							this.floatingButtonPointerRef = ref;
+						}
+					},
+				},
+			);
+		}
+
+		#displayAhaMoment({
+			description,
+			testId,
+			title = null,
+			disableHideByOutsideClick = false,
+			onHide,
+			delay = 0,
+			ref = null,
+		})
+		{
+			setTimeout(() => {
+				if (ref)
+				{
+					AhaMoment.show({
+						title,
+						description,
+						testId,
+						targetRef: ref,
+						closeButton: false,
+						fadeInDuration: 300,
+						disableHideByOutsideClick,
+						onHide,
+					});
+				}
+			}, delay);
+		}
+
+		/**
+		 * @param {object} options
+		 * @param {string} options.description
+		 * @param {string} options.testId
+		 * @param {string} [options.title=null]
+		 * @param {boolean} [options.disableHideByOutsideClick=false]
+		 * @param {function} [options.onHide]
+		 * @param {number} [options.delay=0]
+		 */
+		displayFloatingButtonAhaMoment({
+			description,
+			testId,
+			title = null,
+			disableHideByOutsideClick = false,
+			onHide,
+			delay = 0,
+		})
+		{
+			let ref = this.floatingButtonPointerRef;
+			const fabSpotlightId = this.getFabSpotlightId();
+
+			if (Feature.canUseSpotlightIds())
+			{
+				if (fabSpotlightId)
+				{
+					ref = fabSpotlightId;
+				}
+				else
+				{
+					logger.warn('method displayFloatingButtonAhaMoment() is deprecated without using spotlightIds for floating button. You should set prop spotlightIds');
+				}
+			}
+
+			this.#displayAhaMoment({
+				description,
+				testId,
+				title,
+				disableHideByOutsideClick,
+				onHide,
+				delay,
+				ref,
+			});
+		}
+
+		/**
+		 * @param {object} options
+		 * @param {number} options.itemId
+		 * @param {string} options.description
+		 * @param {string} options.testId
+		 * @param {string} [options.title=null]
+		 * @param {boolean} [options.disableHideByOutsideClick=false]
+		 * @param {function} [options.onHide]
+		 * @param {number} [options.delay=0]
+		 */
+		displayItemAhaMoment({
+			itemId,
+			description,
+			testId,
+			title = null,
+			disableHideByOutsideClick = false,
+			onHide,
+			delay = 0,
+		})
+		{
+			if (itemId)
+			{
+				const ref = this.getItemRootViewRef(itemId);
+
+				this.#displayAhaMoment({
+					description,
+					testId,
+					title,
+					disableHideByOutsideClick,
+					onHide,
+					delay,
+					ref,
+				});
+			}
 		}
 
 		/**

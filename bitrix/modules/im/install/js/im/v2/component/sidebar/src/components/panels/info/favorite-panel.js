@@ -1,4 +1,3 @@
-import { EventEmitter } from 'main.core.events';
 import { Runtime, Extension } from 'main.core';
 
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
@@ -18,6 +17,7 @@ import { DetailEmptyState as StartState, DetailEmptyState } from '../../elements
 import './css/favorite-panel.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelSidebarFavoriteItem, ImModelChat } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -114,7 +114,7 @@ export const FavoritePanel = {
 	{
 		this.initSettings();
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new FavoriteMenu();
+		this.contextMenu = new FavoriteMenu({ emitter: this.getEmitter() });
 		this.service = new Favorite({ dialogId: this.dialogId });
 		this.serviceSearch = new FavoriteSearch({ dialogId: this.dialogId });
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 500, this);
@@ -198,7 +198,7 @@ export const FavoritePanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.favorite });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.favorite });
 		},
 		needToLoadNextPage(event: Event): boolean
 		{
@@ -228,6 +228,10 @@ export const FavoritePanel = {
 				await this.serviceSearch.request();
 			}
 			this.isLoading = false;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{

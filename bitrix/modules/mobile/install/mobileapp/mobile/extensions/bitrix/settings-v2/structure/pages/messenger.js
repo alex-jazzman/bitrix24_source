@@ -2,7 +2,7 @@
  * @module settings-v2/structure/pages/messenger
  */
 jn.define('settings-v2/structure/pages/messenger', (require, exports, module) => {
-	const { createToggle, createSection, createDescription } = require('settings-v2/structure/src/item-create-helper');
+	const { createToggle, createSection, createDescription } = require('settings-v2/structure/helpers/item-create-helper');
 	const { ApplicationStorageSettingController } = require('settings-v2/controller/application-storage');
 	const { SettingsPageId, EventType } = require('settings-v2/const');
 	const { SettingEmitter } = require('settings-v2/emitter');
@@ -71,7 +71,8 @@ jn.define('settings-v2/structure/pages/messenger', (require, exports, module) =>
 						divider: false,
 					}),
 					createDescription({
-						id: 'loc-description',
+						id: 'message_cache-description',
+						prefilter: (settingsData) => settingsData?.isLocalStorageAvailable,
 						text: Loc.getMessage('SETTINGS_V2_STRUCTURE_RELOAD_DESCRIPTION'),
 					}),
 				],

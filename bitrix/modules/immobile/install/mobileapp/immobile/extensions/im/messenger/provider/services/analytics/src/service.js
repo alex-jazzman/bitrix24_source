@@ -28,6 +28,9 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { ChatPin } = require('im/messenger/provider/services/analytics/chat-pin');
 	const { NavigationTab } = require('im/messenger/provider/services/analytics/navigation-tab');
 	const { AudioAnalytics } = require('im/messenger/provider/services/analytics/src/audio');
+	const { AssistantButtonAnalytics } = require('im/messenger/provider/services/analytics/src/assistant-button');
+	const { VideoNoteAnalytics } = require('im/messenger/provider/services/analytics/video-note');
+	const { Reactions } = require('im/messenger/provider/services/analytics/src/reaction');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -37,6 +40,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	 */
 	class AnalyticsService
 	{
+		/** @type {VideoNoteAnalytics} */
+		#videoNote;
 		/** @type {AudioAnalytics} */
 		#audio;
 		/** @type {MessageDelete} */
@@ -77,6 +82,10 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#chatPin;
 		/** @type {NavigationTab} */
 		#navigation;
+		/** @type {AssistantButtonAnalytics} */
+		#assistantButtonAnalytics;
+		/** @type {Reactions} */
+		#reactions;
 
 		static getInstance()
 		{
@@ -229,11 +238,68 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.#chatPin;
 		}
 
+		/** @protected */
+		get videoNote()
+		{
+			this.#videoNote = this.#videoNote ?? new VideoNoteAnalytics();
+
+			return this.#videoNote;
+		}
+
 		get audio()
 		{
 			this.#audio = this.#audio ?? new AudioAnalytics();
 
 			return this.#audio;
+		}
+
+		/** @protected */
+		get assistantButtonAnalytics()
+		{
+			this.#assistantButtonAnalytics = this.#assistantButtonAnalytics ?? new AssistantButtonAnalytics();
+
+			return this.#assistantButtonAnalytics;
+		}
+
+		get reactions()
+		{
+			this.#reactions = this.#reactions ?? new Reactions();
+
+			return this.#reactions;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {number} recordLength
+		 */
+		sendRecordAudioInChat({ dialogId, recordLength })
+		{
+			return this.audio.sendRecordAudioInChat({ dialogId, recordLength });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendTapToPlayVideoNote(dialogId)
+		{
+			return this.videoNote.sendTapToPlay(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendTapToPauseVideoNote(dialogId)
+		{
+			return this.videoNote.sendTapToPause(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {number} duration
+		 */
+		sendRecordVideoNote(dialogId, duration)
+		{
+			return this.videoNote.sendRecord(dialogId, duration);
 		}
 
 		/**
@@ -259,6 +325,15 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendClickToChangeAudioSpeedInChat({ dialogId, speed })
 		{
 			return this.audio.sendClickToChangeAudioSpeedInChat({ dialogId, speed });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {?string} status
+		 */
+		sendViewTranscriptionInChat({ dialogId, status = Analytics.Status.success })
+		{
+			return this.audio.sendViewTranscriptionInChat({ dialogId, status });
 		}
 
 		/** @protected */
@@ -341,6 +416,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.chatOpen.sendOpenCopilotDialog({ dialogId, context });
 		}
 
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendOpenAiAssistantDialog({ dialogId })
+		{
+			return this.chatOpen.sendOpenAiAssistantDialog({ dialogId });
+		}
+
 		sendUserAddButtonClicked({ dialogId })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
@@ -356,6 +439,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
 				.setEvent(Analytics.Event.clickAddUser)
 				.setSection(Analytics.Section.chatSidebar)
+				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
@@ -597,6 +681,28 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendChangeNavigationTab(currentTab, analyticsOptions)
 		{
 			this.navigation.sendChangeTab(currentTab, analyticsOptions);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {boolean} isActive
+		 */
+		sendToggleReasoning({ dialogId, isActive })
+		{
+			this.assistantButtonAnalytics.sendToggleReasoning({ dialogId, isActive });
+		}
+
+		sendClickMCPIntegrations()
+		{
+			this.assistantButtonAnalytics.sendClickMCPIntegrations();
+		}
+
+		/**
+		 * @param {string|number} dialogId
+		 */
+		sendAnalyticsExpandReactionList(dialogId)
+		{
+			this.reactions.sendExpandReactionList(dialogId);
 		}
 	}
 

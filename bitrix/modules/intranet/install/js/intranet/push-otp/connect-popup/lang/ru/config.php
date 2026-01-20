@@ -1,0 +1,24 @@
+<?php
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1_MSGVER_1'] = 'Наведите камеру телефона на QR-код (или [LINK]перейдите по ссылке[/LINK], если у вас Huawei)';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_2'] = 'Перейдите по ссылке на экране';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_3'] = 'Установите приложение';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4'] = 'Cканируйте QR-код ещё раз для входа в приложение';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_DANGER'] = 'Никому не показывайте этот QR-код. В нём содержится информация для входа под вашим именем.';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_DESC'] = 'Теперь вы можете подтверждать вход с этого устройства';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_QR_DESCRIPTION'] = 'Установите мобильное приложение или откройте его через QR-код, если оно у вас уже есть. Мобильное приложение необходимо, чтобы подтверждать вход';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE'] = 'Установите мобильное приложение';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_NEXT_BTN'] = 'Продолжить';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN'] = 'Подтвердить';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECTED_TITLE'] = 'Отлично!';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_TITLE'] = 'Номер для резервного входа';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_DESC'] = 'Если у вас не будет доступа к приложению, вы сможете войти с помощью кода из СМС';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_TITLE'] = 'Подтвердите номер телефона';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_TITLE'] = 'Готово!';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_SUBTITLE'] = 'Ваш аккаунт под надёжной защитой';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESC'] = 'Введите код из СМС';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_DESCRIPTION'] = 'Мы отправили СМС с кодом подтверждения на номер #PHONE_NUMBER#';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_COOLDOWN'] = 'Запросить повторно можно через #SEC# секунд';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_RESEND_CODE'] = 'Получить новый код';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_CHANGE_NUMBER_BTN'] = 'Изменить номер';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_SUBTITLE'] = 'Введите номер телефона';
+$MESS['INTRANET_PUSH_OTP_CONNECT_POPUP_BUTTON_BACK'] = 'Назад';

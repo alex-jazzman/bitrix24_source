@@ -154,11 +154,15 @@
 	    dropdownMode: true,
 	    enableSearch: true,
 	    items: babelHelpers.classPrivateFieldGet(this, _props).supportedDatabases.map(function (database) {
+	      var _database$isSupportMa;
 	      return {
 	        id: database.code,
 	        entityId: 'biconnector-external-connection',
 	        title: database.name,
-	        tabs: 'connections'
+	        tabs: 'connections',
+	        customData: {
+	          isSupportMapping: (_database$isSupportMa = database.isSupportMapping) !== null && _database$isSupportMa !== void 0 ? _database$isSupportMa : false
+	        }
 	      };
 	    }),
 	    events: {
@@ -166,10 +170,12 @@
 	        var item = event.getData().item;
 	        var selectedDatabaseCode = item.getId();
 	        var selectedDatabaseName = item.getTitle();
+	        var isSupportMapping = item.getCustomData().get('isSupportMapping');
 	        button.textContent = main_core.Text.encode(selectedDatabaseName);
 	        _classPrivateMethodGet(_this2, _onChangeType, _onChangeType2).call(_this2, {
 	          target: {
-	            value: selectedDatabaseCode
+	            value: selectedDatabaseCode,
+	            isSupportMapping: isSupportMapping
 	          }
 	        });
 	      }
@@ -207,11 +213,13 @@
 	function _onChangeType2(event) {
 	  var _connector$type;
 	  var value = event.target.value;
+	  var isSupportMapping = event.target.isSupportMapping;
 	  var connector = babelHelpers.classPrivateFieldGet(this, _props).supportedDatabases.find(function (database) {
 	    return database.code === value;
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _props).sourceFields.code = value;
 	  babelHelpers.classPrivateFieldGet(this, _props).sourceFields.type = (_connector$type = connector.type) !== null && _connector$type !== void 0 ? _connector$type : null;
+	  babelHelpers.classPrivateFieldGet(this, _props).sourceFields.isSupportMapping = isSupportMapping;
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldGet(this, _node).querySelector('.hint-wrapper'));
 	  _classPrivateMethodGet(this, _initHint, _initHint2).call(this);
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldGet(this, _node).querySelector('.fields-wrapper'));
@@ -293,10 +301,12 @@
 	  };
 	  var sourceType = (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldGet(this, _props).sourceFields.type) !== null && _babelHelpers$classPr11 !== void 0 ? _babelHelpers$classPr11 : babelHelpers.classPrivateFieldGet(this, _props).supportedDatabases[0].code;
 	  main_core.Event.bind(createDatasetButton, 'click', function () {
+	    var _connection$isSupport;
 	    onPopupClose();
 	    biconnector_datasetImport.Slider.open(sourceType, 0, {
 	      connectionId: connection.id,
-	      connectionType: connection.type
+	      connectionType: connection.type,
+	      connectionIsSupportMapping: (_connection$isSupport = connection.isSupportMapping) !== null && _connection$isSupport !== void 0 ? _connection$isSupport : false
 	    });
 	  });
 	  main_core.Event.bind(closeButton, 'click', function () {

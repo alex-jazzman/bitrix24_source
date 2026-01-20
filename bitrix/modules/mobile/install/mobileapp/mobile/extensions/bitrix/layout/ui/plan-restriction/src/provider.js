@@ -1,7 +1,7 @@
 /**
- * @module layout/ui/plan-restriction/provider
+ * @module layout/ui/plan-restriction/src/provider
  */
-jn.define('layout/ui/plan-restriction/provider', (require, exports, module) => {
+jn.define('layout/ui/plan-restriction/src/provider', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { StorageCache } = require('storage-cache');
 

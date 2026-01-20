@@ -1,0 +1,29 @@
+.tasks-task-time-tracking-timer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 2px;
+}
+
+.tasks-task-time-tracking-timer-current {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-1);
+}
+
+.tasks-task-time-tracking-timer-current.--running {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-task-time-tracking-timer-separator,
+.tasks-task-time-tracking-timer-total {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-4);
+}
+
+.tasks-task-time-tracking-timer-total.--exceeded {
+	color: var(--ui-color-accent-main-alert);
+}

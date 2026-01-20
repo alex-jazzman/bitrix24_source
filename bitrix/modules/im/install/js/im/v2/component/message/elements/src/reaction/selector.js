@@ -1,16 +1,18 @@
-import { ReactionsSelect, reactionType as ReactionType } from 'ui.reactions-select';
+import { ReactionsSelect } from 'ui.reactions-select';
+import { ReactionPicker as ReactionsSelectV2 } from 'ui.reaction.picker';
+import { ReactionName } from 'ui.reaction.item';
 
-import { ActionByRole, UserType } from 'im.v2.const';
+import { ActionByRole, UserType, EventType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
-
-import { ReactionService } from './classes/reaction-service';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
 import './selector.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelMessage, ImModelReactions, ImModelUser, ImModelBot } from 'im.v2.model';
 
-const SHOW_DELAY = 500;
-const HIDE_DELAY = 800;
+const SHOW_DELAY = 250;
+const HIDE_DELAY = 500;
 
 // @vue/component
 export const ReactionSelector = {
@@ -32,13 +34,17 @@ export const ReactionSelector = {
 		{
 			return this.$store.getters['chats/getByChatId'](this.message.chatId);
 		},
-		reactionsData(): ImModelReactions
+		reactionsData(): ?ImModelReactions
 		{
 			return this.$store.getters['messages/reactions/getByMessageId'](this.messageId);
 		},
-		ownReactionSet(): boolean
+		ownReactions(): Set<string>
 		{
-			return this.reactionsData?.ownReactions?.size > 0;
+			return this.reactionsData?.ownReactions ?? new Set();
+		},
+		ownPlainLikeSet(): boolean
+		{
+			return this.ownReactions.has(ReactionName.like);
 		},
 		isChatWithBot(): boolean
 		{
@@ -105,10 +111,18 @@ export const ReactionSelector = {
 		},
 		showSelector()
 		{
-			this.selector = new ReactionsSelect({
-				name: 'im-base-message-reaction-selector',
-				position: this.$refs.selector,
-			});
+			if (FeatureManager.isFeatureAvailable(Feature.reactionsV2Available))
+			{
+				this.selector = new ReactionsSelectV2({ target: this.$refs.selector });
+			}
+			else
+			{
+				this.selector = new ReactionsSelect({
+					name: 'im-base-message-reaction-selector',
+					position: this.$refs.selector,
+				});
+			}
+
 			this.subscribeToSelectorEvents();
 			this.selector.show();
 		},
@@ -116,7 +130,10 @@ export const ReactionSelector = {
 		{
 			this.selector.subscribe('select', (selectEvent) => {
 				const { reaction } = selectEvent.getData();
-				this.getReactionService().setReaction(this.messageId, reaction);
+				this.getEmitter().emit(EventType.reaction.onReactionSelected, {
+					messageId: this.messageId,
+					reaction,
+				});
 				this.selector?.hide();
 			});
 
@@ -144,24 +161,14 @@ export const ReactionSelector = {
 		onIconClick()
 		{
 			this.clearShowTimer();
-			if (this.ownReactionSet)
-			{
-				const [currentReaction] = [...this.reactionsData.ownReactions];
-				this.getReactionService().removeReaction(this.messageId, currentReaction);
-
-				return;
-			}
-
-			this.getReactionService().setReaction(this.messageId, ReactionType.like);
+			this.getEmitter().emit(EventType.reaction.onReactionSelected, {
+				messageId: this.messageId,
+				reaction: ReactionName.like,
+			});
 		},
-		getReactionService(): ReactionService
+		getEmitter(): EventEmitter
 		{
-			if (!this.reactionService)
-			{
-				this.reactionService = new ReactionService();
-			}
-
-			return this.reactionService;
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `
@@ -173,7 +180,7 @@ export const ReactionSelector = {
 				class="bx-im-reaction-selector__selector"
 				ref="selector"
 			>
-				<div class="bx-im-reaction-selector__icon" :class="{'--active': ownReactionSet}"></div>
+				<div class="bx-im-reaction-selector__icon" :class="{'--active': ownPlainLikeSet}"></div>
 			</div>
 		</div>
 	`,

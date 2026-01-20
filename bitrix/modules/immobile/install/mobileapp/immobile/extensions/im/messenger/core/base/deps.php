@@ -16,6 +16,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/state-manager/vuex-manager/mutation-manager',
 		'im:messenger/const',
+		'im/messenger/lib/di/service-locator',
 	],
 	'bundle' => [
 		'./src/application',

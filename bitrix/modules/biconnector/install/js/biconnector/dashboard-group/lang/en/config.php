@@ -21,3 +21,5 @@ $MESS["BI_GROUP_SUBTITLE_PLURAL_1"] = "#COUNT# dashboards";
 $MESS["BI_GROUP_SUBTITLE_PLURAL_2"] = "#COUNT# dashboards";
 $MESS["BI_GROUP_SYSTEM_NAME_HINT"] = "Cannot rename a system group.";
 $MESS["BI_GROUP_SYSTEM_SCOPES_HINT"] = "Cannot change scope of a system group.";
+$MESS["DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE"] = "To delete this dashboard's scope, <br>remove the dashboard from the group \"#GROUP_NAME#\".";
+$MESS["DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE_MANY"] = "To delete this dashboard's scope, <br>remove the dashboard from the these groups:";

@@ -94,7 +94,6 @@ export const Chip = {
 					'--rounded': rounded,
 					'--compact': compact,
 					'--trimmable': trimmable,
-					'--lock': lock,
 					'--with-right-icon': withClear || dropdown,
 					'--no-text': text.length === 0,
 				},

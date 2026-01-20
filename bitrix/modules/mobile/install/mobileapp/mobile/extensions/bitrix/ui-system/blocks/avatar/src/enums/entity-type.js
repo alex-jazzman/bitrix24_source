@@ -9,6 +9,7 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 	const { EmptyAvatar } = require('ui-system/blocks/avatar/src/enums/empty-avatar');
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
 	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
+	const { AvatarAccentType } = require('ui-system/blocks/avatar/src/enums/accent-type');
 
 	/**
 	 * @class AvatarEntityType
@@ -27,6 +28,7 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 				},
 				backgroundColor: Color.collabAccentPrimary,
 			},
+			accentType: AvatarAccentType.GREEN,
 			accentGradient: AvatarAccentGradient.GREEN,
 		});
 
@@ -38,6 +40,7 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 				},
 			},
 			shape: AvatarShape.CIRCLE,
+			accentType: AvatarAccentType.BLUE,
 			accentGradient: AvatarAccentGradient.BLUE,
 		});
 
@@ -49,6 +52,8 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 				},
 			},
 			shape: AvatarShape.CIRCLE,
+			accentType: AvatarAccentType.BLUE,
+			accentColor: Color.accentMainPrimary,
 			accentGradient: AvatarAccentGradient.BLUE,
 		});
 
@@ -62,6 +67,7 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 				backgroundColor: Color.accentMainWarning,
 			},
 			shape: AvatarShape.CIRCLE,
+			accentType: AvatarAccentType.ORANGE,
 			accentGradient: AvatarAccentGradient.ORANGE,
 		});
 
@@ -97,5 +103,7 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type', (require, exports, mo
 		}
 	}
 
-	module.exports = { AvatarEntityType };
+	module.exports = {
+		AvatarEntityType: AvatarEntityType.export(),
+	};
 });

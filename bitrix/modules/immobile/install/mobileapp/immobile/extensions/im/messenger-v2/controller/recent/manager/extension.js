@@ -49,6 +49,13 @@ jn.define('im/messenger-v2/controller/recent/manager', (require, exports, module
 			this.setActiveRecent(this.currentListId, true);
 		}
 
+		destructor()
+		{
+			this.recentGetter.getRecentLists().forEach((recentList) => {
+				recentList.removeAll();
+			});
+		}
+
 		/**
 		 * @return {RecentUiGetter}
 		 */

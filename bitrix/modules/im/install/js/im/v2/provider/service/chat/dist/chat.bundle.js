@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,imopenlines_v2_lib_openlines,call_lib_callTokenManager,im_public,im_v2_provider_service_message,im_v2_lib_copilot,im_v2_lib_user,im_v2_lib_analytics,ui_uploader_core,im_v2_lib_roleManager,im_v2_lib_uuid,ui_vue3_vuex,rest_client,im_v2_lib_utils,im_v2_lib_notifier,im_v2_lib_layout,main_core,im_v2_application_core,im_v2_lib_logger,im_v2_const,im_v2_lib_rest,im_v2_lib_feature) {
+(function (exports,imopenlines_v2_lib_openlines,call_lib_callTokenManager,im_public,im_v2_provider_service_message,im_v2_lib_copilot,im_v2_lib_user,im_v2_lib_analytics,ui_uploader_core,im_v2_lib_roleManager,im_v2_lib_uuid,im_v2_lib_counter,ui_vue3_vuex,rest_client,im_v2_lib_utils,im_v2_lib_notifier,im_v2_lib_layout,main_core,im_v2_application_core,im_v2_lib_logger,im_v2_const,im_v2_lib_rest,im_v2_lib_feature) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -979,12 +979,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3] = im_v2_application_core.Core.getRestClient();
 	  }
+	  readAllByType(type) {
+	    const counterClearActions = im_v2_lib_counter.CounterClearActionsByChatType[type];
+	    if (counterClearActions) {
+	      counterClearActions.forEach(actionName => {
+	        void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch(actionName, {
+	          type
+	        });
+	      });
+	    }
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatReadAllByType, {
+	      data: {
+	        type
+	      }
+	    }).catch(([error]) => {
+	      console.error('ReadService: readAllByType error', error);
+	    });
+	  }
 	  readAll() {
 	    im_v2_lib_logger.Logger.warn('ReadService: readAll');
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/clearCounters');
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('recent/clearUnread');
-	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3].callMethod(im_v2_const.RestMethod.imV2ChatReadAll).catch(result => {
-	      console.error('ReadService: readAll error', result.error());
+	    im_v2_lib_counter.CounterClearActionsDefault.forEach(actionName => {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch(actionName);
+	    });
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatReadAll).catch(([error]) => {
+	      console.error('ReadService: readAll error', error);
 	    });
 	  }
 	  readDialog(dialogId) {
@@ -1319,7 +1337,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      inited: false
 	    }
 	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('recent/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('recent/hide', {
 	    id: dialogId
 	  });
 	  const chatIsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].getters['application/isChatOpen'](dialogId);
@@ -1562,6 +1580,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  readAll() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _readService)[_readService].readAll();
 	  }
+	  readAllByType(type) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _readService)[_readService].readAllByType(type);
+	  }
 	  readDialog(dialogId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _readService)[_readService].readDialog(dialogId);
 	  }
@@ -1627,5 +1648,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatService = ChatService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX?.OpenLines?.v2?.Lib??{},BX?.Call?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Vue3?.Vuex??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{}));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX?.OpenLines?.v2?.Lib??{},BX?.Call?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Vue3?.Vuex??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{}));
 //# sourceMappingURL=chat.bundle.js.map

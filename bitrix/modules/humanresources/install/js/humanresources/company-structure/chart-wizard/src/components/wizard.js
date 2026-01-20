@@ -85,6 +85,7 @@ export const ChartWizard = {
 				userCount: 0,
 				createDefaultChat: false,
 				createDefaultChannel: false,
+				createDefaultCollab: false,
 				teamColor: NodeColorsSettingsDict.blue,
 				entityType: EntityTypes.department,
 				settings: {
@@ -351,6 +352,7 @@ export const ChartWizard = {
 					teamColor,
 					createDefaultChat: false,
 					createDefaultChannel: false,
+					createDefaultCollab: false,
 				};
 				const rawSettings = await WizardAPI.getSettings(this.nodeId);
 				const newSettings = this.mapRawSettings(rawSettings);

@@ -10,6 +10,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/api/notifications-opener',
 		'im:messenger-v2/lib/widget/header-button',
+		'im:messenger-v2/lib/read-all-chats',
 	],
 	'bundle' => [
 		'./src/button',

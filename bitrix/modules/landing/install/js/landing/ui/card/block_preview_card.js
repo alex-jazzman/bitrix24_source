@@ -121,13 +121,15 @@
 				}
 				const type = BX.Landing.Env.getInstance().getType();
 
+				const blockSection = this.currentCategory;
 				BX.Landing.Backend.getInstance()
-					.action('Landing::markFavouriteBlock', { codeBlock: this.code, action, type })
+					.action('Landing::markFavouriteBlock', { codeBlock: this.code, action, type, blockSection })
 					.then((result) => {
 						if (action === ACTION_REMOVE)
 						{
 							this.showFavoriteNotification(BX.Landing.Loc.getMessage('LANDING_SECTION_FAVOURITE_BALLOON_REMOVE'));
 						}
+
 						if (action === ACTION_ADD)
 						{
 							this.showFavoriteNotification(BX.Landing.Loc.getMessage('LANDING_SECTION_FAVOURITE_BALLOON_ADD'));

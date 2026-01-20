@@ -136,7 +136,7 @@ jn.define('tasks/layout/task/view-new/ui/comments-button', (require, exports, mo
 				testId: `${this.props.testId}_Badge`,
 				value: `+${unreadComments.replace('+', '')}`,
 				showRawValue: true,
-				mode: this.state.isBadgeActive ? BadgeCounterDesign.SUCCESS : BadgeCounterDesign.GREY,
+				design: this.state.isBadgeActive ? BadgeCounterDesign.SUCCESS : BadgeCounterDesign.GREY,
 			});
 		}
 	}

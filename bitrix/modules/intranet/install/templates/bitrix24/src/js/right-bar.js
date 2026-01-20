@@ -58,8 +58,8 @@ export class RightBar
 			return;
 		}
 
-		const scrollWidth = document.documentElement.scrollWidth - document.documentElement.clientWidth;
-		if (scrollWidth > 0)
+		const hasHorizontalScroll = document.documentElement.scrollWidth > window.innerWidth;
+		if (hasHorizontalScroll > 0)
 		{
 			if (!this.#isTransparentMode)
 			{

@@ -1,0 +1,67 @@
+.tasks-task-deadline-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-deadline-settings-line {
+	height: 1px;
+	background: rgba(0, 0, 0, 0.04);
+	box-shadow: 0 0 1px rgba(0, 0, 0, 0.04);
+	pointer-events: none;
+}
+
+.tasks-task-deadline-settings-label {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding-left: 10px;
+	padding-right: 6px;
+}
+
+.tasks-task-deadline-settings-label-filter {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.tasks-task-deadline-settings-label-filter span {
+	text-decoration-line: underline;
+	text-decoration-thickness: var(--ui-border-width-thin);
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-base-5);
+	text-underline-offset: 4px;
+	cursor: pointer;
+}
+
+.tasks-task-deadline-settings-label-filter span:not(.--active) {
+	color: var(--ui-color-base-4);
+}
+
+.tasks-task-deadline-settings-content {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	padding-left: 37px;
+	min-height: 40px;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.tasks-task-deadline-settings-content .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.tasks-task-deadline-settings-content .ui-ctl-textbox {
+	width: 120px;
+}
+
+.tasks-task-deadline-settings-content.--date .ui-system-input {
+	max-width: 165px;
+	padding: 0;
+}
+
+.tasks-task-deadline-settings-content .ui-system-input.--light-grey {
+	--border-color: var(--ui-color-base-4);
+}

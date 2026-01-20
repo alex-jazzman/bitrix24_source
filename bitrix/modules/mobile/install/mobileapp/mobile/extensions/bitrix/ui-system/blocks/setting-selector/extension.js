@@ -79,29 +79,34 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 							flexDirection: 'column',
 						},
 					},
-					View(
-						{
-							style: {
-								alignItems: 'center',
-								flexDirection: 'row',
-							},
-						},
-						View(
-							{
-								style: {
-									flex: 1,
-									flexDirection: 'row',
-									paddingVertical: Indent.XS2.toNumber(),
-								},
-							},
-							this.renderIcon(),
-							this.renderTitle(),
-						),
-						this.#renderModeComponent(),
-					),
+					this.#renderTopContainer(),
 					this.renderSubtitle(),
 					this.state.checked ? additionalContent : null,
 				),
+			);
+		}
+
+		#renderTopContainer()
+		{
+			return View(
+				{
+					style: {
+						alignItems: 'center',
+						flexDirection: 'row',
+					},
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+							flexDirection: 'row',
+							paddingVertical: Indent.XS2.toNumber(),
+						},
+					},
+					this.renderIcon(),
+					this.renderTitle(),
+				),
+				this.#renderModeComponent(),
 			);
 		}
 
@@ -122,27 +127,6 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 				style: {
 					flex: 1,
 					flexShrink: 1,
-				},
-			});
-		}
-
-		renderSubtitle()
-		{
-			const { subtitle, numberOfLinesSubtitle = 5, subtitleEllipsize } = this.props;
-
-			if (!subtitle)
-			{
-				return null;
-			}
-
-			return Text5({
-				text: subtitle,
-				color: Color.base3,
-				numberOfLines: numberOfLinesSubtitle,
-				ellipsize: this.#getEllipsize(subtitleEllipsize),
-				style: {
-					paddingVertical: Indent.XS2.toNumber(),
-					marginRight: this.#getSwitchSize().getWidth(),
 				},
 			});
 		}
@@ -173,6 +157,27 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 			return IconView(iconProps);
 		}
 
+		renderSubtitle()
+		{
+			const { subtitle, numberOfLinesSubtitle = 5, subtitleEllipsize } = this.props;
+
+			if (!subtitle)
+			{
+				return null;
+			}
+
+			return Text5({
+				text: subtitle,
+				color: Color.base3,
+				numberOfLines: numberOfLinesSubtitle,
+				ellipsize: this.#getEllipsize(subtitleEllipsize),
+				style: {
+					paddingVertical: Indent.XS2.toNumber(),
+					marginRight: this.#getSwitchSize().getWidth(),
+				},
+			});
+		}
+
 		#renderModeComponent()
 		{
 			const { mode } = this.props;
@@ -191,18 +196,19 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		#renderParameterMode()
 		{
 			const { testId } = this.props;
-			const { chevron, text, iconRef, color } = this.#getModeParams();
+			const { chevron, text, iconRef, color, textColor } = this.#getModeParams();
 
 			return View(
 				{
 					testId: `${testId}-parameter`,
 					style: {
 						flexDirection: 'row',
+						marginLeft: Indent.XL4.toNumber(),
 					},
 				},
 				Boolean(text) && Text4({
 					text,
-					color: color ?? Color.base4,
+					color: textColor ?? color ?? Color.base4,
 				}),
 				chevron && IconView({
 					size: 20,

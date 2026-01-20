@@ -132,7 +132,9 @@
 										params: {
 											Field: { Field: toLoad.data.fieldName, Form: 'sfa_form' },
 											Value: (toLoad.data.value || ''),
-											Als: isPublicMode ? 0 : 1,
+											Als: BX.Type.isUndefined(toLoad.data.property?.AllowSelection)
+												? (isPublicMode ? 0 : 1)
+												: Number(toLoad.data.property.AllowSelection),
 											RenderMode: renderMode === 'designer' ? 'designer' : 'public',
 										},
 									})),
@@ -374,7 +376,7 @@
 						params: {
 							Field: {Field: fieldName, Form: 'sfa_form'},
 							Value: (value || ''),
-							Als: 1,
+							Als: (property?.AllowSelection === false) ? 0 : 1,
 							RenderMode: 'designer',
 						}
 					}
@@ -385,6 +387,7 @@
 						if (typeof BX.Bizproc.Selector !== 'undefined')
 						{
 							BX.Bizproc.Selector.initSelectors(node);
+							BX.Event.EventEmitter.emit('BX.Bizproc.FieldType.onDesignerRenderControlFinished', { node });
 						}
 					});
 				},
@@ -394,7 +397,7 @@
 
 			return node;
 		},
-		formatValuePrintable: function(property, value)
+		formatValuePrintable: function(property, value, labelNode = null)
 		{
 			let result;
 			switch (property['Type'])
@@ -404,6 +407,21 @@
 					result = BX.message(
 						value === 'Y' ? 'BIZPROC_JS_BP_FIELD_TYPE_YES' : 'BIZPROC_JS_BP_FIELD_TYPE_NO'
 					);
+					break;
+
+				case 'entityselector':
+					var options = property['Options'] || {};
+					if (BX.Type.isPlainObject(options) && Object.keys(options).length > 0)
+					{
+						result = options[value];
+					}
+					else
+					{
+						Promise.resolve().then(() => {
+							this.loadEntitySelectorLabel(property, value, labelNode);
+						});
+						result = '...';
+					}
 					break;
 
 				case 'select':
@@ -525,6 +543,38 @@
 			}
 
 			return result;
+		},
+
+		loadEntitySelectorLabel: function(property, value, labelNode)
+		{
+			if (!labelNode)
+			{
+				return;
+			}
+
+			BX.ajax.runAction(
+				'ui.entityselector.load',
+				{
+					json: {
+						"dialog": {
+							"id": "ui-selector-" + BX.util.getRandomString(8),
+							"context": null,
+							"entities": [property.Settings?.entity],
+						}
+					}
+				}
+			).then((response) => {
+				const items = response.data.dialog?.items;
+				if (BX.Type.isArrayFilled(items))
+				{
+					const item = items.find(item => item.id === value);
+					const valueLabel = labelNode.querySelector(`[data-role="value-label"]`);
+					if (item && valueLabel)
+					{
+						valueLabel.textContent = item.title;
+					}
+				}
+			}).catch(console.error);
 		},
 
 		/**
@@ -1102,6 +1152,10 @@
 			{
 				BX.Bizproc.UserSelector.decorateNode(controlNode.querySelector('[data-role="user-selector"]'));
 			}
+			else if (property && property['Type'] === 'entityselector' && BX.Bizproc.EntitySelector)
+			{
+				BX.Bizproc.EntitySelector.decorateNode(controlNode.querySelector('[data-role="bp-entity-selector"]'));
+			}
 			else if (childControlNodes.length > 0)
 			{
 				const context =
@@ -1120,7 +1174,7 @@
 									fields: BX.clone(context.document.getFields()),
 									useSwitcherMenu: context.get('showTemplatePropertiesMenuOnSelecting'),
 									rootGroupTitle: context.document.title,
-									userOptions: context.userOptions
+									userOptions: context.userOptions,
 								})
 							},
 						);

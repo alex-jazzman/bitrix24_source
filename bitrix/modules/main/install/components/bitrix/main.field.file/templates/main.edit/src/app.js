@@ -3,6 +3,8 @@ import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 import { Main, AppContext } from './components/main';
 
 declare type AppConstructorParams = {
+	fieldName: string,
+	controlId: string,
 	containerId: string,
 	context: AppContext,
 	value: Array,
@@ -10,48 +12,29 @@ declare type AppConstructorParams = {
 
 export class App
 {
-	#controlId: string;
-	#container: HTMLElement;
-	#context: AppContext;
-	#value: Array;
-
 	#app: ?VueCreateAppResult = null;
 
 	constructor(params: AppConstructorParams)
 	{
-		this.#controlId = params.controlId;
-		this.#container = document.getElementById(params.containerId);
+		const container = document.getElementById(params.containerId);
 
-		if (!Type.isDomNode(this.#container))
+		if (!Type.isDomNode(container))
 		{
 			throw new Error('container not found');
 		}
-		
-		this.#context = params.context;
-		this.#value = params.value.map((value) => { return parseInt(value); });
-	}
 
-	start(): void
-	{
 		this.#app = BitrixVue.createApp(
 			{
-				...Main
+				...Main,
 			},
 			{
-				controlId: this.#controlId,
-				container: this.#container,
-				context: this.#context,
-				filledValues: this.#value,
+				fieldName: params.fieldName,
+				controlId: params.controlId,
+				context: params.context,
+				values: params.value.map((value) => parseInt(value, 10)),
 			},
 		);
 
-		this.#app.mount(this.#container);
-	}
-
-	stop(): void
-	{
-		this.#app.unmount();
-
-		this.#app = null;
+		this.#app.mount(container);
 	}
 }

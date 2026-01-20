@@ -49,4 +49,6 @@ $MESS['CRM_KANBAN_OPEN_ITEM'] = 'Открыть';
 $MESS['CRM_KANBAN_DELETE_RESTORE_SUCCESS_MSGVER_1'] = 'Элементы восстановлены';
 $MESS['CRM_KANBAN_COMPANY'] = 'Компания';
 $MESS['CRM_KANBAN_CONTACT'] = 'Контакт';
-$MESS["CRM_KANBAN_NOT_SUPPORTED"] = "Тип сущности не поддерживает отображение в канбане";
+$MESS['CRM_KANBAN_NOT_SUPPORTED'] = 'Тип сущности не поддерживает отображение в канбане';
+$MESS['CRM_KANBAN_AUTOMATED_SOLUTION_STUB_TITLE'] = 'Здесь будет ваш рабочий процесс';
+$MESS['CRM_KANBAN_AUTOMATED_SOLUTION_STUB_DESCRIPTION'] = 'Создайте первую карточку, чтобы начать работу';

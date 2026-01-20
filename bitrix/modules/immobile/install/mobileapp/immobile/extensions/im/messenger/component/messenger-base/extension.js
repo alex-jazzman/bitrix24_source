@@ -24,6 +24,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 	const { AnchorPullHandler } = require('im/messenger/provider/pull/anchor');
 	const { Anchors } = require('im/messenger/lib/anchors');
 	const { MessengerCounterHandler } = require('im/messenger/lib/counters/counter-manager/messenger/handler');
+	const { CopilotManager } = require('im/messenger/lib/copilot');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { createTabCountersByComponent } = require('im/messenger/lib/counters/tab-counters');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -124,6 +125,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.initPushMessageHandlers();
 			this.initNotifyRefreshErrorWorker();
 			await this.fillDataBaseFromPush();
+			await CopilotManager.fillStore();
 
 			BX.onViewLoaded(async () => {
 				try

@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 	const { Loc } = require('im/messenger/loc');
 	const AppTheme = require('apptheme');
 	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
 
 	const { MessageMenuActionType } = require('im/messenger/const');
 	const { Url } = require('im/messenger/lib/helper');
@@ -295,6 +296,20 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		},
 	};
 
+	const AskCopilotAction = {
+		id: MessageMenuActionType.askCopilot,
+		testId: 'MESSAGE_MENU_ACTION_ASK_COPILOT',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_ASK_COPILOT'),
+		iconName: Icon.COPILOT.getIconName(),
+		iconFallbackUrl: Url.createFromPath(Icon.COPILOT.getPath()).href,
+		iconSvg: Icon.COPILOT.getSvg(),
+		style: {
+			fontColor: Color.accentSoftElementViolet.toHex(),
+			iconColor: Color.accentSoftElementViolet.toHex(),
+		},
+	};
+
 	/** @type MessageContextMenuSeparator */
 	const SeparatorAction = {
 		type: ActionViewType.separator,
@@ -324,5 +339,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		RevoteAction,
 		OpenVoteResultAction,
 		GoToMessageAction,
+		AskCopilotAction,
 	};
 });

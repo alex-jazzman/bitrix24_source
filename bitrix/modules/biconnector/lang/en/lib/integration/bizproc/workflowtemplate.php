@@ -10,7 +10,8 @@ $MESS["WORKFLOW_TEMPLATE_FIELD_ENTITY_FULL"] = "Entity name.";
 $MESS["WORKFLOW_TEMPLATE_FIELD_ID"] = "Template ID";
 $MESS["WORKFLOW_TEMPLATE_FIELD_ID_FULL"] = "Workflow template ID.";
 $MESS["WORKFLOW_TEMPLATE_FIELD_IS_MODIFIED"] = "Template changed";
-$MESS["WORKFLOW_TEMPLATE_FIELD_IS_MODIFIED_FULL"] = "Workflow template changed, Y/N.";
+$MESS["WORKFLOW_TEMPLATE_FIELD_IS_MODIFIED_FULL"] = "Workflow template changed by user, Y/N.
+";
 $MESS["WORKFLOW_TEMPLATE_FIELD_IS_SYSTEM"] = "System template";
 $MESS["WORKFLOW_TEMPLATE_FIELD_IS_SYSTEM_FULL"] = "System workflow template, Y/N.";
 $MESS["WORKFLOW_TEMPLATE_FIELD_MODIFIED"] = "Modified on";

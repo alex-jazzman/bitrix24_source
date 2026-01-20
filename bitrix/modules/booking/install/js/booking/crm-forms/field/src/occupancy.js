@@ -86,7 +86,7 @@ export class Occupancy
 		const { data: occupancy } = await this.#runAction('booking.api_v1.CrmForm.getOccupancy', {
 			data: {
 				ids,
-				dateTs: dateTs / 1000,
+				dateTs: Math.floor(dateTs / 1000),
 			},
 		});
 
@@ -141,6 +141,13 @@ export class Occupancy
 		const slots: ResourceSlot[] = [];
 		const now = Date.now();
 
+		const isAmPmMode = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' })
+			.resolvedOptions()
+			.hour12
+		;
+
+		const timeFormat = isAmPmMode ? 'h:i a' : 'H:i';
+
 		SlotRanges
 			.applyTimezone(slotRanges, date.getTime(), timezone)
 			.filter((slotRange) => slotRange.weekDays.includes(date.getDay()))
@@ -174,7 +181,7 @@ export class Occupancy
 					slots.push({
 						fromTs,
 						toTs,
-						label: DateTimeFormat.format('H:i', new Date(fromTs)),
+						label: DateTimeFormat.format(timeFormat, new Date(fromTs)),
 					});
 					fromTs += stepTs;
 				}

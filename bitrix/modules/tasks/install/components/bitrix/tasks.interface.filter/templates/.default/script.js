@@ -713,10 +713,19 @@ this.BX = this.BX || {};
 	    return;
 	  }
 	  const button = ui_buttons.ButtonManager.createFromNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].createNode);
-	  button.getMainButton().bindEvent('click', () => BX.Tasks.V2.Application.TaskCard.showCompactCard({
-	    groupId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId,
-	    analytics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics
-	  }));
+	  const loadCard = top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
+	  button.getMainButton().bindEvent('click', async () => {
+	    const {
+	      TaskCard
+	    } = await loadCard;
+	    TaskCard.showCompactCard({
+	      groupId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId,
+	      analytics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics,
+	      ...(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isScrum ? {
+	        deadlineTs: 0
+	      } : {})
+	    });
+	  });
 	}
 	function _initRoles2() {
 	  new Roles(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].roles);

@@ -1,6 +1,7 @@
-import { Model } from 'tasks.v2.const';
+import { Endpoint, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { apiClient } from 'tasks.v2.lib.api-client';
+import { GroupMappers } from 'tasks.v2.provider.service.group-service';
 import { mapDtoToModel } from './mappers';
 
 class FlowService
@@ -14,14 +15,13 @@ class FlowService
 	{
 		try
 		{
-			const data = await apiClient.post('Flow.get', { flow: { id } });
-
-			// TODO: insert group
-			console.log(data);
+			const data = await apiClient.post(Endpoint.FlowGet, { flow: { id } });
 
 			const flow = mapDtoToModel(data);
+			const group = GroupMappers.mapDtoToModel(data.group);
 
 			await Core.getStore().dispatch(`${Model.Flows}/insert`, flow);
+			await Core.getStore().dispatch(`${Model.Groups}/insert`, group);
 		}
 		catch (error)
 		{

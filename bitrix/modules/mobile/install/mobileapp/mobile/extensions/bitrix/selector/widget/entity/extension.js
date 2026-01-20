@@ -22,11 +22,11 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 				allowMultipleSelection,
 				closeOnSelect,
 				leftButtons,
+				events,
 			} = props;
 			const {
 				selectOptions,
 				canUseRecent,
-				events,
 				initSelectedIds,
 				undeselectableIds,
 				sectionTitles,
@@ -43,6 +43,7 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 			widgetParams = this.prepareWidgetParams(widgetParams);
 			searchOptions = this.prepareSearchOptions(searchOptions);
 			createOptions = this.prepareCreateOptions(createOptions, provider.options);
+			events = this.addEvents(events);
 
 			if (!BX.type.isBoolean(allowMultipleSelection))
 			{
@@ -182,6 +183,8 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 				createOptions.canCreateWithEmptySearch = this.canCreateWithEmptySearch();
 			}
 
+			createOptions.getCustomCreateElement = this.getCustomCreateElement.bind(this);
+
 			if (!createOptions.createText)
 			{
 				createOptions.createText = this.getCreateText();
@@ -259,6 +262,11 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 			return null;
 		}
 
+		static addEvents(events)
+		{
+			return events;
+		}
+
 		static isCreationEnabled(providerOptions, createOptions)
 		{
 			return false;
@@ -267,6 +275,11 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 		static canCreateWithEmptySearch()
 		{
 			return false;
+		}
+
+		static getCustomCreateElement()
+		{
+			return null;
 		}
 
 		static getCreateText()

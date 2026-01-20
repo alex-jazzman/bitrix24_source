@@ -7,6 +7,7 @@ export type ResourceId = number | null;
 export type ResourceCreationWizardState = {
 	resourceId: ResourceId;
 	resourceName: string;
+	resourceAvatarFile: File | null;
 	resource: ResourceModel;
 	advertisingResourceTypes: AdvertisingResourceType[],
 	favorite: boolean;
@@ -24,6 +25,8 @@ export type ResourceCreationWizardState = {
 	isChannelChoiceAvailable: boolean;
 	isIntegrationCalendarEnabled: boolean;
 	checkedForAll: { [type: string]: boolean };
+	catalogSkuEntityOptions: CatalogSkuEntityOptions;
+	showLicenseWarning: boolean;
 }
 
 export type InitPayload = {
@@ -50,3 +53,11 @@ export type AdvertisingResourceType = {
 }
 
 export type SlotLengthId = 0 | 60 | 120 | 1440 | 10080;
+
+export type CatalogSkuEntityOptions = {
+	basePriceId: number;
+	iblockId: number;
+	restrictedProductTypes: number[];
+	showPriceInCaption: boolean;
+	canCreate: boolean;
+}

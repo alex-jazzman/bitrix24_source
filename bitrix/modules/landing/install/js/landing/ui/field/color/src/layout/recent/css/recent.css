@@ -7,20 +7,37 @@
 }
 
 .landing-ui-field-color-recent {
-    display: flex;
-	flex-grow: 1;
-	padding-right: 5px;
-	margin: 0 -1.5px;
-	overflow: hidden;
+	--tile-size: 37px;
+	--gap: 4px;
+
+	display: grid;
+	justify-content: center;
+	grid-template-columns: repeat(6, minmax(0, var(--tile-size)));
+	gap: var(--gap);
+	width: 100%;
 }
 
 .landing-ui-field-color-recent-item {
-	margin: 0 1.5px;
-    height: 22px;
-    width: 22px;
-	border-radius: 2px;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	width: 100%;
+	border-radius: var(--ui-border-radius-xs);
     user-select: none;
     cursor: pointer;
-	box-shadow: 0 0 4px rgba(128, 128, 128, .1);
-	border: 1px solid rgba(0, 0, 0, .05);
+	border: 1px solid var(--ui-color-base-10);
+	box-sizing: border-box;
+}
+
+.landing-ui-field-color-recent-item.active:before {
+	content: '';
+	position: absolute;
+	right: -6px;
+	top: -5px;
+	width: 14px;
+	height: 14px;
+	border-radius: var(--ui-border-radius-circle);
+	background-image: url(../images/landing-badge-success.svg);
 }

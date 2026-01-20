@@ -3,6 +3,11 @@
  */
 jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 	const { Type } = require('type');
+	const { URL } = require('utils/url');
+
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { SmileManager } = require('im/messenger/lib/smile-manager');
+	const logger = getLoggerWithContext('url-helper', 'Url');
 
 	/**
 	 * @class Url
@@ -114,6 +119,54 @@ jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 			{
 				return false;
 			}
+		}
+
+		/**
+		 * @return {Set<string>}
+		 */
+		getSmilesUrl()
+		{
+			return SmileManager.getInstance().getSmilesUrl();
+		}
+
+		/**
+		 * @return {Promise<boolean>}
+		 */
+		async isSmileUrlAsync()
+		{
+			if (!Type.isStringFilled(this.href))
+			{
+				return false;
+			}
+
+			await SmileManager.getInstance().ready();
+			const smileUrlCollection = this.getSmilesUrl();
+
+			let normalizedUrl = this.href.trim();
+			try
+			{
+				const parsed = new URL(normalizedUrl);
+				normalizedUrl = parsed?.pathname ?? '';
+			}
+			catch (error)
+			{
+				logger.error('isSmileUrlAsync URL parsed catch:', error);
+				normalizedUrl = normalizedUrl.split('?')?.[0]?.split('#')?.[0];
+			}
+
+			if (smileUrlCollection.has(normalizedUrl))
+			{
+				return true;
+			}
+
+			if (!normalizedUrl.includes('/smiles/'))
+			{
+				return false;
+			}
+
+			return [...smileUrlCollection].some(
+				(smilePath) => normalizedUrl.endsWith(smilePath) || smilePath.endsWith(normalizedUrl),
+			);
 		}
 	}
 

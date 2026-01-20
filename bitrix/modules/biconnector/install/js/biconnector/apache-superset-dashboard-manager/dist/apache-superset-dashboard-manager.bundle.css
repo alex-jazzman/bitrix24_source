@@ -115,17 +115,9 @@
 }
 
 .dashboard-login-popup-copy-attention {
-	padding: 12px;
-	margin-bottom: 12px;
-
-	border-radius: var(--ui-border-radius-2xs);
-	/*font-family: var(--ui-font-family-secondary);*/
-	font-size: var(--ui-typography-heading-h5-font-size);
-	line-height: 20px;
-	font-weight: 400;
-	color: var(--ui-color-base-90);
-	background: rgb(245, 247, 248);
-	border: 1px solid rgb(213, 215, 219);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-90);
 }
 
 .attention-link {

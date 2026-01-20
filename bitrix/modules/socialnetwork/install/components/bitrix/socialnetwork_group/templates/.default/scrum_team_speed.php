@@ -21,6 +21,7 @@ $APPLICATION->includeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'groupId' => $arResult['VARIABLES']['group_id']
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );

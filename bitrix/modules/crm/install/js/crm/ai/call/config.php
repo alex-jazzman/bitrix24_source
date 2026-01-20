@@ -5,6 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Application;
+
+$settings = [
+	'region' => mb_strtolower(Application::getInstance()->getLicense()->getRegion() ?? ''),
+];
+
 return [
 	'css' => 'dist/call.bundle.css',
 	'js' => 'dist/call.bundle.js',
@@ -27,4 +33,5 @@ return [
 		'main.core',
 	],
 	'skip_core' => false,
+	'settings' => $settings,
 ];

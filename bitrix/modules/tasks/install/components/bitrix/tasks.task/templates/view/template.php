@@ -27,6 +27,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn();
+
 UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
@@ -295,7 +297,7 @@ if (
 		<? $mailUf = $arResult['AUX_DATA']['USER_FIELDS'][$mailUfCode]; ?>
 		<? if (!empty($mailUf['VALUE'])): ?>
 			<div style="padding: 15px 0; border-bottom: 1px solid rgba(234,235,237,0.78); ">
-				<? $mailUf['FIELD_NAME'] = $inputPrefix.'['.$mailUfCode.']'; ?>
+				<? $mailUf['FIELD_NAME'] = ($inputPrefix ?? null) .'['.$mailUfCode.']'; ?>
 				<? \Bitrix\Tasks\Util\UserField\UI::showView($mailUf); ?>
 			</div>
 		<? endif ?>
@@ -826,6 +828,7 @@ if (
 							'MAIN_POST_FORM_BUTTONS' => [
 								'Copilot',
 							],
+							'SHOW_POST_FORM' => $isV2Form ? 'N' : 'Y',
 						),
 						($component->__parent ?: $component),
 						["HIDE_ICONS" => "Y"]

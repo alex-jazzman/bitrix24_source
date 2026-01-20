@@ -18,7 +18,7 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 	class SettingsPage extends LayoutComponent
 	{
 		/**
-		 * @param props
+		 * @param {SettingPage} props
 		 * @param {Array<SettingItem>} props.items
 		 * @param {Function} props.openPage
 		 * @param {String} props.testId
@@ -32,6 +32,8 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 				context: this,
 			});
 
+			this.items = this.props?.items || [];
+
 			this.initState();
 		}
 
@@ -41,25 +43,34 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 				itemsValues: {},
 				isLoading: true,
 			};
-
-			void this.loadItemsValues(this.items);
 		}
 
-		/**
-		 * @returns {Array<SettingItem>}
-		 */
-		get items()
+		componentDidMount()
 		{
-			return this.props?.items || [];
+			this.load();
+		}
+
+		async load()
+		{
+			const settingsData = await this.loadSettingsData();
+			this.items = this.prepareItems(this.items, settingsData);
+			await this.loadItemsValues(this.items);
+
+			this.setState({
+				isLoading: false,
+			});
+		}
+
+		async loadSettingsData()
+		{
+			const { requestSettingsData, ...other } = this.props;
+
+			return requestSettingsData?.(other) ?? null;
 		}
 
 		async loadItemsValues(items)
 		{
 			await this.loadItemsValuesRecursive(items);
-
-			this.setState({
-				isLoading: false,
-			});
 		}
 
 		async loadItemsValuesRecursive(items)
@@ -81,6 +92,39 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 					await this.loadItemsValuesRecursive(item.items);
 				}
 			}));
+		}
+
+		prepareItems(items, settingsData)
+		{
+			const preparedItems = items.map((item) => {
+				if (item.prepareItems)
+				{
+					item.items = item.prepareItems(settingsData);
+				}
+
+				return item;
+			});
+
+			return this.filterItems(preparedItems, settingsData);
+		}
+
+		filterItems(items, settingsData)
+		{
+			items.forEach((item) => {
+				if (Type.isArrayFilled(item.items))
+				{
+					item.items = this.filterItems(item.items, settingsData);
+				}
+			});
+
+			return items.filter((item) => {
+				if (item.prefilter)
+				{
+					return item.prefilter(settingsData);
+				}
+
+				return true;
+			});
 		}
 
 		onChangeItemValue = (id, controller, value) => {
@@ -140,7 +184,7 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 
 			return items.map(
 				(item, index) => this.renderItem(item, item.divider ?? index !== lastItemIndex),
-			);
+			).filter(Boolean);
 		}
 
 		renderItem(item, showDivider)
@@ -160,6 +204,12 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 					},
 					...this.renderItems(item.items),
 				);
+			}
+			const hidden = item.controller && Type.isNil(this.state.itemsValues[item.id]);
+
+			if (hidden)
+			{
+				return null;
 			}
 
 			return ItemFactory.make(this.getItemProps(item, showDivider));

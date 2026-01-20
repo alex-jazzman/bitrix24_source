@@ -52,3 +52,8 @@ export function filterOutNilValues(object: Object): Object
 
 	return result;
 }
+
+export function normalizeChannelId(channelId: string): string
+{
+	return channelId.replaceAll('_', '-').replaceAll('~~~', '-');
+}

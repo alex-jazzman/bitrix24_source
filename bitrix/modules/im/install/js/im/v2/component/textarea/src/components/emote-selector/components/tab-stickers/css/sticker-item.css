@@ -1,0 +1,26 @@
+.bx-im-sticker-item {
+	--im-stickers__sticker-grid-size: 70px;
+
+	width: var(--im-stickers__sticker-grid-size);
+	height: var(--im-stickers__sticker-grid-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	border-radius: 6px;
+	flex: 0 0 auto;
+	padding: 9px;
+	background: transparent;
+	transition: background-color .12s ease;
+	cursor: pointer;
+}
+
+.bx-im-sticker-item:hover {
+	background: rgba(var(--im-color-palette-gray-90-rgb), .06);
+}
+
+.bx-im-sticker-item img {
+	display: block;
+	width: 100%;
+	height: 100%;
+}

@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/avatar.bundle.css',
 	'js' => 'dist/avatar.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'ui.avatar',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -1,0 +1,19 @@
+<?php
+$MESS["TASKS_FIELDS_RESULT_V2_ADD_WIDGET_PLACEHOLDER"] = "Use @ to mention a person, workgroup or department";
+$MESS["TASKS_FIELDS_RESULT_V2_ADD_WIDGET_TITLE"] = "Status summary";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_ADD_RESULT"] = "Add more";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_COMPACT_TITLE"] = "Status summaries";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_COMPACT_TITLE_MULTI"] = "Status summaries: #COUNT#";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_0"] = "Show #COUNT# more summary";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_1"] = "Show #COUNT# more summaries";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_2"] = "Show #COUNT# more summaries";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_TITLE"] = "Status summary";
+$MESS["TASKS_FIELDS_RESULT_V2_EMPTY_ERROR"] = "Enter task status summary";
+$MESS["TASKS_FIELDS_RESULT_V2_LIST_WIDGET_TITLE"] = "Status summaries";
+$MESS["TASKS_FIELDS_RESULT_V2_MENU_REMOVE"] = "Delete status summary";
+$MESS["TASKS_FIELDS_RESULT_V2_MENU_UPDATE"] = "Modify the result";
+$MESS["TASKS_FIELDS_RESULT_V2_REMOVE_CONFIRM_DESCRIPTION"] = "Do you want to unmark the comment as task status summary? The comment will remain in the task.";
+$MESS["TASKS_FIELDS_RESULT_V2_REMOVE_CONFIRM_TITLE"] = "Remove result";
+$MESS["TASKS_FIELDS_RESULT_V2_REMOVE_CONFIRM_YES"] = "Remove";
+$MESS["TASKS_FIELDS_RESULT_V2_VIEW_ACTION_COMPLETE"] = "Complete task";
+$MESS["TASKS_FIELDS_RESULT_V2_VIEW_ANOTHER_RESULTS"] = "Other status summaries";

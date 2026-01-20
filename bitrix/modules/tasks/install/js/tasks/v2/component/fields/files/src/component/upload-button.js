@@ -1,17 +1,16 @@
-import { fileService } from 'tasks.v2.provider.service.file-service';
 import { Button as UiButton, ButtonSize, AirButtonStyle } from 'ui.vue3.components.button';
 import { Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
+
+import { fileService } from 'tasks.v2.provider.service.file-service';
 
 // @vue/component
 export const UploadButton = {
 	components: {
 		UiButton,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		taskId: {},
 	},
 	setup(): Object
 	{

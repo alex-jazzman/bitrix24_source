@@ -187,4 +187,14 @@ create table if not exists b_intranet_invitation_link
 	EXPIRED_AT datetime null,
 	PRIMARY KEY(ID),
 	UNIQUE INDEX ux_b_intranet_invitation_link_entity_type_entity_id (ENTITY_TYPE, ENTITY_ID)
-)
+);
+
+create table if not exists b_intranet_user_annual_summary
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	NAME varchar(255) not null,
+	VALUE mediumtext null,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX ux_user_name(USER_ID, NAME)
+);

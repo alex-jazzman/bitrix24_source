@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'require-lazy',
 		'loc',
-		'whats-new/ui-manager',
+		'whats-new/ui-manager/component-opener',
 	],
 	'components' => [
 		'user.profile',

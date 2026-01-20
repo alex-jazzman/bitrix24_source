@@ -2,6 +2,7 @@
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG"] = "Ақпараттық блок сауда каталогы болып табылмайды";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_FIELDS"] = "Жаңарту үшін тауар параметрлерінің дұрыс емес жинағы";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID"] = "Дұрыс емес ақпараттық блок идентификаторы";
+$MESS["BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_CHANGE_TYPE"] = "#NAMES# түрін өзгерту мүмкін болмады. Қайталап көріңіз";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_SET_FIELD_BY_TYPE"] = "#NAMES# элементінің таңдалған параметрлерін орнату мүмкін емес";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_ELEMENTS"] = "Өзгерістерге арналған элементтер тізімі берілмеген";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS"] = "Жаңарту үшін тауар параметрлері жоқ";

@@ -1,0 +1,30 @@
+.crm-entity-widget-content-block-field-recurring-single .crm-entity-widget-content-block-inner .crm-entity-widget-content-block-input-wrapper {
+	flex-wrap: nowrap;
+}
+
+.crm-entity-widget-content-block-field-recurring-single .crm-entity-widget-content-block-input-wrapper div {
+	margin-left: 0;
+}
+
+.crm-entity-widget-content-block-field-recurring-single .crm-entity-widget-content-block-input-wrapper span {
+	word-break: normal;
+}
+
+.crm-entity-widget-content-block-recurring-email-section-container .ui-ctl-checkbox {
+	margin-top: -10px;
+	margin-bottom: -10px;
+}
+
+.crm-entity-widget-content-block-recurring-email-section-container .ui-ctl-checkbox.--checked {
+	margin-bottom: 0;
+}
+
+.crm-entity-widget-content-block-recurring-email-section-container .placeholder::before {
+	content: attr(data-placeholder);
+	color: #999;
+}
+
+.crm-entity-widget-content-block-recurring-loader {
+	position: relative;
+	margin: auto;
+}

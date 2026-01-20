@@ -118,9 +118,9 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 				return;
 			}
 
-			this.store.dispatch('messagesModel/setAudioState', {
+			this.store.dispatch('messagesModel/setPlayingState', {
 				id: this.playingMessageId,
-				audioPlaying: isPlaying,
+				isPlaying: isPlaying,
 				playingTime,
 			});
 		}

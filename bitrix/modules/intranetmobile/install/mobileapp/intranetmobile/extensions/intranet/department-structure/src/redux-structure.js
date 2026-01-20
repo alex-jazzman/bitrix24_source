@@ -18,11 +18,16 @@ jn.define('intranet/department-structure/src/redux-structure', (require, exports
 	 * @property {Object} containerStyle
 	 * @property {function} [onLayout]
 	 * @property {boolean} [chevron = false]
+	 * @property {boolean} [withPressed = false]
+	 * @property {function} [onClick]
 
 	 * @class ReduxDepartmentStructure
 	 */
 	class ReduxDepartmentStructure extends PureComponent
 	{
+		/**
+		 * @param {ReduxDepartmentStructureProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -61,12 +66,14 @@ jn.define('intranet/department-structure/src/redux-structure', (require, exports
 
 		#renderCompany()
 		{
-			const { departmentIds, chevron = false } = this.props;
+			const { departmentIds, chevron = false, onClick } = this.props;
 			if (Type.isArrayFilled(departmentIds))
 			{
 				return Company({
 					departmentId: departmentIds[0],
 					chevron,
+					onClick,
+					isRoot: true,
 				});
 			}
 
@@ -75,7 +82,12 @@ jn.define('intranet/department-structure/src/redux-structure', (require, exports
 
 		#renderDepartment = (departmentId, index) => {
 			const departmentsCount = this.#getDepartmentIdsWithoutCompany().length;
-			const { userId = null, chevron = false } = this.props;
+			const {
+				userId = null,
+				chevron = false,
+				withPressed = false,
+				onClick,
+			} = this.props;
 
 			return ReduxDepartmentCard({
 				departmentId,
@@ -83,6 +95,8 @@ jn.define('intranet/department-structure/src/redux-structure', (require, exports
 				userId,
 				departmentsCount,
 				chevron,
+				withPressed,
+				onClick,
 			});
 		};
 	}

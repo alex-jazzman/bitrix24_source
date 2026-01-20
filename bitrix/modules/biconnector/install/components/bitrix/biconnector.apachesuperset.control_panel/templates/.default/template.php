@@ -30,3 +30,13 @@ $APPLICATION->IncludeComponent(
 		'THEME' => defined('AIR_SITE_TEMPLATE') ? 'air' : null,
 	],
 );
+
+if ($arParams['NEED_SHOW_SETTINGS'] ?? false): ?>
+
+	<script>
+		BX.ready(() => {
+			BX.BIConnector.DashboardManager.openSettingsSlider()
+		});
+	</script>
+
+<?php endif; ?>

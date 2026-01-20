@@ -252,6 +252,7 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 		showLoader: PropTypes.bool,
 		type: PropTypes.instanceOf(FloatingActionButtonType),
 		icon: PropTypes.instanceOf(Icon),
+		spotlightIds: PropTypes.object,
 	};
 
 	module.exports = {

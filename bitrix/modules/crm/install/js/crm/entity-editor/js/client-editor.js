@@ -3622,8 +3622,34 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 					}
 				}
 
-				var description = this._entityInfo.getDescription();
-				if(description !== "")
+				const post = this._entityInfo.getSetting('post', '');
+				const companyTitle = this._entityInfo.getSetting('companyTitle');
+				const description = this._entityInfo.getDescription();
+
+				if (companyTitle)
+				{
+					innerWrapper.appendChild(
+						BX.create("div",
+							{
+								props: { className: "crm-entity-widget-client-box-position", title: companyTitle },
+								text: companyTitle
+							}
+						)
+					);
+				}
+				if (post)
+				{
+					innerWrapper.appendChild(
+						BX.create("div",
+							{
+								props: { className: "crm-entity-widget-client-box-position", title: post },
+								text: post
+							}
+						)
+					);
+				}
+
+				if (!companyTitle && !post && description !== "")
 				{
 					innerWrapper.appendChild(
 						BX.create("div",

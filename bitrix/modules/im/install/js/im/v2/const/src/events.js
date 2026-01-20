@@ -1,83 +1,117 @@
-export const EventType = Object.freeze({
-	layout:
-	{
-		onLayoutChange: 'IM.Layout:onLayoutChange',
-		onOpenNotifications: 'IM.Layout:onOpenNotifications',
-	},
-	header:
-	{
-		openAddToChatPopup: 'IM.Header:openAddToChatPopup',
-	},
+export const EventType = {
+	// internal
 	dialog:
 	{
-		onDialogInited: 'IM.Dialog:onDialogInited',
-		onMessageDeleted: 'IM.Dialog:onMessageDeleted',
-		onMessageIsVisible: 'IM.Dialog:onMessageIsVisible',
-		onMessageIsNotVisible: 'IM.Dialog:onMessageIsNotVisible',
+		onDialogInited: 'IM:Dialog:onDialogInited',
+		onMessageDeleted: 'IM:Dialog:onMessageDeleted',
+		onMessageIsVisible: 'IM:Dialog:onMessageIsVisible',
+		onMessageIsNotVisible: 'IM:Dialog:onMessageIsNotVisible',
+		onClickMessageContextMenu: 'IM:Dialog:onClickMessageContextMenu',
 
-		scrollToBottom: 'IM.Dialog:scrollToBottom',
-		goToMessageContext: 'IM.Dialog:goToMessageContext',
-		onClickMessageContextMenu: 'IM.Dialog:onClickMessageContextMenu',
-		showForwardPopup: 'IM.Dialog:showForwardPopup',
-		openComments: 'IM.Dialog:openComments',
-		closeComments: 'IM.Dialog:closeComments',
-		showLoadingBar: 'IM.Dialog:showLoadingBar',
-		hideLoadingBar: 'IM.Dialog:hideLoadingBar',
-		showQuoteButton: 'IM.Dialog:showQuoteButton',
-		openBulkActionsMode: 'IM.Dialog:openBulkActionsMode',
-		closeBulkActionsMode: 'IM.Dialog:closeBulkActionsMode',
-
-		errors: {
-			accessDenied: 'IM.Dialog.errors:accessDenied',
-		},
+		scrollToBottom: 'IM:Dialog:scrollToBottom',
+		goToMessageContext: 'IM:Dialog:goToMessageContext',
+		showForwardPopup: 'IM:Dialog:showForwardPopup',
+		openComments: 'IM:Dialog:openComments',
+		closeComments: 'IM:Dialog:closeComments',
+		showLoadingBar: 'IM:Dialog:showLoadingBar',
+		hideLoadingBar: 'IM:Dialog:hideLoadingBar',
+		showQuoteButton: 'IM:Dialog:showQuoteButton',
+		openBulkActionsMode: 'IM:Dialog:openBulkActionsMode',
+		closeBulkActionsMode: 'IM:Dialog:closeBulkActionsMode',
 	},
 	textarea:
 	{
-		editMessage: 'IM.Textarea:editMessage',
-		replyMessage: 'IM.Textarea:replyMessage',
-		forwardEntity: 'IM.Textarea:forwardEntity',
-		insertText: 'IM.Textarea:insertText',
-		insertMention: 'IM.Textarea:insertMention',
-		insertForward: 'IM.Textarea:insertForward',
-		sendMessage: 'IM.Textarea:sendMessage',
-		onAfterSendMessage: 'IM.Textarea:onAfterSendMessage',
-		openUploadPreview: 'IM.Textarea:openUploadPreview',
+		onAfterSendMessage: 'IM:Textarea:onAfterSendMessage',
+
+		editMessage: 'IM:Textarea:editMessage',
+		replyMessage: 'IM:Textarea:replyMessage',
+		insertText: 'IM:Textarea:insertText',
+		insertMention: 'IM:Textarea:insertMention',
+		insertForward: 'IM:Textarea:insertForward',
+		sendMessage: 'IM:Textarea:sendMessage',
+		openUploadPreview: 'IM:Textarea:openUploadPreview',
 	},
-	uploader:
+	sidebar:
 	{
-		cancel: 'IM.Uploader:cancel',
+		open: 'IM:Sidebar:open',
+		close: 'IM:Sidebar:close',
 	},
-	call:
+	header:
 	{
-		onFold: 'CallController::onFold',
-		onViewStateChanged: 'IM.Call:onViewStateChanged',
-		onJoinFromRecentItem: 'IM.Call:onJoinFromRecentItem',
+		openAddToChatPopup: 'IM:Header:openAddToChatPopup',
 	},
 	search:
 	{
-		close: 'IM.Search:close',
-		keyPressed: 'IM.Search:keyPressed',
+		keyPressed: 'IM:Search:keyPressed',
 	},
 	recent:
 	{
 		openSearch: 'IM.Recent:openSearch',
 	},
-	sidebar:
-	{
-		open: 'IM.Sidebar:open',
-		close: 'IM.Sidebar:close',
-	},
 	mention:
 	{
-		selectItem: 'IM.Mention:selectItem',
+		selectItem: 'IM:Mention:selectItem',
+	},
+	reaction:
+	{
+		onReactionSelected: 'IM:Reaction:onReactionSelected',
+	},
+	slider:
+	{
+		onClose: 'onChatSliderClose',
+	},
+	request:
+	{
+		onAuthError: 'IM:request:onAuthError',
+	},
+	audioPlayer:
+	{
+		play: 'IM:AudioPlayer:play',
+		stop: 'IM:AudioPlayer:stop',
+		pause: 'IM:AudioPlayer:pause',
+		preload: 'IM:AudioPlayer:preload',
+	},
+	roundVideoPlayer:
+	{
+		playNext: 'IM:RoundVideoPlayer:playNext',
+		onClickPlay: 'IM:RoundVideoPlayer:onClickPlay',
+	},
+	key:
+	{
+		onBeforeEscape: 'IM:Keys:onBeforeEscape',
+	},
+	notifier:
+	{
+		onBeforeShowMessage: 'IM:Notifier:onBeforeShowMessage',
+	},
+
+	// external
+	layout:
+	{
+		onLayoutChange: 'IM.Layout:onLayoutChange',
+		onOpenNotifications: 'IM.Layout:onOpenNotifications',
 	},
 	counter:
 	{
 		onNotificationCounterChange: 'onImUpdateCounterNotify',
 		onChatCounterChange: 'onImUpdateCounterMessage',
-		onLinesCounterChange: 'onImUpdateCounterLines',
 		onImUpdateCounter: 'onImUpdateCounter',
 		onUpdate: 'IM.Counters:onUpdate',
+	},
+	task:
+	{
+		onMembersCountChange: 'tasks:card:onMembersCountChange',
+	},
+	call:
+	{
+		onFold: 'CallController::onFold',
+		onJoinFromRecentItem: 'IM.Call:onJoinFromRecentItem',
+	},
+	lines:
+	{
+		onInit: 'onLinesInit',
+		openChat: 'openLinesChat',
+		onChatOpen: 'onLinesChatOpen',
 	},
 	desktop:
 	{
@@ -91,37 +125,4 @@ export const EventType = Object.freeze({
 		onIconClick: 'BXApplicationClick',
 		onNewTabClick: 'BXNewTabClick',
 	},
-	lines:
-	{
-		onInit: 'onLinesInit',
-		openChat: 'openLinesChat',
-		onChatOpen: 'onLinesChatOpen',
-	},
-	slider:
-	{
-		onClose: 'onChatSliderClose',
-	},
-	request:
-	{
-		onAuthError: 'IM.request:onAuthError',
-	},
-	audioPlayer:
-	{
-		play: 'im:audioplayer:play',
-		pause: 'im:audioplayer:pause',
-		stop: 'im:audioplayer:stop',
-		preload: 'im:audioplayer:preload',
-	},
-	task:
-	{
-		onMembersCountChange: 'tasks:card:onMembersCountChange',
-	},
-	key:
-	{
-		onBeforeEscape: 'IM.Keys:onBeforeEscape',
-	},
-	notifier:
-	{
-		onBeforeShowMessage: 'IM.Notifier:onBeforeShowMessage',
-	},
-});
+};

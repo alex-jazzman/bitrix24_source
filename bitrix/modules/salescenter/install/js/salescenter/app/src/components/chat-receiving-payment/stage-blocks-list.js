@@ -33,19 +33,18 @@ export default {
 			message: {
 				status: Status.complete,
 				manager: this.$root.$app.options.entityResponsible,
-				titleTemplate: Loc.getMessage('SALESCENTER_APP_CHAT_MESSAGE_TITLE'),
+				titleTemplate: Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_SENDER_MSGVER_1'),
 				showHint: this.$root.$app.options.templateMode !== 'view',
 				editorTemplate: this.$root.$app.sendingMethodDesc.text,
 				editorUrl: this.$root.$app.orderPublicUrl,
 				selectedMode: 'payment',
+				messageSenderData: this.$root.$app.options.messageSenderData,
 			},
 			product: {
 				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
 					? Status.complete
 					: Status.current,
-				title: this.$root.$app.options.templateMode === 'view'
-					? Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW')
-					: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+				title: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 				hintTitle: this.$root.$app.options.templateMode === 'view'
 					? ''
 					: Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'),
@@ -311,6 +310,13 @@ export default {
 	},
 	template: `
 		<div>
+			<product-block
+				:counter="counter++"
+				:status="stages.product.status"
+				:title="stages.product.title"
+				:hintTitle="stages.product.hintTitle"
+				@on-product-form-mode-change="onProductFormModeChange"
+			/>
 			<chat-message-block
 				v-if="editable"
 				@stage-block-sms-send-on-change-provider="changeProvider"
@@ -322,13 +328,7 @@ export default {
 				:editorTemplate="stages.message.editorTemplate"
 				:editorUrl="stages.message.editorUrl"
 				:selectedMode="stages.message.selectedMode"
-			/>
-			<product-block
-				:counter="counter++"
-				:status="stages.product.status"
-				:title="stages.product.title"
-				:hintTitle="stages.product.hintTitle"
-				@on-product-form-mode-change="onProductFormModeChange"
+				:messageSenderData="stages.message.messageSenderData"
 			/>
 			<paysystem-block
 				@on-stage-tile-collection-slider-close="stageRefresh($event, 'PAY_SYSTEM')"
@@ -384,6 +384,7 @@ export default {
 				:buttonEnabled="isSendAllowed"
 				:buttonLabel="submitButtonLabel"
 				:isFacebookForm="isFacebookForm"
+				:showWhatClientSeesControl="false"
 			/>
 			<timeline-block
 				v-if="hasStageTimeLine"

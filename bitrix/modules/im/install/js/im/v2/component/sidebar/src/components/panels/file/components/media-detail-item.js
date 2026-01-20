@@ -19,10 +19,6 @@ export const MediaDetailItem = {
 			type: Object,
 			required: true,
 		},
-		contextDialogId: {
-			type: String,
-			required: true,
-		},
 	},
 	emits: ['contextMenuClick'],
 	data(): JsonObject

@@ -25,8 +25,8 @@ return [
 					],
 					'tagOptions' => [
 						'default' => [
-							'textColor' => '#5f6670',
-							'bgColor' => '#e2e3e5',
+							'textColor' => '#828B95',
+							'bgColor' => '#EDEEF0',
 							'avatar' => '',
 						]
 					],

@@ -2,14 +2,13 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
 import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
-
-import { EventEmitter } from 'main.core.events';
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 
 import './chat-members-avatars.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 
@@ -95,7 +94,7 @@ export const ChatMembersAvatars = {
 	{
 		onOpenUsers()
 		{
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.members,
 				dialogId: this.dialogId,
 			});
@@ -104,6 +103,10 @@ export const ChatMembersAvatars = {
 		{
 			Analytics.getInstance().userAdd.onChatSidebarClick(this.dialogId);
 			this.showAddToChatPopup = true;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

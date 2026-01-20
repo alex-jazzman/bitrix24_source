@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,pull_queuemanager,main_core_events,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_provider_service_relationService,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,main_core,tasks_v2_const) {
+(function (exports,pull_queuemanager,main_core_events,tasks_v2_provider_service_relationService,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,main_core,tasks_v2_const,tasks_v2_core,tasks_v2_provider_service_fileService,tasks_v2_provider_service_taskService,tasks_v2_provider_service_resultService,ui_vue3_vuex) {
 	'use strict';
 
 	class BasePullHandler {
@@ -20,6 +20,79 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	}
 
+	var _handleTagsDeleted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTagsDeleted");
+	var _handleTagDeleted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTagDeleted");
+	var _currentUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
+	class TagsPullHandler extends BasePullHandler {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _currentUserId, {
+	      get: _get_currentUserId,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _handleTagsDeleted, {
+	      writable: true,
+	      value: ({
+	        tagNames,
+	        userId,
+	        groupId
+	      }) => {
+	        tagNames.forEach(tagName => babelHelpers.classPrivateFieldLooseBase(this, _handleTagDeleted)[_handleTagDeleted]({
+	          tagName,
+	          userId,
+	          groupId
+	        }));
+	      }
+	    });
+	    Object.defineProperty(this, _handleTagDeleted, {
+	      writable: true,
+	      value: ({
+	        tagName,
+	        userId,
+	        groupId
+	      }) => {
+	        if (!groupId && userId !== babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId]) {
+	          return;
+	        }
+	        const tasks = this.$store.getters[`${tasks_v2_const.Model.Tasks}/getAll`];
+	        const tasksWithTag = tasks.filter(task => {
+	          return (task.groupId || 0) === (groupId || 0) && task.tags.includes(tagName);
+	        });
+	        tasksWithTag.forEach(task => {
+	          void tasks_v2_provider_service_taskService.taskService.updateStoreTask(task.id, {
+	            tags: task.tags.filter(it => it !== tagName)
+	          });
+	        });
+	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TagDeleted, {
+	          tagName,
+	          groupId
+	        });
+	      }
+	    });
+	  }
+	  getMap() {
+	    return {
+	      tags_deleted: babelHelpers.classPrivateFieldLooseBase(this, _handleTagsDeleted)[_handleTagsDeleted]
+	    };
+	  }
+	  get $store() {
+	    return tasks_v2_core.Core.getStore();
+	  }
+	}
+	function _get_currentUserId() {
+	  return this.$store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
+	}
+
+	function mapInstantFields(model) {
+	  const task = {
+	    id: model.id,
+	    deadlineTs: model.deadlineTs,
+	    status: model.status,
+	    stageId: model.stageId,
+	    auditorsIds: model.auditorsIds
+	  };
+	  return Object.fromEntries(Object.entries(task).filter(([, value]) => !main_core.Type.isUndefined(value)));
+	}
 	function mapPushToModel({
 	  AFTER: after,
 	  TASK_ID: id
@@ -30,7 +103,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    title: prepareValue(after.TITLE),
 	    isImportant: prepareValue(after.PRIORITY, after.PRIORITY === 2),
 	    creatorId: prepareValue(after.CREATED_BY),
-	    responsibleId: prepareValue(after.RESPONSIBLE_ID),
+	    responsibleIds: prepareValue(after.RESPONSIBLE_ID, mapResponsibleId(after.RESPONSIBLE_ID)),
 	    deadlineTs: prepareValue(after.DEADLINE, after.DEADLINE * 1000),
 	    checklist: undefined,
 	    groupId: prepareValue(after.GROUP_ID),
@@ -41,7 +114,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    accomplicesIds: prepareValue(after.ACCOMPLICES, mapUserIds(after.ACCOMPLICES)),
 	    auditorsIds: prepareValue(after.AUDITORS, mapUserIds(after.AUDITORS)),
 	    parentId: prepareValue(after.PARENT_ID, Number(after.PARENT_ID) || 0),
-	    tags: prepareValue(after.TAGS, after.TAGS ? after.TAGS.split(',') : [])
+	    tags: prepareValue(after.TAGS, after.TAGS ? after.TAGS.split(',') : []),
+	    mark: prepareValue(after.MARK, mapMark(String(after.MARK)))
 	  };
 	  return Object.fromEntries(Object.entries(task).filter(([, value]) => !main_core.Type.isUndefined(value)));
 	}
@@ -55,11 +129,22 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    6: tasks_v2_const.TaskStatus.Deferred
 	  }[status]) != null ? _$3$4$5$6$status : tasks_v2_const.TaskStatus.Pending;
 	}
+	function mapMark(mark) {
+	  var _false$P$N$mark;
+	  return (_false$P$N$mark = {
+	    false: tasks_v2_const.Mark.None,
+	    P: tasks_v2_const.Mark.Positive,
+	    N: tasks_v2_const.Mark.Negative
+	  }[mark]) != null ? _false$P$N$mark : tasks_v2_const.Mark.None;
+	}
 	function mapUserIds(users) {
 	  if (!users) {
 	    return [];
 	  }
 	  return users.split(',').map(id => Number(id));
+	}
+	function mapResponsibleId(responsibleId) {
+	  return main_core.Type.isNumber(responsibleId) ? [responsibleId] : [];
 	}
 	function prepareValue(value, mappedValue = value) {
 	  return main_core.Type.isUndefined(value) ? undefined : mappedValue;
@@ -82,12 +167,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	var _needToLoadUsers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToLoadUsers");
 	var _getUsersIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUsersIds");
 	var _loadRights = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadRights");
-	var _currentUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
+	var _currentUserId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
 	class TaskPullHandler extends BasePullHandler {
 	  constructor(...args) {
 	    super(...args);
-	    Object.defineProperty(this, _currentUserId, {
-	      get: _get_currentUserId,
+	    Object.defineProperty(this, _currentUserId$1, {
+	      get: _get_currentUserId$1,
 	      set: void 0
 	    });
 	    Object.defineProperty(this, _loadRights, {
@@ -129,7 +214,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        const features = tasks_v2_core.Core.getParams().features;
 
 	        // show task created balloon if miniform feature is enabled
-	        const showTaskAddedBalloon = data.AFTER.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId] && features.isMiniformEnabled && !features.isV2Enabled;
+	        const showTaskAddedBalloon = data.AFTER.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId$1)[_currentUserId$1] && features.isMiniformEnabled && !features.isV2Enabled;
 	        if (showTaskAddedBalloon) {
 	          var _data$AFTER$URL;
 	          const url = (_data$AFTER$URL = data.AFTER.URL) != null ? _data$AFTER$URL : '';
@@ -152,33 +237,47 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _handleTaskUpdated, {
 	      writable: true,
 	      value: data => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _upsertStage)[_upsertStage](data.AFTER.STAGE_INFO);
 	        const task = mapPushToModel(data);
+	        babelHelpers.classPrivateFieldLooseBase(this, _upsertStage)[_upsertStage](data.AFTER.STAGE_INFO);
 	        if (data.BEFORE.PARENT_ID) {
 	          tasks_v2_provider_service_relationService.subTasksService.deleteStore(data.BEFORE.PARENT_ID, [task.id]);
 	        }
 	        if (task.parentId) {
 	          tasks_v2_provider_service_relationService.subTasksService.addStore(task.parentId, [task.id]);
 	        }
+	        const {
+	          id,
+	          ...fields
+	        } = mapInstantFields(task);
+	        void tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields);
 	      }
 	    });
 	    Object.defineProperty(this, _handleTaskUpdatedDelayed, {
 	      writable: true,
 	      value: async data => {
 	        const task = mapPushToModel(data);
+	        const {
+	          TaskFullCard
+	        } = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
+	        if (data.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId$1)[_currentUserId$1] && TaskFullCard.isCardOpened(task.id)) {
+	          return;
+	        }
+	        if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(task.id)) {
+	          return;
+	        }
 	        if (babelHelpers.classPrivateFieldLooseBase(this, _needToLoadTask)[_needToLoadTask](data)) {
-	          void babelHelpers.classPrivateFieldLooseBase(this, _loadTask)[_loadTask](task);
+	          await babelHelpers.classPrivateFieldLooseBase(this, _loadTask)[_loadTask](task);
 	        } else {
 	          await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _loadGroup)[_loadGroup](task), babelHelpers.classPrivateFieldLooseBase(this, _loadFlow)[_loadFlow](task), babelHelpers.classPrivateFieldLooseBase(this, _loadUsers)[_loadUsers](task), babelHelpers.classPrivateFieldLooseBase(this, _loadRights)[_loadRights](task)]);
 	          const {
 	            id,
 	            ...fields
 	          } = task;
-	          void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	            id,
-	            fields
-	          });
+	          void tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields);
 	        }
+	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TaskPullUpdated, {
+	          task: tasks_v2_provider_service_taskService.taskService.getStoreTask(task.id)
+	        });
 	      }
 	    });
 	    Object.defineProperty(this, _handleTaskViewed, {
@@ -188,20 +287,22 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _handleTaskDeleted, {
 	      writable: true,
 	      value: data => {
-	        tasks_v2_provider_service_relationService.subTasksService.deleteStore(data.BEFORE.PARENT_ID, [data.TASK_ID]);
+	        const taskId = data.TASK_ID;
+	        void tasks_v2_provider_service_taskService.taskService.deleteStore(taskId);
 	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.CloseFullCard, {
-	          taskId: data.TASK_ID
+	          taskId
 	        });
-	        void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/delete`, data.TASK_ID);
+	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TaskDeleted, {
+	          id: taskId
+	        });
 	      }
 	    });
 	    Object.defineProperty(this, _handleDefaultDeadlineChanged, {
 	      writable: true,
-	      value: data => {
-	        void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDefaultDeadline`, {
-	          defaultDeadlineDate: data.defaultDeadlineDate,
-	          defaultDeadlineInSeconds: data.deadline
-	        });
+	      value: ({
+	        deadlineUserOption
+	      }) => {
+	        void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, deadlineUserOption);
 	      }
 	    });
 	  }
@@ -230,10 +331,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	}
 	function _loadTask2(task) {
-	  void tasks_v2_provider_service_taskService.taskService.getById(task.id);
+	  void tasks_v2_provider_service_taskService.taskService.get(task.id);
 	}
 	function _needToLoadTask2(data) {
-	  const notPushableFields = new Set(['DESCRIPTION', 'UF_TASK_WEBDAV_FILES']);
+	  const notPushableFields = new Set(['DESCRIPTION', 'UF_TASK_WEBDAV_FILES', 'STATUS', 'ALLOW_TIME_TRACKING']);
 	  return Object.keys(data.AFTER).some(field => notPushableFields.has(field));
 	}
 	async function _loadGroup2(task) {
@@ -264,13 +365,90 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  return !tasks_v2_provider_service_userService.userService.hasUsers(babelHelpers.classPrivateFieldLooseBase(this, _getUsersIds)[_getUsersIds](task));
 	}
 	function _getUsersIds2(task) {
-	  var _task$accomplicesIds, _task$auditorsIds;
-	  return [task.creatorId, task.responsibleId, ...((_task$accomplicesIds = task.accomplicesIds) != null ? _task$accomplicesIds : []), ...((_task$auditorsIds = task.auditorsIds) != null ? _task$auditorsIds : [])].filter(id => id);
+	  var _task$responsibleIds, _task$accomplicesIds, _task$auditorsIds;
+	  return [task.creatorId, ...((_task$responsibleIds = task.responsibleIds) != null ? _task$responsibleIds : []), ...((_task$accomplicesIds = task.accomplicesIds) != null ? _task$accomplicesIds : []), ...((_task$auditorsIds = task.auditorsIds) != null ? _task$auditorsIds : [])].filter(id => id);
 	}
 	async function _loadRights2(task) {
 	  await tasks_v2_provider_service_taskService.taskService.getRights(task.id);
 	}
-	function _get_currentUserId() {
+	function _get_currentUserId$1() {
+	  return this.$store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
+	}
+
+	var _handleResultCreate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResultCreate");
+	var _handleResultUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResultUpdate");
+	var _handleResultDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResultDelete");
+	var _currentUserId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
+	class ResultsPullHandler extends BasePullHandler {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _currentUserId$2, {
+	      get: _get_currentUserId$2,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _handleResultCreate, {
+	      writable: true,
+	      value: async data => {
+	        const result = data.result;
+	        const {
+	          id,
+	          taskId,
+	          messageId
+	        } = result;
+	        if (tasks_v2_provider_service_resultService.resultService.hasStoreResult(id) || !tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId)) {
+	          return;
+	        }
+	        const insertedResult = tasks_v2_provider_service_resultService.ResultMappers.mapDtoToModel(result);
+	        await tasks_v2_provider_service_resultService.resultService.insertStoreResult(insertedResult);
+	        tasks_v2_provider_service_resultService.resultService.addResultToTask(taskId, id, messageId);
+	        void tasks_v2_provider_service_resultService.resultService.get(id);
+	      }
+	    });
+	    Object.defineProperty(this, _handleResultUpdate, {
+	      writable: true,
+	      value: async data => {
+	        const result = data.result;
+	        const {
+	          id,
+	          fileIds,
+	          author
+	        } = result;
+	        if (!tasks_v2_provider_service_resultService.resultService.hasStoreResult(id) || author.id === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId$2)[_currentUserId$2]) {
+	          return;
+	        }
+	        const updatedResult = tasks_v2_provider_service_resultService.ResultMappers.mapDtoToModel(result);
+	        await tasks_v2_provider_service_resultService.resultService.updateStoreResult(id, updatedResult);
+	        await tasks_v2_provider_service_fileService.fileService.get(id, tasks_v2_provider_service_fileService.EntityTypes.Result).sync(fileIds);
+	      }
+	    });
+	    Object.defineProperty(this, _handleResultDelete, {
+	      writable: true,
+	      value: data => {
+	        const result = data.result;
+	        const {
+	          id,
+	          taskId
+	        } = result;
+	        if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId) || !tasks_v2_provider_service_resultService.resultService.hasStoreResult(taskId)) {
+	          return;
+	        }
+	        tasks_v2_provider_service_resultService.resultService.deleteResultFromTask(taskId, id);
+	        void tasks_v2_provider_service_resultService.resultService.deleteStoreResult(id);
+	      }
+	    });
+	  }
+	  getMap() {
+	    return {
+	      task_result_create: babelHelpers.classPrivateFieldLooseBase(this, _handleResultCreate)[_handleResultCreate],
+	      task_result_update: babelHelpers.classPrivateFieldLooseBase(this, _handleResultUpdate)[_handleResultUpdate],
+	      task_result_delete: babelHelpers.classPrivateFieldLooseBase(this, _handleResultDelete)[_handleResultDelete]
+	    };
+	  }
+	  get $store() {
+	    return tasks_v2_core.Core.getStore();
+	  }
+	}
+	function _get_currentUserId$2() {
 	  return this.$store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
 	}
 
@@ -316,7 +494,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = _params2;
-	    babelHelpers.classPrivateFieldLooseBase(this, _handlers)[_handlers] = new Set([new TaskPullHandler()]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _handlers)[_handlers] = new Set([new TaskPullHandler(), new TagsPullHandler(), new ResultsPullHandler()]);
 	  }
 	  initQueueManager() {
 	    return new pull_queuemanager.QueueManager({
@@ -408,5 +586,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	exports.PullManager = PullManager;
 
-}((this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}),BX.Pull,BX.Event,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}),BX.Pull,BX.Event,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Vuex));
 //# sourceMappingURL=pull-manager.bundle.js.map

@@ -456,15 +456,22 @@
 			 'create',
 			 function(data)
 			 {
+				var newUrl = detailPageUrlTemplate.replace('#LINE#', data.config_id);
+
+				// Add scenario parameter for notifications connector
+				var currentUrl = new URL(document.location);
+				var scenarioCode = currentUrl.searchParams.get('scenario');
+				if (scenarioCode)
+				{
+					newUrl = BX.util.add_url_param(newUrl, {scenario: scenarioCode});
+				}
+
 				if (isIframe)
 				{
-					BX.SidePanel.Instance.reload();
-					window.location.href = detailPageUrlTemplate.replace('#LINE#', data.config_id) + '&IFRAME=Y';
+					newUrl = BX.util.add_url_param(newUrl, {IFRAME: 'Y'});
 				}
-				else
-				{
-					window.location.href = detailPageUrlTemplate.replace('#LINE#', data.config_id);
-				}
+
+				window.location.href = newUrl;
 			 },
 			 function(data)
 			 {
@@ -644,7 +651,7 @@
 				// workaround for imconnector.notifications
 				// without it scenario code will be lost on line change
 				var scenarioCode = (new URL(document.location)).searchParams.get('scenario');
-				if (scenarioCode)
+				if (scenarioCode && item.NEW !== 'Y')
 				{
 					item.URL = BX.util.add_url_param(item.URL, {scenario: scenarioCode});
 				}

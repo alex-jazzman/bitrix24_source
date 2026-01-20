@@ -9,6 +9,7 @@ import { MobileAuthContent } from './content/mobile-auth-content';
 import { Analytics } from './analytics';
 import type { ConfigOptions, PopupOptions } from './types';
 import { ExtranetSecondaryContent } from './content/extranet-secondary-content';
+import { AnnualSummaryContent } from './content/annual-summary-content';
 
 export class Popup extends EventEmitter
 {
@@ -91,6 +92,11 @@ export class Popup extends EventEmitter
 				this.#getMainContent().getConfig(),
 			];
 
+			if (this.getOptions().content.promo)
+			{
+				content.push(this.#getAnnualSummaryContent().getConfig());
+			}
+
 			content.push(this.#getApplicationContent().getConfig());
 
 			if (this.getOptions().content.extranetSecondary)
@@ -108,6 +114,16 @@ export class Popup extends EventEmitter
 			return content;
 		});
 	}
+
+	#getAnnualSummaryContent(): MobileAuthContent
+	{
+		return this.#cache.remember('annualSummaryContent', () => {
+			return new AnnualSummaryContent({
+				...this.getOptions().content.promo.tools.annualSummary,
+			});
+		});
+	}
+
 
 	#getMainContent(): MainContent
 	{

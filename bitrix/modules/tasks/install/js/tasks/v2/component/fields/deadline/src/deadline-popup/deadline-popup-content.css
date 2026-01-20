@@ -18,10 +18,15 @@
 	cursor: pointer;
 }
 
-.tasks-field-deadline-preset:hover {
+.tasks-field-deadline-preset:hover:not(.--disabled) {
 	background: var(--ui-color-accent-soft-blue-3);
 	color: var(--ui-color-accent-main-primary);
 	border-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.tasks-field-deadline-preset.--disabled {
+	cursor: default;
+	opacity: 0.5;
 }
 
 .tasks-field-deadline-preset-title {
@@ -49,16 +54,7 @@
 	transform-origin: 0 0;
 }
 
-.tasks-field-deadline-picker-settings {
-	z-index: 2;
-	position: absolute;
-	right: 6px;
-	bottom: 4px;
-	--ui-icon-set__icon-size: 22px;
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
-	cursor: pointer;
-}
-
-.tasks-field-deadline-picker-settings:hover {
-	--ui-icon-set__icon-color: var(--ui-color-base-3);
+.tasks-field-deadline-date-picker-hint {
+	padding-left: 12px;
+	padding-bottom: 4px;
 }

@@ -34,8 +34,8 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 
 	public function cancel()
 	{
-		parent::cancel();
 		$this->unsubscribeOnDay();
+		return parent::cancel();
 	}
 
 	public function OnExternalEvent($arEventParameters = [])

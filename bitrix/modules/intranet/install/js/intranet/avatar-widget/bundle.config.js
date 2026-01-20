@@ -3,5 +3,8 @@ module.exports = {
 	output: 'dist/avatar-widget.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	minification: true,
+	cssImages: {
+		type: 'copy',
+		output: './avatar-widget',
+	},
 };

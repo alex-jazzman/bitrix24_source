@@ -26,6 +26,11 @@ import { PromoManager } from 'im.v2.lib.promo';
 import { AhaMomentNotify } from './aha-moment-notify';
 
 import '../css/view.css';
+import { CloudRecordInfoPopup } from './cloud-record-info-popup';
+import { CommonRecordMenuPopup } from './common-record-menu-popup';
+import { ConfirmModal } from './confirm-modal';
+import { Analytics } from 'call.lib.analytics';
+import { CallCommonRecordState, CallCommonRecordType, CallCloudRecord } from '../call_common_record';
 
 const Layouts = {
 	Grid: 1,
@@ -55,19 +60,6 @@ const UiState = {
 const Size = {
 	Folded: 'folded',
 	Full: 'full'
-};
-
-const RecordState = {
-	Started: 'started',
-	Resumed: 'resumed',
-	Paused: 'paused',
-	Stopped: 'stopped'
-};
-
-const RecordType = {
-	None: 'none',
-	Video: 'video',
-	Audio: 'audio',
 };
 
 const RoomState = {
@@ -104,6 +96,7 @@ const EventName = {
 	onToggleSubscribe: 'onToggleSubscribe',
 	onUnfold: 'onUnfold',
 	onPiPClose: 'onPiPClose',
+	onCommonRecordMenu: 'onCommonRecordMenu',
 };
 
 const beginingPosition = -1;
@@ -123,6 +116,7 @@ const CHANGE_VIDEO_RERENDER_DELAY = 3000;
 const WAITING_VIDEO_DELAY = 3000;
 
 const CALLCONTROL_PROMO_ID = 'call:callcontrol-notify-promo:07052025:all';
+const CLOUD_RECORD_PROMO_ID = 'call:cloud-record-info-popup:09092025:all';
 
 type ViewOptions = {
 	title: ?string,
@@ -171,6 +165,9 @@ export class View
 	userRegistry: UserRegistry
 	users: { [key: number]: CallUser; }
 	screenUsers: { [key: number]: CallUser; }
+
+	#commonRecord;
+	#confirmModal;
 
 	constructor(config: ViewOptions)
 	{
@@ -261,7 +258,7 @@ export class View
 		this.pinnedUser = null;
 		this.presenterId = null;
 
-		this.localUserRecivedStats = false;
+		this.localUserReceivedStats = false;
 
 		this.returnToGridAfterScreenStopped = false;
 
@@ -352,7 +349,7 @@ export class View
 		this.isFullScreen = false;
 		this.isUserBlockFolded = false;
 
-		this.recordState = this.getDefaultRecordState();
+		this.commonRecordState = this.getDefaultCommonRecordState();
 
 		this.blockedButtons = {};
 		let configBlockedButtons = BX.prop.getArray(config, "blockedButtons", []);
@@ -470,6 +467,14 @@ export class View
 		this.isVideoconf = config.isVideoconf || false;
 
 		this.needToShowCallcontrolPromo = this.isVideoconf ? false : PromoManager.getInstance().needToShow(CALLCONTROL_PROMO_ID);
+
+		this.#commonRecord = {
+			infoPopup: null,
+			menuPopup: null,
+			notify: null,
+		};
+
+		this.#confirmModal = null;
 	};
 
 	openArticle(articleCode)
@@ -733,7 +738,7 @@ export class View
 		}
 	};
 
-	setCentralUser(userId)
+	setCentralUser(userId): void
 	{
 		if (this.centralUser.id == userId)
 		{
@@ -747,15 +752,17 @@ export class View
 
 		const previousCentralUser = this.centralUser;
 		this.centralUser = (userId == this.userId ? this.localUser : this.users[userId]);
-		if (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)
+		if (this.layout === Layouts.Centered || this.layout === Layouts.Mobile)
 		{
-			if (this.layout == Layouts.Mobile)
+			if (this.layout === Layouts.Mobile)
 			{
 				previousCentralUser.dismount();
 			}
+
 			this.updateUserList();
 		}
-		if (this.layout == Layouts.Mobile)
+
+		if (this.layout === Layouts.Mobile)
 		{
 			if (this.centralUserMobile)
 			{
@@ -1057,13 +1064,6 @@ export class View
 		if (this.pinnedUser === null)
 		{
 			this.setCentralUser(newPresenterId);
-
-			if (this.layout === Layouts.Centered && currentPresenterId !== newPresenterId)
-			{
-				this.eventEmitter.emit(EventName.onHasMainStream, {
-					userId: this.centralUser.id,
-				});
-			}
 		}
 		else if (currentPresenterId !== newPresenterId)
 		{
@@ -1576,12 +1576,12 @@ export class View
 			this.cache.delete('activeUsers');
 		}
 
+		user.state = newState;
+
 		if (newState === UserState.Connected && this.uiState === UiState.Calling)
 		{
 			this.setUiState(UiState.Connected);
 		}
-
-		user.state = newState;
 
 		// maybe switch central user
 		if (this.centralUser.id == this.userId && newState == UserState.Connected)
@@ -1722,7 +1722,7 @@ export class View
 		if (userId == this.localUser.id)
 		{
 			this.localUser.showStats(stats);
-			this.localUserRecivedStats = true;
+			this.localUserReceivedStats = true;
 		}
 
 		this.pictureInPictureCallWindow?.setStats(userId, stats);
@@ -1807,12 +1807,9 @@ export class View
 
 			user.floorRequestState = userFloorRequestState;
 
-			if (userId != this.localUser.id)
-			{
-				this.updateFloorRequestNotifications(user, userFloorRequestState);
-			}
+			this.updateFloorRequestNotifications(user, userFloorRequestState);
 
-			if (userId != this.localUser.id && userFloorRequestState)
+			if (userFloorRequestState)
 			{
 				this.showFloorRequestNotification(userId);
 			}
@@ -1995,13 +1992,7 @@ export class View
 	{
 		const mediaRenderer = streamData.mediaRenderer;
 		const mediaStream = streamData.stream;
-		const removed = streamData.removed;
 		const flipVideo = streamData.flipVideo;
-
-		if (removed)
-		{
-			mediaRenderer.stream = null;
-		}
 
 		if (mediaRenderer) // for Bitrix calls
 		{
@@ -2024,8 +2015,8 @@ export class View
 		}
 		this.localUser.userModel.cameraState = this.localUser.hasCameraVideo();
 
-		const videoTracks = mediaStream.getVideoTracks();
-		if (videoTracks.length > 0)
+		const videoTracks = mediaStream?.getVideoTracks();
+		if (videoTracks?.length > 0)
 		{
 			const videoTrackSettings = videoTracks[0].getSettings();
 			this.cameraId = videoTrackSettings.deviceId || '';
@@ -2035,8 +2026,8 @@ export class View
 			this.cameraId = '';
 		}
 
-		const audioTracks = mediaStream.getAudioTracks();
-		if (audioTracks.length > 0)
+		const audioTracks = mediaStream?.getAudioTracks();
+		if (audioTracks?.length > 0)
 		{
 			const audioTrackSettings = audioTracks[0].getSettings();
 			this.microphoneId = audioTrackSettings.deviceId || '';
@@ -2353,29 +2344,31 @@ export class View
 		}
 	};
 
-	getDefaultRecordState()
+	getDefaultCommonRecordState()
 	{
 		return {
-			state: RecordState.Stopped,
+			state: CallCommonRecordState.Stopped,
+			type: CallCommonRecordType.None,
 			userId: 0,
 			date: {
 				start: null,
-				pause: []
+				pause: [],
 			},
 		};
-	};
+	}
 
-	setRecordState(recordState)
+	setCommonRecordState(commonRecordState)
 	{
-		this.recordState = recordState;
+		this.commonRecordState = commonRecordState;
+
 		if (this.buttons.recordStatus)
 		{
-			this.buttons.recordStatus.update(this.recordState);
+			this.buttons.recordStatus.update(this.commonRecordState);
 		}
 
-		if (this.recordState.userId != this.userId)
+		if (this.commonRecordState.userId != this.userId)
 		{
-			if (this.recordState.state === RecordState.Stopped)
+			if ([CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state))
 			{
 				this.unblockButtons(['record']);
 			}
@@ -2387,13 +2380,13 @@ export class View
 
 		if (this.elements.topPanel)
 		{
-			if (this.recordState.state === RecordState.Stopped)
+			if ([CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state))
 			{
 				delete (this.elements.topPanel.dataset.recordState);
 			}
 			else
 			{
-				this.elements.topPanel.dataset.recordState = recordState.state;
+				this.elements.topPanel.dataset.recordState = commonRecordState.state;
 			}
 		}
 	};
@@ -2510,7 +2503,11 @@ export class View
 				[DeviceSelector.Events.onChangeMicAutoParams]: this._onChangeMicAutoParams.bind(this),
 				[DeviceSelector.Events.onChangeFaceImprove]: this._onChangeFaceImprove.bind(this),
 				[DeviceSelector.Events.onAdvancedSettingsClick]: () => this.eventEmitter.emit(EventName.onOpenAdvancedSettings),
-				[DeviceSelector.Events.onDestroy]: () => this.deviceSelector = null,
+				[DeviceSelector.Events.onDestroy]: () => {
+					this.buttons.microphone.elements.arrow?.classList.remove('rotate');
+					this.buttons.camera.elements.arrow?.classList.remove('rotate');
+					this.deviceSelector = null;
+				},
 				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {}),
 			}
 		});
@@ -2881,7 +2878,7 @@ export class View
 		{
 			this.buttons.recordStatus.stopViewUpdate();
 		}
-		this.recordState = this.getDefaultRecordState();
+		this.commonRecordState = this.getDefaultCommonRecordState();
 
 		if (this.elements.root)
 		{
@@ -2953,13 +2950,7 @@ export class View
 		switch (buttonName)
 		{
 			case 'camera':
-				const isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
-				const isForceBlock = this.blockedButtons[buttonName] === true;
-				const noCamPermission = !Util.havePermissionToBroadcast('cam');
-				const isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
-				const localUserRecivedStats =  this.isVideoconf ? true : this.localUserRecivedStats;
-				const isButtonBlocked = isUiBlocked || isForceBlock || noCamPermission || isUserConnecting || !localUserRecivedStats;
-				return isButtonBlocked;
+				return this.#isCameraButtonBlocked();
 			case 'chat':
 				return !this.showChatButtons || this.blockedButtons[buttonName] === true;
 			case 'microphone':
@@ -2996,24 +2987,34 @@ export class View
 		this.hideButtons([buttonCode]);
 	};
 
+	#isCameraButtonBlocked(): Boolean
+	{
+		const isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
+		const isForceBlock = this.blockedButtons.camera === true;
+		const noCamPermission = !Util.havePermissionToBroadcast('cam');
+		const isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
+		const hasStream = this.localUser.hasVideo() || this.localUser.hasAudio();
+		const localUserReceivedStats = (this.isVideoconf || this.localUserReceivedStats || !hasStream);
+
+		return isUiBlocked || isForceBlock || noCamPermission || isUserConnecting || !localUserReceivedStats;
+	}
+
 	/**
 	 * @return {bool} Returns true if buttons update is required
 	 */
 	checkPanelOverflow()
 	{
-		const delta = this.elements.panel.scrollWidth - this.elements.panel.offsetWidth
-		const mediumButtonMinWidth = 60; // todo: move to constants maybe? or maybe even calculate dynamically somehow?
+		const delta = this.elements.panel.scrollWidth - this.elements.panel.offsetWidth;
+		const mediumButtonMinWidth = (this.layout === Layouts.Mobile)
+			? 60
+			: 66; // todo: move to constants maybe? or maybe even calculate dynamically somehow?
 		if (delta > 0)
 		{
-			let countOfButtonsToHide = Math.ceil(delta / mediumButtonMinWidth);
-			if (Object.keys(this.overflownButtons).length === 0)
-			{
-				countOfButtonsToHide += 1;
-			}
+			let countOfButtonsToHide = Math.ceil(delta / mediumButtonMinWidth) + 1;
 
 			const buttons = this.getButtonList();
 
-			for (let i = buttons.length - 1; i > 0; i--)
+			for (let i = buttons.length - 1; i >= 0; i--)
 			{
 				if (buttons[i] === 'hangupOptions' || buttons[i] === 'hangup' || buttons[i] === 'close' || buttons[i] === 'more')
 				{
@@ -3286,15 +3287,27 @@ export class View
 		{
 			result.push('mobileMenu');
 		}
+		const bottomCenterMenuIsVisible = this.uiState === UiState.Initializing
+			|| this.uiState === UiState.Calling
+			|| this.uiState === UiState.Connected
+			|| this.uiState === UiState.Error;
 
-		result.push('chat', 'users');
+		if (bottomCenterMenuIsVisible)
+		{
+			result.push('chat');
+		}
 
-		if (this.layout != Layouts.Mobile)
+		if (this.layout !== Layouts.Mobile)
+		{
+			result.push('users');
+		}
+
+		if (this.layout != Layouts.Mobile && bottomCenterMenuIsVisible)
 		{
 			result.push('floorRequest', 'screen', 'record', 'document');
 		}
 
-		if (this.layout !== Layouts.Mobile && CallAI.serviceEnabled)
+		if (this.layout !== Layouts.Mobile && CallAI.serviceEnabled && bottomCenterMenuIsVisible)
 		{
 			result.push('copilot');
 		}
@@ -3304,7 +3317,7 @@ export class View
 				&& !Object.prototype.hasOwnProperty.call(this.overflownButtons, buttonCode);
 		});
 
-		if (Object.keys(this.overflownButtons).length > 0)
+		if (Object.keys(this.overflownButtons).length > 0 && bottomCenterMenuIsVisible)
 		{
 			result.push('more');
 		}
@@ -4472,19 +4485,14 @@ export class View
 						this.buttons.record = new Buttons.SimpleButton({
 							class: 'record',
 							backgroundClass: 'bx-messenger-videocall-panel-background-record',
-							text: [
-								'View.RecordState.Started',
-								'View.RecordState.Resumed'
-							].includes(this.recordState.state)
-								? BX.message('CALL_M_BTN_TITLE_STOP_RECORD')
-								: BX.message('IM_M_CALL_BTN_RECORD'),
+							text: Loc.getMessage('IM_M_CALL_BTN_RECORD'),
 							blocked: this.isButtonBlocked('record'),
-							onClick: this._onRecordToggleClick.bind(this),
+							onClick: this.#onCommonRecordClick.bind(this),
 							...(Util.isDesktop() ? {
 								tooltip: {
 									position: 'top',
 									getText: () => `${this.keyModifierForCss} + R`,
-								}
+								},
 							} : {}),
 						});
 					}
@@ -4493,6 +4501,7 @@ export class View
 					{
 						Dom.append(this.buttons.record.render(), center);
 					}
+
 					break;
 				case 'document':
 					if (this.buttons.document)
@@ -4754,21 +4763,23 @@ export class View
 					{
 						this.buttons.recordStatus = new Buttons.RecordStatusButton({
 							userId: this.userId,
-							recordState: this.recordState,
-							onPauseClick: this._onRecordPauseClick.bind(this),
-							onStopClick: this._onRecordStopClick.bind(this),
+							commonRecordState: this.commonRecordState,
 							tooltip: {
 								position: 'bottom',
 								getText: () => {
-									if (this.recordState.userId == this.userId || !this.userData[this.recordState.userId])
+									const userData = this.userData[this.commonRecordState.userId];
+
+									if (!userData)
 									{
 										return '';
 									}
 
-									const recordingUserName = Text.encode(this.userData[this.recordState.userId].name);
-									return BX.message('IM_M_CALL_RECORD_HINT').replace('#USER_NAME#', recordingUserName);
+									const recordingUserName = Text.encode(userData.name);
+									const gender = userData.gender || 'M';
+
+									return Loc.getMessage(`CALL_COMMON_RECORD_INITIATOR_HINT_${gender}`).replace('#USER_NAME#', recordingUserName);
 								},
-							}
+							},
 						});
 					}
 
@@ -4782,14 +4793,14 @@ export class View
 					{
 						this.buttons.grid.update({
 							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
-							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
+							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE_MSGVER_1'),
 						});
 					}
 					else
 					{
 						this.buttons.grid = new Buttons.TopButton({
 							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
-							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
+							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE_MSGVER_1'),
 							onClick: this._onGridButtonClick.bind(this),
 							...(Util.isDesktop() ? {
 								tooltip: {
@@ -4955,18 +4966,13 @@ export class View
 
 	showCopilotNotify(callId = 0, errorCode = '')
 	{
-		let notifyType = '';
+		const notifyType = errorCode
+			? null
+			: CopilotNotifyType[this.isCopilotActive ? 'COPILOT_ENABLED' : 'COPILOT_DISABLED'];
 
-		if (!errorCode)
+		if (notifyType)
 		{
-			notifyType = CopilotNotifyType[this.isCopilotActive ? 'COPILOT_ENABLED' : 'COPILOT_DISABLED'];
-		}
-
-		this.copilotNotify = this.createCopilotNotify(notifyType, callId);
-
-		if (this.copilotNotify)
-		{
-			this.copilotNotify.show();
+			this.#openCopilotNotify(notifyType, callId);
 		}
 	}
 
@@ -4975,27 +4981,19 @@ export class View
 		if (this.copilotNotify)
 		{
 			this.copilotNotify.close();
+			this.copilotNotify = null;
 		}
 	}
 
 	showCopilotResultNotify()
 	{
-		this.copilotNotify = this.createCopilotNotify(CopilotNotifyType.COPILOT_RESULT);
-
-		if (this.copilotNotify)
-		{
-			this.copilotNotify.show();
-		}
+		this.#openCopilotNotify(CopilotNotifyType.COPILOT_RESULT);
 	}
 
 	showCopilotErrorNotify(errorType)
 	{
-		this.copilotNotify = this.createCopilotNotify(CopilotNotifyType[errorType]);
-
-		if (this.copilotNotify)
-		{
-			this.copilotNotify.show();
-		}
+		const notifyType = CopilotNotifyType[errorType];
+		this.#openCopilotNotify(notifyType);
 	}
 
 	createCopilotNotify(notifyType, callId)
@@ -5013,6 +5011,18 @@ export class View
 			},
 			callId,
 		});
+	}
+
+	#openCopilotNotify(notifyType, callId = 0)
+	{
+		this.closeCopilotNotify();
+
+		this.copilotNotify = this.createCopilotNotify(notifyType, callId);
+
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.show();
+		}
 	}
 
 	createAhaMomentNotifyCallcontrol()
@@ -5684,6 +5694,235 @@ export class View
 		return !!this.hotKey[name];
 	}
 
+	showCommonRecordMenuPopup(isDesktopRecord = false) {
+		if (this.#commonRecord.menuPopup)
+		{
+			this.#commonRecord.menuPopup.close();
+
+			return;
+		}
+
+		const popupType = [CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state) ? 'kind' : 'control';
+
+		this.#commonRecord.menuPopup = new CommonRecordMenuPopup({
+			state: this.commonRecordState.state,
+			popupType,
+			isDesktopRecord,
+			onStart: (kind) => {
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: CallCommonRecordState.Started,
+					kind,
+				});
+			},
+			onStop: () => {
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: CallCommonRecordState.Stopped,
+				});
+			},
+			onPause: () => {
+				let commonRecordState;
+
+				if (this.commonRecordState.state === CallCommonRecordState.Paused)
+				{
+					this.commonRecordState.state = CallCommonRecordState.Started;
+					commonRecordState = CallCommonRecordState.Resumed;
+				}
+				else
+				{
+					this.commonRecordState.state = CallCommonRecordState.Paused;
+					commonRecordState = this.commonRecordState.state;
+				}
+
+				this.buttons.recordStatus.update(this.commonRecordState);
+
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: commonRecordState,
+				});
+			},
+			onDestroy: () => {
+				if (!CallCloudRecord.serviceEnabled)
+				{
+					return;
+				}
+
+				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+					state: CallCommonRecordState.Destroyed,
+				});
+			},
+			onClose: () => {
+				this.#commonRecord.menuPopup = null;
+			},
+
+		});
+
+		this.#commonRecord.menuPopup.toggle();
+	}
+
+	showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId)
+	{
+		if (this.#commonRecord.infoPopup)
+		{
+			this.#commonRecord.infoPopup.close();
+
+			return;
+		}
+
+		this.#commonRecord.infoPopup = new CloudRecordInfoPopup({
+			isCloudRecordFeaturesEnabled,
+			callId,
+			onClose: () => {
+				this.#commonRecord.infoPopup = null;
+			},
+			turnOn: () => {
+				this.showCommonRecordMenuPopup();
+			},
+		});
+
+		this.#commonRecord.infoPopup.toggle();
+	}
+
+	showCommonRecordStartNotify(userId, state = CallCommonRecordState.Started)
+	{
+		if (this.#commonRecord.notify)
+		{
+			this.#commonRecord.notify.close();
+			this.#commonRecord.notify = null;
+		}
+
+		const userModel = this.userRegistry.get(userId);
+		const userGender = userModel && userModel.data.gender ? userModel.data.gender.toUpperCase() : 'M';
+
+		this.#commonRecord.notify = BX.UI.Notification.Center.notify({
+			position: 'top-right',
+			autoHideDelay: 8000,
+			closeButton: true,
+			render() {
+				return Dom.create('div', {
+					props: {
+						className: 'ui-notification-balloon-content call-cloud-record-notify',
+					},
+					children: [
+						Dom.create('div', {
+							props: {
+								className: 'ui-notification-balloon-message',
+							},
+							children: [
+								Dom.create('div', {
+									props: {
+										className: 'call-cloud-record-notify__icon',
+									},
+								}),
+								Dom.create('div', {
+									props: {
+										className: 'call-cloud-record-notify__message',
+									},
+									text: Loc.getMessage(`CALL_CLOUD_RECORD_NOTIFY_${state.toUpperCase()}_${userGender}`, {
+										'#INITIATOR_NAME#': userModel?.data?.name || '',
+									}),
+								}),
+							],
+						}),
+						Dom.create('div', {
+							props: {
+								className: 'ui-notification-balloon-actions',
+							},
+						}),
+						this.getCloseButton(),
+					],
+				});
+			},
+		});
+	}
+
+	closeCommonRecordPopups()
+	{
+		if (this.#commonRecord.menuPopup)
+		{
+			this.#commonRecord.menuPopup.close();
+			this.#commonRecord.menuPopup = null;
+		}
+
+		if (this.#commonRecord.infoPopup)
+		{
+			this.#commonRecord.infoPopup.close();
+			this.#commonRecord.infoPopup = null;
+		}
+
+		if (this.#commonRecord.notify)
+		{
+			this.#commonRecord.notify.close();
+			this.#commonRecord.notify = null;
+		}
+	}
+
+	/**
+	 * @param { Object } params
+	 * @param { string } params.title
+	 * @param { string } params.message
+	 * @param { string } params.yesButtonText
+	 * @param { string } params.noButtonText
+	 * @returns {Promise}
+	 */
+	showConfirmModal(params)
+	{
+		if (this.#confirmModal)
+		{
+			this.#confirmModal.close();
+			this.#confirmModal = null;
+		}
+
+		return new Promise((resolve) => {
+			let isResolved = false;
+
+			const resolveOnce = (choice) => {
+				if (isResolved)
+				{
+					return;
+				}
+				isResolved = true;
+				resolve(choice);
+			};
+
+			this.#confirmModal = new ConfirmModal({
+				...params,
+				onClose: () => {
+					this.#confirmModal = null;
+					resolveOnce('close');
+				},
+				onClickYesButton: () => resolveOnce('yes'),
+				onClickNoButton: () => resolveOnce('no'),
+			});
+
+			this.#confirmModal.show();
+		});
+	}
+
+	showCommonRecordStartModal()
+	{
+		this.showConfirmModal({
+			title: Loc.getMessage('CALL_CLOUD_RECORD_MODAL_START_TITLE'),
+			message: Loc.getMessage('CALL_CLOUD_RECORD_MODAL_START_MESSAGE'),
+			yesButtonText: Loc.getMessage('CALL_CLOUD_RECORD_MODAL_START_RESUME_BUTTON'),
+		});
+	}
+
+	showCloudRecordPromo(isCloudRecordFeaturesEnabled, callId)
+	{
+		// TODO: Remove once PromoManager is available for conferences
+		if (this.isVideoconf)
+		{
+			return;
+		}
+
+		const promoRequired = PromoManager.getInstance().needToShow(CLOUD_RECORD_PROMO_ID);
+
+		if (promoRequired)
+		{
+			this.showCloudRecordInfoPopup(isCloudRecordFeaturesEnabled, callId);
+			PromoManager.getInstance().markAsWatched(CLOUD_RECORD_PROMO_ID);
+		}
+	}
+
 	// event handlers
 
 	_onBodyClick()
@@ -5803,6 +6042,7 @@ export class View
 		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-700", rootDimensions.width < 700);
 		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-850", rootDimensions.width < 850);
 		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-900", rootDimensions.width < 900);
+		this.elements.root.classList.toggle("bx-messenger-videocall-width-lt-1050", rootDimensions.width < 1050);
 
 		/*if (this.maxWidth === 0)
 		{
@@ -5938,7 +6178,7 @@ export class View
 		)
 		{
 			e.preventDefault();
-			this._onForceRecordToggleClick(e);
+			this.#onCommonRecordHotkey();
 		}
 		else if (
 			e.code === 'KeyH'
@@ -6085,96 +6325,31 @@ export class View
 		});
 	};
 
-	_onRecordToggleClick(e)
+	#onCommonRecordClick()
 	{
 		const limitObj = this.getRecordLimitation();
 
 		this.onClickButtonWithLimit(limitObj, () => {
-			if (this.recordState.state === View.RecordState.Stopped)
-			{
-				this._onRecordStartClick(e);
-			}
-			else
-			{
-				this._onRecordStopClick(e);
-			}
-		})
+			this.eventEmitter.emit(EventName.onButtonClick, {
+				buttonName: 'record',
+			});
+		});
 	}
 
-	_onForceRecordToggleClick(e)
-	{
+	#onCommonRecordHotkey() {
 		const limitObj = this.getRecordLimitation();
 
 		this.onClickButtonWithLimit(limitObj, () => {
-			if (this.recordState.state === View.RecordState.Stopped)
-			{
-				this._onForceRecordStartClick(View.RecordType.Video);
-			}
-			else
-			{
-				this._onRecordStopClick(e);
-			}
-		})
-	}
+			const state = [CallCommonRecordState.Stopped, CallCommonRecordState.Destroyed].includes(this.commonRecordState.state)
+				? CallCommonRecordState.Started
+				: CallCommonRecordState.Stopped;
 
-	_onForceRecordStartClick(recordType)
-	{
-		if (typeof recordType === 'undefined')
-		{
-			recordType = View.RecordType.None;
-		}
-
-		this.eventEmitter.emit(EventName.onButtonClick, {
-			buttonName: "record",
-			recordState: View.RecordState.Started,
-			forceRecord: recordType, // none, video, audio
-			node: null
+			this.eventEmitter.emit(EventName.onCommonRecordMenu, {
+				state,
+				hotkey: true,
+			});
 		});
 	}
-
-	_onRecordStartClick(e)
-	{
-		this.eventEmitter.emit(EventName.onButtonClick, {
-			buttonName: "record",
-			recordState: View.RecordState.Started,
-			node: e.currentTarget
-		});
-	}
-
-	_onRecordPauseClick(e)
-	{
-		let recordState;
-		if (this.recordState.state === View.RecordState.Paused)
-		{
-			this.recordState.state = View.RecordState.Started;
-			recordState = View.RecordState.Resumed;
-		}
-		else
-		{
-			this.recordState.state = View.RecordState.Paused;
-			recordState = this.recordState.state;
-		}
-
-		this.buttons.recordStatus.update(this.recordState);
-
-		this.eventEmitter.emit(EventName.onButtonClick, {
-			buttonName: "record",
-			recordState: recordState,
-			node: e.currentTarget
-		});
-	};
-
-	_onRecordStopClick(e)
-	{
-		this.recordState.state = View.RecordState.Stopped;
-		this.buttons.recordStatus.update(this.recordState);
-
-		this.eventEmitter.emit(EventName.onButtonClick, {
-			buttonName: "record",
-			recordState: this.recordState.state,
-			node: e.currentTarget
-		});
-	};
 
 	_onDocumentButtonClick(e)
 	{
@@ -6310,7 +6485,7 @@ export class View
 	_onChangeFaceImprove(e)
 	{
 		this.eventEmitter.emit(EventName.onChangeFaceImprove, e.data);
-	};
+	}
 
 	disableFaceImprove()
 	{
@@ -6746,7 +6921,7 @@ export class View
 		}
 
 	}
-	// 594840
+
 	#getViewVisibilityChange(listners = []) {
 		const handler = (event) => {
 			for (const listner of listners)
@@ -6775,6 +6950,8 @@ export class View
 		this.destroyed = true;
 
 		this.closeCopilotNotify();
+		this.closeCommonRecordPopups();
+
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();
@@ -6824,7 +7001,7 @@ export class View
 		{
 			this.buttons.recordStatus.stopViewUpdate();
 		}
-		this.recordState = this.getDefaultRecordState();
+		this.commonRecordState = this.getDefaultCommonRecordState();
 		this.buttons = null;
 
 		this.eventEmitter.emit(EventName.onDestroy);
@@ -6840,8 +7017,6 @@ export class View
 
 	static Layout = Layouts;
 	static Size = Size;
-	static RecordState = RecordState;
-	static RecordType = RecordType;
 
 	static RecordSource = {
 		Chat: 'BXCLIENT_CHAT'

@@ -11,7 +11,7 @@ jn.define('settings-v2/services/native/src/cache', (require, exports, module) =>
 	class NativeCacheService
 	{
 		/**
-		 * @return {Promise<Object>}
+		 * @return {Promise<Record<string, string>>}
 		 */
 		static async getCacheIntervalOptionLabels()
 		{
@@ -21,7 +21,7 @@ jn.define('settings-v2/services/native/src/cache', (require, exports, module) =>
 		}
 
 		/**
-		 * @return {Promise<Array<String>>}
+		 * @return {Promise<String[]>}
 		 */
 		static async getCacheIntervalOptions()
 		{
@@ -37,9 +37,7 @@ jn.define('settings-v2/services/native/src/cache', (require, exports, module) =>
 
 		static async getCacheSettings()
 		{
-			const cacheObject = appConfig.cache;
-
-			return cacheObject.getSettings();
+			return appConfig.cache.getSettings();
 		}
 
 		static async getSettingById(id)
@@ -59,31 +57,25 @@ jn.define('settings-v2/services/native/src/cache', (require, exports, module) =>
 		/**
 		 * @return {Promise<String>}
 		 */
-		static async clearCache()
+		static async clearFiles()
 		{
-			const cacheObject = appConfig.cache;
-
-			return cacheObject.clearAll();
+			return appConfig.cache.clearFiles();
 		}
 
 		/**
 		 * @return {Promise<String>}
 		 */
-		static async clearImages()
+		static async clearMedia()
 		{
-			const cacheObject = appConfig.cache;
-
-			return cacheObject.clearImages();
+			return appConfig.cache.clearMedia();
 		}
 
 		/**
 		 * @return {Promise<String>}
 		 */
-		static async clearAppUserData()
+		static async clearSystem()
 		{
-			const cacheObject = appConfig.cache;
-
-			return cacheObject.clearAppUserData();
+			return appConfig.cache.clearSystem();
 		}
 	}
 

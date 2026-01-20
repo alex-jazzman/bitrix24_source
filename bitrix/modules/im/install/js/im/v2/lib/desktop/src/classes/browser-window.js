@@ -17,14 +17,10 @@ export class DesktopBrowserWindow
 
 	constructor()
 	{
-		if (DesktopApi.isAirDesignEnabledInDesktop())
-		{
-			ReloadChecker.init();
-			WakeUpHandler.init();
-			HotkeyHandler.init();
-			SliderBindings.init();
-		}
-
+		ReloadChecker.init();
+		WakeUpHandler.init();
+		HotkeyHandler.init();
+		SliderBindings.init();
 		NewTabHandler.init();
 
 		this.#initComplete();

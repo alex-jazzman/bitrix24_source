@@ -1,12 +1,11 @@
-<?
-/*
-##############################################
-# Bitrix: SiteManager                        #
-# Copyright (c) 2004 Bitrix                  #
-# https://www.bitrixsoft.com          #
-# mailto:admin@bitrix.ru                     #
-##############################################
-*/
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage advertising
+ * @copyright 2001-2025 Bitrix
+ */
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Text\HtmlFilter;
@@ -98,7 +97,7 @@ if ($action == "view")
 	$isEditRightsMode = false;
 }
 
-if (($save <> '' || $apply <> '') && check_bitrix_sessid() && $REQUEST_METHOD == "POST")
+if (($save <> '' || $apply <> '') && check_bitrix_sessid() && $_SERVER['REQUEST_METHOD'] == "POST")
 {
 	$arrWEEKDAY = [
 		"SUNDAY" => $arrSUNDAY,
@@ -295,7 +294,7 @@ if (intval($ID) > 0)
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
-<?= CAdminMessage::ShowMessage($strError) ?>
+<? CAdminMessage::ShowMessage($strError) ?>
 <form name="form1" method="POST" action="<? echo $APPLICATION->GetCurPage() ?>">
 	<?= bitrix_sessid_post() ?>
 	<input type="hidden" name="ID" value="<?= $str_ID ?>">

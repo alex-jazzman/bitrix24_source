@@ -11,3 +11,7 @@
 .ui-draggable--type-move .booking-wait-list-add button {
 	pointer-events: none;
 }
+
+.booking-wait-list-add-locked {
+	padding: 0 2px;
+}

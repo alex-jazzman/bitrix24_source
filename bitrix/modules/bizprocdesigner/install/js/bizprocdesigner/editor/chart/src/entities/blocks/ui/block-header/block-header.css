@@ -1,0 +1,61 @@
+.editor-chart-block-header {
+	border-radius: 10px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-block-header__title {
+	display: block;
+	flex-shrink: 1;
+	padding-right: 8px;
+	max-height: 20px;
+	font-size: 14px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-black-base);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	line-height: 20px;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.editor-chart-block-header__icon-wrapper {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 38px;
+	height: 38px;
+	margin-right: 8px;
+	border-radius: 7px;
+	background-color: var(--ui-color-palette-blue-25);
+	background-repeat: no-repeat;
+	background-position: center center;
+	overflow: hidden;
+}
+
+.editor-chart-block-header__icon-wrapper--sub {
+	border-radius: 50%;
+	width: 28px;
+	height: 28px;
+	background-color: rgba(var(--ui-color-palette-blue-25), 1);
+}
+
+.editor-chart-block-header__icon-wrapper--sub-external {
+	width: 32px;
+	height: 32px;
+}
+
+.editor-chart-block-header__icon-wrapper--sub .editor-chart-block-icon {
+	width: 28px;
+	height: 28px;
+}
+
+.editor-chart-block-header__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 38px;
+	margin: 0 5px 0 -4px;
+	background: var(--ui-color-gray-05);
+	border-radius: 2px;
+}

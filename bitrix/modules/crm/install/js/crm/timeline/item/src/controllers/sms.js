@@ -1,11 +1,13 @@
 import { Loc, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import ConfigurableItem from '../configurable-item';
 
 import { ActionParams, Base } from './base';
-import ConfigurableItem from '../configurable-item';
+import { tryToResendWithMessage } from './message/resend';
 
 declare type SmsParams = {
 	text: string,
+	senderCode: string,
 	senderId: string,
 	from: string,
 	client: Object,
@@ -24,12 +26,27 @@ export class Sms extends Base
 
 		if (action === 'Activity:Sms:Resend' && Type.isPlainObject(actionData.params))
 		{
-			this.#resendSms(actionData.params);
+			void this.#resendSms(actionData.params);
 		}
 	}
 
-	#resendSms(params: SmsParams): void
+	async #resendSms(params: SmsParams): Promise<void>
 	{
+		const messageParams = {
+			backend: {
+				senderCode: params.senderCode,
+				id: params.senderId,
+			},
+			fromId: params.from,
+			client: params.client,
+			text: params.text,
+		};
+
+		if (await tryToResendWithMessage(messageParams))
+		{
+			return;
+		}
+
 		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
 		if (!menuBar)
 		{

@@ -17,5 +17,8 @@ return [
 		'./src/recent/deleter',
 		'./src/message',
 		'./src/message/deleter',
+		'./src/reaction',
+		'./src/reaction/setter',
+		'./src/reaction/deleter',
 	],
 ];

@@ -1298,7 +1298,7 @@ this.BX.UI = this.BX.UI || {};
 	        id: 'department',
 	        options: {
 	          selectMode: _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _getDepartamentsSelectMode, _getDepartamentsSelectMode2).call(babelHelpers.assertThisInitialized(_this)),
-	          allowFlatDepartments: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _enableDepartments),
+	          allowFlatDepartments: main_core.Type.isNil(params.allowFlatDepartments) ? babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _enableDepartments) : params.allowFlatDepartments,
 	          allowSelectRootDepartment: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _enableDepartments)
 	        }
 	      });

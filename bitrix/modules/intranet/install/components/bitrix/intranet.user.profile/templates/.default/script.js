@@ -43,6 +43,8 @@
 			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
 			this.actionsAvailability = params.actionsAvailability;
 			this.rootDepartment = params.rootDepartment;
+			this.workPosition = params.workPosition;
+			this.otp = params.otp ?? null;
 
 			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
@@ -441,6 +443,20 @@
 						this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM'), this.setIntegratorRights.bind(this));
 					}, this),
 				});
+			}
+
+			if (!this.isOwnProfile && this.canEditProfile && this.otp?.isActive)
+			{
+				const menuItem = new BX.Intranet.PushOtp.ProfileDeactivate({
+					fullName: this.userFullName,
+					avatarUri: this.avatarUri,
+					workPosition: this.workPosition,
+					signedUserId: this.otp.signedUserId,
+					callback: () => {
+						BX.PopupMenu.getMenuById('user-profile-action-popup').destroy();
+					},
+				});
+				menuItems.push(menuItem.getProfileItem());
 			}
 
 			BX.PopupMenu.show(

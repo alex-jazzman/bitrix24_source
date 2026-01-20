@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/pull/anchor', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { getLogger } = require('im/messenger/lib/logger');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class AnchorPullHandler
@@ -12,31 +12,64 @@ jn.define('im/messenger/provider/pull/anchor', (require, exports, module) => {
 	{
 		constructor()
 		{
-			const logger = getLogger('pull-handler--anchor');
+			const logger = getLoggerWithContext('pull-handler--anchor', 'AnchorPullHandler');
 			super({ logger });
 		}
 
 		handleAddAnchor(params, extra, command)
 		{
-			this.logger.info(`${this.getClassName()}.handleAddAnchor: `, params);
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleAddAnchor: ', params);
 			this.store.dispatch('anchorModel/add', params)
-				.catch((err) => this.logger.error(`${this.getClassName()}.handleAddAnchor.catch err:`, err))
+				.catch((error) => this.logger.error('handleAddAnchor.catch error:', error))
 			;
 		}
 
 		handleDeleteAnchor(params, extra, command)
 		{
-			this.logger.info(`${this.getClassName()}.handleDeleteAnchor: `, params);
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleDeleteAnchor: ', params);
 			this.store.dispatch('anchorModel/delete', params)
-				.catch((err) => this.logger.error(`${this.getClassName()}.handleDeleteAnchor.catch err:`, err))
+				.catch((error) => this.logger.error('handleDeleteAnchor.catch error:', error))
 			;
+		}
+
+		handleDeleteAnchors(params, extra, command)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleDeleteAnchors: ', params);
+
+			const { chatIds } = params;
+
+			chatIds.forEach((chatId) => {
+				this.store.dispatch('anchorModel/deleteByChatId', { chatId })
+					.catch((error) => this.logger.error('handleDeleteAnchor.catch error:', error))
+				;
+			});
 		}
 
 		handleDeleteChatAnchors(params, extra, command)
 		{
-			this.logger.info(`${this.getClassName()}.handleDeleteChatAnchors: `, params);
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleDeleteChatAnchors: ', params);
 			this.store.dispatch('anchorModel/deleteByChatId', params)
-				.catch((err) => this.logger.error(`${this.getClassName()}.handleDeleteChatAnchor.catch err:`, err))
+				.catch((error) => this.logger.error('handleDeleteChatAnchor.catch error:', error))
 			;
 		}
 	}

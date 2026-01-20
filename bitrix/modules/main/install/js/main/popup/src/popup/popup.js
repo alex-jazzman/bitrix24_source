@@ -166,7 +166,6 @@ export default class Popup extends EventEmitter
 		this.autoHide = params.autoHide === true;
 		this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
 		this.autoHideHandler = Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
-		this.handleOverlayClick = this.handleOverlayClick.bind(this);
 		this.isAutoHideBinded = false;
 		this.closeByEsc = params.closeByEsc === true;
 		this.isCloseByEscBinded = false;
@@ -1331,20 +1330,14 @@ export default class Popup extends EventEmitter
 				Event.bind(this.getPopupContainer(), 'click', this.handleContainerClick);
 			}
 
-			if (this.overlay && this.overlay.element)
+			if (!this.hasOverlay())
 			{
-				Event.bind(this.overlay.element, 'click', this.handleOverlayClick);
-			}
-			else
-			{
-				if (this.isCompatibleMode())
-				{
-					Event.bind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
-				}
-				else
-				{
-					this.targetContainer.ownerDocument.addEventListener('click', this.handleAutoHide, true);
-				}
+				Event.bind(
+					this.targetContainer.ownerDocument,
+					'click',
+					this.handleAutoHide,
+					!this.isCompatibleMode(),
+				);
 			}
 		}
 	}
@@ -1363,20 +1356,14 @@ export default class Popup extends EventEmitter
 				Event.unbind(this.getPopupContainer(), 'click', this.handleContainerClick);
 			}
 
-			if (this.overlay && this.overlay.element)
+			if (!this.hasOverlay())
 			{
-				Event.unbind(this.overlay.element, 'click', this.handleOverlayClick);
-			}
-			else
-			{
-				if (this.isCompatibleMode())
-				{
-					Event.unbind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
-				}
-				else
-				{
-					this.targetContainer.ownerDocument.removeEventListener('click', this.handleAutoHide, true);
-				}
+				Event.unbind(
+					this.targetContainer.ownerDocument,
+					'click',
+					this.handleAutoHide,
+					!this.isCompatibleMode(),
+				);
 			}
 		}
 	}
@@ -1436,17 +1423,26 @@ export default class Popup extends EventEmitter
 	 */
 	handleOverlayClick(event): void
 	{
-		this.tryCloseByEvent(event);
-		event.stopPropagation();
+		if (this.autoHide)
+		{
+			this.tryCloseByEvent(event);
+			event.stopPropagation();
+		}
 	}
 
 	setOverlay(params: PopupOverlay): void
 	{
 		if (this.overlay === null)
 		{
+			this.unbindAutoHide();
+
 			this.overlay = {
 				element: Tag.render`
-					<div class="popup-window-overlay" id="popup-window-overlay-${this.getId()}"></div>
+					<div 
+						class="popup-window-overlay" 
+						id="popup-window-overlay-${this.getId()}"
+						onclick="${this.handleOverlayClick.bind(this)}"
+					></div>
 				`,
 			};
 
@@ -1470,6 +1466,11 @@ export default class Popup extends EventEmitter
 		{
 			Dom.style(this.overlay.element, 'backdrop-filter', params.blur);
 		}
+	}
+
+	hasOverlay(): boolean
+	{
+		return this.overlay !== null && this.overlay.element !== null;
 	}
 
 	removeOverlay(): void
@@ -1743,7 +1744,13 @@ export default class Popup extends EventEmitter
 			if (this.animationCloseEventType !== null)
 			{
 				const eventName = this.animationCloseEventType + 'end';
-				this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd() {
+				const className = this.animationShowClassName;
+				this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd(event) {
+					if (!Dom.hasClass(event.target, className))
+					{
+						return;
+					}
+
 					this.removeEventListener(eventName, handleTransitionEnd);
 					callback();
 				});
@@ -1773,7 +1780,13 @@ export default class Popup extends EventEmitter
 			if (this.animationCloseEventType !== null)
 			{
 				const eventName = this.animationCloseEventType + 'end';
-				this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd() {
+				const className = this.animationCloseClassName;
+				this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd(event) {
+					if (!Dom.hasClass(event.target, className))
+					{
+						return;
+					}
+
 					this.removeEventListener(eventName, handleTransitionEnd);
 					callback();
 				});
@@ -1911,7 +1924,14 @@ export default class Popup extends EventEmitter
 			return;
 		}
 
-		this.bindElementPos = bindElementPos;
+		const bindElementVanished = (
+			bindElementPos.top === 0
+			&& bindElementPos.left === 0
+			&& bindElementPos.width === 0
+			&& bindElementPos.height === 0
+		);
+
+		this.bindElementPos = bindElementVanished && this.bindElementPos !== null ? this.bindElementPos : bindElementPos;
 
 		const windowSize = bindElementPos.windowSize ? bindElementPos.windowSize : this.getWindowSize();
 		const windowScroll = bindElementPos.windowScroll ? bindElementPos.windowScroll : this.getWindowScroll();

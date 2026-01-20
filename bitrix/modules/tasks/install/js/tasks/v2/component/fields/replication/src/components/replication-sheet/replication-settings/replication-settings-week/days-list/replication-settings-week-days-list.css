@@ -1,0 +1,14 @@
+.tasks-field-replication-weekday {
+	display: flex;
+	align-items: start;
+	gap: var(--ui-space-inline-xs);
+	cursor: pointer;
+}
+
+.tasks-replication-sheet-action-row.--weekdays {
+	justify-content: space-between;
+}
+
+.tasks-field-replication-weekday-text:not(.--checked) {
+	color: var(--ui-color-base-3);
+}

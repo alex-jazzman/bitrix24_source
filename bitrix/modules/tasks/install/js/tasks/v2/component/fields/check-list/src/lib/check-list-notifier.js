@@ -1,5 +1,5 @@
 import { Loc, Text, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { UI } from 'ui.notification';
 
 type Params = {
@@ -30,8 +30,10 @@ export class CheckListNotifier extends EventEmitter
 	{
 		this.#counter = this.#timerValue;
 
+		const balloonId = `check-list-balloon-${Text.getRandom()}`;
+
 		this.#balloonWithTimer = UI.Notification.Center.notify({
-			id: `check-list-balloon-${Text.getRandom()}`,
+			id: balloonId,
 			content: this.#getBalloonContent(),
 			actions: [{
 				title: Loc.getMessage('TASKS_V2_CHECK_LIST_BALLOON_CANCEL'),
@@ -39,18 +41,25 @@ export class CheckListNotifier extends EventEmitter
 					mouseup: this.#handleCancelClick.bind(this),
 				},
 			}],
-			events: {
-				onClose: this.#handleClosingBalloon.bind(this),
-			},
 		});
+
+		const handler = (baseEvent: BaseEvent) => {
+			const closingBalloon = baseEvent.getTarget();
+			if (closingBalloon.getId() === balloonId)
+			{
+				this.#handleClosingBalloon();
+
+				EventEmitter.unsubscribe('UI.Notification.Balloon:onClose', handler);
+			}
+		};
+
+		EventEmitter.subscribe('UI.Notification.Balloon:onClose', handler);
 
 		this.#startTimer();
 	}
 
 	stopTimer(): void
 	{
-		this.emit('complete', true);
-
 		this.#balloonWithTimer.close();
 	}
 
@@ -63,15 +72,15 @@ export class CheckListNotifier extends EventEmitter
 
 			if (this.#counter <= 0)
 			{
-				this.emit('complete', true);
-
-				this.#balloonWithTimer.close();
+				this.stopTimer();
 			}
 		}, 1000);
 	}
 
 	#handleCancelClick()
 	{
+		this.emit('complete', false);
+
 		this.#balloonWithTimer.close();
 	}
 
@@ -79,7 +88,7 @@ export class CheckListNotifier extends EventEmitter
 	{
 		clearInterval(this.#interval);
 
-		this.emit('complete', false);
+		this.emit('complete', true);
 	}
 
 	#getBalloonContent(): string

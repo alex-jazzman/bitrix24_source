@@ -57,7 +57,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 				width: 1100,
 				events: {
 					onClose: function(){
-						var slider = BX.SidePanel.Instance.getSlider('/company/personal/user/<?= CUtil::JSEscape($arParams["USER_ID"]) ?>/common_security/?page=auth');
+						var slider = BX.SidePanel.Instance.getSlider('/company/personal/user/<?= CUtil::JSEscape($arParams["USER_ID"]) ?>/common_security/?page=otpConnected');
 
 						if (slider !== null)
 						{

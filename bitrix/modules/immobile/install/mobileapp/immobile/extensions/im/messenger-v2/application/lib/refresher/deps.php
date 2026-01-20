@@ -11,6 +11,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/smile-manager',
+		'im:messenger/lib/reaction-assets-manager',
 		'im:messenger/lib/helper',
 		'im:messenger-v2/application/lib/message-queue-request-manager',
 	],

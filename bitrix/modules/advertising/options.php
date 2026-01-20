@@ -7,7 +7,7 @@ IncludeModuleLangFile(__FILE__);
 $ADV_RIGHT = $APPLICATION->GetGroupRight($module_id);
 if ($ADV_RIGHT>="R") :
 
-if ($REQUEST_METHOD=="GET" && $ADV_RIGHT=="W" && $RestoreDefaults <> '' && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD']=="GET" && $ADV_RIGHT=="W" && $RestoreDefaults <> '' && check_bitrix_sessid())
 {
 	COption::RemoveOption($module_id);
 	$z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
@@ -33,7 +33,7 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if($REQUEST_METHOD=="POST" && $Update.$Apply <> '' && $ADV_RIGHT>="W" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD']=="POST" && $Update.$Apply <> '' && $ADV_RIGHT>="W" && check_bitrix_sessid())
 {
 	// смена подкаталога для хранения баннеров
 	$old_subdir = COption::GetOptionString($module_id, "UPLOAD_SUBDIR");
@@ -107,7 +107,7 @@ $tabControl->BeginNextTab();
 							foreach($arr as $table)
 							{
 								$strSql = "SELECT count(*) as COUNT FROM ".$table;
-								$z = $DB->Query($strSql,false,$err_mess.__LINE__);
+								$z = $DB->Query($strSql);
 								$zr = $z->Fetch();
 								$count += $zr["COUNT"];
 							}

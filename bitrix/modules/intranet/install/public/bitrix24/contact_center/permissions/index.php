@@ -25,7 +25,8 @@ if(!isset($_GET['IFRAME']) || $_GET['IFRAME'] !== 'Y')
 	'',
 	[
 		'POPUP_COMPONENT_NAME' => 'bitrix:imopenlines.settings.perms',
-		'POPUP_COMPONENT_TEMPLATE_NAME' => ''
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );?>
 <?require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');?>

@@ -5,7 +5,7 @@ import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
 
-import { HelpDesk, Model, Option } from 'booking.const';
+import { HelpDesk, LimitFeatureId, Model, Option } from 'booking.const';
 import { optionService } from 'booking.provider.service.option-service';
 import { limit } from 'booking.lib.limit';
 import { helpDesk } from 'booking.lib.help-desk';
@@ -15,6 +15,7 @@ import { Multiple } from './multiple/multiple';
 import { Single } from './single/single';
 import './intersections.css';
 
+// @vue/component
 export const Intersections = {
 	components: {
 		Icon,
@@ -27,6 +28,48 @@ export const Intersections = {
 			IconSet,
 			intersectionModeMenuItemId: 'booking-intersection-menu-mode',
 		};
+	},
+	computed: {
+		...mapGetters({
+			resourcesIds: `${Model.Interface}/resourcesIds`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
+			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+			intersections: `${Model.Interface}/intersections`,
+			isIntersectionForAll: `${Model.Interface}/isIntersectionForAll`,
+			scroll: `${Model.Interface}/scroll`,
+			isLoaded: `${Model.Interface}/isLoaded`,
+			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+		}),
+		hasIntersections(): boolean
+		{
+			return Object.values(this.intersections).some((resourcesIds: number[]) => resourcesIds.length > 0);
+		},
+		disabled(): boolean
+		{
+			return !this.isLoaded || this.isFilterMode || this.isEditingBookingMode;
+		},
+		isMultiResourcesFeatureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingMulti;
+		},
+	},
+	watch: {
+		async isIntersectionForAll(): void
+		{
+			await this.$store.dispatch(`${Model.Interface}/setIntersections`, {});
+
+			this.updateScroll();
+
+			await busySlots.loadBusySlots();
+
+			this.toggleMenuItemActivityState(
+				this.menu.getMenuItem(this.intersectionModeMenuItemId),
+			);
+		},
+		scroll(): void
+		{
+			this.updateScroll();
+		},
 	},
 	mounted(): void
 	{
@@ -49,6 +92,13 @@ export const Intersections = {
 	methods: {
 		showMenu(): void
 		{
+			if (!this.isMultiResourcesFeatureEnabled)
+			{
+				void limit.show(LimitFeatureId.MultiResources);
+
+				return;
+			}
+
 			if (this.isFeatureEnabled)
 			{
 				this.menu.show();
@@ -129,55 +179,23 @@ export const Intersections = {
 			}
 		},
 	},
-	watch: {
-		async isIntersectionForAll(): void
-		{
-			await this.$store.dispatch(`${Model.Interface}/setIntersections`, {});
-
-			this.updateScroll();
-
-			await busySlots.loadBusySlots();
-
-			this.toggleMenuItemActivityState(
-				this.menu.getMenuItem(this.intersectionModeMenuItemId),
-			);
-		},
-		scroll(): void
-		{
-			this.updateScroll();
-		},
-	},
-	computed: {
-		...mapGetters({
-			resourcesIds: `${Model.Interface}/resourcesIds`,
-			isFilterMode: `${Model.Filter}/isFilterMode`,
-			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
-			intersections: `${Model.Interface}/intersections`,
-			isIntersectionForAll: `${Model.Interface}/isIntersectionForAll`,
-			scroll: `${Model.Interface}/scroll`,
-			isLoaded: `${Model.Interface}/isLoaded`,
-			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
-		}),
-		hasIntersections(): boolean
-		{
-			return Object.values(this.intersections).some((resourcesIds: number[]) => resourcesIds.length > 0);
-		},
-		disabled(): boolean
-		{
-			return !this.isLoaded || this.isFilterMode || this.isEditingBookingMode;
-		},
-	},
 	template: `
-		<div class="booking-booking-intersections" :class="{'--disabled': disabled}">
+		<div
+			class="booking-booking-intersections"
+			:class="{
+				'--disabled': disabled,
+				'--locked': !isMultiResourcesFeatureEnabled,
+			}"
+		>
 			<div
 				ref="intersectionMenu"
 				class="booking-booking-intersections-left-panel"
 				:class="{'--active': hasIntersections}"
-				@click="showMenu"
 				data-id="booking-intersections-left-panel-menu"
+				@click="showMenu"
 			>
 				<div class="ui-icon-set --double-rhombus"></div>
-				<div v-if="!isFeatureEnabled" class="booking-lock-icon-container">
+				<div v-if="!isFeatureEnabled || !isMultiResourcesFeatureEnabled" class="booking-lock-icon-container">
 					<Icon :name="IconSet.LOCK"/>
 				</div>
 			</div>

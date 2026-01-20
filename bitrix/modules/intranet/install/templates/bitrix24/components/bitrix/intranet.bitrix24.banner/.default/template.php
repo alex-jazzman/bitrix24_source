@@ -1,11 +1,9 @@
-<?
+<?php
 
-use Bitrix\Main\Localization\Loc;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
-$desktopDownloadLinks = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks();
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'intranet.desktop-download']);
 
 $this->setFrameMode(true);
 $this->SetViewTarget("sidebar", 500);
@@ -13,29 +11,11 @@ $this->SetViewTarget("sidebar", 500);
 <div class="sidebar-widget b24-app-block">
 	<div class="sidebar-widget-top">
 		<div class="sidebar-widget-top-title">
-			<?=GetMessage("B24_BANNER_MESSENGER_TITLE_MSGVER_2")?>
+			<?= GetMessage("B24_BANNER_MESSENGER_TITLE_MSGVER_2")?>
 		</div>
 	</div>
 	<div class="sidebar-widget-content">
 		<div class="b24-app-block-content">
-		<a href="<?= htmlspecialcharsbx($desktopDownloadLinks['macos']) ?>" target="_blank" class="b24-app-block-content-apps">
-			<span class="b24-app-icon-wrapper">
-				<span class="b24-app-icon --macos"></span>
-			</span>
-			<span class="b24-app-title">Mac OS</span>
-		</a>
-		<a href="<?= htmlspecialcharsbx($desktopDownloadLinks['windows']) ?>" target="_blank" class="b24-app-block-content-apps">
-			<span class="b24-app-icon-wrapper">
-				<span class="b24-app-icon --windows"></span>
-			</span>
-			<span class="b24-app-title">Windows</span>
-		</a>
-		<a href="<?= htmlspecialcharsbx($desktopDownloadLinks['linuxDeb']) ?>" target="_blank" class="b24-app-block-content-apps b24-app-block-content-apps-linux">
-			<span class="b24-app-icon-wrapper">
-				<span class="b24-app-icon --linux"></span>
-			</span>
-			<span class="b24-app-title">Linux</span>
-		</a>
 		<a href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('mobile_app');" class="b24-app-block-content-apps">
 			<span class="b24-app-icon-wrapper">
 				<span class="b24-app-icon --ios"></span>
@@ -54,17 +34,34 @@ $this->SetViewTarget("sidebar", 500);
 </div>
 <script>
 	BX.ready(() => {
-		BX.message(<?= \Bitrix\Main\Web\Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
-		var element = document.querySelector('.b24-app-block-content-apps-linux');
-		element.addEventListener('click', function (event){
-			BX.Intranet.Bitrix24Banner.getInstance().showMenuForLinux(
-				event,
-				document.querySelector('.b24-app-block-content-apps-linux .b24-app-title'),
-				{
-					deb: "<?= htmlspecialcharsbx($desktopDownloadLinks['linuxDeb']) ?>",
-					rpm: "<?= htmlspecialcharsbx($desktopDownloadLinks['linuxRpm']) ?>"
-				}
-			);
-		});
+		const element = document.querySelector('.b24-app-block-content');
+		const desktopLinks = new BX.Intranet.DesktopDownload();
+
+		BX.Dom.prepend(BX.Tag.render`
+			<a href="javascript:void(0)" onclick="${event => desktopLinks.showMenuForLinux(event.currentTarget)}" class="b24-app-block-content-apps">
+				<span class="b24-app-icon-wrapper">
+					<span class="b24-app-icon --linux"></span>
+				</span>
+				<span class="b24-app-title">Linux</span>
+			</a>
+		`, element);
+
+		BX.Dom.prepend(BX.Tag.render`
+			<a href="${BX.Intranet.DesktopDownload.getLinks().windows}" target="_blank" class="b24-app-block-content-apps">
+				<span class="b24-app-icon-wrapper">
+					<span class="b24-app-icon --windows"></span>
+				</span>
+				<span class="b24-app-title">Windows</span>
+			</a>
+		`, element);
+
+		BX.Dom.prepend(BX.Tag.render`
+			<a href="javascript:void(0)" onclick="${event => desktopLinks.showMenuForMac(event.currentTarget)}" class="b24-app-block-content-apps">
+				<span class="b24-app-icon-wrapper">
+					<span class="b24-app-icon --macos"></span>
+				</span>
+				<span class="b24-app-title">Mac OS</span>
+			</a>
+		`, element);
 	});
 </script>

@@ -64,6 +64,7 @@ jn.define('text-editor', (require, exports, module) => {
 		 *     			department?: (id) => string,
 		 *     		},
 		 *     },
+		 *     parentWidget?: PageManager,
 		 * }}
 		 */
 		constructor(props = {})
@@ -73,6 +74,8 @@ jn.define('text-editor', (require, exports, module) => {
 			this.onLinkClick = this.onLinkClick.bind(this);
 			this.onLongClickInReadOnlyMode = this.onLongClickInReadOnlyMode.bind(this);
 			this.onFileFieldFocusOut = this.onFileFieldFocusOut.bind(this);
+
+			this.parentWidget = props.parentWidget;
 
 			const defaultPlaceholder = (
 				this.isBBCodeAllowed() ? '' : Loc.getMessage('MOBILEAPP_TEXT_EDITOR_PLACEHOLDER')
@@ -176,7 +179,6 @@ jn.define('text-editor', (require, exports, module) => {
 				},
 			});
 
-			this.parentWidget = null;
 			this.onFileFieldRef = this.onFileFieldRef.bind(this);
 			this.onFilesChange = this.onFilesChange.bind(this);
 			this.onFilePreviewMenuClick = this.onFilePreviewMenuClick.bind(this);
@@ -650,11 +652,15 @@ jn.define('text-editor', (require, exports, module) => {
 		{
 			if (Type.isPlainObject(file))
 			{
+				const fileId = file.id.startsWith('mobile')
+					? (file.token || file.serverFileId || file.id)
+					: file.id;
+
 				const sourceNode = scheme.createElement({
 					name: 'disk',
 					attributes: {
 						file: '',
-						id: file.id,
+						id: fileId,
 					},
 				});
 
@@ -872,7 +878,7 @@ jn.define('text-editor', (require, exports, module) => {
 							});
 						},
 					},
-					{
+					!file.readOnly && {
 						id: 'remove',
 						title: Loc.getMessage('MOBILEAPP_TEXT_EDITOR_FILE_REMOVE'),
 						onClickCallback: () => {

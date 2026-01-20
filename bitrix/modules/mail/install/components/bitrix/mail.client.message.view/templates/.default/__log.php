@@ -21,7 +21,7 @@ foreach ($list as $item)
 	?>
 	<div class="mail-msg-view-log-item mail-msg-view-logitem-<?=intval($item['ID']) ?>"
 		data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($item['__log']) ?>">
-		<span class="mail-msg-view-log-item-icon-<?=($item['__is_outcome'] ? 'outcome' : 'income') ?>"></span>
+		<span class="<?=($item['__is_outcome'] ? 'mail-msg-view-log-item-icon-outcome' : 'mail-msg-view-log-item-icon-income') ?>"></span>
 		<?php $__from = reset($item['__from']); ?>
 		<span class="mail-msg-view-log-item-name"><?=htmlspecialcharsbx($__from['name'] ?: $__from['email']) ?></span>
 		<span class="mail-msg-view-log-item-description"><?=htmlspecialcharsbx($item['SUBJECT']) ?></span>

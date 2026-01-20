@@ -7,6 +7,30 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 	 */
 	module.exports = (inAppUrl) => {
 		inAppUrl.register(
+			'/company/personal/user/:userId/tasks/task/view/:taskId/\\?chatAction=:action(?:&entityId=:entityId(?:&.*)?)?$',
+			async ({ userId, taskId, action, entityId = null }) => {
+				const { Entry } = await requireLazy('tasks:entry');
+				const analyticsLabel = getAnalyticsData();
+
+				const map = {
+					showCheckList: () => Entry.openChecklist({ userId, taskId, entityId, analyticsLabel }),
+					changeDeadline: () => Entry.openDeadlinePicker({ userId, taskId, analyticsLabel }),
+					openResult: () => Entry.openResult({
+						userId,
+						entityId,
+						isFocused: false,
+						taskId,
+						isWithAnotherResultsEmptyState: true,
+					}),
+					completeTask: () => Entry.completeTask({ userId, taskId }),
+					default: () => Entry.openTask({ taskId }, { analyticsLabel }),
+				};
+
+				((map[action] || map.default)());
+			},
+		).name('tasks:task:openChatAction');
+
+		inAppUrl.register(
 			'/company/personal/user/:userId/tasks/task/view/:taskId/',
 			async ({ taskId }) => {
 				const { Entry } = await requireLazy('tasks:entry');
@@ -18,6 +42,31 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 		).name('tasks:task:openForUser');
 
 		inAppUrl.register(
+			'/workgroups/group/:groupId/tasks/task/view/:taskId/\\?chatAction=:action(?:&entityId=:entityId(?:&.*)?)?$',
+			async ({ taskId, action, entityId = null }) => {
+				const { Entry } = await requireLazy('tasks:entry');
+				const analyticsLabel = getAnalyticsData();
+				const userId = Number(env.userId);
+
+				const map = {
+					showCheckList: () => Entry.openChecklist({ userId, taskId, entityId, analyticsLabel }),
+					changeDeadline: () => Entry.openDeadlinePicker({ userId, taskId, analyticsLabel }),
+					openResult: () => Entry.openResult({
+						userId,
+						entityId,
+						isFocused: false,
+						taskId,
+						isWithAnotherResultsEmptyState: true,
+					}),
+					completeTask: () => Entry.completeTask({ userId, taskId }),
+					default: () => Entry.openTask({ taskId }, { analyticsLabel }),
+				};
+
+				((map[action] || map.default)());
+			},
+		).name('tasks:task:openChatActionForGroup');
+
+		inAppUrl.register(
 			'/workgroups/group/:groupId/tasks/task/view/:taskId/',
 			async ({ taskId }) => {
 				const { Entry } = await requireLazy('tasks:entry');
@@ -27,6 +76,20 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 				Entry.openTask({ taskId }, { analyticsLabel });
 			},
 		).name('tasks:task:openForGroup');
+
+		inAppUrl.register(
+			'/task/comments/:taskId/',
+			async ({ taskId }) => {
+				const { Entry } = await requireLazy('tasks:entry');
+
+				const analyticsLabel = getAnalyticsData();
+
+				void Entry.openComments({
+					taskId,
+					analyticsLabel,
+				});
+			},
+		).name('tasks:task:openComments');
 
 		inAppUrl.register(
 			'/company/personal/user/:userId/tasks/effective/',

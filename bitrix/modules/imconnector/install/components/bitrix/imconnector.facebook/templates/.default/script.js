@@ -16,10 +16,6 @@
 			urlSearchParams.delete('wrong_user');
 			hideChannelsBlock = true;
 		}
-		if (urlSearchParams.get('MENU_TAB') === 'catalog')
-		{
-			hideChannelsBlock = true;
-		}
 		if (hideChannelsBlock && channelSettingsBlock)
 		{
 			channelSettingsBlock.style.display = 'none';
@@ -95,14 +91,7 @@
 			var channelSettingsBlock = BX('bx-connector-user-list')
 			if (channelSettingsBlock)
 			{
-				if (node.dataset.fbConnectorPage === 'catalog')
-				{
-					channelSettingsBlock.style.display = 'none';
-				}
-				else
-				{
-					channelSettingsBlock.style.display = 'block';
-				}
+				channelSettingsBlock.style.display = 'block';
 			}
 
 			BX.removeClass(node, 'imconnector-page-hide');

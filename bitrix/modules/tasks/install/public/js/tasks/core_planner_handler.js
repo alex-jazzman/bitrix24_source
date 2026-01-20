@@ -290,10 +290,14 @@ BX.CTasksPlannerHandler.prototype.draw = function(obPlanner, DATA)
 							var menu = BX.PopupMenu.getMenuById(menuId);
 							if(menu !== null)
 							{
+								window.BXTIMEMAN?.WND?.POPUP?.setAutoHide(true);
+
 								BX.PopupMenu.destroy(menuId);
 							}
 							else
 							{
+								window.BXTIMEMAN?.WND?.POPUP?.setAutoHide(false);
+
 								menu = BX.PopupMenu.show(
 									'task-tm-item-entry-menu-' + taskData.ID,
 									this,
@@ -304,9 +308,10 @@ BX.CTasksPlannerHandler.prototype.draw = function(obPlanner, DATA)
 										"offsetTop": 4,
 										"events":
 										{
-											"onPopupClose" : function(ind){
-											}
-										}
+											onPopupAfterClose: (ind) => {
+												window.BXTIMEMAN?.WND?.POPUP?.setAutoHide(true);
+											},
+										},
 									}
 								);
 							}
@@ -602,6 +607,8 @@ BX.CTasksPlannerHandler.prototype.showTasks = function()
 		this.TASKS_WND.setNode(BX.proxy_context);
 	}
 
+	window.BXTIMEMAN?.WND?.POPUP?.setAutoHide(false);
+
 	this.TASKS_WND.Show();
 };
 
@@ -754,7 +761,14 @@ BX.CTasksPlannerSelector = function(params)
 					className : "popup-window-button-link-cancel",
 					events : {click : function(e) {this.popupWindow.close();return BX.PreventDefault(e);}}
 				})
-			]
+			],
+			events: {
+				onPopupAfterClose: () => {
+					setTimeout(() => {
+						window.BXTIMEMAN?.WND?.POPUP?.setAutoHide(true);
+					}, 100);
+				},
+			},
 		}
 	);
 };

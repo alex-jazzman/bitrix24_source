@@ -147,7 +147,7 @@ export function spoiler(content = '', open = true, title = 'Spoiler')
 
 	return `
 		<details class="${defaultTheme.spoiler.container}"${openAttr}>
-			<summary class="${defaultTheme.spoiler.title}">
+			<summary tabindex="-1" class="${defaultTheme.spoiler.title}">
 				<span data-lexical-text="true">${title}</span>
 			</summary>
 			<div class="${defaultTheme.spoiler.content}">${contentHtml}</div>
@@ -205,7 +205,7 @@ export function video(
 		<span class="${defaultTheme.video.container}${selected ? ' --selected' : ''}" data-lexical-decorator="true" contenteditable="false">
 			<div class="ui-text-editor-video-component${selected ? ' --selected' : ''}">
 			<div class="ui-text-editor-video-object-container">
-				<video controls="true" preload="metadata" playsinline="true" src="${url}" class="${defaultTheme.video.object}" width="560"></video>
+				<video controls="true" preload="metadata" playsinline="true" tabindex="-1" src="${url}" class="${defaultTheme.video.object}" width="560"></video>
 			</div>
 			<div class="ui-text-editor-figure-resizer${selected ? ' --shown' : ''}">
 				<div class="ui-text-editor-figure-resizer-handle --north-east" data-direction="9"></div>

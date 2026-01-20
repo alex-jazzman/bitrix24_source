@@ -1,0 +1,28 @@
+.edit-condition-expression-form__dropdown.ui-ctl {
+	--ui-field-size: 34px;
+	width: 100%;
+}
+
+.edit-condition-expression-form__dropdown.ui-ctl .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.edit-condition-expression-form__dropdown.ui-ctl .ui-ctl-icon-angle.ui-ctl-after {
+	display: block !important;
+}
+
+.edit-condition-expression-form__label {
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
+	margin-bottom: 5px;
+	display: inline-block;
+}
+
+.edit-condition-expression-form__item {
+	margin-bottom: 9px;
+}
+
+.edit-condition-expression-form__item:last-of-type {
+	margin-bottom: 0;
+}

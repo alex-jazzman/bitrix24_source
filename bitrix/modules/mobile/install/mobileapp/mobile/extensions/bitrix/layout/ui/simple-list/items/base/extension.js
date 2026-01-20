@@ -100,7 +100,7 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 					style: wrapperStyle,
 					ref: this.props.forwardRef,
 					testId: `${this.testId}_ITEM_${item.id}`,
-					onClick: () => this.onItemClick(item.id, item.data, this.params),
+					onClick: () => this.onItemClick(item.id, item.data ?? item, this.params),
 					onLongClick: () => this.onItemLongClick(item.id, item.data, this.params),
 				},
 				View(

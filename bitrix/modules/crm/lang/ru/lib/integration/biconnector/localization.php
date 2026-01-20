@@ -210,3 +210,27 @@ $MESS['CRM_QUOTE_UF_TABLE'] = "Пользовательские поля в пр
 $MESS['CRM_QUOTE_UF_FIELD_QUOTE_ID'] = "ID предложения";
 $MESS['CRM_QUOTE_UF_FIELD_DATE_CREATE'] = "Дата создания";
 $MESS['CRM_QUOTE_UF_FIELD_CLOSEDATE'] = "Дата завершения";
+
+//CRM_ENTITY_STAGE_HISTORY table/field for smart process stage history descriptions
+$MESS['CRM_ENTITY_STAGE_HISTORY_TABLE'] = 'Движение смарт-процессов по стадиям';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_ID'] = 'Уникальный ключ';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_TYPE_ID'] = 'Тип записи';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_OWNER_TYPE_ID'] = 'ID смарт-процесса';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_OWNER_ID'] = 'ID элемента смарт-процесса';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_DATE_CREATE'] = 'Дата и время создания';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_START_DATE'] = 'Дата начала';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_END_DATE'] = 'Дата завершения';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_RESPONSIBLE_BY_ID'] = 'ID ответственного';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_RESPONSIBLE_BY_NAME'] = 'Имя ответственного';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_RESPONSIBLE_BY'] = 'Ответственный';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_RESPONSIBLE_BY_FULL'] = 'ID и имя ответственного';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_RESPONSIBLE_BY_DEPARTMENT'] = 'Отдел ответственного';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_RESPONSIBLE_BY_DEPARTMENT_FULL'] = 'Подразделение в структуре компании, в котором работает ответственный';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_CATEGORY_ID'] = 'ID воронки смарт-процесса';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_CATEGORY_NAME'] = 'Название воронки смарт-процесса';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_CATEGORY'] = 'Воронка смарт-процесса';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_SEMANTIC_ID'] = 'ID типа стадии';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_SEMANTIC'] = 'Тип стадии';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_ID'] = 'ID стадии';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_NAME'] = 'Название стадии';
+$MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE'] = 'Стадия';

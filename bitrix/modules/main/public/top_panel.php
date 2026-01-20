@@ -1181,7 +1181,7 @@ class CTopPanel
 			: $APPLICATION->GetShowIncludeAreas() == 'Y';
 
 		//Save if changed
-		$old_edit = $aUserOpt['edit'];
+		$old_edit = $aUserOpt['edit'] ?? '';
 		$aUserOpt['edit'] = $toggleMode ? 'on' : 'off';
 		if ($old_edit !== $aUserOpt['edit'])
 		{
@@ -1531,13 +1531,13 @@ class CTopPanel
 					{
 						$button_text = '<span class="bx-panel-button-text">'.str_replace('#BR#', '<span class="bx-panel-break"></span>', $arButton['TEXT']).'</span>';
 						$result .= '<a href="'.htmlspecialcharsbx($arButton['HREF']).'" onclick="'.$onClick.';BX.removeClass(this.parentNode.parentNode, \'bx-panel-button-active\');" id="bx_topmenu_btn_'.$key.'"'.($title ? ' title="'.$title.'"' : '').'>'.$button_icon.$button_text.'</a>';
-						$result .= '<script>BX.admin.panel.RegisterButton({ID: \'bx_topmenu_btn_'.$key.'\', TYPE: \'BIG\', ACTIVE_CSS: \'bx-panel-button-active\', HOVER_CSS: \'bx-panel-button-hover\''.($arButton['HINT'] ? ', HINT: ' . Json::encode($arButton['HINT']) : '').', GROUP_ID : '.$groupId.', LINK: "'.CUtil::JSEscape($arButton['HREF']).'", ACTION : "'.$onClickJs.'", TEXT :  "'.$button_text_js.'"});</script>';
+						$result .= '<script>BX.admin.panel.RegisterButton({ID: \'bx_topmenu_btn_'.$key.'\', TYPE: \'BIG\', ACTIVE_CSS: \'bx-panel-button-active\', HOVER_CSS: \'bx-panel-button-hover\''.(!empty($arButton['HINT']) ? ', HINT: ' . Json::encode($arButton['HINT']) : '').', GROUP_ID : '.$groupId.', LINK: "'.CUtil::JSEscape($arButton['HREF']).'", ACTION : "'.$onClickJs.'", TEXT :  "'.$button_text_js.'"});</script>';
 					}
 					else // if $bHasMenu
 					{
 						$button_text = '<span class="bx-panel-button-text">'.str_replace('#BR#', '<span class="bx-panel-break"></span>', $arButton['TEXT']).'&nbsp;<span class="bx-panel-button-arrow"></span></span>';
 						$result .= '<a href="javascript:void(0)" id="bx_topmenu_btn_'.$key.'_menu">'.$button_icon.$button_text.'</a>';
-						$result .= '<script>BX.admin.panel.RegisterButton({ID: \'bx_topmenu_btn_'.$key.'_menu\', TYPE: \'BIG\', MENU: ' . Json::encode($arButton['MENU']) . ', ACTIVE_CSS: \'bx-panel-button-active\', HOVER_CSS: \'bx-panel-button-hover\''.($arButton['HINT'] ? ', HINT: ' . Json::encode($arButton['HINT']) : '').', GROUP_ID : '.$groupId.', TEXT :  "'.$button_text_js.'"});</script>';
+						$result .= '<script>BX.admin.panel.RegisterButton({ID: \'bx_topmenu_btn_'.$key.'_menu\', TYPE: \'BIG\', MENU: ' . Json::encode($arButton['MENU']) . ', ACTIVE_CSS: \'bx-panel-button-active\', HOVER_CSS: \'bx-panel-button-hover\''.(!empty($arButton['HINT']) ? ', HINT: ' . Json::encode($arButton['HINT']) : '').', GROUP_ID : '.$groupId.', TEXT :  "'.$button_text_js.'"});</script>';
 					}
 
 					$result .= '</span></span>';

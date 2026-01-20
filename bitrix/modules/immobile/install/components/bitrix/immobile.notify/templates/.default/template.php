@@ -566,20 +566,16 @@ if(empty($arResult['NOTIFY'])):?>
 
 		clearTimeout(window.onNotificationsOpenTimeout);
 		window.onNotificationsOpenTimeout = setTimeout(function(){
-			var lastId = <?=$arResult['UNREAD_NOTIFY_ID']?>;
-
-			BXMobileApp.onCustomEvent("onNotificationsOpen", {lastId: lastId}, true);
-			BXMobileApp.Events.postToComponent("chatdialog::notification::readAll", [{}, true], 'im.recent');
-
 			BX.rest.callMethod('im.notify.read.all')
 				.then(result => {
 					console.log('im.notify.read.all result:', result);
+
+					BXMobileApp.onCustomEvent("onNotificationsOpen", result?.answer?.result, true);
 				})
 				.catch(error => {
 					console.log('im.notify.read.all error:', error);
 				})
 			;
-
 		}, 300);
 
 		BX.addCustomEvent("onFrameDataReceived", function(data){

@@ -31,7 +31,7 @@ jn.define('im/messenger/provider/services/analytics/entity-manager', (require, e
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.clickCreateTask)
 				.setSection(Analytics.Section.chatTextarea)
-				.setP1(AnalyticsHelper.getP1ByChatType())
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
 
@@ -56,7 +56,7 @@ jn.define('im/messenger/provider/services/analytics/entity-manager', (require, e
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.clickCreateEvent)
 				.setSection(Analytics.Section.chatTextarea)
-				.setP1(AnalyticsHelper.getP1ByChatType())
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
 

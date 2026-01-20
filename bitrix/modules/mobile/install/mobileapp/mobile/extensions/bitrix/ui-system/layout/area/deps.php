@@ -2,8 +2,9 @@
 return [
 	'extensions' => [
 		'tokens',
-		'utils/object',
 		'ui-system/typography/bbcodetext',
+		'utils/object',
+		'utils/validation',
 	],
 	'bundle' => [
 		'./src/top',

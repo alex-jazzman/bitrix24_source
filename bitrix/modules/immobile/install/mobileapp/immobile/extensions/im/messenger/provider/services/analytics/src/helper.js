@@ -6,6 +6,7 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	const CUSTOM_CHAT_TYPE = 'custom';
 
@@ -44,9 +45,13 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 			return `parentChatId_${parentChatId}`;
 		}
 
+		/**
+		 * @param {string} type
+		 * @returns {string}
+		 */
 		getTypeByChatType(type)
 		{
-			return this.#prepareChatType(type);
+			return this.prepareChatType(type);
 		}
 
 		/**
@@ -99,17 +104,20 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 		}
 
 		/**
-		 * @param {boolean} dialog
+		 * @param {DialoguesModelState} dialog
 		 * @returns {string}
 		 */
-		getChatSubSectionCode(dialog)
+		getP1ByDialog(dialog)
 		{
-			return dialog ? Analytics.SubSection.chat : Analytics.SubSection.chatList;
-		}
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			let type = this.prepareChatType(dialog.type);
 
-		getP1ByChatType(type)
-		{
-			return `chatType_${this.#prepareChatType(type)}`;
+			if (dialogHelper?.isAiAssistant)
+			{
+				type = Analytics.Type.Dialog.aiAssistant;
+			}
+
+			return `chatType_${type}`;
 		}
 
 		getP2ByUserType()
@@ -119,7 +127,11 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 			return Analytics.P2[userInfo.type] ?? Analytics.P2.user;
 		}
 
-		#prepareChatType(type)
+		/**
+		 * @param {string} type
+		 * @returns {string}
+		 */
+		prepareChatType(type)
 		{
 			if ([DialogType.private, DialogType.user].includes(type))
 			{

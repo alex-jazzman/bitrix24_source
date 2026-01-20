@@ -151,6 +151,7 @@ class AhaMoments
 			[AhaMoment.SelectResources]: this.#shouldShowSelectResources(),
 			[AhaMoment.CyclePopup]: this.#shouldShowCyclePopup(),
 			[AhaMoment.SearchNavigation]: this.#shouldShowSearchNavigation(),
+			[AhaMoment.IntegrationMapsYa]: this.#shouldShowIntegrationMapsYa(),
 		}[ahaMoment];
 	}
 
@@ -237,6 +238,11 @@ class AhaMoments
 		return this.#wasNotShown(AhaMoment.SearchNavigation);
 	}
 
+	#shouldShowIntegrationMapsYa(): boolean
+	{
+		return this.#wasNotShown(AhaMoment.IntegrationMapsYa);
+	}
+
 	#wasNotShown(ahaMoment: $Values<typeof AhaMoment>): boolean
 	{
 		return !this.#wasShown(ahaMoment);
@@ -263,6 +269,7 @@ class AhaMoments
 			[AhaMoment.SelectResources]: Option.AhaSelectResources,
 			[AhaMoment.CyclePopup]: Option.AhaCyclePopup,
 			[AhaMoment.SearchNavigation]: Option.AhaSearchNavigation,
+			[AhaMoment.IntegrationMapsYa]: Option.AhaIntegrationMapsYa,
 		}[ahaMoment];
 	}
 }

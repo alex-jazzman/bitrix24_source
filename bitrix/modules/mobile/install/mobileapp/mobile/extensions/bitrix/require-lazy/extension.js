@@ -1,5 +1,7 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module require-lazy
+ */
+jn.define('require-lazy', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 
 	/**
@@ -47,15 +49,13 @@
 			});
 	}
 
-	jnexport(requireLazy);
-
 	/**
 	 * Be careful! Prefix extension modules with a colon instead of a slash. (e.g. use ['crm:type'], not ['crm/type'])
 	 *
 	 * @function requireLazyBatch
 	 * @param {string[]} extensionsNamesWithColon
 	 * @param {boolean} [showLoader]
-	 * @returns {Map}
+	 * @returns {Promise<Map<string, any>>}
 	 */
 	async function requireLazyBatch(extensionsNamesWithColon, showLoader = true)
 	{
@@ -74,10 +74,9 @@
 				loadedExtensions.set(extensionNameWithColon, requireResult);
 
 				return requireResult;
-			})
-				.catch(() => {
-					console.error(`${extensionNameWithColon}, extension not found`);
-				});
+			}).catch(() => {
+				console.error(`${extensionNameWithColon}, extension not found`);
+			});
 		});
 
 		await Promise.allSettled(loadPromises).then(() => {
@@ -90,5 +89,17 @@
 		return loadedExtensions;
 	}
 
+	module.exports = {
+		requireLazy,
+		requireLazyBatch,
+	};
+});
+
+// todo remove after all global usages in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { requireLazy, requireLazyBatch } = require('require-lazy');
+
 	jnexport(requireLazyBatch);
+	jnexport(requireLazy);
 })();

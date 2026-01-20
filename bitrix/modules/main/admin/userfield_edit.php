@@ -599,7 +599,7 @@ $tabControl->Buttons(
 );
 ?>
 <?echo bitrix_sessid_post();?>
-<?if($ID>0 && !$bCopy):?>
+<?if($ID>0 && empty($bCopy)):?>
 	<input type="hidden" name="ID" value="<?=$ID?>">
 <?endif;?>
 <input type="hidden" name="back_url" value="<?=htmlspecialcharsbx($back_url)?>">
@@ -614,4 +614,4 @@ $tabControl->ShowWarnings("post_form", $message);
 ?>
 
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

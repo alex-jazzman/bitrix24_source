@@ -6,6 +6,7 @@ $MESS["MENU_BIZPROC_DISK"] = "Workflows on Company drive";
 $MESS["MENU_BIZPROC_TASKS"] = "My Assignments";
 $MESS["MENU_BIZPROC_TASKS_1"] = "My Assignments";
 $MESS["MENU_BIZPROC_TASKS_2"] = "Assignments";
+$MESS["MENU_BIZPROC_TEMPLATE_PROCESSES"] = "Workflow templates";
 $MESS["MENU_MY_PROCESS"] = "My Workflows";
 $MESS["MENU_MY_PROCESS_1"] = "My Workflows";
 $MESS["MENU_PROCESS_STREAM"] = "Workflows in Activity Stream";

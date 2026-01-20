@@ -5,6 +5,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+$portalSettingsUrl = '';
+
+if (\Bitrix\Main\Loader::includeModule('im'))
+{
+	$portalSettingsUrl = (new \Bitrix\Im\V2\Application\Config())->getPortalSettingsUrl();
+}
+
 return [
 	'css' => 'dist/sidebar.bundle.css',
 	'js' => 'dist/sidebar.bundle.js',
@@ -32,7 +39,7 @@ return [
 		'ui.viewer',
 		'im.v2.provider.service.disk',
 		'im.v2.model',
-		'im.v2.component.elements.audioplayer',
+		'im.v2.component.elements.player',
 		'ui.icons',
 		'ui.notification',
 		'rest.client',
@@ -60,7 +67,6 @@ return [
 		'im.v2.component.elements.avatar',
 		'im.v2.lib.user',
 		'im.v2.application.core',
-		'main.core.events',
 		'im.public',
 		'im.v2.const',
 		'im.v2.component.elements.loader',
@@ -68,4 +74,7 @@ return [
 		'im.v2.lib.date-formatter',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'portalSettingsUrl' => $portalSettingsUrl,
+	]
 ];

@@ -361,6 +361,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.props.parentWidget,
+				analyticsSection: 'tasks_flow_ai_advice_user',
 			});
 		}
 

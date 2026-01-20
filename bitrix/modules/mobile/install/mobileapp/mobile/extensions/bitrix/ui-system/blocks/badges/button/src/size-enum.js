@@ -33,5 +33,7 @@ jn.define('ui-system/blocks/badges/button/src/size-enum', (require, exports, mod
 		}
 	}
 
-	module.exports = { BadgeButtonSize };
+	module.exports = {
+		BadgeButtonSize: BadgeButtonSize.export(),
+	};
 });

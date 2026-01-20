@@ -14,6 +14,7 @@ return [
 		'main.date',
 		'main.core',
 		'sign.v2.api',
+		'sign.v2.b2e.signing-frame-event-handler',
 	],
 	'skip_core' => false,
 ];

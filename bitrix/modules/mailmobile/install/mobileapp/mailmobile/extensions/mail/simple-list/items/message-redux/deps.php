@@ -1,0 +1,38 @@
+<?php
+
+return [
+	'extensions' => [
+		'mail:simple-list/items/message-redux/src/action-menu',
+		'mail:statemanager/redux/slices/mailboxes/selector',
+		'mail:statemanager/redux/slices/messages/selector',
+		'mail:statemanager/redux/slices/messages/thunk',
+		'mail:statemanager/redux/slices/messages',
+		'mail:message/elements/avatar',
+		'mail:const',
+		'layout/ui/simple-list/items/base',
+		'ui-system/typography/bbcodetext',
+		'ui-system/blocks/badges/button',
+		'ui-system/form/buttons/button',
+		'ui-system/typography/heading',
+		'ui-system/typography/text',
+		'ui-system/form/checkbox',
+		'ui-system/blocks/avatar',
+		'statemanager/redux/connect',
+		'statemanager/redux/store',
+		'layout/pure-component',
+		'layout/ui/user-list',
+		'utils/function',
+		'utils/object',
+		'user/profile',
+		'utils/date',
+		'apptheme',
+		'haptics',
+		'tokens',
+		'type',
+		'loc',
+	],
+	'bundle' => [
+		'./src/message-content',
+		'./src/action-menu',
+	],
+];

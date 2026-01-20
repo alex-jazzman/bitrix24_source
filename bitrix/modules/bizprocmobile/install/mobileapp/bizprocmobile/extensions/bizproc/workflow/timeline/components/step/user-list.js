@@ -210,6 +210,7 @@ jn.define('bizproc/workflow/timeline/components/step/user-list', (require, expor
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.props.layout,
+				analyticsSection: 'bizproc_workflow_timeline',
 			});
 		}
 

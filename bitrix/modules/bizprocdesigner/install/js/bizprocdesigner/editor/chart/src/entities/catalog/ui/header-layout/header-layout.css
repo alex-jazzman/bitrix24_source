@@ -1,0 +1,12 @@
+.editor-chart-catalog-header-layout {
+	display: flex;
+	height: 43px;
+	padding: 0 6px 5px 0;
+	border-bottom: solid 1px var(--ui-color-palette-gray-15);
+	align-items: center;
+}
+
+.editor-chart-catalog-header-layout__logo {
+	width: 100%;
+	padding-left: 13px;
+}

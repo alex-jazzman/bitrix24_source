@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'tokens',
-		'notify-manager',
+		'notify',
 
 		'layout/pure-component',
 

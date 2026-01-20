@@ -220,7 +220,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: 0
 	    }
 	  },
-	  emits: ['close'],
+	  emits: ['close', 'scroll'],
 	  computed: {
 	    POPUP_ID: () => POPUP_ID,
 	    config() {
@@ -253,6 +253,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:contextDialogId="contextDialogId"
 				:loading="loading" 
 				:adjustPopupFunction="adjustPosition"
+				@scroll="$emit('scroll', $event)"
 			/>
 		</MessengerPopup>
 	`

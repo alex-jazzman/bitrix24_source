@@ -4,7 +4,6 @@
 jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 	const { TabType } = require('user-profile/const');
 	const { CommonTab } = require('user-profile/common-tab');
-	const { ProfileFilesGrid } = require('disk/file-grid/profile-files');
 	const { getState } = require('statemanager/redux/store');
 	const { selectById } = require('statemanager/redux/slices/users/selector');
 	const { Loc } = require('loc');
@@ -90,6 +89,8 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 	{
 		if (nestedWidgets[TabType.FILES])
 		{
+			const { ProfileFilesGrid } = require('disk/file-grid/profile-files');
+
 			const widget = nestedWidgets[TabType.FILES];
 			const widgetParams = params[TabType.FILES];
 

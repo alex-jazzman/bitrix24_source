@@ -1,6 +1,18 @@
 <?php
+$MESS["TASKS_V2_DEADLINE_AFTER_CUSTOM"] = "Custom:";
+$MESS["TASKS_V2_DEADLINE_AFTER_HINT"] = "This deadline will be applied to all new tasks created from this template.";
+$MESS["TASKS_V2_DEADLINE_AFTER_TEXT"] = "Specify the default deadline for new tasks created from this template.";
 $MESS["TASKS_V2_DEADLINE_AUTO"] = "Auto";
+$MESS["TASKS_V2_DEADLINE_A_WEEK"] = "1 week";
 $MESS["TASKS_V2_DEADLINE_CANCEL"] = "Cancel";
+$MESS["TASKS_V2_DEADLINE_CAN_CHANGE_HINT"] = "Changing deadline is prohibited by the task owner.";
+$MESS["TASKS_V2_DEADLINE_CAN_MAX_CHANGE_DATE_HINT"] = "The deadline cannot be later than #DATE#.";
+$MESS["TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_1"] = "The task owner has limited the number of times the deadline can be changed.";
+$MESS["TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_2"] = "The deadline cannot be changed anymore.";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_CANCEL"] = "Cancel";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_SAVE"] = "OK";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_MESSAGE"] = "The task owner requests that you provide a reason for changing the deadline. The text you submit here will be visible in the task chat.";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_TITLE"] = "Deadline change reason";
 $MESS["TASKS_V2_DEADLINE_EMPTY"] = "No deadline";
 $MESS["TASKS_V2_DEADLINE_EXPIRED"] = "Overdue #EXPIRED_DURATION#";
 $MESS["TASKS_V2_DEADLINE_FORMAT"] = "#DATE# #TIME#";
@@ -11,3 +23,4 @@ $MESS["TASKS_V2_DEADLINE_SELECT"] = "Select";
 $MESS["TASKS_V2_DEADLINE_TITLE"] = "Deadline:";
 $MESS["TASKS_V2_DEADLINE_TODAY"] = "Today";
 $MESS["TASKS_V2_DEADLINE_TOMORROW"] = "Tomorrow";
+$MESS["TASKS_V2_DEADLINE_TWO_WEEKS"] = "2 weeks";

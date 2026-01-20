@@ -10,7 +10,7 @@ import {
 	AnalyticsType,
 } from '../const';
 
-import type { ImModelChat, ImModelCommentInfo } from 'im.v2.model';
+import type { ImModelChat } from 'im.v2.model';
 
 export class MessageDelete
 {
@@ -28,14 +28,12 @@ export class MessageDelete
 			event: AnalyticsEvent.view,
 			type: AnalyticsType.deletedMessage,
 			p1: `chatType_${chat.type}`,
-			p5: `chatId_${chat.chatId}`,
 		});
 	}
 
-	onDeletedPostNotification({ messageId, dialogId }: {messageId: string | number, dialogId: string}): void
+	onDeletedPostNotification({ dialogId }: {dialogId: string}): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
-		const commentInfo: ImModelCommentInfo = Core.getStore().getters['messages/comments/getByMessageId'](messageId);
 
 		sendData({
 			tool: AnalyticsTool.im,
@@ -45,7 +43,6 @@ export class MessageDelete
 			c_section: AnalyticsSection.comments,
 			p1: `chatType_${chat.type}`,
 			p4: `parentChatId_${chat.chatId}`,
-			p5: `chatId_${commentInfo.chatId}`,
 		});
 	}
 }

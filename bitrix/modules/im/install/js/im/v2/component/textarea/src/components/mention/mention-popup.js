@@ -4,7 +4,7 @@ import { CopilotManager } from 'im.v2.lib.copilot';
 
 import type { ImModelChat } from 'im.v2.model';
 
-import { MentionPopupContent } from './components/mention-popup-content';
+import { MentionPopupContent } from './mention-content';
 
 import './css/mention-popup.css';
 
@@ -63,10 +63,10 @@ export const MentionPopup = {
 				return [];
 			}
 
-			const copilotUserId = this.$store.getters['users/bots/getCopilotUserId'];
-			if (copilotUserId && this.isGroupCopilotChat)
+			const copilotBotDialogId = this.$store.getters['users/bots/getCopilotBotDialogId'];
+			if (copilotBotDialogId && this.isGroupCopilotChat)
 			{
-				return [copilotUserId.toString()];
+				return [copilotBotDialogId];
 			}
 
 			return [];

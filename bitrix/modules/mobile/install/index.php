@@ -47,6 +47,7 @@ class mobile extends CModule
 			'intranet',
 			'stafftrack',
 			'disk',
+			'mail',
 		];
 	}
 

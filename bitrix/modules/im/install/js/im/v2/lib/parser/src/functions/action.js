@@ -1,12 +1,10 @@
-import { Messenger } from 'im.public';
 import { Dom, Text } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
-import { getConst, getUtils, getCore } from '../utils/core-proxy';
+import { getConst, getCore } from '../utils/core-proxy';
+
+import type { ApplicationContext } from 'im.v2.const';
 
 const { EventType } = getConst();
-
-const atomRegExpPart = '\\d{4}-\\d{2}-\\d{2}T[0-2]\\d:[0-5]\\d:[0-5]\\d[+-][0-2]\\d:[0-5]\\d';
 
 const ActionType = {
 	put: 'put',
@@ -118,12 +116,14 @@ export const ParserAction = {
 		}).outerHTML;
 	},
 
-	executeClickEvent(event: PointerEvent)
+	executeClickEvent(event: PointerEvent, context: ApplicationContext)
 	{
 		if (!Dom.hasClass(event.target, 'bx-im-message-command'))
 		{
 			return;
 		}
+
+		const { emitter } = context;
 
 		const element: HTMLSpanElement = event.target;
 		const messageId = getMessageIdForClickElement(element);
@@ -136,7 +136,7 @@ export const ParserAction = {
 				return;
 			}
 
-			EventEmitter.emit(EventType.textarea.insertText, {
+			emitter.emit(EventType.textarea.insertText, {
 				text: textToInsert,
 				dialogId,
 			});
@@ -149,7 +149,7 @@ export const ParserAction = {
 				return;
 			}
 
-			EventEmitter.emit(EventType.textarea.sendMessage, {
+			emitter.emit(EventType.textarea.sendMessage, {
 				text: textToSend,
 				dialogId,
 			});

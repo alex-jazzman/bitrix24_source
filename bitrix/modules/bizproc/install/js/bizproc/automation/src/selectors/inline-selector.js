@@ -25,14 +25,17 @@ export class InlineSelector extends EventEmitter
 	basisFields: Array<Object> = [];
 	#dialog: ?Dialog = null;
 	#switcherDialog: ?Menu = null;
+	#customSelectorFn: ?Function = null;
+	static #counter = 1;
 
-	constructor(props: { context: SelectorContext })
+	constructor(props: { context: SelectorContext, customSelectorFn: ?Function})
 	{
 		super();
 		this.setEventNamespace('BX.Bizproc.Automation.Selector');
 
 		this.context = props.context;
 		this.basisFields = this.context.fields;
+		this.#customSelectorFn = props.customSelectorFn;
 	}
 
 	hasGroup(groupId: string): boolean
@@ -102,9 +105,16 @@ export class InlineSelector extends EventEmitter
 		this.targetInput = Runtime.clone(targetInput);
 		this.targetInput.setAttribute('autocomplete', 'off');
 
+		if (this.#customSelectorFn)
+		{
+			this.targetInput.setAttribute(
+				'id',
+				this.targetInput.getAttribute('name') + InlineSelector.#counter++,
+			);
+		}
 		this.menuButton = Tag.render`
 			<span 
-				onclick="${this.openMenu.bind(this)}"
+				onclick="${this.#customSelectorFn ? this.#customSelectorFn.bind(this, this.targetInput.id) : this.openMenu.bind(this)}"
 				class="bizproc-automation-popup-select-dotted"
 			></span>
 		`;
@@ -193,7 +203,7 @@ export class InlineSelector extends EventEmitter
 		}
 		else if (fieldType === 'date' || fieldType === 'datetime')
 		{
-			return field.Type === 'date' || field.Type === 'datetime';
+			return field.Type === 'date' || field.Type === 'datetime' || field.Type === 'UF:date';
 		}
 		else if (fieldType === 'time')
 		{

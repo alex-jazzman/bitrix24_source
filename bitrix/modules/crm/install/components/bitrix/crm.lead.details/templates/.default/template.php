@@ -68,31 +68,6 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 		$component
 	);
 }
-
-$isMlAvailable = \Bitrix\Crm\Ml\Scoring::isMlAvailable();
-$isScoringEnabled = \Bitrix\Crm\Ml\Scoring::isEnabled();
-$isScoringAvailable = \Bitrix\Crm\Ml\Scoring::isScoringAvailable();
-$isTrainingUsed = \Bitrix\Crm\Ml\Scoring::isTrainingUsed();
-if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUsed)
-{
-	echo \Bitrix\Crm\Tour\Ml\ScoringShutdownWarning::getInstance()->build();
-}
-
-if ($isScoringAvailable):
-?>
-	<script>
-		<? if($arResult['ENTITY_ID'] > 0): ?>
-			new BX.CrmScoringButton({
-				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
-				scoringEnabled: <?= ($isScoringEnabled ? 'true' : 'false')?>,
-				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING'])?>,
-				entityType: '<?= CCrmOwnerType::LeadName?>',
-				entityId: <?= (int)$arResult['ENTITY_ID']?>,
-				isFinal: <?= $arResult['IS_STAGE_FINAL'] ? 'true' : 'false' ?>,
-			});
-		<? endif; ?>
-</script><?
-endif;
 ?>
 <script>
 	BX.message({

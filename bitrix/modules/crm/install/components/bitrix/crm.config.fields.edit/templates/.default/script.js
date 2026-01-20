@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 function jsTypeChanged(form_id, dropdown)
 {
 	var _form = document.getElementById(form_id);
@@ -162,5 +164,45 @@ function display_list_length(display)
 	if(row)
 	{
 		row.style.display = display ? "" : "none";
+	}
+}
+
+function getMultiLangNodes(commonInputName, multiLangInputNames, checkboxName)
+{
+	const commonInput = document.getElementsByName(commonInputName)[0];
+	const commonInputContainer = commonInput.closest('tr');
+
+	const multiLangInputContainers = [];
+	multiLangInputNames.forEach(labelInputName => {
+		const input = document.getElementsByName(labelInputName)[0];
+		const inputContainer = input.closest('tr');
+		if (!BX.Type.isNull(inputContainer))
+		{
+			multiLangInputContainers.push(inputContainer);
+		}
+	});
+
+	const multiLangToggleCheckbox = document.querySelector(`input[type="checkbox"][name=${checkboxName}]`);
+
+	return {
+		commonInputContainer,
+		multiLangInputContainers,
+		multiLangToggleCheckbox,
+	};
+}
+
+function adjustMultiLangInputsVisibility(commonInput, multiLangInputs, checkBox)
+{
+	const isShowMultiLang = checkBox.checked;
+
+	if (isShowMultiLang)
+	{
+		BX.Dom.hide(commonInput);
+		multiLangInputs.forEach(input => BX.Dom.show(input))
+	}
+	else
+	{
+		BX.Dom.show(commonInput);
+		multiLangInputs.forEach(input => BX.Dom.hide(input))
 	}
 }

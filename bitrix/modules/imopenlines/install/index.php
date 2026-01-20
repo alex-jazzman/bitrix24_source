@@ -2,7 +2,7 @@
 
 use \Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__DIR__. '/install.php');
+Loc::loadMessages(__FILE__);
 
 if (class_exists("imopenlines"))
 {
@@ -248,8 +248,6 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
 		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish  */
 		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
-
-		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer', 500);
 
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
@@ -568,8 +566,6 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionStart');
 		/** @see \Bitrix\ImOpenLines\Connector::onSessionFinish */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionFinish');
-		/** @see \Bitrix\ImOpenLines\SalesCenter\Catalog::OnChatAnswer */
-		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer');
 
 		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Livechat::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
 		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Config::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');

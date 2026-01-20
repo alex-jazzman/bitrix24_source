@@ -117,6 +117,21 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	// @vue/component
+	const BrRule = {
+	  name: 'BrRule',
+	  props: {
+	    // default property for every rule
+	    text: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  template: `
+		<br/>
+	`
+	};
+
 	const ruleRegistry = {
 	  helpdesk: {
 	    name: 'helpdesk',
@@ -125,6 +140,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  nowrap: {
 	    name: 'nowrap',
 	    component: NoWrapRule
+	  },
+	  br: {
+	    name: 'br',
+	    component: BrRule
 	  }
 	};
 

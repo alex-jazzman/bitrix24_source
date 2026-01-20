@@ -16,6 +16,7 @@ export class Stages extends BuilderEntityModel<StagesModelState, StageModel>
 			id: 0,
 			title: '',
 			color: '',
+			systemType: '',
 		};
 	}
 }

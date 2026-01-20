@@ -112,7 +112,11 @@ class Config
 	fillTabs()
 	{
 		const tabNames = [
-			'common', 'labels', 'additional', 'list'
+			'common',
+			'labels',
+			'tooltips',
+			'additional',
+			'list',
 		];
 		if (this.container)
 		{
@@ -196,12 +200,37 @@ class Config
 			if (currentLanguageLabelInput)
 			{
 				Event.bind(commonLabelInput, 'change', () => {
-					this.syncLabelInputs(commonLabelInput, currentLanguageLabelInput);
+					this.syncInputs(commonLabelInput, currentLanguageLabelInput);
 				});
 
 				Event.bind(currentLanguageLabelInput, 'change', () => {
-					this.syncLabelInputs(currentLanguageLabelInput, commonLabelInput);
+					this.syncInputs(currentLanguageLabelInput, commonLabelInput);
 				});
+			}
+		}
+
+		const commonTooltipInput = this.getInput('editFormTooltip');
+		if (
+			commonTooltipInput
+			&& !Type.isNull(commonTooltipInput.parentElement)
+			&& !Type.isNull(commonTooltipInput.parentElement.parentElement)
+		)
+		{
+			const languageId = commonTooltipInput.parentElement.parentElement.dataset['language'];
+			const currentLanguageTooltipInput = this.getInput('editFormTooltip-' + languageId);
+			if (!Type.isNull(currentLanguageTooltipInput))
+			{
+				Event.bind(
+					commonTooltipInput,
+					'change',
+					() => this.syncInputs(commonTooltipInput, currentLanguageTooltipInput),
+				);
+
+				Event.bind(
+					currentLanguageTooltipInput,
+					'change',
+					() => this.syncInputs(currentLanguageTooltipInput, commonTooltipInput),
+				);
 			}
 		}
 
@@ -414,11 +443,17 @@ class Config
 		}
 
 		const editFormLabel = {};
-
 		const labelInputs = Array.from(this.container.querySelectorAll('[data-role="main-user-field-label-container"]'));
 		labelInputs.forEach((labelContainer) => {
 			const languageId = labelContainer.dataset['language'];
 			editFormLabel[languageId] = this.getInputValue('editFormLabel-' + languageId);
+		});
+
+		const helpMessage = {};
+		const tooltipInputs = Array.from(this.container.querySelectorAll('[data-role="main-user-field-label-container"]'));
+		tooltipInputs.forEach(tooltipContainer => {
+			const languageId = tooltipContainer.dataset['language'];
+			helpMessage[languageId] = this.getInputValue('editFormTooltip-' + languageId);
 		});
 
 		const list = [];
@@ -469,6 +504,7 @@ class Config
 		return {
 			id,
 			editFormLabel,
+			helpMessage,
 			entityId: this.getInputValue('entityId'),
 			fieldName: fieldName,
 			sort: this.getInputValue('sort'),
@@ -682,12 +718,12 @@ class Config
 		}
 	}
 
-	syncLabelInputs(fromLabel: HTMLInputElement, toLabel: HTMLInputElement)
+	syncInputs(fromInput: HTMLInputElement, toInput: HTMLInputElement)
 	{
-		const tab = fromLabel.closest('.main-user-field-edit-tab');
+		const tab = fromInput.closest('.main-user-field-edit-tab');
 		if (tab && tab.classList.contains('main-user-field-edit-tab-current'))
 		{
-			toLabel.value = fromLabel.value;
+			toInput.value = fromInput.value;
 		}
 	}
 

@@ -32,9 +32,17 @@ export const Feature = {
 	teamsInStructureAvailable: 'teamsInStructureAvailable',
 	isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
 	aiAssistantBotAvailable: 'aiAssistantAvailable',
+	isCopilotMentionAvailable: 'isCopilotMentionAvailable',
 	aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable',
 	aiFileTranscriptionAvailable: 'aiFileTranscriptionAvailable',
 	isTasksRecentListAvailable: 'isTasksRecentListAvailable',
+	unreadRecentModeAvailable: 'unreadRecentModeAvailable',
+	isCopilotReasoningAvailable: 'isCopilotReasoningAvailable',
+	reactionsV2Available: 'isMultipleReactionsAvailable',
+	aiAssistantMcpSelectorAvailable: 'aiAssistantMcpSelectorAvailable',
+	mentionAllAvailable: 'mentionAllAvailable',
+	videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
+	stickersAvailable: 'stickersAvailable',
 };
 
 export const FeatureManager = {

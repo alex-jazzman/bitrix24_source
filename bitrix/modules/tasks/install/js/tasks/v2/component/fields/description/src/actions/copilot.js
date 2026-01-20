@@ -21,18 +21,11 @@ export const Copilot = {
 			return 'var(--ui-color-copilot-primary)';
 		},
 	},
-	methods: {
-		handleClick()
-		{
-			alert('Not implemented yet');
-		},
-	},
 	template: `
 		<ActionButton
 			:iconName="Outline.COPILOT"
 			:title="loc('TASKS_V2_DESCRIPTION_ACTION_COPILOT_TITLE')"
 			:iconColor="buttonColor"
-			@click="handleClick"
 		/>
 	`,
 };

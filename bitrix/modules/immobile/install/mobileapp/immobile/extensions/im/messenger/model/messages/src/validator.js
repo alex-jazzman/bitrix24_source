@@ -4,6 +4,7 @@
 jn.define('im/messenger/model/messages/validator', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { withCurrentDomain } = require('utils/url');
 	const { Uuid } = require('utils/uuid');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { ObjectUtils, Normalizer } = require('im/messenger/lib/utils');
@@ -124,9 +125,14 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.files = fields.files;
 		}
 
+		if (Type.isPlainObject(fields.stickerParams))
+		{
+			result.stickerParams = fields.stickerParams;
+		}
+
 		if (Type.isPlainObject(fields.params) || Type.isArray(fields.params))
 		{
-			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(fields.params);
+			const { params, fileIds, attach, richLinkId, keyboard, stickerParams } = validateParams(fields.params);
 			result.params = params;
 
 			if (Type.isUndefined(result.files))
@@ -147,6 +153,11 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			if (Type.isUndefined(result.keyboard))
 			{
 				result.keyboard = keyboard;
+			}
+
+			if (Type.isUndefined(result.stickerParams))
+			{
+				result.stickerParams = stickerParams;
 			}
 		}
 
@@ -202,9 +213,9 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.retry = fields.retry;
 		}
 
-		if (Type.isBoolean(fields.audioPlaying))
+		if (Type.isBoolean(fields.isPlaying))
 		{
-			result.audioPlaying = fields.audioPlaying;
+			result.isPlaying = fields.isPlaying;
 		}
 
 		if (Type.isNumber(fields.playingTime))
@@ -233,6 +244,16 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.vote = fields.vote;
 		}
 
+		if (Type.isBoolean(fields.reactionsViewed))
+		{
+			result.reactionsViewed = fields.reactionsViewed;
+		}
+
+		if (Type.isString(fields.lastReactionId))
+		{
+			result.lastReactionId = fields.lastReactionId;
+		}
+
 		return result;
 	}
 
@@ -243,6 +264,7 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 		let attach = [];
 		let keyboard = [];
 		let richLinkId = null;
+		let stickerParams = null;
 
 		Object.entries(rawParams).forEach(([key, value]) => {
 			if (key === 'COMPONENT_ID' && Type.isStringFilled(value))
@@ -294,13 +316,28 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 				richLinkId = value[0] ? Number(value[0]) : null;
 				params.URL_ID = value;
 			}
+			else if (key === 'STICKER_PARAMS')
+			{
+				const preparedValue = ObjectUtils.convertKeysToCamelCase(clone(value));
+				params.STICKER_PARAMS = preparedValue;
+
+				stickerParams = {
+					id: preparedValue.id,
+					type: preparedValue.type,
+					packId: preparedValue.packId,
+					packType: preparedValue.packType,
+					uri: withCurrentDomain(preparedValue.uri),
+					height: preparedValue.height,
+					width: preparedValue.width,
+				};
+			}
 			else
 			{
 				params[key] = value;
 			}
 		});
 
-		return { params, fileIds, attach, richLinkId, keyboard };
+		return { params, fileIds, attach, richLinkId, keyboard, stickerParams };
 	}
 
 	module.exports = { validate };

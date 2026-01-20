@@ -5,41 +5,52 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main;
-use Bitrix\Sign;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign;
 use Bitrix\Sign\Config\Feature;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_TITLE'),
-	'DESCRIPTION' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DESCRIPTION'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'SignB2EDocumentActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
+$locked = Main\Loader::includeModule('bitrix24') && !\Bitrix\Bitrix24\Feature::isFeatureEnabled('sign_automation')
+	? [ 'INFO_CODE' => 'limit_crm_sign_automation' ]
+	: []
+;
+
+$arActivityDescription = (new ActivityDescription(
+	name: Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_TITLE'),
+	description: Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DESCRIPTION'),
+	type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value, ActivityType::NODE->value ],
+))
+	->setCategory([
 		'ID' => 'document',
 		'OWN_ID' => 'crm',
 		'OWN_NAME' => 'CRM',
-	],
-	'FILTER' => [
+	])
+	->setClass('SignB2EDocumentActivity')
+	->setJsClass('BizProcActivity')
+	->setFilter([
 		'INCLUDE' => [
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
+			[ 'crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class ],
 		],
-	],
-	'ROBOT_SETTINGS' => [
+	])
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
-		'GROUP' => ['paperwork'],
+		'GROUP' => [ 'paperwork' ],
 		'IS_SUPPORTING_ROBOT' => false,
 		'RESPONSIBLE_PROPERTY' => 'employee',
 		'SORT' => 1300,
-	],
-	'EXCLUDED' => (
+	])
+	->set('EXCLUDED', (
 		!Main\Loader::includeModule('sign')
 		|| !Main\Loader::includeModule('crm')
 		|| !Sign\Config\Storage::instance()->isB2eAvailable()
 		|| !Feature::instance()->isB2eRobotEnabled()
-	),
-	'RETURN' => [
+	))
+	->setReturn([
 		'documentId' => [
 			'NAME' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ID'),
 			'TYPE' => 'int',
@@ -48,15 +59,10 @@ $arActivityDescription = [
 			'NAME' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_STATUS'),
 			'TYPE' => 'string',
 		],
-	],
-];
-
-if (
-	Main\Loader::includeModule('bitrix24')
-	&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('sign_automation')
-)
-{
-	$arActivityDescription['LOCKED'] = [
-		'INFO_CODE' => 'limit_crm_sign_automation',
-	];
-}
+	])
+	->setGroups([ ActivityGroup::SIGN->value ])
+	->setColorIndex(ActivityColorIndex::ORANGE->value)
+	->setIcon(Outline::DOCUMENT_SIGN->name)
+	->set('LOCKED', $locked)
+	->toArray()
+;

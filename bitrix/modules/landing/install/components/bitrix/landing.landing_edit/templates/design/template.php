@@ -262,10 +262,14 @@ if ($arParams['SUCCESS_SAVE'])
 															const currentColor = <?= CUtil::PhpToJSObject($arResult['CURRENT_COLORS']['currentColor']) ?>;
 															BX.ready(function ()
 															{
+																const metrikaParams = {
+																	p1: 'page_design',
+																};
 																this.corporateColor = new BX.Landing.ColorPickerTheme(
 																	BX('<?= $template->getFieldId('COLORPICKER_THEME') ?>'),
 																	allColors,
 																	currentColor,
+																	metrikaParams,
 																);
 															});
 														</script>
@@ -361,9 +365,14 @@ if ($arParams['SUCCESS_SAVE'])
 											defaultColor: <?=CUtil::PhpToJSObject($colorMain)?>,
 										}
 										BX.ready(function() {
+											const metrikaParams = {
+												subSection: 'text',
+												p1: 'page_design',
+											};
 											this.textColor = new BX.Landing.ColorPicker(
 												BX('<?= $template->getFieldId('THEMEFONTS_COLOR') ?>'),
-												paramsColor
+												paramsColor,
+												metrikaParams,
 											);
 										});
 									</script>
@@ -413,9 +422,14 @@ if ($arParams['SUCCESS_SAVE'])
 											defaultColor: <?=CUtil::PhpToJSObject($colorTitle)?>,
 										}
 										BX.ready(function() {
+											const metrikaParams = {
+												subSection: 'title',
+												p1: 'page_design',
+											};
 											this.hColor = new BX.Landing.ColorPicker(
 												BX('<?= $template->getFieldId('THEMEFONTS_COLOR_H') ?>'),
-												paramsColorH
+												paramsColorH,
+												metrikaParams,
 											);
 										});
 									</script>
@@ -501,9 +515,14 @@ if ($arParams['SUCCESS_SAVE'])
 											defaultColor: <?=CUtil::PhpToJSObject(LandingEditComponent::COLOR_PICKER_DEFAULT_BG_COLOR)?>,
 										}
 										BX.ready(function() {
+											const metrikaParams = {
+												subSection: 'background',
+												p1: 'page_design',
+											};
 											this.bgColor = new BX.Landing.ColorPicker(
 												BX('<?= $template->getFieldId('BACKGROUND_COLOR') ?>'),
-												paramsBgColor
+												paramsBgColor,
+												metrikaParams,
 											);
 										});
 									</script>

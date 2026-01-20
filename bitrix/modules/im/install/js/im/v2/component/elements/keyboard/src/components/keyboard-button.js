@@ -7,6 +7,11 @@ import { Utils } from 'im.v2.lib.utils';
 import type { JsonObject } from 'main.core';
 import type { KeyboardButtonConfig } from 'im.v2.const';
 
+type ButtonStyle = {
+	width?: string,
+	backgroundColor?: string
+};
+
 // @vue/component
 export const KeyboardButton = {
 	name: 'KeyboardButton',
@@ -32,6 +37,13 @@ export const KeyboardButton = {
 		{
 			return this.config;
 		},
+		commonAttributes(): { class: string[], style: ButtonStyle }
+		{
+			return {
+				class: ['bx-im-keyboard-button__container', this.buttonClasses],
+				style: this.buttonStyles,
+			};
+		},
 		buttonClasses(): string[]
 		{
 			const { bgColorToken = ColorToken.base, display, disabled, wait } = this.button;
@@ -49,7 +61,7 @@ export const KeyboardButton = {
 
 			return classes;
 		},
-		buttonStyles(): { width?: string, backgroundColor?: string }
+		buttonStyles(): ButtonStyle
 		{
 			const styles = {};
 			const { width } = this.button;
@@ -60,12 +72,29 @@ export const KeyboardButton = {
 
 			return styles;
 		},
+		preparedLink(): string
+		{
+			if (!this.button.link)
+			{
+				return '';
+			}
+
+			return Text.decode(this.button.link);
+		},
 	},
 	methods:
 	{
-		onClick()
+		onClick(event: PointerEvent)
 		{
 			if (this.keyboardBlocked || this.button.disabled || this.button.wait)
+			{
+				event.preventDefault();
+
+				return;
+			}
+
+			// proceed with native link handling
+			if (this.button.link)
 			{
 				return;
 			}
@@ -77,11 +106,6 @@ export const KeyboardButton = {
 			else if (this.button.appId)
 			{
 				Logger.warn('Messenger keyboard: open app is not implemented.');
-			}
-			else if (this.button.link)
-			{
-				const preparedLink = Text.decode(this.button.link);
-				Utils.browser.openLink(preparedLink);
 			}
 			else if (this.button.command)
 			{
@@ -112,10 +136,18 @@ export const KeyboardButton = {
 		},
 	},
 	template: `
+		<a
+			v-if="button.link"
+			:href="preparedLink"
+			target="_blank"
+			v-bind="commonAttributes"
+			@click="onClick"
+		>
+			{{ button.text }}
+		</a>
 		<div
-			class="bx-im-keyboard-button__container"
-			:class="buttonClasses"
-			:style="buttonStyles"
+			v-else
+			v-bind="commonAttributes"
 			@click="onClick"
 		>
 			{{ button.text }}

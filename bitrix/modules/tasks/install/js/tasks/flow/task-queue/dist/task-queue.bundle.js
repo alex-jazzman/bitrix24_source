@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_loader,main_popup,tasks_sidePanelIntegration,main_sidepanel,main_core) {
+(function (exports,main_loader,main_popup,tasks_sidePanelIntegration,main_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -82,7 +82,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	let _$1 = t => t,
 	  _t$1,
 	  _t2$1,
-	  _t3;
+	  _t3,
+	  _t4;
 	var _serial = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("serial");
 	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
 	var _url = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("url");
@@ -94,19 +95,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _canRead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canRead");
 	var _getTitleElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitleElement");
 	var _getSerialElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSerialElement");
-	var _getTitleClass = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitleClass");
-	var _openTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openTask");
 	var _getSerial = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSerial");
 	class Line {
 	  constructor(lineData) {
 	    Object.defineProperty(this, _getSerial, {
 	      value: _getSerial2
-	    });
-	    Object.defineProperty(this, _openTask, {
-	      value: _openTask2
-	    });
-	    Object.defineProperty(this, _getTitleClass, {
-	      value: _getTitleClass2
 	    });
 	    Object.defineProperty(this, _getSerialElement, {
 	      value: _getSerialElement2
@@ -179,23 +172,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	}
 	function _getTitleElement2() {
-	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
-			<div class="${0}" onclick="${0}">${0}</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _getTitleClass)[_getTitleClass](), babelHelpers.classPrivateFieldLooseBase(this, _openTask)[_openTask].bind(this), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _canRead)[_canRead]) {
+	    return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+				<a class="tasks-flow__task-queue-line_title-access" href="${0}">${0}</a>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _url)[_url], main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
+	  }
+	  return main_core.Tag.render(_t3 || (_t3 = _$1`
+			<div class="tasks-flow__task-queue-line_title">${0}</div>
+		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
 	}
 	function _getSerialElement2() {
-	  return main_core.Tag.render(_t3 || (_t3 = _$1`
+	  return main_core.Tag.render(_t4 || (_t4 = _$1`
 			<div class="tasks-flow__task-queue-line_number">${0}</div>
 		`), babelHelpers.classPrivateFieldLooseBase(this, _getSerial)[_getSerial]());
-	}
-	function _getTitleClass2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _canRead)[_canRead] ? 'tasks-flow__task-queue-line_title-access' : 'tasks-flow__task-queue-line_title';
-	}
-	function _openTask2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _canRead)[_canRead]) {
-	    return;
-	  }
-	  main_sidepanel.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _url)[_url]);
 	}
 	function _getSerial2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _serial)[_serial] < 10) {
@@ -208,7 +197,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  _t$2,
 	  _t2$2,
 	  _t3$1,
-	  _t4;
+	  _t4$1;
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _flowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowId");
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
@@ -433,7 +422,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter;
 	}
 	function _renderLines2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner = main_core.Tag.render(_t4 || (_t4 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupInner = main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
 			<div class="tasks-flow__task-queue-popup_inner">
 				${0}
 			</div>
@@ -506,5 +495,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.TaskQueue = TaskQueue;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX.SidePanel,BX));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX));
 //# sourceMappingURL=task-queue.bundle.js.map

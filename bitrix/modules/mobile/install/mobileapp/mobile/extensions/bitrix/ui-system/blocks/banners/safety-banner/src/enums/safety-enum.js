@@ -5,7 +5,8 @@ jn.define('ui-system/blocks/banners/safety-banner/src/enums/safety-enum', (requi
 	const { BaseEnum } = require('utils/enums/base');
 	const { withCurrentDomain } = require('utils/url');
 	const ASSET_PATH = withCurrentDomain(
-		'/bitrix/mobileapp/mobile/extensions/bitrix/ui-system/blocks/banners/safety-banner/assets/');
+		`/bitrix/mobileapp/mobile/extensions/bitrix/ui-system/blocks/banners/safety-banner/assets/${AppTheme.id}/`,
+	);
 
 	/**
 	 * @class SafetyType

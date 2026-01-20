@@ -219,7 +219,7 @@ describe('ui.bbcode.parser/Parser', () => {
 		assert.deepEqual(ast.toString({ encode: false }), bbcode);
 	});
 
-	xit('should parses multi-level lists', () => {
+	it('should parses multi-level lists', () => {
 		const bbcode = stripIndent(`
 			[list]
 				[*]Item #1
@@ -280,32 +280,6 @@ describe('ui.bbcode.parser/Parser', () => {
 		assert.ok(listNode.getChildren().at(2).getType() === BBCodeNode.ELEMENT_NODE, 'Invalid list item node');
 		assert.ok(listNode.getChildren().at(2).getChildren().at(0).getType() === BBCodeNode.TEXT_NODE);
 		assert.ok(listNode.getChildren().at(2).getChildren().at(0).getContent() === 'Item 3');
-	});
-
-	it('parseText', () => {
-		const parser = new BBCodeParser();
-		const parent = new BBCodeNode();
-		const source = '\n\t\ttest\nnewline';
-
-		const result = parser.parseText(source, parent);
-
-		assert.ok(result.at(0).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(result.at(0).getContent() === '\n');
-
-		assert.ok(result.at(1).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(result.at(1).getContent() === '\t');
-
-		assert.ok(result.at(2).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(result.at(2).getContent() === '\t');
-
-		assert.ok(result.at(3).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(result.at(3).getContent() === 'test');
-
-		assert.ok(result.at(4).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(result.at(4).getContent() === '\n');
-
-		assert.ok(result.at(5).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(result.at(5).getContent() === 'newline');
 	});
 
 	it('should works with table', () => {
@@ -522,7 +496,7 @@ describe('ui.bbcode.parser/Parser', () => {
 		assert.ok(ast.getChildren().at(1).getChildren().at(0).getChildren().at(1).getName() === 'td');
 	});
 
-	xit('An invalid descendant must be added to a higher level (#2)', () => {
+	it('An invalid descendant must be added to a higher level (#2)', () => {
 		const bbcode = stripIndent(`
 			[table]
 				[tr]
@@ -535,16 +509,15 @@ describe('ui.bbcode.parser/Parser', () => {
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
 
-		assert.ok(ast.getChildrenCount() === 2);
 		assert.ok(ast.getChildren().at(0).getName() === 'table');
-		assert.ok(ast.getChildren().at(0).getChildrenCount() === 0);
-
-		assert.ok(ast.getChildren().at(1).getName() === 'table');
-		assert.ok(ast.getChildren().at(1).getChildrenCount() === 1);
-		assert.ok(ast.getChildren().at(1).getChildren().at(0).getName() === 'tr');
-		assert.ok(ast.getChildren().at(1).getChildren().at(0).getChildrenCount() === 2);
-		assert.ok(ast.getChildren().at(1).getChildren().at(0).getChildren().at(0).getName() === 'td');
-		assert.ok(ast.getChildren().at(1).getChildren().at(0).getChildren().at(1).getName() === 'td');
+		assert.ok(ast.getChildren().at(0).getChildrenCount() === 1);
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getName() === 'tr');
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getChildrenCount() === 2);
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getChildren().at(0).getName() === 'td');
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getChildren().at(0).getChildrenCount() === 2);
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getChildren().at(0).getChildren().at(0).getName() === '#text');
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getChildren().at(0).getChildren().at(1).getName() === 'table');
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getChildren().at(1).getName() === 'td');
 	});
 
 	it('Should parse value with spaces', () => {
@@ -721,7 +694,7 @@ describe('ui.bbcode.parser/Parser', () => {
 		assert.equal(ast.getFirstChild().getValue(), 'https://ya.ru?prop[');
 	});
 
-	xit('should work with invalid bbcode #1', () => {
+	it('should work with invalid bbcode #1', () => {
 		const bbcode = stripIndent(`
 			[p][b]test[b][/p]
 		`);
@@ -734,7 +707,7 @@ describe('ui.bbcode.parser/Parser', () => {
 		assert.ok(ast.getChildren().at(0).getChildren().at(2).getContent() === '[b]');
 	});
 
-	xit('should work with invalid bbcode #2', () => {
+	it('should work with invalid bbcode #2', () => {
 		const bbcode = stripIndent(`
 			[p]test[/p][/p][/b]
 		`);
@@ -748,7 +721,7 @@ describe('ui.bbcode.parser/Parser', () => {
 		assert.ok(ast.getChildren().at(2).getContent() === '[/b]');
 	});
 
-	xit('should work with invalid bbcode #3', () => {
+	it('should work with invalid bbcode #3', () => {
 		const bbcode = stripIndent(`
 			[code]test[/quote]
 		`);
@@ -756,9 +729,19 @@ describe('ui.bbcode.parser/Parser', () => {
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
 
-		assert.ok(ast.getChildren().at(0).getContent() === '[code]');
-		assert.ok(ast.getChildren().at(1).getContent() === 'test');
-		assert.ok(ast.getChildren().at(2).getContent() === '[/quote]');
+		assert.ok(ast.getChildren().at(0).toString({ encode: false }) === '[code]');
+		assert.ok(ast.getChildren().at(1).toString({ encode: false }) === 'test');
+		assert.ok(ast.getChildren().at(2).toString({ encode: false }) === '[/quote]');
+	});
+
+	it('should work with invalid bbcode #4', () => {
+		const bbcode = '[p][b]';
+
+		const parser = new BBCodeParser();
+		const ast = parser.parse(bbcode);
+
+		assert.ok(ast.getChildren().at(0).toString({ encode: false }) === '[p]');
+		assert.ok(ast.getChildren().at(1).toString({ encode: false }) === '[b]');
 	});
 
 	it('should works with code in code', () => {
@@ -778,13 +761,12 @@ describe('ui.bbcode.parser/Parser', () => {
 	});
 
 	describe('Encoding/decoding', () => {
-		xit('should decode source bbcode', () => {
+		it('should decode source bbcode', () => {
 			const bbcode = stripIndent(`
 				[p]&#91;&#93;[/p]
 				&#91;&#93;
 				&amp;#91;&amp;#93;
 				&#39;&quot;
-				&lt;&gt;
 			`);
 
 			const parser = new BBCodeParser();
@@ -802,17 +784,7 @@ describe('ui.bbcode.parser/Parser', () => {
 
 			assert.equal(
 				ast.getChildren().at(4).getContent(),
-				'&#91;&#93;',
-			);
-
-			assert.equal(
-				ast.getChildren().at(6).getContent(),
-				'\'"',
-			);
-
-			assert.equal(
-				ast.getChildren().at(8).getContent(),
-				'<>',
+				'&amp;#91;&amp;#93;',
 			);
 		});
 
@@ -1124,7 +1096,7 @@ describe('ui.bbcode.parser/Parser', () => {
 	});
 
 	it('should not decode square brackets in url', () => {
-	    const bbcode = '[url]https://bitrix24.com?test&#91;aa&#93;=11&&#91;&#93;=bb[/url]';
+		const bbcode = '[url]https://bitrix24.com?test&#91;aa&#93;=11&&#91;&#93;=bb[/url]';
 
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
@@ -1226,7 +1198,7 @@ describe('ui.bbcode.parser/Parser', () => {
 
 	describe('\\r\\n support', () => {
 		it('should works', () => {
-		    const bbcode = 'text\r\ntext2\n \\n \\r\\n';
+			const bbcode = 'text\r\ntext2\n \\n \\r\\n';
 			const parser = new BBCodeParser();
 			const ast = parser.parse(bbcode);
 
@@ -1237,6 +1209,140 @@ describe('ui.bbcode.parser/Parser', () => {
 			assert.equal(ast.getChildren().at(4).getContent(), ' \\n \\r\\n');
 
 			assert.equal(ast.toString(), 'text\ntext2\n \\n \\r\\n');
+		});
+	});
+
+	describe('Nested Lists', () => {
+		it('should handle deeply nested lists', () => {
+			const bbcode = stripIndent(`
+				[list]
+					[*]Item 1
+					[*]Item 2
+						[list]
+							[*]Sub item 1
+							[*]Sub item 2
+								[list]
+									[*]Sub sub item 1
+									[*]Sub sub item 2
+									[*]Sub sub item 3
+								[/list]
+							[*]Sub item 3
+						[/list]
+					[*]Item 3
+				[/list]
+			`);
+
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.equal(ast.getChildrenCount(), 1, 'root has more 1 children');
+
+			const rootList = ast.getChildren().at(0);
+			assert.equal(rootList.getChildrenCount(), 3);
+			assert.equal(rootList.getChildren().at(0).getChildren().at(0).getContent(), 'Item 1');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(0).getContent(), 'Item 2');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(1).getContent(), '\n');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getName(), 'list');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildrenCount(), 3);
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(0).getContent(), 'Sub item 1');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(0).getContent(), 'Sub item 2');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(1).getContent(), '\n');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(2).getName(), 'list');
+			// eslint-disable-next-line max-len
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(2).getChildrenCount(), 3);
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(2).getChildren().at(0).getContent(), 'Sub sub item 1');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(2).getChildren().at(1).getContent(), 'Sub sub item 2');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(1).getChildren().at(2).getChildren().at(2).getContent(), 'Sub sub item 3');
+			assert.equal(rootList.getChildren().at(1).getChildren().at(2).getChildren().at(2).getContent(), 'Sub item 3');
+			assert.equal(rootList.getChildren().at(2).getChildren().at(0).getContent(), 'Item 3');
+		});
+
+		it('should build correct AST from list with disk tags', () => {
+			const bbcode = stripIndent(`
+				[list]
+					[*]Item 1
+					[*]Item 2[disk file id=n1231 width=600 height=496]
+					[*]Item 3
+					[*]Item 4
+					[*]Item 5[disk file id=n1232 width=600 height=496]
+				[/list]
+			`);
+
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.deepEqual(
+				ast.toJSON(),
+				[
+					{
+						name: 'list',
+						children: [
+							{
+								name: '*',
+								children: [
+									{ name: '#text', content: 'Item 1' },
+								],
+								value: '',
+								attributes: {},
+								void: false,
+							},
+							{
+								name: '*',
+								children: [
+									{ name: '#text', content: 'Item 2' },
+									{
+										name: 'disk',
+										children: [],
+										value: '',
+										attributes: { file: '', id: 'n1231', width: '600', height: '496' },
+										void: true,
+									},
+								],
+								value: '',
+								attributes: {},
+								void: false,
+							},
+							{
+								name: '*',
+								children: [
+									{ name: '#text', content: 'Item 3' },
+								],
+								value: '',
+								attributes: {},
+								void: false,
+							},
+							{
+								name: '*',
+								children: [
+									{ name: '#text', content: 'Item 4' },
+								],
+								value: '',
+								attributes: {},
+								void: false,
+							},
+							{
+								name: '*',
+								children: [
+									{ name: '#text', content: 'Item 5' },
+									{
+										name: 'disk',
+										children: [],
+										value: '',
+										attributes: { file: '', id: 'n1232', width: '600', height: '496' },
+										void: true,
+									},
+								],
+								value: '',
+								attributes: {},
+								void: false,
+							},
+						],
+						value: '',
+						attributes: {},
+						void: false,
+					},
+				],
+			);
 		});
 	});
 });

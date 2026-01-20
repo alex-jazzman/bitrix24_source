@@ -8,6 +8,7 @@ jn.define('im/messenger/const/url-params', (require, exports, module) => {
 		openMessage: 'IM_MESSAGE',
 		openLines: 'IM_LINES',
 		openCopilotChat: 'IM_COPILOT',
+		openTaskChat: 'IM_TASK',
 	});
 
 	module.exports = { UrlGetParameter };

@@ -77,13 +77,7 @@ h1.g-line-height-0, h2.g-line-height-0, h3.g-line-height-0, h4.g-line-height-0, 
 ------------------------------------*/
 
 ::selection {
-  color: #fff;
-  background-color: var(--primary);
-}
-
-.g-bg-primary ::selection {
-  color: var(--primary);
-  background-color: #fff;
+  background-color: rgba(153, 153, 153, 0.5);
 }
 
 /*------------------------------------

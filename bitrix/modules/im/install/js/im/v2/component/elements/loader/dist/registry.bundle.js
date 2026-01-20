@@ -39,7 +39,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const SpinnerColor = Object.freeze({
 	  grey: 'grey',
 	  blue: 'blue',
-	  copilot: 'copilot'
+	  copilot: 'copilot',
+	  white: 'white'
 	});
 
 	// @vue/component

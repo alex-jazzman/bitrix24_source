@@ -1,6 +1,8 @@
 "use strict";
-(function ()
-{
+jn.define('call/calls/voximplant', (require, exports, module) => {
+
+	const { CallLogger } = require('call/calls/logger');
+
 	include("Calls");
 
 	BX.DoNothing = function ()
@@ -2036,7 +2038,8 @@
 		}
 	}
 
-	window.VIClientWrapper = VIClientWrapper;
-	window.VoximplantCall = VoximplantCall;
-})
-();
+	module.exports = {
+		VIClientWrapper,
+		VoximplantCall,
+	};
+});

@@ -91,7 +91,7 @@ jn.define('ui-system/blocks/chips/chip-reaction', (require, exports, module) => 
 		{
 			const { compact } = props;
 
-			this.size = compact ? ChipButtonSize.SMALL : ChipButtonSize.NORMAL;
+			this.size = compact ? ChipButtonSize.S : ChipButtonSize.M;
 		}
 
 		getTypography()
@@ -264,6 +264,8 @@ jn.define('ui-system/blocks/chips/chip-reaction', (require, exports, module) => 
 
 	module.exports = {
 		/**
+		 * @deprecated
+		 * @see layout/ui/reaction/chip
 		 * @param {ChipReactionProps} props
 		 * @returns {ChipReaction}
 		 */

@@ -3,13 +3,13 @@ import { Type, Runtime } from 'main.core';
 import { MarketManager } from 'im.v2.lib.market';
 import { Spinner, SpinnerSize } from 'im.v2.component.elements.loader';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
-import { EventEmitter } from 'main.core.events';
 
 import { DetailHeader } from '../../elements/detail-header/detail-header';
 
 import './detail.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelMarketApplication } from 'im.v2.model';
 
 // @vue/component
@@ -71,7 +71,11 @@ export const MarketPanel = {
 	{
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.market });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.market });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

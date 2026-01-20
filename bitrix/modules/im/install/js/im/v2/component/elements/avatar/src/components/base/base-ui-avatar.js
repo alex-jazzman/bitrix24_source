@@ -1,4 +1,11 @@
-import { AvatarHexagonGuest, AvatarRoundExtranet, AvatarRoundGuest, AvatarRoundCopilot, AvatarBase } from 'ui.avatar';
+import {
+	AvatarRoundMarta,
+	AvatarHexagonGuest,
+	AvatarRoundExtranet,
+	AvatarRoundGuest,
+	AvatarRoundCopilot,
+	AvatarBase,
+} from 'ui.avatar';
 
 import { AvatarSize, AvatarSizeMap } from '../../const/const';
 
@@ -10,6 +17,7 @@ export const AvatarType = {
 	collab: 'collab',
 	copilot: 'copilot',
 	default: 'default',
+	aiAssistant: 'aiAssistant',
 };
 
 // @vue/component
@@ -64,6 +72,7 @@ export const BaseUiAvatar = {
 			collaber: AvatarRoundGuest,
 			collab: AvatarHexagonGuest,
 			copilot: AvatarRoundCopilot,
+			aiAssistant: AvatarRoundMarta,
 			default: AvatarBase,
 		};
 

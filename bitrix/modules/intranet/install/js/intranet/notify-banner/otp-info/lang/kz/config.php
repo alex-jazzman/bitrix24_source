@@ -1,0 +1,21 @@
+<?php
+$MESS["NOTIFY_BANNER_INFO_ALL_EMPLOYEE_BLOCK"] = "Егер кем дегенде бір қызметкер кіру үшін екінші факторды пайдаланбаса, бұл сіздің Битрикс24-тегі деректеріңіздің барлығына қауіп төндіреді. Мұның салдары қандай болуы мүмкін:";
+$MESS["NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE"] = "<span class=\"intranet-otp-motivating-popup__title--accent\">Жаңа екі факторлы аутентификацияны қосыңыз.</span> Кодсыз кіруді растаңыз";
+$MESS["NOTIFY_BANNER_INFO_CONFIRM_WITHOUT_TITLE_MSGVER_1"] = "[SPAN]Жаңа екі факторлы аутентификациясын[/SPAN] қосыңыз және кодсыз кіруді растаңыз";
+$MESS["NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE"] = "Компания деректерін ағып кетуден қорғау үшін <span class=\"intranet-otp-motivating-popup__title--accent\">екі факторлы аутентификацияны</span>қосыңыз";
+$MESS["NOTIFY_BANNER_INFO_DEF_TITLE"] = "Жеке деректерді ағып кетуден қорғаңыз. Барлық қызметкерлер үшін <span class=\"intranet-otp-motivating-popup__title ac accent\">екі факторлы аутентификацияны</span> қосыңыз";
+$MESS["NOTIFY_BANNER_INFO_DESC_BLOCK"] = "Екі факторлы аутентификациямен алаяқтар құпиясөзді білсе де, сіздің аккаунтыңызға кіре алмайды. Осылайша сіз жеке және корпоративтік деректерді қауіпсіз сақтайсыз.";
+$MESS["NOTIFY_BANNER_INFO_ENABLE_ALL_BTN"] = "Барлығына қосу";
+$MESS["NOTIFY_BANNER_INFO_ENABLE_BTN"] = "Қосу";
+$MESS["NOTIFY_BANNER_INFO_EXIST_BLOCK"] = "Сізде аккаунтты күштірек қорғау мүмкіндігі бар.";
+$MESS["NOTIFY_BANNER_INFO_EXIST_BLOCK_MSGVER_1"] = "Битрикс24-ті алаяқтардан қорғау әлдеқайда оңай бола түсті. Енді кодтарды енгізудің қажеті жоқ — мобильді қосымшада бір рет түрту арқылы кіруді растаңыз.";
+$MESS["NOTIFY_BANNER_INFO_FIN_OPT"] = "Қаржылық және беделдік тәуекелдер";
+$MESS["NOTIFY_BANNER_INFO_IS_PROJECT_BLOCK"] = "Екі факторлы аутентификация — ақпаратты сенімді қорғауға арналған шешімдердің толық жиынтығын қамтитын <b>Дербес деректер қауіпсіздігі</b> жобасының бөлігі.";
+$MESS["NOTIFY_BANNER_INFO_LATER_BTN"] = "Кейінірек еске түсіріңіз";
+$MESS["NOTIFY_BANNER_INFO_LEAK_OPT"] = "Құпия ақпараттың ағуы";
+$MESS["NOTIFY_BANNER_INFO_LEGAL_OPT"] = "Заңды жауапкершілік";
+$MESS["NOTIFY_BANNER_INFO_MORE_BTN"] = "Толығырақ";
+$MESS["NOTIFY_BANNER_INFO_NEW_OTP_BLOCK"] = "Енді Битрикс24-ті алаяқтардан қорғау оңайырақ. Енді кодты енгізудің қажеті жоқ. Битрикс24 мобильді қосымшасы арқылы кіруді растаңыз — бұл жылдам және ыңғайлы.";
+$MESS["NOTIFY_BANNER_INFO_REQ_BLOCK"] = "Битрикс24 әкімшісі қауіпсіздік баптауларын жаңартты. <b>#END_DATE#</b> бастап аккаунтқа кіру тек мобильді қосымша арқылы растаудан соң мүмкін болады";
+$MESS["NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE"] = "<b>#END_DATE#</b> бастап аккаунтқа тек мобильді қосымша арқылы растаудан кейін кіруге болады";
+$MESS["NOTIFY_BANNER_INFO_WARNING_BLOCK"] = "Күн сайын компанияға автоматты кибершабуылдар көбейіп келеді. Ақпарат ағыны қаржылық және беделдік тәуекелдерге қауіп төндіреді.";

@@ -90,7 +90,7 @@ export const CallEvent = {
 	onNeedResetMediaDevicesState: 'onNeedResetMediaDevicesState',
 	onUserVideoPaused: 'onUserVideoPaused',
 	onUserScreenState: 'onUserScreenState',
-	onUserRecordState: 'onUserRecordState',
+	onUserCommonRecordState: 'onUserCommonRecordState',
 	onUserVoiceStarted: 'onUserVoiceStarted',
 	onUserVoiceStopped: 'onUserVoiceStopped',
 	onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak

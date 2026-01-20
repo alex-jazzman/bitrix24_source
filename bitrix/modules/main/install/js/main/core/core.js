@@ -7187,15 +7187,13 @@ window._main_polyfill_core = true;
 	    this[namespaceProperty] = null;
 	    this[isEmitterProperty] = true;
 	    let target = this;
-	    if (Object.getPrototypeOf(this) === EventEmitter.prototype && args.length > 0)
-	      //new EventEmitter(obj) case
-	      {
-	        if (!Type.isObject(args[0])) {
-	          throw new TypeError(`The "target" argument must be an object.`);
-	        }
-	        target = args[0];
-	        this.setEventNamespace(args[1]);
+	    if (Object.getPrototypeOf(this) === EventEmitter.prototype && args.length > 0) {
+	      if (!Type.isObject(args[0])) {
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
+	      target = args[0];
+	      this.setEventNamespace(args[1]);
+	    }
 	    this[targetProperty] = target;
 	  }
 
@@ -7488,7 +7486,7 @@ window._main_polyfill_core = true;
 	    key: "getFullEventName",
 	    value: function getFullEventName(eventName) {
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      return EventEmitter.makeFullEventName(this.getEventNamespace(), eventName);
 	    }
@@ -7532,11 +7530,11 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      listener = this.normalizeListener(listener);
 	      options = Type.isPlainObject(options) ? options : {};
@@ -7549,21 +7547,19 @@ window._main_polyfill_core = true;
 	      let listeners = eventsMap.get(fullEventName);
 	      if (listeners && listeners.has(listener) || onceListeners && onceListeners.has(listener)) {
 	        console.error(`You cannot subscribe the same "${fullEventName}" event listener twice.`);
+	      } else if (listeners) {
+	        listeners.set(listener, {
+	          listener,
+	          options,
+	          sort: this.getNextSequenceValue()
+	        });
 	      } else {
-	        if (listeners) {
-	          listeners.set(listener, {
-	            listener,
-	            options,
-	            sort: this.getNextSequenceValue()
-	          });
-	        } else {
-	          listeners = new Map([[listener, {
-	            listener,
-	            options,
-	            sort: this.getNextSequenceValue()
-	          }]]);
-	          eventsMap.set(fullEventName, listeners);
-	        }
+	        listeners = new Map([[listener, {
+	          listener,
+	          options,
+	          sort: this.getNextSequenceValue()
+	        }]]);
+	        eventsMap.set(fullEventName, listeners);
 	      }
 	      const maxListeners = this.getMaxListeners(target, eventName);
 	      if (listeners.size > maxListeners) {
@@ -7580,11 +7576,11 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      listener = this.normalizeListener(listener);
 	      const fullEventName = this.resolveEventName(eventName, target);
@@ -7621,7 +7617,7 @@ window._main_polyfill_core = true;
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      listener = this.normalizeListener(listener);
 	      options = Type.isPlainObject(options) ? options : {};
@@ -7673,11 +7669,11 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      options = Type.isPlainObject(options) ? options : {};
 	      const fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
@@ -7689,30 +7685,29 @@ window._main_polyfill_core = true;
 	        targetListeners = targetEvents && targetEvents.eventsMap.get(fullEventName) || new Map();
 	      }
 	      const listeners = [...globalListeners.values(), ...targetListeners.values()];
-	      listeners.sort(function (a, b) {
+	      listeners.sort((a, b) => {
 	        return a.sort - b.sort;
 	      });
 	      const preparedEvent = this.prepareEvent(target, fullEventName, event);
 	      const result = [];
-	      for (let i = 0; i < listeners.length; i++) {
+	      for (const {
+	        listener,
+	        options: listenerOptions
+	      } of listeners) {
 	        if (preparedEvent.isImmediatePropagationStopped()) {
 	          break;
 	        }
-	        const {
-	          listener,
-	          options: listenerOptions
-	        } = listeners[i];
 
-	        //A previous listener could remove a current listener.
+	        // A previous listener could remove a current listener.
 	        if (globalListeners.has(listener) || targetListeners.has(listener)) {
 	          let listenerResult;
 	          if (listenerOptions.compatMode) {
 	            let params = [];
 	            const compatData = preparedEvent.getCompatData();
-	            if (compatData !== null) {
-	              params = options.cloneData === true ? Runtime.clone(compatData) : compatData;
-	            } else {
+	            if (compatData === null) {
 	              params = [preparedEvent];
+	            } else {
+	              params = options.cloneData === true ? Runtime.clone(compatData) : compatData;
 	            }
 	            const context = Type.isUndefined(options.thisArg) ? target : options.thisArg;
 	            listenerResult = listener.apply(context, params);
@@ -7769,7 +7764,7 @@ window._main_polyfill_core = true;
 	    value: function setMaxListeners(...args) {
 	      let target = this.GLOBAL_TARGET;
 	      let eventName = null;
-	      let count = undefined;
+	      let count;
 	      if (args.length === 1) {
 	        count = args[0];
 	      } else if (args.length === 2) {
@@ -7782,10 +7777,10 @@ window._main_polyfill_core = true;
 	        [target, eventName, count] = args;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      if (eventName !== null && !Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      if (!Type.isNumber(count) || count < 0) {
 	        throw new TypeError(`The value of "count" is out of range. It must be a non-negative number. Received ${count}.`);
@@ -7808,7 +7803,7 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      const targetInfo = eventStore.get(target);
 	      if (targetInfo) {
@@ -7884,13 +7879,13 @@ window._main_polyfill_core = true;
 	        [target, eventName, increment] = args;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      if (eventName !== null && !Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      if (!Type.isNumber(increment)) {
-	        throw new TypeError(`The value of "increment" must be a number.`);
+	        throw new TypeError('The value of "increment" must be a number.');
 	      }
 	      return [target, eventName, increment];
 	    }
@@ -7907,11 +7902,11 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError(`The "target" argument must be an object.`);
+	        throw new TypeError('The "target" argument must be an object.');
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError(`The "eventName" argument must be a string.`);
+	        throw new TypeError('The "eventName" argument must be a string.');
 	      }
 	      const targetInfo = eventStore.get(target);
 	      if (!targetInfo) {
@@ -7940,16 +7935,16 @@ window._main_polyfill_core = true;
 	    key: "normalizeAliases",
 	    value: function normalizeAliases(aliases) {
 	      if (!Type.isPlainObject(aliases)) {
-	        throw new TypeError(`The "aliases" argument must be an object.`);
+	        throw new TypeError('The "aliases" argument must be an object.');
 	      }
 	      const result = Object.create(null);
 	      for (let alias in aliases) {
 	        if (!Type.isStringFilled(alias)) {
-	          throw new TypeError(`The alias must be an non-empty string.`);
+	          throw new TypeError('The alias must be an non-empty string.');
 	        }
 	        const options = aliases[alias];
 	        if (!options || !Type.isStringFilled(options.eventName) || !Type.isStringFilled(options.namespace)) {
-	          throw new TypeError(`The alias options must set the "eventName" and the "namespace".`);
+	          throw new TypeError('The alias options must set the "eventName" and the "namespace".');
 	        }
 	        alias = this.normalizeEventName(alias);
 	        result[alias] = {
@@ -8567,6 +8562,20 @@ window._main_polyfill_core = true;
 	    key: "isShown",
 	    value: function isShown(element) {
 	      return Type.isDomNode(element) && !element.hidden && element.style.getPropertyValue('display') !== 'none';
+	    }
+	    /**
+	     * Checks if element is shown with recursive check of its ancestors
+	     */
+	  }, {
+	    key: "isShownRecursive",
+	    value: function isShownRecursive(element) {
+	      if (!Type.isDomNode(element)) {
+	        return false;
+	      }
+	      if (element === document.body) {
+	        return Dom.isShown(element);
+	      }
+	      return Dom.isShown(element) && Dom.isShownRecursive(element.parentElement);
 	    }
 	    /**
 	     * Toggles element visibility
@@ -9989,6 +9998,11 @@ window._main_polyfill_core = true;
 	}();
 
 	/**
+	 * Checks if the given value is a valid email address.
+	 * Supports Cyrillic characters in both local and domain parts.
+	 *
+	 * @param {any} email The value to validate.
+	 * @returns {boolean} True if the value is a valid email, false otherwise.
 	 * @memberOf BX
 	 */
 	let Validation = /*#__PURE__*/function () {
@@ -9997,18 +10011,58 @@ window._main_polyfill_core = true;
 	  }
 	  babelHelpers.createClass(Validation, null, [{
 	    key: "isEmail",
-	    /**
-	     * Checks that value is valid email
-	     * @param value
-	     * @return {boolean}
-	     */
-	    value: function isEmail(value) {
-	      const exp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-	      return exp.test(String(value).toLowerCase());
+	    value: function isEmail(email) {
+	      if (!Type.isStringFilled(email)) {
+	        return false;
+	      }
+	      if (email.length > Validation.MAX_EMAIL_LENGTH) {
+	        return false;
+	      }
+	      const atPos = email.indexOf('@');
+	      if (atPos <= 0 || atPos === email.length - 1 || email.includes('@', atPos + 1)) {
+	        return false;
+	      }
+	      const local = email.slice(0, atPos);
+	      const domain = email.slice(atPos + 1);
+	      if (!Validation.LOCAL_ALLOWED_CHARS.test(local)) {
+	        return false;
+	      }
+	      if (local.startsWith('.') || local.endsWith('.') || local.startsWith('-') || local.endsWith('-') || local.includes('..') || local.length > Validation.MAX_LOCAL_LENGTH) {
+	        return false;
+	      }
+	      if (!Validation.DOMAIN_LABEL_CHARS.test(domain)) {
+	        return false;
+	      }
+	      if (domain.startsWith('.') || domain.endsWith('.') || domain.includes('..')) {
+	        return false;
+	      }
+	      const labels = domain.split('.');
+	      if (labels.length < 2) {
+	        return false;
+	      }
+	      const tld = labels[labels.length - 1];
+	      if (tld.length < 2 || tld.length > 24) {
+	        return false;
+	      }
+	      for (const label of labels) {
+	        if (label.startsWith('-') || label.endsWith('-')) {
+	          return false;
+	        }
+	        const startsWithLetterOrDigit = /^[\dA-Za-zЁА-яё]/.test(label);
+	        const endsWithLetterOrDigit = /[\dA-Za-zЁА-яё]$/.test(label);
+	        if (!startsWithLetterOrDigit || !endsWithLetterOrDigit) {
+	          return false;
+	        }
+	      }
+	      return true;
 	    }
 	  }]);
 	  return Validation;
 	}();
+	babelHelpers.defineProperty(Validation, "MAX_EMAIL_LENGTH", 254);
+	babelHelpers.defineProperty(Validation, "MAX_LOCAL_LENGTH", 64);
+	babelHelpers.defineProperty(Validation, "LOCAL_ALLOWED_CHARS", /^[\w%+.ЁА-яё-]+$/);
+	babelHelpers.defineProperty(Validation, "DOMAIN_LABEL_CHARS", /^[\w.ЁА-яё-]+$/);
 
 	let BaseCache = /*#__PURE__*/function () {
 	  function BaseCache() {
@@ -10868,6 +10922,629 @@ window._main_polyfill_core = true;
 	  WeakRefMap
 	};
 
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classStaticPrivateMethodGet$1(receiver, classConstructor, method) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); return method; }
+	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	var _easing = /*#__PURE__*/new WeakMap();
+	/**
+	 * @deprecated
+	 */
+	let FX = /*#__PURE__*/function () {
+	  function FX(options) {
+	    babelHelpers.classCallCheck(this, FX);
+	    _classPrivateFieldInitSpec$1(this, _easing, {
+	      writable: true,
+	      value: null
+	    });
+	    const fxOptions = Type.isPlainObject(options) ? options : {};
+	    const callback = Type.isFunction(fxOptions.callback) ? fxOptions.callback : null;
+	    const callbackStart = Type.isFunction(fxOptions.callback_start) ? fxOptions.callback_start : null;
+	    const callbackComplete = Type.isFunction(fxOptions.callback_complete) ? fxOptions.callback_complete : null;
+	    const easingOptions = {
+	      transition: 'linear',
+	      duration: Type.isNumber(fxOptions.time) && fxOptions.time > 0 ? fxOptions.time * 1000 : 1000,
+	      begin: state => {
+	        if (callbackStart !== null) {
+	          // eslint-disable-next-line no-underscore-dangle
+	          callbackStart(Type.isUndefined(state._param) ? state : state._param);
+	        }
+	      },
+	      step: state => {
+	        if (callback !== null) {
+	          // eslint-disable-next-line no-underscore-dangle
+	          callback(Type.isUndefined(state._param) ? state : state._param);
+	        }
+	      },
+	      complete: state => {
+	        if (callbackComplete !== null) {
+	          // eslint-disable-next-line no-underscore-dangle
+	          callbackComplete(Type.isUndefined(state._param) ? state : state._param);
+	        }
+	      }
+	    };
+	    if (Type.isPlainObject(fxOptions.start)) {
+	      easingOptions.start = fxOptions.start;
+	      easingOptions.finish = fxOptions.finish;
+	    } else {
+	      easingOptions.start = {
+	        _param: fxOptions.start
+	      };
+	      easingOptions.finish = {
+	        _param: fxOptions.finish
+	      };
+	    }
+	    if (fxOptions.type === 'accelerated') {
+	      easingOptions.transition = 'quint';
+	    } else if (fxOptions.type === 'decelerated') {
+	      fxOptions.transition = 'ease-out-quint';
+	    }
+	    babelHelpers.classPrivateFieldSet(this, _easing, new Easing(easingOptions));
+	  }
+	  babelHelpers.createClass(FX, [{
+	    key: "start",
+	    value: function start() {
+	      babelHelpers.classPrivateFieldGet(this, _easing).animate();
+	      return this;
+	    }
+	  }, {
+	    key: "stop",
+	    value: function stop(silent = false) {
+	      babelHelpers.classPrivateFieldGet(this, _easing).stop(silent);
+	    }
+	  }, {
+	    key: "pause",
+	    value: function pause() {
+	      // just for compatibility
+	    }
+	    /**
+	     * @deprecated
+	     */
+	  }], [{
+	    key: "hide",
+	    value: function hide(el, type, opts) {
+	      return _classStaticPrivateMethodGet$1(this, FX, _toggle).call(this, 'hide', el, type, opts);
+	    }
+	    /**
+	     * @deprecated
+	     */
+	  }, {
+	    key: "show",
+	    value: function show(el, type, opts) {
+	      return _classStaticPrivateMethodGet$1(this, FX, _toggle).call(this, 'show', el, type, opts);
+	    }
+	  }]);
+	  return FX;
+	}();
+	function _toggle(mode, el, type, opts) {
+	  let options = {};
+	  let effect = null;
+	  const element = Type.isStringFilled(el) ? document.getElementById(el) : el;
+	  if (Type.isPlainObject(type) && Type.isNil(opts)) {
+	    options = type;
+	    effect = options.type;
+	  } else if (Type.isPlainObject(opts)) {
+	    options = opts;
+	    effect = type;
+	  }
+	  if (!Type.isStringFilled(effect)) {
+	    Dom.style(element, 'display', mode === 'show' ? 'block' : 'none');
+	    return undefined;
+	  }
+	  const fxOptions = effect === 'scroll' ? _classStaticPrivateMethodGet$1(this, FX, _scroll).call(this, element, options, mode) : _classStaticPrivateMethodGet$1(this, FX, _fade).call(this, element, options, mode);
+	  fxOptions.callback_complete = () => {
+	    if (options.show !== false && options.hide !== false) {
+	      Dom.style(element, 'display', mode === 'show' ? 'block' : 'none');
+	    }
+	    if (options.callback_complete) {
+	      options.callback_complete();
+	    }
+	  };
+	  return new FX(fxOptions).start();
+	}
+	function _scroll(el, opts) {
+	  const param = opts.direction === 'horizontal' ? 'width' : 'height';
+	  let currentValue = parseInt(Dom.style(el, param), 10);
+	  if (Number.isNaN(currentValue)) {
+	    currentValue = Dom.getPosition(el)[param];
+	  }
+	  const start = currentValue;
+	  const finish = opts.min_height ? parseInt(opts.min_height, 10) : 0;
+	  return {
+	    start,
+	    finish,
+	    time: opts.time || 1,
+	    type: 'linear',
+	    callback_start: () => {
+	      if (Dom.style(el, 'position') === 'static') {
+	        Dom.style(el, 'position', 'relative');
+	      }
+	      Dom.style(el, 'overflow', 'hidden');
+	      Dom.style(el, param, `${start}px`);
+	      Dom.style(el, 'display', 'block');
+	    },
+	    callback: value => {
+	      Dom.style(el, param, `${value}px`);
+	    }
+	  };
+	}
+	function _fade(element, opts, mode) {
+	  return {
+	    time: opts.time || 1,
+	    type: mode === 'show' ? 'linear' : 'decelerated',
+	    start: mode === 'show' ? 0 : 100,
+	    finish: mode === 'show' ? 100 : 0,
+	    callback_start: () => {
+	      Dom.style(element, 'display', 'block');
+	    },
+	    callback: val => {
+	      Dom.style(element, 'opacity', val / 100);
+	    }
+	  };
+	}
+
+	let Transition = /*#__PURE__*/function () {
+	  function Transition() {
+	    babelHelpers.classCallCheck(this, Transition);
+	  }
+	  babelHelpers.createClass(Transition, null, [{
+	    key: "linear",
+	    value: function linear(progress) {
+	      return progress;
+	    }
+	  }, {
+	    key: "quad",
+	    value: function quad(progress) {
+	      return progress ** 2;
+	    }
+	  }, {
+	    key: "cubic",
+	    value: function cubic(progress) {
+	      return progress ** 3;
+	    }
+	  }, {
+	    key: "quart",
+	    value: function quart(progress) {
+	      return progress ** 4;
+	    }
+	  }, {
+	    key: "quint",
+	    value: function quint(progress) {
+	      return progress ** 5;
+	    }
+	  }, {
+	    key: "circ",
+	    value: function circ(progress) {
+	      return 1 - Math.sin(Math.acos(progress));
+	    }
+	  }, {
+	    key: "back",
+	    value: function back(progress) {
+	      return progress ** 2 * ((1.5 + 1) * progress - 1.5);
+	    }
+	  }, {
+	    key: "elasti",
+	    value: function elasti(progress) {
+	      return 2 ** (10 * (progress - 1)) * Math.cos(20 * Math.PI * 1.5 / 3 * progress);
+	    }
+	  }, {
+	    key: "bounce",
+	    value: function bounce(progress) {
+	      for (let a = 0, b = 1;; a += b, b /= 2) {
+	        if (progress >= (7 - 4 * a) / 11) {
+	          return -(((11 - 6 * a - 11 * progress) / 4) ** 2) + b ** 2;
+	        }
+	      }
+	    }
+	  }]);
+	  return Transition;
+	}();
+
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _duration = /*#__PURE__*/new WeakMap();
+	var _transition = /*#__PURE__*/new WeakMap();
+	var _begin = /*#__PURE__*/new WeakMap();
+	var _step = /*#__PURE__*/new WeakMap();
+	var _complete = /*#__PURE__*/new WeakMap();
+	var _start = /*#__PURE__*/new WeakMap();
+	var _finish = /*#__PURE__*/new WeakMap();
+	var _currentState = /*#__PURE__*/new WeakMap();
+	var _progress = /*#__PURE__*/new WeakMap();
+	var _timer = /*#__PURE__*/new WeakMap();
+	var _options = /*#__PURE__*/new WeakMap();
+	var _animate = /*#__PURE__*/new WeakSet();
+	let Easing = /*#__PURE__*/function () {
+	  function Easing(easingOptions) {
+	    babelHelpers.classCallCheck(this, Easing);
+	    _classPrivateMethodInitSpec$2(this, _animate);
+	    _classPrivateFieldInitSpec$2(this, _duration, {
+	      writable: true,
+	      value: 1000
+	    });
+	    _classPrivateFieldInitSpec$2(this, _transition, {
+	      writable: true,
+	      value: Transition.linear
+	    });
+	    _classPrivateFieldInitSpec$2(this, _begin, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$2(this, _step, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$2(this, _complete, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$2(this, _start, {
+	      writable: true,
+	      value: {}
+	    });
+	    _classPrivateFieldInitSpec$2(this, _finish, {
+	      writable: true,
+	      value: {}
+	    });
+	    _classPrivateFieldInitSpec$2(this, _currentState, {
+	      writable: true,
+	      value: {}
+	    });
+	    _classPrivateFieldInitSpec$2(this, _progress, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$2(this, _timer, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$2(this, _options, {
+	      writable: true,
+	      value: null
+	    });
+	    this.setOptions(easingOptions);
+	  }
+	  babelHelpers.createClass(Easing, [{
+	    key: "setOptions",
+	    value: function setOptions(easingOptions) {
+	      const options = Type.isPlainObject(easingOptions) ? easingOptions : {};
+	      babelHelpers.classPrivateFieldSet(this, _duration, Type.isNumber(options.duration) && options.duration > 0 ? options.duration : babelHelpers.classPrivateFieldGet(this, _duration));
+	      babelHelpers.classPrivateFieldSet(this, _begin, Type.isFunction(options.begin) || options.begin === null ? options.begin : babelHelpers.classPrivateFieldGet(this, _begin));
+	      babelHelpers.classPrivateFieldSet(this, _step, Type.isFunction(options.step) || options.step === null ? options.step : babelHelpers.classPrivateFieldGet(this, _step));
+	      babelHelpers.classPrivateFieldSet(this, _complete, Type.isFunction(options.complete) || options.complete === null ? options.complete : babelHelpers.classPrivateFieldGet(this, _complete));
+	      babelHelpers.classPrivateFieldSet(this, _progress, Type.isFunction(options.progress) || options.progress === null ? options.progress : babelHelpers.classPrivateFieldGet(this, _progress));
+	      babelHelpers.classPrivateFieldSet(this, _start, Type.isPlainObject(options.start) ? {
+	        ...options.start
+	      } : babelHelpers.classPrivateFieldGet(this, _start));
+	      babelHelpers.classPrivateFieldSet(this, _finish, Type.isPlainObject(options.finish) ? {
+	        ...options.finish
+	      } : babelHelpers.classPrivateFieldGet(this, _finish));
+	    }
+	  }, {
+	    key: "setTransition",
+	    value: function setTransition(transition) {
+	      if (Type.isFunction(transition)) {
+	        babelHelpers.classPrivateFieldSet(this, _transition, transition);
+	      } else if (Type.isStringFilled(transition)) {
+	        let funcName = transition;
+	        let decorator = null;
+	        if (transition.startsWith('ease-out-')) {
+	          funcName = funcName.replace('ease-out-', '');
+	          decorator = this.constructor.makeEaseOut;
+	        } else if (transition.startsWith('ease-in-out-')) {
+	          funcName = funcName.replace('ease-in-out-', '');
+	          decorator = this.constructor.makeEaseInOut;
+	        }
+	        if (Type.isFunction(Transition[funcName])) {
+	          babelHelpers.classPrivateFieldSet(this, _transition, decorator === null ? Transition[funcName] : decorator(Transition[funcName]));
+	        }
+	      }
+	    }
+	  }, {
+	    key: "animateProgress",
+	    value: function animateProgress() {
+	      _classPrivateMethodGet$2(this, _animate, _animate2).call(this);
+	    }
+	  }, {
+	    key: "animate",
+	    value: function animate() {
+	      babelHelpers.classPrivateFieldSet(this, _progress, progress => {
+	        babelHelpers.classPrivateFieldSet(this, _currentState, {});
+	        for (const propName of Object.keys(babelHelpers.classPrivateFieldGet(this, _start))) {
+	          babelHelpers.classPrivateFieldGet(this, _currentState)[propName] = Math.round(babelHelpers.classPrivateFieldGet(this, _start)[propName] + (babelHelpers.classPrivateFieldGet(this, _finish)[propName] - babelHelpers.classPrivateFieldGet(this, _start)[propName]) * progress);
+	        }
+	        if (babelHelpers.classPrivateFieldGet(this, _step) !== null) {
+	          babelHelpers.classPrivateFieldGet(this, _step).call(this, babelHelpers.classPrivateFieldGet(this, _currentState));
+	        }
+	      });
+	      _classPrivateMethodGet$2(this, _animate, _animate2).call(this);
+	    }
+	  }, {
+	    key: "stop",
+	    value: function stop(completed = false) {
+	      if (babelHelpers.classPrivateFieldGet(this, _timer) !== null) {
+	        cancelAnimationFrame(babelHelpers.classPrivateFieldGet(this, _timer));
+	        babelHelpers.classPrivateFieldSet(this, _timer, null);
+	        if (completed && babelHelpers.classPrivateFieldGet(this, _complete) !== null) {
+	          babelHelpers.classPrivateFieldGet(this, _complete).call(this, babelHelpers.classPrivateFieldGet(this, _currentState));
+	        }
+	      }
+	    }
+	  }, {
+	    key: "options",
+	    /**
+	     * @private
+	     * Compatible proxy for options
+	     */
+	    get: function () {
+	      if (babelHelpers.classPrivateFieldGet(this, _options) === null) {
+	        babelHelpers.classPrivateFieldSet(this, _options, new Proxy(this, {
+	          get(target, property, receiver) {
+	            switch (property) {
+	              case 'transition':
+	                return babelHelpers.classPrivateFieldGet(this, _transition);
+	              case 'start':
+	                return babelHelpers.classPrivateFieldGet(this, _start);
+	              case 'finish':
+	                return babelHelpers.classPrivateFieldGet(this, _finish);
+	              case 'duration':
+	                return babelHelpers.classPrivateFieldGet(this, _duration);
+	              default:
+	                return null;
+	            }
+	          },
+	          set(target, property, value, receiver) {
+	            target.setOptions({
+	              [property]: value
+	            });
+	            return true;
+	          }
+	        }));
+	      }
+	      return babelHelpers.classPrivateFieldGet(this, _options);
+	    }
+	  }], [{
+	    key: "makeEaseInOut",
+	    value: function makeEaseInOut(delta) {
+	      return progress => {
+	        if (progress < 0.5) {
+	          return delta(2 * progress) / 2;
+	        }
+	        return (2 - delta(2 * (1 - progress))) / 2;
+	      };
+	    }
+	  }, {
+	    key: "makeEaseOut",
+	    value: function makeEaseOut(delta) {
+	      return progress => {
+	        return 1 - delta(1 - progress);
+	      };
+	    }
+	  }, {
+	    key: "transitions",
+	    get: function () {
+	      return Transition;
+	    }
+	  }]);
+	  return Easing;
+	}();
+	function _animate2() {
+	  for (const propName of Object.keys(babelHelpers.classPrivateFieldGet(this, _start))) {
+	    if (Type.isUndefined(babelHelpers.classPrivateFieldGet(this, _finish)[propName])) {
+	      delete babelHelpers.classPrivateFieldGet(this, _start)[propName];
+	    }
+	  }
+	  let start = null;
+	  const animation = time => {
+	    if (start === null) {
+	      start = time;
+	    }
+	    let progress = (time - start) / babelHelpers.classPrivateFieldGet(this, _duration);
+	    if (progress > 1) {
+	      progress = 1;
+	    }
+	    const delta = babelHelpers.classPrivateFieldGet(this, _transition).call(this, progress);
+	    babelHelpers.classPrivateFieldGet(this, _progress).call(this, delta);
+	    if (progress === 1) {
+	      this.stop(true);
+	    } else {
+	      babelHelpers.classPrivateFieldSet(this, _timer, requestAnimationFrame(animation));
+	    }
+	  };
+	  if (babelHelpers.classPrivateFieldGet(this, _begin) !== null) {
+	    babelHelpers.classPrivateFieldGet(this, _begin).call(this, babelHelpers.classPrivateFieldGet(this, _currentState));
+	  }
+	  babelHelpers.classPrivateFieldSet(this, _timer, requestAnimationFrame(animation));
+	}
+
+	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _prefix = /*#__PURE__*/new WeakMap();
+	var _setPrefix = /*#__PURE__*/new WeakSet();
+	var _handleStorageChange = /*#__PURE__*/new WeakSet();
+	var _clear = /*#__PURE__*/new WeakSet();
+	var _encode = /*#__PURE__*/new WeakSet();
+	var _decode = /*#__PURE__*/new WeakSet();
+	var _getRealValue = /*#__PURE__*/new WeakSet();
+	var _parseValue = /*#__PURE__*/new WeakSet();
+	var _isValueValid = /*#__PURE__*/new WeakSet();
+	let LocalStorage = /*#__PURE__*/function () {
+	  function LocalStorage(storageOptions = {}) {
+	    babelHelpers.classCallCheck(this, LocalStorage);
+	    _classPrivateMethodInitSpec$3(this, _isValueValid);
+	    _classPrivateMethodInitSpec$3(this, _parseValue);
+	    _classPrivateMethodInitSpec$3(this, _getRealValue);
+	    _classPrivateMethodInitSpec$3(this, _decode);
+	    _classPrivateMethodInitSpec$3(this, _encode);
+	    _classPrivateMethodInitSpec$3(this, _clear);
+	    _classPrivateMethodInitSpec$3(this, _handleStorageChange);
+	    _classPrivateMethodInitSpec$3(this, _setPrefix);
+	    _classPrivateFieldInitSpec$3(this, _prefix, {
+	      writable: true,
+	      value: null
+	    });
+	    const options = Type.isPlainObject(storageOptions) ? storageOptions : {};
+	    _classPrivateMethodGet$3(this, _setPrefix, _setPrefix2).call(this, options.prefix);
+	    Event.bind(window, 'storage', _classPrivateMethodGet$3(this, _handleStorageChange, _handleStorageChange2).bind(this));
+	    setInterval(_classPrivateMethodGet$3(this, _clear, _clear2).bind(this), 5000);
+	  }
+	  babelHelpers.createClass(LocalStorage, [{
+	    key: "set",
+	    value: function set(key, value, ttl = 60) {
+	      if (!Type.isStringFilled(key) || Type.isNil(value)) {
+	        return false;
+	      }
+	      try {
+	        window.localStorage.setItem(this.getPrefix() + key, `${Math.round(Date.now() / 1000) + ttl}:${_classPrivateMethodGet$3(this, _encode, _encode2).call(this, value)}`);
+	      } catch {
+	        console.error('LocalStorage error', key, ttl);
+	        return false;
+	      }
+	      return true;
+	    }
+	  }, {
+	    key: "get",
+	    value: function get(key) {
+	      const storageValue = window.localStorage.getItem(this.getPrefix() + key);
+	      if (storageValue) {
+	        const valueParts = _classPrivateMethodGet$3(this, _parseValue, _parseValue2).call(this, storageValue);
+	        if (valueParts === null) {
+	          return null;
+	        }
+	        const [ttl, value] = valueParts;
+	        if (Date.now() <= ttl) {
+	          return _classPrivateMethodGet$3(this, _decode, _decode2).call(this, value);
+	        }
+	        this.remove(key);
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: "remove",
+	    value: function remove(key) {
+	      window.localStorage.removeItem(this.getPrefix() + key);
+	    }
+	  }, {
+	    key: "getPrefix",
+	    value: function getPrefix() {
+	      if (babelHelpers.classPrivateFieldGet(this, _prefix) === null) {
+	        const userId = Loc.hasMessage('USER_ID') ? Loc.getMessage('USER_ID') : '';
+	        const siteId = Loc.hasMessage('SITE_ID') ? Loc.getMessage('SITE_ID') : 'admin';
+	        babelHelpers.classPrivateFieldSet(this, _prefix, `${this.getBasePrefix()}${userId}-${siteId}-`);
+	      }
+	      return babelHelpers.classPrivateFieldGet(this, _prefix);
+	    }
+	  }, {
+	    key: "getBasePrefix",
+	    value: function getBasePrefix() {
+	      return 'bx';
+	    }
+	  }]);
+	  return LocalStorage;
+	}();
+	function _setPrefix2(prefix) {
+	  if (Type.isString(prefix)) {
+	    babelHelpers.classPrivateFieldSet(this, _prefix, `${this.getBasePrefix()}-${prefix}`);
+	  }
+	}
+	function _handleStorageChange2(event) {
+	  if (!Type.isStringFilled(event.key) || !event.key.startsWith(this.getPrefix())) {
+	    return;
+	  }
+	  const key = event.key.slice(this.getPrefix().length);
+	  const value = _classPrivateMethodGet$3(this, _getRealValue, _getRealValue2).call(this, event.newValue);
+	  const oldValue = _classPrivateMethodGet$3(this, _getRealValue, _getRealValue2).call(this, event.oldValue);
+	  const data = {
+	    key,
+	    value,
+	    oldValue
+	  };
+	  if (key === 'BXGCE') {
+	    // BX Global Custom Event
+	    if (value) {
+	      EventEmitter.emit(data.value.e, new BaseEvent({
+	        data: data.value.p,
+	        compatData: data.value.p
+	      }));
+	    }
+	  } else {
+	    // normal event handlers
+	    if (event.newValue) {
+	      EventEmitter.emit('onLocalStorageSet', new BaseEvent({
+	        data: [data],
+	        compatData: [data]
+	      }));
+	    }
+	    if (event.oldValue && !event.newValue) {
+	      EventEmitter.emit('onLocalStorageRemove', new BaseEvent({
+	        data: [data],
+	        compatData: [data]
+	      }));
+	    }
+	    EventEmitter.emit('onLocalStorageChange', new BaseEvent({
+	      data: [data],
+	      compatData: [data]
+	    }));
+	  }
+	}
+	function _clear2() {
+	  const curDate = Date.now();
+	  for (let i = 0; i < window.localStorage.length; i++) {
+	    const key = window.localStorage.key(i);
+	    if (key.startsWith(this.getBasePrefix())) {
+	      const value = window.localStorage.getItem(key);
+	      const valueParts = _classPrivateMethodGet$3(this, _parseValue, _parseValue2).call(this, value);
+	      if (valueParts === null) {
+	        continue;
+	      }
+	      const [ttl] = valueParts;
+	      if (curDate >= ttl) {
+	        window.localStorage.removeItem(key);
+	      }
+	    }
+	  }
+	}
+	function _encode2(value) {
+	  if (Type.isPlainObject(value)) {
+	    return JSON.stringify(value);
+	  }
+	  return value.toString();
+	}
+	function _decode2(value) {
+	  let result = null;
+	  if (Type.isStringFilled(value)) {
+	    try {
+	      result = JSON.parse(value);
+	    } catch {
+	      result = value;
+	    }
+	  }
+	  return result;
+	}
+	function _getRealValue2(value) {
+	  const valueParts = _classPrivateMethodGet$3(this, _parseValue, _parseValue2).call(this, value);
+	  if (valueParts === null) {
+	    return null;
+	  }
+	  return _classPrivateMethodGet$3(this, _decode, _decode2).call(this, valueParts[1]);
+	}
+	function _parseValue2(value) {
+	  if (!_classPrivateMethodGet$3(this, _isValueValid, _isValueValid2).call(this, value)) {
+	    return null;
+	  }
+	  const [ttl] = value.split(':', 1);
+	  const realValue = value.slice(ttl.length + 1);
+	  return [parseInt(ttl, 10) * 1000, realValue];
+	}
+	function _isValueValid2(value) {
+	  return Type.isStringFilled(value) && /^\d{10}:/.test(value);
+	}
+	const localStorage$1 = new LocalStorage();
+
 	function getElement(element) {
 	  if (Type.isString(element)) {
 	    return document.getElementById(element);
@@ -10893,6 +11570,8 @@ window._main_polyfill_core = true;
 	  namespace
 	} = Reflection;
 	const message$1 = message;
+	const easing = Easing;
+	const fx = FX;
 
 	/**
 	 * @memberOf BX
@@ -11168,6 +11847,15 @@ window._main_polyfill_core = true;
 	    useGlobalNaming: true
 	  });
 	}
+	function onGlobalCustomEvent(eventName, arEventParams, bSkipSelf) {
+	  localStorage$1.set('BXGCE', {
+	    e: eventName,
+	    p: arEventParams
+	  }, 1);
+	  if (!bSkipSelf) {
+	    onCustomEvent(eventName, arEventParams);
+	  }
+	}
 
 	if (typeof global === 'object' && global.window && global.window.BX) {
 	  Object.assign(global.window.BX, exports);
@@ -11190,9 +11878,14 @@ window._main_polyfill_core = true;
 	exports.Extension = Extension;
 	exports.ZIndexManager = ZIndexManager;
 	exports.Collections = collections;
+	exports.Easing = Easing;
+	exports.LocalStorage = LocalStorage;
+	exports.localStorage = localStorage$1;
 	exports.getClass = getClass;
 	exports.namespace = namespace;
 	exports.message = message$1;
+	exports.easing = easing;
+	exports.fx = fx;
 	exports.replace = replace;
 	exports.remove = remove;
 	exports.clean = clean;
@@ -11238,6 +11931,7 @@ window._main_polyfill_core = true;
 	exports.onCustomEvent = onCustomEvent;
 	exports.removeCustomEvent = removeCustomEvent;
 	exports.removeAllCustomEvents = removeAllCustomEvents;
+	exports.onGlobalCustomEvent = onGlobalCustomEvent;
 
 }((this.BX = this.BX || {})));
 
@@ -15491,6 +16185,7 @@ window._main_polyfill_core = true;
 
 
 
+
 ;(function(window){
 
 if (window.BX.ajax)
@@ -17670,6 +18365,7 @@ BX.ajax.FormData.prototype.send = function(url, callbackOk, callbackProgress, ca
 
 BX.addCustomEvent('onAjaxFailure', BX.debug);
 })(window);
+
 
 
 (function (exports,main_core) {

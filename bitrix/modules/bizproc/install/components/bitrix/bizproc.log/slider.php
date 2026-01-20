@@ -27,6 +27,7 @@ if (!empty($_REQUEST['WORKFLOW_ID']))
 			'POPUP_COMPONENT_TEMPLATE_NAME' => 'modern',
 			'POPUP_COMPONENT_PARAMS' => [
 				'COMPONENT_VERSION' => 2,
+				'SET_ADMIN_MODE' => 'Y',
 				'ID' => (string)$_REQUEST['WORKFLOW_ID'],
 				'SET_TITLE' => 'N',
 				'AJAX_MODE' => 'Y',

@@ -16,7 +16,12 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 
-	const { CounterPrefix, CounterValue, CounterPostfix } = require('im/messenger/lib/element/recent/const/test-id');
+	const {
+		CounterPrefix,
+		CounterValue,
+		CounterPostfix,
+		CounterSuffix,
+	} = require('im/messenger/lib/element/recent/const/test-id');
 
 	/**
 	 * @class ChannelItem
@@ -180,7 +185,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
-			const prefix = CounterPrefix.counter;
+			const prefix = CounterPrefix.listItemCounter;
 			const value = dialogCounters > 0 || commentCounters > 0 ? dialogCounters || commentCounters : CounterValue.unread;
 
 			let postfix = '';
@@ -199,8 +204,8 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 			const dialogId = this.getModelItem().id;
 			const suffix = (this.getCommentsCounterItem() > 0 && !dialog.counter)
-				? 'comments'
-				: 'posts';
+				? CounterSuffix.comments
+				: CounterSuffix.posts;
 
 			this.counterTestId = `${prefix}-${dialogId}-${suffix}-${value}-${postfix}`;
 

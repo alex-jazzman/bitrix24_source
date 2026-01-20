@@ -1,0 +1,1922 @@
+{
+    "NAME": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_1###",
+    "DESCRIPTION": "###BIZPROC_NODES_BITRIX_AI_COACH_DESCRIPTION_1###",
+    "PARAMETERS": [],
+    "VARIABLES": [],
+    "CONSTANTS": {
+        "SetupTemplateActivity_OgbJZSi53p": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_2###",
+            "Description": "",
+            "Type": "string",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "###BIZPROC_NODES_BITRIX_AI_COACH_DEFAULT_1###"
+        },
+        "SetupTemplateActivity_f8J9TnkjX5": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_3###",
+            "Description": "",
+            "Type": "user",
+            "Required": 0,
+            "Multiple": 1,
+            "Options": null,
+            "Default": [
+                "user_1"
+            ]
+        },
+        "SetupTemplateActivity_0ioDFL4rgH": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_4###",
+            "Description": "",
+            "Type": "string",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "###BIZPROC_NODES_BITRIX_AI_COACH_DEFAULT_2###"
+        }
+    },
+    "TEMPLATE": [
+        {
+            "Type": "NodeWorkflowActivity",
+            "Name": "Template",
+            "Properties": {
+                "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_1###",
+                "Links": [
+                    [
+                        "A9654_3504_4807_2932:o0",
+                        "A4120_8802_2523_2854:i0"
+                    ],
+                    [
+                        "A4372_1460_5476_9814:o0",
+                        "A8369_8149_6365_5481:i0"
+                    ],
+                    [
+                        "A8369_8149_6365_5481:o0",
+                        "A9598_6102_8882_8646:i0"
+                    ],
+                    [
+                        "A8369_8149_6365_5481:o0",
+                        "A5647_8130_8558_3635:i0"
+                    ],
+                    [
+                        "A9598_6102_8882_8646:o0",
+                        "A5722_9997_9025_4029:i0"
+                    ],
+                    [
+                        "A7586_4625_6752_3529:o0",
+                        "A9312_1858_2156_7551:i0"
+                    ],
+                    [
+                        "A9312_1858_2156_7551:o0",
+                        "A8762_2315_5201_1662:i0"
+                    ],
+                    [
+                        "A4769_8071_8996_8194:o0",
+                        "A9692_4897_2126_2020:i0"
+                    ],
+                    [
+                        "A3246_1874_7458_8230:o0",
+                        "A2087_9399_5384_5330:i0"
+                    ],
+                    [
+                        "A2087_9399_5384_5330:o0",
+                        "A8947_9497_6913_6578:i0"
+                    ],
+                    [
+                        "A8369_8149_6365_5481:o0",
+                        "A4306_9994_2013_8543:i0"
+                    ],
+                    [
+                        "A8947_9497_6913_6578:o0",
+                        "A5846_8478_5020_2228:i0"
+                    ],
+                    [
+                        "A5846_8478_5020_2228:o0",
+                        "A2087_9399_5384_5330:i1"
+                    ],
+                    [
+                        "A9692_4897_2126_2020:o0",
+                        "A9433_3697_1811_2293:i0"
+                    ],
+                    [
+                        "A9433_3697_1811_2293:o0",
+                        "A9833_6990_1088_4471:i0"
+                    ],
+                    [
+                        "A9433_3697_1811_2293:o1",
+                        "A1689_5301_1167_3785:i0"
+                    ],
+                    [
+                        "A1096_4690_2822_9024:o1",
+                        "A8569_7164_3775_5606:i0"
+                    ],
+                    [
+                        "A1535_5119_7045_4611:o0",
+                        "A1096_4690_2822_9024:i0"
+                    ],
+                    [
+                        "A1096_4690_2822_9024:o0",
+                        "A6125_8815_9480_4420:i0"
+                    ],
+                    [
+                        "A1096_4690_2822_9024:o0",
+                        "A7586_4625_6752_3529:i0"
+                    ],
+                    [
+                        "A9433_3697_1811_2293:o0",
+                        "A3246_1874_7458_8230:i0"
+                    ],
+                    [
+                        "A7464_6478_5578_9056:o0",
+                        "A1535_5119_7045_4611:i0"
+                    ],
+                    [
+                        "A7464_6478_5578_9056:o1",
+                        "A8489_1316_1178_9993:i0"
+                    ],
+                    [
+                        "A4120_8802_2523_2854:o0",
+                        "A7464_6478_5578_9056:i0"
+                    ],
+                    [
+                        "A4306_9994_2013_8543:o0",
+                        "A2636_8739_1696_8052:i0"
+                    ]
+                ]
+            },
+            "Children": [
+                {
+                    "Name": "A4769_8071_8996_8194",
+                    "Type": "ImBotNewMessageTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BotId": null,
+                        "BotCode": "{=Workflow:TemplateId}-feedback-maker",
+                        "SenderIds": [
+                            "{=Constant:SetupTemplateActivity_f8J9TnkjX5}"
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Children": [],
+                    "Node": {
+                        "id": "A4769_8071_8996_8194",
+                        "type": "trigger",
+                        "position": {
+                            "x": -95,
+                            "y": 231
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2###",
+                            "colorIndex": 2,
+                            "icon": "MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9833_6990_1088_4471",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A4769_8071_8996_8194:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A4769_8071_8996_8194:SenderId}"
+                        ],
+                        "message": "{=A9692_4897_2126_2020:message}",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9833_6990_1088_4471",
+                        "type": "simple",
+                        "position": {
+                            "x": 491,
+                            "y": 239
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4372_1460_5476_9814",
+                    "Type": "AiAgentStartTrigger",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_4###"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A4372_1460_5476_9814",
+                        "type": "trigger",
+                        "position": {
+                            "x": 105,
+                            "y": -59
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_4###",
+                            "colorIndex": 0,
+                            "icon": "AI_ROBOT",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9598_6102_8882_8646",
+                    "Type": "ImBotCreateBotActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botName": "{=Constant:SetupTemplateActivity_OgbJZSi53p}",
+                        "workPosition": "",
+                        "avatar": null,
+                        "botCode": "{=Workflow:TemplateId}-feedback-maker",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_5###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9598_6102_8882_8646",
+                        "type": "simple",
+                        "position": {
+                            "x": 610,
+                            "y": -66
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_6###",
+                            "colorIndex": 1,
+                            "icon": "MESSENGER",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A5647_8130_8558_3635",
+                    "Type": "ImBotCreateBotActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botName": "{=Constant:SetupTemplateActivity_0ioDFL4rgH}",
+                        "workPosition": "",
+                        "avatar": null,
+                        "botCode": "{=Workflow:TemplateId}-feedback-interviewer",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_7###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5647_8130_8558_3635",
+                        "type": "simple",
+                        "position": {
+                            "x": 610,
+                            "y": 17
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_6###",
+                            "colorIndex": 1,
+                            "icon": "MESSENGER",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A5722_9997_9025_4029",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9598_6102_8882_8646:botId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=Constant:SetupTemplateActivity_f8J9TnkjX5}"
+                        ],
+                        "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_1###",
+                        "asError": null,
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Children": [],
+                    "Node": {
+                        "id": "A5722_9997_9025_4029",
+                        "type": "simple",
+                        "position": {
+                            "x": 1018,
+                            "y": -3
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9654_3504_4807_2932",
+                    "Type": "ImBotNewMessageTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BotId": null,
+                        "BotCode": "{=Workflow:TemplateId}-feedback-interviewer",
+                        "SenderIds": [
+                            "group_hrr1"
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Children": [],
+                    "Node": {
+                        "id": "A9654_3504_4807_2932",
+                        "type": "trigger",
+                        "position": {
+                            "x": -98,
+                            "y": 563
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2###",
+                            "colorIndex": 2,
+                            "icon": "MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A6125_8815_9480_4420",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9654_3504_4807_2932:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A9654_3504_4807_2932:SenderId}"
+                        ],
+                        "message": "{=A1535_5119_7045_4611:message}",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6125_8815_9480_4420",
+                        "type": "simple",
+                        "position": {
+                            "x": 793,
+                            "y": 580
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A6357_6275_4301_2053",
+                    "Type": "EmptyBlockActivity",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A6357_6275_4301_2053",
+                        "type": "frame",
+                        "position": {
+                            "x": 75,
+                            "y": -85
+                        },
+                        "dimensions": {
+                            "width": 1330.7858459143351,
+                            "height": 281.12990289435044
+                        },
+                        "ports": {
+                            "input": [],
+                            "output": []
+                        },
+                        "node": {
+                            "type": "frame",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###",
+                            "colorIndex": null,
+                            "icon": null,
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4649_3219_2693_9076",
+                    "Type": "EmptyBlockActivity",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A4649_3219_2693_9076",
+                        "type": "frame",
+                        "position": {
+                            "x": -145,
+                            "y": 541
+                        },
+                        "dimensions": {
+                            "width": 1893.198600361702,
+                            "height": 510.3069210531767
+                        },
+                        "ports": {
+                            "input": [],
+                            "output": []
+                        },
+                        "node": {
+                            "type": "frame",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###",
+                            "colorIndex": null,
+                            "icon": null,
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A8947_9497_6913_6578",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "FieldValue": {
+                            "title": "{=A9692_4897_2126_2020:topic}",
+                            "questions": "{=A9692_4897_2126_2020:questions}",
+                            "author": "{=A4769_8071_8996_8194:SenderId}"
+                        },
+                        "Author": "=\"user_\" & {=A2087_9399_5384_5330:Value}",
+                        "StorageId": null,
+                        "StorageCode": "storage_{=Workflow:TemplateId}",
+                        "Fields": {
+                            "title": {
+                                "Value": "{=A9692_4897_2126_2020:topic}",
+                                "FieldName": "title"
+                            },
+                            "questions": {
+                                "Value": "{=A9692_4897_2126_2020:questions}",
+                                "FieldName": "questions"
+                            },
+                            "author": {
+                                "Value": "{=A4769_8071_8996_8194:SenderId}",
+                                "FieldName": "author"
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_9###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A8947_9497_6913_6578",
+                        "type": "simple",
+                        "position": {
+                            "x": 1340,
+                            "y": 461
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_9###",
+                            "colorIndex": 5,
+                            "icon": "PLUS_M",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A5846_8478_5020_2228",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "{=Workflow:TemplateId}-feedback-interviewer",
+                        "recipient": [
+                            "=\"user_\" & {=A2087_9399_5384_5330:Value}"
+                        ],
+                        "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_2###",
+                        "asError": null,
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5846_8478_5020_2228",
+                        "type": "simple",
+                        "position": {
+                            "x": 1632,
+                            "y": 461
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4120_8802_2523_2854",
+                    "Type": "ReadDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "storage_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "title",
+                            "questions",
+                            "author",
+                            "id"
+                        ],
+                        "DynamicFilterFields": {
+                            "type": "field",
+                            "items": [
+                                [
+                                    {
+                                        "operator": "=",
+                                        "value": "{=A9654_3504_4807_2932:SenderId}",
+                                        "field": "CREATED_BY",
+                                        "object": "Document"
+                                    },
+                                    "AND"
+                                ]
+                            ],
+                            "activityNames": [],
+                            "internalized": true
+                        },
+                        "OutputFields": {
+                            "title": {
+                                "Name": "title",
+                                "FieldName": "title"
+                            },
+                            "questions": {
+                                "Name": "questions",
+                                "FieldName": "questions"
+                            },
+                            "author": {
+                                "Name": "author",
+                                "FieldName": "author"
+                            },
+                            "id": {
+                                "Name": "id",
+                                "FieldName": "id"
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_10###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4120_8802_2523_2854",
+                        "type": "simple",
+                        "position": {
+                            "x": -86,
+                            "y": 655
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_11###",
+                            "colorIndex": 5,
+                            "icon": "DATA_READING",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A8762_2315_5201_1662",
+                    "Type": "DeleteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": 0,
+                        "StorageCode": "storage_{=Workflow:TemplateId}",
+                        "DeleteMode": "multiple",
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "ID",
+                                        "operator": "=",
+                                        "value": "{=A4120_8802_2523_2854:id}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_12###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A8762_2315_5201_1662",
+                        "type": "simple",
+                        "position": {
+                            "x": 1309,
+                            "y": 810
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_12###",
+                            "colorIndex": 5,
+                            "icon": "TRASHCAN",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9312_1858_2156_7551",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "{=Workflow:TemplateId}-feedback-maker",
+                        "recipient": [
+                            "{=A4120_8802_2523_2854:author}"
+                        ],
+                        "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_3###",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9312_1858_2156_7551",
+                        "type": "simple",
+                        "position": {
+                            "x": 1182,
+                            "y": 660
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A8369_8149_6365_5481",
+                    "Type": "SetupTemplateActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "user": "{=A4372_1460_5476_9814:startedBy}",
+                        "blocks": [
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_1###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_BITRIX_AI_COACH_TEXT_1###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_OgbJZSi53p",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_2###",
+                                        "constantType": "string",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_BITRIX_AI_COACH_DEFAULT_1###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_f8J9TnkjX5",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_3###",
+                                        "constantType": "user",
+                                        "description": "",
+                                        "multiple": true,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_BITRIX_AI_COACH_TEXT_2###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_BITRIX_AI_COACH_TEXT_3###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_0ioDFL4rgH",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_4###",
+                                        "constantType": "string",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_BITRIX_AI_COACH_DEFAULT_2###"
+                                    }
+                                ]
+                            }
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_13###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Children": [],
+                    "Node": {
+                        "id": "A8369_8149_6365_5481",
+                        "type": "simple",
+                        "position": {
+                            "x": 170,
+                            "y": 73
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_13###",
+                            "colorIndex": 2,
+                            "icon": "SETTINGS",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A3246_1874_7458_8230",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                        "EditorComment": "",
+                        "mixedcondition": [
+                            {
+                                "object": "A9692_4897_2126_2020",
+                                "field": "input_data_is_known",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 0
+                            },
+                            {
+                                "object": "A9692_4897_2126_2020",
+                                "field": "questions_is_approved",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 0
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3246_1874_7458_8230",
+                        "type": "complex",
+                        "position": {
+                            "x": 713,
+                            "y": 308
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 176
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": "true"
+                                },
+                                {
+                                    "id": "o1",
+                                    "position": 1,
+                                    "title": "false"
+                                }
+                            ],
+                            "aux": null
+                        },
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A7586_4625_6752_3529",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                        "EditorComment": "",
+                        "mixedcondition": [
+                            {
+                                "object": "A1535_5119_7045_4611",
+                                "field": "is_test_complete",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 0
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7586_4625_6752_3529",
+                        "type": "complex",
+                        "position": {
+                            "x": 872,
+                            "y": 768
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 176
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": "true"
+                                },
+                                {
+                                    "id": "o1",
+                                    "position": 1,
+                                    "title": "false"
+                                }
+                            ],
+                            "aux": null
+                        },
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9692_4897_2126_2020",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A4769_8071_8996_8194:SenderId}",
+                        "query": "{=A4769_8071_8996_8194:Message}",
+                        "systemPrompt": "###BIZPROC_NODES_BITRIX_AI_COACH_SYSTEMPROMPT_1###",
+                        "returnType": "json",
+                        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"message\": {\n      \"type\": \"string\",\n      \"description\": \"Next message for chat\"\n    },\n    \"number_of_questions\": {\n      \"type\": \"integer\",\n      \"description\": \"Number of questions\"\n    },\n    \"topic\": {\n      \"type\": \"string\",\n      \"description\": \"Topic\"\n    },\n    \"tested_user_ids\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"integer\",\n        \"description\": \"Tested User ID\"\n      }\n    },\n    \"questions_is_approved\": {\n      \"type\": \"boolean\",\n      \"description\": \"questions is approved\"\n    },\n    \"input_data_is_known\": {\n      \"type\": \"boolean\",\n      \"description\": \"Input data is known\"\n    },\n    \"questions\": {\n      \"type\": \"string\",\n      \"description\": \"Questions of test\"\n    }\n  },\n  \"required\": [\n    \"message\",\n    \"number_of_questions\",\n    \"topic\",\n    \"tested_user_ids\",\n    \"questions_is_approved\",\n    \"input_data_is_known\",\n    \"questions\"\n  ]\n}",
+                        "jsonPath": {
+                            "message": {
+                                "Id": "message",
+                                "Type": "json",
+                                "Name": "JSON:message",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "number_of_questions": {
+                                "Id": "number_of_questions",
+                                "Type": "json",
+                                "Name": "JSON:number_of_questions",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "topic": {
+                                "Id": "topic",
+                                "Type": "json",
+                                "Name": "JSON:topic",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "tested_user_ids": {
+                                "Id": "tested_user_ids",
+                                "Type": "json",
+                                "Name": "JSON:tested_user_ids",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "questions_is_approved": {
+                                "Id": "questions_is_approved",
+                                "Type": "json",
+                                "Name": "JSON:questions_is_approved",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "input_data_is_known": {
+                                "Id": "input_data_is_known",
+                                "Type": "json",
+                                "Name": "JSON:input_data_is_known",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "questions": {
+                                "Id": "questions",
+                                "Type": "json",
+                                "Name": "JSON:questions",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9692_4897_2126_2020",
+                        "type": "simple",
+                        "position": {
+                            "x": -81,
+                            "y": 412
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "aux": [
+                                {
+                                    "id": "a0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
+                            "colorIndex": 0,
+                            "icon": "AI_ROBOT",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A2087_9399_5384_5330",
+                    "Type": "ForEachActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Variable": "tested_user_ids",
+                        "Object": "A9692_4897_2126_2020",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_16###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2087_9399_5384_5330",
+                        "type": "complex",
+                        "position": {
+                            "x": 1064,
+                            "y": 221
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 176
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1,
+                                    "title": "in"
+                                },
+                                {
+                                    "id": "i1",
+                                    "position": 2,
+                                    "title": "->>"
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o1",
+                                    "position": 1,
+                                    "title": "out"
+                                },
+                                {
+                                    "id": "o0",
+                                    "position": 2,
+                                    "title": "->>"
+                                }
+                            ],
+                            "aux": null,
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_16###",
+                            "colorIndex": null,
+                            "icon": "",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A1535_5119_7045_4611",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A9654_3504_4807_2932:SenderId}",
+                        "query": "{=A9654_3504_4807_2932:Message}",
+                        "systemPrompt": "###BIZPROC_NODES_BITRIX_AI_COACH_SYSTEMPROMPT_2###",
+                        "returnType": "json",
+                        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"message\": {\n      \"type\": \"string\",\n      \"description\": \"Next message for the chat\"\n    },\n    \"is_test_complete\": {\n      \"type\": \"boolean\",\n      \"description\": \"Flag is test complete\"\n    },\n    \"results_of_test\": {\n      \"type\": \"string\",\n      \"description\": \"Results of the test\"\n    }\n  },\n  \"required\": [\n    \"message\",\n    \"is_test_complete\",\n    \"results_of_test\"\n  ]\n}",
+                        "jsonPath": {
+                            "message": {
+                                "Id": "message",
+                                "Type": "json",
+                                "Name": "JSON:message",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "is_test_complete": {
+                                "Id": "is_test_complete",
+                                "Type": "json",
+                                "Name": "JSON:is_test_complete",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "results_of_test": {
+                                "Id": "results_of_test",
+                                "Type": "json",
+                                "Name": "JSON:results_of_test",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1535_5119_7045_4611",
+                        "type": "simple",
+                        "position": {
+                            "x": 233,
+                            "y": 596
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "aux": [
+                                {
+                                    "id": "a0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
+                            "colorIndex": 0,
+                            "icon": "AI_ROBOT",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4306_9994_2013_8543",
+                    "Type": "CreateStorageNode",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageTitle": "###BIZPROC_NODES_BITRIX_AI_COACH_STORAGETITLE_1###",
+                        "StorageDescription": "",
+                        "StorageCode": "storage_{=Workflow:TemplateId}",
+                        "StorageFields": {
+                            "ItemCode": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_5###",
+                                "Type": "string"
+                            },
+                            "title": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_6###",
+                                "Type": "string"
+                            },
+                            "questions": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_7###",
+                                "Type": "string"
+                            },
+                            "author": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_8###",
+                                "Type": "user"
+                            }
+                        },
+                        "SelectedFields": [
+                            {
+                                "id": 0,
+                                "storageId": 0,
+                                "code": "title",
+                                "sort": 500,
+                                "name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_9###",
+                                "description": "",
+                                "type": "string",
+                                "multiple": false,
+                                "mandatory": false,
+                                "settings": null
+                            },
+                            {
+                                "id": 0,
+                                "storageId": 0,
+                                "code": "questions",
+                                "sort": 500,
+                                "name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_10###",
+                                "description": "",
+                                "type": "string",
+                                "multiple": false,
+                                "mandatory": false,
+                                "settings": null
+                            },
+                            {
+                                "id": 0,
+                                "storageId": 0,
+                                "code": "author",
+                                "sort": 500,
+                                "name": "###BIZPROC_NODES_BITRIX_AI_COACH_NAME_11###",
+                                "description": "",
+                                "type": "user",
+                                "multiple": false,
+                                "mandatory": false,
+                                "settings": null
+                            }
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_17###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4306_9994_2013_8543",
+                        "type": "simple",
+                        "position": {
+                            "x": 614,
+                            "y": 98
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_17###",
+                            "colorIndex": 5,
+                            "icon": "DATABASE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9433_3697_1811_2293",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                        "mixedcondition": [
+                            {
+                                "object": "A9692_4897_2126_2020",
+                                "field": "message",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ],
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9433_3697_1811_2293",
+                        "type": "complex",
+                        "position": {
+                            "x": 193,
+                            "y": 232
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 120
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": "true"
+                                },
+                                {
+                                    "id": "o1",
+                                    "position": 1,
+                                    "title": "false"
+                                }
+                            ],
+                            "aux": null,
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A1689_5301_1167_3785",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A4769_8071_8996_8194:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A4769_8071_8996_8194:SenderId}"
+                        ],
+                        "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_4###",
+                        "asError": "Y",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1689_5301_1167_3785",
+                        "type": "simple",
+                        "position": {
+                            "x": 246,
+                            "y": 431
+                        },
+                        "dimensions": {
+                            "width": 302.5625,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A8569_7164_3775_5606",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9654_3504_4807_2932:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A9654_3504_4807_2932:SenderId}"
+                        ],
+                        "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_4###",
+                        "asError": "Y",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A8569_7164_3775_5606",
+                        "type": "simple",
+                        "position": {
+                            "x": 747,
+                            "y": 946
+                        },
+                        "dimensions": {
+                            "width": 302.5625,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A1096_4690_2822_9024",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                        "mixedcondition": [
+                            {
+                                "object": "A1535_5119_7045_4611",
+                                "field": "message",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ],
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1096_4690_2822_9024",
+                        "type": "complex",
+                        "position": {
+                            "x": 442,
+                            "y": 703
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 120
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": "true"
+                                },
+                                {
+                                    "id": "o1",
+                                    "position": 1,
+                                    "title": "false"
+                                }
+                            ],
+                            "aux": null,
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A8489_1316_1178_9993",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9654_3504_4807_2932:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A9654_3504_4807_2932:SenderId}"
+                        ],
+                        "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_5###",
+                        "asError": "N",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A8489_1316_1178_9993",
+                        "type": "simple",
+                        "position": {
+                            "x": 310,
+                            "y": 942
+                        },
+                        "dimensions": {
+                            "width": 302.5625,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A7464_6478_5578_9056",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                        "mixedcondition": [
+                            {
+                                "object": "A4120_8802_2523_2854",
+                                "field": "questions",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ],
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7464_6478_5578_9056",
+                        "type": "complex",
+                        "position": {
+                            "x": 66,
+                            "y": 763
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 120
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": "true"
+                                },
+                                {
+                                    "id": "o1",
+                                    "position": 1,
+                                    "title": "false"
+                                }
+                            ],
+                            "aux": null,
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A2636_8739_1696_8052",
+                    "Type": "DeleteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": 0,
+                        "StorageCode": "storage_{=Workflow:TemplateId}",
+                        "DeleteMode": "all",
+                        "DynamicFilterFields": {
+                            "items": []
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_12###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2636_8739_1696_8052",
+                        "type": "simple",
+                        "position": {
+                            "x": 886,
+                            "y": 99
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_12###",
+                            "colorIndex": 5,
+                            "icon": "TRASHCAN",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

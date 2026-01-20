@@ -1,6 +1,8 @@
+import { Extension } from 'main.core';
+
 import type { Store } from 'ui.vue3.vuex';
 
-import { Model } from 'tasks.v2.const';
+import { Endpoint, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import type { UserModel } from 'tasks.v2.model.users';
@@ -12,7 +14,15 @@ class UserService
 {
 	getUrl(id: number): string
 	{
-		return `/company/personal/user/${id}/`;
+		const settings = Extension.getSettings('tasks.v2.application.task-card');
+		const urlTemplate = settings.userDetailUrlTemplate;
+
+		if (!urlTemplate)
+		{
+			return `/company/personal/user/${id}/`;
+		}
+
+		return urlTemplate.replace('#USER_ID#', String(id));
 	}
 
 	async list(ids: number[]): Promise<void>
@@ -25,7 +35,7 @@ class UserService
 
 		try
 		{
-			const data = await apiClient.post('User.list', { ids: unloadedIds });
+			const data = await apiClient.post(Endpoint.UserList, { ids: unloadedIds });
 
 			const users = data.map((user: UserDto) => mapDtoToModel(user));
 

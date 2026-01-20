@@ -1,6 +1,7 @@
 import {Dom, Type} from 'main.core';
 import {BaseField} from 'landing.ui.field.basefield';
 import {TextField} from 'landing.ui.field.textfield';
+import ColorPopup from './control/color_popup/color_popup';
 
 import BaseProcessor from './processor/base_processor';
 import Color from './processor/color';
@@ -40,6 +41,7 @@ export class ColorField extends BaseField
 		this.frame = (typeof options.frame === 'object') ? options.frame : null;
 		const processorOptions = {
 			block: options.block,
+			style: options.style,
 			styleNode: options.styleNode,
 			selector: options.selector,
 			contentRoot: this.contentRoot,
@@ -48,7 +50,6 @@ export class ColorField extends BaseField
 
 		this.changeHandler = (typeof options.onChange === "function") ? options.onChange : (() => {});
 		this.valueChangeHandler = (typeof options.onValueChange === "function") ? options.onValueChange : (() => {});
-		this.resetHandler = (typeof options.onReset === "function") ? options.onReset : (function () {});
 
 		// todo: rename "subtype"
 		switch (options.subtype)
@@ -137,6 +138,11 @@ export class ColorField extends BaseField
 				break;
 		}
 
+		if (!this.processor)
+		{
+			return;
+		}
+
 		this.property = this.processor.getProperty()[this.processor.getProperty().length - 1];
 		this.processor.getClassName().forEach(
 			item => this.items.push({name: item, value: item}),
@@ -148,7 +154,6 @@ export class ColorField extends BaseField
 		Dom.append(this.processor.getLayout(), this.layout);
 
 		this.processor.subscribe('onChange', this.onChange.bind(this));
-		this.processor.subscribe('onReset', this.onReset.bind(this));
 	}
 
 	getInlineProperties(): [string]
@@ -213,11 +218,6 @@ export class ColorField extends BaseField
 		this.emit('onChange');
 	}
 
-	onReset()
-	{
-		this.resetHandler(this.items, this.postfix, this.property);
-	}
-
 	getValue(): IColorValue
 	{
 		return this.processor.getValue() || this.processor.getNullValue();
@@ -267,5 +267,10 @@ export class ColorField extends BaseField
 		// todo: now not work with "group select", can use just any node from elements. If group - need forEach
 		const value = this.data.styleNode.getValue(true);
 		this.setValue(value.style);
+	}
+
+	createPopup(options)
+	{
+		this.colorPopup = new ColorPopup(options);
 	}
 }

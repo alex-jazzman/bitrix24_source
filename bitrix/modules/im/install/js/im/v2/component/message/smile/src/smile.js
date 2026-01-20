@@ -61,11 +61,7 @@ export const SmileMessage = {
 			</div>
 			<template #after-message>
 				<div class="bx-im-message-smile__reactions-container">
-					<ReactionList 
-						:messageId="message.id"
-						:contextDialogId="dialogId"
-						class="bx-im-message-smile__reactions"
-					/>
+					<ReactionList :messageId="message.id" class="bx-im-message-smile__reactions" />
 				</div>
 			</template>
 		</BaseMessage>

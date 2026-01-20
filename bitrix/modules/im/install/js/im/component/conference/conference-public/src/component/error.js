@@ -1,11 +1,11 @@
 import { BitrixVue } from "ui.vue";
-import { ConferenceErrorCode } from "im.const";
+import { ConferenceErrorCode } from "call.const";
 import { Cookie } from 'im.lib.cookie';
 import { Utils } from "im.lib.utils";
 import { Vuex } from "ui.vue.vuex";
 import { State as CallState } from 'call.core';
 
-import 'im.component.call-feedback';
+import 'call.component.call-feedback';
 
 const Error = {
 	data()
@@ -67,13 +67,10 @@ const Error = {
 		},
 		showFeedback()
 		{
-			console.warn('this.$Bitrix.Application.get()', this.$Bitrix.Application.get());
-			console.warn('this.$Bitrix.Application.get().showFeedback', this.$Bitrix.Application.get().showFeedback);
 			return this.$Bitrix.Application.get().showFeedback;
 		},
 		callDetails()
 		{
-			console.warn('this.$Bitrix.Application.get().callDetails', this.$Bitrix.Application.get().callDetails);
 			return this.$Bitrix.Application.get().callDetails;
 		},
 		isExternalUser()
@@ -148,8 +145,8 @@ const Error = {
 					<div class="bx-im-component-call-error-content">
 						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_MESSAGE_PLEASE_LOG_IN'] }}</div>
 						<div class="bx-im-component-call-error-buttons">
-							<button @click="redirectToAuthorize" class="ui-btn ui-btn-sm ui-btn-primary bx-im-component-call-error-button-authorize">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AUTHORIZE'] }}</button>
-							<button @click="continueAsGuest" class="ui-btn ui-btn-sm bx-im-component-call-error-button-as-guest">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AS_GUEST'] }}</button>
+							<button @click="redirectToAuthorize" class="bx-im-component-call-error-button-authorize">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AUTHORIZE'] }}</button>
+							<button @click="continueAsGuest" class="bx-im-component-call-error-button-as-guest">{{ this.localize['BX_IM_COMPONENT_CALL_BUTTON_AS_GUEST'] }}</button>
 						</div>
 					</div>
 				</div>
@@ -212,7 +209,7 @@ const Error = {
 					<div class="bx-im-component-call-error-content">
 						<div class="bx-im-component-call-error-text">{{ localize['BX_IM_COMPONENT_CALL_ERROR_NO_SIGNAL_FROM_CAMERA'] }}</div>
 						<div class="bx-im-component-call-error-buttons">
-							<button @click="reloadPage" class="ui-btn ui-btn-sm ui-btn-no-caps">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_RELOAD'] }}</button>
+							<button @click="reloadPage" class="bx-im-component-call-error-button-reload">{{ localize['BX_IM_COMPONENT_CALL_BUTTON_RELOAD'] }}</button>
 						</div>
 					</div>
 				</div>

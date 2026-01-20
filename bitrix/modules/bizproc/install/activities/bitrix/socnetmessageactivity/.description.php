@@ -5,22 +5,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('BPSNMA_DESCR_NAME'),
-	'DESCRIPTION' => Loc::getMessage('BPSNMA_DESCR_DESCR_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'SocNetMessageActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
-		'ID' => 'interaction',
-	],
-	'ROBOT_SETTINGS' => [
+$arActivityDescription = (new ActivityDescription(
+	name: Loc::getMessage('BPSNMA_DESCR_NAME'),
+	description: Loc::getMessage('BPSNMA_DESCR_DESCR_1'),
+	type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value ],
+))
+	->setCategory([ 'ID' => 'interaction' ])
+	->setClass('SocNetMessageActivity')
+	->setJsClass('BizProcActivity')
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
 		'TITLE' => Loc::getMessage('BPSNMA_DESCR_ROBOT_TITLE_1'),
 		'RESPONSIBLE_PROPERTY' => 'MessageUserTo',
-		'GROUP' => ['informingEmployee'],
+		'GROUP' => [ 'informingEmployee' ],
 		'SORT' => 700,
-	],
-];
+	])
+	->toArray()
+;

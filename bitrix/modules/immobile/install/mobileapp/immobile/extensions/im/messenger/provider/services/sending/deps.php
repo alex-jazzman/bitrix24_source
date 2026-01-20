@@ -4,10 +4,12 @@ return [
 	'extensions' => [
 		'native/filesystem',
 		'type',
+		'utils/object',
 		'utils/file',
 		'utils/function',
 		'utils/uuid',
 		'uploader/client',
+		'im:messenger/view/dialog',
 		'im:messenger/lib/helper',
 		'im:messenger/const',
 		'im:messenger/lib/logger',

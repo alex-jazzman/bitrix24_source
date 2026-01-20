@@ -1,0 +1,5 @@
+.mail_massconnect__mailbox-settings_form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg2)
+}

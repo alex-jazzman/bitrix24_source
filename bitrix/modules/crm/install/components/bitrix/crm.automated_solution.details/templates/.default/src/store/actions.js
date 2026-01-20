@@ -103,6 +103,16 @@ export default {
 				// eslint-disable-next-line no-console
 				console.warn('could not delete automated solution', { response, state: Runtime.clone(store.state) });
 
+				const { errors } = response;
+
+				for (const error of errors)
+				{
+					if (Type.isStringFilled(error.customData?.sliderCode))
+					{
+						FeaturePromotersRegistry.getPromoter({ code: error.customData.sliderCode }).show();
+					}
+				}
+
 				store.dispatch('setErrors', response.errors);
 
 				throw response.errors;

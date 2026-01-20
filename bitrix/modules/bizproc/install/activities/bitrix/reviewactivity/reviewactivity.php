@@ -14,7 +14,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Mixins\ErrorHandling;
 use Bitrix\Main\Type\DateTime;
 
-class CBPReviewActivity extends CBPCompositeActivity implements IBPEventActivity, IBPActivityExternalEventListener
+class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
 {
 	use ErrorHandling;
 

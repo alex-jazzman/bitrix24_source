@@ -964,6 +964,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    handleUserClick(url) {
 	      BX.SidePanel.Instance.open(url, {
+	        width: 1100,
 	        cacheable: false
 	      });
 	    },
@@ -1419,74 +1420,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	}
 
-	class EditEmployeesMenuItem extends AbstractMenuItem {
-	  constructor(entityType, role) {
-	    const permissionAction = entityType === humanresources_companyStructure_utils.EntityTypes.team ? humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember : humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment;
-	    super({
-	      id: MenuActions.editEmployee,
-	      imageClass: '-hr-department-org-chart-menu-edit-list',
-	      bIcon: {
-	        name: ui_iconSet_api_core.Main.EDIT_MENU,
-	        size: 20,
-	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
-	      },
-	      permissionAction,
-	      dataTestId: 'hr-company-structure_menu__edit-employee-item'
-	    });
-	    this.localize(entityType, role);
-	  }
-	  localize(entityType, role) {
-	    const i18nRole = ['head', 'employee'].includes(role) ? role : 'default';
-	    const i18nType = entityType === humanresources_companyStructure_utils.EntityTypes.team ? 'team' : 'default';
-	    const i18nMap = {
-	      head: {
-	        team: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_TEAM_HEAD_TITLE'),
-	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_TEAM_HEAD_SUBTITLE')
-	        },
-	        default: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_HEAD_TITLE'),
-	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_HEAD_SUBTITLE')
-	        }
-	      },
-	      employee: {
-	        team: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_TEAM_EMPLOYEE_TITLE'),
-	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_TEAM_EMPLOYEE_SUBTITLE')
-	        },
-	        default: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_EMPLOYEE_TITLE'),
-	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_TEAM_EMPLOYEE_SUBTITLE')
-	        }
-	      },
-	      default: {
-	        team: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_EMPLOYEE_LIST_TITLE'),
-	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_EMPLOYEE_LIST_SUBTITLE')
-	        },
-	        default: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_TITLE'),
-	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_SUBTITLE')
-	        }
-	      }
-	    };
-	    this.title = i18nMap[i18nRole][i18nType].title;
-	    this.description = i18nMap[i18nRole][i18nType].description;
-	  }
-	  invoke({
-	    entityId,
-	    analyticSource
-	  }) {
-	    main_core_events.EventEmitter.emit(events.HR_ENTITY_SHOW_WIZARD, {
-	      nodeId: entityId,
-	      isEditMode: true,
-	      showEntitySelector: false,
-	      type: 'employees',
-	      source: analyticSource
-	    });
-	  }
-	}
-
 	class MoveEmployeeMenuItem extends AbstractMenuItem {
 	  constructor() {
 	    super({
@@ -1922,9 +1855,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    subdivisionsText() {
 	      var _this$nodeData$childr3;
+	      const wrapCountInHtml = (nodeType, pluralString, count) => {
+	        return pluralString.replace(count.toString(), `<span data-test-id="humanresources-tree__node-subdivisions-count --${nodeType}">${count}</span>`);
+	      };
+	      const nodeTypeTeam = 'team';
+	      const nodeTypeDept = 'dept';
 	      if (this.isTeamEntity) {
 	        var _this$nodeData$childr2;
-	        return (_this$nodeData$childr2 = this.nodeData.children) != null && _this$nodeData$childr2.length ? this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', this.nodeData.children.length) : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_NO_SUBDEPARTMENTS');
+	        if (!((_this$nodeData$childr2 = this.nodeData.children) != null && _this$nodeData$childr2.length)) {
+	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_NO_SUBDEPARTMENTS');
+	        }
+	        const pluralString = this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', this.nodeData.children.length);
+	        return wrapCountInHtml(nodeTypeTeam, pluralString, this.nodeData.children.length);
 	      }
 	      if (!((_this$nodeData$childr3 = this.nodeData.children) != null && _this$nodeData$childr3.length)) {
 	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_NO_SUBDEPARTMENTS');
@@ -1936,16 +1878,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return department.entityType === humanresources_companyStructure_utils.EntityTypes.team && this.nodeData.children.includes(department.id);
 	      }).length;
 	      if (childTeamsCount > 0 && childDepartmentsCount > 0) {
+	        const deptPlural = this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount);
+	        const teamPlural = this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
+	        const deptHtml = wrapCountInHtml(nodeTypeDept, deptPlural, childDepartmentsCount);
+	        const teamHtml = wrapCountInHtml(nodeTypeTeam, teamPlural, childTeamsCount);
 	        return this.loc('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT_WITH_CONJUNCTION', {
-	          '#DEPT_COUNT#': this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount),
-	          '#TEAM_COUNT#': this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount)
+	          '#DEPT_COUNT#': deptHtml,
+	          '#TEAM_COUNT#': teamHtml
 	        });
 	      }
 	      if (childDepartmentsCount > 0) {
-	        return this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount);
+	        const pluralString = this.locPlural('HUMANRESOURCES_COMPANY_DEPARTMENT_CHILDREN_COUNT', childDepartmentsCount);
+	        return wrapCountInHtml(nodeTypeDept, pluralString, childDepartmentsCount);
 	      }
 	      if (childTeamsCount > 0) {
-	        return this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
+	        const pluralString = this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
+	        return wrapCountInHtml(nodeTypeTeam, pluralString, childTeamsCount);
 	      }
 	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_NO_SUBDEPARTMENTS');
 	    },
@@ -2238,7 +2186,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						:class="subdivisionsClass"
 						@click.stop="onDepartmentClick('subdivisions')"
 					>
-						<span>{{ subdivisionsText }}</span>
+						<span v-html="subdivisionsText"></span>
 					</div>
 				</template>
 				<svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" class="humanresources-tree__node_lock">
@@ -4844,7 +4792,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.items = this.getFilteredItems();
 	  }
 	  getItems() {
-	    return [new AddEmployeeMenuItem(this.entityType, this.role), new EditEmployeesMenuItem(this.entityType, this.role)];
+	    return [new AddEmployeeMenuItem(this.entityType, this.role)];
 	  }
 	}
 

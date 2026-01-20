@@ -1,0 +1,111 @@
+.crm-messagesender-editor__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: var(--ui-space-stack-sm);
+	min-width: 0;
+}
+
+.crm-messagesender-editor__header-left, .crm-messagesender-editor__header-right {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+.crm-messagesender-editor__header-left {
+	min-width: 0;
+	flex: 1;
+}
+
+.crm-messagesender-editor__header-right {
+	flex-shrink: 0;
+}
+
+.crm-messagesender-editor__content {
+	margin-bottom: var(--ui-space-stack-lg);
+}
+
+.crm-messagesender-editor__content__body {
+	border-radius: var(--ui-border-radius-2xl);
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.crm-messagesender-editor__content__body__textarea-container {
+	border-radius: var(--ui-border-radius-2xl);
+	padding: var(--ui-space-inset-xs2);
+}
+
+.crm-messagesender-editor__content__body__textarea {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 50px;
+	font-size: var(--ui-font-size-lg);
+	resize: none;
+	border: none;
+	outline: none;
+}
+
+.crm-messagesender-editor__content__body__actions {
+	height: 35px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	/* align buttons to be visually 16px from border of body*/
+	padding-left: 7px;
+	padding-right: 7px;
+}
+
+.crm-messagesender-editor__content__body__actions__left {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.crm-messagesender-editor__content__body__actions__copilot .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-copilot-accent-primary);
+}
+
+.crm-messagesender-editor__content__footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.crm-messagesender-editor__content__footer__text {
+	color: var(--ui-color-palette-gray-35);
+}
+
+.crm-messagesender-editor__content__footer__text.--disabled {
+	color: var(--ui-color-palette-gray-10);
+}
+
+.crm-messagesender-editor__content__footer__text.--pointer {
+	cursor: pointer;
+}
+
+.crm-messagesender-editor__footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--ui-space-inline-8xl);
+}
+
+.crm-messagesender-editor__footer__buttons {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+}
+
+.crm-messagesender-editor__footer__from {
+	display: flex;
+	align-items: center;
+}
+
+.crm-messagesender-editor__footer__from__text {
+	color: var(--ui-color-gray-70);
+}
+
+.crm-messagesender-editor__alert .ui-alert {
+	margin-bottom: 0;
+}

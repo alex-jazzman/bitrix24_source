@@ -2,21 +2,21 @@
 
 return [
 	'extensions' => [
-		'type',
+		'layout/ui/loaders/spinner',
 		'tokens',
-		'utils/type',
-		'utils/object',
-		'utils/string',
-		'utils/enums/base',
-		'utils/validation',
-		'utils/enums/style',
+		'type',
 		'ui-system/blocks/icon',
 		'ui-system/typography/text',
-		'layout/ui/loaders/spinner',
+		'utils/object',
+		'utils/string',
+		'utils/type',
+		'utils/validation',
+		'utils/enums/base',
+		'utils/enums/style',
 	],
 	'bundle' => [
-		'./src/size-enum',
 		'./src/design-enum',
+		'./src/size-enum',
 		'./src/state-decorator',
 	],
 ];

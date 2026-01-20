@@ -732,7 +732,7 @@ body {background:url("images/submenu-bg.png") repeat 0 0;
 	overflow:hidden;
 	padding-left:11px;
 	position:absolute;
-	width:100px;
+	min-width: 300px;
 	z-index: 1;
 	margin-top: -8px;
 }
@@ -756,7 +756,6 @@ body {background:url("images/submenu-bg.png") repeat 0 0;
 	text-shadow:0 -1px rgba(0,0,0,0.7);
 	padding:9px 17px 7px;
 	position:relative;
-	white-space:nowrap;
 }
 
 .login-error-message:before {
@@ -765,11 +764,10 @@ body {background:url("images/submenu-bg.png") repeat 0 0;
 	height:20px;
 	margin-top:-9px;
 	left:-10px;
-	top:50%;
+	top:28px;
 	position:absolute;
 	width:11px;
 }
-
 .login-error-red {
 	color:#ebb1aa;
 	display:block;
@@ -777,23 +775,6 @@ body {background:url("images/submenu-bg.png") repeat 0 0;
 	font-weight:normal;
 	padding-top:4px;
 }
-
-/************* deprecated - outline for fields with wrong value ***************/
-/*
-.login-input.login-popup-error-field {
-	border-color:#87909C #939CA7 #9FA8B2;
-	box-shadow:inset 0 1px 7px 0 rgba(159,174,182,0.7), 0 1px 0 #fff;
-	-moz-transition:border-color 0.3s ease-in, border-width 0.3s ease-in;
-	padding:12px 13px 13px;
-}
-
-.login-input.login-popup-error-field-anim {
-	border-color:#de7b7b #de7b7b #de7b7b;
-	border-width:2px;
-}
-*/
-
-
 
 /***************** ANIMATION **********************/
 .login-page-bg {

@@ -557,7 +557,7 @@ export class UploadingService extends EventEmitter
 			}
 			else
 			{
-				void this.#store.dispatch('recent/delete', {
+				void this.#store.dispatch('recent/hide', {
 					id: chat.dialogId,
 				});
 			}

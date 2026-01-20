@@ -1,54 +1,51 @@
-.bx-im-message-status__scope {
-	--im-message-status__font-color_edit-mark: rgba(var(--im-color-palette-gray-90-rgb), 0.4);
-	--im-message-status__font-color_edit-mark-overlay: var(--im-color-palette-white-base);
-	--im-message-status__font-color_date: rgba(var(--im-color-palette-gray-90-rgb), 0.4);
-	--im-message-status__font-color_date-overlay: var(--im-color-palette-white-base);
-	--im-message-status__background-color_date-overlay: rgb(0 0 0 / 50%);
-}
-
 .bx-im-message-status__container {
+	--im-message-status__font-color_status: rgba(var(--im-color-palette-gray-90-rgb), 0.4);
+	--im-message-status__font-color_overlay-status: var(--im-color-palette-white-base);
+	--im-message-status__background-color_date-overlay: rgba(var(--im-color-palette-black-solid-rgb), 0.3);
+
 	display: flex;
 	align-items: flex-end;
 }
 
 .bx-im-message-status__container.--overlay {
 	border-radius: 12px;
-	padding: 2px 6px;
+	padding: 4px 6px;
 	background-color: var(--im-message-status__background-color_date-overlay);
 }
 
 .bx-im-message-status__edit-mark {
 	margin-right: 4px;
 	text-transform: lowercase;
-	font: var(--im-font-size-4xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font: var(--im-font-size-4xs)/11px var(--im-font-family-system);
 	font-style: italic;
-	color: var(--im-message-status__font-color_edit-mark);
+	color: var(--im-message-status__font-color_status);
 	user-select: none;
 }
 
 .--overlay .bx-im-message-status__edit-mark {
-	color: var(--im-message-status__font-color_edit-mark-overlay);
+	color: var(--im-message-status__font-color_overlay-status);
 }
 
 .bx-im-message-status__date {
 	font: var(--im-font-size-4xs)/11px var(--im-font-family-system);
-	color: var(--im-message-status__font-color_date);
+	color: var(--im-message-status__font-color_status);
 	user-select: none;
+	white-space: nowrap;
 }
 
 .bx-im-message-status__container.--overlay .bx-im-message-status__date {
-	color: var(--im-message-status__font-color_date-overlay);
+	color: var(--im-message-status__font-color_overlay-status);
 }
 
 .bx-im-message-status__icon {
-	width: 14px;
+	width: 13px;
 	height: 11px;
-	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
 }
 
 .bx-im-message-status__icon.--sending {
+	width: 14px;
 	background-image: url('./images/sending-status.svg');
 }
 
@@ -61,7 +58,7 @@
 }
 
 .bx-im-message-status__icon.--error {
-	background-image: url('./images/error-status.svg');
+	background-image: url('./images/error-status-white.svg');
 }
 
 .--overlay .bx-im-message-status__icon.--sending {
@@ -70,6 +67,10 @@
 
 .--overlay .bx-im-message-status__icon.--sent {
 	background-image: url('./images/sent-status-white.svg');
+}
+
+.--overlay .bx-im-message-status__icon.--viewed {
+	background-image: url('./images/viewed-status-white.svg');
 }
 
 .bx-im-message-status__date + .bx-im-message-status__icon {

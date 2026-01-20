@@ -13,25 +13,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  [im_v2_const.NavigationMenuItem.market]: onMarketClick
 	};
 	const NavigationManager = {
-	  open(menuItem) {
+	  open(payload) {
 	    const {
-	      id,
-	      entityId
-	    } = menuItem;
+	      id
+	    } = payload;
 	    if (!im_v2_const.NavigationMenuItem[id]) {
 	      return;
 	    }
 	    if (customClickHandler[id]) {
-	      customClickHandler[id](menuItem);
+	      customClickHandler[id](payload);
 	      return;
 	    }
-	    changeLayout({
-	      layoutName: id,
-	      layoutEntityId: entityId
-	    });
-	  },
-	  isLayout(id) {
-	    return Boolean(im_v2_const.Layout[id]);
+	    handleMenuItem(payload);
 	  },
 	  isMarketApp(payload) {
 	    const {
@@ -53,10 +46,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    return;
 	  }
-	  changeLayout({
-	    layoutName: im_v2_const.Layout.copilot,
-	    layoutEntityId: payload.entityId
-	  });
+	  handleMenuItem(payload);
 	}
 	function onCallClick(payload) {
 	  const KEYPAD_OFFSET_TOP = -30;
@@ -79,13 +69,93 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    entityId
 	  } = payload;
 	  if (entityId) {
+	    // specific apps should be opened as layouts
 	    changeLayout({
 	      layoutName: im_v2_const.Layout.market,
 	      layoutEntityId: entityId
 	    });
 	    return;
 	  }
-	  im_v2_lib_market.MarketManager.openMarketplace();
+
+	  // marketplace should be opened as slider
+	  im_v2_lib_market.MarketManager.openChatMarket();
+	}
+	function handleMenuItem(payload) {
+	  const {
+	    id: layoutName,
+	    entityId: layoutEntityId,
+	    asLink
+	  } = payload;
+	  if (asLink) {
+	    openLink({
+	      layoutName,
+	      layoutEntityId
+	    });
+	    return;
+	  }
+	  changeLayout({
+	    layoutName,
+	    layoutEntityId
+	  });
+	}
+	function openLink({
+	  layoutName,
+	  layoutEntityId
+	}) {
+	  const LayoutToUrlConfigMap = {
+	    [im_v2_const.NavigationMenuItem.chat]: {
+	      paramName: im_v2_const.GetParameter.openChat,
+	      useParamByDefault: false,
+	      canUseId: true
+	    },
+	    [im_v2_const.NavigationMenuItem.copilot]: {
+	      paramName: im_v2_const.GetParameter.openCopilotChat,
+	      useParamByDefault: true,
+	      canUseId: true
+	    },
+	    [im_v2_const.NavigationMenuItem.collab]: {
+	      paramName: im_v2_const.GetParameter.openCollab,
+	      useParamByDefault: true,
+	      canUseId: true
+	    },
+	    [im_v2_const.NavigationMenuItem.channel]: {
+	      paramName: im_v2_const.GetParameter.openChannel,
+	      useParamByDefault: true,
+	      canUseId: true
+	    },
+	    [im_v2_const.NavigationMenuItem.tasksTask]: {
+	      paramName: im_v2_const.GetParameter.openTaskComments,
+	      useParamByDefault: true,
+	      canUseId: true
+	    },
+	    [im_v2_const.NavigationMenuItem.openlines]: {
+	      paramName: im_v2_const.GetParameter.openLines,
+	      useParamByDefault: true,
+	      canUseId: true
+	    },
+	    [im_v2_const.NavigationMenuItem.notification]: {
+	      paramName: im_v2_const.GetParameter.openNotifications,
+	      useParamByDefault: true,
+	      canUseId: false
+	    },
+	    [im_v2_const.NavigationMenuItem.settings]: {
+	      paramName: im_v2_const.GetParameter.openSettings,
+	      useParamByDefault: true,
+	      canUseId: false
+	    }
+	  };
+	  const basePath = im_v2_const.Path.online;
+	  const urlConfig = LayoutToUrlConfigMap[layoutName];
+	  if (!urlConfig) {
+	    return;
+	  }
+	  let finalUrl = basePath;
+	  if (urlConfig.canUseId && layoutEntityId) {
+	    finalUrl += `?${urlConfig.paramName}=${layoutEntityId}`;
+	  } else if (urlConfig.useParamByDefault) {
+	    finalUrl += `?${urlConfig.paramName}`;
+	  }
+	  location.href = finalUrl;
 	}
 	function changeLayout({
 	  layoutName,

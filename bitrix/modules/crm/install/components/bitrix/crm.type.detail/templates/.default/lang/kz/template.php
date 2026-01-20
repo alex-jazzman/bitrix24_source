@@ -20,6 +20,7 @@ $MESS["CRM_TYPE_DETAIL_FIELD_CLIENT"] = "«Клиент»";
 $MESS["CRM_TYPE_DETAIL_FIELD_DATES"] = "«Басталу күні» «Аяқталу күні»";
 $MESS["CRM_TYPE_DETAIL_FIELD_MY_COMPANY"] = "«Компания деректемелері»";
 $MESS["CRM_TYPE_DETAIL_FIELD_OBSERVERS"] = "«Бақылаушылар»";
+$MESS["CRM_TYPE_DETAIL_FIELD_RECURRING"] = "«Тұрақтылық»";
 $MESS["CRM_TYPE_DETAIL_FIELD_SOURCE"] = "«Дереккөз»";
 $MESS["CRM_TYPE_DETAIL_FIELD_TITLE"] = "Атауын енгізіңіз";
 $MESS["CRM_TYPE_DETAIL_HIDE_DESCRIPTION"] = "Мәлімдемені жасыру";

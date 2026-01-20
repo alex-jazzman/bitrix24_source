@@ -7,7 +7,14 @@ jn.define('im/messenger/model/dialogues/ai-assistant/default-element', (require,
 		isClosedNotifyPanel: false,
 	});
 
+	const aiAssistantMCPDefaultElement = Object.freeze({
+		selectedAuthId: null,
+		name: '',
+		iconUrl: '',
+	});
+
 	module.exports = {
 		aiAssistantNotifyPanelDefaultElement,
+		aiAssistantMCPDefaultElement,
 	};
 });

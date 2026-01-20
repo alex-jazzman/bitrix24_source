@@ -1,0 +1,26 @@
+<?php
+$MESS["AI_PROCESSING_ACTIVITY_EMPTY_ENGINE"] = "AI provider is not selected.";
+$MESS["AI_PROCESSING_ACTIVITY_EMPTY_PROMPT"] = "AI prompt is not specified.";
+$MESS["AI_PROCESSING_ACTIVITY_EMPTY_RETURN_TYPE"] = "Incorrect response format.";
+$MESS["AI_PROCESSING_ACTIVITY_ENGINE_NOT_FOUND"] = "Selected AI provider is not available.";
+$MESS["AI_PROCESSING_ACTIVITY_EXECUTION_TIMEOUT_ERROR"] = "AI agent response timed out. Try again later.";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_ENGINE_NAME"] = "AI provider";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_JSON_SCHEMA_DESC"] = "Describe the expected JSON structure. This field is required if the response format \"Strict JSON schema\" is selected.";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_JSON_SCHEMA_NAME"] = "JSON schema result";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_PROMPT_NAME"] = "Prompt";
+$MESS["AI_PROCESSING_ACTIVITY_FIELD_RETURN_TYPE"] = "Response format";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_INVALID"] = "Incorrect JSON schema (syntax error or unsupported format).";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_PREVIEW_TITLE"] = "Preview";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_REQUIRED"] = "JSON schema not specified for the selected response format.";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_INVALID"] = "Error: invalid JSON.";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_VALID"] = "Schema is valid.";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_BTN"] = "Apply template";
+$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_CONFIRM_OVERWRITE"] = "Replace the current schema with the template?";
+$MESS["AI_PROCESSING_ACTIVITY_MODULE_NOT_INSTALLED"] = "The \"AI\" module is not installed.";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_ERROR"] = "Could not enqueue task. Error: #ERROR#.";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_FAIL"] = "Could not process enqueued task: #MESSAGE# (#CODE#).";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_RESULT"] = "AI prompt has been processed. Result: #RESULT#.";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_UNEXPECTED_FAIL"] = "Could not process enqueued task. Sorry, something's gone wrong.";
+$MESS["AI_PROCESSING_ACTIVITY_QUEUE_UNEXPECTED_RESULT"] = "Cannot display the result of AI prompt processing in required format.";
+$MESS["AI_PROCESSING_ACTIVITY_RETURN_TYPE_JSON"] = "Strict JSON schema";
+$MESS["AI_PROCESSING_ACTIVITY_RETURN_TYPE_STRING"] = "Text";

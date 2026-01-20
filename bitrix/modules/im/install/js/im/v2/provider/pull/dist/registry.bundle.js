@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports,im_v2_lib_uuid,im_v2_provider_service_message,main_core_events,ui_vue3_vuex,im_v2_lib_inputAction,im_v2_lib_roleManager,im_v2_lib_analytics,im_v2_lib_notifier,im_v2_lib_counter,main_sidepanel,im_public,im_v2_lib_slider,im_v2_lib_layout,im_v2_lib_copilot,im_v2_lib_utils,im_v2_model,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_messageNotifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,main_core,im_v2_lib_logger,im_v2_provider_pull,im_v2_const,im_v2_lib_promo,im_v2_application_core) {
+(function (exports,im_v2_lib_uuid,im_v2_provider_service_message,main_core_events,ui_vue3_vuex,im_v2_lib_inputAction,im_v2_lib_roleManager,im_v2_lib_analytics,im_v2_lib_notifier,im_v2_lib_counter,main_sidepanel,im_public,im_v2_lib_slider,im_v2_lib_layout,im_v2_lib_copilot,im_v2_lib_utils,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_messageNotifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,main_core,im_v2_lib_logger,im_v2_provider_pull,im_v2_const,im_v2_lib_promo,im_v2_application_core) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -92,8 +92,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	function _closeChannelComments2(params) {
 	  main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
 	  im_v2_lib_analytics.Analytics.getInstance().messageDelete.onDeletedPostNotification({
-	    dialogId: params.dialogId,
-	    messageId: params.id
+	    dialogId: params.dialogId
 	  });
 	  im_v2_lib_notifier.Notifier.message.onNotFoundError();
 	}
@@ -304,17 +303,25 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      actualReactionsState.ownReactions = [reaction];
 	    }
 	    const userManager = new im_v2_lib_user.UserManager();
-	    userManager.addUsersToModel(usersShort);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/reactions/set', [actualReactionsState]);
+	    void userManager.addUsersToModel(usersShort);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/reactions/set', [actualReactionsState]);
 	  }
 	  handleDeleteReaction(params) {
 	    im_v2_lib_logger.Logger.warn('MessagePullHandler: handleDeleteReaction', params);
 	    const {
 	      actualReactions: {
-	        reaction: actualReactionsState
-	      }
+	        reaction: rawReaction
+	      },
+	      reaction: reactionType,
+	      userId
 	    } = params;
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/reactions/set', [actualReactionsState]);
+	    const newReactionItem = {
+	      ...rawReaction
+	    };
+	    if (im_v2_application_core.Core.getUserId() === userId) {
+	      newReactionItem.ownReactionsToRemove = [reactionType];
+	    }
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/reactions/set', [newReactionItem]);
 	  }
 	  handleMessageParamsUpdate(params) {
 	    im_v2_lib_logger.Logger.warn('MessagePullHandler: handleMessageParamsUpdate', params);
@@ -751,8 +758,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  handleReadAllChats() {
 	    im_v2_lib_logger.Logger.warn('ChatPullHandler: handleReadAllChats');
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('chats/clearCounters');
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('recent/clearUnread');
+	    im_v2_lib_counter.CounterClearActionsDefault.forEach(actionName => {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch(actionName);
+	    });
+	  }
+	  handleReadAllChatsByType(params) {
+	    const {
+	      type
+	    } = params;
+	    const counterClearActions = im_v2_lib_counter.CounterClearActionsByChatType[type];
+	    if (!counterClearActions) {
+	      return;
+	    }
+	    counterClearActions.forEach(actionName => {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch(actionName, {
+	        type
+	      });
+	    });
 	  }
 	  handleChatConvert(params) {
 	    im_v2_lib_logger.Logger.warn('ChatPullHandler: handleChatConvert', params);
@@ -1203,6 +1225,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  handleReadAllChats() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatHandler)[_chatHandler].handleReadAllChats();
 	  }
+	  handleReadAllChatsByType(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatHandler)[_chatHandler].handleReadAllChatsByType(params);
+	  }
 	  handleChatMuteNotify(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatHandler)[_chatHandler].handleChatMuteNotify(params);
 	  }
@@ -1436,6 +1461,21 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  im_v2_application_core.Core.getStore().dispatch('messages/store', lastChannelPost);
 	}
 
+	function buildRecentItem(params) {
+	  const newRecentItem = {
+	    id: params.dialogId,
+	    chatId: params.chatId,
+	    messageId: params.message.id
+	  };
+	  const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](params.dialogId);
+	  if (recentItem) {
+	    newRecentItem.isFakeElement = false;
+	    newRecentItem.isBirthdayPlaceholder = false;
+	    newRecentItem.liked = false;
+	  }
+	  return newRecentItem;
+	}
+
 	var _deleteLastMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteLastMessage");
 	var _updateRecentForMessageDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateRecentForMessageDelete");
 	// noinspection JSUnusedGlobalSymbols
@@ -1463,17 +1503,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      return;
 	    }
 	    im_v2_lib_logger.Logger.warn('RecentPullHandler: handleMessageAdd', params);
-	    const newRecentItem = {
-	      id: params.dialogId,
-	      chatId: params.chatId,
-	      messageId: params.message.id
-	    };
-	    const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](params.dialogId);
-	    if (recentItem) {
-	      newRecentItem.isFakeElement = false;
-	      newRecentItem.isBirthdayPlaceholder = false;
-	      newRecentItem.liked = false;
-	    }
+	    const newRecentItem = buildRecentItem(params);
 	    const addActions = manager.getAddActions();
 	    addActions.forEach(actionName => {
 	      if (!actionName) {
@@ -1534,7 +1564,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (!recentItem) {
 	      return;
 	    }
-	    im_v2_application_core.Core.getStore().dispatch('recent/delete', {
+	    void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 	      id: params.dialogId
 	    });
 	  }
@@ -1544,7 +1574,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (!recentItem || params.userId !== im_v2_application_core.Core.getUserId()) {
 	      return;
 	    }
-	    im_v2_application_core.Core.getStore().dispatch('recent/delete', {
+	    im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 	      id: params.dialogId
 	    });
 	  }
@@ -1600,7 +1630,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 	function _updateRecentForMessageDelete2(dialogId, newLastMessageId) {
 	  if (!newLastMessageId) {
-	    im_v2_application_core.Core.getStore().dispatch('recent/delete', {
+	    im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 	      id: dialogId
 	    });
 	    return;
@@ -1611,6 +1641,49 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      messageId: newLastMessageId
 	    }
 	  });
+	}
+
+	var _getChannelByParentChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChannelByParentChatId");
+	class RecentUnreadPullHandler {
+	  constructor() {
+	    Object.defineProperty(this, _getChannelByParentChatId, {
+	      value: _getChannelByParentChatId2
+	    });
+	  }
+	  getModuleId() {
+	    return 'im';
+	  }
+	  handleMessage(params, extra) {
+	    this.handleMessageAdd(params, extra);
+	  }
+	  handleMessageChat(params, extra) {
+	    this.handleMessageAdd(params, extra);
+	  }
+	  handleMessageAdd(params, extra) {
+	    if (params.counter === 0 || main_core.Type.isUndefined(params.counter)) {
+	      return;
+	    }
+	    im_v2_lib_logger.Logger.warn('UnreadRecentPullHandler: handleMessageAdd', params);
+	    const manager = new NewMessageManager(params, extra);
+	    if (manager.isCommentChat()) {
+	      const parentChatId = manager.getParentChatId();
+	      const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _getChannelByParentChatId)[_getChannelByParentChatId](parentChatId);
+	      if (!recentItem) {
+	        return;
+	      }
+	      void im_v2_application_core.Core.getStore().dispatch('recent/setUnread', recentItem);
+	      return;
+	    }
+	    const newRecentItem = buildRecentItem(params);
+	    void im_v2_application_core.Core.getStore().dispatch('recent/setUnread', newRecentItem);
+	  }
+	}
+	function _getChannelByParentChatId2(parentChatId) {
+	  const {
+	    dialogId
+	  } = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](parentChatId);
+	  const recentList = im_v2_application_core.Core.getStore().getters['recent/getRecentCollection'];
+	  return recentList.find(item => item.dialogId === dialogId);
 	}
 
 	class NotificationPullHandler {
@@ -1646,7 +1719,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	        read: true
 	      });
 	    });
-	    this.updateCounterDebounced(params.counter);
+	    if (params.counter < this.store.getters['notifications/getCounter']) {
+	      this.updateCounterDebounced(params.counter);
+	    }
 	  }
 	  handleNotifyUnread(params) {
 	    params.list.forEach(id => {
@@ -1657,8 +1732,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    this.updateCounterDebounced(params.counter);
 	  }
-	  handleNotifyReadAll() {
-	    void this.store.dispatch('notifications/readAll');
+	  handleNotifyReadAll(params) {
+	    void this.store.dispatch('notifications/readAllSimple');
+	    this.updateCounterDebounced(params.newCounter);
 	  }
 	  handleNotifyDelete(params) {
 	    const idsToDelete = Object.keys(params.id).map(id => Number.parseInt(id, 10));
@@ -1688,10 +1764,22 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (this.getMembersCountFromStore(params.chatId) === 0) {
 	      return;
 	    }
-	    void this.userManager.setUsersToModel(Object.values(params.users));
+	    const {
+	      chatId,
+	      users,
+	      newUsers,
+	      relations
+	    } = params;
+	    void this.userManager.setUsersToModel(Object.values(users));
+	    const usersToAdd = newUsers.filter(userId => {
+	      const {
+	        isHidden
+	      } = relations.find(relation => relation.userId === userId);
+	      return !isHidden;
+	    });
 	    void this.store.dispatch('sidebar/members/set', {
-	      chatId: params.chatId,
-	      users: params.newUsers
+	      chatId,
+	      users: usersToAdd
 	    });
 	  }
 	  handleChatUserLeave(params) {
@@ -2054,7 +2142,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _shouldHandleMessageNotification2(params, extraData) {
-	  var _params$message, _params$message$param;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isExpired)[_isExpired](extraData)) {
 	    return false;
 	  }
@@ -2067,8 +2154,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (params.lines && !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowLinesNotification)[_shouldShowLinesNotification](params)) {
 	    return false;
 	  }
-	  const messageWithoutNotification = !params.notify || ((_params$message = params.message) == null ? void 0 : (_params$message$param = _params$message.params) == null ? void 0 : _params$message$param.NOTIFY) === 'N';
-	  if (messageWithoutNotification || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowToUser)[_shouldShowToUser](params) || babelHelpers.classPrivateFieldLooseBase(this, _desktopWillShowNotification)[_desktopWillShowNotification]()) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _shouldShowToUser)[_shouldShowToUser](params) || babelHelpers.classPrivateFieldLooseBase(this, _desktopWillShowNotification)[_desktopWillShowNotification]()) {
 	    return false;
 	  }
 	  const callIsActive = im_v2_lib_call.CallManager.getInstance().hasCurrentCall();
@@ -2118,7 +2204,17 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isImportantMessage)[_isImportantMessage](params)) {
 	    return true;
 	  }
-	  const dialog = this.store.getters['chats/get'](params.dialogId, true);
+	  const {
+	    notify,
+	    message,
+	    dialogId
+	  } = params;
+	  const messageParams = message == null ? void 0 : message.params;
+	  const isNotificationDisabled = !notify || (messageParams == null ? void 0 : messageParams.NOTIFY) === 'N';
+	  if (isNotificationDisabled) {
+	    return false;
+	  }
+	  const dialog = this.store.getters['chats/get'](dialogId, true);
 	  const isMuted = dialog.muteList.includes(im_v2_application_core.Core.getUserId());
 	  return !babelHelpers.classPrivateFieldLooseBase(this, _isUserDnd)[_isUserDnd]() && !isMuted;
 	}
@@ -2269,10 +2365,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  handleChatMuteNotify(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _handleCounters)[_handleCounters](params);
 	  }
-	  handleReadAllChats() {
-	    im_v2_lib_logger.Logger.warn('CounterPullHandler: handleReadAllChats');
-	    void im_v2_application_core.Core.getStore().dispatch('counters/clear');
-	  }
 	}
 	function _handleCounters2(params) {
 	  const {
@@ -2398,19 +2490,22 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      anchor
 	    });
 	  }
-	  handleDeleteAllAnchors() {
-	    this.store.dispatch('messages/anchors/removeAllAnchors');
+	  handleDeleteAnchors(payload) {
+	    const {
+	      chatIds
+	    } = payload;
+	    chatIds.forEach(chatId => {
+	      void this.store.dispatch('messages/anchors/removeChatAnchors', chatId);
+	    });
 	  }
 	  handleDeleteChatAnchors(payload) {
-	    this.store.dispatch('messages/anchors/removeChatAnchors', {
-	      chatId: payload.chatId,
-	      userId: payload.userId
-	    });
+	    this.store.dispatch('messages/anchors/removeChatAnchors', payload.chatId);
 	  }
 	}
 
 	exports.BasePullHandler = BasePullHandler;
 	exports.RecentPullHandler = RecentPullHandler;
+	exports.RecentUnreadPullHandler = RecentUnreadPullHandler;
 	exports.NotificationPullHandler = NotificationPullHandler;
 	exports.SidebarPullHandler = SidebarPullHandler;
 	exports.NotifierPullHandler = NotifierPullHandler;
@@ -2420,5 +2515,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.AnchorPullHandler = AnchorPullHandler;
 	exports.NewMessageManager = NewMessageManager;
 
-}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.SidePanel,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Pull,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.SidePanel,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Pull,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Application));
 //# sourceMappingURL=registry.bundle.js.map

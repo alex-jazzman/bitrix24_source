@@ -6,14 +6,18 @@
  * @module im/messenger/lib/parser/functions/mention
  */
 jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const parserMention = {
 		decode(text)
 		{
-			text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/ig, (whole, userId, replace, userName) => {
+			text = text.replace(/\[USER=([0-9]+|all)( REPLACE)?](.*?)\[\/USER]/ig, (whole, userId, replace, userName) => {
+				if (Type.isStringFilled(userId) && String(userId).toLowerCase() === 'all')
+				{
+					return `[USER=${userId}]${userName}[/USER]`;
+				}
+
 				userId = Number.parseInt(userId, 10);
 				if (!Type.isNumber(userId) || userId === 0)
 				{
@@ -42,7 +46,11 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 
 		simplify(text)
 		{
-			text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/ig, (whole, userId, replace, userName) => {
+			text = text.replace(/\[USER=([0-9]+|all)( REPLACE)?](.*?)\[\/USER]/ig, (whole, userId, replace, userName) => {
+				if (Type.isStringFilled(userId) && String(userId).toLowerCase() === 'all')
+				{
+					return userName;
+				}
 				userId = Number.parseInt(userId, 10);
 
 				if (!Type.isNumber(userId) || userId === 0)

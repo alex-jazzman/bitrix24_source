@@ -21,6 +21,9 @@ export type CopilotRole = {
 export type CopilotAIModel = {
 	code: CopilotAIModelCode,
 	name: string,
+	recommended: boolean,
+	default: boolean,
+	supportsReasoning: boolean,
 };
 
 export type CopilotRoleCode = string;

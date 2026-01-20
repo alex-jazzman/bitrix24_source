@@ -2,7 +2,7 @@ import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 
 import { Runtime, type JsonObject } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { BaseEvent } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Utils } from 'im.v2.lib.utils';
@@ -23,6 +23,8 @@ import { RecentUsersCarousel } from './elements/recent-users-carousel';
 
 import './css/chat-search.css';
 
+import type { EventEmitter } from 'main.core.events';
+
 // @vue/component
 export const ChatSearch = {
 	name: 'ChatSearch',
@@ -37,7 +39,7 @@ export const ChatSearch = {
 			required: true,
 		},
 	},
-	emits: ['loading'],
+	emits: ['loading', 'closeSearch'],
 	data(): JsonObject
 	{
 		return {
@@ -88,7 +90,7 @@ export const ChatSearch = {
 	},
 	created()
 	{
-		this.contextMenuManager = new SearchContextMenu();
+		this.contextMenuManager = new SearchContextMenu({ emitter: this.getEmitter() });
 
 		this.searchService = new SearchService({
 			chats: true,
@@ -96,15 +98,13 @@ export const ChatSearch = {
 		});
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
 
-		EventEmitter.subscribe(EventType.dialog.errors.accessDenied, this.onDelete);
-		EventEmitter.subscribe(EventType.search.keyPressed, this.onKeyPressed);
+		this.getEmitter().subscribe(EventType.search.keyPressed, this.onKeyPressed);
 
 		void this.loadRecentSearchFromServer();
 	},
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(EventType.dialog.errors.accessDenied, this.onDelete);
-		EventEmitter.unsubscribe(EventType.search.keyPressed, this.onKeyPressed);
+		this.getEmitter().unsubscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
 	methods: {
 		async loadRecentSearchFromServer()
@@ -172,16 +172,6 @@ export const ChatSearch = {
 
 			this.contextMenuManager.openMenu({ dialogId }, nativeEvent.currentTarget);
 		},
-		onDelete({ data: eventData })
-		{
-			const { dialogId } = eventData;
-			this.recentItems = this.recentItems.filter((recentItem) => {
-				return recentItem !== dialogId;
-			});
-			this.searchResult = this.searchResult.filter((dialogIdFromSearch) => {
-				return dialogIdFromSearch !== dialogId;
-			});
-		},
 		onScroll()
 		{
 			this.contextMenuManager.destroy();
@@ -194,7 +184,7 @@ export const ChatSearch = {
 
 			if (!Utils.key.isAltOrOption(nativeEvent))
 			{
-				EventEmitter.emit(EventType.search.close);
+				this.$emit('closeSearch');
 			}
 		},
 		onKeyPressed(event: BaseEvent)
@@ -226,6 +216,10 @@ export const ChatSearch = {
 				dialogId: firstItem.dialogId,
 				nativeEvent: keyboardEvent,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(key: string): string
 		{

@@ -5,5 +5,6 @@ return [
 		'tokens',
 		'assets/icons',
 		'utils/url',
+		'utils/validation',
 	],
 ];

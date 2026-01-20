@@ -2,9 +2,9 @@ import { mapGetters } from 'ui.vue3.vuex';
 
 import { Label, LabelSize } from 'ui.label';
 
-import { CrmEntity, Model } from 'booking.const';
+import { Model } from 'booking.const';
 import { currencyFormat } from 'booking.lib.currency-format';
-import type { BookingModel, DealData } from 'booking.model.bookings';
+import type { BookingModel, SkuModel } from 'booking.model.bookings';
 import type { ResourceModel } from 'booking.model.resources';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
 
@@ -48,19 +48,18 @@ export const Resource = {
 		profit(): string
 		{
 			const currencyId = currencyFormat.getBaseCurrencyId();
-			const deals = this.bookings
-				.map(({ externalData }) => externalData?.find((data) => data.entityTypeId === CrmEntity.Deal) ?? null)
-				.filter((deal: DealData | null) => deal?.data?.currencyId === currencyId)
+			const services = this.bookings
+				.filter((booking: BookingModel) => booking.skus)
+				.flatMap((booking: BookingModel) => booking.skus)
+				.filter((sku: SkuModel) => sku.currencyId === currencyId)
 			;
 
-			if (deals.length === 0)
+			if (services.length === 0)
 			{
 				return '';
 			}
 
-			const uniqueDeals: DealData[] = [...new Map(deals.map((it) => [it.value, it])).values()];
-
-			const profit = uniqueDeals.reduce((sum: number, deal: DealData) => sum + deal.data.opportunity, 0);
+			const profit = services.reduce((sum: number, sku: SkuModel) => sum + sku.price, 0);
 
 			return currencyFormat.format(currencyId, profit);
 		},

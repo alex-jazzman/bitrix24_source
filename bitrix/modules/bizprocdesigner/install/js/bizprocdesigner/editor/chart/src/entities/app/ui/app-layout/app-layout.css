@@ -1,0 +1,160 @@
+.editor-chart-app-layout {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+}
+
+.editor-chart-app-layout__header {
+	position: relative;
+	z-index: 16;
+	width: 100%;
+	height: 56px;
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.editor-chart-app-layout__content {
+	position: relative;
+	height: calc(100% - 56px);
+}
+
+.editor-chart-app-layout__top-right-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	gap: 8px;
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	z-index: 2;
+	max-width: 415px;
+	transition: transform 0.3s ease;
+}
+
+.editor-chart-app-layout__top-right-toolbar.--shifted {
+	transform: translateX(-479px);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	z-index: 2;
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	gap: 8px;
+	max-width: 350px;
+	transition: transform 0.3s ease;
+}
+
+.editor-chart-app-layout__bottom-right-toolbar div.ui-block-diagram-canvas-zoom-bar__map-close-icon {
+	background-color: var(--ui-color-base-5);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar .ui-block-diagram-canvas-map__cursor {
+	stroke: var(--ui-color-blue-50);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar.--shifted {
+	transform: translateX(-479px);
+}
+
+.editor-chart-app-layout__catalog {
+	position: absolute;
+	top: 8px;
+	bottom: 8px;
+	left: 8px;
+	z-index: 2;
+	display: flex;
+	min-width: 54px;
+	border-radius: 8px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+.editor-chart-app-layout__settings {
+	position: absolute;
+	z-index: 15;
+	right: 8px;
+	top: 8px;
+	bottom: 8px;
+	width: 470px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+	border-radius: 8px;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
+}
+
+.editor-chart-app-layout__settings::scrollbar-thumb:hover {
+	scrollbar-width: thin;
+}
+
+.editor-chart-app-layout__settings.--with-preview-panel {
+	border-bottom-left-radius: 0;
+}
+
+.fade-settings-panel-enter-active,
+.fade-settings-panel-leave-active {
+	transition: transform 0.3s ease;
+}
+
+.fade-settings-panel-enter-from,
+.fade-settings-panel-leave-to {
+	transform: translateX(100%);
+}
+
+.fade-settings-panel-enter-to,
+.fade-settings-panel-leave-from {
+	transform: translateX(0);
+}
+
+.editor-chart-app-layout__preview-panel {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	z-index: 3;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(10, 45, 95, 0.2);
+	overflow-x: hidden;
+}
+
+.editor-chart-app-layout__preview-panel-conatiner {
+	position: absolute;
+	top: 45px;
+	bottom: 8px;
+	right: 478px;
+	z-index: 4;
+	width: 522px;
+	border-top-left-radius: 16px;
+	border-bottom-left-radius: 16px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+	overflow: hidden;
+}
+
+.editor-chart-app-layout__preview-panel-content {
+	position: realite;
+	width: 100%;
+	height: 100%;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.fade-preview-panel-enter-active,
+.fade-preview-panel-leave-active {
+	transition: opacity 0.2s easy;
+}
+
+.fade-preview-panel-enter-from {
+	opacity: 0;
+}
+
+.fade-preview-panel-leave-to {
+	opacity: 0;
+}

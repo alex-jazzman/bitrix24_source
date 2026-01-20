@@ -101,16 +101,15 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 						marginLeft: this.getLeftShift(LAYOUT_CHECKBOX_WIDTH),
 					},
 				},
-				this.renderAttachments(),
-				this.renderMembers(),
+				this.#renderAttachments(),
+				this.#renderMembers(),
 			);
 		}
 
 		/**
-		 * @private
 		 * @return View
 		 */
-		renderMembers()
+		#renderMembers()
 		{
 			const { item, openUserSelectionManager, openTariffRestrictionWidget } = this.props;
 
@@ -131,10 +130,9 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 		}
 
 		/**
-		 * @private
 		 * @returns {ItemAttachments}
 		 */
-		renderAttachments()
+		#renderAttachments()
 		{
 			const { item, parentWidget, diskConfig, onChangeAttachments } = this.props;
 

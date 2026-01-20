@@ -6910,6 +6910,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	};
 
+	const showReadMessagesConfirm = text => {
+	  return showTwoButtonConfirm({
+	    title: main_core.Loc.getMessage('IM_LIB_CONFIRM_READ_MESSAGES_TITLE_MSGVER_1'),
+	    text,
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_READ_MESSAGES_TEXT_CONFIRM')
+	  });
+	};
+
 	exports.showDeleteChatConfirm = showDeleteChatConfirm;
 	exports.showLeaveChatConfirm = showLeaveChatConfirm;
 	exports.showExitUpdateChatConfirm = showExitUpdateChatConfirm;
@@ -6922,6 +6930,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showNotificationsModeSwitchConfirm = showNotificationsModeSwitchConfirm;
 	exports.showKickUserConfirm = showKickUserConfirm;
 	exports.showCloseWithActiveCallConfirm = showCloseWithActiveCallConfirm;
+	exports.showReadMessagesConfirm = showReadMessagesConfirm;
 
 }((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Main,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX));
 //# sourceMappingURL=registry.bundle.js.map

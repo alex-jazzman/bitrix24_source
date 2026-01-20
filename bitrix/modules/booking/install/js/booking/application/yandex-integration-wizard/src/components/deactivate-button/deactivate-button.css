@@ -1,0 +1,63 @@
+.booking-yiw__deactivate-button_container {
+	display: flex;
+	justify-content: center;
+	margin-top: 20px;
+}
+
+.booking-yiw__deactivate-button .ui-btn {
+	width: 230px;
+	height: 38px;
+	color: var(--ui-color-palette-gray-70) !important;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	background: none;
+	border: none;
+}
+
+.booking-yiw__deactivate-button .ui-btn[disabled],
+.booking-yiw__deactivate-button .ui-btn[disabled]:hover {
+	background: none;
+	border: none;
+}
+
+.booking-yiw__deactivate-confirmation .popup-window-titlebar-text {
+	padding: 0;
+	margin: 18px 0 0 24px;
+	font-size: 19px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-black-base);
+}
+
+.booking-yiw__deactivate-confirmation .popup-window-content {
+	padding: 0;
+	margin: 24px 24px 0 24px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.booking-yiw__deactivate-confirmation .popup-window-buttons {
+	display: flex;
+	justify-content: center;
+	padding: 20px 24px 24px 24px;
+	gap: 12px;
+}
+
+.booking-yiw__deactivate-confirmation .popup-window-buttons .ui-btn:first-child {
+	min-height: 38px;
+	min-width: 144px;
+	background: var(--ui-color-palette-red-20);
+	color: var(--ui-color-palette-red-50);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.booking-yiw__deactivate-confirmation .popup-window-buttons .ui-btn:not(:first-child) {
+	min-height: 38px;
+	min-width: 57px;
+	border: 2px solid #EDEEF0;
+	font-size: var(--ui-font-size-lg);
+}

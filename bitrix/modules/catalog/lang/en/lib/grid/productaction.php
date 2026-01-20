@@ -2,6 +2,7 @@
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG"] = "The information block is not in catalog mode.";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_FIELDS"] = "Incorrect sets of product parameters to update";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID"] = "Incorrect information block ID";
+$MESS["BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_CHANGE_TYPE"] = "Could not not change type for #NAMES#. Please try again.";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_SET_FIELD_BY_TYPE"] = "Selected parameters cannot be updated in products #NAMES#";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_ELEMENTS"] = "No items to modify specified";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS"] = "No product parameters to update specified";

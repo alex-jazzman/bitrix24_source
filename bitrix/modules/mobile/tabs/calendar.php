@@ -61,7 +61,7 @@ class Calendar implements Tabable
 			'color' => '#F5A200',
 			'imageUrl' => 'favorite/icon-calendar.png',
 			'imageName' => $this->getIconId(),
-			'sort' => 100,
+			'sort' => 160,
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => $this->getId(),

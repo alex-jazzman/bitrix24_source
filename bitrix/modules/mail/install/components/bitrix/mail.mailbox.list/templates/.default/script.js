@@ -13,7 +13,12 @@
 			this.gridId = params.gridId;
 
 			this.sliderMessageEvent = 'SidePanel.Slider:onMessage';
-			this.mailboxSuccessEventId = 'mail-mailbox-config-success';
+
+			this.reloadGridEventIds = [
+				'mail-mailbox-config-success',
+				'mail-mailbox-config-delete',
+				'mail-massconnect-mailboxes-append-success',
+			];
 
 			this.bindEvents();
 		}
@@ -25,7 +30,7 @@
 
 		onSliderMessage(event)
 		{
-			if (event.getEventId() === this.mailboxSuccessEventId)
+			if (this.reloadGridEventIds.includes(event.getEventId()))
 			{
 				const grid = BX.Main.gridManager.getInstanceById(this.gridId);
 				if (grid)
@@ -46,5 +51,16 @@
 		}
 	}
 
+	const LimitHelpers = {
+		showLimitSlider(code)
+		{
+			const activeFeaturePromoter = BX.UI.FeaturePromotersRegistry.getPromoter({
+				code,
+			});
+			activeFeaturePromoter.show();
+		},
+	};
+
 	namespace.Manager = Manager;
+	namespace.LimitHelpers = LimitHelpers;
 })();

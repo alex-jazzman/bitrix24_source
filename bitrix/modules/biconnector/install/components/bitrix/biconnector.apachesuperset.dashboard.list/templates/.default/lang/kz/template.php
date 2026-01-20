@@ -1,7 +1,9 @@
 <?php
+$MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD"] = "Есепті құруға құқықтар жеткіліксіз";
 $MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD"] = "Маркетплейсте таңдаңыз";
 $MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_NEW_DASHBOARD"] = "Жаңа есеп";
 $MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_NEW_GROUP"] = "Жаңа топ";
+$MESS["BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_ORDER_DASHBOARD"] = "Есепке тапсырыс беру";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_ADD_TO_TOP_MENU"] = "Жоғарғы мәзірге қосу";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_DELETE_FROM_TOP_MENU"] = "Жоғарғы мәзірден алып тастау";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_ERROR"] = "Есепті жоғарғы мәзірге қосу мүмкін болмады. Қайталап көріңіз";
@@ -31,6 +33,8 @@ $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_DRAFT_GUIDE_TITLE"] = "Бастапқ
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_EXPORT_NOTIFICATION_ERROR"] = "Есепті экспорттау мүмкін болмады. Қайталап көріңіз";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCK_NOTIFICATION"] = "Төменірек тарифке ауысқыңыз келсе, BI Құрастырушыны өшіріңіз. Құралды пайдалануды жалғастыру үшін ағымдағы тарифті төлеңіз";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_PUBLISH_NOTIFICATION_ERROR"] = "Есепті жариялау кезінде қате пайда болды";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_INFO"] = "BI Конструкторындағы есептер одан да жылдам жұмыс істей алады. Битрикс24 әкімшісіне хабарласыңыз. [link]Толығырақ[/link]";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_KEY_UPDATE"] = "Есептер тезірек жұмыс істеуі үшін шифрлау кілтін жаңартыңыз. [link]Толығырақ[/link]";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_SET_DRAFT_NOTIFICATION_ERROR"] = "Бастапқы үлгіні жасау кезінде қате пайда болды";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT"] = "Бастапқы үлгі";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED"] = "Қате";

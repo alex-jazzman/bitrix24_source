@@ -1,0 +1,26 @@
+.booking-sre-app--services-bar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding-top: var(--ui-space-stack-sm);
+	padding-bottom: var(--ui-space-stack-sm);
+	flex-grow: 1;
+	background: var(--ui-color-base-8);
+	z-index: 999;
+	position: sticky;
+	top: -20px;
+}
+
+.booking-sre-app--services-bar__label {
+	color: var(--ui-color-text-secondary);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var( --ui-typography-heading-h3-line-height);
+	letter-spacing: -0.05px;
+	flex-grow: 1;
+}
+
+.booking-sre-app--services-bar__grow {
+	flex-grow: 1;
+}
+

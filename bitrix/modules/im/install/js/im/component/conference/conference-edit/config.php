@@ -16,7 +16,7 @@ return [
 		'calendar.util',
 		'main.core.events',
 		'ui.vue.components.hint',
-		'im.const',
+		'call.const',
 		'ui.entity-selector',
 	],
 	'skip_core' => false,

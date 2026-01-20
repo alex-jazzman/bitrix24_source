@@ -6,11 +6,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 \Bitrix\Main\Loader::includeModule('rest');
 \Bitrix\Main\Loader::includeModule('crm');
+\Bitrix\Main\Loader::includeModule('voximplant');
 
 return [
 	'css' => 'dist/phone-calls.bundle.css',
 	'js' => 'dist/phone-calls.bundle.js',
 	'rel' => [
+		'voximplant',
 		'intranet.desktop-download',
 		'main.core.events',
 		'main.core',

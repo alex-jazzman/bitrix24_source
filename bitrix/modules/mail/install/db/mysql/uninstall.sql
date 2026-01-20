@@ -22,3 +22,8 @@ drop table if exists b_mail_message_delete_queue;
 drop table if exists b_mail_mailbox_dir;
 drop table if exists b_mail_counter;
 drop table if exists b_mail_entity_options;
+drop table if exists b_mail_access_role_relation;
+drop table if exists b_mail_access_permission;
+drop table if exists b_mail_access_role;
+drop table if exists b_mail_mass_connect;
+drop table if exists b_mail_mailbox_list_search_index;

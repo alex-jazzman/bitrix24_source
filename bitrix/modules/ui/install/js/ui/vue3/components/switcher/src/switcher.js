@@ -45,7 +45,7 @@ export const Switcher = {
 			this.switcher.check(this.isChecked, false);
 		},
 		isDisabled(): void {
-			this.switcher.setDisabled(this.isDisabled);
+			this.switcher.disable(this.isDisabled, false);
 		},
 		options(newOptions, oldOptions): void {
 			if (this.isOptionsEqual(newOptions, oldOptions))

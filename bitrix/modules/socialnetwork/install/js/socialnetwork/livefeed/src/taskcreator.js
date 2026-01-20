@@ -1,6 +1,8 @@
-import {ajax, Type, Loc, Dom, Tag} from 'main.core';
-import {Popup} from 'main.popup';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import { ajax, Type, Loc, Dom, Tag } from 'main.core';
+import { Popup } from 'main.popup';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+
+import { createFromContent } from './v2/task-creator';
 
 export class TaskCreator
 {
@@ -10,6 +12,7 @@ export class TaskCreator
 		popupTitle: 'feed-create-task-popup-title',
 		popupDescription: 'feed-create-task-popup-description',
 	};
+
 	static signedFiles = null;
 	static sliderUrl = '';
 
@@ -20,10 +23,16 @@ export class TaskCreator
 
 	initEvents()
 	{
+		if (
+			Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y'
+			&& Loc.getMessage('SONET_EXT_LIVEFEED_isV2Form') === 'Y'
+		)
+		{
+			return;
+		}
 
 		EventEmitter.subscribe('tasksTaskEvent', (event: BaseEvent) => {
-
-			const [ type, data ] = event.getCompatData();
+			const [type, data] = event.getCompatData();
 			if (
 				type !== 'ADD'
 				|| !Type.isPlainObject(data.options)
@@ -38,7 +47,6 @@ export class TaskCreator
 		});
 
 		EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', (event: BaseEvent) => {
-
 			const sliderInstance = event.getTarget();
 			if (!sliderInstance)
 			{
@@ -65,8 +73,18 @@ export class TaskCreator
 		});
 	}
 
-	static create(params)
+	static async create(params)
 	{
+		if (
+			Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y'
+			&& Loc.getMessage('SONET_EXT_LIVEFEED_isV2Form') === 'Y'
+		)
+		{
+			void createFromContent(params);
+
+			return;
+		}
+
 		if (Loc.getMessage('SONET_EXT_LIVEFEED_INTRANET_INSTALLED') === 'Y')
 		{
 			ajax.runAction('intranet.controlbutton.getTaskLink', {
@@ -123,7 +141,7 @@ export class TaskCreator
 					restrict: true,
 				},
 				closeByEsc: false,
-				contentColor : 'white',
+				contentColor: 'white',
 				contentNoPaddings: true,
 				buttons: [],
 				content: Tag.render`<div id="BXCTP_content" class="${this.cssClass.popupContent}"></div>`,
@@ -143,19 +161,18 @@ export class TaskCreator
 										checkPermissions: {
 											feature: 'tasks',
 											operation: 'create_tasks',
-										}
-									}
-								}
-							}
+										},
+									},
+								},
+							},
 						}).then((response) => {
-
 							const entryTitle = (Type.isStringFilled(response.data.TITLE) ? response.data.TITLE : '');
 							const entryDescription = (Type.isStringFilled(response.data.DESCRIPTION) ? response.data.DESCRIPTION : '');
 							const entryDiskObjects = (Type.isPlainObject(response.data.DISK_OBJECTS) ? response.data.DISK_OBJECTS : []);
 							const entryUrl = (Type.isStringFilled(response.data.LIVEFEED_URL) ? response.data.LIVEFEED_URL : '');
 							const entrySuffix = (Type.isStringFilled(response.data.SUFFIX) ? response.data.SUFFIX : '');
 							const groupsAvailable = (Type.isPlainObject(response.data.GROUPS_AVAILABLE) ? response.data.GROUPS_AVAILABLE : []);
-							const logId = (!Type.isUndefined(response.data.LOG_ID) ? parseInt(response.data.LOG_ID) : 0);
+							const logId = (Type.isUndefined(response.data.LOG_ID) ? 0 : parseInt(response.data.LOG_ID));
 
 							if (
 								(
@@ -197,7 +214,6 @@ export class TaskCreator
 										data: taskData,
 									},
 								}).then((response) => {
-
 									const resultData = response.data;
 
 									this.createTaskSetContentSuccess(resultData.DATA.ID);
@@ -213,15 +229,13 @@ export class TaskCreator
 												logId: (
 													Type.isNumber(params.logId)
 														? params.logId
-														: logId > 0 ? logId : null
+														: (logId > 0 ? logId : null)
 												),
 											},
 										},
-									}).then(() => {
-									}, () => {
-									});
+									}).then(() => {}, () => {});
 								}, (response) => {
-									if (response.errors && response.errors.length)
+									if (response.errors && response.errors.length > 0)
 									{
 										const errors = [];
 										response.errors.forEach((error) => {
@@ -247,7 +261,7 @@ export class TaskCreator
 					onPopupClose: () => {
 						this.createTaskPopup.destroy();
 					},
-				}
+				},
 			});
 
 			this.createTaskPopup.show();
@@ -275,12 +289,11 @@ export class TaskCreator
 
 		return BX.Uri.addParam(link, {
 			ta_sec: analyticsSection,
-			ta_el: analyticsElement
+			ta_el: analyticsElement,
 		});
 	}
 
 	static createTaskSetContentSuccess(taskId) {
-
 		const taskLink = Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_PATH').replace('#user_id#', Loc.getMessage('USER_ID')).replace('#task_id#', taskId);
 
 		this.createTaskPopup.destroy();
@@ -293,8 +306,8 @@ export class TaskCreator
 					click: (event, balloon, action) => {
 						balloon.close();
 						window.top.BX.SidePanel.Instance.open(taskLink);
-					}
-				}
+					},
+				},
 			}],
 
 		});
@@ -302,10 +315,12 @@ export class TaskCreator
 
 	static createTaskSetContentFailure(errors)
 	{
-		this.createTaskSetContent(Tag.render`<div>
-			<div class="${this.cssClass.popupTitle}">${Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_FAILURE_TITLE')}</div>
-			<div class="${this.cssClass.popupDescription}">${errors.join('<br>')}</div>
-		</div>`);
+		this.createTaskSetContent(Tag.render`
+			<div>
+						<div class="${this.cssClass.popupTitle}">${Loc.getMessage('SONET_EXT_LIVEFEED_CREATE_TASK_FAILURE_TITLE')}</div>
+						<div class="${this.cssClass.popupDescription}">${errors.join('<br>')}</div>
+					</div>
+		`);
 	}
 
 	static createTaskSetContent(contentNode)
@@ -327,16 +342,12 @@ export class TaskCreator
 		suffix = (Type.isStringFilled(suffix) ? `_${suffix}` : '');
 
 		if (
-			!!livefeedUrl
-			&& !!entityType
+			Boolean(livefeedUrl)
+			&& Boolean(entityType)
 			&& livefeedUrl.length > 0
 		)
 		{
-			result += "\n\n" + Loc.getMessage(`SONET_EXT_COMMENTAUX_CREATE_TASK_${entityType}${suffix}`).replace(
-				'#A_BEGIN#', `[URL=${livefeedUrl}]`
-			).replace(
-				'#A_END#', '[/URL]'
-			);
+			result += `\n\n${Loc.getMessage(`SONET_EXT_COMMENTAUX_CREATE_TASK_${entityType}${suffix}`).replace('#A_BEGIN#', `[URL=${livefeedUrl}]`).replace('#A_END#', '[/URL]')}`;
 		}
 
 		return result;

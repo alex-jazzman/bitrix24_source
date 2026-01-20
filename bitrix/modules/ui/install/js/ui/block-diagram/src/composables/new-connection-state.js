@@ -1,23 +1,18 @@
 import { computed, toValue } from 'ui.vue3';
-import { getBeziePath, getLinePath } from '../utils';
+import { getBeziePath, BEZIER_DIR } from '../utils';
+import { PORT_POSITION } from '../constants';
 import type { PathInfo } from '../utils';
 import { useBlockDiagram } from './block-diagram';
-import { CONNECTION_VIEW_TYPE } from '../constants';
-import type { DiagramConnectionViewType } from '../types';
-
-export type useNewConnectionStateOptions = {
-	viewType: DiagramConnectionViewType;
-};
 
 export type UseNewConnectionState = {
 	hasNewConnection: boolean;
 	newConnectionPathInfo: PathInfo;
+	isValid: boolean;
 };
 
-export function useNewConnectionState(options: useNewConnectionStateOptions): UseNewConnectionState
+export function useNewConnectionState(): UseNewConnectionState
 {
-	const { newConnection } = useBlockDiagram();
-	const { viewType } = options;
+	const { newConnection, isValidNewConnection } = useBlockDiagram();
 
 	const hasNewConnection = computed((): boolean => {
 		return toValue(newConnection) !== null;
@@ -35,22 +30,28 @@ export function useNewConnectionState(options: useNewConnectionStateOptions): Us
 			};
 		}
 
-		if (toValue(viewType) === CONNECTION_VIEW_TYPE.BEZIER)
-		{
-			return getBeziePath(
-				toValue(newConnection).start,
-				toValue(newConnection).end,
-			);
-		}
+		const isHorizontalBezier = ([PORT_POSITION.LEFT, PORT_POSITION.RIGHT])
+			.includes(toValue(newConnection).sourcePortPosition);
 
-		return getLinePath(
+		return getBeziePath(
 			toValue(newConnection).start,
 			toValue(newConnection).end,
+			isHorizontalBezier ? BEZIER_DIR.HORIZONTAL : BEZIER_DIR.VERTICAL,
 		);
+	});
+
+	const isValid = computed((): boolean => {
+		if (toValue(newConnection) === null)
+		{
+			return true;
+		}
+
+		return toValue(isValidNewConnection);
 	});
 
 	return {
 		hasNewConnection,
 		newConnectionPathInfo,
+		isValid,
 	};
 }

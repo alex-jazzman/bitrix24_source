@@ -15,6 +15,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Landing\Restriction;
+use Bitrix\Landing\Metrika;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\Marketplace\Client;
 use Bitrix\Rest\Marketplace\Url;
@@ -344,7 +345,24 @@ else
 	}
 
 	$isKnowledgeBase = $arParams['TYPE'] === Type::SCOPE_CODE_KNOWLEDGE || $arParams['TYPE'] === Type::SCOPE_CODE_GROUP;
-
+	$appCode = $template['APP_CODE'];
+	if ($appCode === '')
+	{
+		$appCode = $template['ID'];
+	}
+	$siteType = null;
+	$res = \Bitrix\Landing\Site::getList([
+		'select' => ['TYPE'],
+		'filter' => ['ID' => $arParams['SITE_ID']]
+	]);
+	if ($row = $res->fetch())
+	{
+		$siteType = $row['TYPE'];
+	}
+	if (is_string($siteType))
+	{
+		$tool = Metrika\Tools::getBySiteType($siteType)->value;
+	}
 	?>
 	BX.Landing.TemplatePreviewInstance = BX.Landing.TemplatePreview.getInstance({
 		createStore: <?= ($isCreateStore ? 'true' : 'false') ?>,
@@ -362,7 +380,7 @@ else
 		},
 		disableStoreRedirect: <?= ($arParams['DISABLE_REDIRECT'] === 'Y') ? 'true' : 'false' ?>,
 		zipInstallPath: '<?= ($template['ZIP_ID'] ?? null) ? Url::getConfigurationImportZipUrl($template['ZIP_ID']) : '' ?>',
-		appCode: '<?= $template['APP_CODE'] ?>',
+		appCode: '<?= $appCode ?>',
 		siteId: <?= ($arParams['SITE_ID'] > 0) ? $arParams['SITE_ID'] : 0 ?>,
 		replaceLid: <?= $arParams['REPLACE_LID'] ?? 0 ?>,
 		isCrmForm: '<?= $arParams['IS_CRM_FORM'] ?? 'N' ?>',
@@ -371,6 +389,7 @@ else
 		folderId: <?= ($arResult['FOLDER_ID'] ?? 0 && $arResult['FOLDER_ID'] > 0) ? $arResult['FOLDER_ID'] : 0 ?>,
 		adminSection: <?= $arParams['ADMIN_SECTION'] === 'Y' ? 'true' : 'false'?>,
 		urlPreview: <?=CUtil::PhpToJSObject($template['URL_PREVIEW'])?>,
+		tool: "<?= $tool ?? null ?>",
 	});
 
 	<?php if (!$isCreateStore):?>

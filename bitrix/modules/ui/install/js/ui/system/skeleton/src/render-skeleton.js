@@ -1,4 +1,4 @@
-import { localStorage } from 'main.core';
+import { Tag, localStorage } from 'main.core';
 import { Circle } from './circle';
 import { Line } from './line';
 
@@ -19,8 +19,10 @@ export async function renderSkeleton(path: string, root: HTMLElement): Promise<H
 	}
 
 	const shadowRoot = root.attachShadow({ mode: 'open' });
+	shadowRoot.append(Tag.render`<template>${html}</template>`.content);
+
 	css ??= [...document.styleSheets].find(({ href }) => href?.includes('ui/system/skeleton'))?.href;
-	shadowRoot.innerHTML = `${html}<link rel="stylesheet" href="${css}">`;
+	shadowRoot.append(Tag.render`<link rel="stylesheet" href="${css}">`);
 
 	return root;
 }

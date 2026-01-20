@@ -78,4 +78,5 @@ export default class ButtonIcon
 	static PERSON = 'ui-btn-icon-person';
 	static WORKFLOW_STOP = 'ui-btn-icon-workflow-stop';
 	static MARKET = 'ui-btn-icon-market';
+	static KEY = 'ui-btn-icon-key';
 }

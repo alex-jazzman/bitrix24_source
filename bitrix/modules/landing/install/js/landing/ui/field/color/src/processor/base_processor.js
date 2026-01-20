@@ -119,11 +119,6 @@ export default class BaseProcessor extends EventEmitter
 	{
 	}
 
-	onReset()
-	{
-		this.emit('onReset');
-	}
-
 	unsetActive()
 	{
 	}

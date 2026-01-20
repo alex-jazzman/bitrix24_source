@@ -1,0 +1,10 @@
+<?php
+
+$MESS['TASKS_V2_MARK_TASK_BUTTON_NONE'] = 'Оценить задачу';
+$MESS['TASKS_V2_MARK_TASK_BUTTON_SET'] = 'Оценка';
+
+$MESS['TASKS_V2_MARK_TASK_MARK_POSITIVE'] = 'Положительная';
+$MESS['TASKS_V2_MARK_TASK_MARK_NEGATIVE'] = 'Отрицательная';
+$MESS['TASKS_V2_MARK_TASK_MARK_NONE'] = 'Без оценки';
+
+$MESS['TASKS_V2_MARK_TASK_MARK_SECTION_TITLE'] = 'Оценка задачи';

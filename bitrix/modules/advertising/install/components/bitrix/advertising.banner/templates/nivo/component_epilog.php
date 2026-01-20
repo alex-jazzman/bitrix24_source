@@ -2,5 +2,5 @@
 
 if ($arParams['JQUERY'] === 'Y' || isset($arParams['PREVIEW']))
 {
-	CJSCore::Init(['jquery2']);
+	CJSCore::Init(['jquery3']);
 }

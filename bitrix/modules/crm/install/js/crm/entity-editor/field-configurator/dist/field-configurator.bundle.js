@@ -427,15 +427,20 @@ this.BX = this.BX || {};
 	      } else {
 	        typeId = BX.prop.get(params, 'typeId', BX.UI.EntityUserFieldType.string);
 	      }
+	      var tooltipConfigurator = null;
+	      if (params !== null && params !== void 0 && params.enableTooltipConfigurator) {
+	        tooltipConfigurator = new BX.UI.EntityEditorUfConfigurators.TooltipConfigurator(this.id, this._editor, field);
+	      }
 	      if (typeId === 'resourcebooking') {
 	        var options = {
+	          parent: parent,
+	          typeId: typeId,
+	          field: field,
+	          tooltipConfigurator: tooltipConfigurator,
 	          editor: this._editor,
 	          schemeElement: null,
 	          model: parent.getModel(),
 	          mode: BX.UI.EntityEditorMode.edit,
-	          parent: parent,
-	          typeId: typeId,
-	          field: field,
 	          showAlways: true,
 	          enableMandatoryControl: BX.prop.getBoolean(params, 'enableMandatoryControl', true),
 	          mandatoryConfigurator: params.mandatoryConfigurator
@@ -447,13 +452,14 @@ this.BX = this.BX || {};
 	        }
 	      } else {
 	        return BX.Crm.EntityEditorUserFieldConfigurator.create('', {
+	          parent: parent,
+	          typeId: typeId,
+	          field: field,
+	          tooltipConfigurator: tooltipConfigurator,
 	          editor: this._editor,
 	          schemeElement: null,
 	          model: parent.getModel(),
 	          mode: BX.UI.EntityEditorMode.edit,
-	          parent: parent,
-	          typeId: typeId,
-	          field: field,
 	          mandatoryConfigurator: params.mandatoryConfigurator,
 	          visibilityConfigurator: params.visibilityConfigurator,
 	          showAlways: true

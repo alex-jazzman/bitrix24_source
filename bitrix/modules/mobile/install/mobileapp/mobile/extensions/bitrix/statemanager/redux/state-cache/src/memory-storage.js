@@ -1,8 +1,8 @@
 /**
- * @module statemanager/redux/state-cache/memory-storage
+ * @module statemanager/redux/state-cache/src/memory-storage
  */
-jn.define('statemanager/redux/state-cache/memory-storage', (require, exports, module) => {
-	const { BaseStorage } = require('statemanager/redux/state-cache/base-storage');
+jn.define('statemanager/redux/state-cache/src/memory-storage', (require, exports, module) => {
+	const { BaseStorage } = require('statemanager/redux/state-cache/src/base-storage');
 	const { Logger, LogType } = require('utils/logger');
 
 	const logger = new Logger([

@@ -59,4 +59,10 @@ export type DeviceFile = {
 	width: number,
 }
 
+export type FileParams = {
+	is_transcribable?: 'Y',
+	is_voice_note?: 'Y',
+	is_video_note?: 'Y',
+}
+
 export type FilesIdsCollection = Array<Record<FileId, TemporallyFileId>>

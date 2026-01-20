@@ -1,0 +1,43 @@
+.bx-im-transcription-button__container {
+	--im-transcription-button__background-color_button: var(--im-color-accent-soft-blue-3);
+	--im-transcription-button__background-color_button-hover: #d3f4ff;
+	--im-transcription-button__background-color_button-self: rgba(var(--im-color-palette-gray-90-rgb), 0.05);
+	--im-transcription-button__background-color_button-self-hover: rgba(var(--im-color-palette-gray-90-rgb), 0.1);
+	--im-transcription-button__background-color_overlay-button: rgba(var(--im-color-palette-black-solid-rgb), 0.3);
+	--im-transcription-button__background-color_overlay-button-hover: rgba(var(--im-color-palette-black-solid-rgb), 0.4);
+}
+
+.bx-im-transcription-button__button {
+	cursor: pointer;
+	min-width: 40px;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 98px;
+	border: none;
+	outline: none;
+	background-color: var(--im-transcription-button__background-color_button);
+}
+
+.bx-im-transcription-button__button.--overlay {
+	min-width: 38px;
+	height: 28px;
+	background-color: var(--im-transcription-button__background-color_overlay-button);
+}
+
+.bx-im-transcription-button__button.--overlay:hover {
+	background-color: var(--im-transcription-button__background-color_overlay-button-hover);
+}
+
+.bx-im-transcription-button__button:hover {
+	background-color: var(--im-transcription-button__background-color_button-hover);
+}
+
+.bx-im-message-base__wrap.--self .bx-im-transcription-button__button:not(.--overlay) {
+	background-color: var(--im-transcription-button__background-color_button-self);
+}
+
+.bx-im-message-base__wrap.--self .bx-im-transcription-button__button:not(.--overlay):hover {
+	background-color: var(--im-transcription-button__background-color_button-self-hover);
+}

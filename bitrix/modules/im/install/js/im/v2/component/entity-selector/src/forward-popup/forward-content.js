@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { SendingService } from 'im.v2.provider.service.sending';
 import { Messenger } from 'im.public';
@@ -9,6 +7,7 @@ import { ForwardSearch, ChatSearchInput } from 'im.v2.component.search';
 import { Notifier } from 'im.v2.lib.notifier';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 
 import './forward-content.css';
 
@@ -69,7 +68,7 @@ export const ForwardContent = {
 		{
 			const { dialogId: forwardDialogId } = event;
 
-			EventEmitter.emit(EventType.dialog.closeBulkActionsMode, {
+			this.getEmitter().emit(EventType.dialog.closeBulkActionsMode, {
 				dialogId: this.dialogId,
 			});
 
@@ -82,13 +81,17 @@ export const ForwardContent = {
 			else
 			{
 				await Messenger.openChat(forwardDialogId);
-				EventEmitter.emit(EventType.textarea.insertForward, {
+				this.getEmitter().emit(EventType.textarea.insertForward, {
 					messagesIds: this.messagesIds,
 					dialogId: forwardDialogId,
 				});
 			}
 
 			this.$emit('close');
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

@@ -2,6 +2,8 @@ import { IBaseRecentService } from '../base/type';
 
 export interface IFloatingButtonService extends IBaseRecentService
 {
+    subscribeEvents: () => void;
+    redraw: () => void;
     renderButton: () => Promise<void>;
     renderAccentButton: () => Promise<void>;
 }

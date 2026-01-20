@@ -19,3 +19,6 @@ DROP TABLE IF EXISTS b_booking_option;
 DROP TABLE IF EXISTS b_booking_wait_list_item;
 DROP TABLE IF EXISTS b_booking_resource_linked_entity;
 DROP TABLE IF EXISTS b_booking_delayed_task;
+DROP TABLE IF EXISTS b_booking_booking_sku;
+DROP TABLE IF EXISTS b_booking_resource_sku;
+DROP TABLE IF EXISTS b_booking_resource_sku_yandex;

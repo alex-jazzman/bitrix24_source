@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TM_STATUS_WORK"] = "Работаю";
 $MESS["TM_STATUS_COMPLETED"] = "Завершен";
 $MESS["TM_STATUS_START"] = "Начать";
@@ -17,6 +17,7 @@ $MESS["TM_SAVE"] = "Сохранить";
 $MESS["TM_BEGINNING"] = "начало";
 $MESS["TM_END"] = "окончание";
 $MESS["TM_PAUSE"] = "перерыв";
+$MESS["TM_PAUSE_TITLE"] = "перерыв";
 $MESS["TM_DURATION"] = "длительность<br>рабочего дня";
 $MESS["TM_DURATION2"] = "Длительность рабочего дня";
 $MESS["TM_REASON2"] = "Причина изменения";
@@ -24,6 +25,8 @@ $MESS["TM_REASON_START"] = "Причина изменения";
 $MESS["TM_REASON_END"] = "Причина изменения";
 $MESS["TM_START"] = "Начать рабочий день";
 $MESS["TM_RESUME"] = "Продолжить";
+$MESS["TM_RESUME_MSGVER_1"] = "Возобновить";
+$MESS["TM_RESUME_MSGVER_2"] = "Продолжить";
 $MESS["TM_PAUSE2"] = "Перерыв";
 $MESS["TM_FINISH"] = "Завершить рабочий день";
 $MESS["TM_MENU_START"] = "Начать с текущим временем";
@@ -34,4 +37,3 @@ $MESS["TM_MENU_EDIT"] = "Изменить рабочий день";
 $MESS["TM_MENU_REPORT"] = "Сделано за день";
 $MESS["TM_MENU_SAVE"] = "Сохранить";
 $MESS["TM_MENU_CANCEL"] = "Отменить";
-?>

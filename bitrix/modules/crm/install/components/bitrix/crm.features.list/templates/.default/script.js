@@ -6,6 +6,8 @@ BX.ready(() => {
 			const switcher = new BX.UI.Switcher({
 				id: `crm-feature-list-item-${node.dataset.id}`,
 				checked: (node.dataset.checked === 'Y'),
+				useAirDesign: true,
+				size: 'extra-large',
 				handlers: {
 					toggled: () => {
 						switcher.setLoading(true);
@@ -49,6 +51,8 @@ BX.ready(() => {
 			const toursSwitcher = new BX.UI.Switcher({
 				id: 'crm-feature-tours-switcher',
 				checked: (enableToursNode.dataset.checked === 'Y'),
+				useAirDesign: true,
+				size: 'extra-large',
 				handlers: {
 					toggled: () => {
 						toursSwitcher.setLoading(true);
@@ -113,8 +117,10 @@ BX.ready(() => {
 					}
 					else
 					{
-						BX.Dom.addClass(node, 'ui-btn-icon-success');
+						BX.Dom.addClass(node, '--with-left-icon');
+						BX.Dom.addClass(node, 'ui-btn-icon-done');
 						setTimeout(() => {
+							BX.Dom.removeClass(node, '--with-left-icon');
 							BX.Dom.removeClass(node, 'ui-btn-icon-success');
 						}, 3000);
 					}
@@ -128,8 +134,55 @@ BX.ready(() => {
 						console.error(response);
 					}
 				});
-			})
+			});
 		});
+
+		const resetAllToursBtn = document.querySelector('[data-role="tour-reset-all"]');
+		if (resetAllToursBtn)
+		{
+			BX.bind(resetAllToursBtn, 'click', (event) => {
+				if (BX.Dom.hasClass(resetAllToursBtn, 'ui-btn-clock'))
+				{
+					return;
+				}
+				BX.Dom.addClass(resetAllToursBtn, 'ui-btn-clock');
+
+				BX.ajax.runComponentAction(
+					'bitrix:crm.features.list',
+					'resetAllTours',
+					{
+						mode: 'class',
+					},
+				).then((response) => {
+					BX.Dom.removeClass(resetAllToursBtn, 'ui-btn-clock');
+					if (response.errors && response.errors.length > 0)
+					{
+						BX.UI.Notification.Center.notify({
+							content: response.errors[0]?.message,
+						});
+						console.error(response);
+					}
+					else
+					{
+						BX.Dom.addClass(resetAllToursBtn, '--with-left-icon');
+						BX.Dom.addClass(resetAllToursBtn, 'ui-btn-icon-done');
+						setTimeout(() => {
+							BX.Dom.removeClass(resetAllToursBtn, '--with-left-icon');
+							BX.Dom.removeClass(resetAllToursBtn, 'ui-btn-icon-done');
+						}, 3000);
+					}
+				}, (response) => {
+					BX.Dom.removeClass(resetAllToursBtn, 'ui-btn-clock');
+					if (response.errors && response.errors.length > 0)
+					{
+						BX.UI.Notification.Center.notify({
+							content: response.errors[0]?.message,
+						});
+						console.error(response);
+					}
+				});
+			});
+		}
 
 		const copyNodes = document.querySelectorAll('.crm-features-list-item-copy[data-url]');
 		[...copyNodes].forEach((node) => {

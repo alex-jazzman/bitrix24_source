@@ -9,10 +9,10 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 	const { Text4 } = require('ui-system/typography/text');
 	const { openInfoBox } = require('user-profile/common-tab/src/block/common-fields/src/info-box');
 	const { BaseEditWrapper } = require('user-profile/common-tab/src/block/base-edit');
-	const { isFieldValueEmpty } = require('user-profile/common-tab/src/block/common-fields/src/utils');
+	const { isFieldValueEmpty, isFieldVisible } = require('user-profile/common-tab/src/block/common-fields/src/utils');
 	const { PropTypes } = require('utils/validation');
 
-	const ViewModeFieldIds = ['PERSONAL_MOBILE', 'UF_PHONE_INNER', 'EMAIL', 'DEPARTMENT_HEAD', 'UF_DEPARTMENT', 'PERSONAL_BIRTHDAY'];
+	const ViewModeFieldIds = ['PERSONAL_MOBILE', 'UF_PHONE_INNER', 'EMAIL', 'DEPARTMENT_HEAD', 'DEPARTMENT', 'TEAM', 'PERSONAL_BIRTHDAY'];
 
 	/**
 	 * @typedef {Object} CommonFieldsProps
@@ -52,7 +52,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 		{
 			const { sections = [] } = this.props;
 			const renderedSections = sections.map(
-				(section) => this.#renderSection(section),
+				(section) => this.#renderEditModeSection(section),
 			);
 
 			return View(
@@ -63,12 +63,12 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 			);
 		}
 
-		#renderSection(section)
+		#renderEditModeSection(section)
 		{
 			const { isEditMode, onFocus } = this.props;
 			const { title, fields = [] } = section;
 			const renderedFields = fields
-				.filter((field) => this.#isFieldVisible(field))
+				.filter((field) => this.#isFieldVisibleInEditMode(field))
 				.map((field, index) => FieldFactory.create(field.type, {
 					...field,
 					testId: field.id,
@@ -88,7 +88,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 			});
 		}
 
-		#isFieldVisible = (field) => {
+		#isFieldVisibleInEditMode = (field) => {
 			const { isEditMode } = this.props;
 			const { isEditable } = field;
 
@@ -122,17 +122,18 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 
 		#renderViewModeFields()
 		{
-			const { isEditMode, sections = [] } = this.props;
+			const { isEditMode, parentWidget, sections = [] } = this.props;
 
 			const renderedFields = sections
 				.flatMap((section) => section.fields || [])
-				.filter((field) => !isFieldValueEmpty(field) && ViewModeFieldIds.includes(field.id))
+				.filter((field) => !isFieldValueEmpty(field) && isFieldVisible(field) && ViewModeFieldIds.includes(field.id))
 				.sort((a, b) => ViewModeFieldIds.indexOf(a.id) - ViewModeFieldIds.indexOf(b.id))
 				.map((field, index) => FieldFactory.create(field.type, {
 					...field,
 					testId: field.id,
 					isEditMode,
 					isFirst: index === 0,
+					parentWidget,
 				}));
 
 			return View(

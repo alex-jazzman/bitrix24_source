@@ -1,4 +1,4 @@
-import { Outline } from 'ui.icon-set.api.core';
+import { Outline } from 'ui.icon-set.api.vue';
 
 import { ActionButton } from './action-button';
 
@@ -7,7 +7,6 @@ export const FullDescription = {
 	name: 'TaskFullDescription',
 	components: {
 		ActionButton,
-		Outline,
 	},
 	setup(): Object
 	{

@@ -116,10 +116,10 @@ export class SpoilerNode extends ElementNode
 		};
 	}
 
-	isShadowRoot(): boolean
-	{
-		return true;
-	}
+	// isShadowRoot(): boolean
+	// {
+	// 	return true;
+	// }
 
 	canBeEmpty(): false
 	{

@@ -1,0 +1,30 @@
+<?php
+
+return [
+	'extensions' => [
+		'mail:dialog',
+		'alert',
+		'apptheme',
+		'haptics',
+		'layout/ui/context-menu',
+		'layout/ui/fields',
+		'layout/ui/fields/mail-contact',
+		'layout/ui/widget-header-button',
+		'loc',
+		'notify-manager',
+		'type',
+		'utils/function',
+		'utils/object',
+		'utils/string',
+		'mail:chain/action-panel',
+		'mail:message/tools/connector',
+		'mail:message/elements/messagebody',
+		'layout/ui/warning-block',
+		'mail:const',
+		'layout/ui/fields/menu-select',
+		'layout/ui/fields/file',
+		'layout/ui/fields/multiple-field',
+		'layout/ui/fields/textarea',
+		'ui-system/form/inputs/string',
+	],
+];

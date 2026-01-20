@@ -63,6 +63,10 @@ this.BX.UI = this.BX.UI || {};
 	      return main_core.Dom.getPosition(this.target);
 	    }
 	  }
+	  isTargetVisible() {
+	    const target = this.getTarget();
+	    return main_core.Type.isDomNode(target) && document.body.contains(target) && main_core.Dom.isShownRecursive(target);
+	  }
 	  getId() {
 	    return this.id;
 	  }
@@ -188,6 +192,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.helper = top.BX.Helper;
 	    this.targetContainer = main_core.Type.isDomNode(options.targetContainer) ? options.targetContainer : null;
 	    this.overlay = main_core.Type.isBoolean(options.overlay) ? options.overlay : true;
+	    this.canShowWithoutTarget = main_core.Type.isBoolean(options.canShowWithoutTarget) ? options.canShowWithoutTarget : true;
 	    this.finalStep = options.finalStep || false;
 	    this.finalText = options.finalText || "";
 	    this.finalTitle = options.finalTitle || "";
@@ -328,7 +333,7 @@ this.BX.UI = this.BX.UI || {};
 	   * @public
 	   */
 	  showNextStep() {
-	    if (this.currentStepIndex === this.steps.length) {
+	    if (this.currentStepIndex === this.steps.length || !this.canShowWithoutTarget && !this.getCurrentStep().isTargetVisible()) {
 	      return;
 	    }
 	    if (this.getCurrentStep().getCursorMode()) {
@@ -767,24 +772,12 @@ this.BX.UI = this.BX.UI || {};
 	    // eslint-disable-next-line sonarjs/no-nested-template-literals
 	    const url = `redirect=detail&code=${article}${anchor ? `&anchor=${anchor}` : ''}`;
 	    this.helper.show(url);
-	    if (this.helper.isOpen()) {
-	      this.getPopup().setAutoHide(false);
-	    }
-	    main_core_events.EventEmitter.subscribe(this.helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
-	      this.getPopup().setAutoHide(true);
-	    });
 	  }
 	  handleInfoHelperCodeClickLink() {
 	    event.preventDefault();
 	    if (main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
 	      const helper = top.BX.UI.InfoHelper;
 	      helper.show(this.getCurrentStep().getInfoHelperCode());
-	      if (helper.isOpen()) {
-	        this.getPopup().setAutoHide(false);
-	      }
-	      main_core_events.EventEmitter.subscribe(helper.getSlider(), 'SidePanel.Slider:onCloseComplete', () => {
-	        this.getPopup().setAutoHide(true);
-	      });
 	    }
 	  }
 

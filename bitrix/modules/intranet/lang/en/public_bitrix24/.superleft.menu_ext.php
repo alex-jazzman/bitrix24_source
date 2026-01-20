@@ -1,4 +1,5 @@
 <?php
+$MESS["MENU_AI_AGENTS"] = "AI agents";
 $MESS["MENU_AI_SECTION"] = "AI Labs";
 $MESS["MENU_AUTOMATION_SECTION"] = "Automation";
 $MESS["MENU_BIZPROC"] = "Workflows";
@@ -39,6 +40,7 @@ $MESS["MENU_MARKETING"] = "Marketing";
 $MESS["MENU_MARKETPLACE_ALL"] = "Marketplace";
 $MESS["MENU_MARKETPLACE_APPS_2"] = "Market";
 $MESS["MENU_MARKETPLACE_APPS_2_MSGVER_1"] = "Market";
+$MESS["MENU_MCP_INTEGRATIONS"] = "MCP connections";
 $MESS["MENU_ONEC_SECTION"] = "1C + Bitrix24 CRM";
 $MESS["MENU_OPENLINES_LINES_SINGLE"] = "Open Channels";
 $MESS["MENU_PHOTO"] = "My Photos";

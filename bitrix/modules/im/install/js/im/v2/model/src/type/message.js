@@ -30,6 +30,7 @@ export type Message = {
 	isDeleted: boolean,
 	removeLinks: boolean,
 	copilotRole?: string,
+	sticker: boolean,
 };
 
 export type RawMessage = {
@@ -41,6 +42,7 @@ export type RawMessage = {
 	id: number,
 	isSystem: boolean,
 	params: JsonObject,
+	stickerParams: JsonObject | null,
 	replaces: Array,
 	text: string,
 	unread: boolean,

@@ -34,6 +34,11 @@ BX.adminLogin.prototype.registerForm = function(obForm)
 	this.arForms[obForm.name] = obForm;
 };
 
+BX.adminLogin.prototype.getForm = function(formName)
+{
+	return this.arForms[formName];
+};
+
 BX.adminLogin.prototype.Init = function()
 {
 	this.form = document.forms[this.form];
@@ -306,24 +311,36 @@ BX.adminLogin.prototype.Destroy = function()
 };
 
 /* interface class for admin forms */
-BX.IAdminAuthForm = function(container, params){
+BX.IAdminAuthForm = function(container, params)
+{
 	this.container = container;
 	this.params = params;
 
 	this.form = null;
 };
+
 BX.IAdminAuthForm.prototype.Init = function(form)
 {
 	this.form = form;
 	this.container = BX(this.container);
 };
 
+BX.IAdminAuthForm.prototype.setParams = function(params)
+{
+	this.params = params;
+};
+
 BX.IAdminAuthForm.prototype.validate = function(e) {};
+
 BX.IAdminAuthForm.prototype.onshow = function() {
 	this.form.action = this.params.url;
 };
+
 BX.IAdminAuthForm.prototype.onclose = function() {};
-BX.IAdminAuthForm.prototype.onerror = function(error) {alert(error.MESSAGE||error);};
+
+BX.IAdminAuthForm.prototype.onerror = function(error) {
+	alert(error.MESSAGE||error);
+};
 
 BX.IAdminAuthForm.prototype.fix = function()
 {
@@ -469,6 +486,37 @@ BX.authFormOtp.prototype.onshow = function()
 	{
 		this.showCaptcha(BX.adminLogin._lastError);
 		BX.adminLogin._lastError = null;
+	}
+
+	if (this.params.pullConfig.pullConfig)
+	{
+		var Pull = new BX.PullClient();
+		Pull.subscribe({
+			moduleId: 'security',
+			command: 'pushOtpCode',
+			callback: function (params) {
+				this.form.USER_OTP.value = params.code;
+				this.form.requestSubmit();
+			}.bind(this)
+		});
+		Pull.start(this.params.pullConfig.pullConfig);
+	}
+
+	if (this.params.pullConfig.channelTag)
+	{
+		BX.ajax.runAction(
+			'security.pushOtp.sendMobilePush',
+			{
+				data: {
+					channelTag: this.params.pullConfig.channelTag
+				}
+			}
+		).then(null, function(response) {
+			BX.adminLogin.showError('USER_OTP', {
+				TITLE: BX.message('admin_push_otp_error'),
+				MESSAGE: response.errors.map(e => e.message).join(' ')
+			});
+		});
 	}
 
 	BX.defer(BX.focus)(this.form.USER_OTP);
@@ -707,3 +755,4 @@ BX.authFormChangePasswordMessage.prototype.setContent = function(str)
 
 
 })();
+

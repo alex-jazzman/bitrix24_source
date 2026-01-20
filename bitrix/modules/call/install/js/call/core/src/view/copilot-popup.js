@@ -30,9 +30,9 @@ export class CopilotPopup
 				this.sendAnalytics('private_coming_soon');
 
 				return {
-					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
+					props: { className: 'bx-call-copilot-popup__button coming_soon' },
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_COMING_SOON'),
-				}
+				};
 			}
 
 			if (!CallAI.settingsEnabled)
@@ -50,15 +50,34 @@ export class CopilotPopup
 				this.sendAnalytics('tariff_limit');
 
 				return {
-					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green' },
-					text: BX.message('CALL_COPILOT_POPUP_TARIFF_UP'),
+					props: { className: 'bx-call-copilot-popup__button tariff_up' },
 					events: {
 						click: () => {
 							Util.openArticle(CallAI.helpSlider);
 							this.close();
 						},
-					}
-				}
+					},
+					children: [
+						Dom.create('div', {
+							props: {
+								className: 'bx-call-copilot-popup__button_wrapper',
+							},
+							children: [
+								Dom.create('div', {
+									props: {
+										className: 'bx-call-copilot-popup__button_icon',
+									},
+								}),
+								Dom.create('div', {
+									props: {
+										className: 'bx-call-copilot-popup__button_text',
+									},
+									text: BX.message('CALL_COPILOT_POPUP_TARIFF_UP'),
+								}),
+							],
+						}),
+					],
+				};
 			}
 
 			if (!CallAI.agreementAccepted)
@@ -68,21 +87,21 @@ export class CopilotPopup
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
 					text: BX.message('CALL_COPILOT_POPUP_CONCERN_NOT_ACCEPTED'),
-				}
+				};
 			}
 
 			if (this.isCopilotActive)
 			{
 				return {
-					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_gray' },
+					props: { className: 'bx-call-copilot-popup__button turn_off' },
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
 					events: {
 						click: () => {
 							this.callbacks.updateCopilotState();
 							this.close();
 						},
-					}
-				}
+					},
+				};
 			}
 
 			if (!CallAI.baasAvailable)
@@ -90,27 +109,48 @@ export class CopilotPopup
 				this.sendAnalytics('baas_limit');
 
 				return {
-					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green' },
-					text: BX.message('CALL_COPILOT_POPUP_BUTTON_BUY_BOOST'),
+					props: {
+						className: 'bx-call-copilot-popup__button --secondary buy_boost',
+					},
+					children: [
+						Dom.create('div', {
+							props: {
+								className: 'bx-call-copilot-popup__button_wrapper',
+							},
+							children: [
+								Dom.create('div', {
+									props: {
+										className: 'bx-call-copilot-popup__button_icon',
+									},
+								}),
+								Dom.create('div', {
+									props: {
+										className: 'bx-call-copilot-popup__button_text',
+									},
+									text: BX.message('CALL_COPILOT_POPUP_BUTTON_BUY_BOOST'),
+								}),
+							],
+						}),
+					],
 					events: {
 						click: () => {
 							Util.openArticle(CallAI.baasPromoSlider);
 							this.close();
 						},
-					}
-				}
+					},
+				};
 			}
 
 			return {
-				props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green' },
+				props: { className: 'bx-call-copilot-popup__button turn_on' },
 				text: BX.message('CALL_COPILOT_POPUP_BUTTON_ENABLE'),
 				events: {
 					click: () => {
 						this.callbacks.updateCopilotState();
 						this.close();
 					},
-				}
-			}
+				},
+			};
 		};
 
 		this.popupTemplate = Dom.create("div", {

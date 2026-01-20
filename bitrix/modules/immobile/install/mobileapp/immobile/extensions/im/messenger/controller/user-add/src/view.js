@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/user-add/view', (require, exports, module) =>
 		constructor(props) {
 			super(props);
 
+			debugger;
 			this.selector = new MultiSelector({
 				itemList: this.props.itemList,
 				searchMode: 'inline',

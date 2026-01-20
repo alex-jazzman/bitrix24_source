@@ -1,4 +1,7 @@
 .b24-hover-pill {
+	--b24-hover-pill-content-pl: 2px;
+	--b24-hover-pill-content-pr: 10px;
+
 	position: relative;
 	min-width: 0;
 	max-width: 100%;
@@ -11,7 +14,8 @@
 	cursor: pointer;
 }
 
-.b24-hover-pill:not(.--readonly):hover {
+.b24-hover-pill:not(.--readonly):hover,
+.b24-hover-pill:not(.--readonly).--active {
 	--hover-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
 	box-shadow: 0 0 0 2px var(--hover-color);
 	background: var(--hover-color);
@@ -21,17 +25,29 @@
 	outline: 2px solid var(--ui-color-design-outline-a1-content-divider);
 }
 
-.b24-hover-pill:hover.--transparent {
-	--hover-color: transparent;
+.b24-hover-pill.--readonly:focus-visible {
+	outline: none;
+}
+
+.b24-hover-pill.--text-only:not(.--no-offset) {
+	margin-left: -10px;
 }
 
 .b24-hover-pill-content {
 	overflow: hidden;
 	display: flex;
 	align-items: center;
-	padding: 2px 10px 2px 2px;
+	padding: var(--ui-space-stack-3xs) var(--b24-hover-pill-content-pr) var(--ui-space-stack-3xs) var(--b24-hover-pill-content-pl);
 }
 
+.b24-hover-pill.--text-only {
+	--b24-hover-pill-content-pl: 10px;
+}
+
+.b24-hover-pill.--compact {
+	--b24-hover-pill-content-pl: 2px;
+	--b24-hover-pill-content-pr: 2px;
+}
 
 /* remover */
 .b24-hover-pill-remover {

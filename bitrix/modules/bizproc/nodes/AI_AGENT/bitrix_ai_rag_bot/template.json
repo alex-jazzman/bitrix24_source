@@ -1,0 +1,584 @@
+{
+    "NAME": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_1###",
+    "DESCRIPTION": "###BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_1###",
+    "PARAMETERS": [],
+    "VARIABLES": [],
+    "CONSTANTS": {
+        "SetupTemplateActivity_62HyznTvdU": {
+            "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_2###",
+            "Description": "",
+            "Type": "string",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": ""
+        },
+        "SetupTemplateActivity_BTXo5PtF6w": {
+            "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_3###",
+            "Description": "",
+            "Type": "user",
+            "Required": 0,
+            "Multiple": 1,
+            "Options": null,
+            "Default": ""
+        },
+        "SetupTemplateActivity_Z15YXPjTOs": {
+            "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_4###",
+            "Description": "###BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_2###",
+            "Type": "rag_knowledge_base",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": ""
+        },
+        "SetupTemplateActivity_T76SEQ8ol9": {
+            "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_5###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "###BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_1###"
+        },
+        "SetupTemplateActivity_YxMBdDhXHd": {
+            "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_6###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "###BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_2###"
+        },
+		"SetupTemplateActivity_rgrHChbMKt": {
+			"Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7###",
+			"Description": "",
+			"Type": "file",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": null,
+			"Default": ""
+		}
+    },
+    "TEMPLATE": [
+        {
+            "Type": "NodeWorkflowActivity",
+            "Name": "Template",
+            "Properties": {
+                "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_1###",
+                "Links": [
+                    [
+                        "A7649_2965_8496_3775:o0",
+                        "A7426_4464_6102_9845:i0"
+                    ],
+                    [
+                        "A7426_4464_6102_9845:o0",
+                        "A9988_4968_1175_9417:i0"
+                    ],
+                    [
+                        "A6799_3346_2347_2123:o0",
+                        "A5172_6770_9062_4959:i0"
+                    ],
+                    [
+                        "A4791_5036_6881_3286:o0",
+                        "A7649_2965_8496_3775:i0"
+                    ],
+                    [
+                        "A9700_4393_6634_9720:o0",
+                        "A6799_3346_2347_2123:i0"
+                    ],
+                    [
+                        "A6799_3346_2347_2123:a0",
+                        "A9610_6597_9992_4868:t0"
+                    ]
+                ]
+            },
+            "Children": [
+                {
+                    "Name": "A6799_3346_2347_2123",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A9700_4393_6634_9720:SenderId}",
+                        "query": "{=A9700_4393_6634_9720:Message}",
+                        "systemPrompt": "###BIZPROC_AI_AGENT_RAGCHATBOT_SYSTEMPROMPT_1###",
+                        "returnType": "text",
+                        "jsonSchema": "",
+                        "jsonPath": null,
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6799_3346_2347_2123",
+                        "type": "simple",
+                        "position": {
+                            "x": 598,
+                            "y": 470
+                        },
+						"dimensions": {
+							"width": null,
+							"height": null
+						},
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "aux": [
+                                {
+                                    "id": "a0",
+                                    "position": 0,
+                                    "title": ""
+                                }
+                            ],
+                            "topAux": null
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2###",
+							"colorIndex": 0,
+							"icon": "AI_ROBOT",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A7649_2965_8496_3775",
+                    "Type": "SetupTemplateActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "user": "{=A4791_5036_6881_3286:startedBy}",
+                        "description": "",
+                        "blocks": [
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_1###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_1###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_62HyznTvdU",
+                                        "name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_2###",
+                                        "constantType": "string",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    },
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_rgrHChbMKt",
+										"name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7###",
+										"constantType": "file",
+										"description": "",
+										"multiple": false,
+										"required": false,
+										"options": [],
+										"default": ""
+									},
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_BTXo5PtF6w",
+                                        "name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_3###",
+                                        "constantType": "user",
+                                        "description": "",
+                                        "multiple": true,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_Z15YXPjTOs",
+                                        "name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_4###",
+                                        "constantType": "rag_knowledge_base",
+                                        "description": "###BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_2###",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_2###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_3###"
+                                    },
+                                    {
+                                        "itemType": "delimiter",
+                                        "delimiterType": "line"
+                                    },
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_4###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_5###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_T76SEQ8ol9",
+                                        "name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_5###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_1###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_YxMBdDhXHd",
+                                        "name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_6###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_2###"
+                                    }
+                                ]
+                            }
+                        ],
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7649_2965_8496_3775",
+                        "type": "simple",
+						"position": {
+							"x": 587,
+							"y": 234
+						},
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3###",
+							"colorIndex": 2,
+							"icon": "SETTINGS",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A7426_4464_6102_9845",
+                    "Type": "ImBotCreateBotActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botName": "{=Constant:SetupTemplateActivity_62HyznTvdU}",
+                        "workPosition": "",
+                        "avatar": "{=Constant:SetupTemplateActivity_rgrHChbMKt}",
+                        "botCode": "{=Workflow:TemplateId}",
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_4###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7426_4464_6102_9845",
+                        "type": "simple",
+                        "position": {
+                            "x": 936,
+                            "y": 234
+                        },
+						"dimensions": {
+							"width": null,
+							"height": null
+						},
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_4###",
+							"colorIndex": 1,
+							"icon": "MESSENGER",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9988_4968_1175_9417",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A7426_4464_6102_9845:botId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=Constant:SetupTemplateActivity_BTXo5PtF6w}"
+                        ],
+                        "message": "###BIZPROC_AI_AGENT_RAGCHATBOT_MESSAGE_1###",
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9988_4968_1175_9417",
+                        "type": "simple",
+                        "position": {
+                            "x": 1269,
+                            "y": 234
+                        },
+						"dimensions": {
+							"width": null,
+							"height": null
+						},
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
+							"colorIndex": 2,
+							"icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A5172_6770_9062_4959",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9700_4393_6634_9720:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A9700_4393_6634_9720:SenderId}"
+                        ],
+                        "message": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, {=A6799_3346_2347_2123:aiResult}, {=A6799_3346_2347_2123:errorMessage})}}",
+						"asError": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, 'N', 'Y')}}",
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5172_6770_9062_4959",
+                        "type": "simple",
+                        "position": {
+                            "x": 949,
+                            "y": 470
+                        },
+						"dimensions": {
+							"width": null,
+							"height": null
+						},
+                        "ports": {
+                            "input": [
+                                {
+                                    "id": "i0",
+                                    "position": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
+							"colorIndex": 2,
+							"icon": "GO_TO_MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4791_5036_6881_3286",
+                    "Type": "AiAgentStartTrigger",
+                    "Properties": {
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6###"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A4791_5036_6881_3286",
+                        "type": "trigger",
+                        "position": {
+							"x": 178,
+							"y": 234
+						},
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": {
+                            "input": [],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6###",
+                            "colorIndex": 0,
+                            "icon": "AI_ROBOT",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9700_4393_6634_9720",
+                    "Type": "ImBotNewMessageTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BotId": null,
+                        "BotCode": "{=Workflow:TemplateId}",
+                        "SenderIds": [
+                            "{=Constant:SetupTemplateActivity_BTXo5PtF6w}"
+                        ],
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_7###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9700_4393_6634_9720",
+                        "type": "trigger",
+                        "position": {
+                            "x": 193,
+                            "y": 470
+                        },
+						"dimensions": {
+							"width": null,
+							"height": null
+						},
+                        "ports": {
+                            "input": [],
+                            "output": [
+                                {
+                                    "id": "o0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_7###",
+                            "colorIndex": 2,
+                            "icon": "MESSAGE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9610_6597_9992_4868",
+                    "Type": "RagKnowledgeBaseNode",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Rag": "{=Constant:SetupTemplateActivity_Z15YXPjTOs}",
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9610_6597_9992_4868",
+                        "type": "tool",
+                        "position": {
+                            "x": 598,
+                            "y": 607
+                        },
+						"dimensions": {
+							"width": null,
+							"height": null
+						},
+                        "ports": {
+                            "input": [],
+                            "output": [],
+                            "topAux": [
+                                {
+                                    "id": "t0",
+                                    "position": 1
+                                }
+                            ]
+                        },
+                        "node": {
+                            "type": "tool",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8###",
+                            "colorIndex": 0,
+                            "icon": "DATABASE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

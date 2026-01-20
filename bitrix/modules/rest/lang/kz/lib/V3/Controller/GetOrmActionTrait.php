@@ -1,0 +1,3 @@
+<?php
+$MESS["REST_V3_CONTROLLER_GETORMACTIONTRAIT_ACTION_DESCRIPTION"] = "Жеке куәлік бойынша нақты жазбаны алу";
+$MESS["REST_V3_CONTROLLER_GETORMACTIONTRAIT_ACTION_TITLE"] = "Элементті алу әдісі";

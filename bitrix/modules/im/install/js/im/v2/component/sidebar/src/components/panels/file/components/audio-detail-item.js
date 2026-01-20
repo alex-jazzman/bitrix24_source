@@ -1,5 +1,5 @@
 import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
-import { AudioPlayer } from 'im.v2.component.elements.audioplayer';
+import { AudioPlayer } from 'im.v2.component.elements.player';
 
 import '../css/audio-detail-item.css';
 
@@ -18,11 +18,6 @@ export const AudioDetailItem = {
 		},
 	},
 	emits: ['contextMenuClick'],
-	data() {
-		return {
-			timelineType: 0,
-		};
-	},
 	computed:
 	{
 		sidebarFileItem(): ImModelSidebarFileItem
@@ -37,10 +32,6 @@ export const AudioDetailItem = {
 		{
 			return this.file.urlDownload;
 		},
-	},
-	created()
-	{
-		this.timelineType = Math.floor(Math.random() * 5);
 	},
 	methods:
 	{
@@ -60,9 +51,9 @@ export const AudioDetailItem = {
 				:src="audioUrl" 
 				:file="file" 
 				:messageId="sidebarFileItem.messageId"
-				:timelineType="timelineType" 
 				:authorId="sidebarFileItem.authorId"
 				:withPlaybackRateControl="true"
+				:withTranscription="false"
 				@contextMenuClick="onContextMenuClick"
 			/>
 		</div>

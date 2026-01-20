@@ -1,4 +1,6 @@
 <?php
+$MESS["CALL_NOTIFY_AUDIO_RECORD_WITHOUT_MESSAGE_LINK"] = "Phone call recording ##CALL_ID#";
+$MESS["CALL_NOTIFY_AUDIO_RECORD_WITH_MESSAGE_LINK"] = "Phone call recording [url=#CALL_LINK#]##CALL_ID#[/url]";
 $MESS["CALL_NOTIFY_COPILOT"] = "CoPilot";
 $MESS["CALL_NOTIFY_COPILOT_AGENDA"] = "Agenda";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS"] = "Meeting summary";
@@ -29,5 +31,6 @@ $MESS["CALL_NOTIFY_TASK_DROPPED_F"] = "#USER# deleted phone call analysis [url=#
 $MESS["CALL_NOTIFY_TASK_DROPPED_M"] = "#USER# deleted phone call analysis [url=#CALL_START#]##CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_FAILED"] = "CoPilot failed to analyze [url=#CALL_START#]call ##CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_START"] = "CoPilot is processing [url=#CALL_START#]call ##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_START_V2"] = "CoPilot is analyzing the call [url=#CALL_START#]##CALL_ID#[/url]. The analysis will be posted to the chat as soon as it's completed.";
 $MESS["CALL_NOTIFY_TASK_WAIT"] = "CoPilot is now processing the recording for [url=#CALL_START#]call ##CALL_ID#[/url]. Please wait.";
 $MESS["CALL_NOTIFY_USERS"] = "Participants: #USERS#";

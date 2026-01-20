@@ -333,7 +333,12 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		onItemSelectedListener({ text, item, scope })
 		{
-			this.handleOnEventsCallback('onItemSelected', { text, item, scope });
+			this.handleOnEventsCallback('onItemSelected', {
+				text,
+				item,
+				scope,
+				widgetEntity: this,
+			});
 
 			if (item.disabled)
 			{
@@ -351,7 +356,7 @@ jn.define('selector/widget', (require, exports, module) => {
 				this.createItems(text);
 			}
 
-			if (this.closeOnSelect)
+			if (this.closeOnSelect && !item.params?.preventCloseOnSelect)
 			{
 				this.close();
 			}
@@ -515,41 +520,94 @@ jn.define('selector/widget', (require, exports, module) => {
 				return;
 			}
 
-			if (cache === false)
-			{
-				items = items.filter(({ id }) => id !== 'loading');
-			}
+			const { processedItems, hasContentItems } = this.prepareProviderItems(items, cache, true);
+			this.setItems(processedItems);
 
-			const hasOwnItems = items.length > 0;
-			if (!hasOwnItems)
+			if (!this.manualSelection && hasContentItems)
 			{
-				items.push({
-					title: this.getEmptyItemTitle(),
-					type: 'button',
-					sectionCode: COMMON_SECTION_CODE,
-					unselectable: true,
-				});
-			}
-
-			this.setItems(items);
-
-			if (!this.manualSelection && hasOwnItems)
-			{
-				const filteredSelectedItems = this.filterSelectedByItems(items);
+				const filteredSelectedItems = this.filterSelectedByItems(processedItems);
 				this.setSelected(filteredSelectedItems);
 			}
 		}
 
-		getEmptyItemTitle()
+		prepareProviderItems(items, cache, isRecent)
 		{
-			if (this.createOptions.enableCreation)
+			const processedItems = cache === false ? this.removeLoadingItem(items) : items;
+			const hasContentItems = processedItems.length > 0;
+
+			const addItem = this.getCustomCreateElement(processedItems, isRecent);
+			if (addItem)
 			{
-				return this.searchOptions.startTypingWithCreationText || BX.message(
-					'PROVIDER_WIDGET_START_TYPING_TO_CREATE',
-				);
+				processedItems.push(addItem);
 			}
 
-			return this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH');
+			if (!hasContentItems)
+			{
+				processedItems.push(this.getEmptyResultItem(isRecent));
+			}
+
+			return {
+				processedItems: this.moveLoadingItemToEnd(processedItems),
+				hasContentItems,
+			};
+		}
+
+		removeLoadingItem(items)
+		{
+			return items.filter(({ id }) => id !== 'loading');
+		}
+
+		getEmptyResultItem(isRecent)
+		{
+			return {
+				title: this.getEmptyItemTitle(isRecent),
+				type: 'button',
+				sectionCode: COMMON_SECTION_CODE,
+				unselectable: true,
+			};
+		}
+
+		moveLoadingItemToEnd(items)
+		{
+			const loadingIndex = items.findIndex(({ id }) => id === 'loading');
+			if (loadingIndex !== -1)
+			{
+				const [loadingItem] = items.splice(loadingIndex, 1);
+				items.push(loadingItem);
+			}
+
+			return items;
+		}
+
+		getCustomCreateElement(items, isRecent = true)
+		{
+			if (
+				this.isCreationModeActive()
+				&& this.createOptions.useCustomCreationElement
+				&& this.hasCustomCreateElement()
+			)
+			{
+				return this.createOptions.getCustomCreateElement({ items, isRecent });
+			}
+
+			return null;
+		}
+
+		getEmptyItemTitle(isRecent)
+		{
+			if (isRecent)
+			{
+				if (this.createOptions.enableCreation)
+				{
+					return this.searchOptions.startTypingWithCreationText || BX.message(
+						'PROVIDER_WIDGET_START_TYPING_TO_CREATE',
+					);
+				}
+
+				return this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH');
+			}
+
+			return this.searchOptions.noResultsText || BX.message('PROVIDER_SEARCH_NO_RESULTS');
 		}
 
 		filterSelectedByItems(items)
@@ -590,17 +648,8 @@ jn.define('selector/widget', (require, exports, module) => {
 				return;
 			}
 
-			if (cache === false)
-			{
-				items = items.filter(({ id }) => id !== 'loading');
-			}
-
-			if (items.length === 0)
-			{
-				items.unshift(this.getEmptyResultButtonItem());
-			}
-
-			this.setItems(items);
+			const { processedItems } = this.prepareProviderItems(items, cache, false);
+			this.setItems(processedItems);
 		}
 
 		// endregion
@@ -749,6 +798,11 @@ jn.define('selector/widget', (require, exports, module) => {
 			return enableCreation && (canCreateWithEmptySearch || !this.isRecentSearch());
 		}
 
+		hasCustomCreateElement()
+		{
+			return typeof this.createOptions.getCustomCreateElement === 'function';
+		}
+
 		getCommonSectionButtonText()
 		{
 			return '';
@@ -787,6 +841,11 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			if (isForbiddenTryToUnselectLast)
 			{
+				if (this.selectOptions.onUnselectLast)
+				{
+					this.selectOptions.onUnselectLast();
+				}
+
 				this.widget.setSelected(this.currentSelectedItems);
 
 				return;
@@ -954,16 +1013,6 @@ jn.define('selector/widget', (require, exports, module) => {
 					? (this.createOptions.creatingText || BX.message('PROVIDER_WIDGET_CREATING_ITEM'))
 					: (this.createOptions.createText || BX.message('PROVIDER_WIDGET_CREATE_ITEM'))
 			);
-		}
-
-		getEmptyResultButtonItem()
-		{
-			return {
-				title: this.searchOptions.noResultsText || BX.message('PROVIDER_SEARCH_NO_RESULTS'),
-				type: 'button',
-				sectionCode: COMMON_SECTION_CODE,
-				unselectable: true,
-			};
 		}
 
 		close()

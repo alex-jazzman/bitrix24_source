@@ -3,10 +3,14 @@
 use Bitrix\Crm\Activity\Provider\Sms\MessageDto;
 use Bitrix\Crm\Activity\Provider\Sms\TemplatePlaceholderDto;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Validation\Validator\UrlValidator;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Engine\UrlManager;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -459,6 +463,43 @@ elseif ($action === 'SAVE_SMS_MESSAGE')
 	$owner = new ItemIdentifier($ownerTypeId, $ownerId);
 
 	$senderId = isset($_REQUEST['SENDER_ID']) ? (string)$_REQUEST['SENDER_ID'] : null;
+
+	if ($senderId  === NotificationsManager::getSenderCode())
+	{
+		static $templateWhitelist = [
+			'CRM_DOCUMENT_SHARING',
+		];
+		$messagePlaceholders = $_REQUEST['MESSAGE_PLACEHOLDERS'] ?? [];
+		$messageTemplateCode = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
+
+		if (!in_array(mb_strtoupper($messageTemplateCode), $templateWhitelist, true))
+		{
+			__CrmTimelineEndResponse(['ERROR'=>'SENDER ID IS NOT SUPPORTED!']);
+		}
+
+		foreach ($messagePlaceholders as $placeholderName => $placeholderValue)
+		{
+			if (mb_strtoupper($placeholderName) !== 'DOCUMENT_URL')
+			{
+				__CrmTimelineEndResponse(['ERROR'=>'SENDER ID IS NOT SUPPORTED!']);
+			}
+
+			$validator = new UrlValidator();
+			if (!$validator->validate($placeholderValue)->isSuccess())
+			{
+				__CrmTimelineEndResponse(['ERROR'=>'SENDER ID IS NOT SUPPORTED!']);
+			}
+
+			$uri = new Uri($placeholderValue);
+			$hostUri = new Uri(UrlManager::getInstance()->getHostUrl());
+
+			if ($uri->getHost() !== $hostUri->getHost())
+			{
+				__CrmTimelineEndResponse(['ERROR'=>'SENDER ID IS NOT SUPPORTED!']);
+			}
+		}
+	}
+
 	$messageFrom = isset($_REQUEST['MESSAGE_FROM']) ? (string)$_REQUEST['MESSAGE_FROM'] : null;
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;

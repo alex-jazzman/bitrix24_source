@@ -1,0 +1,43 @@
+.editor-chart-dropdown-menu-button {
+	position: relative;
+	z-index: 3;
+}
+
+.editor-chart-dropdown-menu-button__menu-content {
+	position: absolute;
+	right: -2px;
+	top: 54px;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	width: 380px;
+	padding: 12px;
+	border-radius: 18px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.21), 0 7px 21px rgba(83, 92, 105, .12), 0 -1px 6px 0 rgba(83, 92, 105, .06);
+}
+
+.editor-chart-dropdown-menu-button__list {
+	margin: 0;
+	padding: 0;
+}
+
+.editor-chart-dropdown-menu-button__footer {
+	display: none; /* temporarily for release */
+	padding: 10px 13px 0;
+	border-top: 1px solid var(--ui-color-gray-10);
+	font-size: 13px;
+}
+
+.editor-chart-dropdown-menu-button__help-link {
+    color: var(--ui-color-accent-main-link);
+	text-decoration: none;
+	letter-spacing: .3px;
+	font-size: 12px;
+}
+
+.editor-chart-dropdown-menu-button__help-link:hover {
+    text-decoration: underline;
+}
+

@@ -780,8 +780,7 @@
 	BXMailMessage.prototype.markAsSpam = function (btn, uid)
 	{
 		btn.classList.add('mail-msg-view-control-disabled');
-		BX.ajax.runComponentAction('bitrix:mail.client', 'markAsSpam', {
-			mode: 'ajax',
+		BX.ajax.runAction('mail.message.markAsSpam', {
 			data: {ids: [uid]}
 		}).then(
 			this.onMessageActionSuccess.bind(this, btn),
@@ -856,8 +855,7 @@
 	BXMailMessage.prototype.processDelete = function (btn, uid)
 	{
 		btn.classList.add('mail-msg-view-control-disabled');
-		BX.ajax.runComponentAction('bitrix:mail.client', 'delete', {
-			mode: 'ajax',
+		BX.ajax.runAction('mail.message.delete', {
 			data: {ids: [uid]}
 		}).then(
 			this.onMessageActionSuccess.bind(this, btn),

@@ -1,0 +1,23 @@
+.bx-im-emote-popup__container {
+	--im-emote-selector__button-color_active: var(--im-color-accent-main-primary);
+	--im-emote-selector__button-text-color_active: var(--im-color-palette-white-base);
+	--im-emote-selector__background-color: #f1f1f1;
+	--im-emote-selector__background-tab-color: rgba(246, 250, 251, 1);
+	--im-emote-selector__background-tab-border-color: #e6e9ea;
+	--im-emote-selector__background-tab-shadow: var(--im-color-palette-black-solid-rgb);
+
+	box-shadow: 0 8px 17px 0 rgba(var(--im-emote-selector__background-tab-shadow), 0.21);
+	background-color: var(--im-emote-selector__background-color);
+}
+
+.bx-im-emote-popup__tabs-controls {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+	height: 48px;
+	border-top: 1px solid var(--im-emote-selector__background-tab-border-color);
+	box-shadow: 0 0 4px rgba(var(--im-emote-selector__background-tab-shadow), 0.04);
+	background-color: var(--im-emote-selector__background-tab-color);
+}

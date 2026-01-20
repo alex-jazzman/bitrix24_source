@@ -538,6 +538,12 @@
 					this.stopPauseTimers(set);
 				this.showStopForm("normal");
 				this.showStartForm("normal");
+
+				if (!this.currentStatus || this.currentStatus !== status || set)
+				{
+					this.updateResumeButtonText(status);
+					this.currentStatus = status;
+				}
 			};
 			d.prototype.getMenu = function(status) {
 				var menu = [];
@@ -845,6 +851,21 @@
 			};
 			d.prototype.showStopForm = function(status) {
 				this.nodes.main.setAttribute("data-bx-timeman-stop-state", status);
+			};
+			d.prototype.updateResumeButtonText = function(status) {
+				const resumeButton = BX.findChild(this.node, {attribute: {"data-bx-timeman": "resume-button"}}, true);
+				if (!resumeButton)
+				{
+					return;
+				}
+
+				const messageKey = status === 'completed' ? 'TM_RESUME_MSGVER_1' : 'TM_RESUME_MSGVER_2';
+				const newText = BX.message(messageKey);
+
+				if (newText)
+				{
+					resumeButton.value = newText;
+				}
 			};
 			return d;
 		})(),

@@ -8,6 +8,7 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 		handleItemClick,
 	} = require('more-menu/utils');
 	const { Type } = require('type');
+	const { inAppUrl } = require('in-app-url');
 
 	/**
 	 * @class MenuNavigator
@@ -26,7 +27,7 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			this.menuList = Type.isArrayFilled(props.menuList) ? props.menuList : [];
 		}
 
-		updateMenuList(menuList)
+		update(menuList, restrictions)
 		{
 			if (Type.isArrayFilled(menuList))
 			{
@@ -36,6 +37,8 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			{
 				this.menuList = [];
 			}
+
+			this.restrictions = restrictions;
 		}
 
 		subscribeToEvents()
@@ -122,28 +125,20 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			this.onSubscribeToPushNotification(SUBSCRIPTION_EVENTS.INVITE);
 		}
 
-		async onInviteNotification()
+		async onInviteNotification(openInviteOnMount = true)
 		{
 			if (!this.isActiveTab())
 			{
 				await this.makeTabActive();
 			}
-			const usersItem = this.getItemById('users');
-			if (usersItem)
-			{
-				const params = usersItem.params || {};
 
-				handleItemClick({
-					...usersItem,
-					params: {
-						openInviteOnMount: true,
-						...params,
-					},
-				});
-			}
-			else
+			if (this.restrictions?.canInvite)
 			{
-				console.error('Users menu item not found');
+				inAppUrl.open('/intranetmobile/users', {
+					canInvite: this.restrictions?.canInvite,
+					canUseTelephony: this.restrictions?.canUseTimeMan,
+					openInviteOnMount,
+				});
 			}
 		}
 	}

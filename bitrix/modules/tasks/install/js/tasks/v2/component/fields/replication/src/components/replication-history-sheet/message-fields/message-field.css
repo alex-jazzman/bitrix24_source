@@ -1,0 +1,8 @@
+.tasks-field-replication-error-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-field-replication-message {
+	display: flex;
+	justify-content: space-between;
+}

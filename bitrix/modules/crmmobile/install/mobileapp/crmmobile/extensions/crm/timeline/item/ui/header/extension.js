@@ -301,7 +301,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			const { analyticsEvent, activityType, confirmationTexts } = this.props;
 
 			analyticsEvent
-				.setEvent('activity_complete')
+				?.setEvent('activity_complete')
 				.setElement('checkbox');
 
 			const cancelButton = makeCancelButton(

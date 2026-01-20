@@ -319,10 +319,6 @@ if(
 		{
 			$ID = $user->Add($arFields);
 			$res = ($ID > 0);
-			if(COption::GetOptionString("main", "event_log_register", "N") === "Y" && $res)
-			{
-				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "USER_REGISTER", "main", $ID, ['login' => $_POST["LOGIN"] ?? '', 'name' => $_POST["NAME"] ?? '', 'lastName' => $_POST["LAST_NAME"] ?? '']);
-			}
 			$new = "Y";
 		}
 		if ($USER->CanDoOperation('edit_ratings') && ($selfEdit || $ID!=$USER->GetID()) && is_array($_POST['RATING_BONUS'] ?? null))

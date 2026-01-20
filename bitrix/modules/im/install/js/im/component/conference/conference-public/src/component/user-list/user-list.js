@@ -2,7 +2,7 @@ import { Vuex } from "ui.vue.vuex";
 import { Logger } from "im.lib.logger";
 import { EventEmitter } from 'main.core.events';
 import { EventType } from "im.const";
-import { ConferenceRightPanelMode as RightPanelMode, ConferenceUserState } from 'im.const';
+import { ConferenceRightPanelMode as RightPanelMode, ConferenceUserState } from 'call.const';
 import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
 
 import {UserListItem} from './user-list-item';
@@ -45,7 +45,7 @@ const UserList = {
 		usersList()
 		{
 			const users = this.conference.common.users.filter(user => {
-				return !this.presentersList.includes(user);
+				return !this.presentersList.includes(user) && this.call.users[user] && [ConferenceUserState.Ready, ConferenceUserState.Connected].includes(this.call.users[user].state);
 			});
 
 			return [...users].sort(this.userSortFunction);

@@ -1,5 +1,6 @@
 module.exports = {
 	input: './src/selector.js',
 	output: './dist/selector.bundle.js',
-	namespace: 'BX.DocumentGenerator'
+	namespace: 'BX.DocumentGenerator',
+	browserslist: true,
 };

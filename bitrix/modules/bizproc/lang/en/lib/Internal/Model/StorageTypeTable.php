@@ -1,0 +1,12 @@
+<?php
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_CODE"] = "Symbolic code";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_CREATED_BY"] = "Created by";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_CREATED_TIME"] = "Created on";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_DESCRIPTION"] = "Description:";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_LIMIT_EXCEEDED"] = "Maximum number of storages (#LIMIT#) exceeded.";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_NAME"] = "Name";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_TABLE_NAME"] = "Table name";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_TITLE"] = "Name:";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_UPDATED_BY"] = "Updated by";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_UPDATED_TIME"] = "Last updated on";
+$MESS["BIZPROC_STORAGE_TYPE_MODEL_FIELD_WRONG_CODE"] = "Storage symbolic code can only include lower Latin characters, numbers and underscores. Field code has to begin with a Latin character.";

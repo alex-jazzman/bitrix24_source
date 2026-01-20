@@ -1,0 +1,17 @@
+.bx-im-transcribed-video-note-note__container {
+	padding: 9px 12px 0 14px;
+}
+
+.bx-im-transcribed-video-note__header {
+	padding-bottom: 6px;
+}
+
+.bx-im-transcribed-video-note__default-message-container {
+	padding:
+		0
+		var(--im-message-base__padding-right_body)
+		var(--im-message-base__padding-bottom_body)
+		var(--im-message-base__padding-left_body)
+;
+	margin-top: 8px;
+}

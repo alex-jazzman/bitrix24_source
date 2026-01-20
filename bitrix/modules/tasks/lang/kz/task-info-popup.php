@@ -11,7 +11,6 @@ $MESS["TASKS_FILES"] = "Файлдар";
 $MESS["TASKS_PRIORITY_V2"] = "Маңызды міндет";
 $MESS["TASKS_QUICK_INFO_DETAILS"] = "Толығырақ";
 $MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "жоқ";
-$MESS["TASKS_RESPONSIBLE"] = "Жауапты";
 $MESS["TASKS_STATUS"] = "Мәртебе";
 $MESS["TASKS_STATUS_ACCEPTED"] = "Орындалуын күтуде";
 $MESS["TASKS_STATUS_COMPLETED"] = "Аяқталды";

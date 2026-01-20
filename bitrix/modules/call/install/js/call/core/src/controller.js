@@ -1,12 +1,12 @@
-import {Loc, Browser, Dom, Type, Text, Reflection, ZIndexManager} from 'main.core';
+import {Loc, Browser, Dom, Type, Text, Reflection, ZIndexManager, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Popup, Menu} from 'main.popup';
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
 import {Button} from 'ui.buttons';
 import {LocalStorage} from 'im.lib.localstorage';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { DesktopBroadcastAction, SoundType, WINDOW_ACTIVATION_DELAY } from 'im.v2.const';
 import { DesktopBroadcastManager } from 'im.v2.lib.desktop';
+import { SoundType, DesktopBroadcastAction } from 'im.v2.const';
 import {DesktopDownload} from 'intranet.desktop-download';
 
 import {BackgroundDialog} from './dialogs/background_dialog'
@@ -15,9 +15,9 @@ import {IncomingNotification} from './dialogs/incoming_notification';
 import {ConferenceNotifications} from './dialogs/conference_notification';
 import {CallHint} from './call_hint_popup';
 import { UnsupportedBrowserFeatures } from './engine/unsupported_features_in_browsers';
+import { CallStreamManager } from './media-stream-manager';
 import {Sidebar} from './sidebar';
-import { CopilotNotify, CopilotNotifyType } from './view/copilot-notify';
-import { RecordWithCopilotPopup } from './view/record-with-copilot-popup';
+import { CopilotNotifyType } from './view/copilot-notify';
 import {WebScreenSharePopup} from './web_screenshare_popup';
 import {FloatingScreenShare} from './floating_screenshare';
 import {
@@ -44,11 +44,13 @@ import { Analytics } from 'call.lib.analytics';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CopilotPopup, CopilotPopupType } from './view/copilot-popup';
 import { CallAI } from './call_ai';
-import { JoinResponseError, RecorderStatus } from './call_api.js';
+import { MediaStreamsKinds, RecorderStatus, CloudRecordKind, CloudRecordStatus, JoinResponseError } from './call_api.js';
+import { MediaRenderer } from './view/media-renderer';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
 import {PictureInPictureWindow} from './view/pictureInPictureWindow';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 import { CallMultiChannel } from './call_multi_channel';
+import { CallCloudRecord, CallCommonRecordState, CallCommonRecordType } from './call_common_record';
 
 import './css/call-overlay.css';
 
@@ -91,6 +93,10 @@ const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
 
 const MASK_PROMO_CODE = 'im:mask:06122022:desktop';
 const MASK_PROMO_DELAY = 5 * 60 * 1000; // 5 minutes
+
+const DEFAULT_GENDER = 'M';
+
+const CLOUD_RECORD_PROMO_CODE = 'call:cloud-record-info-popup:09092025:all';
 
 type UserData = {
 	id: number,
@@ -138,15 +144,21 @@ type MessengerFacade = {
 
 export class CallController extends EventEmitter
 {
-	currentCall: BitrixCall | PlainCall | VoximplantCall | null
-	currentCallIsNew: false
-	callNotification: ?IncomingNotification
-	floatingScreenShareWindow: ?FloatingScreenShare
-	callView: ?View
-	language: string
-	incomingVideoStrategyType: string
-	formatRecordDate: string
-	messengerFacade: MessengerFacade
+	currentCall: BitrixCall | PlainCall | VoximplantCall | null;
+	currentCallIsNew: false;
+	callNotification: ?IncomingNotification;
+	floatingScreenShareWindow: ?FloatingScreenShare;
+	callView: ?View;
+	language: string;
+	incomingVideoStrategyType: string;
+	formatRecordDate: string;
+	messengerFacade: MessengerFacade;
+
+	#onCallUserCommonRecordStateHandler;
+	#onCloudRecordStatusChangedHandler;
+
+	#onSwitchTrackRecordStatusHandler;
+	#onRecorderStatusChangedHandler;
 
 	constructor(config)
 	{
@@ -188,14 +200,10 @@ export class CallController extends EventEmitter
 		this.callWithLegacyMobile = false;
 
 		this.featureScreenSharing = FeatureState.Enabled;
-		this.featureRecord = FeatureState.Enabled;
 
 		this.screenShareStartTime = null;
 
-		this.callRecordState = View.RecordState.Stopped;
-		this.callRecordType = View.RecordType.None;
-		this.callRecordInitiatorId = null;
-		this.callRecordInfo = null;
+		this.commonRecord = this.#getDefaultCommonRecord();
 
 		this.autoCloseCallView = true;
 
@@ -244,7 +252,8 @@ export class CallController extends EventEmitter
 		this._onUserStatsReceivedHandler = this._onUserStatsReceived.bind(this);
 		this._onTrackSubscriptionFailedHandler = this._onTrackSubscriptionFailed.bind(this);
 		this._onCallUserScreenStateHandler = this._onCallUserScreenState.bind(this);
-		this._onCallUserRecordStateHandler = this._onCallUserRecordState.bind(this);
+		this.#onCallUserCommonRecordStateHandler = this.#onCallUserCommonRecordState.bind(this);
+		this.#onCloudRecordStatusChangedHandler = this.#onCloudRecordStatusChanged.bind(this);
 		this.onCallUserFloorRequestHandler = this._onCallUserFloorRequest.bind(this);
 		this._onCallFailureHandler = this._onCallFailure.bind(this);
 		this._onNetworkProblemHandler = this._onNetworkProblem.bind(this);
@@ -259,10 +268,10 @@ export class CallController extends EventEmitter
 		this._onTransferRoomSpeakerHandler = this._onTransferRoomSpeaker.bind(this);
 		this._onCallLeaveHandler = this._onCallLeave.bind(this);
 		this._onCallJoinHandler = this._onCallJoin.bind(this);
-		this._onGetUserMediaEndedHandler = this._onGetUserMediaEnded.bind(this);
+		this._onGetUserMediaEndedHandler = this.#onGetUserMediaEnded.bind(this);
 		this._onUpdateLastUsedCameraIdHandler = this._onUpdateLastUsedCameraId.bind(this);
-		this._onSwitchTrackRecordStatusHandler = this._onSwitchTrackRecordStatus.bind(this);
-		this._onRecorderStatusChangedHandler = this._onRecorderStatusChanged.bind(this);
+		this.#onSwitchTrackRecordStatusHandler = this.#onSwitchTrackRecordStatus.bind(this);
+		this.#onRecorderStatusChangedHandler = this.#onRecorderStatusChanged.bind(this);
 
 		this._onBeforeUnloadHandler = this._onBeforeUnload.bind(this);
 		this._onImTabChangeHandler = this._onImTabChange.bind(this);
@@ -429,6 +438,17 @@ export class CallController extends EventEmitter
 		if (DesktopApi.isDesktop())
 		{
 			DesktopApi.subscribe(Hardware.Events.onChangeMirroringVideo, this._onCallLocalCameraFlipInDesktopHandler);
+		}
+
+		if (DesktopApi.isDesktop())
+		{
+			DesktopApi.subscribe('BXVpnStatusChange', (status) =>
+			{
+				if (status)
+				{
+					this.showVpnIsActiveNotification();
+				}
+			});
 		}
 
 		if (window['VoxImplant'])
@@ -774,7 +794,8 @@ export class CallController extends EventEmitter
 		this.currentCall.addEventListener(CallEvent.onMicrophonePublishing, this._onMicrophonePublishingdHandler);
 		this.currentCall.addEventListener(CallEvent.onUserVideoPaused, this._onCallUserVideoPausedHandler);
 		this.currentCall.addEventListener(CallEvent.onUserScreenState, this._onCallUserScreenStateHandler);
-		this.currentCall.addEventListener(CallEvent.onUserRecordState, this._onCallUserRecordStateHandler);
+		Event.bind(this.currentCall, CallEvent.onUserCommonRecordState, this.#onCallUserCommonRecordStateHandler);
+		Event.bind(this.currentCall, CallEvent.onCloudRecordStatusChanged, this.#onCloudRecordStatusChangedHandler);
 		this.currentCall.addEventListener(CallEvent.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 		this.currentCall.addEventListener(CallEvent.onLocalMediaReceived, this._onCallLocalMediaReceivedHandler);
 		this.currentCall.addEventListener(CallEvent.onLocalMediaStopped, this._onCallLocalMediaStoppedHandler);
@@ -811,8 +832,8 @@ export class CallController extends EventEmitter
 		this.currentCall.addEventListener(CallEvent.onLeave, this._onCallLeaveHandler);
 		this.currentCall.addEventListener(CallEvent.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
 		this.currentCall.addEventListener(CallEvent.onUpdateLastUsedCameraId, this._onUpdateLastUsedCameraIdHandler);
-		this.currentCall.addEventListener(CallEvent.onSwitchTrackRecordStatus, this._onSwitchTrackRecordStatusHandler);
-		this.currentCall.addEventListener(CallEvent.onRecorderStatusChanged, this._onRecorderStatusChangedHandler);
+		Event.bind(this.currentCall, CallEvent.onSwitchTrackRecordStatus, this.#onSwitchTrackRecordStatusHandler);
+		Event.bind(this.currentCall, CallEvent.onRecorderStatusChanged, this.#onRecorderStatusChangedHandler);
 	}
 
 	removeCallEvents()
@@ -828,7 +849,8 @@ export class CallController extends EventEmitter
 		this.currentCall.removeEventListener(CallEvent.onMicrophonePublishing, this._onMicrophonePublishingdHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserVideoPaused, this._onCallUserVideoPausedHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserScreenState, this._onCallUserScreenStateHandler);
-		this.currentCall.removeEventListener(CallEvent.onUserRecordState, this._onCallUserRecordStateHandler);
+		Event.unbind(this.currentCall, CallEvent.onUserCommonRecordState, this.#onCallUserCommonRecordStateHandler);
+		Event.unbind(this.currentCall, CallEvent.onCloudRecordStatusChanged, this.#onCloudRecordStatusChangedHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserFloorRequest, this.onCallUserFloorRequestHandler);
 		this.currentCall.removeEventListener(CallEvent.onLocalMediaReceived, this._onCallLocalMediaReceivedHandler);
 		this.currentCall.removeEventListener(CallEvent.onLocalMediaStopped, this._onCallLocalMediaStoppedHandler);
@@ -861,8 +883,8 @@ export class CallController extends EventEmitter
 		this.currentCall.removeEventListener(CallEvent.onLeave, this._onCallLeaveHandler);
 		this.currentCall.removeEventListener(CallEvent.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
 		this.currentCall.removeEventListener(CallEvent.onUpdateLastUsedCameraId, this._onUpdateLastUsedCameraIdHandler);
-		this.currentCall.removeEventListener(CallEvent.onSwitchTrackRecordStatus, this._onSwitchTrackRecordStatusHandler);
-		this.currentCall.removeEventListener(CallEvent.onRecorderStatusChanged, this._onRecorderStatusChangedHandler);
+		Event.unbind(this.currentCall, CallEvent.onSwitchTrackRecordStatus, this.#onSwitchTrackRecordStatusHandler);
+		Event.unbind(this.currentCall, CallEvent.onRecorderStatusChanged, this.#onRecorderStatusChangedHandler);
 	}
 
 	bindCallViewEvents()
@@ -889,6 +911,7 @@ export class CallController extends EventEmitter
 		this.callView.setCallback(View.Event.onToggleSubscribe, this._onCallToggleSubscribe.bind(this));
 		this.callView.setCallback(View.Event.onUserClick, this._onCallUserClick.bind(this));
 		this.callView.setCallback(View.Event.onPiPClose, this._onPipClose.bind(this));
+		this.callView.setCallback(View.Event.onCommonRecordMenu, this.#onCommonRecordMenu.bind(this));
 	}
 
 	updateCallViewUsers(callId, userList)
@@ -951,11 +974,6 @@ export class CallController extends EventEmitter
 	setFeatureScreenSharing(enable)
 	{
 		this.featureScreenSharing = enable;
-	}
-
-	setFeatureRecord(enable)
-	{
-		this.featureRecord = enable;
 	}
 
 	setVideoStrategyType(type)
@@ -1078,15 +1096,15 @@ export class CallController extends EventEmitter
 		const newCall = this.childCall;
 		this.childCall = null;
 
-		let previousRecordType = View.RecordType.None;
+		let previousRecordType = CallCommonRecordType.None;
 
-		if (this.isRecording())
+		if (this.#isCommonRecordStarted())
 		{
-			previousRecordType = this.callRecordType;
-			this.#stopRecordCall();
+			previousRecordType = this.commonRecord.type;
+			this.#stopCommonRecord();
 		}
 
-		this.callView.showButtons(['floorRequest', 'hangupOptions'])
+		this.callView.showButtons(['floorRequest', 'hangupOptions']);
 
 		newCall.removeEventListener(CallEvent.onUserJoined, this._onChildCallFirstMediaHandler);
 		newCall.removeEventListener(CallEvent.onRemoteMediaReceived, this._onChildCallFirstUserJoinedHandler);
@@ -1109,7 +1127,7 @@ export class CallController extends EventEmitter
 
 		this.currentCall = newCall;
 
-		if (this.currentCall.associatedEntity && this.currentCall.associatedEntity.id)
+		if (this.currentCall.associatedEntity && this.currentCall.associatedEntity.id && this.folded)
 		{
 			this.messengerFacade.openMessenger(this.currentCall.associatedEntity.id);
 		}
@@ -1117,9 +1135,16 @@ export class CallController extends EventEmitter
 		this.bindCallEvents();
 		this.createVideoStrategy();
 
-		if (previousRecordType !== View.RecordType.None)
+		// restart Follow-Up if it was started in one-to-one call
+		if (oldCall.isCopilotActive && oldCall.isCopilotInitiator)
 		{
-			this._startRecordCall(previousRecordType);
+			this.#onChangeStateCopilotAction(RecorderStatus.ENABLED);
+		}
+
+		// restart cloud recording if it was started in one-to-one call
+		if (previousRecordType !== CallCommonRecordType.None)
+		{
+			this.#startCommonRecord(previousRecordType);
 		}
 	}
 
@@ -1278,6 +1303,28 @@ export class CallController extends EventEmitter
 		});
 	}
 
+	checkVpnStatus()
+	{
+		if (DesktopApi.isDesktop() && typeof BXDesktopSystem?.IsVpnConnected === 'function' && BXDesktopSystem.IsVpnConnected())
+		{
+			this.showVpnIsActiveNotification()
+		}
+	}
+
+	showVpnIsActiveNotification()
+	{
+		if (this.callView)
+		{
+			BX.UI.Notification.Center.notify({
+				content: Text.encode(Loc.getMessage('CALL_MESSAGE_VPN_IS_ACTIVE')),
+				position: 'top-right',
+				autoHideDelay: 10000,
+				closeButton: true,
+				category: 'vpnIsActive',
+			});
+		}
+	}
+
 	showNetworkProblemNotification(notificationText)
 	{
 		BX.UI.Notification.Center.notify({
@@ -1402,6 +1449,7 @@ export class CallController extends EventEmitter
 			provider = Util.getConferenceProvider();
 		}
 
+		const isPlainCall = provider === Provider.Plain;
 		const isLegacyCall = this.isLegacyCall(provider);
 
 		const callTokenPromise = isLegacyCall
@@ -1420,17 +1468,18 @@ export class CallController extends EventEmitter
 			{
 				if (video && isCallPrepared)
 				{
-					this._prepareLocalStream(provider);
+					this.#prepareLocalStream(provider);
 				}
 
 				this.createContainer();
 				let hiddenButtons = [];
-				if (provider === Provider.Plain)
+				if (isPlainCall)
 				{
 					hiddenButtons.push('floorRequest');
 					hiddenButtons.push('callconrol');
 					hiddenButtons.push('hangupOptions');
 				}
+
 				if (!Util.shouldShowDocumentButton())
 				{
 					hiddenButtons.push('document');
@@ -1438,21 +1487,27 @@ export class CallController extends EventEmitter
 
 				Hardware.isCameraOn = video;
 
+				const isCopilotFeaturesEnabled = (isPlainCall && CallSettingsManager.plainCallFollowUpEnabled) || !isPlainCall;
+				const isCloudRecordFeaturesEnabled = DesktopApi.isDesktop()
+					|| (isPlainCall && CallSettingsManager.plainCallCloudRecordingEnabled)
+					|| !isPlainCall;
+
 				this.callView = new View({
+					hiddenButtons,
+					isCopilotFeaturesEnabled,
+					isCloudRecordFeaturesEnabled,
 					container: this.container,
 					baseZIndex: this.messengerFacade.getDefaultZIndex(),
 					showChatButtons: true,
 					showUsersButton: false,
 					userLimit: Util.getUserLimit(),
 					language: this.language,
-					layout: dialogId.toString().startsWith("chat") ? View.Layout.Grid : View.Layout.Centered,
+					layout: dialogId.toString().startsWith('chat') ? View.Layout.Grid : View.Layout.Centered,
 					microphoneId: Hardware.defaultMicrophone,
 					showShareButton: this.featureScreenSharing !== FeatureState.Disabled,
-					showRecordButton: this.featureRecord !== FeatureState.Disabled,
-					hiddenButtons: hiddenButtons,
-					blockedButtons: this.getBlockedButtons(provider === Provider.Plain),
-					showAddUserButtonInList: provider === Provider.Plain,
-					isCopilotFeaturesEnabled: provider === Provider.Bitrix,
+					showRecordButton: true,
+					blockedButtons: this.getBlockedButtons(isPlainCall),
+					showAddUserButtonInList: isPlainCall,
 					isCopilotActive: false,
 					isWindowFocus: this.isWindowFocus,
 				});
@@ -1472,7 +1527,7 @@ export class CallController extends EventEmitter
 					Util.setUserData(this.preparedCall.userData);
 					if (this.localStream)
 					{
-						this._setLocalStream(provider);
+						this.#setLocalStream(provider);
 					}
 
 					const style = 'background-color: #AA00AA; color: white;'
@@ -1536,7 +1591,7 @@ export class CallController extends EventEmitter
 
 				if (isLegacyCall)
 				{
-					this._onUpdateCallCopilotState(this.currentCall.isCopilotActive);
+					this.#onUpdateCallCopilotState(this.currentCall.isCopilotActive);
 				}
 
 				this.log("Call creation time: " + (debug2 - debug1) / 1000 + " seconds");
@@ -1591,6 +1646,7 @@ export class CallController extends EventEmitter
 
 				this.showDocumentPromo();
 				this.showMaskPromo();
+				this.#showCloudRecordPromo();
 
 				if (this.currentCallIsNew)
 				{
@@ -1635,6 +1691,7 @@ export class CallController extends EventEmitter
 					this.currentCall.answer();
 				}
 
+				this.checkVpnStatus();
 				this._onUpdateLastUsedCameraId();
 			})
 			.catch((error) => {
@@ -1680,7 +1737,7 @@ export class CallController extends EventEmitter
 						message: error.message || '',
 					});
 
-					this._stopLocalStream();
+					this.#stopLocalStream();
 				}
 			})
 			.finally(() =>
@@ -1813,11 +1870,12 @@ export class CallController extends EventEmitter
 					userLimit: Util.getUserLimit(),
 					language: this.language,
 					layout: isGroupCall ? View.Layout.Grid : View.Layout.Centered,
-					showRecordButton: this.featureRecord !== FeatureState.Disabled,
+					showRecordButton: true,
 					microphoneId: Hardware.defaultMicrophone,
 					hiddenButtons: hiddenButtons,
 					blockedButtons: this.getBlockedButtons(this.currentCall.provider === Provider.Plain),
 					showAddUserButtonInList: this.currentCall.provider === Provider.Plain,
+					isCloudRecordFeaturesEnabled: this.currentCall.isCloudRecordFeaturesEnabled,
 					isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
 					isCopilotActive: this.currentCall.isCopilotActive,
 					isWindowFocus: this.isWindowFocus,
@@ -1851,6 +1909,8 @@ export class CallController extends EventEmitter
 				this.callView.show();
 				this.showDocumentPromo();
 				this.showCopilotNotify();
+				this.#showCloudRecordPromo();
+				this.checkVpnStatus();
 
 				this.currentCall.useHdVideo(Hardware.preferHdQuality);
 				if (Hardware.defaultMicrophone)
@@ -1933,18 +1993,19 @@ export class CallController extends EventEmitter
 		this.initCallPromise = null;
 		Util.abortGetCallConnectionData();
 
-		if (this.isRecording())
+		if (this.#isLocalRecordStarted())
 		{
 			Analytics.getInstance().onRecordStop({
 				callId: this._getCallIdentifier(this.currentCall),
 				callType: this.getCallType(),
 				subSection: finishCall ? Analytics.AnalyticsSubSection.contextMenu : Analytics.AnalyticsSubSection.window,
 				element: finishCall ? Analytics.AnalyticsElement.finishForAllButton : Analytics.AnalyticsElement.disconnectButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo, true),
+				recordTime: Util.getRecordTimeText(this.commonRecord.info, true),
 			});
 
-			this.callRecordInfo = null;
 		}
+
+		this.#stopCommonRecord();
 
 		if (this.callView)
 		{
@@ -1981,8 +2042,13 @@ export class CallController extends EventEmitter
 			this.callView.close();
 		}
 
+		for (const mediaStreamKind of Object.values(MediaStreamsKinds))
+		{
+			CallStreamManager.stopStream(mediaStreamKind);
+		}
+
 		this.hasStreamFromCall = false;
-		this._stopLocalStream();
+		this.#stopLocalStream();
 	}
 
 	hasActiveCall()
@@ -1995,14 +2061,75 @@ export class CallController extends EventEmitter
 		return !!(this.callView && this.callView.visible && this.callView.size == View.Size.Full);
 	}
 
-	canRecord()
+	/**
+	 * @group CommonRecord
+	 */
+	#canLocalRecord(): boolean
 	{
-		return DesktopApi.isDesktop() && DesktopApi.getApiVersion() >= 54;
+		const isDesktop = DesktopApi.isDesktop();
+		const isValidApi = DesktopApi.getApiVersion() >= 54;
+
+		// It's a desktop with the right API version.
+		if (!isDesktop || !isValidApi)
+		{
+			return false;
+		}
+
+		// If cloud recording is disabled, can record local
+		if (!CallCloudRecord.serviceEnabled)
+		{
+			return true;
+		}
+
+		// If the cloud recording tariff is not available, can record local
+		if (!CallCloudRecord.tariffAvailable)
+		{
+			return true;
+		}
+
+		// If the cloud recording is active, and it is a paid plan, then we turn it on only in plain
+		return this.currentCall.provider === Provider.Plain;
 	}
 
-	isRecording()
+	/**
+	 * @group CommonRecord
+	 */
+	#canCloudRecord(): boolean
 	{
-		return this.canRecord() && this.callRecordState != View.RecordState.Stopped;
+		const isPlainCall = this.currentCall.provider === Provider.Plain;
+		const cloudRecordingEnabled = ((isPlainCall && CallSettingsManager.plainCallCloudRecordingEnabled) || !isPlainCall);
+
+		return CallCloudRecord.serviceEnabled
+			&& CallCloudRecord.tariffAvailable
+			&& cloudRecordingEnabled;
+	}
+
+	/**
+	 * @group CommonRecord
+	 */
+	#canCommonRecord(): boolean
+	{
+		return this.#canLocalRecord() || this.#canCloudRecord();
+	}
+
+	/**
+	 * @group CommonRecord
+	 */
+	#isLocalRecordStarted(): boolean
+	{
+		return this.#canLocalRecord()
+			&& this.commonRecord.state != CallCommonRecordState.Stopped
+			&& this.commonRecord.state != CallCommonRecordState.Destroyed;
+	}
+
+	/**
+	 * @group CommonRecord
+	 */
+	#isCommonRecordStarted(): boolean
+	{
+		return this.#canCommonRecord()
+			&& this.commonRecord.state != CallCommonRecordState.Stopped
+			&& this.commonRecord.state != CallCommonRecordState.Destroyed;
 	}
 
 	useDevicesInCurrentCall(deviceList, isForceUse = false)
@@ -2308,8 +2435,9 @@ export class CallController extends EventEmitter
 
 		let newStyleOptions = {
 			className: 'bx-messenger-videocall-document-options-container',
-			background: '#22272B',
-			contentBackground: '#22272B',
+			background: '#00428F',
+			contentBackground: '#00428F',
+			borderRadius: '6px',
 			darkMode: true,
 			contentBorderRadius: '6px',
 		};
@@ -2952,6 +3080,21 @@ export class CallController extends EventEmitter
 		);
 	}
 
+	/**
+	 * @group CommonRecord
+	 */
+	#showCloudRecordPromo()
+	{
+		const isPlainCall = this.currentCall.provider === Provider.Plain;
+		const isBitrixCall = this.currentCall.provider === Provider.Bitrix;
+		const cloudRecordingEnabled = (isPlainCall && this.currentCall.isCloudRecordFeaturesEnabled) || isBitrixCall;
+
+		if (this.hasActiveCall() && CallCloudRecord.serviceEnabled && cloudRecordingEnabled)
+		{
+			this.callView.showCloudRecordPromo(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
+		}
+	}
+
 	closePromo()
 	{
 		if (this.documentPromoPopup)
@@ -2968,32 +3111,80 @@ export class CallController extends EventEmitter
 		clearTimeout(this.showPromoPopup3dTimeout);
 	}
 
-	_startRecordCall(type)
+	/**
+	 * @group CommonRecord
+	 */
+	#getDefaultCommonRecord()
 	{
-		this.callView.setButtonActive('record', true);
-		this.callRecordType = type;
-
-		this.currentCall.sendRecordState({
-			action: View.RecordState.Started,
-			date: new Date()
-		});
-
-		this.callRecordState = View.RecordState.Started;
+		return {
+			state: CallCommonRecordState.Stopped,
+			type: CallCommonRecordType.None,
+			initiatorId: null,
+			info: null,
+			notifyShowed: false,
+		};
 	}
 
-	#stopRecordCall()
+	/**
+	 * @group CommonRecord
+	 */
+	#startCommonRecord(type)
 	{
-		if (this.isRecording())
+		const isPlainCall = this.currentCall.provider === Provider.Plain;
+		const isBitrixCall = this.currentCall.provider === Provider.Bitrix;
+		const cloudRecordingEnabled = (isPlainCall && this.currentCall.isCloudRecordFeaturesEnabled) || isBitrixCall;
+
+		this.commonRecord.type = type;
+
+		if (CallCloudRecord.serviceEnabled && cloudRecordingEnabled)
+		{
+			const kind = type === 'audio' ? CloudRecordKind.AUDIO : CloudRecordKind.VIDEO;
+			this.callView.blockButtons(['record']);
+			this.currentCall.setCloudRecordState(CloudRecordStatus.STARTED, kind);
+
+			return;
+		}
+
+		this.callView.setButtonActive('record', true);
+
+		this.currentCall.sendLocalRecordState({
+			action: CallCommonRecordState.Started,
+			type: this.commonRecord.type,
+			date: new Date(),
+		});
+
+		this.commonRecord.state = CallCommonRecordState.Started;
+	}
+
+	/**
+	 * @group CommonRecord
+	 */
+	#stopCommonRecord()
+	{
+		const initiatorId = this.commonRecord.initiatorId;
+		const state = this.commonRecord.state;
+
+		this.commonRecord = this.#getDefaultCommonRecord();
+
+		if (this.#canLocalRecord())
 		{
 			BXDesktopSystem.CallRecordStop();
+		}
 
-			this.callRecordState = View.RecordState.Stopped;
-			this.callRecordType = View.RecordType.None;
-			this.callView.setRecordState(this.callView.getDefaultRecordState());
+		if (this.callView)
+		{
+			this.callView.setCommonRecordState(this.callView.getDefaultCommonRecordState());
 			this.callView.setButtonActive('record', false);
+		}
 
-			this.currentCall.sendRecordState({
-				action: View.RecordState.Stopped,
+		if (
+			state !== CallCommonRecordState.Stopped
+			&& initiatorId === this.userId
+			&& (this.currentCall && this.currentCall.isAnyoneParticipating())
+		)
+		{
+			this.currentCall.sendLocalRecordState({
+				action: CallCommonRecordState.Stopped,
 				userId: this.userId,
 			});
 		}
@@ -3034,7 +3225,7 @@ export class CallController extends EventEmitter
 						scheme: this.currentCall?.scheme || CallScheme.classic,
 					};
 
-					if (!DesktopApi.isAirDesignEnabledInDesktop())
+					if (!DesktopApi.isDesktop())
 					{
 						this.onAnswerButtonClick(data.mediaParams, callParams);
 
@@ -3156,7 +3347,7 @@ export class CallController extends EventEmitter
 			this._ensureDocumentEditorClosed()
 				.then(() =>
 				{
-					return this.messengerFacade.openMessenger(dialogId);
+					return this.messengerFacade.openMessenger(dialogId, true);
 				})
 				.then(() =>
 				{
@@ -3190,7 +3381,7 @@ export class CallController extends EventEmitter
 						userStates: this.currentCall.getUsers(),
 						showChatButtons: true,
 						showUsersButton: false,
-						showRecordButton: this.featureRecord !== FeatureState.Disabled,
+						showRecordButton: true,
 						userLimit: Util.getUserLimit(),
 						layout: isGroupCall ? View.Layout.Grid : View.Layout.Centered,
 						microphoneId: Hardware.defaultMicrophone,
@@ -3198,9 +3389,10 @@ export class CallController extends EventEmitter
 						hiddenButtons: hiddenButtons,
 						language: this.language,
 						showAddUserButtonInList: this.currentCall.provider === Provider.Plain,
+						isCloudRecordFeaturesEnabled: this.currentCall.isCloudRecordFeaturesEnabled,
 						isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
 						isCopilotActive: this.currentCall.isCopilotActive,
-					isWindowFocus: this.isWindowFocus,});
+						isWindowFocus: this.isWindowFocus,});
 					this.autoCloseCallView = true;
 					if (this.callWithLegacyMobile)
 					{
@@ -3215,13 +3407,27 @@ export class CallController extends EventEmitter
 					}
 					else
 					{
-						const currentUser = BX.Messenger.v2.Lib.CallManager.getInstance().getCurrentUser();
-						this.callView.updateUserData({[this.userId]: currentUser});
+						if (Reflection.getClass('BX.Messenger.v2.Lib.CallManager'))
+						{
+							const currentUser = BX.Messenger.v2.Lib.CallManager.getInstance().getCurrentUser();
+							this.callView.updateUserData({ [this.userId]: currentUser });
+						}
+
+						if (!isGroupCall)
+						{
+							const { id, name, avatar } = this.currentCall.associatedEntity;
+							const user = { name, avatar_hr: avatar };
+							this.callView.updateUserData({ [id]: user });
+							this.callView.addUser(id, UserState.Connected);
+						}
 					}
+
 					this.callView.show();
 					this.showDocumentPromo();
 					this.showMaskPromo();
 					this.showCopilotNotify();
+					this.#showCloudRecordPromo();
+					this.checkVpnStatus();
 
 					this.currentCall.useHdVideo(Hardware.preferHdQuality);
 					if (Hardware.defaultMicrophone)
@@ -3315,6 +3521,10 @@ export class CallController extends EventEmitter
 	{
 		ZIndexManager.getStack(document.body).bringToFront(this.container);
 
+		if (Number.isNaN(parseInt(this.messengerFacade.getMessageCount(), 10)))
+		{
+			Util.sendLog(`[call] setButtonCounter chat: this.messengerFacade.getMessageCount() = ${this.messengerFacade.getMessageCount()} (NaN)`);
+		}
 		this.callView.setButtonCounter("chat", this.messengerFacade.getMessageCount());
 		this.callViewState = ViewState.Opened;
 	}
@@ -3411,7 +3621,7 @@ export class CallController extends EventEmitter
 			inviteUser: this._onCallViewInviteUserButtonClick.bind(this),
 			toggleMute: this._onCallViewToggleMuteButtonClick.bind(this),
 			toggleScreenSharing: this._onCallViewToggleScreenSharingButtonClick.bind(this),
-			record: this._onCallViewRecordButtonClick.bind(this),
+			record: this.#onCallViewRecordButtonClick.bind(this),
 			toggleVideo: this._onCallViewToggleVideoButtonClick.bind(this),
 			toggleSpeaker: this._onCallViewToggleSpeakerButtonClick.bind(this),
 			showChat: this._onCallViewShowChatButtonClick.bind(this),
@@ -3498,10 +3708,11 @@ export class CallController extends EventEmitter
 
 		this.hangupOptionsMenu = new BX.PopupMenuWindow({
 			className: 'bx-messenger-videocall-hangup-options-container',
-			background: '#22272B',
-			contentBackground: '#22272B',
+			background: '#00428F',
+			contentBackground: '#00428F',
 			darkMode: true,
 			contentBorderRadius: '6px',
+			borderRadius: '6px',
 			angle: false,
 			bindElement: this.callView.buttons.hangupOptions.elements.root,
 			targetContainer: this.container,
@@ -3723,14 +3934,15 @@ export class CallController extends EventEmitter
 			return;
 		}
 
-		const currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
+		const currentRoom = this.currentCall?.currentRoom?.();
 		if (currentRoom && currentRoom.speaker != this.userId && !e.muted)
 		{
 			this.currentCall.requestRoomSpeaker();
+
 			return;
 		}
 
-		if (!this.currentCall.microphoneId && !e.muted)
+		if (this.currentCall && !this.currentCall.microphoneId && !e.muted)
 		{
 			this.currentCall.setMicrophoneId(Hardware.defaultMicrophone);
 		}
@@ -3757,7 +3969,7 @@ export class CallController extends EventEmitter
 				this.allowMutePopup = true;
 			}
 		}
-		if (this.isRecording())
+		if (this.currentCall && this.#isCommonRecordStarted() && this.#canLocalRecord())
 		{
 			BXDesktopSystem.CallRecordMute(e.muted);
 		}
@@ -3774,145 +3986,196 @@ export class CallController extends EventEmitter
 		this._onCallViewToggleMuteHandler(e);
 	}
 
-	_onCallViewRecordButtonClick(event)
+	/**
+	 * @group CommonRecord
+	 * @param { Object } event
+	 * @param { string } event.state
+	 * @param { string } event.kind
+	 * @param { boolean } event.hotkey
+	 */
+	#onCommonRecordMenu({ state, kind, hotkey })
 	{
-		Analytics.getInstance().onRecordBtnClick({
-			callId: this._getCallIdentifier(this.currentCall),
-			callType: this.getCallType(),
-		});
-
-		if (event.recordState === View.RecordState.Started)
+		// Recording state (Started, Paused, Stopped, etc.)
+		switch (state)
 		{
-			if (this.featureRecord === FeatureState.Limited)
+			case CallCommonRecordState.Started:
 			{
-				this.messengerFacade.openHelpArticle('call_record');
-				return;
-			}
-
-			if (this.featureRecord === FeatureState.Disabled)
-			{
-				return;
-			}
-
-			if (this.canRecord())
-			{
-				const forceRecord = BX.prop.getBoolean(event, "forceRecord", View.RecordType.None);
-				if (forceRecord !== View.RecordType.None)
+				// If forced recording → start immediately
+				if (hotkey)
 				{
-					this._startRecordCall(forceRecord);
-				}
-				else if (DesktopApi.isDesktop() && DesktopApi.getApiVersion() > 55)
-				{
-					if (!this.callRecordMenu)
-					{
-						const setIsRecordWhenCopilotActivePopupAlreadyShow = () => {
-							if (this.currentCall)
-							{
-								this.currentCall.isRecordWhenCopilotActivePopupAlreadyShow = true;
-							}
-						}
-
-						this.callRecordMenu = new BX.PopupMenuWindow({
-							bindElement: event.node,
-							targetContainer: this.callView.container,
-							items: [
-								{
-									text: BX.message('IM_M_CALL_MENU_RECORD_VIDEO'),
-									onclick: (event, item) =>
-									{
-										this._startRecordCall(View.RecordType.Video);
-										item.getMenuWindow().close();
-									}
-								},
-								{
-									text: BX.message('IM_M_CALL_MENU_RECORD_AUDIO'),
-									onclick: (event, item) =>
-									{
-										item.getMenuWindow().close();
-
-										if (!this.currentCall)
-										{
-											return;
-										}
-
-										if (this.currentCall.isRecordWhenCopilotActivePopupAlreadyShow || !this.currentCall.isCopilotActive)
-										{
-											this._startRecordCall(View.RecordType.Audio);
-											return;
-										}
-
-										this.recordWhenCopilotActivePopup = new RecordWithCopilotPopup({
-											onClose: ()=>
-											{
-												setIsRecordWhenCopilotActivePopupAlreadyShow();
-												this.recordWhenCopilotActivePopup = null;
-											},
-											onClickNoButton: () =>
-											{
-												this._startRecordCall(View.RecordType.Audio);
-											},
-											title: BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
-											message: BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
-											yesButtonText: BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
-											noButtonText:  BX.message('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON'),
-										})
-
-										this.recordWhenCopilotActivePopup.show();
-									}
-								}
-							],
-							autoHide: true,
-							angle: {position: "top", offset: 80},
-							offsetTop: 0,
-							offsetLeft: -25,
-							events: {
-								onPopupClose: () => this.callRecordMenu.destroy(),
-								onPopupDestroy: () => this.callRecordMenu = null
-							}
-						});
-					}
-					this.callRecordMenu.toggle();
+					this.#startCommonRecord(CallCommonRecordType.Video);
 
 					return;
 				}
 
-				this.callView.setButtonActive('record', true);
-			}
-			else
-			{
-				if (window.BX.Helper)
+				if (kind === CallCommonRecordType.Audio)
 				{
-					window.BX.Helper.show("redirect=detail&code=22079566");
+					// If copilot is active → ask if recording is needed
+					if (this.currentCall && this.currentCall.isCopilotActive)
+					{
+						this.callView
+							.showConfirmModal({
+								title: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_TITLE'),
+								message: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE'),
+								yesButtonText: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_YES_BUTTON'),
+								noButtonText: Loc.getMessage('CALL_RECORD_AUDIO_WITH_COPILOT_NO_BUTTON'),
+							})
+							.then((choice) => {
+								if (choice === 'no')
+								{
+									this.#startCommonRecord(CallCommonRecordType.Audio);
+								}
+							})
+							.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
+
+						return;
+					}
+					// Else start audio recording immediately
+					this.#startCommonRecord(CallCommonRecordType.Audio);
+				}
+
+				// Start video recording
+				if (kind === CallCommonRecordType.Video)
+				{
+					this.#startCommonRecord(CallCommonRecordType.Video);
 				}
 
 				return;
 			}
-		}
-		else if (event.recordState === View.RecordState.Paused)
-		{
-			if (this.canRecord())
+
+			case CallCommonRecordState.Paused:
+			case CallCommonRecordState.Resumed:
 			{
-				BXDesktopSystem.CallRecordPause(true);
+				// For cloud recording → change recorder state
+				if (this.#canCloudRecord())
+				{
+					const status = (state === CallCommonRecordState.Paused ? CloudRecordStatus.PAUSED : CloudRecordStatus.STARTED);
+					this.currentCall.setCloudRecordState(status);
+					this.commonRecord.state = state;
+
+					return;
+				}
+
+				// For desktop → pause / resume recording
+				if (this.#canLocalRecord())
+				{
+					BXDesktopSystem.CallRecordPause(state === CallCommonRecordState.Paused);
+				}
+
+				break;
 			}
-		}
-		else if (event.recordState === View.RecordState.Resumed)
-		{
-			if (this.canRecord())
+
+			case CallCommonRecordState.Stopped:
 			{
-				BXDesktopSystem.CallRecordPause(false);
+				// For cloud recording → block button and stop recording
+				if (this.#canCloudRecord())
+				{
+					this.callView.blockButtons(['record']);
+					this.currentCall.setCloudRecordState(CloudRecordStatus.STOPPED);
+					this.commonRecord.state = CallCommonRecordState.Stopped;
+
+					return;
+				}
+
+				// For desktop → just deactivate the recording button
+				this.callView.setButtonActive('record', false);
+
+				break;
 			}
-		}
-		else if (event.recordState === View.RecordState.Stopped)
-		{
-			this.callView.setButtonActive('record', false);
+
+			case CallCommonRecordState.Destroyed:
+			{
+				// For cloud recording → confirm recording deletion
+				if (this.#canCloudRecord())
+				{
+					this.callView
+						.showConfirmModal({
+							title: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_TITLE'),
+							message: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_MESSAGE'),
+							yesButtonText: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_RESUME_BUTTON'),
+							noButtonText: Loc.getMessage('CALL_CLOUD_RECORD_DESTROY_DELETE_BUTTON'),
+						})
+						.then((choice) => {
+							if (choice === 'no')
+							{
+								this.callView.blockButtons(['record']);
+								this.currentCall.setCloudRecordState(CloudRecordStatus.DESTROYED);
+								this.commonRecord.state = CallCommonRecordState.Destroyed;
+							}
+						})
+						.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
+
+					return;
+				}
+				break;
+			}
+
+			default:
+			{
+				console.error('Unknown recording state', state);
+				break;
+			}
 		}
 
-		this.currentCall.sendRecordState({
-			action: event.recordState,
-			date: new Date()
+		// Send current recording state
+		this.currentCall.sendLocalRecordState({
+			action: state,
+			type: this.commonRecord.type,
+			date: new Date(),
 		});
 
-		this.callRecordState = event.recordState;
+		// Save current recording state locally
+		this.commonRecord.state = state;
+	}
+
+	/**
+	 * @group CommonRecord
+	 */
+	#onCallViewRecordButtonClick()
+	{
+		if (Util.isCommonRecordStateInactive(this.commonRecord.state))
+		{
+			Analytics.getInstance().onRecordBtnClick({
+				callId: this._getCallIdentifier(this.currentCall),
+				callType: this.getCallType(),
+			});
+		}
+
+		if (CallCloudRecord.serviceEnabled)
+		{
+			if (!CallCloudRecord.tariffAvailable)
+			{
+				Util.openArticle(CallCloudRecord.tariffSlider);
+
+				return;
+			}
+
+			const isLegacyCall = this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme);
+			const isCloudRecordFeaturesEnabled = this.currentCall.isCloudRecordFeaturesEnabled && !isLegacyCall;
+
+			if (!isCloudRecordFeaturesEnabled && !DesktopApi.isDesktop())
+			{
+				this.callView.showCloudRecordInfoPopup(this.currentCall.isCloudRecordFeaturesEnabled, this.currentCall.id);
+
+				return;
+			}
+
+			this.callView.showCommonRecordMenuPopup(isCloudRecordFeaturesEnabled && DesktopApi.isDesktop());
+
+			return;
+		}
+
+		if (!this.#canCommonRecord())
+		{
+			if (window.BX.Helper)
+			{
+				window.BX.Helper.show('redirect=detail&code=22079566');
+			}
+
+			return;
+		}
+
+		this.callView.showCommonRecordMenuPopup(true);
 	}
 
 	_onChangeStateCopilot()
@@ -3924,41 +4187,45 @@ export class CallController extends EventEmitter
 				callType: this.getCallType(),
 			});
 
-			this.deleteCopilotRecordPopup = new RecordWithCopilotPopup({
-				onClose: ()=> this.deleteCopilotRecordPopup = null,
-				onClickYesButton: () => {
-					Analytics.getInstance().copilot.onSelectAIOff({
-						callId: this._getCallIdentifier(this.currentCall),
-						callType: this.getCallType(),
-					});
+			this.callView
+				.showConfirmModal({
+					title: Loc.getMessage('CALL_AI_RECORD_STOP_TITLE'),
+					message: Loc.getMessage('CALL_AI_RECORD_STOP_MESSAGE'),
+					yesButtonText: Loc.getMessage('CALL_AI_RECORD_STOP_YES_BUTTON'),
+					noButtonText: Loc.getMessage('CALL_AI_RECORD_STOP_NO_BUTTON'),
+				})
+				.then((choice) => {
+					if (choice === 'yes')
+					{
+						Analytics.getInstance().copilot.onSelectAIOff({
+							callId: this._getCallIdentifier(this.currentCall),
+							callType: this.getCallType(),
+						});
 
-					this._onChangeStateCopilotAction(RecorderStatus.PAUSED);
-				},
-				onClickNoButton: () => {
-					Analytics.getInstance().copilot.onSelectAIDelete({
-						callId: this._getCallIdentifier(this.currentCall),
-						callType: this.getCallType(),
-					});
+						this.#onChangeStateCopilotAction(RecorderStatus.PAUSED);
+					}
 
-					this._onChangeStateCopilotAction(RecorderStatus.DESTROYED);
-				},
-				title: BX.message('CALL_AI_RECORD_STOP_TITLE'),
-				message: BX.message('CALL_AI_RECORD_STOP_MESSAGE'),
-				yesButtonText: BX.message('CALL_AI_RECORD_STOP_YES_BUTTON'),
-				noButtonText:  BX.message('CALL_AI_RECORD_STOP_NO_BUTTON'),
-			})
+					if (choice === 'no')
+					{
+						Analytics.getInstance().copilot.onSelectAIDelete({
+							callId: this._getCallIdentifier(this.currentCall),
+							callType: this.getCallType(),
+						});
 
-			this.deleteCopilotRecordPopup.show();
+						this.#onChangeStateCopilotAction(RecorderStatus.DESTROYED);
+					}
+				})
+				.catch((error) => console.error('Unspecified error in callView.showConfirmModal:', error));
 
 			return;
 		}
 
-		this._onChangeStateCopilotAction(RecorderStatus.ENABLED);
+		this.#onChangeStateCopilotAction(RecorderStatus.ENABLED);
 	}
 
-	_onChangeStateCopilotAction(state)
+	#onChangeStateCopilotAction(state)
 	{
-		let url;
+		let url = '';
 		switch (state)
 		{
 			case RecorderStatus.ENABLED:
@@ -3972,14 +4239,17 @@ export class CallController extends EventEmitter
 			case RecorderStatus.DESTROYED:
 				url = 'call.Track.destroy';
 				break;
+
+			default:
 		}
+
 		if (this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme))
 		{
 			BX.ajax.runAction(url, {
-				data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid }
+				data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid },
 			}).then(() => {
 				const newCopilotState = !this.currentCall.isCopilotActive;
-				this._onUpdateCallCopilotState(newCopilotState);
+				this.#onUpdateCallCopilotState(newCopilotState);
 
 				Analytics.getInstance().copilot.onAIRecordStatusChanged({
 					isAIOn: newCopilotState,
@@ -3987,13 +4257,13 @@ export class CallController extends EventEmitter
 					callType: this.getCallType(),
 				});
 
-				if (!newCopilotState)
+				if (newCopilotState)
 				{
-					this.showCopilotResultNotify();
+					this.sendStartCopilotRecordAnalytics({ isAutostart: false });
 				}
 				else
 				{
-					this.sendStartCopilotRecordAnalytics({ isAutostart: false });
+					this.showCopilotResultNotify();
 				}
 			}).catch((error) => {
 				const errorCode = error.errors[0].code;
@@ -4003,6 +4273,8 @@ export class CallController extends EventEmitter
 				{
 					this.callView.showCopilotErrorNotify(errorCode);
 				}
+
+				const newCopilotState = !this.currentCall.isCopilotActive;
 
 				Analytics.getInstance().copilot.onAIRecordStatusChanged({
 					isAIOn: newCopilotState,
@@ -4016,20 +4288,20 @@ export class CallController extends EventEmitter
 		else
 		{
 			const newCopilotState = !this.currentCall.isCopilotActive;
-			this._onUpdateCallCopilotState(newCopilotState);
+			this.#onUpdateCallCopilotState(newCopilotState);
 			this.currentCall.setRecorderState(state);
 
 			BX.ajax.runAction(url, {
-				data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid }
+				data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid },
 			});
 
-			if (!newCopilotState)
+			if (newCopilotState)
 			{
-				this.showCopilotResultNotify();
+				this.sendStartCopilotRecordAnalytics({ isAutostart: false });
 			}
 			else
 			{
-				this.sendStartCopilotRecordAnalytics({ isAutostart: false });
+				this.showCopilotResultNotify();
 			}
 		}
 	}
@@ -4039,12 +4311,15 @@ export class CallController extends EventEmitter
 		if (this.copilotPopup)
 		{
 			this.copilotPopup.close();
+
 			return;
 		}
 
 		const isPlainCall = this.currentCall.provider === Provider.Plain;
+		const isBitrixCall = this.currentCall.provider === Provider.Bitrix;
+		const isCopilotFeaturesEnabled = (isPlainCall && this.currentCall.isCopilotFeaturesEnabled) || isBitrixCall;
 
-		if (!isPlainCall && CallAI.settingsEnabled && !CallAI.tariffAvailable)
+		if (isCopilotFeaturesEnabled && CallAI.settingsEnabled && !CallAI.tariffAvailable)
 		{
 			Util.openArticle(CallAI.helpSlider);
 
@@ -4060,7 +4335,7 @@ export class CallController extends EventEmitter
 			},
 			onClose: () => {
 				this.copilotPopup = null;
-			}
+			},
 		});
 
 		if (this.copilotPopup)
@@ -4070,7 +4345,7 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onUpdateCallCopilotState(state)
+	#onUpdateCallCopilotState(state)
 	{
 		if (this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme))
 		{
@@ -4083,9 +4358,9 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onSwitchTrackRecordStatus({ isTrackRecordOn, errorCode })
+	#onSwitchTrackRecordStatus({ isTrackRecordOn, errorCode })
 	{
-		this._onUpdateCallCopilotState(isTrackRecordOn);
+		this.#onUpdateCallCopilotState(isTrackRecordOn);
 
 		if (errorCode)
 		{
@@ -4105,19 +4380,26 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onRecorderStatusChanged({ status, error })
+	/**
+	 * @param {Object} status
+	 * @param {RecorderStatus} status.code
+	 * @param {string} status.error
+	 * @param {boolean} status.isCopilotActive
+	 */
+	#onRecorderStatusChanged({ code, error, isCopilotActive })
 	{
-		this._onUpdateCallCopilotState(status);
+		this.#onUpdateCallCopilotState(isCopilotActive);
 
 		if (!CallAI.tariffAvailable)
 		{
 			this.callView.unblockButtons(['copilot']);
+
 			return;
 		}
 
 		if (this.currentCall.isCopilotInitialized)
 		{
-			if (!this.currentCall.initiatorId && status)
+			if (!this.currentCall.initiatorId && isCopilotActive)
 			{
 				this.sendStartCopilotRecordAnalytics({ isAutostart: true });
 			}
@@ -4130,22 +4412,146 @@ export class CallController extends EventEmitter
 
 			if (this.callView)
 			{
-				const errorType = status
+				const errorType = isCopilotActive
 					? CopilotNotifyType.DISABLE_AI_INTERNAL_ERROR
 					: CopilotNotifyType.ENABLE_AI_INTERNAL_ERROR;
 				this.callView.showCopilotErrorNotify(errorType);
 			}
 			this.sendStartCopilotRecordAnalytics({ error, isAutostart: false });
 		}
-		else if (status)
+
+		if (code === RecorderStatus.DISABLED)
+		{
+			this.showCopilotResultNotify();
+
+			return;
+		}
+
+		if (![RecorderStatus.PAUSED, RecorderStatus.DESTROYED].includes(code))
 		{
 			this.showCopilotNotify();
 		}
+	}
+
+	/**
+	 * @group CommonRecord
+	 * @param { Object } event
+	 * @param { number } event.code
+	 * @param { number } event.initiatorId
+	 * @param { number } event.userId
+	 * @param { boolean } event.justJoined
+	 * @param { Object } event.commonRecordState
+	 * @private
+	 */
+	#onCloudRecordStatusChanged(event)
+	{
+		if (this.userId === event.userId)
+		{
+			const state = event.commonRecordState.state;
+			const callId = this._getCallIdentifier(this.currentCall);
+			const callType = this.getCallType();
+
+			switch (state)
+			{
+				case CallCommonRecordState.Started: {
+					if (this.commonRecord.state === CallCommonRecordState.Resumed)
+					{
+						Analytics.getInstance().onRecordResumed({
+							callId,
+							callType,
+							errorCode: null,
+						});
+					}
+					else
+					{
+						Analytics.getInstance().onRecordStart({
+							callId,
+							callType,
+							recordType: event.commonRecordState.type,
+							errorCode: null,
+						});
+					}
+
+					break;
+				}
+
+				case CallCommonRecordState.Paused: {
+					Analytics.getInstance().onRecordPaused({
+						callId,
+						callType,
+						errorCode: null,
+					});
+					break;
+				}
+
+				case CallCommonRecordState.Stopped: {
+					Analytics.getInstance().onRecordStop({
+						callId,
+						callType,
+						subSection: Analytics.AnalyticsSubSection.window,
+						element: Analytics.AnalyticsElement.recordButton,
+						recordTime: Util.getRecordTimeText(this.commonRecord.info, true),
+					});
+
+					break;
+				}
+
+				case CallCommonRecordState.Destroyed: {
+					Analytics.getInstance().onRecordDelete({
+						callId,
+						callType,
+						errorCode: null,
+					});
+					break;
+				}
+
+				default: {
+					if (Util.isCloudRecordLogEnabled())
+					{
+						console.error(`Unknown record state: ${status}`);
+					}
+				}
+			}
+		}
+
+		if (event.userId && event.userId !== this.userId)
+		{
+			if (event.justJoined)
+			{
+				if (event.commonRecordState.state === CallCommonRecordState.Started)
+				{
+					if (CallCloudRecord.isCisRegion)
+					{
+						this.callView.showCommonRecordStartNotify(event.userId, CallCommonRecordState.Started);
+					}
+					else
+					{
+						this.callView.showCommonRecordStartModal();
+					}
+				}
+			}
+			else
+			{
+				this.callView.showCommonRecordStartNotify(event.userId, event.commonRecordState.state);
+			}
+		}
+
+		this.commonRecord.state = event.commonRecordState.state;
+		this.callView.setCommonRecordState(event.commonRecordState);
+		this.commonRecord.initiatorId = event.initiatorId;
+
+		if (Util.isCommonRecordStateInactive(event.commonRecordState.state))
+		{
+			this.commonRecord.info = null;
+			this.commonRecord.initiatorId = null;
+		}
 		else
 		{
-			this.closeCopilotNotify();
-			this.showCopilotResultNotify();
+			this.commonRecord.info = structuredClone(event.commonRecordState);
 		}
+
+		this.callView.unblockButtons(['record']);
+		this.callView.setButtonActive('record', [CloudRecordStatus.STARTED, CloudRecordStatus.PAUSED].includes(event.code));
 	}
 
 	showCopilotNotify(force = false, errorCode = '')
@@ -4164,7 +4570,7 @@ export class CallController extends EventEmitter
 	{
 		if (this.callView)
 		{
-			this.callView.showCopilotResultNotify()
+			this.callView.showCopilotResultNotify();
 		}
 	}
 
@@ -4228,7 +4634,7 @@ export class CallController extends EventEmitter
 			}
 			this.currentCall.stopScreenSharing();
 
-			if (this.isRecording())
+			if (this.#isCommonRecordStarted() && this.#canLocalRecord())
 			{
 				BXDesktopSystem.CallRecordStopSharing();
 			}
@@ -4247,6 +4653,7 @@ export class CallController extends EventEmitter
 		{
 			return;
 		}
+
 		if (e.video && Object.values(Hardware.cameraList).length === 0)
 		{
 			this.showNotification(BX.message("IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC"));
@@ -4279,7 +4686,7 @@ export class CallController extends EventEmitter
 
 	_onCallViewToggleSpeakerButtonClick(e)
 	{
-		const currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
+		const currentRoom = this.currentCall?.currentRoom?.();
 		if (currentRoom && currentRoom.speaker != this.userId)
 		{
 			alert("only room speaker can turn on sound");
@@ -4301,7 +4708,7 @@ export class CallController extends EventEmitter
 
 	_onCallViewMicrophoneSideIconClick()
 	{
-		const currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
+		const currentRoom = this.currentCall?.currentRoom?.();
 		if (currentRoom)
 		{
 			this.toggleRoomMenu(this.callView.buttons.microphone.elements.icon);
@@ -4386,11 +4793,21 @@ export class CallController extends EventEmitter
 		Hardware.defaultSpeaker = e.deviceId;
 	}
 
-	_onCallViewHasMainStream(e)
+	_onCallViewHasMainStream(event): void
 	{
-		if (this.currentCall && this.currentCall.provider === Provider.Bitrix)
+		if (!this.currentCall)
 		{
-			this.currentCall.setMainStream(e.userId);
+			return;
+		}
+
+		const provider = this.currentCall.provider;
+		const isBitrixCall = provider === Provider.Bitrix;
+		const isPlainCall = provider === Provider.Plain;
+		const isJwtInPlainCallsEnabled = isPlainCall && !this.isLegacyCall(provider, this.currentCall.scheme);
+
+		if (isBitrixCall || isJwtInPlainCallsEnabled)
+		{
+			this.currentCall.setMainStream(event.userId);
 		}
 	}
 
@@ -4549,20 +4966,20 @@ export class CallController extends EventEmitter
 			this.invitePopup.close();
 		}
 
-		this.#stopRecordCall();
-
-		if (this.callRecordMenu)
-		{
-			this.callRecordMenu.close();
-		}
+		this.#stopCommonRecord();
 
 		if (this.callView && this.autoCloseCallView)
 		{
 			this.callView.close();
 		}
 
+		for (const mediaStreamKind of Object.values(MediaStreamsKinds))
+		{
+			CallStreamManager.stopStream(mediaStreamKind);
+		}
+
 		this.hasStreamFromCall = false;
-		this._stopLocalStream();
+		this.#stopLocalStream();
 
 		if (this.floatingWindow)
 		{
@@ -4683,7 +5100,7 @@ export class CallController extends EventEmitter
 				this.callView.unblockButtons(unblockButtonsList);
 			}
 
-			if (this.callRecordState === View.RecordState.Stopped)
+			if (Util.isCommonRecordStateInactive(this.commonRecord.state))
 			{
 				this.callView.unblockButtons(['record']);
 			}
@@ -4695,7 +5112,7 @@ export class CallController extends EventEmitter
 			/*Util.getUser(e.userId).then(function(userData)
 				{
 					this.showNotification(Util.getCustomMessage("IM_M_CALL_USER_CONNECTED", {
-						gender: userData.gender,
+						gender: (userData.gender || DEFAULT_GENDER),
 						name: userData.name
 					}));
 				}.bind(this));*/
@@ -4705,17 +5122,14 @@ export class CallController extends EventEmitter
 			/*Util.getUser(e.userId).then(function(userData)
 				{
 					this.showNotification(Util.getCustomMessage("IM_M_CALL_USER_DISCONNECTED", {
-						gender: userData.gender,
+						gender: (userData.gender || DEFAULT_GENDER),
 						name: userData.name
 					}));
 				}.bind(this));*/
 
-			if (e.userId === this.callRecordInitiatorId)
+			if (!this.#canCloudRecord() && e.userId === this.commonRecord.initiatorId)
 			{
-				this.callRecordState = View.RecordState.Stopped;
-				this.callRecordType = View.RecordType.None;
-				this.callView.setRecordState(this.callView.getDefaultRecordState());
-				this.callView.setButtonActive('record', false);
+				this.#stopCommonRecord();
 			}
 		}
 		else if (e.state == UserState.Failed)
@@ -4729,7 +5143,7 @@ export class CallController extends EventEmitter
 				Util.getUser(this.currentCall.id, e.userId).then((userData) =>
 				{
 					this.showNotification(Util.getCustomMessage("IM_M_CALL_USER_FAILED", {
-						gender: userData.gender,
+						gender: (userData.gender || DEFAULT_GENDER),
 						name: userData.name
 					}));
 				});
@@ -4747,7 +5161,7 @@ export class CallController extends EventEmitter
 					{
 						const userData = await Util.getUser(callId, e.userId);
 						const notyText = Util.getCustomMessage('IM_M_CALL_USER_DECLINED', {
-							gender: userData.gender,
+							gender: (userData.gender || DEFAULT_GENDER),
 							name: userData.name,
 						});
 						this.showNotification(notyText);
@@ -4764,7 +5178,7 @@ export class CallController extends EventEmitter
 			Util.getUser(this.currentCall.id, e.userId).then((userData) =>
 			{
 				this.showNotification(Util.getCustomMessage("IM_M_CALL_USER_BUSY", {
-					gender: userData.gender,
+					gender: (userData.gender || DEFAULT_GENDER),
 					name: userData.name
 				}));
 			});
@@ -4779,6 +5193,9 @@ export class CallController extends EventEmitter
 		}
 		if (e.userId == this.userId)
 		{
+			Util.sendLog({
+				description: `Set microphone muted ${!e.microphoneState} on MicrophoneState event`,
+			});
 			Hardware.isMicrophoneMuted = !e.microphoneState;
 		}
 		else
@@ -4799,6 +5216,9 @@ export class CallController extends EventEmitter
 	_onNeedResetMediaDevicesState(e)
 	{
 		console.log('_onNeedResetMediaDevicesState');
+		Util.sendLog({
+			description: 'Set microphone muted true in _onNeedResetMediaDevicesState',
+		});
 		Hardware.isMicrophoneMuted = true;
 		Hardware.isCameraOn = false;
 
@@ -4913,6 +5333,7 @@ export class CallController extends EventEmitter
 	{
 		this.log("Received local media stream " + e.tag);
 		this.hasStreamFromCall = true;
+
 		if (this.callView)
 		{
 			const flipVideo = (e.tag === "main" || e.mediaRenderer) ? Hardware.enableMirroring : false;
@@ -4958,7 +5379,7 @@ export class CallController extends EventEmitter
 				{
 					this.webScreenSharePopup.close();
 				}
-				if (this.isRecording())
+				if (this.#isCommonRecordStarted() && this.#canLocalRecord())
 				{
 					BXDesktopSystem.CallRecordStopSharing();
 				}
@@ -4969,14 +5390,14 @@ export class CallController extends EventEmitter
 				this.callView.unblockSwitchCamera();
 				this.callView.updateButtons();
 			}
-
-			if (this.localStream)
-			{
-				this._stopLocalStream();
-			}
 		}
 
-		if (this.currentCall && Hardware.isCameraOn && e.tag === 'main' && e.stream.getVideoTracks().length === 0)
+		if (
+			this.currentCall
+			&& Hardware.isCameraOn
+			&& e.tag === 'main'
+			&& e.stream.getVideoTracks().length === 0
+		)
 		{
 			if (this.currentCall.canChangeMediaDevices())
 			{
@@ -5002,7 +5423,11 @@ export class CallController extends EventEmitter
 
 	_onCallLocalMediaStopped(e)
 	{
-		// do nothing
+		if (this.callView && e.kind === 'audio')
+		{
+			Hardware.isMicrophoneMuted = true;
+			this.showNotification(Loc.getMessage('CALL_ERROR_MICROPHONE_STREAM_STOPPED'));
+		}
 	}
 
 	#setUserMedia(e)
@@ -5104,7 +5529,7 @@ export class CallController extends EventEmitter
 		return this.isLegacyCall(call.provider, call.scheme) ? call.id : call.uuid;
 	}
 
-	_prepareLocalStream(provider, fallback = false)
+	#prepareLocalStream(provider, fallback = false)
 	{
 		const video = {};
 
@@ -5121,77 +5546,58 @@ export class CallController extends EventEmitter
 
 		const isNotSupportDevicesListBeforeStream = UnsupportedBrowserFeatures.isNotSupportDevicesListBeforeStream;
 		const constraints = { audio: isNotSupportDevicesListBeforeStream, video };
-			Hardware.getUserMedia(constraints).then((stream) =>
-			{
-				this.localStream = stream;
+		CallStreamManager.getUserMedia(constraints).then((stream) => {
+			this.localStream = stream;
 
-				if (!this.initCallPromise || !Hardware.isCameraOn)
-				{
-					this._stopLocalStream();
-				}
-				else if (this.callView)
-				{
-					this._setLocalStream(provider);
-				}
-				if (isNotSupportDevicesListBeforeStream)
-				{
-					this._onGetUserMediaEnded();
-				}
-			})
-			.catch((error) =>
+			if (!this.currentCall && !this.initCallPromise)
 			{
-				this.log(`Attempt to get video (fallback: ${!!fallback}) for call before it has been created failed`, error);
-				if (!fallback)
-				{
-					this._prepareLocalStream(provider, true);
-				}
-			});
+				this.#stopLocalStream();
+			}
+			else if (this.callView)
+			{
+				this.#setLocalStream(provider);
+			}
+
+			if (isNotSupportDevicesListBeforeStream)
+			{
+				this.#onGetUserMediaEnded();
+			}
+		}).catch((error) => {
+			this.log(`Attempt to get video (fallback: ${Boolean(fallback)}) for call before it has been created failed`, error);
+			if (!fallback)
+			{
+				this.#prepareLocalStream(provider, true);
+			}
+		});
 	}
 
-	_setLocalStream(provider)
+	#setLocalStream(provider)
 	{
-		let streamData;
-		if (provider === Provider.Plain)
+		const isLegacyCall = this.isLegacyCall(provider);
+		const streamData = {
+			stream: this.localStream,
+			tag: 'main',
+			flipVideo: Hardware.enableMirroring,
+		};
+
+		if (provider !== Provider.Plain || !isLegacyCall)
 		{
-			streamData = {
-				stream: this.localStream,
-				tag: 'main',
-				flipVideo: Hardware.enableMirroring,
-			};
-		}
-		else
-		{
-			streamData = {
-				mediaRenderer: {
-					kind: 'video',
-
-					stream: this.localStream,
-
-					render(el)
-					{
-						if (!el.srcObject || !el.srcObject.active || el.srcObject.id !== this.stream.id)
-						{
-							el.srcObject = this.stream;
-						}
-					},
-
-					requestVideoSize()
-					{
-					},
-				},
-				tag: 'main',
-				stream: this.localStream,
-				flipVideo: Hardware.enableMirroring,
-			};
+			const mediaRenderer = new MediaRenderer({
+				track: this.localStream.getVideoTracks()[0],
+				kind: 'video',
+			});
+			streamData.mediaRenderer = mediaRenderer;
+			streamData.stream = mediaRenderer.stream;
 		}
 
 		this.callView.setLocalStream(streamData);
 	}
 
-	_stopLocalStream()
+	#stopLocalStream()
 	{
 		if (this.localStream)
 		{
+			Util.sendLog({ description: 'Stop local media stream' });
 			Util.stopMediaStream(this.localStream);
 			this.localStream = null;
 		}
@@ -5324,7 +5730,7 @@ export class CallController extends EventEmitter
 
 		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-mic-muted"></div>'
 			+ (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_MIC_FOR_ALL_MSGVER_1", {
-				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : 'M'),
+				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : DEFAULT_GENDER),
 				name: userModel.data.name
 			})));
 
@@ -5346,7 +5752,7 @@ export class CallController extends EventEmitter
 
 		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-cam-muted"></div>'
 			+ (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_CAM_FOR_ALL_MSGVER_1", {
-				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : 'M'),
+				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : DEFAULT_GENDER),
 				name: userModel.data.name
 			})));
 
@@ -5367,7 +5773,7 @@ export class CallController extends EventEmitter
 
 		let content = '<div class = "bx-call-view-participants-control-stream-notify-icon bx-call-view-cam-muted"></div>'
 			+ (Text.encode(Util.getCustomMessage("CALL_USER_TURNED_OFF_SCREENSHARE_FOR_ALL_MSGVER_1", {
-				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : 'M'),
+				gender: (userModel.data.gender? userModel.data.gender.toUpperCase() : DEFAULT_GENDER),
 				name: userModel.data.name
 			})));
 
@@ -5390,7 +5796,7 @@ export class CallController extends EventEmitter
 			let contentPhrase = '';
 			const initiatorUserModel = this.callView.userRegistry.get(e.data.fromUserId);
 			const targetUserModel = this.callView.userRegistry.get(e.data.toUserId);
-			const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+			const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : DEFAULT_GENDER);
 
 			if (e.data.toUserId == CallEngine.getCurrentUserId())
 			{
@@ -5479,7 +5885,7 @@ export class CallController extends EventEmitter
 	_onUserPermissionsChanged(e)
 	{
 		const initiatorUserModel = this.callView.userRegistry.get(e.data.fromUserId);
-		const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+		const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : DEFAULT_GENDER);
 
 		let contentPhrase = 'CALL_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_' + initiatorGender;
 
@@ -5551,7 +5957,7 @@ export class CallController extends EventEmitter
 		let isAllow = false;
 
 		const initiatorUserModel = this.callView.userRegistry.get(e.data.fromUserId);
-		const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : 'M');
+		const initiatorGender = (initiatorUserModel.data.gender ? initiatorUserModel.data.gender.toUpperCase() : DEFAULT_GENDER);
 
 		if (e.data.eft === true)
 		{
@@ -5779,7 +6185,7 @@ export class CallController extends EventEmitter
 				{
 					this.webScreenSharePopup.close();
 				}
-				if (this.isRecording())
+				if (this.#isCommonRecordStarted() && this.#canLocalRecord())
 				{
 					BXDesktopSystem.CallRecordStopSharing();
 				}
@@ -5794,38 +6200,82 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onCallUserRecordState(event)
-	{
-		this.callRecordState = event.recordState.state;
-		this.callView.setRecordState(event.recordState);
-		this.callRecordInitiatorId = event.userId;
+	/**
+	 * @group CommonRecord
+	 * @param { Object } event
+	 * @param { BitrixCall | PlainCall } event.call
+	 * @param { Object } event.commonRecordState
+	 * @param { number } event.commonRecordState.userId
+	 * @param { CallCommonRecordType } event.commonRecordState.type
+	 * @param { CallCommonRecordState } event.commonRecordState.state
+	 * @param { Object } event.commonRecordState.date
+	 * @param { string } event.commonRecordState.date.start
+	 * @param { Array } event.commonRecordState.date.pause
+	 * @param { number } event.userId
+ 	 */
 
-		if (event.recordState.state !== View.RecordState.Stopped)
+	#onCallUserCommonRecordState(event)
+	{
+		if (this.#canCloudRecord())
 		{
-			this.callRecordInfo = event.recordState;
+			return;
+		}
+
+		const { commonRecordState, userId } = event;
+		const { state, userId: initiatorId } = commonRecordState;
+
+		this.commonRecord.state = state;
+		this.callView.setCommonRecordState(commonRecordState);
+		this.commonRecord.initiatorId = initiatorId;
+
+		if (Util.isCommonRecordStateInactive(state))
+		{
+			this.commonRecord.info = null;
+			this.commonRecord.initiatorId = null;
 		}
 		else
 		{
-			this.callRecordInitiatorId = null;
+			this.commonRecord.info = commonRecordState;
 		}
 
-		if (!this.canRecord() || event.userId != BX.message['USER_ID'])
+		// if (CallCloudRecord.serviceEnabled)
+		// {
+		// 	if (state === CallCommonRecordState.Started && initiatorId !== this.userId)
+		// 	{
+		// 		this.callView.showCommonRecordStartModal();
+		// 	}
+		//
+		// 	return;
+		// }
+
+		if (!this.commonRecord.notifyShowed && state === CallCommonRecordState.Started && initiatorId !== this.userId)
 		{
-			return true;
+			this.commonRecord.notifyShowed = true;
+			this.callView.showCommonRecordStartNotify(initiatorId);
 		}
 
-		if (
-			event.recordState.state === View.RecordState.Started
-			&& event.recordState.userId == BX.message['USER_ID']
-		)
+		if (Util.isCommonRecordStateInactive(state) && initiatorId !== this.userId)
 		{
-			const windowId = View.RecordSource.Chat;
-			const dialogId = this.currentCall.associatedEntity.id;
-			const dialogName = this.currentCall.associatedEntity.name;
+			this.commonRecord.notifyShowed = false;
+		}
+
+		if (!this.#canLocalRecord() || userId !== this.userId)
+		{
+			return;
+		}
+
+		const isStartedByMe = state === CallCommonRecordState.Started && initiatorId === this.userId;
+		const isStopped = state === CallCommonRecordState.Stopped;
+
+		if (isStartedByMe)
+		{
+			const callType = this.getCallType();
 			const callId = this._getCallIdentifier(this.currentCall);
+			const { id: dialogId, name: dialogName } = this.currentCall.associatedEntity;
+
 			const callDate = BX?.date.format(this.formatRecordDate) || BX.Main.Date.format(this.formatRecordDate);
 
-			let fileName = BX.message('IM_CALL_RECORD_NAME');
+			let fileName = Loc.getMessage('IM_CALL_RECORD_NAME');
 			if (fileName)
 			{
 				fileName = fileName
@@ -5836,45 +6286,43 @@ export class CallController extends EventEmitter
 			}
 			else
 			{
-				fileName = "call_record_" + callId;
+				fileName = `call_record_${callId}`;
 			}
 
 			BX.ajax.runAction('call.Call.onStartRecord', { data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid } });
 
-			Analytics.getInstance().onRecordStart({
-				callId: this._getCallIdentifier(this.currentCall),
-				callType: this.getCallType(),
-			});
+			Analytics.getInstance().onRecordStart({ callId, callType, recordType: this.commonRecord.type, errorCode: null });
 
 			BXDesktopSystem.CallRecordStart({
-				windowId: windowId,
-				fileName: fileName,
-				callId: callId,
-				callDate: callDate,
-				dialogId: dialogId,
-				dialogName: dialogName,
-				video: this.callRecordType !== View.RecordType.Audio,
+				windowId: View.RecordSource.Chat,
+				fileName,
+				callId,
+				callDate,
+				dialogId,
+				dialogName,
+				video: this.commonRecord.type !== CallCommonRecordType.Audio,
 				muted: Hardware.isMicrophoneMuted,
 				cropTop: 72,
 				cropBottom: 90,
 				shareMethod: 'im.disk.record.share',
-				callType: this.getCallType(),
+				callType,
 			});
+
+			return;
 		}
-		else if (event.recordState.state === View.RecordState.Stopped)
+
+		if (isStopped)
 		{
 			Analytics.getInstance().onRecordStop({
 				callId: this._getCallIdentifier(this.currentCall),
 				callType: this.getCallType(),
 				subSection: Analytics.AnalyticsSubSection.window,
 				element: Analytics.AnalyticsElement.recordButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo, true),
+				recordTime: Util.getRecordTimeText(this.commonRecord.info, true),
 			});
-			this.callRecordInfo = null;
-			BXDesktopSystem.CallRecordStop();
-		}
 
-		return true;
+			this.#stopCommonRecord();
+		}
 	}
 
 	_onCallUserFloorRequest(e)
@@ -6202,7 +6650,7 @@ export class CallController extends EventEmitter
 
 		Hardware.isMicrophoneMuted = false;
 
-		this.#stopRecordCall();
+		this.#stopCommonRecord();
 
 		this.docCreatedForCurrentCall = false;
 		let callDetails;
@@ -6250,8 +6698,13 @@ export class CallController extends EventEmitter
 			this.callView.close();
 		}
 
+		for (const mediaStreamKind of Object.values(MediaStreamsKinds))
+		{
+			CallStreamManager.stopStream(mediaStreamKind);
+		}
+
 		this.hasStreamFromCall = false;
-		this._stopLocalStream();
+		this.#stopLocalStream();
 
 		if (this.invitePopup)
 		{
@@ -6318,7 +6771,7 @@ export class CallController extends EventEmitter
 		});
 	}
 
-	_onGetUserMediaEnded()
+	#onGetUserMediaEnded()
 	{
 		Hardware.getCurrentDeviceList();
 	}
@@ -6585,6 +7038,10 @@ export class CallController extends EventEmitter
 			return;
 		}
 
+		if (Number.isNaN(parseInt(counter, 10)))
+		{
+			Util.sendLog(`[call] setButtonCounter chat: counter = ${counter} (NaN)`);
+		}
 		this.callView.setButtonCounter("chat", counter);
 	}
 
@@ -6705,7 +7162,7 @@ export class CallController extends EventEmitter
 			this.floatingScreenShareWindow.close();
 		}
 
-		if (this.isRecording())
+		if (this.#isCommonRecordStarted() && this.#canLocalRecord())
 		{
 			BXDesktopSystem.CallRecordStopSharing();
 		}
@@ -6833,16 +7290,13 @@ export class CallController extends EventEmitter
 
 			if (audioOptions || videoOptions)
 			{
-				return Hardware.getUserMedia({
+				return CallStreamManager.getUserMedia({
 					audio: audioOptions,
 					video: videoOptions,
-				})
-			}
-			else
-			{
-				return new MediaStream();
+				});
 			}
 
+			return new MediaStream();
 		}).then((s) =>
 		{
 			this.stream = s;
@@ -6862,19 +7316,16 @@ export class CallController extends EventEmitter
 
 			if (videoOptions)
 			{
-				return Hardware.getUserMedia({
+				return CallStreamManager.getUserMedia({
 					audio: false,
 					video: {
 						width: 320,
-						height: 180
+						height: 180,
 					},
-				})
-			}
-			else
-			{
-				return new MediaStream();
+				});
 			}
 
+			return new MediaStream();
 		}).then((s2) =>
 		{
 			this.stream2 = s2;
@@ -6918,8 +7369,8 @@ export class CallController extends EventEmitter
 				this.toggleFullScreen();
 
 				break;
-			case "record":
-				this._onCallViewRecordButtonClick(e);
+			case 'record':
+				this.#onCallViewRecordButtonClick(e);
 
 				break;
 			case "floorRequest":
@@ -6998,8 +7449,8 @@ export class CallController extends EventEmitter
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
-			icon: 'raise-hand',
-			showAngle: true,
+			icon: 'mic',
+			showAngle: false,
 			initiatorName: params.initiatorName,
 			customClassName: 'bx-call-view-popup-call-hint-rise-hand-to-talk',
 			autoCloseDelay: (30 * 60 * 1000), // show it 30 minutes
@@ -7011,7 +7462,7 @@ export class CallController extends EventEmitter
 							'#INITIATOR_NAME#': this.initiatorName,
 							'[hint-label]': `<div class="bx-call-view-popup-call-hint-text">`,
 							'[/hint-label]': '</div>',
-							'#RISE_HAND_ICON#': `<div class="bx-call-view-popup-call-hint-hand-raise-icon"></div>`,
+							'#RISE_HAND_ICON#': `<div class="ui-btn bx-call-view-popup-call-hint-hand-raise-icon"></div>`,
 							'[label-or]': `<div class="bx-call-view-popup-call-hint-hand-raise-or-label">`,
 							'[/label-or]': '</div>',
 							'#REQUEST_NOW_BUTTON#': `<div class = "bx-call-view-popup-call-hint-button-placeholder"></div>`,
@@ -7054,7 +7505,7 @@ export class CallController extends EventEmitter
 
 		this.mutePopup = new CallHint({
 			callFolded: this.folded,
-			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
+			bindElement: this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			icon: 'mic-off',
 			buttons: [
@@ -7079,7 +7530,7 @@ export class CallController extends EventEmitter
 
 		this.mutePopup = new CallHint({
 			callFolded: this.folded,
-			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
+			bindElement: this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: Text.encode(BX.message("IM_CALL_MIC_AUTO_MUTED")),
 			icon: 'mic-off',
@@ -7098,7 +7549,7 @@ export class CallController extends EventEmitter
 	createUnmuteButton()
 	{
 		return new BX.UI.Button({
-			baseClass: "ui-btn ui-btn-icon-mic",
+			baseClass: "ui-btn bx-call-view-popup-call-hint-unmute",
 			text: BX.message("IM_CALL_UNMUTE_MIC"),
 			size: BX.UI.Button.Size.EXTRA_SMALL,
 			color: BX.UI.Button.Color.LIGHT_BORDER,
@@ -7191,12 +7642,24 @@ export class CallController extends EventEmitter
 		if (this.roomListMenu)
 		{
 			this.roomListMenu.destroy();
+
+			return;
+		}
+
+		if (this.currentCall?.listRooms)
+		{
 			return;
 		}
 
 		this.currentCall.listRooms().then((roomList) =>
 		{
 			this.roomListMenu = new BX.PopupMenuWindow({
+				className: 'bx-call-context-menu-options-container',
+				background: '#00428F',
+				contentBackground: '#00428F',
+				darkMode: true,
+				contentBorderRadius: '6px',
+				borderRadius: '6px',
 				targetContainer: this.container,
 				bindElement: bindElement,
 				items: this.prepareRoomListMenuItems(roomList),
@@ -7301,7 +7764,7 @@ export class CallController extends EventEmitter
 
 		this.roomJoinedPopup = new CallHint({
 			callFolded: this.folded,
-			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
+			bindElement: this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: title,
 			buttonsLayout: "bottom",
@@ -7358,7 +7821,7 @@ export class CallController extends EventEmitter
 		const title = BX.message("IM_CALL_ROOM_MIC_TAKEN_FROM").replace('#USER_NAME#', userModel.name);
 		this.micTakenFromPopup = new CallHint({
 			callFolded: this.folded,
-			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
+			bindElement: this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: BX.Text.encode(title),
 			buttonsLayout: "right",
@@ -7395,7 +7858,7 @@ export class CallController extends EventEmitter
 
 		this.micTakenByPopup = new CallHint({
 			callFolded: this.folded,
-			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
+			bindElement: this.callView.buttons.microphone.elements.icon,
 			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: BX.Text.encode(BX.message("IM_CALL_ROOM_MIC_TAKEN_BY").replace('#USER_NAME#', userModel.name)),
 			buttonsLayout: "right",

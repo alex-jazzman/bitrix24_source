@@ -159,6 +159,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().collabCreationAvailable;
 		}
 
+		static get isCopilotMentionAvailable()
+		{
+			return MessengerParams.getImFeatures().isCopilotMentionAvailable;
+		}
+
 		static get isInstantPushEnabled()
 		{
 			return Application.getApiVersion() >= 59;
@@ -218,14 +223,8 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 		static get isMessagesAutoDeleteNativeAvailable()
 		{
-			return Feature.isActionButtonAvailable
-				&& Feature.isTitleIconsInDialogHeaderAvailable
+			return Feature.isTitleIconsInDialogHeaderAvailable
 				&& Feature.isImageInRecentAvatarStyleAvailable;
-		}
-
-		static get isActionButtonAvailable()
-		{
-			return Application.getApiVersion() >= 60;
 		}
 
 		static get isIOSChangeTabInBackgroundAvailable()
@@ -256,6 +255,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isMessagesAutoDeleteEnabled()
 		{
 			return MessengerParams.getImFeatures().messagesAutoDeleteEnabled;
+		}
+
+		static get isStickersAvailable()
+		{
+			return MessengerParams.getImFeatures().stickersAvailable;
 		}
 
 		static get isSpotlightIdInTabViewAvailable()
@@ -312,6 +316,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 60;
 		}
 
+		static get isSetQuoteParamsSupported()
+		{
+			return Application.getApiVersion() >= 58;
+		}
+
 		static isAudioPanelSupported()
 		{
 			return NativeFeature?.isFeatureEnabled('audioplayer_api_v1')
@@ -338,6 +347,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().aiFileTranscriptionAvailable;
 		}
 
+		static get isMentionAllAvailable()
+		{
+			return MessengerParams.getImFeatures().mentionAllAvailable;
+		}
+
 		static get isAudioRecordM4ASupported()
 		{
 			return NativeFeature?.isFeatureEnabled('audio_record_m4a_support');
@@ -346,6 +360,106 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isAudioRecordM4AEnabled()
 		{
 			return this.isAudioRecordM4ASupported && this.isAiFileTranscriptionAvailable;
+		}
+
+		static get isAssistantButtonsSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_assistant_buttons');
+		}
+
+
+		static get isCopilotReasoningAvailable()
+		{
+			return MessengerParams.getImFeatures().isCopilotReasoningAvailable && this.isAssistantButtonsSupported;
+		}
+
+		static get isAiAssistantMCPSelectorAvailable()
+		{
+			return this.isAssistantButtonsSupported
+				&& MessengerParams.getImFeatures().aiAssistantMcpSelectorAvailable
+				&& MessengerParams.isAiAssistantMcpSelectorAvailable();
+		}
+
+		static get isVideoNoteAvailable()
+		{
+			return this.isVideoNoteNativeAvailable && MessengerParams.getImFeatures().videoNoteAvailable;
+		}
+
+		static get isVideoNoteNativeAvailable()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_video_record');
+		}
+
+		static get isVideoNoteTranscriptionNativeAvailable()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_transcribation_video');
+		}
+
+		static get isVideoNoteTranscriptionAvailable()
+		{
+			return this.isVideoNoteTranscriptionNativeAvailable
+				&& MessengerParams.getImFeatures().videoNoteTranscriptionAvailable;
+		}
+
+		/**
+		 * @desc If available, means (animations, methods, sizes, and multiple states) are available for chat.
+		 */
+		static get isChatReactionV2NativeSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_reaction_v2') ?? false;
+		}
+
+		/**
+		 * @desc If available, means size and animation changes for new reactions are available in application.
+		 */
+		static get isReactionV2NativeSupported()
+		{
+			return MobileFeature?.isNewReactionVersionSupported() ?? false;
+		}
+
+		/**
+		 * @desc If enabled, it means that the multiple reaction selection mode is available on the backend.
+		 */
+		static get isMultipleReactionsEnabled()
+		{
+			return MessengerParams.getMultipleReactionsEnabled();
+		}
+
+		/**
+		 * @desc If enabled, then all functionality for new reactions is available (multiple, animations, sizes, quantity)
+		 */
+		static get isReactionsV2Enabled()
+		{
+			return this.isChatReactionV2NativeSupported
+				&& this.isReactionV2NativeSupported
+				&& this.isMultipleReactionsEnabled;
+		}
+
+		static get isTranscribationBbcodeSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_transcribation_bbcode') ?? false;
+		}
+
+		static get isTranscribationBbcodeEventsSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_transcribation_bbcode_events') ?? false;
+		}
+
+		static get isChatStickersNativeSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_stickers') ?? false;
+		}
+
+		static get isStickersEnabled()
+		{
+			return this.isStickersAvailable
+				&& this.isChatStickersNativeSupported
+			;
+		}
+
+		static get isCopilotSelectModelEnabled()
+		{
+			return MessengerParams.getCopilotSelectModelEnabled();
 		}
 	}
 

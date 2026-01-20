@@ -21,7 +21,7 @@ export const SupportPreview = {
 		<div class="bx-im-sidebar-main-preview__scope">
 			<div class="bx-im-sidebar-main-preview-group-chat__avatar-container">
 				<div class="bx-im-sidebar-main-preview-group-chat__avatar">
-					<ChatAvatar :size="AvatarSize.XXXL" :avatarDialogId="dialogId" :contextDialogId="dialogId" />
+					<ChatAvatar :size="AvatarSize.XXXL" :avatarDialogId="dialogId" />
 				</div>
 				<ChatTitle :dialogId="dialogId" :twoLine="true" class="bx-im-sidebar-main-preview-group-chat__title" />
 			</div>

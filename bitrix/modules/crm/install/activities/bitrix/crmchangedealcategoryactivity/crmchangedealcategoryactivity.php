@@ -247,11 +247,14 @@ class CBPCrmChangeDealCategoryActivity extends CBPActivity
 				'Name' => Loc::getMessage('CRM_CDCA_CATEGORY'),
 				'FieldName' => 'category_id',
 				'Type' => 'deal_category',
+				'Required' => true,
+				'AiDescription' => 'ID of the category to which the deal will be moved',
 			],
 			'StageId' => [
 				'Name' => Loc::getMessage('CRM_CDCA_STAGE'),
 				'FieldName' => 'stage_id',
 				'Type' => 'deal_stage',
+				'AiDescription' => 'The stage ID to which the deal will be moved, for a category other than the default category, the category name is included in the stage name',
 			],
 		];
 	}

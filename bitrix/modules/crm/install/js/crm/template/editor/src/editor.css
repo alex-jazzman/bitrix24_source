@@ -22,18 +22,22 @@
 	display: inline-flex;
 	flex-direction: row;
 	align-items: center;
-	padding: 0 18px 0 6px;
+	padding: 0 6px 0 6px;
 	margin: 2px 4px 0 0;
+}
+
+.crm-template-editor:not(.--read-only) .crm-template-editor-element-pill {
+	padding-right: 18px;
 	cursor: pointer;
 }
 
 .crm-template-editor-element-pill.--selected {
-	background-color: var(--ui-color-palette-blue-10);
-	color: var(--ui-color-palette-gray-90);
+	background-color: var(--ui-color-accent-soft-blue-2);
+	color: var(--ui-color-accent-soft-element-blue);
 	word-wrap: anywhere;
 }
 
-.crm-template-editor-element-pill:after {
+.crm-template-editor:not(.--read-only) .crm-template-editor-element-pill:after {
 	content: '';
 	position: absolute;
 	right: 2px;

@@ -13,5 +13,11 @@ return [
 		'tasks:statemanager/redux/slices/kanban-settings',
 		'toast',
 		'tasks:enum',
+		'tasks:stage-selector/item',
+		'tasks:statemanager/redux/slices/stage-settings',
+		'statemanager/redux/store',
+		'tasks:deadline-picker',
+		'assets/icons',
+		'tasks:deadline-picker/deadline-restrictions',
 	],
 ];

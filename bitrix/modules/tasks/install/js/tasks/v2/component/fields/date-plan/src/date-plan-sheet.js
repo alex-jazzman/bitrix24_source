@@ -1,31 +1,26 @@
-import { Runtime } from 'main.core';
-import { DurationFormat } from 'main.date';
+import { Runtime, Type } from 'main.core';
 
 import { DatePicker, DatePickerEvent } from 'ui.date-picker';
-import { mapGetters } from 'ui.vue3.vuex';
 import { Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
 import { HeadlineMd, TextSm } from 'ui.system.typography.vue';
 import { BInput, InputDesign } from 'ui.system.input.vue';
-import { BMenu, type MenuOptions } from 'ui.vue3.components.menu';
+import { BMenu } from 'ui.system.menu.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model, DurationUnit } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
+import { Duration } from 'tasks.v2.component.elements.duration';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { calendar } from 'tasks.v2.lib.calendar';
 import { timezone } from 'tasks.v2.lib.timezone';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 
 import { datePlanMeta } from './date-plan-meta';
 import { DatePlanSwitcher } from './components/date-plan-switcher';
 import './date-plan.css';
-
-type UnitParams = {
-	duration: number,
-	title: string,
-};
 
 const MAX_INT = 2 ** 31;
 
@@ -40,27 +35,21 @@ export const DatePlanSheet = {
 		BInput,
 		BMenu,
 		DatePlanSwitcher,
+		Duration,
+	},
+	inject: {
+		task: {},
+		taskId: {},
+		isTemplate: {},
 	},
 	props: {
-		taskId: {
-			type: [Number, String],
+		sheetBindProps: {
+			type: Object,
 			required: true,
-		},
-		isShown: {
-			type: Boolean,
-			required: true,
-		},
-		getBindElement: {
-			type: Function,
-			default: null,
-		},
-		getTargetContainer: {
-			type: Function,
-			default: null,
 		},
 	},
 	emits: ['close'],
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -76,46 +65,85 @@ export const DatePlanSheet = {
 			isEndPicker: false,
 			isEndDuration: false,
 			isPickerShown: false,
-			isMenuShown: false,
-			unitId: DurationUnit.Days,
-			durationValue: '',
-			startTsTemp: null,
-			endTsTemp: null,
+			durationTs: 0,
+			startTs: null,
+			endTs: null,
+			startDatePlanAfter: null,
+			templateDuration: null,
 			matchesWorkTimeTemp: null,
+			matchesSubTasksTimeTemp: null,
 		};
 	},
 	computed: {
-		...mapGetters({
-			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
-		}),
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
-		},
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		// do not remove startPlanTs, otherwise startTs is not updated
-		startPlanTs(): number
-		{
-			return this.task.startPlanTs;
-		},
-		endPlanTs(): number
-		{
-			return this.task.endPlanTs;
-		},
-		startTs(): number
-		{
-			return this.startTsTemp ?? this.startPlanTs;
-		},
-		endTs(): number
-		{
-			return this.endTsTemp ?? this.endPlanTs;
-		},
 		wasFilled(): boolean
 		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, datePlanMeta.id);
+			return this.task.filledFields[datePlanMeta.id];
+		},
+		duration: {
+			get(): number
+			{
+				return this.durationTs;
+			},
+			set(durationTs: number): void
+			{
+				if (durationTs === this.durationTs)
+				{
+					return;
+				}
+
+				this.durationTs = durationTs;
+
+				this.updateRangeFromDuration();
+			},
+		},
+		matchesWorkTime: {
+			get(): boolean
+			{
+				return this.isMatchesWorkTimeLocked
+					? false
+					: this.matchesWorkTimeTemp ?? this.task.matchesWorkTime ?? false;
+			},
+			set(matchesWorkTime: boolean): void
+			{
+				if (this.isMatchesWorkTimeLocked)
+				{
+					void showLimit({
+						featureId: Core.getParams().restrictions.skipWeekends.featureId,
+					});
+
+					return;
+				}
+
+				if (matchesWorkTime === this.matchesWorkTimeTemp)
+				{
+					return;
+				}
+
+				this.matchesWorkTimeTemp = matchesWorkTime;
+
+				this.update();
+			},
+		},
+		matchesSubTasksTime: {
+			get(): boolean
+			{
+				return this.isMatchesSubTasksTimeLocked
+					? false
+					: this.matchesSubTasksTimeTemp ?? this.task.matchesSubTasksTime ?? false;
+			},
+			set(matchesSubTasksTime: boolean): void
+			{
+				if (this.isMatchesSubTasksTimeLocked)
+				{
+					void showLimit({
+						featureId: Core.getParams().restrictions.relatedSubtaskDeadlines.featureId,
+					});
+
+					return;
+				}
+
+				this.matchesSubTasksTimeTemp = matchesSubTasksTime;
+			},
 		},
 		allowsChangeDatePlan: {
 			get(): boolean
@@ -127,124 +155,79 @@ export const DatePlanSheet = {
 				void taskService.update(this.taskId, { allowsChangeDatePlan });
 			},
 		},
-		matchesWorkTime: {
-			get(): boolean
-			{
-				return this.matchesWorkTimeTemp ?? this.task.matchesWorkTime ?? false;
-			},
-			set(matchesWorkTime: boolean): void
-			{
-				this.matchesWorkTimeTemp = matchesWorkTime;
-
-				this.update();
-
-				if (!this.maxDurationReached)
-				{
-					void taskService.update(this.taskId, { matchesWorkTime });
-				}
-			},
-		},
-		matchesSubTasksTime: {
-			get(): boolean
-			{
-				return this.task.matchesSubTasksTime ?? false;
-			},
-			set(matchesSubTasksTime: boolean): void
-			{
-				void taskService.update(this.taskId, { matchesSubTasksTime });
-			},
-		},
 		maxDurationReached(): boolean
 		{
 			return this.endTs && this.startTs && Math.floor((this.endTs - this.startTs) / 1000) >= MAX_INT;
-		},
-		menuOptions(): Function
-		{
-			return (): MenuOptions => ({
-				bindElement: this.$refs.unit.$el,
-				items: [DurationUnit.Days, DurationUnit.Hours, DurationUnit.Minutes].map((unitId) => {
-					const unit = this.units[unitId];
-
-					return {
-						title: unit.title,
-						isSelected: unitId === this.unitId,
-						onClick: (): void => {
-							this.unitId = unitId;
-
-							this.update();
-						},
-					};
-				}),
-			});
-		},
-		units(): { [unitId: string]: UnitParams }
-		{
-			const unitDurations = DurationFormat.getUnitDurations();
-
-			return {
-				[DurationUnit.Days]: {
-					duration: this.matchesWorkTime ? calendar.workdayDuration : unitDurations.d,
-					title: this.loc('TASKS_V2_DATE_PLAN_DAYS'),
-				},
-				[DurationUnit.Hours]: {
-					duration: unitDurations.H,
-					title: this.loc('TASKS_V2_DATE_PLAN_HOURS'),
-				},
-				[DurationUnit.Minutes]: {
-					duration: unitDurations.i,
-					title: this.loc('TASKS_V2_DATE_PLAN_MINUTES'),
-				},
-			};
 		},
 		inputDesign(): string
 		{
 			return this.matchesSubTasksTime ? InputDesign.Disabled : InputDesign.Grey;
 		},
-	},
-	watch: {
-		isShown(isShown: boolean): void
+		isMatchesWorkTimeLocked(): boolean
 		{
-			if (isShown)
+			return !Core.getParams().restrictions.skipWeekends.available;
+		},
+		isMatchesSubTasksTimeLocked(): boolean
+		{
+			return !Core.getParams().restrictions.relatedSubtaskDeadlines.available;
+		},
+		description(): string
+		{
+			if (this.isTemplate)
 			{
-				this.clearTemps();
-				this.updateDuration(this.task.startPlanTs, this.task.endPlanTs);
-				this.wasEmpty = !this.wasFilled;
+				return this.loc('TASKS_V2_DATE_PLAN_DESCRIPTION_TEMPLATE');
 			}
+
+			return this.loc('TASKS_V2_DATE_PLAN_DESCRIPTION');
 		},
-		titleFieldOffsetHeight(): void
+		allowChangeText(): string
 		{
-			this.$refs.bottomSheet?.adjustPosition();
+			if (this.isTemplate)
+			{
+				return this.loc('TASKS_V2_DATE_PLAN_ALLOW_CHANGE_TEMPLATE');
+			}
+
+			return this.loc('TASKS_V2_DATE_PLAN_ALLOW_CHANGE');
+		},
+		matchWorkTimeHint(): string
+		{
+			if (this.isTemplate)
+			{
+				return this.loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT_TEMPLATE');
+			}
+
+			return this.loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT');
 		},
 	},
-	mounted(): void
+	created(): void
 	{
+		this.wasEmpty = !this.wasFilled;
 		this.updateDuration(this.task.startPlanTs, this.task.endPlanTs);
+		this.startDatePlanAfter = this.task.startDatePlanAfter;
+		this.templateDuration = this.task.endDatePlanAfter - this.task.startDatePlanAfter;
 	},
 	methods: {
 		clearStart(): void
 		{
-			this.clearTemps();
-			this.durationValue = '';
-			this.updateTaskPlan(null, this.task.endPlanTs);
+			this.duration = 0;
+			this.updatePlan(null, this.endTs);
 		},
 		clearEnd(): void
 		{
-			this.clearTemps();
-			this.durationValue = '';
-			this.updateTaskPlan(this.task.startPlanTs, null);
+			this.duration = 0;
+			this.updatePlan(this.startTs, null);
 		},
-		handleDateClick({ target }: { target: HTMLElement }, { isEnd }: { isEnd: boolean }): void
+		handleDateClick({ currentTarget }: { currentTarget: HTMLElement }, { isEnd }: { isEnd: boolean }): void
 		{
-			this.clearTemps();
-			this.updateDuration(this.task.startPlanTs, this.task.endPlanTs);
+			this.updateDuration(this.startTs, this.endTs);
 			this.isEndPicker = isEnd;
 
 			const datePicker = this.getDatePicker();
-			datePicker.setTargetNode(target);
+			datePicker.setTargetNode(currentTarget);
 			datePicker.show();
-			if (this.isEndPicker && this.task.endPlanTs)
+			if (this.isEndPicker && this.endTs)
 			{
-				datePicker.setFocusDate(this.task.endPlanTs + timezone.getOffset(this.task.endPlanTs));
+				datePicker.setFocusDate(this.endTs + timezone.getOffset(this.endTs));
 			}
 		},
 		getDatePicker(): DatePicker
@@ -253,7 +236,7 @@ export const DatePlanSheet = {
 			this.datePicker ??= new DatePicker({
 				enableTime: true,
 				selectionMode: 'range',
-				defaultTime: calendar.defaultTime,
+				defaultTime: calendar.dayEndTime,
 				events: {
 					[DatePickerEvent.SELECT]: this.handlePickerChangedDebounced,
 					[DatePickerEvent.DESELECT]: this.handlePickerChangedDebounced,
@@ -264,6 +247,10 @@ export const DatePlanSheet = {
 						this.isPickerShown = false;
 					},
 				},
+				popupOptions: {
+					animation: 'fading',
+					targetContainer: this.sheetBindProps.getTargetContainer(),
+				},
 			});
 
 			return this.datePicker;
@@ -272,12 +259,12 @@ export const DatePlanSheet = {
 		{
 			let startPlanTs = this.preparePickerTimestamp(this.datePicker.getRangeStart());
 			let endPlanTs = this.preparePickerTimestamp(this.datePicker.getRangeEnd());
-			if (this.isEndPicker && !endPlanTs && !this.task.startPlanTs)
+			if (this.isEndPicker && !endPlanTs && !this.startTs)
 			{
 				[startPlanTs, endPlanTs] = [null, startPlanTs];
 			}
 
-			if (startPlanTs && !this.task.startPlanTs)
+			if (startPlanTs && !this.startTs)
 			{
 				startPlanTs = calendar.setHours(startPlanTs, calendar.workdayStart.H, calendar.workdayStart.M);
 			}
@@ -286,37 +273,35 @@ export const DatePlanSheet = {
 		},
 		updateDuration(startTs: number, endTs: number): void
 		{
-			const [startPlanTs, endPlanTs] = this.prepareRange(startTs, endTs);
-			if (!startPlanTs || !endPlanTs)
+			const [start, end] = this.prepareRange(startTs, endTs);
+			if (!start || !end)
 			{
-				this.durationValue = '';
+				this.duration = 0;
 
-				this.updateTaskPlan(startPlanTs, endPlanTs);
+				this.updatePlan(start, end);
 
 				return;
 			}
 
-			const [durationValue, unitId] = this.calculateDurationValue(startPlanTs, endPlanTs, this.matchesWorkTime);
-			this.durationValue = String(durationValue);
-			this.unitId = unitId;
+			this.duration = this.matchesWorkTime ? calendar.calculateDuration(start, end) : end - start;
 
-			this.updateTaskPlan(startPlanTs, endPlanTs);
+			this.updatePlan(start, end);
 		},
 		update(): void
 		{
-			const [startPlanTs, endPlanTs] = this.prepareRange(this.task.startPlanTs, this.task.endPlanTs);
+			const [startPlanTs, endPlanTs] = this.prepareRange(this.startTs, this.endTs);
 			if (startPlanTs && endPlanTs)
 			{
 				this.updateRangeFromDuration();
 			}
 			else
 			{
-				this.updateTaskPlan(startPlanTs, endPlanTs);
+				this.updatePlan(startPlanTs, endPlanTs);
 			}
 		},
 		updateRangeFromDuration(): void
 		{
-			let [startPlanTs, endPlanTs] = this.prepareRange(this.task.startPlanTs, this.task.endPlanTs);
+			let [startPlanTs, endPlanTs] = this.prepareRange(this.startTs, this.endTs);
 			if (!startPlanTs && !endPlanTs)
 			{
 				return;
@@ -327,44 +312,27 @@ export const DatePlanSheet = {
 				startPlanTs = null;
 			}
 
-			this.durationValue = this.durationValue.replaceAll(/\D/g, '');
-			const duration = this.durationValue * this.units[this.unitId].duration;
 			if (this.matchesWorkTime)
 			{
-				startPlanTs = calendar.calculateStartTs(startPlanTs, endPlanTs, duration);
-				endPlanTs = calendar.calculateEndTs(startPlanTs, endPlanTs, duration);
+				startPlanTs = calendar.calculateStartTs(startPlanTs, endPlanTs, this.duration);
+				endPlanTs = calendar.calculateEndTs(startPlanTs, endPlanTs, this.duration);
 			}
 			else
 			{
-				startPlanTs ??= endPlanTs - duration;
-				endPlanTs = startPlanTs + duration;
+				startPlanTs ??= endPlanTs - this.duration;
+				endPlanTs = startPlanTs + this.duration;
 			}
 
-			this.updateTaskPlan(startPlanTs, endPlanTs);
+			this.updatePlan(startPlanTs, endPlanTs);
 		},
-		calculateDurationValue(startTs: number, endTs: number, matchWorkTime: boolean): [number, string]
+		updatePlan(startPlanTs: ?number, endPlanTs: ?number): void
 		{
-			const duration = matchWorkTime ? calendar.calculateDuration(startTs, endTs) : endTs - startTs;
-			const minutes = duration / this.units[DurationUnit.Minutes].duration;
-			const hours = duration / this.units[DurationUnit.Hours].duration;
-			const days = duration / this.units[DurationUnit.Days].duration;
-
-			return {
-				[true]: [minutes, DurationUnit.Minutes],
-				[Number.isInteger(hours)]: [hours, DurationUnit.Hours],
-				[Number.isInteger(days)]: [days, DurationUnit.Days],
-			}.true;
-		},
-		updateTaskPlan(startPlanTs: ?number, endPlanTs: ?number): void
-		{
-			this.startTsTemp = startPlanTs;
-			this.endTsTemp = endPlanTs;
+			this.startTs = startPlanTs;
+			this.endTs = endPlanTs;
 			if (this.maxDurationReached)
 			{
 				return;
 			}
-
-			this.clearTemps();
 
 			const datePicker = this.getDatePicker();
 			const options = { emitEvents: false };
@@ -385,14 +353,6 @@ export const DatePlanSheet = {
 			{
 				datePicker.deselectAll(options);
 			}
-
-			void taskService.update(this.taskId, { startPlanTs, endPlanTs });
-		},
-		clearTemps(): void
-		{
-			this.startTsTemp = null;
-			this.endTsTemp = null;
-			this.matchesWorkTimeTemp = null;
 		},
 		prepareRange(startTs: number, endTs: number): [?number, ?number]
 		{
@@ -420,91 +380,110 @@ export const DatePlanSheet = {
 		},
 		close(): void
 		{
+			if (this.isTemplate)
+			{
+				void taskService.update(this.taskId, {
+					startDatePlanAfter: this.startDatePlanAfter,
+					endDatePlanAfter: this.startDatePlanAfter + this.templateDuration,
+					matchesWorkTime: this.matchesWorkTime,
+				});
+			}
+			else if (!this.maxDurationReached)
+			{
+				void taskService.update(this.taskId, Object.fromEntries(Object.entries({
+					startPlanTs: this.matchesSubTasksTime ? undefined : this.startTs,
+					endPlanTs: this.matchesSubTasksTime ? undefined : this.endTs,
+					matchesWorkTime: this.matchesWorkTime,
+					matchesSubTasksTime: this.matchesSubTasksTime,
+				}).filter(([, value]) => !Type.isUndefined(value))));
+			}
+
 			if (this.wasEmpty && this.wasFilled)
 			{
 				void fieldHighlighter.setContainer(this.$root.$el).highlight(datePlanMeta.id);
-			}
-
-			if (this.task.matchesSubTasksTime && !this.isEdit)
-			{
-				this.updateDuration(null, null);
 			}
 
 			this.$emit('close');
 		},
 	},
 	template: `
-		<BottomSheet
-			v-if="isShown"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="bottomSheet"
-		>
+		<BottomSheet :sheetBindProps @close="close">
 			<div class="tasks-field-date-plan-sheet">
 				<div class="tasks-field-date-plan-header">
 					<HeadlineMd>{{ loc('TASKS_V2_DATE_PLAN_TITLE_SHEET') }}</HeadlineMd>
-					<BIcon class="tasks-field-date-plan-close" :name="Outline.CROSS_L" :hoverable="true" @click="close"/>
+					<BIcon class="tasks-field-date-plan-close" :name="Outline.CROSS_L" hoverable @click="close"/>
 				</div>
-				<TextSm class="tasks-field-date-plan-description">{{ loc('TASKS_V2_DATE_PLAN_DESCRIPTION') }}</TextSm>
+				<TextSm class="tasks-field-date-plan-description">{{ description }}</TextSm>
 				<div class="tasks-field-date-plan-fields">
-					<BInput
-						:modelValue="formatDate(startTs)"
-						:label="loc('TASKS_V2_DATE_PLAN_START')"
-						:design="inputDesign"
-						:icon="Outline.CALENDAR_WITH_SLOTS"
-						:withClear="Boolean(startTs)"
-						:active="isPickerShown && !isEndPicker"
-						@clear="clearStart"
-						@click="handleDateClick($event, { isEnd: false })"
-						@focus="$event.target.blur()"
-					/>
-					<BInput
-						:modelValue="formatDate(endTs)"
-						:label="loc('TASKS_V2_DATE_PLAN_END')"
-						:design="inputDesign"
-						:icon="Outline.CALENDAR_WITH_SLOTS"
-						:withClear="Boolean(endTs)"
-						:active="isPickerShown && isEndPicker"
-						@clear="clearEnd"
-						@click="handleDateClick($event, { isEnd: true })"
-						@focus="$event.target.blur()"
-					/>
-					<div class="tasks-field-date-plan-duration">
+					<template v-if="isTemplate">
+						<Duration
+							v-model="startDatePlanAfter"
+							:matchesWorkTime
+							:label="loc('TASKS_V2_DATE_PLAN_START_AFTER')"
+							:design="inputDesign"
+						/>
+						<Duration
+							v-model="templateDuration"
+							:matchesWorkTime
+							:label="loc('TASKS_V2_DATE_PLAN_DURATION')"
+							:design="inputDesign"
+						/>
+					</template>
+					<template v-else>
 						<BInput
-							v-model="durationValue"
+							:modelValue="formatDate(startTs)"
+							:label="loc('TASKS_V2_DATE_PLAN_START')"
+							:design="inputDesign"
+							:icon="Outline.CALENDAR_WITH_SLOTS"
+							:withClear="Boolean(startTs)"
+							clickable
+							:active="isPickerShown && !isEndPicker"
+							:data-task-plan-start="startTs"
+							@clear="clearStart"
+							@click="handleDateClick($event, { isEnd: false })"
+						/>
+						<BInput
+							:modelValue="formatDate(endTs)"
+							:label="loc('TASKS_V2_DATE_PLAN_END')"
+							:design="inputDesign"
+							:icon="Outline.CALENDAR_WITH_SLOTS"
+							:withClear="Boolean(endTs)"
+							clickable
+							:active="isPickerShown && isEndPicker"
+							:data-task-plan-end="endTs"
+							@clear="clearEnd"
+							@click="handleDateClick($event, { isEnd: true })"
+						/>
+						<Duration
+							v-model="duration"
+							:matchesWorkTime
 							:label="loc('TASKS_V2_DATE_PLAN_DURATION')"
 							:design="inputDesign"
 							:error="maxDurationReached ? ' ' : null"
-							@input="updateRangeFromDuration"
-							@focus="isEndDuration = !task.startPlanTs"
+							:maxValue="Infinity"
+							@focus="isEndDuration = !startTs"
 							@blur="isEndDuration = false"
 						/>
-						<BInput
-							:modelValue="units[unitId].title"
-							:design="inputDesign"
-							:dropdown="true"
-							:active="isMenuShown"
-							ref="unit"
-							@click="isMenuShown = true"
-							@focus="$event.target.blur()"
-						/>
-					</div>
+					</template>
 				</div>
 				<div class="tasks-field-date-plan-switchers">
 					<DatePlanSwitcher
 						v-if="task.rights.edit"
 						v-model="allowsChangeDatePlan"
-						:text="loc('TASKS_V2_DATE_PLAN_ALLOW_CHANGE')"
+						:text="allowChangeText"
 					/>
 					<DatePlanSwitcher
 						v-model="matchesWorkTime"
 						:text="loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME')"
-						:hint="loc('TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT')"
+						:hint="matchWorkTimeHint"
+						:lock="isMatchesWorkTimeLocked"
 					/>
 					<DatePlanSwitcher
+						v-if="!isTemplate"
 						v-model="matchesSubTasksTime"
 						:text="loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME')"
 						:hint="loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT')"
+						:lock="isMatchesSubTasksTimeLocked"
 					/>
 				</div>
 				<div class="tasks-field-date-plan-footer">
@@ -517,6 +496,5 @@ export const DatePlanSheet = {
 				</div>
 			</div>
 		</BottomSheet>
-		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
 	`,
 };

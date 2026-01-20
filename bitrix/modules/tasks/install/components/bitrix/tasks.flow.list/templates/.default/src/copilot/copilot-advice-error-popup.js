@@ -6,6 +6,7 @@ export const CopilotAdviceErrorTypes = Object.freeze({
 	NotEnoughTasks: 'notEnoughTasks',
 	UnexpectedError: 'unexpectedError',
 	AdviceFetching: 'adviceFetching',
+	RateLimit: 'rateLimit',
 });
 
 type CopilotAdviceErrorType = $Values<typeof CopilotAdviceErrorTypes>;
@@ -79,6 +80,13 @@ export class CopilotAdviceErrorPopup
 			case CopilotAdviceErrorTypes.AdviceFetching: {
 				titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE';
 				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION';
+
+				break;
+			}
+
+			case CopilotAdviceErrorTypes.RateLimit: {
+				titleCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_TITLE';
+				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_DESCRIPTION';
 
 				break;
 			}

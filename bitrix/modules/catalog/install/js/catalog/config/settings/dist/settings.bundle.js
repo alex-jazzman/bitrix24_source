@@ -1117,50 +1117,53 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    if (!dealSettings) {
 	      return settingsSection;
 	    }
+	    const storeControlMode = babelHelpers.classPrivateFieldLooseBase(this, _parentPage$3)[_parentPage$3].getValue('storeControlMode');
 	    section.append(new ui_section.Row({
 	      content: new ui_alerts.Alert({
-	        text: `
-						${main_core.Loc.getMessage('CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION')}
-						<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=15706692&anchor=reservation')">
-							${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
-						</a>
-					`,
+	        text: storeControlMode === catalog_storeEnableWizard.ModeList.MODE_B24 ? `
+							${main_core.Loc.getMessage('CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION')}
+							<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=15706692&anchor=reservation')">
+								${main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
+							</a>
+						` : main_core.Loc.getMessage('CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION_1C'),
 	        inline: true,
 	        size: ui_alerts.AlertSize.SMALL,
 	        color: ui_alerts.AlertColor.PRIMARY
 	      }).getContainer()
 	    }).render());
-	    const modeFieldName = ReservationSection.MODE_FIELD_NAME;
-	    const modeSetting = dealSettings.scheme.find(schemeElement => {
-	      return schemeElement.code === 'mode';
-	    });
-	    const modeValue = dealSettings.values.mode;
-	    const periodFieldName = ReservationSection.PERIOD_FIELD_NAME;
-	    const periodSetting = dealSettings.scheme.find(schemeElement => {
-	      return schemeElement.code === 'period';
-	    });
-	    const periodValue = dealSettings.values.period;
-	    new ui_formElements_field.SettingsRow({
-	      row: {
-	        separator: 'bottom',
-	        className: '--block'
-	      },
-	      parent: settingsSection,
-	      child: new ui_formElements_field.SettingsField({
-	        fieldView: new ReservationMode({
-	          mode: {
-	            fieldName: modeFieldName,
-	            setting: modeSetting,
-	            value: modeValue
-	          },
-	          period: {
-	            fieldName: periodFieldName,
-	            setting: periodSetting,
-	            value: periodValue
-	          }
+	    if (storeControlMode === catalog_storeEnableWizard.ModeList.MODE_B24) {
+	      const modeFieldName = ReservationSection.MODE_FIELD_NAME;
+	      const modeSetting = dealSettings.scheme.find(schemeElement => {
+	        return schemeElement.code === 'mode';
+	      });
+	      const modeValue = dealSettings.values.mode;
+	      const periodFieldName = ReservationSection.PERIOD_FIELD_NAME;
+	      const periodSetting = dealSettings.scheme.find(schemeElement => {
+	        return schemeElement.code === 'period';
+	      });
+	      const periodValue = dealSettings.values.period;
+	      new ui_formElements_field.SettingsRow({
+	        row: {
+	          separator: 'bottom',
+	          className: '--block'
+	        },
+	        parent: settingsSection,
+	        child: new ui_formElements_field.SettingsField({
+	          fieldView: new ReservationMode({
+	            mode: {
+	              fieldName: modeFieldName,
+	              setting: modeSetting,
+	              value: modeValue
+	            },
+	            period: {
+	              fieldName: periodFieldName,
+	              setting: periodSetting,
+	              value: periodValue
+	            }
+	          })
 	        })
-	      })
-	    });
+	      });
+	    }
 	    const autoWriteOffSetting = dealSettings.scheme.find(schemeElement => {
 	      return schemeElement.code === 'autoWriteOffOnFinalize';
 	    });

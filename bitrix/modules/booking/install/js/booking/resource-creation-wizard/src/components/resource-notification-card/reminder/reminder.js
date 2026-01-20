@@ -74,7 +74,10 @@ export const Reminder = {
 				<ResourceNotificationTextRow icon="--clock-2">
 					<RichLoc :text="locSendReminderTime" :placeholder="'[delay/]'">
 						<template #delay>
-							<LabelDropdown v-model:value="reminderNotificationDelay" :items="model.settings.notification.delayValues"/>
+							<LabelDropdown
+								v-model:value="reminderNotificationDelay"
+								:items="model.settings.notification.delayValues"
+							/>
 						</template>
 					</RichLoc>
 				</ResourceNotificationTextRow>

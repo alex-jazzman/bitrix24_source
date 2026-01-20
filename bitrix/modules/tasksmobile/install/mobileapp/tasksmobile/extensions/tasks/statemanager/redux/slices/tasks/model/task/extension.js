@@ -219,6 +219,21 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.allowChangeDeadline = serverTask.allowChangeDeadline;
 			}
 
+			if (!Type.isUndefined(serverTask.maxDeadlineChangeDate))
+			{
+				preparedTask.maxDeadlineChangeDate = serverTask.maxDeadlineChangeDate;
+			}
+
+			if (!Type.isUndefined(serverTask.deadlineChangesLeft))
+			{
+				preparedTask.deadlineChangesLeft = serverTask.deadlineChangesLeft;
+			}
+
+			if (!Type.isUndefined(serverTask.requireDeadlineChangeReason))
+			{
+				preparedTask.requireDeadlineChangeReason = serverTask.requireDeadlineChangeReason;
+			}
+
 			if (!Type.isUndefined(serverTask.allowTimeTracking))
 			{
 				preparedTask.allowTimeTracking = serverTask.allowTimeTracking;
@@ -304,13 +319,20 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.shouldShowKanbanStages = serverTask.shouldShowKanbanStages;
 			}
 
+			if (!Type.isUndefined(serverTask.chatId))
+			{
+				preparedTask.chatId = Number(serverTask.chatId);
+			}
+
 			if (!Type.isUndefined(serverTask.actions))
 			{
 				const actions = FieldChangeRegistry.removeChangedFields(preparedTask.id, serverTask.actions);
 
 				preparedTask.canRead = actions.canRead ?? preparedTask.canRead;
 				preparedTask.canUpdate = actions.canUpdate ?? preparedTask.canUpdate;
-				preparedTask.canUpdateDeadline = actions.canUpdateDeadline ?? preparedTask.canUpdateDeadline;
+				preparedTask.canUpdateDeadline = (
+					actions.canUpdateDeadline ?? preparedTask.canUpdateDeadline
+				);
 				preparedTask.canUpdateCreator = actions.canUpdateCreator ?? preparedTask.canUpdateCreator;
 				preparedTask.canUpdateResponsible = actions.canUpdateResponsible ?? preparedTask.canUpdateResponsible;
 				preparedTask.canUpdateAccomplices = actions.canUpdateAccomplices ?? preparedTask.canUpdateAccomplices;
@@ -418,6 +440,9 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isOpenResultExists: undefined,
 				isMatchWorkTime: undefined,
 				allowChangeDeadline: undefined,
+				maxDeadlineChangeDate: undefined,
+				deadlineChangesLeft: undefined,
+				requireDeadlineChangeReason: false,
 				allowTimeTracking: undefined,
 				allowTaskControl: undefined,
 				isTimerRunningForCurrentUser: undefined,
@@ -477,6 +502,10 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isExpired: false,
 				isConsideredForCounterChange: false,
 				isCreationErrorExist: false,
+
+				chatId: undefined,
+				imChatId: undefined,
+				imMessageId: undefined,
 			};
 		}
 
@@ -529,6 +558,9 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isOpenResultExists: false,
 				isMatchWorkTime: false,
 				allowChangeDeadline: false,
+				maxDeadlineChangeDate: null,
+				deadlineChangesLeft: null,
+				requireDeadlineChangeReason: false,
 				allowTimeTracking: false,
 				allowTaskControl: false,
 				isTimerRunningForCurrentUser: false,
@@ -588,6 +620,10 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isExpired: false,
 				isConsideredForCounterChange: false,
 				isCreationErrorExist: false,
+
+				chatId: null,
+				imChatId: null,
+				imMessageId: null,
 			};
 		}
 	}

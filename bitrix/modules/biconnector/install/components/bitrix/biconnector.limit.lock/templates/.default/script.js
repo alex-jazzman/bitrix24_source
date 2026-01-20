@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events,main_popup,ui_buttons,ui_bannerDispatcher) {
+(function (exports,main_core,main_core_events,ui_buttons,ui_bannerDispatcher,ui_system_dialog) {
 	'use strict';
 
 	var _templateObject;
@@ -12,8 +12,8 @@
 	var _licenseButtonText = /*#__PURE__*/new WeakMap();
 	var _laterButtonText = /*#__PURE__*/new WeakMap();
 	var _licenseUrl = /*#__PURE__*/new WeakMap();
-	var _popupClassName = /*#__PURE__*/new WeakMap();
 	var _fullLock = /*#__PURE__*/new WeakMap();
+	var _isLicenceLimit = /*#__PURE__*/new WeakMap();
 	var _init = /*#__PURE__*/new WeakSet();
 	var _show = /*#__PURE__*/new WeakSet();
 	var LimitLockPopup = function LimitLockPopup(_params) {
@@ -40,11 +40,11 @@
 	    writable: true,
 	    value: ''
 	  });
-	  _classPrivateFieldInitSpec(this, _popupClassName, {
-	    writable: true,
-	    value: 'biconnector-limit-lock'
-	  });
 	  _classPrivateFieldInitSpec(this, _fullLock, {
+	    writable: true,
+	    value: false
+	  });
+	  _classPrivateFieldInitSpec(this, _isLicenceLimit, {
 	    writable: true,
 	    value: false
 	  });
@@ -58,37 +58,39 @@
 	  babelHelpers.classPrivateFieldSet(this, _laterButtonText, params.laterButtonText || '');
 	  babelHelpers.classPrivateFieldSet(this, _licenseUrl, params.licenseUrl);
 	  babelHelpers.classPrivateFieldSet(this, _fullLock, params.fullLock === 'Y');
+	  babelHelpers.classPrivateFieldSet(this, _isLicenceLimit, params.isLicenceLimit === 'Y');
 	}
 	function _show2() {
 	  var _this = this;
 	  ui_bannerDispatcher.BannerDispatcher.high.toQueue(function (onDone) {
-	    var popupButtons = [];
-	    if (babelHelpers.classPrivateFieldGet(_this, _licenseButtonText)) {
-	      popupButtons.push(new ui_buttons.Button({
+	    var centerButtons = [];
+	    if (babelHelpers.classPrivateFieldGet(_this, _isLicenceLimit)) {
+	      centerButtons.push(new ui_buttons.Button({
 	        text: babelHelpers.classPrivateFieldGet(_this, _licenseButtonText),
-	        color: ui_buttons.Button.Color.SUCCESS,
+	        size: ui_buttons.ButtonSize.LARGE,
+	        style: ui_buttons.AirButtonStyle.FILLED,
+	        useAirDesign: true,
 	        onclick: function onclick() {
 	          top.location.href = babelHelpers.classPrivateFieldGet(_this, _licenseUrl);
 	        }
+	      }), new ui_buttons.Button({
+	        text: babelHelpers.classPrivateFieldGet(_this, _laterButtonText),
+	        size: ui_buttons.ButtonSize.LARGE,
+	        style: ui_buttons.AirButtonStyle.PLAIN,
+	        useAirDesign: true,
+	        onclick: function onclick() {
+	          popup.close();
+	        }
 	      }));
 	    }
-	    popupButtons.push(new ui_buttons.Button({
-	      text: babelHelpers.classPrivateFieldGet(_this, _laterButtonText),
-	      color: ui_buttons.Button.Color.LINK,
-	      onclick: function onclick() {
-	        popup.close();
-	      }
-	    }));
-	    var popupContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-limit-popup-wrap\">\n\t\t\t\t<div class=\"biconnector-limit-popup\">\n\t\t\t\t\t<div class=\"biconnector-limit-pic\">\n\t\t\t\t\t\t<div class=\"biconnector-limit-pic-round\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"biconnector-limit-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(_this, _content));
-	    var popup = new main_popup.Popup({
-	      titleBar: babelHelpers.classPrivateFieldGet(_this, _title),
+	    var popupContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"biconnector-limit-popup-wrap\">\n\t\t\t\t\t<div class=\"biconnector-limit-popup-wrap__limit__lock__logo\"></div>\n\t\t\t\t\t<div class=\"ui-headline --sm --align-center\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-text --md --align-center\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this, _title), babelHelpers.classPrivateFieldGet(_this, _content));
+	    var popup = new ui_system_dialog.Dialog({
+	      title: ' ',
 	      content: popupContent,
-	      overlay: true,
-	      className: babelHelpers.classPrivateFieldGet(_this, _popupClassName),
-	      closeIcon: true,
-	      lightShadow: true,
-	      offsetLeft: 100,
-	      buttons: popupButtons
+	      centerButtons: centerButtons,
+	      hasOverlay: true,
+	      width: 400,
+	      hasCloseButton: true
 	    });
 	    if (babelHelpers.classPrivateFieldGet(_this, _fullLock)) {
 	      popup.subscribe('onClose', function () {
@@ -109,5 +111,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').LimitLockPopup = LimitLockPopup;
 
-}((this.window = this.window || {}),BX,BX.Event,BX.Main,BX.UI,BX.UI));
+}((this.window = this.window || {}),BX,BX.Event,BX.UI,BX.UI,BX.UI.System));
 //# sourceMappingURL=script.js.map

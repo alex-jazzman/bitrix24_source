@@ -441,7 +441,7 @@ BX.adminFormTools = {
 		{
 			var wrap = BX.create('SPAN', {
 				props: {className: 'adm-input-file'},
-				html: '<span>' + (!!el.multiple ? BX.message('JSADM_FILES') : BX.message('JSADM_FILE')) + '</span>'
+				html: '<span>' + (!!el.multiple ? BX.message('JSADM_FILE_M') : BX.message('JSADM_FILE')) + '</span>'
 			});
 
 			BX.bind(el, 'change', BX.adminFormTools._modified_file_onchange);
@@ -466,7 +466,7 @@ BX.adminFormTools = {
 		var v = this.files || [this.value], s = '';
 		if (!v || v.length <= 0)
 		{
-			s = (!!this.multiple ? BX.message('JSADM_FILES') : BX.message('JSADM_FILE'));
+			s = (!!this.multiple ? BX.message('JSADM_FILE_M') : BX.message('JSADM_FILE'));
 		}
 		else
 		{

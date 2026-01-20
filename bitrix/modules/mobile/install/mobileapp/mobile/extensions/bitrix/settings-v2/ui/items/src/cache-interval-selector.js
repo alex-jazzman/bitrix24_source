@@ -75,7 +75,11 @@ jn.define('settings-v2/ui/items/src/cache-interval-selector', (require, exports,
 		}
 
 		openSelectWidget = async () => {
-			this.menu = new UIMenu(this.getPreparedItems());
+			if (!this.menu)
+			{
+				this.menu = new UIMenu(this.getPreparedItems());
+			}
+
 			this.menu.show({ target: this.selectorRef });
 		};
 

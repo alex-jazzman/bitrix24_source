@@ -7,4 +7,3 @@ $MESS["TASKS_MESSAGE_AUDITORS"] = "Бақылаушылар";
 $MESS["TASKS_MESSAGE_AUDITORS_ADDED"] = "Бақылаушылар қосылды: ";
 $MESS["TASKS_MESSAGE_AUDITORS_REMOVED"] = "Бақылаушылар шығарылды: ";
 $MESS["TASKS_MESSAGE_DEADLINE"] = "Соңғы мерзім";
-$MESS["TASKS_MESSAGE_RESPONSIBLE_ID"] = "Жауапты";

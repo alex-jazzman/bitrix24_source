@@ -1,0 +1,6 @@
+<?php
+
+$MESS['TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_CHAT_NOT_FOUND'] = 'Чат задачи не найден';
+$MESS['TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_CHAT_NOT_TASK_CHAT'] = 'Чат не является чатом задачи';
+$MESS['TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_TASK_ID_NOT_FOUND'] = 'Задача не найдена';
+$MESS['TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_ACCESS_TO_TASK_DENIED'] = 'Недостаточно прав для просмотра задачи';

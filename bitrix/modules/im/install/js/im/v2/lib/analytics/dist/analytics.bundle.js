@@ -6,6 +6,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
+	const AI_ASSISTANT_CHAT_TYPE = 'chatType_aiAssistant';
 	const CopilotChatType = Object.freeze({
 	  private: 'chatType_private',
 	  multiuser: 'chatType_multiuser'
@@ -61,11 +62,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  seeLater: 'see_later',
 	  select: 'select',
 	  addFeedback: 'add_feedback',
+	  viewPopup: 'view_popup',
+	  selectAppMode: 'select_app_mode',
 	  copyChatLink: 'copy_chat_link',
 	  viewTranscription: 'view_transcription',
 	  play: 'play',
 	  pause: 'pause',
-	  changeSpeed: 'change_speed'
+	  changeSpeed: 'change_speed',
+	  askCopilot: 'ask_copilot',
+	  modeOn: 'mode_on',
+	  modeOff: 'mode_off',
+	  clickMcpIntegrations: 'click_mcp_integrations'
 	});
 	const AnalyticsTool = Object.freeze({
 	  ai: 'ai',
@@ -90,7 +97,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  call: 'call',
 	  collab: 'collab',
 	  updateAppPopup: 'update_app_popup',
-	  audiomessage: 'audiomessage'
+	  audioMessage: 'audiomessage',
+	  videoMessage: 'videomessage'
 	});
 	const AnalyticsType = Object.freeze({
 	  ai: 'ai',
@@ -102,7 +110,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  limitOfficeChatingHistory: 'limit_office_chating_history',
 	  privateCall: 'private',
 	  groupCall: 'group',
-	  may25DesktopRelease: 'may_25_desktop_release'
+	  may25DesktopRelease: 'may_25_desktop_release',
+	  selectAppMode: 'select_app_mode',
+	  oneWindow: 'single_window',
+	  aiAssistant: 'aiAssistant',
+	  think: 'think'
 	});
 	const AnalyticsSection = Object.freeze({
 	  copilotTab: 'copilot_tab',
@@ -121,7 +133,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  forward: 'forward',
 	  userAdd: 'user_add',
 	  chatCreateMenu: 'chat_create_menu',
-	  chatEmptyState: 'chat_empty_state'
+	  chatEmptyState: 'chat_empty_state',
+	  settings: 'settings',
+	  miniChat: 'mini_chat'
 	});
 	const AnalyticsSubSection = Object.freeze({
 	  contextMenu: 'context_menu',
@@ -198,17 +212,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	function isAiAssistant(dialogId) {
+	  return im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
+	}
+
 	function isNotes(dialogId) {
 	  return im_v2_application_core.Core.getStore().getters['chats/isNotes'](dialogId);
 	}
 
 	const CUSTOM_CHAT_TYPE = 'custom';
+	const AI_ASSISTANT_CHAT_TYPE$1 = 'aiAssistant';
 	function getChatType(chat) {
-	  var _ChatType$chat$type;
 	  if (isNotes(chat.dialogId)) {
 	    return PSEUDO_CHAT_TYPE_FOR_NOTES;
 	  }
-	  return (_ChatType$chat$type = im_v2_const.ChatType[chat.type]) != null ? _ChatType$chat$type : CUSTOM_CHAT_TYPE;
+	  if (isAiAssistant(chat.dialogId)) {
+	    return AI_ASSISTANT_CHAT_TYPE$1;
+	  }
+	  const chatTypeExists = Object.values(im_v2_const.ChatType).includes(chat.type);
+	  if (chatTypeExists) {
+	    return chat.type;
+	  }
+	  return CUSTOM_CHAT_TYPE;
 	}
 
 	const EntityToEventMap = {
@@ -312,8 +337,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: getChatType(chat),
 	      c_section: AnalyticsSection.sidebar,
 	      c_sub_section: AnalyticsSubSection.contextMenu,
-	      p1: `chatType_${chat.type}`,
-	      p5: `chatId_${chat.chatId}`
+	      p1: `chatType_${chat.type}`
 	    });
 	  }
 	  onCancel(dialogId) {
@@ -324,8 +348,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      event: AnalyticsEvent.cancelDelete,
 	      type: getChatType(chat),
 	      c_section: AnalyticsSection.popup,
-	      p1: `chatType_${chat.type}`,
-	      p5: `chatId_${chat.chatId}`
+	      p1: `chatType_${chat.type}`
 	    });
 	  }
 	  onConfirm(dialogId) {
@@ -349,8 +372,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      event: AnalyticsEvent.view,
 	      type: `deleted_${category}`,
 	      c_section: AnalyticsSection.activeChat,
-	      p1: `chatType_${chat.type}`,
-	      p5: `chatId_${chat.chatId}`
+	      p1: `chatType_${chat.type}`
 	    });
 	  }
 	}
@@ -368,16 +390,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      category: AnalyticsCategory.chatPopup,
 	      event: AnalyticsEvent.view,
 	      type: AnalyticsType.deletedMessage,
-	      p1: `chatType_${chat.type}`,
-	      p5: `chatId_${chat.chatId}`
+	      p1: `chatType_${chat.type}`
 	    });
 	  }
 	  onDeletedPostNotification({
-	    messageId,
 	    dialogId
 	  }) {
 	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	    const commentInfo = im_v2_application_core.Core.getStore().getters['messages/comments/getByMessageId'](messageId);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.chatPopup,
@@ -385,8 +404,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: AnalyticsType.deletedMessage,
 	      c_section: AnalyticsSection.comments,
 	      p1: `chatType_${chat.type}`,
-	      p4: `parentChatId_${chat.chatId}`,
-	      p5: `chatId_${commentInfo.chatId}`
+	      p4: `parentChatId_${chat.chatId}`
 	    });
 	  }
 	}
@@ -604,6 +622,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    category: getCategoryByChatType(chat.type),
 	    event: AnalyticsEvent.clickAddUser,
 	    c_section: element,
+	    p1: `chatType_${getChatType(chat)}`,
 	    p2: getUserType(),
 	    p5: `chatId_${chat.chatId}`
 	  };
@@ -770,12 +789,48 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	    ui_analytics.sendData(payload);
 	  }
-	  onUseAudioInput() {
+	  onUseAudioInput(dialogId) {
+	    var _aiModel$name;
+	    const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const isCopilot = dialog.type === im_v2_const.ChatType.copilot;
+	    if (!isCopilot) {
+	      return;
+	    }
+	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	    const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
+	    const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+	    const aiModelName = (_aiModel$name = aiModel.name) != null ? _aiModel$name : aiModel;
+	    const copilotChatType = dialog.userCounter <= 2 ? CopilotChatType.private : CopilotChatType.multiuser;
 	    ui_analytics.sendData({
 	      event: AnalyticsEvent.audioUse,
 	      tool: AnalyticsTool.ai,
 	      category: AnalyticsCategory.chatOperations,
-	      c_section: AnalyticsSection.copilotTab
+	      c_section: `${currentLayout}_tab`,
+	      p2: `provider_${aiModelName}`,
+	      p3: copilotChatType,
+	      p4: `role_${main_core.Text.toCamelCase(role.code)}`,
+	      p5: `chatId_${dialog.chatId}`
+	    });
+	  }
+	  onToggleReasoning(dialogId) {
+	    var _aiModel$name2;
+	    const isReasoningEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
+	    const event = isReasoningEnabled ? AnalyticsEvent.modeOn : AnalyticsEvent.modeOff;
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	    const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
+	    const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+	    const aiModelName = (_aiModel$name2 = aiModel.name) != null ? _aiModel$name2 : aiModel;
+	    ui_analytics.sendData({
+	      event,
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.copilot,
+	      type: AnalyticsType.think,
+	      c_section: `${currentLayout}_tab`,
+	      p1: getChatType(chat),
+	      p2: `provider_${aiModelName}`,
+	      p4: `role_${main_core.Text.toCamelCase(role.code)}`,
+	      p5: `chatId_${chat.chatId}`
 	    });
 	  }
 	}
@@ -917,7 +972,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      event: AnalyticsEvent.clickShare,
 	      c_section: AnalyticsSection.chatWindow,
 	      c_sub_section: AnalyticsSubSection.contextMenu,
-	      p1: `chatType_${chat.type}`,
+	      p1: `chatType_${getChatType(chat)}`,
 	      p2: im_v2_lib_analytics.getUserType()
 	    });
 	  }
@@ -934,7 +989,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      category: getCategoryByChatType(chat.type),
 	      event: AnalyticsEvent.startSearch,
 	      c_section: AnalyticsSection.forward,
-	      p1: `chatType_${chat.type}`,
+	      p1: `chatType_${getChatType(chat)}`,
 	      p2: im_v2_lib_analytics.getUserType()
 	    });
 	  }
@@ -975,39 +1030,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    event: AnalyticsEvent.selectRecipient,
 	    type,
 	    c_section: AnalyticsSection.forward,
-	    p1: `chatType_${chat.type}`,
+	    p1: `chatType_${getChatType(chat)}`,
 	    p2: im_v2_lib_analytics.getUserType(),
 	    p3: `position_${position}`
 	  });
-	}
-
-	var _buildAnalyticsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAnalyticsData");
-	class DesktopUpdateBanner {
-	  constructor() {
-	    Object.defineProperty(this, _buildAnalyticsData, {
-	      value: _buildAnalyticsData2
-	    });
-	  }
-	  onShow() {
-	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData)[_buildAnalyticsData](AnalyticsEvent.view));
-	  }
-	  onClickUpdate() {
-	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData)[_buildAnalyticsData](AnalyticsEvent.clickUpdate));
-	  }
-	  onClickMoreInformation() {
-	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData)[_buildAnalyticsData](AnalyticsEvent.clickMoreInformation));
-	  }
-	  onOpenWebVersion() {
-	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData)[_buildAnalyticsData](AnalyticsEvent.goToWeb));
-	  }
-	}
-	function _buildAnalyticsData2(event) {
-	  return {
-	    tool: AnalyticsTool.inform,
-	    category: AnalyticsCategory.updateAppPopup,
-	    event,
-	    type: AnalyticsType.may25DesktopRelease
-	  };
 	}
 
 	const AnalyticsAmountFilesType = {
@@ -1075,13 +1101,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }) {
 	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
 	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	    ui_analytics.sendData({
 	      category: AnalyticsCategory.message,
 	      event: AnalyticsEvent.cancelDelete,
 	      type,
 	      c_section: AnalyticsSection.popup,
-	      p5: `chatId_${chat.chatId}`,
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
 	    });
 	  }
@@ -1275,6 +1299,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  onForward(dialogId) {
 	    this.messageForward.onClickForward(dialogId);
 	  }
+	  onAskCopilot(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.askCopilot,
+	      c_section: AnalyticsSection.chatWindow,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
 	}
 	function _onCopyTextCopilot2({
 	  dialogId,
@@ -1325,7 +1358,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return {
 	    tool: AnalyticsTool.im,
 	    c_sub_section: AnalyticsSubSection.contextMenu,
-	    p1: `chatType_${chat.type}`
+	    p1: `chatType_${getChatType(chat)}`
 	  };
 	}
 
@@ -1348,27 +1381,65 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chat.type),
 	      event: AnalyticsEvent.pinChat,
-	      p1: `chatType_${PSEUDO_CHAT_TYPE_FOR_NOTES}`
+	      p1: getChatType(chat)
 	    };
 	    ui_analytics.sendData(params);
 	  }
 	}
 
-	var _buildAnalyticsData$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAnalyticsData");
+	var _buildModeEnableData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildModeEnableData");
+	class DesktopMode {
+	  constructor() {
+	    Object.defineProperty(this, _buildModeEnableData, {
+	      value: _buildModeEnableData2
+	    });
+	  }
+	  onBannerShow() {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.messenger,
+	      event: AnalyticsEvent.viewPopup,
+	      type: AnalyticsType.selectAppMode
+	    });
+	  }
+	  onBannerOneWindowEnable() {
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildModeEnableData)[_buildModeEnableData](AnalyticsType.oneWindow, AnalyticsSection.popup));
+	  }
+	  onBannerTwoWindowEnable() {
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildModeEnableData)[_buildModeEnableData](AnalyticsType.twoWindow, AnalyticsSection.popup));
+	  }
+	  onSettingsOneWindowEnable() {
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildModeEnableData)[_buildModeEnableData](AnalyticsType.oneWindow, AnalyticsSection.settings));
+	  }
+	  onSettingsTwoWindowEnable() {
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildModeEnableData)[_buildModeEnableData](AnalyticsType.twoWindow, AnalyticsSection.settings));
+	  }
+	}
+	function _buildModeEnableData2(type, section) {
+	  return {
+	    tool: AnalyticsTool.im,
+	    category: AnalyticsCategory.messenger,
+	    event: AnalyticsEvent.selectAppMode,
+	    type,
+	    c_section: section
+	  };
+	}
+
+	var _buildAnalyticsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAnalyticsData");
 	class ChatInviteLink {
 	  constructor() {
-	    Object.defineProperty(this, _buildAnalyticsData$1, {
-	      value: _buildAnalyticsData2$1
+	    Object.defineProperty(this, _buildAnalyticsData, {
+	      value: _buildAnalyticsData2
 	    });
 	  }
 	  onCopyMembersPanel(dialogId) {
-	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData$1)[_buildAnalyticsData$1](dialogId, AnalyticsSubSection.membersPanel));
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData)[_buildAnalyticsData](dialogId, AnalyticsSubSection.membersPanel));
 	  }
 	  onCopyContextMenu(dialogId) {
-	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData$1)[_buildAnalyticsData$1](dialogId, AnalyticsSubSection.contextMenu));
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData)[_buildAnalyticsData](dialogId, AnalyticsSubSection.contextMenu));
 	  }
 	}
-	function _buildAnalyticsData2$1(dialogId, subSection) {
+	function _buildAnalyticsData2(dialogId, subSection) {
 	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	  return {
 	    tool: AnalyticsTool.im,
@@ -1379,38 +1450,100 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  };
 	}
 
+	class AiAssistant {
+	  onOpenWidget(dialog) {
+	    const chatType = getChatType(dialog);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: getCategoryByChatType(chatType),
+	      event: AnalyticsEvent.openExisting,
+	      type: chatType,
+	      c_section: AnalyticsSection.miniChat,
+	      p2: getUserType(),
+	      p5: `chatId_${dialog.chatId}`
+	    });
+	  }
+	  onOpenChatAI(dialog, fromWidget = false) {
+	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.ai,
+	      category: AnalyticsCategory.chatOperations,
+	      event: AnalyticsEvent.openChat,
+	      type: AI_ASSISTANT_CHAT_TYPE,
+	      c_section: fromWidget ? AnalyticsSection.miniChat : `${currentLayout}_tab`,
+	      p2: getUserType(),
+	      p3: `chatType_${getChatType(dialog)}`,
+	      p5: `chatId_${dialog.chatId}`
+	    });
+	  }
+	  onUseAudioInput(dialogId) {
+	    const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	    if (!isAiAssistant(dialog.dialogId)) {
+	      return;
+	    }
+	    ui_analytics.sendData({
+	      event: AnalyticsEvent.audioUse,
+	      tool: AnalyticsTool.ai,
+	      category: AnalyticsCategory.chatOperations,
+	      c_section: `${currentLayout}_tab`,
+	      p3: AI_ASSISTANT_CHAT_TYPE,
+	      p5: `chatId_${dialog.chatId}`
+	    });
+	  }
+	  onMcpIntegrationClick() {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.chat,
+	      event: AnalyticsEvent.clickMcpIntegrations,
+	      c_section: AnalyticsSection.chatTextarea,
+	      p1: AI_ASSISTANT_CHAT_TYPE
+	    });
+	  }
+	}
+
 	var _getTypeByChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTypeByChatId");
-	class AudioMessage {
+	var _getCategoryByFileType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCategoryByFileType");
+	class Player {
 	  constructor() {
+	    Object.defineProperty(this, _getCategoryByFileType, {
+	      value: _getCategoryByFileType2
+	    });
 	    Object.defineProperty(this, _getTypeByChatId, {
 	      value: _getTypeByChatId2
 	    });
 	  }
-	  onViewTranscription(chatId, status) {
-	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	  onViewTranscription(fileId, status) {
+	    const file = im_v2_application_core.Core.getStore().getters['files/get'](fileId);
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](file.chatId);
+	    const category = babelHelpers.classPrivateFieldLooseBase(this, _getCategoryByFileType)[_getCategoryByFileType](file);
 	    const normalizedStatus = status.toLowerCase();
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.audiomessage,
+	      category,
 	      event: AnalyticsEvent.viewTranscription,
 	      status: normalizedStatus,
 	      p1: `chatType_${chatType}`
 	    });
 	  }
-	  onPlay(chatId) {
-	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	  onPlay(fileId) {
+	    const file = im_v2_application_core.Core.getStore().getters['files/get'](fileId);
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](file.chatId);
+	    const category = babelHelpers.classPrivateFieldLooseBase(this, _getCategoryByFileType)[_getCategoryByFileType](file);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.audiomessage,
+	      category,
 	      event: AnalyticsEvent.play,
 	      p1: `chatType_${chatType}`
 	    });
 	  }
-	  onPause(chatId) {
-	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	  onPause(fileId) {
+	    const file = im_v2_application_core.Core.getStore().getters['files/get'](fileId);
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](file.chatId);
+	    const category = babelHelpers.classPrivateFieldLooseBase(this, _getCategoryByFileType)[_getCategoryByFileType](file);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.audiomessage,
+	      category,
 	      event: AnalyticsEvent.pause,
 	      p1: `chatType_${chatType}`
 	    });
@@ -1419,7 +1552,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.audiomessage,
+	      category: AnalyticsCategory.audioMessage,
 	      event: AnalyticsEvent.changeSpeed,
 	      p1: `chatType_${chatType}`,
 	      p2: `speed_${rate}`
@@ -1429,6 +1562,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _getTypeByChatId2(chatId) {
 	  const chat = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](chatId);
 	  return getChatType(chat);
+	}
+	function _getCategoryByFileType2(file) {
+	  if (file.isVideoNote) {
+	    return AnalyticsCategory.videoMessage;
+	  }
+	  return AnalyticsCategory.audioMessage;
 	}
 
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
@@ -1464,12 +1603,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.vote = new Vote();
 	    this.messagePins = new MessagePins();
 	    this.messageForward = new MessageForward();
-	    this.desktopUpdateBanner = new DesktopUpdateBanner();
 	    this.messageContextMenu = new MessageContextMenu();
 	    this.sliderInvite = new SliderInvite();
 	    this.chatPins = new ChatPins();
+	    this.desktopMode = new DesktopMode();
 	    this.chatInviteLink = new ChatInviteLink();
-	    this.audioMessage = new AudioMessage();
+	    this.aiAssistant = new AiAssistant();
+	    this.player = new Player();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
@@ -1481,7 +1621,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _excludedChats)[_excludedChats].add(dialogId);
 	  }
 	  onOpenTab(tabName) {
-	    const trackedTabs = [im_v2_const.Layout.copilot, im_v2_const.Layout.collab, im_v2_const.Layout.channel, im_v2_const.Layout.notification, im_v2_const.Layout.settings, im_v2_const.Layout.openlines];
+	    const trackedTabs = [im_v2_const.Layout.copilot, im_v2_const.Layout.collab, im_v2_const.Layout.channel, im_v2_const.Layout.notification, im_v2_const.Layout.settings, im_v2_const.Layout.openlines, im_v2_const.Layout.taskComments];
 	    if (!trackedTabs.includes(tabName)) {
 	      return;
 	    }
@@ -1506,6 +1646,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const chatType = getChatType(dialog);
 	    if (chatType === im_v2_const.ChatType.copilot) {
 	      this.copilot.onOpenChat(dialog.dialogId);
+	    }
+	    if (isAiAssistant(dialog.dialogId)) {
+	      this.aiAssistant.onOpenChatAI(dialog);
 	    }
 	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
 	    const isMember = dialog.role === im_v2_const.UserRole.guest ? 'N' : 'Y';

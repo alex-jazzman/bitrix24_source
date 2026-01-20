@@ -1,5 +1,6 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import { Model } from 'booking.const';
+import { Core } from 'booking.core';
 import { BookingActionsPopup } from './actions-popup/actions-popup';
 
 export type { ActionsPopupOptions } from './actions-popup/actions-popup';
@@ -20,27 +21,38 @@ export const Actions = {
 			default: null,
 		},
 	},
-	data(): Object
-	{
-		return {
-			showPopup: false,
-		};
-	},
-	mounted(): void
+	async mounted(): void
 	{
 		if (this.isEditingBookingMode && this.editingBookingId === this.bookingId)
 		{
-			this.showPopup = true;
+			await Core.getStore().dispatch(
+				`${Model.Interface}/setMenuOpenedForBooking`,
+				{ bookingId: this.bookingId, resourceId: this.resourceId },
+			);
 		}
 	},
 	computed: mapGetters({
 		editingBookingId: `${Model.Interface}/editingBookingId`,
 		isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+		isMenuOpenedForBooking: `${Model.Interface}/isMenuOpenedForBooking`,
 	}),
 	methods: {
-		clickHandler(): void
+		async clickHandler(): void
 		{
-			this.showPopup = true;
+			await Core.getStore().dispatch(
+				`${Model.Interface}/setMenuOpenedForBooking`,
+				{ bookingId: this.bookingId, resourceId: this.resourceId },
+			);
+		},
+		async onClose(): void
+		{
+			if (this.isMenuOpenedForBooking(this.bookingId, this.resourceId))
+			{
+				await Core.getStore().dispatch(
+					`${Model.Interface}/setMenuOpenedForBooking`,
+					{ bookingId: 0, resourceId: 0 },
+				);
+			}
 		},
 	},
 	components: {
@@ -60,12 +72,12 @@ export const Actions = {
 			</div>
 		</div>
 		<BookingActionsPopup
-			v-if="showPopup"
+			v-if="isMenuOpenedForBooking(this.bookingId, this.resourceId)"
 			:bookingId
 			:bindElement="this.$refs.node"
 			:resourceId
 			:options="actionsPopupOptions"
-			@close="showPopup = false"
+			@close="onClose()"
 		/>
 	`,
 };

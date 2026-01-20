@@ -51,6 +51,14 @@ export const Dictionary = Object.freeze({
 	EVENT_WA_TIMELINE: 'wa_timeline',
 	EVENT_WA_DELETE: 'wa_delete',
 
+	EVENT_CONNECT: 'connect',
+	EVENT_VIEW: 'view',
+	EVENT_EDIT: 'edit',
+	EVENT_SEND: 'send',
+	EVENT_RESEND: 'resend',
+	EVENT_CANCEL: 'cancel',
+	EVENT_COPILOT: 'copilot',
+
 	EVENT_REPEAT_SALE_BANNER_VIEW: 'banner_view',
 	EVENT_REPEAT_SALE_BANNER_CLICK: 'banner_click',
 	EVENT_REPEAT_SALE_BANNER_CLOSE: 'banner_close',
@@ -72,6 +80,8 @@ export const Dictionary = Object.freeze({
 	TYPE_WA_EDIT: 'wa_edit',
 	TYPE_WA_ACTIVITY_CREATE: 'wa_activity_create',
 	TYPE_WA_ACTIVITY_DELETE: 'wa_activity_delete',
+	TYPE_CHANNEL: 'channel',
+	TYPE_MESSAGE: 'message',
 	TYPE_REPEAT_SALE_SEGMENT: 'repeat_sale',
 	TYPE_REPEAT_SALE_BANNER_NULL: 'repeat_sale_null',
 	TYPE_REPEAT_SALE_BANNER_START_EMPTY: 'repeat_sale_start_empty',
@@ -104,6 +114,8 @@ export const Dictionary = Object.freeze({
 	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CATALOG_CONTRACTOR_COMPANY
 	 */
 	SECTION_CATALOG_CONTRACTOR_COMPANY: 'catalog_contractor_company_section',
+	SECTION_SALESCENTER_SLIDER: 'sale_center_slider_section',
+	SECTION_DOCUMENT: 'document_section',
 	// endregion
 
 	// region Sub Section const
@@ -120,6 +132,7 @@ export const Dictionary = Object.freeze({
 
 	SUB_SECTION_DEAL: 'deal',
 	SUB_SECTION_LEAD: 'lead',
+	SUB_SECTION_CONNECTION_SLIDER: 'connections_slider',
 	// endregion
 
 	// region Element const
@@ -176,6 +189,16 @@ export const Dictionary = Object.freeze({
 	ELEMENT_WA_NOTE_PIN: 'wa_note_pin',
 	ELEMENT_WA_MESSAGE_DELETE: 'wa_message_delete',
 	ELEMENT_WA_NOTE_DELETE: 'wa_note_delete',
+	ELEMENT_MENU_BUTTON: 'menu_button',
+	ELEMENT_BANNER_BUTTON: 'banner_button',
+	ELEMENT_NO_CONNECTION_BUTTON: 'no_connection_button',
+	ELEMENT_PREVIEW: 'preview',
+	ELEMENT_TEMPLATE_SELECTOR: 'template_selector',
+	ELEMENT_TEMPLATE_OFFER: 'template_offer',
+	ELEMENT_CHANNEL_SELECTOR: 'channel_selector',
+	ELEMENT_CHANNEL_LIST_CHANGE: 'channel_list_change',
+	ELEMENT_ELEMENT_ADD: 'element_add',
+	ELEMENT_AHA_MOMENT: 'aha_moment',
 	// endregion
 
 	// region Status const

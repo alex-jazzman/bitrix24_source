@@ -193,6 +193,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	}
 	const analytics = new AnalyticsSender();
 
+	exports.settings = settings;
 	exports.AnalyticsSender = AnalyticsSender;
 	exports.analytics = analytics;
 

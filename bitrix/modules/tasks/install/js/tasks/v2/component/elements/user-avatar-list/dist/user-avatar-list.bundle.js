@@ -3,65 +3,60 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_popup,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,ui_tooltip,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userAvatar) {
+(function (exports,ui_vue3_components_popup,tasks_v2_provider_service_userService,tasks_v2_component_elements_userAvatar,ui_tooltip,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userLabel) {
 	'use strict';
 
 	// @vue/component
 	const UserAvatarListUsers = {
 	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
-	    UserAvatar: tasks_v2_component_elements_userAvatar.UserAvatar
+	    UserLabel: tasks_v2_component_elements_userLabel.UserLabel
 	  },
 	  props: {
 	    users: {
 	      type: Array,
 	      required: true
 	    },
-	    withCross: {
-	      type: Boolean,
-	      required: true
-	    },
 	    readonly: {
+	      type: Boolean,
+	      default: false
+	    },
+	    removableUserId: {
+	      type: Number,
+	      default: 0
+	    },
+	    activeUserId: {
+	      type: Number,
+	      default: 0
+	    },
+	    compact: {
+	      type: Boolean,
+	      default: false
+	    },
+	    withoutClear: {
 	      type: Boolean,
 	      default: false
 	    }
 	  },
 	  emits: ['onUserClick', 'onUserCrossClick'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
 	  methods: {
 	    getNode(userId) {
 	      var _this$$refs;
-	      return (_this$$refs = this.$refs[`user_${userId}`]) == null ? void 0 : _this$$refs[0];
+	      return (_this$$refs = this.$refs[`user_${userId}`]) == null ? void 0 : _this$$refs[0].$el;
 	    }
 	  },
 	  template: `
-		<template v-for="(user, index) of users" :key="user.id">
-			<div class="b24-user-avatar-list-user-container">
-				<HoverPill
-					class="b24-user-avatar-list-user"
-					:class="'--' + user.type"
-					:withClear="!readonly"
-					@click.stop="$emit('onUserClick', user.id)"
-					@clear="$emit('onUserCrossClick', user.id)"
-				>
-					<div
-						class="b24-user-avatar-list-user-inner"
-						:ref="'user_' + user.id"
-						:bx-tooltip-user-id="user.id"
-						bx-tooltip-context="b24"
-					>
-							<span class="b24-user-avatar-list-user-image">
-								<UserAvatar :src="user.image" :type="user.type"/>
-							</span>
-						<span class="b24-user-avatar-list-user-title">{{ user.name }}</span>
-					</div>
-				</HoverPill>
-			</div>
+		<template v-for="user in users" :key="user.id">
+			<HoverPill
+				class="b24-user-avatar-list-user"
+				:compact
+				:withClear="!withoutClear && (!readonly || user.id === removableUserId) && !compact"
+				:active="activeUserId === user.id"
+				@click.stop="$emit('onUserClick', user.id)"
+				@clear="$emit('onUserCrossClick', user.id)"
+			>
+				<UserLabel :user :ref="'user_' + user.id" :avatarOnly="compact"/>
+			</HoverPill>
 		</template>
 	`
 	};
@@ -82,6 +77,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    visibleAmount: {
 	      type: Number,
 	      default: 3
+	    },
+	    withPopup: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  data() {
@@ -117,10 +116,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  methods: {
 	    showListUsers() {
+	      if (!this.withPopup) {
+	        return;
+	      }
 	      this.isPopupShown = true;
 	    },
 	    handleClickFromListUsers(userId) {
-	      tasks_v2_lib_hrefClick.hrefClick(tasks_v2_provider_service_userService.userService.getUrl(userId));
+	      BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(userId));
 	    }
 	  },
 	  template: `
@@ -154,9 +156,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<div class="b24-user-avatar-list-users --popup">
 					<UserAvatarListUsers
 						:users="popupUsers"
-						:withCross="false"
 						ref="popupUserList"
-						@onClick="(userId) => handleClickFromListUsers(userId)"
+						@onUserClick="(userId) => handleClickFromListUsers(userId)"
 					/>
 				</div>
 			</Popup>
@@ -167,5 +168,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.UserAvatarList = UserAvatarList;
 	exports.UserAvatarListUsers = UserAvatarListUsers;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX.UI.IconSet,BX,BX.UI,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.UI,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=user-avatar-list.bundle.js.map

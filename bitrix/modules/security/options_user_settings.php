@@ -9,6 +9,7 @@
  */
 
 use Bitrix\Security\Mfa\Otp;
+use Bitrix\Security\Mfa\OtpType;
 use Bitrix\Main\Web\Json;
 
 IncludeModuleLangFile(__FILE__);
@@ -20,19 +21,18 @@ if(!CModule::IncludeModule("security") || !CSecurityUser::isActive()):?>
 <?
 	return;
 endif;
-?>
-<?if(
-	$ID <= 0
-	|| ($USER->getID() != $ID && !$USER->CanDoOperation('security_edit_user_otp'))
-)
+
+if ($ID <= 0 || ($USER->getID() != $ID && !$USER->CanDoOperation('security_edit_user_otp')))
+{
 	return;
-?>
-<?
-CJSCore::Init(array('qrcode', 'ajax', 'window'));
+}
+
+CJSCore::Init(array('qrcode', 'ajax', 'window', 'pull.client', 'ui.dialogs.messagebox', 'loader', 'ui.icon-set.main'));
+
 $APPLICATION->AddHeadScript('/bitrix/js/security/admin/page/user-edit.js');
+
 $otp = Otp::getByUser($ID);
 $deactivateUntil = $otp->getDeactivateUntil();
-$availableTypes = Otp::getAvailableTypes();
 $availableTypesDescription = Otp::getTypesDescription();
 $currentPage = $APPLICATION->GetCurPageParam(
 	sprintf('%s_active_tab=%s',$tabControl->name, $tabControl->tabs[$tabControl->tabIndex]['DIV']),
@@ -46,7 +46,11 @@ for($i=1; $i <= 10; $i++)
 }
 $jsMessages = array(
 	'SEC_OTP_ERROR_TITLE' => GetMessage('SEC_OTP_ERROR_TITLE'),
-	'SEC_OTP_UNKNOWN_ERROR' => GetMessage('SEC_OTP_UNKNOWN_ERROR')
+	'SEC_OTP_UNKNOWN_ERROR' => GetMessage('SEC_OTP_UNKNOWN_ERROR'),
+	'SEC_OTP_PUSH_ERROR' => GetMessage('SEC_OTP_PUSH_ERROR'),
+	'SEC_OTP_WAITING_INSTALL' => GetMessage('SEC_OTP_WAITING_INSTALL'),
+	'SEC_OTP_PUSH_SAVING' => GetMessage('SEC_OTP_PUSH_SAVING'),
+	'SEC_OTP_PUSH_SUCCESS' => GetMessage('SEC_OTP_PUSH_SUCCESS'),
 );
 $jsSettings = array(
 	'userId' => (int) $ID,
@@ -60,7 +64,7 @@ $jsSettings = array(
 </script>
 <script>
 	BX.ready(function() {
-		var settings = <?=Json::encode($jsSettings)?>;
+		const settings = <?=Json::encode($jsSettings)?>;
 		new BX.Security.UserEdit.Otp(settings.userId, settings);
 	});
 </script>
@@ -76,7 +80,7 @@ $jsSettings = array(
 		</ol>
 	</div>
 	<div class="otp-connect">
-		<div id="connect-by-qr">
+		<div class="connect-by-qr" id="connect-by-qr">
 			<div class="input-type">
 				<span class="current"><?=GetMessage('SEC_OTP_MOBILE_SCAN_QR')?></span><span class="separator"><?=GetMessage('SEC_OTP_MOBILE_INPUT_METHODS_SEPARATOR')?></span><a href="#" id="connect-mobile-manual-input"><?=GetMessage('SEC_OTP_MOBILE_MANUAL_INPUT')?></a>
 			</div>
@@ -85,7 +89,7 @@ $jsSettings = array(
 			</div>
 			<div>
 				<div class="input-wrapper">
-					<div data-role="qr-code-block" data-autoclear="yes" style="margin-top: 8px; margin-left: 8px;"></div>
+					<div class="qr-code" data-role="qr-code-block" data-autoclear="yes"></div>
 				</div>
 			</div>
 		</div>
@@ -95,8 +99,8 @@ $jsSettings = array(
 			</div>
 			<div style="margin-bottom: 20px">
 				<?=GetMessage('SEC_OTP_CONNECT_MOBILE_MANUAL_INPUT')?>
-				<span class="type-title" data-show-type="<?= Otp::TYPE_HOTP ?>"><?=GetMessage('SEC_OTP_CONNECT_MOBILE_MANUAL_INPUT_HOTP')?></span>
-				<span class="type-title" data-show-type="<?= Otp::TYPE_TOTP ?>"><?=GetMessage('SEC_OTP_CONNECT_MOBILE_MANUAL_INPUT_TOTP')?></span>
+				<span class="type-title" data-show-type="<?= OtpType::Hotp->value ?>"><?=GetMessage('SEC_OTP_CONNECT_MOBILE_MANUAL_INPUT_HOTP')?></span>
+				<span class="type-title" data-show-type="<?= OtpType::Totp->value ?>"><?=GetMessage('SEC_OTP_CONNECT_MOBILE_MANUAL_INPUT_TOTP')?></span>
 				.
 			</div>
 			<div>
@@ -119,9 +123,38 @@ $jsSettings = array(
 		<p data-require-two-codes="yes">
 			<input type="text" dir="ltr" data-autoclear="yes" data-role="check-code" autocomplete="off" placeholder="<?=GetMessage('SEC_OTP_CONNECT_MOBILE_ENTER_NEXT_CODE')?>">
 		</p>
-		<div data-role="error-container" class="error-wrapper" data-autoclear="yes"></div>
 	</div>
 </div>
+
+<div id="otp-mobile-push-popup" class="otp-popup otp-mobile" data-title="<?=GetMessage('SEC_OTP_CONNECT_MOBILE_TITLE')?>">
+	<div class="otp-description"><?= GetMessage('SECT_OTP_PUSH_DESC') ?></div>
+	<div class="otp-connect">
+		<div class="connect-by-qr otp-flex">
+			<div class="otp-qr-column">
+				<div class="input-wrapper">
+					<div class="qr-code" data-role="qr-code-block" data-autoclear="yes"></div>
+				</div>
+			</div>
+			<div class="otp-description">
+				<ol>
+					<li><?= GetMessage('SEC_OTP_PUSH_STEP1') ?></li>
+					<li><?= GetMessage('SEC_OTP_PUSH_STEP2') ?></li>
+					<li><?= GetMessage('SEC_OTP_PUSH_STEP3') ?></li>
+					<li><?= GetMessage('SEC_OTP_PUSH_STEP4') ?></li>
+				</ol>
+			</div>
+		</div>
+	</div>
+	<div>
+		<div>
+			<div class="otp-loader">
+				<div class="otp-icon-loader" style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: #86ad00;" data-role="otp-icon-loader"></div>
+				<div class="otp-text-loader" data-role="otp-text-loader"><?= GetMessage('SEC_OTP_WAITING_INSTALL') ?></div>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div id="otp-device-popup" class="otp-popup otp-device" data-title="<?=GetMessage('SEC_OTP_CONNECT_DEVICE_TITLE')?>">
 	<table>
 		<tr>
@@ -129,11 +162,11 @@ $jsSettings = array(
 				<?=GetMessage("SEC_OTP_TYPE")?>:
 			</td>
 			<td>
-				<?foreach($availableTypes as $value):?>
-					<span class="type-title" data-show-type="<?=$value?>">
-						<?= ($availableTypesDescription[$value]['title'] ?? $value) ?>
+				<?php foreach ($availableTypesDescription as $type => $value): ?>
+					<span class="type-title" data-show-type="<?= $type ?>">
+						<?= ($value['title'] ?? $type) ?>
 					</span>
-				<?endforeach?>
+				<?php endforeach ?>
 			</td>
 		</tr>
 		<tr>
@@ -144,7 +177,7 @@ $jsSettings = array(
 				<input type="text" autocomplete="off" data-autoclear="yes" data-role="secret-code" size="40" maxlength="64" value="">
 			</td>
 		</tr>
-		<tr data-show-type="<?= Otp::TYPE_TOTP ?>">
+		<tr data-show-type="<?= OtpType::Totp->value ?>">
 			<td>
 				<?=GetMessage('SEC_OTP_START_TIMESTAMP')?>:
 			</td>
@@ -171,11 +204,6 @@ $jsSettings = array(
 				<input type="text" autocomplete="off" data-autoclear="yes" data-role="check-code" size="8" maxlength="8" value="">
 			</td>
 		</tr>
-		<tr>
-			<td colspan="2">
-				<div data-role="error-container" class="error-wrapper" data-autoclear="yes"></div>
-			</td>
-		</tr>
 	</table>
 </div>
 <div id="otp-recovery-codes" class="otp-popup otp-recovery-codes" data-title="<?=GetMessage('SEC_OTP_RECOVERY_CODES_TITLE')?>">
@@ -192,19 +220,14 @@ $jsSettings = array(
 			</ol>
 		</div>
 	</div>
-	<p>
-		<div style="margin-top: 10px">
-			<input type="button" data-role="print-codes" value="<?=GetMessage('SEC_OTP_RECOVERY_CODES_PRINT')?>" />
-			<input type="button" data-role="save-codes" value="<?=GetMessage('SEC_OTP_RECOVERY_CODES_SAVE_FILE')?>" />
-		</div>
-	</p>
-	<p>
-		<div><?=GetMessage('SEC_OTP_RECOVERY_CODES_REGENERATE_DESCRIPTION')?></div>
-		<div data-role="error-container" class="error-wrapper" data-autoclear="yes"></div>
-		<div>
-			<input type="button" data-role="regenerate-codes" value="<?=GetMessage('SEC_OTP_RECOVERY_CODES_REGENERATE')?>" />
-		</div>
-	</p>
+	<div style="margin-top: 10px">
+		<input type="button" data-role="print-codes" value="<?=GetMessage('SEC_OTP_RECOVERY_CODES_PRINT')?>" />
+		<input type="button" data-role="save-codes" value="<?=GetMessage('SEC_OTP_RECOVERY_CODES_SAVE_FILE')?>" />
+	</div>
+	<p><?=GetMessage('SEC_OTP_RECOVERY_CODES_REGENERATE_DESCRIPTION')?></p>
+	<div>
+		<input type="button" data-role="regenerate-codes" value="<?=GetMessage('SEC_OTP_RECOVERY_CODES_REGENERATE')?>" />
+	</div>
 	<p>
 		* <?=GetMessage('SEC_OTP_RECOVERY_CODES_NOTE')?>
 	</p>
@@ -350,8 +373,7 @@ $jsSettings = array(
 	</tr>
 	<?if ($USER->CanDoOperation('security_edit_user_otp')):?>
 		<tr class="heading" style="display:none;" data-show-on-reinitialize="yes">
-			<td colspan="2"><?=GetMessage("SEC_OTP_INIT")?></td>
-			<input type="hidden" name="profile_module_id[]" value="security">
+			<td colspan="2"><?=GetMessage("SEC_OTP_INIT")?><input type="hidden" name="profile_module_id[]" value="security"></td>
 		</tr>
 		<tr style="display:none;" data-show-on-reinitialize="yes">
 			<td>

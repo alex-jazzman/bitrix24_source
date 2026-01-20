@@ -1,0 +1,16 @@
+.ui-side-panel-wrap-workarea {
+	background-color: unset;
+	padding: 15px 15px 20px;
+}
+
+.ui-access-rights-column {
+	min-width: 270px;
+}
+
+.ui-page-slider-wrapper-hr.--premissions {
+	overflow: visible;
+}
+
+.mail-permission-config-access-denied-slider {
+	overflow-y: auto;
+}

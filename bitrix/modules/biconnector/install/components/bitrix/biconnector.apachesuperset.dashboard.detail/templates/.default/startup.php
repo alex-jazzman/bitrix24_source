@@ -49,11 +49,13 @@ $APPLICATION->SetTitle($dashboardTitle);
 $supersetServiceLocation = $arResult['SUPERSET_SERVICE_LOCATION'];
 if ($supersetServiceLocation === ServiceLocation::DATACENTER_LOCATION_REGION_EN)
 {
-	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-en.svg';
+	$portalLogo = $templateFolder . '/images/portal-logo-en.svg';
+	$biBuilderLogo = $templateFolder . '/images/bibuilder-logo-en.svg';
 }
 else
 {
-	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-ru.svg';
+	$portalLogo = $templateFolder . '/images/portal-logo-ru.svg';
+	$biBuilderLogo = $templateFolder . '/images/bibuilder-logo-ru.svg';
 }
 
 $templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/template.php');
@@ -63,10 +65,6 @@ $templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateF
 	.dashboard-header {
 		--forward-icon: url("<?= $templateFolder . '/images/forward.svg' ?>");
 		--more-icon: url("<?= $templateFolder . '/images/more.svg' ?>");
-	}
-
-	.dashboard-header-logo-svg-url {
-		background-image: url("<?= $biBuilderLogo ?>");
 	}
 
 	.icon-forward i {
@@ -82,15 +80,25 @@ $templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateF
 	<div class="dashboard-header">
 		<div class="dashboard-header-title-section">
 			<div class="dashboard-header-logo">
-				<div class="dashboard-header-logo-svg dashboard-header-logo-svg-url"></div>
+				<a style="height: 22px; cursor: pointer;" href="/bi/dashboard/"><img src="<?= $portalLogo ?>" alt=""></a>
+				<img src="<?= $biBuilderLogo ?>" alt="">
 			</div>
 			<div class="dashboard-header-selector-text"><?= $dashboardTitle ?></div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" disabled="disabled" class="ui-btn ui-btn-primary ui-btn-round" disabled><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
-			<button id="download-btn" disabled="disabled" class="ui-btn ui-btn-primary ui-btn-round" disabled><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
-			<button id="share-btn" disabled="disabled" class="ui-btn ui-btn-primary ui-btn-round" disabled><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?></button>
-			<div id="more-btn" disabled="disabled" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more disabled"><i></i></div>
+			<button id="edit-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps --with-left-icon dashboard-header-buttons-edit">
+				<div class="ui-icon-set --edit-l"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?>
+			</button>
+			<button id="download-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download">
+				<div class="ui-icon-set --o-download"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?>
+			</button>
+			<button id="share-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share">
+				<div class="ui-icon-set --o-forward"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?>
+			</button>
+			<div id="more-btn" disabled="disabled" class="ui-icon-set --more-l dashboard-header-buttons-more disabled"></div>
 		</div>
 	</div>
 	<div class='biconnector-dashboard__loader'></div>

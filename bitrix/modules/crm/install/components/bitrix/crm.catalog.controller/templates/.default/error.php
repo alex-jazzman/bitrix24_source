@@ -1,14 +1,18 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-/** @var \CBitrixComponentTemplate $this  */
-/** @var \CrmCatalogControllerComponent $component */
+use Bitrix\Main\Localization\Loc;
+
+/**
+ * @var \CBitrixComponentTemplate $this
+ * @var \CrmCatalogControllerComponent $component
+ * @global \Cmain $APPLICATION
+ * @var array $arResult
+ */
 
 if (!$arResult['IS_SIDE_PANEL'])
 {

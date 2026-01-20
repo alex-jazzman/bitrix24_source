@@ -1,5 +1,5 @@
-import { EventEmitter } from 'main.core.events';
-import { reactionType as Reaction } from 'ui.reactions-select';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { ReactionName } from 'ui.reaction.item';
 
 import { DialogScrollThreshold, EventType, ActionByRole } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -13,8 +13,6 @@ import './list.css';
 import type { JsonObject } from 'main.core';
 import type { ImModelReactions, ImModelMessage, ImModelChat } from 'im.v2.model';
 
-type ReactionType = $Values<typeof Reaction>;
-
 // @vue/component
 export const ReactionList = {
 	name: 'ReactionList',
@@ -25,20 +23,15 @@ export const ReactionList = {
 			type: [String, Number],
 			required: true,
 		},
-		contextDialogId: {
-			type: String,
-			required: true,
-		},
 	},
 	data(): JsonObject
 	{
 		return {
-			mounted: false,
+			reactionsToAnimate: new Set(),
 		};
 	},
 	computed:
 	{
-		Reaction: () => Reaction,
 		message(): ImModelMessage
 		{
 			return this.$store.getters['messages/getById'](this.messageId);
@@ -51,15 +44,22 @@ export const ReactionList = {
 		{
 			return this.$store.getters['messages/reactions/getByMessageId'](this.messageId);
 		},
-		reactionCounters(): {[ReactionType]: number}
+		reactionCounters(): {[string]: number}
 		{
 			return this.reactionsData?.reactionCounters ?? {};
 		},
-		ownReactions(): Set<ReactionType>
+		ownReactions(): Set<string>
 		{
 			return this.reactionsData?.ownReactions ?? new Set();
 		},
-		showReactionsContainer(): boolean
+		reactionListToShow(): string[]
+		{
+			return Object.keys(ReactionName)
+				.filter((reaction) => {
+					return Boolean(this.reactionCounters[reaction]);
+				});
+		},
+		needToShowReactionsContainer(): boolean
 		{
 			return Object.keys(this.reactionCounters).length > 0;
 		},
@@ -74,7 +74,20 @@ export const ReactionList = {
 	},
 	watch:
 	{
-		showReactionsContainer(newValue, oldValue)
+		reactionCounters(newCounters: {[string]: number}, oldCounters: {[string]: number})
+		{
+			const newReactions = Object.keys(newCounters);
+			const oldReactions = Object.keys(oldCounters);
+
+			for (const reaction of newReactions)
+			{
+				if (!oldReactions.includes(reaction))
+				{
+					this.reactionsToAnimate.add(reaction);
+				}
+			}
+		},
+		needToShowReactionsContainer(newValue, oldValue)
 		{
 			if (!oldValue && newValue)
 			{
@@ -88,11 +101,17 @@ export const ReactionList = {
 	},
 	mounted()
 	{
-		this.mounted = true;
+		const MAX_LISTENERS = 500;
+		this.getEmitter().setMaxListeners(EventType.reaction.onReactionSelected, MAX_LISTENERS);
+		this.getEmitter().subscribe(EventType.reaction.onReactionSelected, this.onPickerReactionSelected);
+	},
+	beforeUnmount()
+	{
+		this.getEmitter().unsubscribe(EventType.reaction.onReactionSelected, this.onPickerReactionSelected);
 	},
 	methods:
 	{
-		onReactionSelect(reaction: ReactionType, event: {animateItemFunction: () => void})
+		onReactionClick(reaction: string)
 		{
 			const permissionManager = PermissionManager.getInstance();
 			if (!permissionManager.canPerformActionByRole(ActionByRole.setReaction, this.dialog.dialogId))
@@ -100,18 +119,27 @@ export const ReactionList = {
 				return;
 			}
 
-			const { animateItemFunction } = event;
-			if (this.ownReactions?.has(reaction))
+			if (this.ownReactions.has(reaction))
 			{
 				this.getReactionService().removeReaction(this.messageId, reaction);
 
 				return;
 			}
 
+			this.reactionsToAnimate.add(reaction);
 			this.getReactionService().setReaction(this.messageId, reaction);
-			animateItemFunction();
 		},
-		getReactionUsers(reaction: ReactionType): number[]
+		async onPickerReactionSelected(event: BaseEvent<{ messageId: number, reaction: string }>)
+		{
+			const { messageId, reaction } = event.getData();
+			if (this.messageId !== messageId)
+			{
+				return;
+			}
+
+			this.onReactionClick(reaction);
+		},
+		getReactionUsers(reaction: string): number[]
 		{
 			const users = this.reactionsData.reactionUsers[reaction];
 			if (!users)
@@ -130,24 +158,26 @@ export const ReactionList = {
 
 			return this.reactionService;
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 	},
 	template: `
-		<div v-if="showReactionsContainer" class="bx-im-reaction-list__container bx-im-reaction-list__scope">
-			<template v-for="reactionType in Reaction">
-				<ReactionItem
-					v-if="reactionCounters[reactionType] > 0"
-					:key="reactionType + messageId"
-					:messageId="messageId"
-					:type="reactionType"
-					:counter="reactionCounters[reactionType]"
-					:users="getReactionUsers(reactionType)"
-					:selected="ownReactions.has(reactionType)"
-					:animate="mounted"
-					:showAvatars="showAvatars"
-					:contextDialogId="contextDialogId"
-					@click="onReactionSelect(reactionType, $event)"
-				/>
-			</template>
+		<div v-if="needToShowReactionsContainer" class="bx-im-reaction-list__container bx-im-reaction-list__scope">
+			<ReactionItem
+				v-for="reactionType in reactionListToShow"
+				:key="reactionType + messageId"
+				:messageId="messageId"
+				:type="reactionType"
+				:counter="reactionCounters[reactionType]"
+				:users="getReactionUsers(reactionType)"
+				:selected="ownReactions.has(reactionType)"
+				:animate="reactionsToAnimate.has(reactionType)"
+				:showAvatars="showAvatars"
+				@click="onReactionClick(reactionType)"
+				@animationFinish="reactionsToAnimate.delete(reactionType)"
+			/>
 		</div>
 	`,
 };

@@ -42,7 +42,7 @@ if ($arParams['TYPE'] === 'list')
 	}
 	Asset::getInstance()->addString("
 		<script>
-			BX.SidePanel.Instance.bindAnchors({
+			BX.SidePanel.Instance.bindAnchors(top.BX.clone({
 				rules: [
 					{
 						condition: [
@@ -55,7 +55,7 @@ if ($arParams['TYPE'] === 'list')
 						}
 					}
 				]
-			});
+			}));
 		</script>
 	");
 }

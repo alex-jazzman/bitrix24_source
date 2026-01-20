@@ -17,6 +17,9 @@ this.BX.Call = this.BX.Call || {};
 	  clickRecord: 'click_record',
 	  recordStart: 'record_start',
 	  recordStop: 'record_stop',
+	  recordPaused: 'record_paused',
+	  recordResumed: 'record_resumed',
+	  recordDelete: 'record_delete',
 	  clickAnswer: 'click_answer',
 	  clickDeny: 'click_deny',
 	  cameraOn: 'camera_on',
@@ -71,7 +74,8 @@ this.BX.Call = this.BX.Call || {};
 	  callDocs: 'call_docs',
 	  messenger: 'messenger',
 	  callsOperations: 'calls_operations',
-	  callFollowup: 'call_followup'
+	  callFollowup: 'call_followup',
+	  callRecord: 'call_record'
 	});
 	const AnalyticsType = Object.freeze({
 	  private: 'private',
@@ -283,7 +287,6 @@ this.BX.Call = this.BX.Call || {};
 
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _screenShareStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("screenShareStarted");
-	var _recordStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recordStarted");
 	var _getCallElementParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCallElementParam");
 	var _getCallTypeParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCallTypeParam");
 	class Analytics {
@@ -296,10 +299,6 @@ this.BX.Call = this.BX.Call || {};
 	    });
 	    this.copilot = new Copilot();
 	    Object.defineProperty(this, _screenShareStarted, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _recordStarted, {
 	      writable: true,
 	      value: false
 	    });
@@ -542,9 +541,6 @@ this.BX.Call = this.BX.Call || {};
 	    });
 	  }
 	  onRecordBtnClick(params) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _recordStarted)[_recordStarted]) {
-	      return;
-	    }
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
@@ -556,25 +552,50 @@ this.BX.Call = this.BX.Call || {};
 	    });
 	  }
 	  onRecordStart(params) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _recordStarted)[_recordStarted]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _recordStarted)[_recordStarted] = true;
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
 	      event: AnalyticsEvent.recordStart,
 	      type: params.callType,
 	      c_section: AnalyticsSection.callWindow,
-	      status: AnalyticsStatus.success,
+	      status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
+	      p1: `recordType_${params.recordType}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onRecordPaused(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.recordPaused,
+	      type: params.callType,
+	      c_section: AnalyticsSection.callWindow,
+	      status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onRecordResumed(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.recordResumed,
+	      type: params.callType,
+	      c_section: AnalyticsSection.callWindow,
+	      status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onRecordDelete(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.recordDelete,
+	      type: params.callType,
+	      status: params.errorCode ? `error_${params.errorCode}` : AnalyticsStatus.success,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
 	  onRecordStop(params) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _recordStarted)[_recordStarted]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _recordStarted)[_recordStarted] = false;
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
@@ -584,6 +605,15 @@ this.BX.Call = this.BX.Call || {};
 	      c_sub_section: params.subSection,
 	      c_element: params.element,
 	      p1: `recordLength_${params == null ? void 0 : params.recordTime}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onCloudRecordPopupShow(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callRecord,
+	      event: AnalyticsEvent.viewPopup,
+	      type: params.popupType,
 	      p5: `callId_${params.callId}`
 	    });
 	  }

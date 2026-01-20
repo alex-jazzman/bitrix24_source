@@ -1,0 +1,20 @@
+.booking-confirm-page__booking-detail_resource-info {
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2px;
+	display: inline-flex;
+}
+
+.booking-confirm-page__booking-detail_resource-name {
+	align-self: stretch;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page__booking-detail_resource-title {
+	align-self: stretch;
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-xs);
+}

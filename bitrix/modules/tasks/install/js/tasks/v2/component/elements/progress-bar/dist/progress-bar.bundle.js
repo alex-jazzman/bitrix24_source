@@ -64,7 +64,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div class="progress-bar-container" :style="containerStyle">
-			<div class="progress-bar" :style="progressStyle"></div>
+			<div class="progress-bar" :style="progressStyle"/>
 		</div>
 	`
 	};

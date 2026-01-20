@@ -1,5 +1,5 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,ui_bbcode_astProcessor,main_core,ui_bbcode_encoder,ui_linkify,ui_bbcode_model) {
+(function (exports,ui_bbcode_astProcessor,ui_bbcode_encoder,ui_linkify,ui_bbcode_model,main_core) {
 	'use strict';

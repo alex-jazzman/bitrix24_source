@@ -16,7 +16,7 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/lib/welcome-scr
 			this.welcomeScreen = WelcomeScreen.create()
 				.setUpperText(Loc.getMessage('IMMOBILE_RECENT_SERVICE_EMPTY_STATE_TASK_TITLE'))
 				.setLowerText(Loc.getMessage('IMMOBILE_RECENT_SERVICE_EMPTY_STATE_TASK_TEXT'))
-				.setIconName('ws_employees') // TODO: task-tab add empty state button
+				.setIconName('ws_chat_tasks')
 			;
 		}
 

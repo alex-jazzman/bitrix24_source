@@ -1,33 +1,27 @@
-import { Model } from 'tasks.v2.const';
+import { Core } from 'tasks.v2.core';
+import { Participants } from 'tasks.v2.component.elements.participants';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { UserModel } from 'tasks.v2.model.users';
-import { ParticipantList } from 'tasks.v2.component.elements.participant-list';
 
 import { auditorsMeta } from './auditors-meta';
-import { AuditorsMixin } from './auditors-mixin';
 
 // @vue/component
 export const Auditors = {
 	name: 'TaskAuditors',
 	components: {
-		ParticipantList,
+		Participants,
 	},
-	mixins: [AuditorsMixin],
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+	},
+	setup(): { task: TaskModel }
+	{
+		return {
+			auditorsMeta,
+		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		users(): UserModel[]
-		{
-			return this.$store.getters[`${Model.Users}/getByIds`](this.task.auditorsIds);
-		},
 		dataset(): Object
 		{
 			return {
@@ -36,13 +30,32 @@ export const Auditors = {
 				'data-task-field-value': this.task.auditorsIds.join(','),
 			};
 		},
+		isLocked(): boolean
+		{
+			return !Core.getParams().restrictions.stakeholder.available;
+		},
+		featureId(): string
+		{
+			return Core.getParams().restrictions.stakeholder.featureId;
+		},
+	},
+	methods: {
+		update(auditorsIds: number[]): void
+		{
+			void taskService.update(this.taskId, { auditorsIds });
+		},
 	},
 	template: `
-		<ParticipantList
-			:taskId="taskId"
-			context="auditors"
-			:users="users"
-			:dataset="dataset"
+		<Participants
+			:taskId
+			:context="auditorsMeta.id"
+			:userIds="task.auditorsIds"
+			:canAdd="task.rights.addAuditors"
+			:canRemove="task.rights.edit"
+			:dataset
+			:isLocked
+			:featureId
+			useRemoveAll
 			@update="update"
 		/>
 	`,

@@ -28,6 +28,10 @@
 	pointer-events: none;
 }
 
+.booking-booking-intersections.--locked {
+	opacity: 0.6;
+}
+
 .booking-booking-intersections-row {
 	display: flex;
 	box-sizing: border-box;

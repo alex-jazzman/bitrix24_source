@@ -6,6 +6,7 @@ $MESS["MAIN_UI_FILTER__ADDITIONAL_FILTER_PLACEHOLDER_HOW"] = "Бұл қалай 
 $MESS["MAIN_UI_FILTER__ADDITIONAL_FILTER_PLACEHOLDER_IS_EMPTY"] = "Толтырылмады";
 $MESS["MAIN_UI_FILTER__ADD_FIELD"] = "Өрісті қосу";
 $MESS["MAIN_UI_FILTER__ADD_FILTER"] = "Сүзгіні сақтау";
+$MESS["MAIN_UI_FILTER__ADMIN_PRESET_INFO"] = "Сүзгіні Битрикс4 әкімшісі орнатқан — оны өзгерте алмайсыз";
 $MESS["MAIN_UI_FILTER__BUTTON_CANCEL"] = "Болдырмау";
 $MESS["MAIN_UI_FILTER__BUTTON_SAVE"] = "Сақтау";
 $MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL_CHECKBOX"] = "Барлығы үшін";

@@ -231,7 +231,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				Notifier.notify({
 					dialogId: dialog.dialogId,
 					title: dialogTitle,
-					text: this.createMessageChatNotifyText(messageText, userName),
+					text: this.createMessageChatNotifyText(messageText, userName, params.message),
 					avatar,
 					recentConfig: params.recentConfig,
 				}).catch((error) => {

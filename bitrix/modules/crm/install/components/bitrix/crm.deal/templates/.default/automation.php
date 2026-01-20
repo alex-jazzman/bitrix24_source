@@ -55,7 +55,7 @@ else
 	<script>
 		BX.ready(function()
 		{
-			var a = document.querySelector('.crm-robot-btn');
+			var a = document.querySelector('.robot-button-container');
 			if (a && BX.SidePanel)
 			{
 				var url = a.href;

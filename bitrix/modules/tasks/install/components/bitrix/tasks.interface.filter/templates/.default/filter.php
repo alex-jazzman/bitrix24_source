@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\Filter\Theme;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
@@ -24,6 +25,12 @@ $filterComponentData = [
 if (isset($arResult['LIMIT_EXCEEDED']))
 {
 	$filterComponentData['LIMITS'] = $arResult['LIMITS'];
+}
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+if ((int)$request->get('relationToId') && empty($request->get('grid_id')))
+{
+	(new Options($filterId))->reset();
 }
 
 Toolbar::addFilter($filterComponentData);

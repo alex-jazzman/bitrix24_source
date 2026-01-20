@@ -493,7 +493,14 @@ BX.namespace('Tasks.Component');
 					this.id() + 'action',
 					node,
 					menu,
-					{angle: true, position: 'right', offsetLeft: 18, offsetTop: 0}
+					{
+						angle: true,
+						position: 'right',
+						offsetLeft: 18,
+						offsetTop: 0,
+						bindOptions: { forceBindPosition: true },
+						targetContainer: document.body,
+					},
 				);
 			},
 
@@ -547,7 +554,7 @@ BX.namespace('Tasks.Component');
 				}
 
 				BX.PopupMenu.show(
-					this.id() + 'add',
+					BX.Text.getRandom(8),
 					node,
 					menu,
 					{
@@ -555,8 +562,10 @@ BX.namespace('Tasks.Component');
 						closeByEsc: true,
 						position: 'top',
 						offsetLeft: 40,
-						offsetTop: 5
-					}
+						offsetTop: 5,
+						bindOptions: { forceBindPosition: true },
+						targetContainer: document.body,
+					},
 				);
 			},
 
@@ -589,15 +598,20 @@ BX.namespace('Tasks.Component');
 
 				this.control('uhmenu').innerHTML = html;
 
-				if(!this.instances.unHideMenu)
+				if (!this.instances.unHideMenu)
 				{
 					this.instances.unHideMenu = new BX.Tasks.Util.ScrollPanePopup({
 						scope: this.control('un-hide-menu'),
 						maxHeight: 300,
 						popupParameters: {
-							angle: true, position: 'top', offsetLeft: 40, offsetTop: 5,
-							noAllPaddings: true
-						}
+							angle: true,
+							position: 'top',
+							offsetLeft: 40,
+							offsetTop: 5,
+							noAllPaddings: true,
+							bindOptions: { forceBindPosition: true },
+							targetContainer: document.body,
+						},
 					});
 					this.instances.unHideMenu.bindDelegateControl('item', 'click', this.passCtx(this.unHideField));
 				}

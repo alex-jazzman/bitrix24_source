@@ -1,0 +1,2 @@
+<?php
+$MESS["MOBILEAPP_CALL_LIST_DEFAULT_POSITION"] = "Сотрудник";

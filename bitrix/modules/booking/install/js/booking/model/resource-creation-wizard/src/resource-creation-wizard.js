@@ -5,7 +5,7 @@ import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model, NotificationFieldsMap, ResourceEntityType } from 'booking.const';
 import { SlotRange } from 'booking.model.resources';
-import type { IntegrationCalendarType, IntegrationCalendarDataType } from 'booking.model.resources';
+import type { IntegrationCalendarType, IntegrationCalendarDataType, Skus } from 'booking.model.resources';
 
 import { getEmptyResource, getResource } from './lib';
 import type {
@@ -13,6 +13,7 @@ import type {
 	InitPayload,
 	ResourceModel,
 	AdvertisingResourceType,
+	CatalogSkuEntityOptions,
 } from './types';
 
 export class ResourceCreationWizardModel extends BuilderModel
@@ -27,8 +28,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 		return {
 			resourceId: this.getVariable('resourceId', null),
 			resourceName: '',
+			resourceAvatarFile: null,
 			resource: getEmptyResource(),
 			advertisingResourceTypes: [],
+			catalogSkuEntityOptions: {},
 			companyScheduleSlots: [],
 			fetching: false,
 			step: 1,
@@ -53,6 +56,8 @@ export class ResourceCreationWizardModel extends BuilderModel
 			resourceId: (state): ResourceModel => state.resourceId,
 			/** @function resource-creation-wizard/getResource */
 			getResource: (state): ResourceModel => state.resource,
+			/** @function resource-creation-wizard/getResourceAvatarFile */
+			getResourceAvatarFile: (state): File | null => state.resourceAvatarFile,
 			/** @function resource-creation-wizard/isSaving */
 			isSaving: (state): boolean => state.isSaving,
 			/** @function resource-creation-wizard/getCompanyScheduleSlots */
@@ -89,6 +94,8 @@ export class ResourceCreationWizardModel extends BuilderModel
 			},
 			/** @function resource-creation-wizard/isCompanyScheduleAccess */
 			isCompanyScheduleAccess: (state): boolean => state.isCompanyScheduleAccess,
+			/** @function resource-creation-wizard/showLicenseWarning */
+			showLicenseWarning: (state): boolean => state.showLicenseWarning,
 			/** @function resource-creation-wizard/companyScheduleUrl */
 			companyScheduleUrl: (state): boolean => state.companyScheduleUrl,
 			/** @function resource-creation-wizard/weekStart */
@@ -109,6 +116,9 @@ export class ResourceCreationWizardModel extends BuilderModel
 			},
 			isIntegrationCalendarEnabled: (state): boolean => {
 				return state.isIntegrationCalendarEnabled;
+			},
+			skus: (state): Skus | null => {
+				return state.resource?.skus;
 			},
 		};
 	}
@@ -204,6 +214,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 
 				commit('updateResource', patch);
 			},
+			/** @function resource-creation-wizard/setResourceAvatarFile */
+			setResourceAvatarFile({ commit }, file: File | null): void
+			{
+				commit('setResourceAvatarFile', file);
+			},
 			/** @function resource-creation-wizard/createResourceEntityCalendar */
 			createResourceEntityCalendar({ commit }): void
 			{
@@ -230,10 +245,20 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				commit('setGlobalSchedule', checked);
 			},
+			/** @function resource-creation-wizard/setCatalogSkuEntityOptions */
+			setCatalogSkuEntityOptions({ commit }, options: CatalogSkuEntityOptions): void
+			{
+				commit('setCatalogSkuEntityOptions', options);
+			},
 			/** @function resource-creation-wizard/setCompanyScheduleAccess */
 			setCompanyScheduleAccess({ commit }, isCompanyScheduleAccess: boolean): void
 			{
 				commit('setCompanyScheduleAccess', isCompanyScheduleAccess);
+			},
+			/** @function resource-creation-wizard/setLicenseWarning */
+			setLicenseWarning({ commit }, showLicenseWarning: boolean): void
+			{
+				commit('setLicenseWarning', showLicenseWarning);
 			},
 			/** @function resource-creation-wizard/setCompanyScheduleUrl */
 			setCompanyScheduleUrl({ commit }, companyScheduleUrl: string): void
@@ -285,6 +310,16 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				commit('setInvalidIntegrationCalendarUser', invalidIntegrationCalendarUser);
 			},
+			/** @function resource-creation-wizard/addSku */
+			addSku({ commit }, skuId: number): void
+			{
+				commit('addSku', skuId);
+			},
+			/** @function resource-creation-wizard/deleteSku */
+			deleteSku({ commit }, skuId: number): void
+			{
+				commit('deleteSku', skuId);
+			},
 		};
 	}
 
@@ -301,9 +336,17 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				state.resourceName = name;
 			},
+			setResourceAvatarFile(state: ResourceCreationWizardState, file: File | null): void
+			{
+				state.resourceAvatarFile = file;
+			},
 			setAdvertisingTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
 			{
 				state.advertisingResourceTypes = types;
+			},
+			setCatalogSkuEntityOptions(state, options: CatalogSkuEntityOptions): void
+			{
+				state.catalogSkuEntityOptions = options;
 			},
 			setCompanyScheduleSlots(state: ResourceCreationWizardState, slots: SlotRange[]): void
 			{
@@ -369,6 +412,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				state.isCompanyScheduleAccess = isCompanyScheduleAccess;
 			},
+			setLicenseWarning(state: ResourceCreationWizardState, showLicenseWarning: boolean): void
+			{
+				state.showLicenseWarning = showLicenseWarning;
+			},
 			setCompanyScheduleUrl(state: ResourceCreationWizardState, companyScheduleUrl: string): void
 			{
 				state.companyScheduleUrl = companyScheduleUrl;
@@ -404,6 +451,28 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setInvalidIntegrationCalendarUser(state, invalidIntegrationCalendarUser = false): void
 			{
 				state.invalidIntegrationCalendarUser = invalidIntegrationCalendarUser;
+			},
+			addSku(state, skuId: number): void
+			{
+				const existingSku = state.resource?.skus.some(
+					(sku) => sku.id === skuId,
+				);
+
+				if (!existingSku)
+				{
+					state.resource?.skus.push({
+						id: skuId,
+					});
+				}
+			},
+			deleteSku(state, skuId: number): void
+			{
+				const index = state.resource?.skus.findIndex((sku) => sku.id === skuId);
+
+				if (index !== -1)
+				{
+					state.resource?.skus.splice(index, 1);
+				}
 			},
 		};
 	}

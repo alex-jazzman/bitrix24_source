@@ -1,0 +1,31 @@
+.editor-chart-catalog-group-list {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-base-10, #dddee0) var(--ui-color-base-02);
+}
+
+.editor-chart-catalog-group-list::-webkit-scrollbar {
+	display: none;
+	width: 5px;
+	background-color: transparent;
+}
+
+.editor-chart-catalog-group-list::-webkit-scrollbar-thumb {
+	width: 5px;
+	background-color: var(--ui-color-base-10, #dddee0);
+}
+
+.editor-chart-catalog-group-list:hover::-webkit-scrollbar {
+	display: block;
+}
+
+.editor-chart-catalog-group-list.--withoutScroll {
+	height: 100%;
+	overflow: hidden;
+}

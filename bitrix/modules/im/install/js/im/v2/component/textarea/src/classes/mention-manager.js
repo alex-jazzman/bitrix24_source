@@ -3,6 +3,8 @@ import { EventEmitter } from 'main.core.events';
 import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 
+import type { ApplicationContext } from 'im.v2.const';
+
 type MentionTextToInsert = string;
 type MentionReplacementMap = {[textToReplace: string]: MentionTextToInsert};
 
@@ -21,16 +23,20 @@ export class MentionManager extends EventEmitter
 	#mentionPopupOpened: boolean = false;
 	#mentionSymbol: string = '';
 	#textarea: HTMLTextAreaElement;
+	#emitter: EventEmitter;
 
 	#mentionReplacementMap: MentionReplacementMap = {};
 
 	static eventNamespace = 'BX.Messenger.v2.Textarea.MentionManager';
 
-	constructor(textarea: HTMLTextAreaElement)
+	constructor(payload: { textareaElement: HTMLTextAreaElement, context: ApplicationContext })
 	{
 		super();
 		this.setEventNamespace(MentionManager.eventNamespace);
-		this.#textarea = textarea;
+
+		const { textareaElement, context: { emitter } } = payload;
+		this.#textarea = textareaElement;
+		this.#emitter = emitter;
 	}
 
 	// region 'popup'
@@ -162,7 +168,7 @@ export class MentionManager extends EventEmitter
 	#sendInsertMentionEvent(event)
 	{
 		event.preventDefault();
-		EventEmitter.emit(EventType.mention.selectItem);
+		this.#emitter.emit(EventType.mention.selectItem);
 		this.#sendHidePopupEvent();
 	}
 

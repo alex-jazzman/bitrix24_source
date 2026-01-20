@@ -131,7 +131,7 @@
 
 .intranet-widget-skeleton__cube {
 	position: relative;
-	width: 82px;
+	width: 100%;
 	height: 50px;
 	border-radius: 12px;
 	background: #dfe0e3;
@@ -232,7 +232,7 @@
 }
 
 .intranet-widget-skeleton-avatar__tools-label {
-	width: 82px;
+	width: 100%;
 	height: 10px;
 }
 

@@ -13,7 +13,6 @@ $APPLICATION->AddHeadString(
 	.bx-table-checklist{text-align:center;width:80%;}
 </style>
 <?
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/checklist.php");
 $checklist = new CCheckList;
 $isStarted = $checklist->started;
 if ($isStarted == true)

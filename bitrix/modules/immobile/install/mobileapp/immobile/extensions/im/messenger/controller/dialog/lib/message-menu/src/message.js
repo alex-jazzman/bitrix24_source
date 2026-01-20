@@ -19,6 +19,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 	{
 		/** @type {MessageHelper} */
 		#messageHelper;
+		/** @type {DialogHelper} */
 		#dialogHelper;
 
 		/**
@@ -53,6 +54,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			if (this.#dialogHelper.isBot && this.#isYour())
 			{
 				return false;
+			}
+
+			if (this.#isCopilot())
+			{
+				return true;
 			}
 
 			if (this.#isBot())
@@ -130,16 +136,30 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleCreate()
 		{
-			return !this.#isChannel() && !this.#isVote();
+			if (this.#isChannel())
+			{
+				return false;
+			}
+
+			return !this.#isDeleted()
+				&& !this.#isVote()
+				&& !this.#isSticker()
+				&& !this.#isDeletedSticker()
+			;
 		}
 
 		isPossibleSaveFile()
 		{
-			return this.#isWithFile() && !this.#isDeleted();
+			return this.#isWithFile() && !this.#isDeleted() && !this.#isVideoNote();
 		}
 
 		isPossibleDownloadToDevice()
 		{
+			if (this.#isVideoNote())
+			{
+				return false;
+			}
+
 			return (this.#isSingleFileMessage() && this.isPossibleSaveFile())
 				|| (this.isPossibleSaveGallery() && MobileFeature.isMultipleFilesDownloadSupported());
 		}
@@ -186,31 +206,33 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleEdit()
 		{
-			if (this.isDialogCopilot())
+			if (this.isDialogCopilot() && this.#isMessageToCopilot())
 			{
-				return this.#isYour()
-					&& !this.#isDeleted()
-					&& !this.#isSystem()
-					&& !this.#isForward()
-					&& !this.#isMessageToCopilot();
+				return false;
 			}
 
-			return this.#isYour() && !this.#isDeleted() && !this.#isSystem() && !this.#isForward() && !this.#isVote();
+			return this.#isYour()
+				&& !this.#isDeleted()
+				&& !this.#isSystem()
+				&& !this.#isForward()
+				&& !this.#isVote()
+				&& !this.#isVideoNote()
+				&& !this.#isSticker()
+				&& !this.#isDeletedSticker()
+			;
 		}
 
 		isPossibleDelete()
 		{
+			const hasPrivilegedRole = this.isAdmin() || this.isManager();
+			const canDeleteOtherMessage = ChatPermission.canDeleteOtherMessage(this.dialogModel);
+
 			if (this.#isYour())
 			{
-				return !this.#isDeleted();
+				return (hasPrivilegedRole && canDeleteOtherMessage) || !this.#isDeleted();
 			}
 
-			if (ChatPermission.canDeleteOtherMessage(this.dialogModel))
-			{
-				return !this.#isDeleted();
-			}
-
-			return false;
+			return canDeleteOtherMessage;
 		}
 
 		isPossibleSubscribe()
@@ -221,6 +243,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				&& !this.#isSystem()
 				&& !this.#isEmojiOrSmileOnly()
 				&& !this.#isVote()
+				&& !this.#isSticker()
+				&& !this.#isDeletedSticker()
 			);
 		}
 
@@ -232,6 +256,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				&& !this.#isSystem()
 				&& !this.#isEmojiOrSmileOnly()
 				&& !this.#isVote()
+				&& !this.#isSticker()
+				&& !this.#isDeletedSticker()
 			);
 		}
 
@@ -268,6 +294,29 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				&& this.#isVoteModelExist()
 				&& !this.#isEmptyVote()
 			);
+		}
+
+		isPossibleAskCopilot()
+		{
+			if (!Feature.isCopilotMentionAvailable)
+			{
+				return false;
+			}
+
+			if (!this.#dialogHelper?.isCopilotMentionSupported)
+			{
+				return false;
+			}
+
+			if (
+				this.#isSticker()
+				|| this.#isDeletedSticker()
+			)
+			{
+				return false;
+			}
+
+			return ChatPermission.canReply(this.dialogModel);
 		}
 
 		#isDeleted()
@@ -350,6 +399,21 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return this.#messageHelper.isEmptyVote;
 		}
 
+		#isVideoNote()
+		{
+			return this.#messageHelper.isVideoNote;
+		}
+
+		#isSticker()
+		{
+			return this.#messageHelper.isSticker;
+		}
+
+		#isDeletedSticker()
+		{
+			return this.#messageHelper.isDeletedSticker;
+		}
+
 		isDialogCopilot()
 		{
 			return this.dialogModel.type === DialogType.copilot;
@@ -365,6 +429,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return Boolean(this.userModel?.bot);
 		}
 
+		#isCopilot()
+		{
+			return this.#messageHelper.isCopilot;
+		}
+
 		#isMessageToCopilot()
 		{
 			return !(this.messageModel.text.includes('[USER') || this.messageModel.text.includes('[user'));
@@ -373,6 +442,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		isAdmin()
 		{
 			return this.#dialogHelper?.isCurrentUserOwner;
+		}
+
+		isManager()
+		{
+			return this.#dialogHelper?.isCurrentUserManager;
 		}
 
 		#isChannel()

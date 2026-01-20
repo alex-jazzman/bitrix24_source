@@ -17,6 +17,9 @@ this.BX.UI = this.BX.UI || {};
 
 	const Circle = (size = 18) => Line(size, size, 99);
 
+	let _2 = t => t,
+	  _t$1,
+	  _t2;
 	const map = new Map();
 	let css = null;
 	async function renderSkeleton(path, root) {
@@ -32,10 +35,11 @@ this.BX.UI = this.BX.UI || {};
 	  const shadowRoot = root.attachShadow({
 	    mode: 'open'
 	  });
+	  shadowRoot.append(main_core.Tag.render(_t$1 || (_t$1 = _2`<template>${0}</template>`), html).content);
 	  (_css = css) != null ? _css : css = (_find = [...document.styleSheets].find(({
 	    href
 	  }) => href == null ? void 0 : href.includes('ui/system/skeleton'))) == null ? void 0 : _find.href;
-	  shadowRoot.innerHTML = `${html}<link rel="stylesheet" href="${css}">`;
+	  shadowRoot.append(main_core.Tag.render(_t2 || (_t2 = _2`<link rel="stylesheet" href="${0}">`), css));
 	  return root;
 	}
 	const parse = (func, args) => func(...args.split(',').filter(it => it).map(value => value.trim() === 'null' ? null : value)).outerHTML;

@@ -1,0 +1,9 @@
+<?php
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_ADD_RESULT"] = "Add more";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_REMOVE_CONFIRM_DESCRIPTION"] = "Do you want to unmark the comment as task status summary? The comment will remain in the task.";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_REMOVE_CONFIRM_TITLE"] = "Remove result";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_REMOVE_CONFIRM_YES"] = "Remove";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_0"] = "Show #COUNT# more summary";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_1"] = "Show #COUNT# more summaries";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_2"] = "Show #COUNT# more summaries";
+$MESS["TASKS_FIELDS_RESULT_V2_AIR_TITLE"] = "Status summary";

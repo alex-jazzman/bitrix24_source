@@ -65,6 +65,11 @@ export const CopilotChat = {
 			required: false,
 			default: () => ({ value: false }),
 		},
+		articleCode: {
+			type: String,
+			required: false,
+			default: '20412666',
+		},
 		messages: Array,
 		copilotChatInstance: Object,
 		useInput: {
@@ -364,7 +369,7 @@ export const CopilotChat = {
 					v-if="isWarningMessageShown"
 					class="ai__copilot-chat_warning-message"
 				>
-					<CopilotChatWarningMessage />
+					<CopilotChatWarningMessage :article-code="articleCode" />
 				</div>
 			</footer>
 		</div>

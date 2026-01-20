@@ -99,9 +99,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  teamsInStructureAvailable: 'teamsInStructureAvailable',
 	  isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
 	  aiAssistantBotAvailable: 'aiAssistantAvailable',
+	  isCopilotMentionAvailable: 'isCopilotMentionAvailable',
 	  aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable',
 	  aiFileTranscriptionAvailable: 'aiFileTranscriptionAvailable',
-	  isTasksRecentListAvailable: 'isTasksRecentListAvailable'
+	  isTasksRecentListAvailable: 'isTasksRecentListAvailable',
+	  unreadRecentModeAvailable: 'unreadRecentModeAvailable',
+	  isCopilotReasoningAvailable: 'isCopilotReasoningAvailable',
+	  reactionsV2Available: 'isMultipleReactionsAvailable',
+	  aiAssistantMcpSelectorAvailable: 'aiAssistantMcpSelectorAvailable',
+	  mentionAllAvailable: 'mentionAllAvailable',
+	  videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
+	  stickersAvailable: 'stickersAvailable'
 	};
 	const FeatureManager = {
 	  chatHistory: ChatHistoryManager,

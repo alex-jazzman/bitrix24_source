@@ -4,4 +4,35 @@
 	gap: 6px;
 	padding: 2px;
 	line-height: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-responsible-many-aha {
+	display: grid;
+}
+
+.tasks-field-responsible-many-aha span {
+	margin-top: 12px;
+	max-width: -webkit-max-content;
+	max-width: max-content;
+	color: inherit;
+	border-bottom: 1px dashed;
+	cursor: pointer;
+}
+
+.tasks-field-responsible-many-aha span:not(:hover) {
+	opacity: 0.8;
+}
+
+.tasks-field-responsible-for-new-user-switcher {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+	align-items: center;
+	margin-top: 8px;
+	padding: 0 2px;
+}
+
+.tasks-field-responsible-for-new-user-switcher-label {
+	color: var(--ui-color-base-3);
+	cursor: pointer;
 }

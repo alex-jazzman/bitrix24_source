@@ -3,6 +3,8 @@ import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 import { SelectableViewWidget as SelectableViewWidgetComponent } from './components/selectable-view-widget';
 import type { SelectableViewWidgetOptions } from './types';
 
+import 'ui.viewer';
+
 export class SelectableViewWidget
 {
 	#app: VueCreateAppResult;

@@ -4,6 +4,15 @@
 jn.define('layout/ui/fields/file/file-preview', (require, exports, module) => {
 	/**
 	 * @function filePreview
+	 * @param {Object} file
+	 * @param {number} [index]
+	 * @param {Array} [files]
+	 * @param {Function} [onDeleteFile]
+	 * @param {boolean} [showName]
+	 * @param {number} [textLines=2]
+	 * @param {number} [leftIndent=3]
+	 * @param {Function|null} [onFilePreviewMenuClick=null]
+	 * @returns {View}
 	 */
 	const filePreview = (
 		file,
@@ -27,6 +36,7 @@ jn.define('layout/ui/fields/file/file-preview', (require, exports, module) => {
 				imageUri: file.previewUrl || file.url,
 				type: file.type,
 				name: file.name,
+				readOnly: file.readOnly || false,
 				isLoading: file.isUploading || false,
 				isShimmed: file.isShimmed || false,
 				hasError: file.hasError || false,

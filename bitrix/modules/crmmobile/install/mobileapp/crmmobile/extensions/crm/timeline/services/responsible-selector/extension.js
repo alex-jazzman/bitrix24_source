@@ -58,6 +58,7 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 					provider: {},
 					createOptions: {
 						enableCreation: true,
+						useCustomCreationElement: true,
 						closeAfterCreation: true,
 						analytics: new AnalyticsEvent().setSection('crm'),
 						getParentLayout: () => this.layout,

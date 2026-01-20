@@ -16,6 +16,7 @@ export type SliderOptions = {
 	hideControls?: boolean,
 	requestMethod?: 'get' | 'post',
 	requestParams?: JsonObject,
+	skeleton?: string,
 	loader?: string | HTMLElement,
 	contentClassName?: string,
 	containerClassName?: string,

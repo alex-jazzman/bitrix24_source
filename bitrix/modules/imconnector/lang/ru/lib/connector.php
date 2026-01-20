@@ -1,6 +1,7 @@
 <?php
 $MESS['IMCONNECTOR_NAME_CONNECTOR_LIVECHAT'] = 'Онлайн-чат';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO'] = 'WhatsApp';
+$MESS['IMCONNECTOR_NAME_CONNECTOR_WAZZUP'] = 'Wazzup WhatsApp и Telegram';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA'] = 'Edna.ru WhatsApp';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA_IO'] = 'Edna.io WhatsApp';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_AVITO'] = 'Avito';
@@ -22,6 +23,7 @@ $MESS['IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT'] = 'Instagram Direct';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT_RESTRICTION_RU'] = 'Instagram* Direct';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM'] = 'Instagram для бизнеса';
 $MESS['IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM_RESTRICTION_RU'] = 'Instagram* для бизнеса';
+$MESS['IMCONNECTOR_NAME_CONNECTOR_MAX'] = 'MAX';
 
 $MESS['IMCONNECTOR_ERROR_MAIN_MODULE_URL_SITE_USE'] = 'Доменное имя из настроек главного модуля и текущий домен различаются. Доменное имя #DOMAIN# взято для ответа сервера из настроек главного модуля. Вы можете изменить доменное имя, настроив <a href="/bitrix/admin/settings.php?lang=ru&mid=main&mid_menu=1">поле URL сайта.</a>';
 $MESS['IMCONNECTOR_ERROR_SERVER_NAME_USE'] = 'Поле URL сайта в настройках главного модуля не заполнено. Текущее доменное имя #DOMAIN# будет использовано для ответа сервера. Вы можете изменить доменное имя, настроив <a href="/bitrix/admin/settings.php?lang=ru&mid=main&mid_menu=1">поле URL сайта.</a>';

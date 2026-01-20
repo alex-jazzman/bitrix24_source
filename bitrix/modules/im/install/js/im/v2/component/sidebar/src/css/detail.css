@@ -13,3 +13,7 @@
 	height: 55px;
 	flex-shrink: 0;
 }
+
+.bx-im-sidebar-detail__container .bx-im-audio-player__timeline-container {
+	padding-left: 20px;
+}

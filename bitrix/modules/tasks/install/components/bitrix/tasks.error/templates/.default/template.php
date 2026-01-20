@@ -7,7 +7,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 use Bitrix\Main\UI\Extension;
 
-/** @var CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 /** @var array $arResult */
 
 $APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-tasks-iframe-header');

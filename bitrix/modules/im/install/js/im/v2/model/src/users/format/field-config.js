@@ -73,11 +73,6 @@ export const userFieldsConfig: FieldsConfig = [
 		checkFunction: Type.isBoolean,
 	},
 	{
-		fieldName: 'isAdmin',
-		targetFieldName: 'isAdmin',
-		checkFunction: Type.isBoolean,
-	},
-	{
 		fieldName: 'type',
 		targetFieldName: 'type',
 		checkFunction: Type.isString,
@@ -138,6 +133,16 @@ export const userFieldsConfig: FieldsConfig = [
 		targetFieldName: 'phones',
 		checkFunction: Type.isPlainObject,
 		formatFunction: preparePhones,
+	},
+	{
+		fieldName: 'email',
+		targetFieldName: 'email',
+		checkFunction: Type.isStringFilled,
+	},
+	{
+		fieldName: 'website',
+		targetFieldName: 'website',
+		checkFunction: Type.isStringFilled,
 	},
 ];
 

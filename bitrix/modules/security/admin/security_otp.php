@@ -1,4 +1,8 @@
-<?
+<?php
+
+use Bitrix\Security\Mfa\Otp;
+use Bitrix\Security\Mfa\OtpType;
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -35,6 +39,7 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 $_GET["return_url"] = $_GET["return_url"] ?? "";
 
 $returnUrl = $_GET["return_url"]? "&return_url=".urlencode($_GET["return_url"]): "";
+
 if($_SERVER["REQUEST_METHOD"] == "POST"
 	&& (isset($_REQUEST["save"]) || isset($_REQUEST["apply"]) || isset($_REQUEST["otp_siteb"]))
 	&& $canWrite
@@ -51,18 +56,21 @@ if($_SERVER["REQUEST_METHOD"] == "POST"
 
 	COption::SetOptionString("security", "otp_allow_remember", isset($_POST["otp_allow_remember"]) && $_POST["otp_allow_remember"]==="Y"? "Y": "N");
 	COption::SetOptionString("security", "otp_allow_recovery_codes", isset($_POST["otp_allow_recovery_codes"]) && $_POST["otp_allow_recovery_codes"]==="Y"? "Y": "N");
+	COption::SetOptionString("security", "otp_allow_mobile_push", isset($_POST["otp_allow_mobile_push"]) && $_POST["otp_allow_mobile_push"] === "Y"? "Y": "N");
 	COption::SetOptionString("security", "otp_log", ($_POST["otp_log"] === "Y"? "Y": "N"));
 
-	if ($_POST['otp_default_type'])
-		Bitrix\Security\Mfa\Otp::setDefaultType($_POST['otp_default_type']);
+	if (!empty($_POST['otp_default_type']) && ($defaultType = OtpType::tryFrom($_POST['otp_default_type'])))
+	{
+		Otp::setDefaultType($defaultType);
+	}
 
 	if (isset($_POST['otp_mandatory_skip_days']) && is_numeric($_POST['otp_mandatory_skip_days']))
-		Bitrix\Security\Mfa\Otp::setSkipMandatoryDays($_POST['otp_mandatory_skip_days']);
+		Otp::setSkipMandatoryDays($_POST['otp_mandatory_skip_days']);
 
-	Bitrix\Security\Mfa\Otp::setMandatoryUsing(isset($_POST['otp_mandatory_using']) && $_POST['otp_mandatory_using'] === 'Y');
+	Otp::setMandatoryUsing(isset($_POST['otp_mandatory_using']) && $_POST['otp_mandatory_using'] === 'Y');
 
 	if (isset($_POST['otp_mandatory_rights']) && is_array($_POST['otp_mandatory_rights']))
-		Bitrix\Security\Mfa\Otp::setMandatoryRights($_POST['otp_mandatory_rights']);
+		Otp::setMandatoryRights($_POST['otp_mandatory_rights']);
 
 	if(isset($_REQUEST["save"]) && $_GET["return_url"] != "")
 		LocalRedirect($_GET["return_url"]);
@@ -70,10 +78,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"
 		LocalRedirect("/bitrix/admin/security_otp.php?lang=".LANGUAGE_ID.$returnUrl."&".$tabControl->ActiveTabParam());
 }
 
-$availableTypes = \Bitrix\Security\Mfa\Otp::getAvailableTypes();
-$availableTypesDescription = \Bitrix\Security\Mfa\Otp::getTypesDescription();
-$defaultType = \Bitrix\Security\Mfa\Otp::getDefaultType();
-$targetRights = \Bitrix\Security\Mfa\Otp::getMandatoryRights();
+$availableTypesDescription = Otp::getTypesDescription();
+$defaultType = Otp::getDefaultType();
+$targetRights = Otp::getMandatoryRights();
 $access = new CAccess();
 $targetRightsNames = $access->GetNames($targetRights);
 
@@ -95,10 +102,10 @@ else
 }
 
 CAdminMessage::ShowMessage(array(
-			"MESSAGE" => $messageText,
-			"TYPE" => $messageType,
-			"HTML" => true
-		));
+	"MESSAGE" => $messageText,
+	"TYPE" => $messageType,
+	"HTML" => true
+));
 ?>
 
 <form method="POST" action="security_otp.php?lang=<?=LANGUAGE_ID?><?=htmlspecialcharsbx($returnUrl)?>" enctype="multipart/form-data" name="editform">
@@ -179,11 +186,11 @@ $tabControl->BeginNextTab();
 		</td>
 		<td>
 			<select name="otp_default_type">
-				<?foreach($availableTypes as $value):?>
-					<option value="<?=$value?>" <?=($defaultType === $value? 'selected': '')?>>
-						<?=(isset($availableTypesDescription[$value]['title'])? $availableTypesDescription[$value]['title'] : $value)?>
+				<?php foreach ($availableTypesDescription as $type => $value): ?>
+					<option value="<?= $type ?>" <?= ($defaultType->value === $type? 'selected' : '') ?>>
+						<?= ($value['title'] ?? $type) ?>
 					</option>
-				<?endforeach?>
+				<?php endforeach ?>
 			</select>
 		</td>
 	</tr>
@@ -200,7 +207,7 @@ $tabControl->BeginNextTab();
 			<?=GetMessage("SEC_OTP_ALLOW_RECOVERY_CODES")?>:
 		</td>
 		<td>
-			<input type="checkbox" name="otp_allow_recovery_codes" id="otp_allow_recovery_codes" value="Y" <?if(COption::GetOptionString("security", "otp_allow_recovery_codes") == "Y") echo "checked";?>>
+			<input type="checkbox" name="otp_allow_recovery_codes" id="otp_allow_recovery_codes" value="Y" <?if (Otp::isRecoveryCodesEnabled()) echo "checked";?>>
 		</td>
 	</tr>
 	<tr class="heading">
@@ -257,7 +264,7 @@ $tabControl->BeginNextTab();
 $tabControl->Buttons(
 	array(
 		"disabled"=>(!$canWrite),
-		"back_url"=>$_GET["return_url"]? $_GET["return_url"]: "security_otp.php?lang=".LANG,
+		"back_url"=>$_GET["return_url"] ?: "security_otp.php?lang=" . LANG,
 	)
 );
 ?>
@@ -270,4 +277,3 @@ $tabControl->End();
 		))?></script>
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>

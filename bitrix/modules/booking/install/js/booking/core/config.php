@@ -19,7 +19,6 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.vue3.vuex',
-		'booking.const',
 		'booking.model.bookings',
 		'booking.model.message-status',
 		'booking.model.clients',
@@ -34,6 +33,7 @@ return [
 		'booking.provider.pull.booking-pull-manager',
 		'booking.model.filter',
 		'booking.model.forms-menu',
+		'booking.model.sale-channels',
 	],
 	'skip_core' => false,
 	'settings' => [

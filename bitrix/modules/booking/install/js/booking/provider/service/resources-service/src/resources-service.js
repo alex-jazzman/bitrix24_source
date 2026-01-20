@@ -3,17 +3,17 @@ import type { AjaxResponse } from 'main.core';
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { ApiClient } from 'booking.lib.api-client';
-import type { ResourceModel } from 'booking.model.resources';
+import type { ResourceModelWithFile } from 'booking.model.resources';
 
 import { mapModelToDto, mapDtoToModel } from './mappers';
 
 class ResourceService
 {
-	async add(resource: ResourceModel): Promise<AjaxResponse>
+	async add(resource: ResourceModelWithFile): Promise<AjaxResponse>
 	{
 		try
 		{
-			const resourceDto = mapModelToDto(resource);
+			const resourceDto = await mapModelToDto(resource);
 			const data = await (new ApiClient()).post('Resource.add', { resource: resourceDto });
 			const createdResource = mapDtoToModel(data);
 
@@ -41,14 +41,14 @@ class ResourceService
 		}
 	}
 
-	async update(resource: ResourceModel): Promise<AjaxResponse>
+	async update(resource: ResourceModelWithFile): Promise<AjaxResponse>
 	{
 		const id = resource.id;
 		const resourceBeforeUpdate = { ...Core.getStore().getters['resources/getById'](id) };
 
 		try
 		{
-			const resourceDto = mapModelToDto(resource);
+			const resourceDto = await mapModelToDto(resource);
 			const data = await (new ApiClient()).post('Resource.update', { resource: resourceDto });
 			const updatedResource = mapDtoToModel(data);
 

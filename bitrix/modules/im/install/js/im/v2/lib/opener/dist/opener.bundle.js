@@ -98,20 +98,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    botContextService.scheduleContextRequest(preparedDialogId, context);
 	    return this.openChat(preparedDialogId);
 	  },
-	  async forwardEntityToChat(dialogId, entityConfig) {
-	    const preparedDialogId = dialogId.toString();
-	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
-	    const layoutParams = {
-	      name: im_v2_const.Layout.chat,
-	      entityId: preparedDialogId
-	    };
-	    await im_v2_lib_layout.LayoutManager.getInstance().setLayout(layoutParams);
-	    main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.forwardEntity, {
-	      dialogId,
-	      entityConfig
-	    });
-	    return Promise.resolve();
-	  },
 	  async openLines(dialogId = '') {
 	    let preparedDialogId = dialogId.toString();
 	    if (im_v2_lib_utils.Utils.dialog.isLinesExternalId(preparedDialogId)) {
@@ -263,11 +249,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  async openNavigationItem(payload) {
-	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
+	    const {
+	      id,
+	      entityId,
+	      target,
+	      asLink
+	    } = payload;
+	    const isMarketApp = im_v2_lib_navigation.NavigationManager.isMarketApp(payload);
+	    if (!asLink || isMarketApp) {
+	      await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
+	    }
 	    im_v2_lib_navigation.NavigationManager.open({
-	      id: payload.id.toString(),
-	      entityId: normalizeEntityId(payload.entityId),
-	      target: payload.target
+	      id: id.toString(),
+	      entityId: normalizeEntityId(entityId),
+	      target,
+	      asLink
 	    });
 	  },
 	  isChatOpened(dialogId) {

@@ -1,0 +1,12 @@
+.tasks-field-responsible-for-new-user-switcher {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+	align-items: center;
+	margin-top: 8px;
+	padding: 0 2px;
+}
+
+.tasks-field-responsible-for-new-user-switcher-label {
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+}

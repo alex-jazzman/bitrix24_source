@@ -292,3 +292,11 @@
 	margin: 12px 0;
 	gap: 12px;
 }
+
+.ui-hint-content {
+	margin: 7px;
+}
+
+.ui-hint-content ul {
+	opacity: 1;
+}

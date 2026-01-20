@@ -1,0 +1,31 @@
+.node-settings-variable {
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+	line-height: 20px;
+	gap: 6px;
+	margin-bottom: 12px;
+}
+
+.node-settings-variable_name {
+	color: #a56300;
+}
+
+.node-settings-variable_value {
+	color: var(--ui-color-palette-gray-90);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.node-settings-variable_name,
+.node-settings-variable_value {
+	border: 1px solid var(--ui-color-palette-gray-20);
+	border-radius: 4px;
+	padding: 0 4px 0 6px;
+	white-space: nowrap;
+}
+
+.node-settings-variable_eq {
+	color: var(--ui-color-palette-blue-60);
+	text-decoration: underline;
+}

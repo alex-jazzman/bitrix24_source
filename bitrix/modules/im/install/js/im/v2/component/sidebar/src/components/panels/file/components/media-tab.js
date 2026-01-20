@@ -14,6 +14,7 @@ import { Extension } from 'main.core';
 import '../css/media-tab.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelSidebarFileItem, ImModelChat } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -91,7 +92,7 @@ export const MediaTab = {
 		this.service = new File({ dialogId: this.dialogId });
 		this.serviceSearch = new FileSearch({ dialogId: this.dialogId });
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new FileMenu();
+		this.contextMenu = new FileMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -143,9 +144,13 @@ export const MediaTab = {
 			}
 			this.isLoading = false;
 		},
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		getEmitter(): EventEmitter
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
@@ -156,7 +161,6 @@ export const MediaTab = {
 					<MediaDetailItem
 						v-for="file in dateGroup.items"
 						:fileItem="file"
-						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

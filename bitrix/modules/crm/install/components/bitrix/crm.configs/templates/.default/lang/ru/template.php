@@ -24,7 +24,6 @@ $MESS["CRM_CONFIGS_FIELDS"] = "Пользовательские поля";
 $MESS["CRM_CONFIGS_CONFIG"] = "Прочие настройки";
 $MESS["CRM_CONFIGS_ROUND"] = "Округление";
 $MESS["CRM_CONFIGS_VOLUME"] = "Чем занято место";
-$MESS["CRM_CONFIGS_FACE_TRACER"] = "Face-трекер";
 $MESS["CRM_CONFIGS_EXCLUSION"] = "Список исключений";
 $MESS["CRM_CONFIGS_SENDSAVE"] = "Интеграция с почтой";
 $MESS["CRM_CONFIGS_MEASURE"] = "Единицы измерения";

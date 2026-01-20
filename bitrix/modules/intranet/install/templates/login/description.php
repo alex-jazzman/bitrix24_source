@@ -7,6 +7,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Main\Localization\Loc;
 
 $arTemplate = [
-	'NAME' => Loc::getMessage('TEMPLATE_NAME'),
+	'NAME' => GetMessage('TEMPLATE_NAME'),
 	'DESCRIPTION' => ''
 ];

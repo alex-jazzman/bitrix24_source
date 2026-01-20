@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var Form = /*#__PURE__*/function () {
 	  function Form(id) {
 	    var _this = this;
@@ -189,6 +189,9 @@ this.BX = this.BX || {};
 	      }
 	      result += "</div>";
 	      result = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["", ""])), result);
+	      if (section.warning) {
+	        result.appendChild(main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-alert ui-alert-warning\">", "</div>"])), main_core.Text.encode(section.warning)));
+	      }
 	      section.elements.forEach(function (element) {
 	        if (main_core.Type.isObject(element) && element.name) {
 	          var field = Form.getByName(_this3.fields, element.name);

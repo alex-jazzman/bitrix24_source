@@ -99,8 +99,6 @@ CJSCore::RegisterExt("intranet_userfield_employee", array(
 
 CJSCore::RegisterExt("sidepanel_bitrix24", ["rel" => ["intranet.sidepanel.bitrix24"]]);
 
-/*patchlimitationmutatormark1*/
-
 if(
 	(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
 	&& (

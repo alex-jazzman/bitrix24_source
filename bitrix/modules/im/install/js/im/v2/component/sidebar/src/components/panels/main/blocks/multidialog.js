@@ -1,8 +1,8 @@
-import { EventEmitter } from 'main.core.events';
-
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
 
 import '../css/multidialog.css';
+
+import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const MultidialogPreview = {
@@ -35,17 +35,21 @@ export const MultidialogPreview = {
 	},
 	methods:
 	{
-		loc(phraseCode: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
-		},
 		onOpenDetail()
 		{
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.multidialog,
 				dialogId: this.dialogId,
 				standalone: true,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `

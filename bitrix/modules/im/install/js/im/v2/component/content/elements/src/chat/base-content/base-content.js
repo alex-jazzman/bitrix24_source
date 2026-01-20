@@ -8,7 +8,6 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { ResizeManager } from 'im.v2.lib.textarea';
 import { ChatSidebar } from 'im.v2.component.sidebar';
 import { ActionByRole, Settings, UserRole, EventType, SidebarDetailBlock } from 'im.v2.const';
-import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 
 import { Height } from './const/size';
 import { ChatHeader } from '../header/chat-header';
@@ -148,8 +147,6 @@ export const BaseChatContent = {
 	{
 		this.initTextareaResizeManager();
 		this.bindEvents();
-
-		BulkActionsManager.init();
 	},
 	beforeUnmount()
 	{
@@ -196,13 +193,17 @@ export const BaseChatContent = {
 		},
 		bindEvents()
 		{
-			EventEmitter.subscribe(EventType.dialog.showLoadingBar, this.onShowLoadingBar);
-			EventEmitter.subscribe(EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
+			this.getEmitter().subscribe(EventType.dialog.showLoadingBar, this.onShowLoadingBar);
+			this.getEmitter().subscribe(EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
 		},
 		unbindEvents()
 		{
-			EventEmitter.unsubscribe(EventType.dialog.showLoadingBar, this.onShowLoadingBar);
-			EventEmitter.unsubscribe(EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
+			this.getEmitter().unsubscribe(EventType.dialog.showLoadingBar, this.onShowLoadingBar);
+			this.getEmitter().unsubscribe(EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

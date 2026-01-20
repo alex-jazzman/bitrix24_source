@@ -18,7 +18,6 @@ jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 		const parentLayout = layout && layout !== PageManager ? layout : null;
 
 		let pageManagerHeight = 600;
-
 		if (!external)
 		{
 			const { QRCodeAuthComponent } = await requireLazy('qrauth') || {};

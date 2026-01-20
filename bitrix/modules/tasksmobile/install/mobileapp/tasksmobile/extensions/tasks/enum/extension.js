@@ -78,9 +78,11 @@ jn.define('tasks/enum', (require, exports, module) => {
 		UPDATE_RESPONSIBLE: 'updateResponsible',
 		UPDATE_ACCOMPLICES: 'updateAccomplices',
 		UPDATE_DEADLINE: 'updateDeadline',
+		UPDATE_DEADLINE_BY_MAX_CHANGES: 'updateDeadlineByMaxChanges',
 		UPDATE_PROJECT: 'updateProject',
 		EDIT_CHECKLIST: 'editChecklist',
 		CAN_CREATE: 'canCreate',
+		UPDATE_DEADLINE_BY_MAX_DATE: 'updateDeadlineByMaxDate',
 	};
 
 	const TaskField = {

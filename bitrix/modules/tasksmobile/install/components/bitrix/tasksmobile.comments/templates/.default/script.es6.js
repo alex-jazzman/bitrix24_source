@@ -19,6 +19,7 @@ export default class Comments
 		this.userId = options.userId;
 		this.taskId = options.taskId;
 		this.guid = options.guid;
+		this.shouldRenderTextField = options.shouldRenderTextField;
 
 		this.canReadCommentsOnInit = true;
 
@@ -38,6 +39,11 @@ export default class Comments
 
 	initTextField(): void
 	{
+		if (!this.shouldRenderTextField)
+		{
+			return;
+		}
+
 		if (BX.MobileUI.TextField.defaultParams)
 		{
 			window.BX.MobileUI.TextField.show();

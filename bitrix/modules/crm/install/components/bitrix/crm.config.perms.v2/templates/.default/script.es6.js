@@ -100,15 +100,28 @@ class ConfigPermsComponent
 		const loader = new BX.Loader({
 			target: document.getElementById('bx-crm-perms-config-permissions'),
 		});
+		const selectedMember = this.AccessRights.getSelectedMember();
 		this.AccessRights.destroy();
 		loader.show();
 
 		this.#runGetDataAjaxRequest(controllerData)
-			.then(({ accessRightsData, maxVisibleUserGroups, additionalSaveParams }) => {
-				this.AccessRightsOption.userGroups = accessRightsData.userGroups;
-				this.AccessRightsOption.accessRights = accessRightsData.accessRights;
-				this.AccessRightsOption.maxVisibleUserGroups = maxVisibleUserGroups;
-				this.AccessRightsOption.additionalSaveParams = additionalSaveParams;
+			.then(({
+				accessRightsData,
+				maxVisibleUserGroups,
+				additionalSaveParams,
+				userSortConfig,
+				userSortConfigName,
+			}) => {
+				this.AccessRightsOption = {
+					...this.AccessRightsOption,
+					userGroups: accessRightsData.userGroups,
+					accessRights: accessRightsData.accessRights,
+					maxVisibleUserGroups,
+					additionalSaveParams,
+					userSortConfig,
+					userSortConfigName,
+					selectedMember,
+				};
 
 				this.AccessRights = new App(this.AccessRightsOption);
 				this.AccessRights.draw();

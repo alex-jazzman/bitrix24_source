@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_popup,ui_buttons,tasks_wizard,tasks_intervalSelector,main_polyfill_intersectionobserver,pull_client,ui_entitySelector,main_core_events,main_core,ui_formElements_view,ui_lottie) {
+(function (exports,main_sidepanel,main_popup,ui_buttons,tasks_wizard,tasks_intervalSelector,main_polyfill_intersectionobserver,pull_client,ui_entitySelector,main_core_events,main_core,ui_formElements_view,ui_lottie,ui_dialogs_messagebox) {
 	'use strict';
 
 	class FormPage {
@@ -422,13 +422,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.emit('onCleanErrors');
 	  }
 	  getFields(flowData = {}) {
-	    var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _flowData$name, _babelHelpers$classPr5, _flowData$description, _babelHelpers$classPr6, _flowData$taskCreator, _flowData$plannedComp, _flowData$matchSchedu, _flowData$matchWorkTi, _babelHelpers$classPr7, _babelHelpers$classPr8;
+	    var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _ref, _flowData$name, _babelHelpers$classPr5, _ref2, _flowData$description, _babelHelpers$classPr6, _flowData$taskCreator, _flowData$plannedComp, _flowData$matchSchedu, _flowData$matchWorkTi, _babelHelpers$classPr7, _babelHelpers$classPr8;
 	    const plannedCompletionTimeValue = parseInt((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime) == null ? void 0 : _babelHelpers$classPr2.getValue(), 10);
 	    const intervalDuration = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector) == null ? void 0 : _babelHelpers$classPr3.getDuration();
 	    const interval = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector) == null ? void 0 : _babelHelpers$classPr4.getInterval();
 	    return {
-	      name: (_flowData$name = flowData.name) != null ? _flowData$name : (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowName) == null ? void 0 : _babelHelpers$classPr5.getValue().trim(),
-	      description: (_flowData$description = flowData.description) != null ? _flowData$description : (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowDescription) == null ? void 0 : _babelHelpers$classPr6.getValue(),
+	      name: (_ref = (_flowData$name = flowData.name) != null ? _flowData$name : (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowName) == null ? void 0 : _babelHelpers$classPr5.getValue().trim()) != null ? _ref : '',
+	      description: (_ref2 = (_flowData$description = flowData.description) != null ? _flowData$description : (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowDescription) == null ? void 0 : _babelHelpers$classPr6.getValue()) != null ? _ref2 : '',
 	      taskCreators: (_flowData$taskCreator = flowData.taskCreators) != null ? _flowData$taskCreator : babelHelpers.classPrivateFieldLooseBase(this, _getTasksCreatorsFromSelector)[_getTasksCreatorsFromSelector](),
 	      plannedCompletionTime: (_flowData$plannedComp = flowData.plannedCompletionTime) != null ? _flowData$plannedComp : plannedCompletionTimeValue * intervalDuration || 0,
 	      matchSchedule: (_flowData$matchSchedu = flowData.matchSchedule) != null ? _flowData$matchSchedu : babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval),
@@ -1012,7 +1012,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	function _getResponsiblesFromSelector2(selector) {
 	  if (selector != null && selector.getSelector().getDialog().isLoaded()) {
-	    return selector == null ? void 0 : selector.getSelector().getTags().map(tag => [tag.entityId, tag.id]);
+	    return selector == null ? void 0 : selector.getSelector().getTags().map(tag => [tag.entityId, String(tag.id)]);
 	  }
 	  return null;
 	}
@@ -1314,7 +1314,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      ownerId = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout$3)[_layout$3].flowOwnerSelector.getSelector().getTags()[0]) == null ? void 0 : _babelHelpers$classPr3.id;
 	    }
 	    return {
-	      ownerId: flowData.ownerId || ownerId || 0,
+	      ownerId: Number(flowData.ownerId || ownerId || 0),
 	      notifyOnQueueOverflow: (_flowData$notifyOnQue = flowData.notifyOnQueueOverflow) != null ? _flowData$notifyOnQue : babelHelpers.classPrivateFieldLooseBase(this, _getCheckerNumericValue)[_getCheckerNumericValue](babelHelpers.classPrivateFieldLooseBase(this, _layout$3)[_layout$3].notifyOnQueueOverflow),
 	      notifyOnTasksInProgressOverflow: (_flowData$notifyOnTas = flowData.notifyOnTasksInProgressOverflow) != null ? _flowData$notifyOnTas : babelHelpers.classPrivateFieldLooseBase(this, _getCheckerNumericValue)[_getCheckerNumericValue](babelHelpers.classPrivateFieldLooseBase(this, _layout$3)[_layout$3].notifyOnTasksInProgressOverflow),
 	      notifyWhenEfficiencyDecreases: (_flowData$notifyWhenE = flowData.notifyWhenEfficiencyDecreases) != null ? _flowData$notifyWhenE : babelHelpers.classPrivateFieldLooseBase(this, _getCheckerNumericValue)[_getCheckerNumericValue](babelHelpers.classPrivateFieldLooseBase(this, _layout$3)[_layout$3].notifyWhenEfficiencyDecreases)
@@ -3235,9 +3235,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _finishButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("finishButton");
 	var _saveChangesButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveChangesButton");
 	var _flow$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flow");
+	var _flowInitial = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowInitial");
 	var _flowLottieAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowLottieAnimation");
 	var _lottieIconContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lottieIconContainer");
 	var _pageChanging = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pageChanging");
+	var _isCloseConfirmed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCloseConfirmed");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _renderHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHeader");
 	var _renderWizard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderWizard");
@@ -3245,6 +3247,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _getFinishButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFinishButton");
 	var _getSaveChangesButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSaveChangesButton");
 	var _onChangeHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChangeHandler");
+	var _onCloseHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCloseHandler");
+	var _isDataChanged = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDataChanged");
 	var _saveFlowAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveFlowAction");
 	var _showErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showErrors");
 	var _showDemoInfo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDemoInfo");
@@ -3296,6 +3300,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _saveFlowAction, {
 	      value: _saveFlowAction2
 	    });
+	    Object.defineProperty(this, _isDataChanged, {
+	      value: _isDataChanged2
+	    });
+	    Object.defineProperty(this, _onCloseHandler, {
+	      value: _onCloseHandler2
+	    });
 	    Object.defineProperty(this, _onChangeHandler, {
 	      value: _onChangeHandler2
 	    });
@@ -3345,6 +3355,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _flowInitial, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _flowLottieAnimation, {
 	      writable: true,
 	      value: null
@@ -3354,6 +3368,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _pageChanging, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isCloseConfirmed, {
 	      writable: true,
 	      value: false
 	    });
@@ -3423,6 +3441,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3] = babelHelpers.classPrivateFieldLooseBase(this, _getFlow)[_getFlow](flowData);
 	        }
 	        babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].forEach(page => page.setFlow(babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3]));
+	        babelHelpers.classPrivateFieldLooseBase(this, _flowInitial)[_flowInitial] = structuredClone(babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3]);
 	        return babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	      },
 	      width: SLIDER_WIDTH,
@@ -3434,10 +3453,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            babelHelpers.classPrivateFieldLooseBase(this, _wizard)[_wizard].initHints();
 	          });
 	        },
-	        onClose: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _wizard)[_wizard].hideHints();
-	          this.emit('afterClose');
-	        }
+	        onClose: event => babelHelpers.classPrivateFieldLooseBase(this, _onCloseHandler)[_onCloseHandler](event)
 	      }
 	    });
 	  }
@@ -3521,6 +3537,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].forEach(page => page.update());
 	  babelHelpers.classPrivateFieldLooseBase(this, _wizard)[_wizard].update();
 	}
+	function _onCloseHandler2(event) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isCloseConfirmed)[_isCloseConfirmed] || !babelHelpers.classPrivateFieldLooseBase(this, _isDataChanged)[_isDataChanged]()) {
+	    return;
+	  }
+	  event.denyAction();
+	  ui_dialogs_messagebox.MessageBox.show({
+	    useAirDesign: true,
+	    title: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_ONCLOSE_POPUP_TITLE'),
+	    message: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_ONCLOSE_POPUP_MESSAGE'),
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    okCaption: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_ONCLOSE_POPUP_OK_CAPTION'),
+	    onOk: dialog => {
+	      dialog.close();
+	      babelHelpers.classPrivateFieldLooseBase(this, _wizard)[_wizard].hideHints();
+	      this.emit('afterClose');
+	      babelHelpers.classPrivateFieldLooseBase(this, _isCloseConfirmed)[_isCloseConfirmed] = true;
+	      this.slider.close();
+	    }
+	  });
+	}
+	function _isDataChanged2() {
+	  return JSON.stringify(babelHelpers.classPrivateFieldLooseBase(this, _getFlow)[_getFlow]()) !== JSON.stringify(babelHelpers.classPrivateFieldLooseBase(this, _flowInitial)[_flowInitial]);
+	}
 	function _saveFlowAction2() {
 	  var _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasIncorrectData)[_hasIncorrectData]()) {
@@ -3547,6 +3586,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    if (response.status === 'success') {
 	      const flowData = response.data;
 	      this.emit('afterSave', flowData);
+	      babelHelpers.classPrivateFieldLooseBase(this, _isCloseConfirmed)[_isCloseConfirmed] = true;
 	      this.slider.close(false, () => {
 	        if (flowData.trialFeatureEnabled) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _showDemoInfo)[_showDemoInfo]();
@@ -3732,5 +3772,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.EditForm = EditForm;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Main,BX.UI,BX.Tasks,BX.Tasks,BX,BX,BX.UI.EntitySelector,BX.Event,BX,BX.UI.FormElements,BX.UI));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.SidePanel,BX.Main,BX.UI,BX.Tasks,BX.Tasks,BX,BX,BX.UI.EntitySelector,BX.Event,BX,BX.UI.FormElements,BX.UI,BX.UI.Dialogs));
 //# sourceMappingURL=edit-form.bundle.js.map

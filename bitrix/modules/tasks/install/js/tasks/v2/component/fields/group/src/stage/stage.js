@@ -1,17 +1,15 @@
-import { Tag } from 'main.core';
-import { hint, type HintParams } from 'ui.vue3.directives.hint';
-import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { CRM, Outline } from 'ui.icon-set.api.core';
+import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.system.menu.vue';
+import { BLine } from 'ui.system.skeleton.vue';
+import { Icon } from 'ui.icon-set.api.core';
+import { BIcon, CRM, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.crm';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
-import { Loader } from 'tasks.v2.component.elements.user-custom-tag-selector';
-import { tooltip } from 'tasks.v2.component.elements.hint';
 import { Color } from 'tasks.v2.lib.color';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { ScrumManager } from 'tasks.v2.lib.scrum-manager';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { StageModel } from 'tasks.v2.model.stages';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -22,17 +20,15 @@ import './stage.css';
 export const Stage = {
 	components: {
 		BIcon,
-		Loader,
 		BMenu,
+		BLine,
 	},
-	directives: { hint },
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+		isEdit: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			Outline,
@@ -45,14 +41,6 @@ export const Stage = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
-		},
 		group(): GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
@@ -61,9 +49,13 @@ export const Stage = {
 		{
 			return this.task.groupId;
 		},
+		stageId(): number
+		{
+			return this.task.stageId;
+		},
 		stage(): StageModel
 		{
-			return this.$store.getters[`${Model.Stages}/getById`](this.task.stageId) ?? null;
+			return this.$store.getters[`${Model.Stages}/getById`](this.stageId) ?? null;
 		},
 		menuOptions(): Function
 		{
@@ -71,6 +63,7 @@ export const Stage = {
 				id: 'tasks-field-group-stage-menu',
 				bindElement: this.$refs.stage,
 				offsetTop: 8,
+				maxWidth: 500,
 				items: this.menuItems,
 				maxHeight: window.innerHeight / 2,
 				targetContainer: document.body,
@@ -78,7 +71,9 @@ export const Stage = {
 		},
 		menuItems(): MenuItemOptions[]
 		{
-			const stages = this.$store.getters[`${Model.Stages}/getByIds`](this.group.stagesIds ?? []);
+			const stages = this.$store.getters[`${Model.Stages}/getByIds`](this.group.stagesIds ?? [])
+				.sort(({ sort: a }, { sort: b }) => a - b)
+			;
 
 			return stages?.map((stage: StageModel): MenuItemOptions => ({
 				title: stage.title,
@@ -86,10 +81,6 @@ export const Stage = {
 				isSelected: stage.id === this.stage.id,
 				onClick: () => this.setStage(stage.id),
 			}));
-		},
-		stageColor(): string
-		{
-			return `#${this.stage.color}`;
 		},
 		backgroundColor(): string
 		{
@@ -99,18 +90,9 @@ export const Stage = {
 		{
 			return new Color(this.stage.color).isDark();
 		},
-		tooltip(): Function
-		{
-			return (): HintParams => tooltip({
-				text: this.loc('TASKS_V2_GROUP_STAGE_HINT'),
-				popupOptions: {
-					offsetLeft: this.$refs.stage.offsetWidth / 2,
-				},
-			});
-		},
 		readonly(): boolean
 		{
-			return !this.task.rights.edit;
+			return !this.task.rights.sort;
 		},
 	},
 	watch: {
@@ -126,9 +108,7 @@ export const Stage = {
 	methods: {
 		getStageSvg(color: string): SVGElement
 		{
-			return Tag.render`
-				<div class="ui-icon-set --${CRM.STAGE}" style="--ui-icon-set__icon-color: ${color}"></div>
-			`;
+			return new Icon({ icon: CRM.STAGE, color }).render();
 		},
 		async handleClick(): Promise<void>
 		{
@@ -144,12 +124,35 @@ export const Stage = {
 
 			this.isMenuShown = true;
 		},
-		setStage(stageId: number): void
+		async setStage(stageId: number): Promise<void>
 		{
-			void taskService.update(
-				this.taskId,
-				{ stageId },
-			);
+			const scrumManager = new ScrumManager({
+				taskId: this.task.id,
+				parentId: this.task.parentId,
+				groupId: this.task.groupId,
+			});
+
+			let canMove = true;
+			if (scrumManager.isScrum(this.group?.type))
+			{
+				const stage: StageModel = await this.$store.getters[`${Model.Stages}/getById`](stageId) ?? null;
+				if (stage.systemType === 'FINISH')
+				{
+					canMove = await scrumManager.handleDodDisplay();
+				}
+			}
+
+			if (!canMove)
+			{
+				return;
+			}
+
+			await taskService.setStage(this.taskId, stageId);
+
+			if (scrumManager.isScrum(this.group?.type))
+			{
+				void scrumManager?.handleParentState();
+			}
 		},
 		async loadStagesForCreation(): Promise<void>
 		{
@@ -159,26 +162,21 @@ export const Stage = {
 			}
 
 			await groupService.getStages(this.groupId);
-
-			if (!this.task.stageId)
-			{
-				this.setStage(this.group.stagesIds[0]);
-			}
 		},
 	},
 	template: `
 		<div
-			v-if="stage"
-			v-hint="tooltip"
+			v-if="stage?.id"
 			class="tasks-field-group-stage"
 			:class="{ '--dark': isDarkColor, '--readonly': readonly }"
 			:style="{
-				'--stage-color': stageColor,
+				'--stage-color': '#' + stage.color,
 				'--stage-background': backgroundColor,
 			}"
+			:title="stage?.title"
 			:data-task-id="taskId"
 			:data-task-field-id="'stageId'"
-			:data-task-field-value="task.stageId"
+			:data-task-field-value="stageId"
 			:data-task-stage-title="stage?.title"
 			ref="stage"
 			@click="handleClick"
@@ -186,11 +184,11 @@ export const Stage = {
 			<div class="tasks-field-group-stage-text-container">
 				<div class="tasks-field-group-stage-text">{{ stage.title }}</div>
 			</div>
-			<div class="tasks-field-group-stage-arrow"></div>
+			<div class="tasks-field-group-stage-arrow"/>
 			<BIcon v-if="!readonly" :name="Outline.CHEVRON_DOWN_S"/>
 		</div>
 		<div v-else class="tasks-field-group-stage-loader">
-			<Loader/>
+			<BLine :width="80" :height="10"/>
 		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
 	`,

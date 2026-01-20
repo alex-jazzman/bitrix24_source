@@ -1,0 +1,7 @@
+<?php
+$MESS['REST_V3_REALISATION_CONTROLLER_SCOPE_LIST_ACTION_TITLE'] = 'List метод для scope';
+$MESS['REST_V3_REALISATION_CONTROLLER_SCOPE_LIST_ACTION_DESCRIPTION'] = 'Метод для получения всех доступных scope приложения';
+$MESS['REST_V3_REALISATION_CONTROLLER_SCOPE_ALL_CONTROLLER_METHODS_TITLE'] = 'Все методы контроллера';
+$MESS['REST_V3_REALISATION_CONTROLLER_SCOPE_ALL_CONTROLLER_METHODS_DESCRIPTION'] = 'Все доступные методы, которые указаны в данном контроллере';
+$MESS['REST_V3_REALISATION_CONTROLLER_SCOPE_ALL_MODULE_METHODS_TITLE'] = 'Все методы модуля';
+$MESS['REST_V3_REALISATION_CONTROLLER_SCOPE_ALL_MODULE_METHODS_DESCRIPTION'] = 'Все доступные методы во всех контроллерах данного модуля';

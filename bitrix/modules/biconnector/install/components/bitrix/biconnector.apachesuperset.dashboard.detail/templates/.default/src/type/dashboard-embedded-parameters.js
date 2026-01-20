@@ -1,3 +1,5 @@
+import { FilterOptions } from './filter-options';
+
 export type DashboardEmbeddedParameters = {
 	uuid: string,
 	id: number,
@@ -14,4 +16,5 @@ export type DashboardEmbeddedParameters = {
 	canEdit: boolean,
 	canExport: boolean,
 	isUseExternalDatasets: boolean,
+	filters: FilterOptions,
 }

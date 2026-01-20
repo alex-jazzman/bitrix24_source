@@ -6,10 +6,11 @@
  * @module im/messenger/provider/services/message/reaction
  */
 jn.define('im/messenger/provider/services/message/reaction', (require, exports, module) => {
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, ErrorType } = require('im/messenger/const');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { runAction } = require('im/messenger/lib/rest');
 
@@ -25,25 +26,34 @@ jn.define('im/messenger/provider/services/message/reaction', (require, exports, 
 			this.chatId = chatId;
 		}
 
-		set(reaction, messageId)
+		/**
+		 * @param {string} reaction
+		 * @param {number} messageId
+		 * @param {object} options
+		 * @param {boolean} options.shouldAnimated
+		 * @param {boolean} options.isUpdateUi
+		 */
+		set(reaction, messageId, options)
 		{
 			const reactions = this.store.getters['messagesModel/reactionsModel/getByMessageId'](messageId);
 
 			if (reactions && reactions.ownReactions.has(reaction))
 			{
-				this.remove(reaction, messageId);
+				this.remove(reaction, messageId, options);
 			}
 			else
 			{
-				this.add(reaction, messageId);
+				this.add(reaction, messageId, options);
 			}
 		}
 
 		/**
 		 * @param {ReactionType} reaction
-		 * @param messageId
+		 * @param {number} messageId
+		 * @param {boolean} shouldAnimated
+		 * @param {boolean} isUpdateUi
 		 */
-		add(reaction, messageId)
+		add(reaction, messageId, { shouldAnimated = false, isUpdateUi = false })
 		{
 			Logger.warn('ReactionService: add', reaction, messageId);
 
@@ -54,7 +64,26 @@ jn.define('im/messenger/provider/services/message/reaction', (require, exports, 
 				userId: MessengerParams.getUserId(),
 			};
 
-			this.store.dispatch('messagesModel/reactionsModel/setReaction', storeParams);
+			if (shouldAnimated)
+			{
+				this.store.dispatch('messagesModel/reactionsModel/setReaction', storeParams);
+
+				this.store.dispatch('messagesModel/updateReactionState', {
+					id: messageId,
+					fields: {
+						reactionsViewed: false,
+						lastReactionId: reaction,
+					},
+				});
+			}
+			else if (isUpdateUi)
+			{
+				this.store.dispatch('messagesModel/reactionsModel/setReaction', storeParams);
+			}
+			else
+			{
+				this.store.dispatch('messagesModel/reactionsModel/setReactionSilent', storeParams);
+			}
 
 			const queryParams = {
 				messageId,
@@ -65,11 +94,23 @@ jn.define('im/messenger/provider/services/message/reaction', (require, exports, 
 			runAction(RestMethod.imV2ChatMessageReactionAdd, { data: queryParams }).catch((errors) => {
 				Logger.error('ReactionService.add error:', errors);
 
+				const isAlreadySetError = Type.isArrayFilled(errors)
+					&& errors.some((error) => error.code === ErrorType.reaction.reactionAlreadySet);
+				if (isAlreadySetError)
+				{
+					return;
+				}
+
 				this.store.dispatch('messagesModel/reactionsModel/removeReaction', storeParams);
 			});
 		}
 
-		remove(reaction, messageId)
+		/**
+		 * @param {ReactionType} reaction
+		 * @param {number} messageId
+		 * @param {boolean} isUpdateUi
+		 */
+		remove(reaction, messageId, { isUpdateUi = false })
 		{
 			Logger.warn('ReactionService: remove', reaction, messageId);
 
@@ -80,7 +121,8 @@ jn.define('im/messenger/provider/services/message/reaction', (require, exports, 
 				userId: MessengerParams.getUserId(),
 			};
 
-			this.store.dispatch('messagesModel/reactionsModel/removeReaction', storeParams);
+			const modelAction = isUpdateUi ? 'messagesModel/reactionsModel/removeReaction' : 'messagesModel/reactionsModel/removeReactionSilent';
+			this.store.dispatch(modelAction, storeParams);
 
 			const queryParams = {
 				reaction,
@@ -91,7 +133,14 @@ jn.define('im/messenger/provider/services/message/reaction', (require, exports, 
 			runAction(RestMethod.imV2ChatMessageReactionDelete, { data: queryParams }).catch((errors) => {
 				Logger.error('ReactionService.remove error:', errors);
 
-				this.store.dispatch('messagesModel/reactionsModel/setReaction', storeParams);
+				const isNotFoundError = Type.isArrayFilled(errors)
+					&& errors.some((error) => error.code === ErrorType.reaction.reactionNotFound);
+				if (isNotFoundError)
+				{
+					return;
+				}
+
+				this.store.dispatch('messagesModel/reactionsModel/removeReaction', storeParams);
 			});
 		}
 	}

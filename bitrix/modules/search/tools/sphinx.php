@@ -6,24 +6,24 @@ class CSearchSphinx extends CSearchFullText
 	public $arForumTopics = [];
 	public $db = false;
 	private static $fields = [
-		'title' => 'field',
-		'body' => 'field',
-		'module_id' => 'uint',
-		'module' => 'string',
-		'item_id' => 'uint',
-		'item' => 'string',
-		'param1_id' => 'uint',
-		'param1' => 'string',
-		'param2_id' => 'uint',
-		'param2' => 'string',
-		'date_change' => 'timestamp',
-		'date_from' => 'timestamp',
-		'date_to' => 'timestamp',
-		'custom_rank' => 'uint',
-		'tags' => 'mva',
-		'right' => 'mva',
-		'site' => 'mva',
-		'param' => 'mva',
+		'title' => ['field'],
+		'body' => ['field'],
+		'module_id' => ['uint'],
+		'module' => ['string'],
+		'item_id' => ['uint'],
+		'item' => ['string'],
+		'param1_id' => ['uint'],
+		'param1' => ['string'],
+		'param2_id' => ['uint'],
+		'param2' => ['string'],
+		'date_change' => ['uint','timestamp'],
+		'date_from' => ['uint','timestamp'],
+		'date_to' => ['uint','timestamp'],
+		'custom_rank' => ['uint'],
+		'tags' => ['uint_set','mva'],
+		'right' => ['uint_set','mva'],
+		'site' => ['uint_set','mva'],
+		'param' => ['uint_set','mva'],
 	];
 	private static $typesMap = [
 		'timestamp' => 'rt_attr_timestamp',
@@ -136,11 +136,11 @@ class CSearchSphinx extends CSearchFullText
 			}
 
 			$missed = [];
-			foreach (self::$fields as $name => $type)
+			foreach (self::$fields as $name => $types)
 			{
-				if (!isset($indexColumns[$name]) || $indexColumns[$name] !== $type)
+				if (!isset($indexColumns[$name]) || !in_array($indexColumns[$name], $types, true))
 				{
-					$missed[] = self::$typesMap[$type] . ' = ' . $name;
+					$missed[] = self::$typesMap[$types[0]] . ' = ' . $name;
 				}
 			}
 
@@ -1385,7 +1385,7 @@ class CSearchSphinxFormatter extends CSearchFormatter
 			,'" . $this->sphinx->Escape($this->sphinx->indexName) . "'
 			,'" . $this->sphinx->Escape($this->sphinx->query . ' ' . $this->sphinx->tags) . "'
 			,500 as limit
-			,1 as query_mode
+			" . (version_compare($this->sphinx->db->server_info, '3.0.0') < 0 ? ',1 as query_mode' : '') . "
 		)";
 		$result = $this->sphinx->query($sql);
 

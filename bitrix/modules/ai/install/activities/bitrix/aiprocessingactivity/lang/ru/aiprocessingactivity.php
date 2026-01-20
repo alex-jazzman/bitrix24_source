@@ -1,0 +1,26 @@
+<?php
+$MESS['AI_PROCESSING_ACTIVITY_EMPTY_PROMPT'] = 'Не задан промпт для AI-обработки';
+$MESS['AI_PROCESSING_ACTIVITY_MODULE_NOT_INSTALLED'] = 'Модуль AI не установлен';
+$MESS['AI_PROCESSING_ACTIVITY_ENGINE_NOT_FOUND'] = 'Выбранная модель AI недоступна';
+$MESS['AI_PROCESSING_ACTIVITY_QUEUE_ERROR'] = 'Не удалось отправить задачу в очередь: #ERROR#';
+$MESS['AI_PROCESSING_ACTIVITY_FIELD_PROMPT_NAME'] = 'Промпт';
+$MESS['AI_PROCESSING_ACTIVITY_QUEUE_FAIL'] = 'Не удалось обработать задачу в очереди: #MESSAGE# (#CODE#)';
+$MESS['AI_PROCESSING_ACTIVITY_QUEUE_UNEXPECTED_FAIL'] = 'Не удалось обработать задачу в очереди. Что-то пошло не так';
+$MESS['AI_PROCESSING_ACTIVITY_QUEUE_UNEXPECTED_RESULT'] = 'Не удалось показать результат AI-обработки в нужном формате';
+$MESS['AI_PROCESSING_ACTIVITY_QUEUE_RESULT'] = 'Результат АI-обработки готов: #RESULT#';
+$MESS['AI_PROCESSING_ACTIVITY_FIELD_ENGINE_NAME'] = 'Модель AI';
+$MESS['AI_PROCESSING_ACTIVITY_EMPTY_ENGINE'] = 'Модель AI не выбрана';
+$MESS['AI_PROCESSING_ACTIVITY_FIELD_RETURN_TYPE'] = 'Формат ответа';
+$MESS['AI_PROCESSING_ACTIVITY_RETURN_TYPE_STRING'] = 'Текст';
+$MESS['AI_PROCESSING_ACTIVITY_RETURN_TYPE_JSON'] = 'Строгая схема JSON';
+$MESS['AI_PROCESSING_ACTIVITY_EMPTY_RETURN_TYPE'] = 'Не указан формат ответа';
+$MESS['AI_PROCESSING_ACTIVITY_FIELD_JSON_SCHEMA_NAME'] = 'JSON-схема результата';
+$MESS['AI_PROCESSING_ACTIVITY_FIELD_JSON_SCHEMA_DESC'] = 'Опишите ожидаемую структуру JSON. Поле обязательно, если выбран формат ответа «Строгая схема JSON»';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_REQUIRED'] = 'Не указана JSON-схема для выбранного формата ответа';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_INVALID'] = 'Некорректная JSON-схема (ошибка синтаксиса или неподдерживаемый формат)';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_BTN'] = 'Применить шаблон';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_CONFIRM_OVERWRITE'] = 'Заменить текущую схему на шаблон?';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_VALID'] = 'Схема валидна';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_INVALID'] = 'Ошибка: невалидный JSON';
+$MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_PREVIEW_TITLE'] = 'Предпросмотр';
+$MESS['AI_PROCESSING_ACTIVITY_EXECUTION_TIMEOUT_ERROR'] = 'Превышено время ожидания ответа от AI-агента. Попробуйте позже';

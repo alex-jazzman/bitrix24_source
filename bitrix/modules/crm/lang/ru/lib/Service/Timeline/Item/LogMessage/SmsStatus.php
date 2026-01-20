@@ -11,3 +11,6 @@ $MESS['CRM_TIMELINE_LOG_TAG_SENDING_ERROR'] = 'Ошибка отправки';
 $MESS['CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_FAILURE'] = 'Сообщение в WhatsApp не доставлено';
 $MESS['CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_SUCCESS'] = 'Сообщение в WhatsApp доставлено';
 $MESS['CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_READ'] = 'Сообщение в WhatsApp прочитано';
+$MESS['CRM_TIMELINE_LOG_TELEGRAM_STATUS_TITLE_FAILURE'] = 'Сообщение в Telegram не доставлено';
+$MESS['CRM_TIMELINE_LOG_TELEGRAM_STATUS_TITLE_SUCCESS'] = 'Сообщение в Telegram доставлено';
+$MESS['CRM_TIMELINE_LOG_TELEGRAM_STATUS_TITLE_READ'] = 'Сообщение в Telegram прочитано';

@@ -32,15 +32,3 @@
 .--opponent .bx-im-message-audio__reaction-list-container {
 	justify-content: flex-start;
 }
-
-.bx-im-message-audio__container .bx-im-audio-player__container {
-	height: auto;
-}
-
-.bx-im-message-audio__container .bx-im-audio-player__timeline-container {
-	margin-top: 7px;
-}
-
-.bx-im-message-audio__container .bx-im-audio-player__track-container {
-	margin-bottom: 7px;
-}

@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","createEntityAdapter","sliceName","mailboxesListAdapter"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,iDAAiD,CAACC,EAASC,EAASC,KAC7E,MAAMC,oBAAEA,GAAwBH,EAAQ,8BAExC,MAAMI,EAAY,iBAClB,MAAMC,EAAuBF,IAE7BD,EAAOD,QAAU,CAChBG,YACAC,uBACA","ignoreList":[]}

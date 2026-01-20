@@ -2,8 +2,9 @@
  * @module im/messenger/controller/dialog/lib/assets/chat-assets
  */
 jn.define('im/messenger/controller/dialog/lib/assets/chat-assets', (require, exports, module) => {
-	const { ReactionType } = require('im/messenger/const');
-	const { ReactionAssets, headerIconsPath, defaultGroupChatAvatar } = require('im/messenger/assets/common');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
+	const { headerIconsPath, defaultGroupChatAvatar } = require('im/messenger/assets/common');
 	const { backgroundCache } = require('im/messenger/lib/background-cache');
 
 	/**
@@ -21,28 +22,27 @@ jn.define('im/messenger/controller/dialog/lib/assets/chat-assets', (require, exp
 		 */
 		preloadReactions()
 		{
-			backgroundCache.downloadImages([
-				ReactionAssets.getSvgUrl(ReactionType.like),
-				ReactionAssets.getSvgUrl(ReactionType.kiss),
-				ReactionAssets.getSvgUrl(ReactionType.cry),
-				ReactionAssets.getSvgUrl(ReactionType.laugh),
-				ReactionAssets.getSvgUrl(ReactionType.angry),
-				ReactionAssets.getSvgUrl(ReactionType.facepalm),
-				ReactionAssets.getSvgUrl(ReactionType.wonder),
-				headerIconsPath.subscribe,
-				headerIconsPath.unsubscribe,
-				defaultGroupChatAvatar,
-			]);
+			try
+			{
+				const currentAssetsPack = ReactionAssetsManager.getInstance().getReactionAssetsUrl();
+				const imagesUrlArray = currentAssetsPack.svg
+					? Object.values(currentAssetsPack.svg) : Object.values(currentAssetsPack.png);
 
-			backgroundCache.downloadLottieAnimations([
-				ReactionAssets.getLottieUrl(ReactionType.like),
-				ReactionAssets.getLottieUrl(ReactionType.kiss),
-				ReactionAssets.getLottieUrl(ReactionType.laugh),
-				ReactionAssets.getLottieUrl(ReactionType.wonder),
-				ReactionAssets.getLottieUrl(ReactionType.angry),
-				ReactionAssets.getLottieUrl(ReactionType.cry),
-				ReactionAssets.getLottieUrl(ReactionType.facepalm),
-			]);
+				backgroundCache.downloadImages([
+					...imagesUrlArray,
+					headerIconsPath.subscribe,
+					headerIconsPath.unsubscribe,
+					defaultGroupChatAvatar,
+				]);
+
+				const lottiUrlArray = Object.values(currentAssetsPack.lottie);
+
+				backgroundCache.downloadLottieAnimations(lottiUrlArray);
+			}
+			catch (error)
+			{
+				Logger.error('preloadReactions catch:', error);
+			}
 		}
 	}
 

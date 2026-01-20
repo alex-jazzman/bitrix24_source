@@ -509,7 +509,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		 * @returns {Button}
 		 */
 		Button: (props) => (
-			props.withStateDecorator
+			props?.withStateDecorator
 				? new ButtonStateDecorator({ component: Button, ...props })
 				: new Button(props)
 		),

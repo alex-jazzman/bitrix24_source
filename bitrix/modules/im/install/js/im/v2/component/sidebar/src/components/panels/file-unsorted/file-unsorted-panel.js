@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Loader } from 'im.v2.component.elements.loader';
 import { EventType, FileViewerContext, SidebarDetailBlock, SidebarFileGroups } from 'im.v2.const';
 
@@ -15,6 +13,7 @@ import { SidebarCollectionFormatter } from '../../../classes/sidebar-collection-
 import './detail.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelSidebarFileItem, ImModelChat } from 'im.v2.model';
 
 // @vue/component
@@ -70,7 +69,7 @@ export const FileUnsortedPanel = {
 	{
 		this.service = new FileUnsorted({ dialogId: this.dialogId });
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new FileMenu();
+		this.contextMenu = new FileMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -111,7 +110,11 @@ export const FileUnsortedPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.fileUnsorted });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.fileUnsorted });
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `
@@ -128,7 +131,6 @@ export const FileUnsortedPanel = {
 					<FileDetailItem
 						v-for="file in dateGroup.items"
 						:fileItem="file"
-						:contextDialogId="dialogId"
 						:viewerContext="FileViewerContext.sidebarTabFileUnsorted"
 						@contextMenuClick="onContextMenuClick"
 					/>

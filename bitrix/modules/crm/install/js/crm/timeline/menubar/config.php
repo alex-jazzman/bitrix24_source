@@ -25,6 +25,7 @@ return [
 		'ui.icon-set.actions',
 		'ui.icon-set.main',
 		'ui.icon-set.social',
+		'ui.hint',
 		'ui.tour',
 		'ui.forms',
 	],

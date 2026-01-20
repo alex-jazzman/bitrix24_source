@@ -1,11 +1,34 @@
 this.BX = this.BX || {};
 this.BX.Baas = this.BX.Baas || {};
-(function (exports,ui_icons_b24,ui_progressbar,main_date,ui_label,ui_infoHelper,main_popup,bitrix24_license,ui_notification,ui_buttons,ui_popupWithHeader,ui_analytics,main_core,main_core_events,ui_iconSet_api_core) {
+(function (exports,ui_icons_b24,ui_progressbar,main_date,ui_label,bitrix24_license,ui_notification,ui_analytics,ui_buttons,main_popup,ui_iconSet_api_core,ui_popupWithHeader,ui_infoHelper,main_core,main_core_events) {
 	'use strict';
+
+	class PresenterDefault {
+	  constructor(serviceCode, serviceData, dataProviderPromiseCreator = null) {
+	    this.serviceData = null;
+	    this.dataProviderPromiseCreator = null;
+	    this.serviceCode = serviceCode;
+	    this.serviceData = {
+	      ...serviceData
+	    };
+	    this.dataProviderPromiseCreator = dataProviderPromiseCreator;
+	  }
+	  adjustServiceData(serviceData) {}
+	  getPopup() {
+	    return new main_popup.Popup();
+	  }
+	  toggle(node) {}
+	  show(node) {}
+	  hide() {}
+	}
 
 	let _ = t => t,
 	  _t,
-	  _t2;
+	  _t2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6;
 	var _purchasedPackages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("purchasedPackages");
 	class PurchaseTileDefault extends main_core_events.EventEmitter {
 	  // 'Y-m-d';
@@ -77,35 +100,31 @@ this.BX.Baas = this.BX.Baas || {};
 	    if (multiple) {
 	      const modifiedClass = count > 2 ? '--more' : '--two';
 	      return main_core.Tag.render(_t || (_t = _`
-			<div class="ui-popupcomponentmaker__content--section ${0}">
-				<div class="ui-popupcomponentmaker__content--section-item">
-					<div class="ui-popupconstructor-content-item-wrapper">
-						<div class="ui-popupconstructor-content-item-wrapper_information">
-							<div class="ui-popupconstructor-content-item-wrapper-title">
-								<div class="ui-popupconstructor-content-item__title">
+				<div class="ui-popupcomponentmaker__content--section ${0}">
+					<div class="ui-popupcomponentmaker__content--section-item">
+						<div class="ui-popupconstructor-content-item-wrapper">
+							<div class="ui-popupconstructor-content-item-wrapper_information">
+								<div class="ui-popupconstructor-content-item-wrapper-title">
+									<div class="ui-popupconstructor-content-item__title">
+										${0}
+									</div>
+									<div class="ui-popupconstructor-content-item-subject">
+										<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
+											<div class="ui-label-status"></div>
+											<span class="ui-label-inner">${0}</span>
+										</div>
+										<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
+									</div>
+								</div>
+								<div class="ui-popupconstructor-content-item-progressbar">${0}</div>
+								<div class="ui-popupconstructor-content-item-limit">
 									${0}
 								</div>
-								<div class="ui-popupconstructor-content-item-subject">
-									<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${0}</span>
-									</div>
-									<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
-								</div>
-							</div>
-							<div class="ui-popupconstructor-content-item-progressbar">${0}</div>
-							<div class="ui-popupconstructor-content-item-limit">
-								<span>${0} </span>
-								${0}
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>`), modifiedClass, [main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_TITLE'), ': ', count].join(''), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE'), this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer(), this.getLeftUnitsLabel(), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
-	        '#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
-	        '#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
-	        '#date#': `<span class="ui-popupconstructor-content-item-date">${pack.expirationDate}</span>`
-	      }));
+			`), modifiedClass, [main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_TITLE'), ': ', count].join(''), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE'), this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer(), this.getLeftUnitsString(serviceGrouped, pack));
 	    }
 	    return main_core.Tag.render(_t2 || (_t2 = _`
 			<div class="ui-popupcomponentmaker__content--section">
@@ -117,33 +136,28 @@ this.BX.Baas = this.BX.Baas || {};
 									${0}
 								</div>
 								<div class="ui-popupconstructor-content-item-subject">
-									<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill" ${0}>
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${0}</span>
-									</div>
-									<div class="ui-label ui-label-success ui-label-sm --paid ui-label-fill" ${0}>
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${0}</span>
-									</div>
+									${0}
 									<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
 								</div>
 							</div>
 							<div class="ui-popupconstructor-content-item-progressbar">${0}</div>
 							<div class="ui-popupconstructor-content-item-limit">
-								<span>${0} </span>
 								${0}
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), pack.actual === 'Y' ? '' : 'style="display: none;"', main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'), pack.actual === 'Y' ? 'style="display: none;"' : '', main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_PAID'), this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer(), this.getLeftUnitsLabel(), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
-	      '#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
-	      '#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
-	      '#date#': `<span class="ui-popupconstructor-content-item-date">${pack.expirationDate}</span>`
-	    }));
+			</div>
+		`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), this.renderStatusLabel(pack), this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer(), this.getLeftUnitsString(serviceGrouped, pack));
 	  }
-	  getLeftUnitsLabel() {
-	    return main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT');
+	  getLeftUnitsString(serviceGrouped, pack) {
+	    return `
+			${main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
+      '#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
+      '#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
+      '#date#': String(pack.expirationDate)
+    })}
+		`;
 	  }
 	  getData() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _purchasedPackages)[_purchasedPackages];
@@ -154,18 +168,74 @@ this.BX.Baas = this.BX.Baas || {};
 	      size: 4
 	    });
 	  }
+	  renderStatusLabel(pack) {
+	    const firstService = Object.values(pack.services)[0];
+	    const isActual = pack.actual === 'Y';
+	    const current = firstService.current;
+	    if (isActual && current > 0) {
+	      const limitPercentLeft = current / firstService.maximal * 100;
+	      if (limitPercentLeft <= 20) {
+	        return main_core.Tag.render(_t3 || (_t3 = _`
+					<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
+						<div class="ui-label-status"></div>
+						<span class="ui-label-inner">${0}</span>
+					</div>
+				`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED'));
+	      }
+	      return main_core.Tag.render(_t4 || (_t4 = _`
+				<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
+					<div class="ui-label-status"></div>
+					<span class="ui-label-inner">${0}</span>
+				</div>
+			`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'));
+	    }
+	    if (isActual && current <= 0) {
+	      return main_core.Tag.render(_t5 || (_t5 = _`
+				<div class="ui-label ui-label-sm --exceeded ui-label-fill">
+					<div class="ui-label-status"></div>
+					<span class="ui-label-inner">${0}</span>
+				</div>
+			`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED'));
+	    }
+	    return main_core.Tag.render(_t6 || (_t6 = _`
+			<div class="ui-label ui-label-success ui-label-sm --paid ui-label-fill">
+				<div class="ui-label-status"></div>
+				<span class="ui-label-inner">${0}</span>
+			</div>
+		`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_PAID'));
+	  }
 	}
 
 	let _$1 = t => t,
 	  _t$1,
 	  _t2$1,
-	  _t3;
+	  _t3$1;
+	var _groupPackages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("groupPackages");
+	var _calculateActiveResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateActiveResult");
+	var _calculateNextResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateNextResult");
 	var _prepareActiveAndFuturePurchases = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareActiveAndFuturePurchases");
+	var _getStatusLabels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStatusLabels");
+	var _createLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createLabel");
 	class PurchaseTileAnnual extends PurchaseTileDefault {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _createLabel, {
+	      value: _createLabel2
+	    });
+	    Object.defineProperty(this, _getStatusLabels, {
+	      value: _getStatusLabels2
+	    });
 	    Object.defineProperty(this, _prepareActiveAndFuturePurchases, {
 	      value: _prepareActiveAndFuturePurchases2
+	    });
+	    Object.defineProperty(this, _calculateNextResult, {
+	      value: _calculateNextResult2
+	    });
+	    Object.defineProperty(this, _calculateActiveResult, {
+	      value: _calculateActiveResult2
+	    });
+	    Object.defineProperty(this, _groupPackages, {
+	      value: _groupPackages2
 	    });
 	  }
 	  getContainer() {
@@ -186,29 +256,27 @@ this.BX.Baas = this.BX.Baas || {};
 									${0}
 								</div>
 								<div class="ui-popupconstructor-content-item-subject">
-									<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${0}</span>
-									</div>
+									${0}
 								</div>
 							</div>
 							<div class="ui-popupconstructor-content-item-progressbar">${0}</div>
 							${0}
 							<div class="ui-popupconstructor-content-item-limit">
-							${0}
+								${0}
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>`), modifiedClass, main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'), this.createProgressBar(current, maximal).getContainer(), packageInfo.active ? main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+			</div>
+		`), modifiedClass, main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _getStatusLabels)[_getStatusLabels](packageInfo).map(label => label.render()), this.createProgressBar(current, maximal).getContainer(), packageInfo.active ? main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
 								<div class="ui-popupconstructor-content-item-limit">
-									<span>${0} </span>
-										${0}
-								</div>`), this.getLeftUnitsLabel(), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
+									${0}
+								</div>
+							`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
 	      '#left#': `<span class="ui-popupconstructor-content-item-num">${current}</span>`,
 	      '#total#': `<span class="ui-popupconstructor-content-item-num">${maximal}</span>`,
-	      '#date#': `<span class="ui-popupconstructor-content-item-date">${theDate}</span>`
-	    })) : main_core.Tag.render(_t3 || (_t3 = _$1`
+	      '#date#': `<span>${theDate}</span>`
+	    })) : main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
 								<div class="ui-popupconstructor-content-item-limit">
 									<span>${0} </span>
 										${0}
@@ -225,7 +293,7 @@ this.BX.Baas = this.BX.Baas || {};
 	    return main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_FUTURE_UNITS');
 	  }
 	}
-	function _prepareActiveAndFuturePurchases2(purchasedPackages) {
+	function _groupPackages2(purchasedPackages) {
 	  const rawActivePacks = {};
 	  const rawInactivePacks = {};
 	  let expirationDateObj = new Date();
@@ -250,54 +318,103 @@ this.BX.Baas = this.BX.Baas || {};
 	      expirationDateObj = expDate;
 	    }
 	  });
+	  return {
+	    rawActivePacks,
+	    rawInactivePacks,
+	    expirationDateObj
+	  };
+	}
+	function _calculateActiveResult2(rawActivePacks) {
+	  const activePackKeys = Object.keys(rawActivePacks);
+	  const active = {
+	    current: 0,
+	    maximal: 0,
+	    expirationDateObject: new Date(),
+	    expirationDate: ''
+	  };
+	  activePackKeys.forEach(key => {
+	    const packs = rawActivePacks[key];
+	    packs.forEach(pack => {
+	      Object.keys(pack.services).forEach(serviceCode => {
+	        const service = pack.services[serviceCode];
+	        active.current += parseInt(service.current, 10);
+	        active.maximal += parseInt(service.maximal, 10);
+	      });
+	      const expDateActive = main_date.DateTimeFormat.parse(pack.expirationDate, false, this.FORMAT_DATE);
+	      if (active.expirationDateObject < expDateActive) {
+	        active.expirationDateObject = expDateActive;
+	      }
+	    });
+	  });
+	  active.expirationDate = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), active.expirationDateObject);
+	  return active;
+	}
+	function _calculateNextResult2(rawInactivePacks) {
+	  const inactivePackKeys = Object.keys(rawInactivePacks).sort((a, b) => {
+	    return a < b ? -1 : 1;
+	  });
+	  const next = {
+	    current: 0,
+	    maximal: 0,
+	    startDateObject: new Date(),
+	    startDate: ''
+	  };
+	  const firstDate = inactivePackKeys[0];
+	  const futurePacks = rawInactivePacks[firstDate];
+	  futurePacks.forEach(pack => {
+	    Object.keys(pack.services).forEach(serviceCode => {
+	      const service = pack.services[serviceCode];
+	      next.current += parseInt(service.current, 10);
+	      next.maximal += parseInt(service.maximal, 10);
+	    });
+	    next.startDate = pack.startDate;
+	  });
+	  return next;
+	}
+	function _prepareActiveAndFuturePurchases2(purchasedPacks) {
+	  const {
+	    rawActivePacks,
+	    rawInactivePacks,
+	    expirationDateObj
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _groupPackages)[_groupPackages](purchasedPacks);
 	  const result = {
 	    expirationDate: main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT'), expirationDateObj)
 	  };
-	  const activePackKeys = Object.keys(rawActivePacks);
-	  if (activePackKeys.length > 0) {
-	    result.active = {
-	      current: 0,
-	      maximal: 0,
-	      expirationDateObject: new Date(),
-	      expirationDate: ''
-	    };
-	    activePackKeys.forEach(key => {
-	      const packs = rawActivePacks[key];
-	      packs.forEach(pack => {
-	        Object.keys(pack.services).forEach(serviceCode => {
-	          const service = pack.services[serviceCode];
-	          result.active.current += parseInt(service.current, 10);
-	          result.active.maximal += parseInt(service.maximal, 10);
-	        });
-	        const expDateActive = main_date.DateTimeFormat.parse(pack.expirationDate, false, this.FORMAT_DATE);
-	        if (result.active.expirationDateObject < expDateActive) {
-	          result.active.expirationDateObject = expDateActive;
-	        }
-	      });
-	    });
-	    result.active.expirationDate = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT'), result.active.expirationDateObject);
+	  const active = babelHelpers.classPrivateFieldLooseBase(this, _calculateActiveResult)[_calculateActiveResult](rawActivePacks);
+	  if (active) {
+	    result.active = active;
 	  } else {
-	    result.next = {
-	      current: 0,
-	      maximal: 0,
-	      startDateObject: new Date(),
-	      startDate: ''
-	    };
-	    const inactivePackKeys = Object.keys(rawInactivePacks).sort((a, b) => {
-	      return a < b ? -1 : 1;
-	    });
-	    const firstDate = inactivePackKeys[0];
-	    const futurePacks = rawInactivePacks[firstDate];
-	    futurePacks.forEach(pack => {
-	      Object.keys(pack.services).forEach(serviceCode => {
-	        const service = pack.services[serviceCode];
-	        result.next.current += parseInt(service.current, 10);
-	        result.next.maximal += parseInt(service.maximal, 10);
-	      });
-	      result.next.startDate = pack.startDate;
-	    });
+	    const next = babelHelpers.classPrivateFieldLooseBase(this, _calculateNextResult)[_calculateNextResult](rawInactivePacks);
+	    if (next) {
+	      result.next = next;
+	    }
 	  }
 	  return result;
+	}
+	function _getStatusLabels2(purchasesResult) {
+	  const labels = [];
+	  const isActual = Boolean(purchasesResult.active);
+	  if (!isActual) {
+	    labels.push(babelHelpers.classPrivateFieldLooseBase(this, _createLabel)[_createLabel]('BAAS_WIDGET_PURCHASES_ARE_PAID', '--paid'));
+	    return labels;
+	  }
+	  const hasZeroBalance = isActual && purchasesResult.active.current === 0;
+	  if (isActual && !hasZeroBalance && purchasesResult.active.current / purchasesResult.active.maximal * 100 <= 20) {
+	    labels.push(babelHelpers.classPrivateFieldLooseBase(this, _createLabel)[_createLabel]('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED', '--almost'));
+	  }
+	  if (hasZeroBalance) {
+	    labels.push(babelHelpers.classPrivateFieldLooseBase(this, _createLabel)[_createLabel]('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED_THIS_MONTH', '--exceeded'));
+	  }
+	  labels.unshift(babelHelpers.classPrivateFieldLooseBase(this, _createLabel)[_createLabel]('BAAS_WIDGET_PURCHASE_IS_ACTIVE', '--active'));
+	  return labels;
+	}
+	function _createLabel2(message, styleClass) {
+	  return new ui_label.Label({
+	    text: main_core.Loc.getMessage(message),
+	    size: ui_label.LabelSize.SM,
+	    fill: true,
+	    customClass: styleClass
+	  });
 	}
 
 	let _$2 = t => t,
@@ -369,13 +486,12 @@ this.BX.Baas = this.BX.Baas || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _package)[_package].getData();
 	  }
 	  groupPackages(purchases) {
-	    const singlePackages = {};
+	    const singlePackages = [];
 	    const groupedPackages = {};
 	    [...purchases].forEach(purchase => {
-	      const onePackageInAPurchase = purchase.length <= 1;
 	      [...purchase].forEach(purchasedPackage => {
 	        let id = main_date.DateTimeFormat.parse(purchasedPackage.expirationDate, false, this.FORMAT_DATE).getTime();
-	        if (onePackageInAPurchase) {
+	        if (purchase.length <= 1) {
 	          if (!singlePackages[id]) {
 	            singlePackages[id] = [];
 	          }
@@ -385,28 +501,57 @@ this.BX.Baas = this.BX.Baas || {};
 	          if (!groupedPackages[id]) {
 	            groupedPackages[id] = {};
 	          }
-	          groupedPackages[id][main_date.DateTimeFormat.parse(purchasedPackage.startDate, false, this.FORMAT_DATE).getTime()] = purchasedPackage;
+	          const time = main_date.DateTimeFormat.parse(purchasedPackage.startDate, false, this.FORMAT_DATE).getTime();
+	          groupedPackages[id][time] = purchasedPackage;
 	        }
 	      });
 	    });
+	    const packageComparator = (a, b) => {
+	      const getSortingRank = pkg => {
+	        const hasService = pkg.services && pkg.services[0];
+	        switch (true) {
+	          case hasService && pkg.services[0].current > 0 && pkg.actual === 'Y':
+	            return 0;
+	          case pkg.actual === 'N':
+	            return 1;
+	          case hasService && pkg.services[0].current === 0:
+	            return 2;
+	          default:
+	            return 3;
+	        }
+	      };
+	      const rankA = getSortingRank(a);
+	      const rankB = getSortingRank(b);
+	      if (rankA !== rankB) {
+	        return rankA - rankB;
+	      }
+	      const dateA = main_date.DateTimeFormat.parse(a.expirationDate, false, this.FORMAT_DATE).getTime();
+	      const dateB = main_date.DateTimeFormat.parse(b.expirationDate, false, this.FORMAT_DATE).getTime();
+	      return dateA - dateB;
+	    };
+	    singlePackages.sort(packageComparator);
 	    const finalPackages = singlePackages;
-
-	    // region find the earliest date in propped packages
+	    const groupedPackageTopElements = [];
 	    Object.keys(groupedPackages).forEach(key => {
 	      const sortedKeys = Object.keys(groupedPackages[key]).sort((a, b) => {
 	        return a < b ? -1 : 1;
 	      });
-	      let earliestDate = sortedKeys[0];
+	      const earliestDate = sortedKeys[0];
+	      const topElement = {
+	        ...groupedPackages[key][earliestDate]
+	      };
+	      topElement.groupKey = key;
+	      topElement.earliestDate = earliestDate;
+	      groupedPackageTopElements.push(topElement);
+	    });
+	    groupedPackageTopElements.sort(packageComparator).forEach(topElement => {
+	      let earliestDate = topElement.earliestDate;
 	      while (finalPackages[earliestDate]) {
 	        earliestDate += 1;
 	      }
-	      finalPackages[earliestDate] = groupedPackages[key];
+	      finalPackages[earliestDate] = groupedPackages[topElement.groupKey];
 	    });
-	    // endregion
-
-	    const sortedKeys = Object.keys(finalPackages).sort((a, b) => {
-	      return a < b ? -1 : 1;
-	    });
+	    const sortedKeys = Object.keys(finalPackages);
 	    return [...sortedKeys].map(key => {
 	      const annual = !main_core.Type.isArray(finalPackages[key]);
 	      let packages = finalPackages[key];
@@ -422,20 +567,34 @@ this.BX.Baas = this.BX.Baas || {};
 	}
 
 	class PurchaseTileDiskOoEdit extends PurchaseTileDefault {
-	  getLeftUnitsLabel() {
-	    return main_core.Loc.getMessage('BAAS_WIDGET_AI_PURCHASE_LEFT');
+	  getLeftUnitsString(serviceGrouped, pack) {
+	    return `
+			${main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_DISK_LEFT_STATUS', {
+      '#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
+      '#date#': `<span>${pack.expirationDate}</span>`
+    })}`;
 	  }
 	}
 
 	class PurchaseTileAiCopilotToken extends PurchaseTileDefault {
-	  getLeftUnitsLabel() {
-	    return main_core.Loc.getMessage('BAAS_WIDGET_AI_PURCHASE_LEFT');
+	  getLeftUnitsString(serviceGrouped, pack) {
+	    return `
+			${main_core.Loc.getMessage('BAAS_WIDGET_AI_PURCHASE_LEFT_STATUS', {
+      '#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
+      '#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
+      '#date#': `<span>${pack.expirationDate}</span>`
+    })}`;
 	  }
 	}
 
 	class PurchaseTileAiCopilotAnnualToken extends PurchaseTileAnnual {
-	  getLeftUnitsLabel() {
-	    return main_core.Loc.getMessage('BAAS_WIDGET_AI_PURCHASE_LEFT');
+	  getLeftUnitsString(serviceGrouped, pack) {
+	    return `
+			${main_core.Loc.getMessage('BAAS_WIDGET_AI_PURCHASE_LEFT_STATUS', {
+      '#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
+      '#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
+      '#date#': `<span>${pack.expirationDate}</span>`
+    })}`;
 	  }
 	}
 
@@ -452,30 +611,28 @@ this.BX.Baas = this.BX.Baas || {};
 	    if (multiple) {
 	      const modifiedClass = count > 2 ? '--more' : '--two';
 	      return main_core.Tag.render(_t$3 || (_t$3 = _$3`
-			<div class="ui-popupcomponentmaker__content--section ${0}">
-				<div class="ui-popupcomponentmaker__content--section-item">
-					<div class="ui-popupconstructor-content-item-wrapper">
-						<div class="ui-popupconstructor-content-item-wrapper_information">
-							<div class="ui-popupconstructor-content-item-wrapper-title">
-								<div class="ui-popupconstructor-content-item__title">
-									${0}
-								</div>
-								<div class="ui-popupconstructor-content-item-subject">
-									<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${0}</span>
+				<div class="ui-popupcomponentmaker__content--section ${0}">
+					<div class="ui-popupcomponentmaker__content--section-item">
+						<div class="ui-popupconstructor-content-item-wrapper">
+							<div class="ui-popupconstructor-content-item-wrapper_information">
+								<div class="ui-popupconstructor-content-item-wrapper-title">
+									<div class="ui-popupconstructor-content-item__title">
+										${0}
 									</div>
-									<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
+									<div class="ui-popupconstructor-content-item-subject">
+										${0}
+										<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
+									</div>
 								</div>
-							</div>
-							<div class="ui-popupconstructor-content-item-limit">
-								<span>${0} </span>
-								<span class="ui-popupconstructor-content-item-date">${0}</span>
+								<div class="ui-popupconstructor-content-item-limit">
+									<span>${0} </span>
+									<span class="ui-popupconstructor-content-item-date">${0}</span>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>`), modifiedClass, [main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_TITLE'), ': ', count].join(''), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE'), main_core.Loc.getMessage('BAAS_WIDGET_DFT_PURCHASE_LEFT'), pack.expirationDate);
+			`), modifiedClass, [main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_TITLE'), ': ', count].join(''), this.renderStatusLabel(pack), main_core.Loc.getMessage('BAAS_WIDGET_DFT_PURCHASE_LEFT'), pack.expirationDate);
 	    }
 	    return main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
 			<div class="ui-popupcomponentmaker__content--section">
@@ -498,7 +655,8 @@ this.BX.Baas = this.BX.Baas || {};
 						</div>
 					</div>
 				</div>
-			</div>`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'), main_core.Loc.getMessage('BAAS_WIDGET_DFT_PURCHASE_LEFT'), pack.expirationDate);
+			</div>
+		`), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'), main_core.Loc.getMessage('BAAS_WIDGET_DFT_PURCHASE_LEFT'), pack.expirationDate);
 	  }
 	}
 
@@ -526,7 +684,7 @@ this.BX.Baas = this.BX.Baas || {};
 	        });
 	        return [[groupedPackages]];
 	      };
-	    } else if (serviceCode === 'disk-oo-edit') {
+	    } else if (serviceCode === 'disk_oo_edit') {
 	      purchase.setDefaultTileFabric((...params) => new PurchaseTileDiskOoEdit(...params));
 	    }
 	    return purchase;
@@ -555,10 +713,10 @@ this.BX.Baas = this.BX.Baas || {};
 	let _$4 = t => t,
 	  _t$4,
 	  _t2$3,
-	  _t3$1,
-	  _t4,
-	  _t5,
-	  _t6;
+	  _t3$2,
+	  _t4$1,
+	  _t5$1,
+	  _t6$1;
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
 	var _renderIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderIcon");
@@ -747,7 +905,7 @@ this.BX.Baas = this.BX.Baas || {};
 	  if (!main_core.Type.isStringFilled(featurePromotionCode)) {
 	    return null;
 	  }
-	  const node = main_core.Tag.render(_t3$1 || (_t3$1 = _$4`
+	  const node = main_core.Tag.render(_t3$2 || (_t3$2 = _$4`
 			<div class="ui-popupconstructor-content-item__more-link">${0}</div>
 		`), main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE'));
 	  const onclick = e => {
@@ -788,7 +946,7 @@ this.BX.Baas = this.BX.Baas || {};
 	  return main_core.Extension.getSettings('baas.store').isBaasActive;
 	}
 	function _renderButtonDescription2(data) {
-	  return data.isActive ? main_core.Tag.render(_t4 || (_t4 = _$4`
+	  return data.isActive ? main_core.Tag.render(_t4$1 || (_t4$1 = _$4`
 			<div class="ui-popupconstructor-content-item__button-description">
 				<div>${0}</div>
 				${0}
@@ -796,38 +954,65 @@ this.BX.Baas = this.BX.Baas || {};
 		`), data.price.value, data.price.description) : null;
 	}
 	function _getPurchaseBlock2() {
+	  function getStatusLabels(response) {
+	    const labels = [];
+	    const purchaseInfo = response.purchaseInfo;
+	    if (!purchaseInfo || purchaseInfo.purchaseCount <= 0) {
+	      return labels;
+	    }
+	    const isAnnual = response.code === 'COPILOT_Q1000_P12';
+	    const hasZeroBalance = purchaseInfo.purchaseBalance === 0;
+	    const isExceedAnnual = isAnnual && hasZeroBalance && purchaseInfo.purchases.length === 1 && purchaseInfo.purchases[0].length === 1;
+	    if (purchaseInfo.purchaseBalance <= 20 && !hasZeroBalance) {
+	      labels.push(new ui_label.Label({
+	        text: main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED'),
+	        size: ui_label.LabelSize.SM,
+	        fill: true,
+	        customClass: '--almost'
+	      }));
+	    }
+	    if (isExceedAnnual || hasZeroBalance && !isAnnual) {
+	      labels.push(new ui_label.Label({
+	        text: main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED'),
+	        size: ui_label.LabelSize.SM,
+	        fill: true,
+	        customClass: '--exceeded'
+	      }));
+	    }
+	    if (hasZeroBalance && isAnnual) {
+	      labels.push(new ui_label.Label({
+	        text: main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED_THIS_MONTH'),
+	        size: ui_label.LabelSize.SM,
+	        fill: true,
+	        customClass: '--exceeded'
+	      }));
+	    }
+	    const isActiveAnnual = isAnnual && (labels.length === 0 || !isExceedAnnual);
+	    const isActiveMonthly = !isAnnual && labels.length === 0;
+	    if (isActiveAnnual || isActiveMonthly) {
+	      labels.unshift(new ui_label.Label({
+	        text: main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'),
+	        size: ui_label.LabelSize.SM,
+	        fill: true,
+	        customClass: '--active'
+	      }));
+	    }
+	    return labels;
+	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('purchase-block', () => {
 	    const data = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data];
-	    if (main_core.Type.isPlainObject(data.purchaseInfo)) {
-	      const purchaseInfo = data.purchaseInfo;
-	      if (purchaseInfo && purchaseInfo.purchaseCount > 0) {
-	        const activityLabel = new ui_label.Label({
-	          text: purchaseInfo.purchaseCount > 1 ? main_core.Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE') : main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE'),
-	          size: ui_label.LabelSize.SM,
-	          fill: true,
-	          customClass: '--active'
-	        });
-	        const limitLabel = purchaseInfo.purchaseBalance > 20 ? null : purchaseInfo.purchaseBalance > 0 ? new ui_label.Label({
-	          text: main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED'),
-	          size: ui_label.LabelSize.SM,
-	          fill: true,
-	          customClass: '--almost'
-	        }) : new ui_label.Label({
-	          text: main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED'),
-	          size: ui_label.LabelSize.SM,
-	          fill: true,
-	          customClass: '--exceeded'
-	        });
-	        return main_core.Tag.render(_t5 || (_t5 = _$4`
-						<div class="ui-popupconstructor-content-item__purchase-description" onclick="${0}">
-							<span class="ui-link ui-link-dashed">${0}: ${0}</span>
-							${0}
-							${0}
-						</div>
-					`), this.showPurchases.bind(this), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), purchaseInfo.purchaseCount, activityLabel.render(), limitLabel ? limitLabel.render() : '');
-	      }
+	    let htmlToRender = main_core.Tag.render(_t5$1 || (_t5$1 = _$4`<div></div>`));
+	    const purchaseInfo = data.purchaseInfo;
+	    if (main_core.Type.isPlainObject(purchaseInfo) && purchaseInfo.purchaseCount > 0) {
+	      const labels = getStatusLabels(data);
+	      htmlToRender = main_core.Tag.render(_t6$1 || (_t6$1 = _$4`
+					<div class="ui-popupconstructor-content-item__purchase-description" onclick="${0}">
+						<span class="ui-link ui-link-dashed">${0}: ${0}</span>
+						${0}
+					</div>
+				`), this.showPurchases.bind(this), main_core.Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE'), purchaseInfo.purchaseCount, labels.map(label => label.render()));
 	    }
-	    return main_core.Tag.render(_t6 || (_t6 = _$4`<div></div>`));
+	    return htmlToRender;
 	  });
 	}
 	function _adjustPackage2(newPackageData) {
@@ -837,71 +1022,6 @@ this.BX.Baas = this.BX.Baas || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('purchase-block');
 	    const newNode = babelHelpers.classPrivateFieldLooseBase(this, _getPurchaseBlock)[_getPurchaseBlock]();
 	    main_core.Dom.replace(oldNode, newNode);
-	  }
-	}
-
-	class PackageItemFactory {
-	  create(data) {
-	    return new PackageItem(data);
-	  }
-	}
-
-	var _cache$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
-	class PackageTemplateManager extends ui_popupWithHeader.BaseTemplate {
-	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _cache$1, {
-	      writable: true,
-	      value: new main_core.Cache.MemoryCache()
-	    });
-	    Object.defineProperty(this, _items, {
-	      writable: true,
-	      value: []
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = main_core.Type.isPlainObject(options) ? options.items : [];
-	  }
-	  setOptions(data) {
-	    if (data.items) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = main_core.Type.isPlainObject(data.items) ? Object.values(data.items) : main_core.Type.isArray(data.items) ? data.items : [];
-	    }
-	    super.setOptions(data);
-	  }
-	  getContent() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('popup-content', () => {
-	      const factory = new PackageItemFactory();
-	      return babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].map((serviceData, index) => {
-	        var _serviceData$styles;
-	        const item = factory.create(serviceData);
-	        return {
-	          html: item.getContainer(),
-	          background: (_serviceData$styles = serviceData.styles) == null ? void 0 : _serviceData$styles.background,
-	          margin: index === 0 ? '12px 0 0 0' : null
-	        };
-	      });
-	    });
-	  }
-	}
-
-	var _events = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("events");
-	class WidgetIcon extends ui_iconSet_api_core.Icon {
-	  constructor(params = {}) {
-	    super(params);
-	    Object.defineProperty(this, _events, {
-	      writable: true,
-	      value: {}
-	    });
-	    if (params.events) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _events)[_events] = params.events;
-	    }
-	  }
-	  render() {
-	    this.iconElement = super.render();
-	    main_core.Dom.style(this.iconElement, 'opacity', '60%');
-	    Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _events)[_events]).forEach(eventName => {
-	      main_core.Event.bind(this.iconElement, eventName, babelHelpers.classPrivateFieldLooseBase(this, _events)[_events][eventName]);
-	    });
-	    return this.iconElement;
 	  }
 	}
 
@@ -1025,136 +1145,167 @@ this.BX.Baas = this.BX.Baas || {};
 	Analytics.CONTEXT_CRM = 'CRM';
 	Analytics.CONTEXT_TASKS = 'tasks';
 
-	var _getPopupWithHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupWithHeader");
-	var _getLastBoundElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLastBoundElement");
-	var _fetchData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchData");
-	var _onPurchaseShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPurchaseShown");
-	var _onPackageHidden = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPackageHidden");
-	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
-	class Widget extends main_core_events.EventEmitter {
-	  constructor(widgetData) {
+	class PackageItemFactory {
+	  create(data) {
+	    return new PackageItem(data);
+	  }
+	}
+
+	var _cache$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
+	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
+	class PackageTemplateManager extends ui_popupWithHeader.BaseTemplate {
+	  constructor(options) {
 	    super();
-	    Object.defineProperty(this, _onPackageHidden, {
-	      value: _onPackageHidden2
+	    Object.defineProperty(this, _cache$1, {
+	      writable: true,
+	      value: new main_core.Cache.MemoryCache()
 	    });
-	    Object.defineProperty(this, _onPurchaseShown, {
-	      value: _onPurchaseShown2
+	    Object.defineProperty(this, _items, {
+	      writable: true,
+	      value: []
 	    });
-	    Object.defineProperty(this, _fetchData, {
-	      value: _fetchData2
+	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = main_core.Type.isPlainObject(options) ? options.items : [];
+	  }
+	  setOptions(data) {
+	    if (data.items) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = main_core.Type.isPlainObject(data.items) ? Object.values(data.items) : main_core.Type.isArray(data.items) ? data.items : [];
+	    }
+	    super.setOptions(data);
+	  }
+	  getContent() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('popup-content', () => {
+	      const factory = new PackageItemFactory();
+	      return babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].map((serviceData, index) => {
+	        var _serviceData$styles;
+	        const item = factory.create(serviceData);
+	        return {
+	          html: item.getContainer(),
+	          background: (_serviceData$styles = serviceData.styles) == null ? void 0 : _serviceData$styles.background,
+	          margin: index === 0 ? '12px 0 0 0' : null
+	        };
+	      });
 	    });
-	    Object.defineProperty(this, _getLastBoundElement, {
-	      value: _getLastBoundElement2
+	  }
+	}
+
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$4;
+	var _setServiceData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setServiceData");
+	var _getAnalytic = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalytic");
+	var _getLastBoundElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLastBoundElement");
+	var _getWidgetData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetData");
+	var _getPopupWithHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupWithHeader");
+	var _convertIntoWidgetDataType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertIntoWidgetDataType");
+	class PresenterPopup extends PresenterDefault {
+	  constructor(serviceCode, _serviceData, dataProviderPromiseCreator = null) {
+	    super(serviceCode, _serviceData, dataProviderPromiseCreator);
+	    Object.defineProperty(this, _convertIntoWidgetDataType, {
+	      value: _convertIntoWidgetDataType2
 	    });
 	    Object.defineProperty(this, _getPopupWithHeader, {
 	      value: _getPopupWithHeader2
 	    });
+	    Object.defineProperty(this, _getWidgetData, {
+	      value: _getWidgetData2
+	    });
+	    Object.defineProperty(this, _getLastBoundElement, {
+	      value: _getLastBoundElement2
+	    });
+	    Object.defineProperty(this, _getAnalytic, {
+	      value: _getAnalytic2
+	    });
+	    Object.defineProperty(this, _setServiceData, {
+	      value: _setServiceData2
+	    });
 	    this.cache = new main_core.Cache.MemoryCache();
-	    this.setEventNamespace('BX.Baas');
-	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Baas:onPurchaseShown', event => babelHelpers.classPrivateFieldLooseBase(this, _onPurchaseShown)[_onPurchaseShown](event));
-	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Baas:onPurchaseHidden', event => babelHelpers.classPrivateFieldLooseBase(this, _onPackageHidden)[_onPackageHidden](event));
-	    this.cache.set('boundElements', new WeakMap());
+	    babelHelpers.classPrivateFieldLooseBase(this, _setServiceData)[_setServiceData](_serviceData);
+	    this.initialize();
+	  }
+	  initialize() {}
+	  adjustServiceData(serviceData) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setServiceData)[_setServiceData](serviceData);
+	    this.getSubtitleContainer().innerHTML = main_core.Text.encode(serviceData.isActive === true ? serviceData.activeSubtitle : serviceData.inactiveSubtitle);
+	  }
+	  getIconContainer(data) {
+	    return this.cache.remember('baas-popup-icon', () => {
+	      var _ref, _Set$iconClass;
+	      const iconParams = {
+	        ...this.serviceData.icon
+	      };
+	      const iconClass = iconParams.className;
+	      const params = {
+	        icon: (_ref = (_Set$iconClass = ui_iconSet_api_core.Set[iconClass]) != null ? _Set$iconClass : ui_iconSet_api_core.Set.QR_CODE_1) != null ? _ref : null
+	      };
+	      if (params) {
+	        if (iconParams.color) {
+	          params.color = iconParams.color;
+	        }
+	        return new ui_iconSet_api_core.Icon(params).render();
+	      }
+	      return main_core.Dom.addClass(main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="ui-popupconstructor-content-item__icon ui-icon-set"></div>`)), iconClass);
+	    });
+	  }
+	  getWidgetHeader(data) {
+	    return {
+	      title: this.serviceData.title,
+	      subtitle: this.getSubtitleContainer()
+	    };
+	  }
+	  getSubtitleContainer() {
+	    return this.cache.remember('baas-popup-subtitle', () => {
+	      return main_core.Tag.render(_t2$4 || (_t2$4 = _$5`<span>${0}</span>`), main_core.Text.encode(this.serviceData.isActive ? this.serviceData.activeSubtitle : this.serviceData.inactiveSubtitle));
+	    });
+	  }
+	  getBody(data) {
+	    const adsInfo = data.adsInfo;
+	    return adsInfo ? {
+	      title: adsInfo.title,
+	      subtitle: adsInfo.subtitle,
+	      subtitleDescription: adsInfo.subtitleDescription,
+	      roundContent: {
+	        posterUrl: adsInfo.iconUrl,
+	        videos: [{
+	          url: adsInfo.videoUrl,
+	          type: adsInfo.videoFileType
+	        }]
+	      },
+	      moreLabel: main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE'),
+	      code: adsInfo.featurePromotionCode || this.serviceData.featurePromotionCode
+	    } : {
+	      title: this.serviceData.description,
+	      roundContent: this.getIconContainer(),
+	      moreLabel: main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE'),
+	      code: this.serviceData.featurePromotionCode
+	    };
+	  }
+	  getEmergencyButton(data) {
+	    if (main_core.Type.isArray(data == null ? void 0 : data.packages)) {
+	      return null;
+	    }
+	    return new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('BAAS_WIDGET_RELOAD_PACKAGES'),
+	      color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	      size: ui_buttons.ButtonSize.SMALL,
+	      onclick: () => {
+	        this.reload();
+	      },
+	      round: true,
+	      noCaps: true
+	    });
+	  }
+	  adjustPopupOnShow(popup) {
+	    main_core.Dom.addClass(popup.getPopup().getContentContainer(), '--baas-widget --baas-specified');
 	  }
 	  getPopup() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getPopupWithHeader)[_getPopupWithHeader]().getPopup();
 	  }
-	  getAnalytic() {
-	    return this.cache.remember('analyticObject', () => {
-	      return new Analytics(Analytics.SERVICE_ALL);
-	    });
-	  }
-	  getAjaxPromise() {
-	    return main_core.ajax.runAction('baas.Service.getAll');
-	  }
-	  setData(data) {
-	    this.cache.set('response-data', data);
-	    return this;
-	  }
-	  convertIntoWidgetDataType() {
-	    const data = this.cache.get('response-data');
-	    main_core.Dom.addClass(this.getPopup().contentContainer, '--baas-widget --baas-common');
-	    const showMore = main_core.Type.isStringFilled(data.adsInfo && data.adsInfo.featurePromotionCode);
-	    const result = {
-	      header: {
-	        icon: new WidgetIcon({
-	          icon: ui_iconSet_api_core.Actions.CHEVRON_LEFT,
-	          size: 22,
-	          color: '#fff',
-	          events: {
-	            click: () => {
-	              this.emit('onClickBack');
-	              this.hide();
-	            }
-	          }
-	        }).render(),
-	        top: {
-	          title: main_core.Loc.getMessage('BAAS_WIDGET_TITLE'),
-	          subtitle: ''
-	        },
-	        info: data.adsInfo && data.adsInfo.title ? {
-	          title: data.adsInfo.title,
-	          subtitle: data.adsInfo.subtitle,
-	          subtitleDescription: data.adsInfo.subtitleDescription,
-	          roundContent: {
-	            posterUrl: data.adsInfo.iconUrl,
-	            videos: [{
-	              url: data.adsInfo.videoUrl,
-	              type: data.adsInfo.videoFileType
-	            }]
-	          },
-	          moreLabel: showMore ? main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE') : '',
-	          code: showMore ? data.adsInfo.featurePromotionCode : null
-	        } : {
-	          title: main_core.Loc.getMessage('BAAS_WIDGET_DESCRIPTION'),
-	          roundContent: new ui_iconSet_api_core.Icon({
-	            icon: ui_iconSet_api_core.Set.QR_CODE_1
-	          }).render(),
-	          moreLabel: '',
-	          code: null
-	        }
-	      }
-	    };
-	    if (main_core.Type.isArray(data.packages) && data.packages.length > 0) {
-	      result.items = data.packages;
-	    } else {
-	      result.header.button = new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('BAAS_WIDGET_RELOAD_PACKAGES'),
-	        color: ui_buttons.ButtonColor.LIGHT_BORDER,
-	        size: ui_buttons.ButtonSize.SMALL,
-	        onclick: () => {
-	          this.reload();
-	        },
-	        round: true,
-	        noCaps: true
-	      });
-	    }
-	    return result;
-	  }
-	  bind(node, bxAnalyticContextLabel) {
-	    this.cache.set('boundLastElement', node);
-	    if (!this.cache.get('boundElements').has(node)) {
-	      this.cache.get('boundElements').set(node);
-	      Event.bind(node, 'click', () => {
-	        this.show(node);
-	      });
-	    }
-	    this.bindAnalyticContext(node, bxAnalyticContextLabel || Analytics.CONTEXT_IS_NOT_SET);
-	    return this;
-	  }
-	  bindAnalyticContext(node, bxAnalyticContextLabel) {
-	    node.dataset.bxAnalyticContextLabel = bxAnalyticContextLabel;
-	    return this;
-	  }
 	  show(node) {
-	    const popup = this.getPopup();
-	    if (!node) {
-	      node = this.cache.get('boundLastElement');
-	    }
+	    const popup = babelHelpers.classPrivateFieldLooseBase(this, _getPopupWithHeader)[_getPopupWithHeader]().getPopup();
 	    if (node && node !== popup.bindElement) {
 	      popup.setBindElement(node);
 	    }
 	    popup.show();
-	    return this;
 	  }
 	  toggle(node) {
 	    const popup = this.getPopup();
@@ -1163,82 +1314,195 @@ this.BX.Baas = this.BX.Baas || {};
 	    } else {
 	      this.show(node);
 	    }
-	    return this;
 	  }
 	  hide() {
 	    const popup = this.getPopup();
 	    popup.close();
-	    return this;
 	  }
 	  reload() {
 	    const popup = this.getPopup();
 	    popup.close();
 	    this.cache.delete('widgetData');
 	    this.cache.delete('baas-popup');
+	    this.cache.delete('baas-popup-icon');
+	    this.cache.delete('baas-popup-subtitle');
 	    this.show(popup.bindElement);
 	  }
-	  static getInstance() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] === null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this();
+	}
+	function _setServiceData2(serviceData) {
+	  this.serviceData = {
+	    ...serviceData
+	  };
+	}
+	function _getAnalytic2() {
+	  return this.cache.remember('analyticObject', () => {
+	    return Analytics.createByServiceCode(this.serviceCode);
+	  });
+	}
+	function _getLastBoundElement2() {
+	  return this.cache.has('boundLastElement') ? this.cache.get('boundLastElement') : null;
+	}
+	function _getWidgetData2() {
+	  return new Promise((resolve, reject) => {
+	    if (this.cache.has('widgetData')) {
+	      resolve({
+	        data: this.cache.get('widgetData')
+	      });
+	    } else if (main_core.Type.isFunction(this.dataProviderPromiseCreator)) {
+	      this.dataProviderPromiseCreator().then(response => {
+	        response.data = babelHelpers.classPrivateFieldLooseBase(this, _convertIntoWidgetDataType)[_convertIntoWidgetDataType](response.data);
+	        resolve(response);
+	      }).catch(reject);
+	    } else {
+	      // eslint-disable-next-line unicorn/prefer-type-error
+	      throw new Error('Baas popup presenter: data provider is not defined');
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
-	  }
+	  });
 	}
 	function _getPopupWithHeader2() {
 	  return this.cache.remember('baas-popup', () => {
-	    return new ui_popupWithHeader.PopupWithHeader({
+	    const popup = new ui_popupWithHeader.PopupWithHeader({
 	      target: babelHelpers.classPrivateFieldLooseBase(this, _getLastBoundElement)[_getLastBoundElement](),
 	      id: `baas-components-maker-${this.constructor.justCounter++}`,
 	      width: 344,
 	      content: [],
-	      asyncData: babelHelpers.classPrivateFieldLooseBase(this, _fetchData)[_fetchData](),
+	      asyncData: babelHelpers.classPrivateFieldLooseBase(this, _getWidgetData)[_getWidgetData](),
 	      template: new PackageTemplateManager(),
 	      analyticsCallback: (event, additionalParameter) => {
-	        this.getAnalytic().onPlayerEvents(event, additionalParameter);
+	        babelHelpers.classPrivateFieldLooseBase(this, _getAnalytic)[_getAnalytic]().onPlayerEvents(event, additionalParameter);
 	      },
 	      popupOptions: {
 	        autoHide: true,
 	        closeByEsc: true,
 	        events: {
 	          onShow: event => {
-	            var _popup$bindElement$da;
-	            const popup = event.getTarget();
-	            const targetPos = main_core.Dom.getPosition(popup.bindElement);
-	            const popupWidth = popup.getPopupContainer().offsetWidth;
+	            var _targetPopup$bindElem;
+	            const targetPopup = event.getTarget();
+	            const targetPos = main_core.Dom.getPosition(targetPopup.bindElement);
+	            const popupWidth = targetPopup.getPopupContainer().offsetWidth;
 	            const offsetLeft = targetPos.width / 2 - popupWidth / 2;
 	            const angleShift = main_popup.Popup.getOption('angleLeftOffset') - main_popup.Popup.getOption('angleMinTop');
-	            popup.setAngle({
+	            targetPopup.setAngle({
 	              offset: popupWidth / 2 - angleShift
 	            });
-	            popup.setOffset({
+	            targetPopup.setOffset({
 	              offsetLeft: offsetLeft + main_popup.Popup.getOption('angleLeftOffset')
 	            });
-	            this.getAnalytic().activate().onShowFrom((_popup$bindElement$da = popup.bindElement.dataset.bxAnalyticContextLabel) != null ? _popup$bindElement$da : Analytics.CONTEXT_IS_NOT_SET);
+	            babelHelpers.classPrivateFieldLooseBase(this, _getAnalytic)[_getAnalytic]().activate().onShowFrom((_targetPopup$bindElem = targetPopup.bindElement.dataset.bxAnalyticContextLabel) != null ? _targetPopup$bindElem : Analytics.CONTEXT_IS_NOT_SET);
 	          },
 	          onClose: () => {
-	            this.getAnalytic().deactivate();
+	            babelHelpers.classPrivateFieldLooseBase(this, _getAnalytic)[_getAnalytic]().deactivate();
 	          }
 	        }
 	      }
 	    });
+	    this.adjustPopupOnShow(popup);
+	    return popup;
 	  });
 	}
-	function _getLastBoundElement2() {
-	  return this.cache.has('boundLastElement') ? this.cache.get('boundLastElement') : null;
+	function _convertIntoWidgetDataType2(data) {
+	  return {
+	    header: {
+	      icon: this.getIconContainer(data),
+	      top: this.getWidgetHeader(data),
+	      info: this.getBody(data),
+	      button: this.getEmergencyButton(data)
+	    },
+	    items: data.packages
+	  };
 	}
-	function _fetchData2() {
-	  return new Promise((resolve, reject) => {
-	    if (this.cache.has('widgetData')) {
-	      resolve({
-	        data: this.cache.get('widgetData')
-	      });
-	    } else {
-	      this.getAjaxPromise().then(response => {
-	        response.data = this.setData(response.data).convertIntoWidgetDataType();
-	        resolve(response);
-	      }).catch(reject);
+	PresenterPopup.justCounter = 0;
+
+	var _events = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("events");
+	class WidgetIcon extends ui_iconSet_api_core.Icon {
+	  constructor(params = {}) {
+	    super(params);
+	    Object.defineProperty(this, _events, {
+	      writable: true,
+	      value: {}
+	    });
+	    if (params.events) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _events)[_events] = params.events;
 	    }
-	  });
+	  }
+	  render() {
+	    this.iconElement = super.render();
+	    main_core.Dom.style(this.iconElement, 'opacity', '60%');
+	    Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _events)[_events]).forEach(eventName => {
+	      main_core.Event.bind(this.iconElement, eventName, babelHelpers.classPrivateFieldLooseBase(this, _events)[_events][eventName]);
+	    });
+	    return this.iconElement;
+	  }
+	}
+
+	var _onPurchaseShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPurchaseShown");
+	var _onPackageHidden = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPackageHidden");
+	class PresenterPopupMain extends PresenterPopup {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _onPackageHidden, {
+	      value: _onPackageHidden2
+	    });
+	    Object.defineProperty(this, _onPurchaseShown, {
+	      value: _onPurchaseShown2
+	    });
+	  }
+	  initialize() {
+	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Baas:onPurchaseShown', event => babelHelpers.classPrivateFieldLooseBase(this, _onPurchaseShown)[_onPurchaseShown](event));
+	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Baas:onPurchaseHidden', event => babelHelpers.classPrivateFieldLooseBase(this, _onPackageHidden)[_onPackageHidden](event));
+	  }
+	  getIconContainer(data) {
+	    return this.cache.remember('baas-popup-icon', () => {
+	      return new WidgetIcon({
+	        icon: ui_iconSet_api_core.Actions.CHEVRON_LEFT,
+	        size: 22,
+	        color: '#fff',
+	        events: {
+	          click: () => {
+	            main_core_events.EventEmitter.emit(this, 'BX.Baas:onClickBack');
+	            this.hide();
+	          }
+	        }
+	      }).render();
+	    });
+	  }
+	  getWidgetHeader(data) {
+	    return {
+	      title: main_core.Loc.getMessage('BAAS_WIDGET_TITLE'),
+	      subtitle: this.getSubtitleContainer()
+	    };
+	  }
+	  getSubtitleContainer() {
+	    return '';
+	  }
+	  getBody(data) {
+	    const adsInfo = data.adsInfo;
+	    const showMore = main_core.Type.isStringFilled(adsInfo == null ? void 0 : adsInfo.featurePromotionCode);
+	    return adsInfo && adsInfo.title ? {
+	      title: adsInfo.title,
+	      subtitle: adsInfo.subtitle,
+	      subtitleDescription: adsInfo.subtitleDescription,
+	      roundContent: {
+	        posterUrl: adsInfo.iconUrl,
+	        videos: [{
+	          url: adsInfo.videoUrl,
+	          type: adsInfo.videoFileType
+	        }]
+	      },
+	      moreLabel: showMore ? main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE') : '',
+	      code: showMore ? adsInfo.featurePromotionCode : null
+	    } : {
+	      title: main_core.Loc.getMessage('BAAS_WIDGET_DESCRIPTION'),
+	      roundContent: new ui_iconSet_api_core.Icon({
+	        icon: ui_iconSet_api_core.Set.QR_CODE_1
+	      }).render(),
+	      moreLabel: '',
+	      code: null
+	    };
+	  }
+	  adjustPopupOnShow(popup) {
+	    main_core.Dom.addClass(popup.getPopup().contentContainer, '--baas-widget --baas-common');
+	  }
 	}
 	function _onPurchaseShown2(event) {
 	  var _this$getPopup;
@@ -1255,167 +1519,147 @@ this.BX.Baas = this.BX.Baas || {};
 	    this.getPopup().setClosingByEsc(true);
 	  }
 	}
-	Widget.justCounter = 0;
+
+	class PresenterSlider extends PresenterDefault {
+	  constructor(serviceCode, serviceData, dataProviderPromiseCreator = null) {
+	    super(serviceCode, serviceData, dataProviderPromiseCreator);
+	  }
+	  hide() {
+	    ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	      code: this.serviceData.featurePromotionCode
+	    }).hide();
+	  }
+	  show(node) {
+	    ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	      code: this.serviceData.featurePromotionCode
+	    }).show();
+	  }
+	}
+
+	class PresenterFactory {
+	  static createForWidget(serviceCode, serviceData, dataProviderPromiseCreator = null) {
+	    if (serviceCode === 'main') {
+	      return new PresenterPopupMain(serviceCode, serviceData, dataProviderPromiseCreator);
+	    }
+	    if ((serviceData == null ? void 0 : serviceData.advertisingStrategy) === 'market') {
+	      return new PresenterSlider(serviceCode, serviceData, dataProviderPromiseCreator);
+	    }
+	    return new PresenterPopup(serviceCode, serviceData, dataProviderPromiseCreator);
+	  }
+	}
+
+	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
+	class Widget extends main_core_events.EventEmitter {
+	  constructor(serviceCode, serviceData) {
+	    super();
+	    this.cache = new main_core.Cache.MemoryCache();
+	    this.setEventNamespace('BX.Baas');
+	    this.serviceCode = serviceCode;
+	    this.serviceData = serviceData;
+	    this.presenter = PresenterFactory.createForWidget(this.serviceCode, this.serviceData, this.getAjaxPromise.bind(this));
+	    main_core_events.EventEmitter.subscribe(this.presenter, 'BX.Baas:onClickBack', () => this.emit('onClickBack'));
+	    this.cache.set('boundElements', new WeakMap());
+	  }
+
+	  // deprecated
+	  getPopup() {
+	    return this.presenter.getPopup();
+	  }
+	  getAjaxPromise() {
+	    return main_core.ajax.runAction('baas.Service.getAll');
+	  }
+	  bind(node, bxAnalyticContextLabel) {
+	    this.cache.set('boundLastElement', node);
+	    if (!this.cache.get('boundElements').has(node)) {
+	      this.cache.get('boundElements').set(node);
+	      main_core.Event.bind(node, 'click', () => {
+	        this.show(node);
+	      });
+	    }
+	    this.bindAnalyticContext(node, bxAnalyticContextLabel || Analytics.CONTEXT_IS_NOT_SET);
+	    return this;
+	  }
+	  bindAnalyticContext(node, bxAnalyticContextLabel) {
+	    // eslint-disable-next-line no-param-reassign
+	    node.dataset.bxAnalyticContextLabel = bxAnalyticContextLabel;
+	    return this;
+	  }
+	  show(node) {
+	    const targetElement = node != null ? node : this.cache.get('boundLastElement');
+	    this.presenter.show(targetElement);
+	    return this;
+	  }
+	  toggle(node) {
+	    this.presenter.toggle(node);
+	    return this;
+	  }
+	  hide() {
+	    this.presenter.hide();
+	    return this;
+	  }
+	  reload() {
+	    if (main_core.Type.isFunction(this.presenter.reload)) {
+	      this.presenter.reload();
+	      this.presenter.show();
+	    }
+	  }
+	  static getInstance() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] === null) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this('main', null);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
+	  }
+	}
 	Object.defineProperty(Widget, _instance, {
 	  writable: true,
 	  value: null
 	});
 
-	let _$5 = t => t,
-	  _t$5,
-	  _t2$4;
-	var _serviceCode$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("serviceCode");
-	var _serviceData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("serviceData");
-	var _getIconContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIconContainer");
-	var _getSubtitleContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSubtitleContainer");
-	var _adjustFromPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustFromPull");
 	var _instances = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instances");
 	class ServiceWidget extends Widget {
-	  constructor(widgetData) {
-	    super(widgetData);
-	    Object.defineProperty(this, _adjustFromPull, {
-	      value: _adjustFromPull2
-	    });
-	    Object.defineProperty(this, _getSubtitleContainer, {
-	      value: _getSubtitleContainer2
-	    });
-	    Object.defineProperty(this, _getIconContainer, {
-	      value: _getIconContainer2
-	    });
-	    Object.defineProperty(this, _serviceCode$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _serviceData, {
-	      writable: true,
-	      value: void 0
-	    });
-	    if (BX.PULL && main_core.Extension.getSettings('baas.store').pull) {
-	      BX.PULL.extendWatch(main_core.Extension.getSettings('baas.store').pull.channelName);
+	  constructor(serviceCode, serviceData) {
+	    super(serviceCode, serviceData);
+	    const settings = main_core.Extension.getSettings('baas.store');
+	    if (BX.PULL && settings.pull) {
+	      BX.PULL.extendWatch(settings.pull.channelName);
 	      main_core_events.EventEmitter.subscribe('onPullEvent-baas', event => {
 	        const [command, params] = event.getData();
-	        if (command === 'updateService' && params.service.code === babelHelpers.classPrivateFieldLooseBase(this, _serviceCode$1)[_serviceCode$1]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _adjustFromPull)[_adjustFromPull](params.service);
+	        if (command === 'updateService' && params.service.code === this.serviceCode) {
+	          this.setServiceData(params.service);
 	        }
 	      });
 	    }
 	  }
-	  setServiceCode(code) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _serviceCode$1)[_serviceCode$1] = code;
-	    return this;
-	  }
-	  setData(data) {
-	    super.setData(data);
-	    babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData] = data.service;
-	    babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].icon.className = ui_iconSet_api_core.Set[babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].icon.className] ? babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].icon.className : 'QR_CODE_1';
+	  setServiceData(serviceData) {
+	    if (serviceData) {
+	      this.serviceData = {
+	        ...serviceData
+	      };
+	      this.presenter.adjustServiceData(this.serviceData);
+	    }
 	    return this;
 	  }
 	  getAjaxPromise() {
 	    return main_core.ajax.runAction('baas.Service.get', {
 	      data: {
-	        code: babelHelpers.classPrivateFieldLooseBase(this, _serviceCode$1)[_serviceCode$1]
+	        code: this.serviceCode
 	      }
 	    });
 	  }
-	  getAnalytic() {
-	    return this.cache.remember('analyticObject', () => {
-	      return Analytics.createByServiceCode(babelHelpers.classPrivateFieldLooseBase(this, _serviceCode$1)[_serviceCode$1]);
-	    });
-	  }
-	  convertIntoWidgetDataType() {
-	    var _Set$data$service$ico;
-	    const data = this.cache.get('response-data');
-	    main_core.Dom.addClass(this.getPopup().contentContainer, '--baas-widget --baas-specified');
-	    return {
-	      header: {
-	        icon: babelHelpers.classPrivateFieldLooseBase(this, _getIconContainer)[_getIconContainer](),
-	        top: {
-	          title: data.service.title,
-	          subtitle: babelHelpers.classPrivateFieldLooseBase(this, _getSubtitleContainer)[_getSubtitleContainer]()
-	        },
-	        info: data.adsInfo ? {
-	          title: data.adsInfo.title,
-	          subtitle: data.adsInfo.subtitle,
-	          subtitleDescription: data.adsInfo.subtitleDescription,
-	          roundContent: {
-	            posterUrl: data.adsInfo.iconUrl,
-	            videos: [{
-	              url: data.adsInfo.videoUrl,
-	              type: data.adsInfo.videoFileType
-	            }]
-	          },
-	          moreLabel: main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE'),
-	          code: data.adsInfo.featurePromotionCode || data.service.featurePromotionCode
-	        } : {
-	          title: data.service.description,
-	          roundContent: new ui_iconSet_api_core.Icon({
-	            icon: (_Set$data$service$ico = ui_iconSet_api_core.Set[data.service.icon.className]) != null ? _Set$data$service$ico : ui_iconSet_api_core.Set.QR_CODE_1
-	          }).render(),
-	          moreLabel: main_core.Loc.getMessage('BAAS_WIDGET_MORE_LINK_TITLE'),
-	          code: data.service.featurePromotionCode
-	        }
-	      },
-	      items: data.packages
-	    };
-	  }
 	  bindAnalyticContext(node, bxAnalyticContextLabel) {
+	    let contextLabel = bxAnalyticContextLabel;
 	    if (Analytics.CONTEXT_IS_NOT_SET === bxAnalyticContextLabel) {
-	      bxAnalyticContextLabel = Analytics.guessContextByServiceCode(babelHelpers.classPrivateFieldLooseBase(this, _serviceCode$1)[_serviceCode$1]);
+	      contextLabel = Analytics.guessContextByServiceCode(this.serviceCode);
 	    }
-	    super.bindAnalyticContext(node, bxAnalyticContextLabel);
+	    super.bindAnalyticContext(node, contextLabel);
 	    return this;
 	  }
 	  static getInstanceByCode(code) {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instances)[_instances][code]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _instances)[_instances][code] = new this().setServiceCode(code);
+	      babelHelpers.classPrivateFieldLooseBase(this, _instances)[_instances][code] = new this(code, main_core.Extension.getSettings('baas.store').services[code]);
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _instances)[_instances][code];
 	  }
-	}
-	function _getIconContainer2() {
-	  return this.cache.remember('baas-popup-icon', () => {
-	    const iconParams = babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].icon;
-	    // const iconClass = this.#serviceData.isActive ? iconParams.className : 'LOCK';
-	    const iconClass = iconParams.className;
-	    let iconNode = main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="ui-popupconstructor-content-item__icon ui-icon-set"></div>`));
-	    if (ui_iconSet_api_core.Set[iconClass]) {
-	      const params = {
-	        icon: ui_iconSet_api_core.Set[iconClass]
-	      };
-	      if (iconParams.color) {
-	        params.color = iconParams.color;
-	      }
-	      iconNode = new ui_iconSet_api_core.Icon(params).render();
-	    } else {
-	      main_core.Dom.addClass(iconNode, iconClass);
-	    }
-	    return iconNode;
-	  });
-	}
-	function _getSubtitleContainer2() {
-	  return this.cache.remember('baas-popup-subtitle', () => {
-	    return main_core.Tag.render(_t2$4 || (_t2$4 = _$5`<span>${0}</span>`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].isActive ? babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].activeSubtitle : babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].inactiveSubtitle));
-	  });
-	}
-	function _adjustFromPull2(newServiceData) {
-	  if (newServiceData.isActive !== babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].isActive) {
-	    // const iconParams: { className: ?string, color: ?string, style: ?Object } = this.#serviceData.icon;
-	    // const iconClass = Set[iconParams.className] ? `--${Set[iconParams.className]}` : iconParams.className;
-
-	    if (newServiceData.isActive === true) {
-	      // Dom.removeClass(this.#getIconContainer(), `--${Set.LOCK}`);
-	      // Dom.addClass(this.#getIconContainer(), iconClass);
-
-	      babelHelpers.classPrivateFieldLooseBase(this, _getSubtitleContainer)[_getSubtitleContainer]().innerHTML = main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].activeSubtitle);
-	    } else {
-	      // Dom.addClass(this.#getIconContainer(), `--${Set.LOCK}`);
-	      // Dom.removeClass(this.#getIconContainer(), iconClass);
-
-	      babelHelpers.classPrivateFieldLooseBase(this, _getSubtitleContainer)[_getSubtitleContainer]().innerHTML = main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].inactiveSubtitle);
-	    }
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].isActive = newServiceData.isActive;
-	  babelHelpers.classPrivateFieldLooseBase(this, _serviceData)[_serviceData].value = newServiceData.value;
 	}
 	Object.defineProperty(ServiceWidget, _instances, {
 	  writable: true,
@@ -1426,5 +1670,5 @@ this.BX.Baas = this.BX.Baas || {};
 	exports.ServiceWidget = ServiceWidget;
 	exports.Analytics = Analytics;
 
-}((this.BX.Baas.Store = this.BX.Baas.Store || {}),BX,BX.UI,BX.Main,BX.UI,BX.UI,BX.Main,BX.Bitrix24,BX,BX.UI,BX.UI,BX.UI.Analytics,BX,BX.Event,BX.UI.IconSet));
+}((this.BX.Baas.Store = this.BX.Baas.Store || {}),BX,BX.UI,BX.Main,BX.UI,BX.Bitrix24,BX,BX.UI.Analytics,BX.UI,BX.Main,BX.UI.IconSet,BX.UI,BX.UI,BX,BX.Event));
 //# sourceMappingURL=list.bundle.js.map

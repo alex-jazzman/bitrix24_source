@@ -1,0 +1,38 @@
+:root {
+	--im-notification-item-actions__background_delete-icon: url('./images/delete.svg');
+	--im-notification-item-actions__background_menu-icon: url('./images/menu.svg');
+}
+
+.bx-im-content-notification-item__actions-delete-button {
+	cursor: pointer;
+	width: 16px;
+	height: 28px;
+	background: var(--im-notification-item-actions__background_delete-icon) no-repeat center;
+}
+
+.bx-im-content-notification-item__actions-more-button {
+	cursor: pointer;
+	width: 16px;
+	height: 28px;
+	background: var(--im-notification-item-actions__background_menu-icon) no-repeat center;
+}
+
+.bx-im-content-notification-item__actions {
+	position: absolute;
+	right: 8px;
+	top: -8px;
+	display: flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	background: var(--ui-color-white-base);
+	border-radius: 14px;
+	opacity: 0;
+	transition: opacity 0.3s;
+	gap: 6px;
+}
+
+.bx-im-content-notification-item__container:hover .bx-im-content-notification-item__actions {
+	opacity: 1;
+}

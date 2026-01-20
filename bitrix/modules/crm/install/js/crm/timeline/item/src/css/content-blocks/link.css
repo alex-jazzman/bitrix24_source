@@ -35,6 +35,11 @@
 	background-image: url(../../images/common/crm-timeline__chat.svg);
 }
 
+.crm-timeline__card_link_icon.--code-chevron {
+	padding-top: 2px;
+	background-image: url(../../images/common/crm-timeline__link-chevron.svg);
+}
+
 .crm-timeline__card_link.--color-base-50 {
 	color: var(--ui-color-base-50, #a8adb4);
 }

@@ -1,4 +1,4 @@
-import { Event } from 'main.core';
+import { Event, Type } from 'main.core';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 
 import { Core } from 'tasks.v2.core';
@@ -19,24 +19,23 @@ export const FullCardButton = {
 		Hint,
 		UiButton,
 	},
-	inject: ['analytics'],
+	inject: {
+		analytics: {},
+		task: {},
+		taskId: {},
+	},
 	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
 		isOpening: {
 			type: Boolean,
 			required: true,
 		},
 	},
 	emits: ['update:isOpening'],
-	setup(props): Object
+	setup(): { task: TaskModel }
 	{
 		return {
 			AirButtonStyle,
 			ButtonSize,
-			fileService: fileService.get(props.taskId),
 		};
 	},
 	data(): Object
@@ -49,15 +48,9 @@ export const FullCardButton = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		checkLists(): CheckListModel[]
 		{
-			return this.task?.checklist
-				? this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist)
-				: [];
+			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
 		},
 		isDisabled(): boolean
 		{
@@ -65,7 +58,7 @@ export const FullCardButton = {
 		},
 		isUploading(): boolean
 		{
-			return this.fileService.isUploading();
+			return fileService.get(this.taskId).isUploading();
 		},
 		isCheckListUploading(): boolean
 		{
@@ -96,6 +89,7 @@ export const FullCardButton = {
 		// Show auditors hint if auditorsIds is not empty
 		if (this.hasAuditors && ahaMoments.shouldShow(Option.AhaAuditorsInCompactFormPopup))
 		{
+			ahaMoments.setActive(Option.AhaAuditorsInCompactFormPopup);
 			this.$nextTick(() => {
 				// Bind to the button element
 				this.auditorsHintBindElement = this.$refs.fullCardButtonContainer;
@@ -160,21 +154,31 @@ export const FullCardButton = {
 
 			const features = Core.getParams().features;
 			analytics.sendOpenFullCard(this.analytics);
-			if (features.isMiniformEnabled && !features.isV2Enabled)
+
+			const canOpenFullCard = (
+				features.isV2Enabled
+				|| (
+					Type.isArray(features.allowedGroups)
+					&& features.allowedGroups.includes(this.task.groupId)
+				)
+			);
+
+			if (canOpenFullCard)
+			{
+				Event.EventEmitter.emit(`${EventName.OpenFullCard}:${this.taskId}`, this.taskId);
+			}
+			else
 			{
 				Event.EventEmitter.emit(`${EventName.OpenSliderCard}:${this.taskId}`, {
 					task: this.task,
 					checkLists: this.checkLists,
 				});
 			}
-			else
-			{
-				Event.EventEmitter.emit(`${EventName.OpenFullCard}:${this.taskId}`, this.taskId);
-			}
 		},
 		closeAuditorsHint()
 		{
 			this.showAuditorsHint = false;
+			ahaMoments.setInactive(Option.AhaAuditorsInCompactFormPopup);
 		},
 		handleAuditorsHintLinkClick()
 		{

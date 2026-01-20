@@ -4,16 +4,16 @@
 }
 
 .tasks-check-list-popup-show {
-	animation: popupShowAnimation 300ms;
+	animation: tasksCheckListPopupShowAnimation 300ms;
 	animation-fill-mode: both;
 }
 
 .tasks-check-list-popup-close {
-	animation: popupCloseAnimation 300ms;
+	animation: tasksCheckListPopupCloseAnimation 300ms;
 	animation-fill-mode: both;
 }
 
-@keyframes popupShowAnimation {
+@keyframes tasksCheckListPopupShowAnimation {
 	0% {
 		opacity: 0;
 		transform: translateY(550px);
@@ -24,7 +24,7 @@
 	}
 }
 
-@keyframes popupCloseAnimation {
+@keyframes tasksCheckListPopupCloseAnimation {
 	0% {
 		opacity: 1;
 		transform: translateY(0px);

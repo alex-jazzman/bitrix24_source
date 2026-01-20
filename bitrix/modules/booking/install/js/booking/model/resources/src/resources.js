@@ -2,7 +2,7 @@ import { BuilderModel, Store } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import type { ResourceModel, ResourcesState, SlotRange } from './types';
+import type { ResourceModel, ResourcesState, SlotRange, Skus } from './types';
 
 export class Resources extends BuilderModel
 {
@@ -25,11 +25,13 @@ export class Resources extends BuilderModel
 			type: '',
 			name: '',
 			description: '',
+			avatar: null,
 			linkedResources: [],
 			slotRanges: [],
 			workLoad: null,
 			counter: null,
 			isMain: false,
+			isPrimary: false,
 			isDeleted: false,
 			isConfirmationNotificationOn: true,
 			isFeedbackNotificationOn: true,
@@ -46,6 +48,8 @@ export class Resources extends BuilderModel
 			updatedAt: 0,
 			deletedAt: 0,
 			entities: [],
+			skus: [],
+			skusYandex: [],
 		};
 	}
 
@@ -63,6 +67,14 @@ export class Resources extends BuilderModel
 			/** @function resources/getByIds */
 			getByIds: (state: ResourcesState) => (ids: number[]): ResourceModel[] => {
 				return ids.map((id: number): ResourceModel => state.collection[id]);
+			},
+			/** @function resources/getBySkuIds */
+			getBySkuIds: (state: ResourcesState) => (ids: number[]): ResourceModel[] => {
+				return Object.values(state.collection).filter(
+					(resource: ResourceModel) => resource.skus.some(
+						(sku: Skus) => ids.includes(sku.id),
+					),
+				);
 			},
 		};
 	}

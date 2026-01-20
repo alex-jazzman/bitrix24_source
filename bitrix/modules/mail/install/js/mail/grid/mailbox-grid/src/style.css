@@ -10,24 +10,18 @@
 	gap: 4px;
 	align-items: center;
 	position: relative;
-	top: -4px;
+	top: 4px;
 }
 
 .mailbox-grid_employee-card-container {
 	display: flex;
-}
-
-.mailbox-grid_employee-card-container > .mailbox-grid_owner-photo {
-	margin-right: 10px;
+	gap: 10px;
 }
 
 .mailbox-grid_full-name-container {
 	display: flex;
 	flex-direction: column;
-}
-
-.mailbox-grid_full-name-wrapper {
-	max-width: calc(100% - 50px);
+	justify-content: center;
 }
 
 .mailbox-grid_position-label {
@@ -43,6 +37,12 @@
 .mailbox-grid_last-sync-text {
 	white-space: nowrap;
 	text-align: center;
+}
+
+.mailbox-grid_single-line_field
+{
+	position: relative;
+	top: 8px;
 }
 
 .mailbox-grid_last-sync-container {
@@ -70,7 +70,6 @@
 	align-items: center;
 	gap: 8px;
 	position: relative;
-	top: -8px;
 }
 
 .mailbox-grid_list-members {
@@ -78,7 +77,6 @@
 	display: flex;
 	margin-left: 8px;
 	position: relative;
-	top: -5px;
 	cursor: pointer;
 }
 
@@ -113,7 +111,7 @@
 	box-shadow: inset 0 0 0 1px var(--ui-color-design-tinted-content-divider);
 }
 
-.mailbox-grid_list-members.--single-user {
+.mailbox-grid_list-members.--single-member {
 	display: flex;
 	gap: 8px;
 	align-items: center;
@@ -128,24 +126,6 @@
 	font-size: 10px;
 	line-height: 1;
 	margin-left: 1px;
-}
-
-.mailbox-grid_crm-status-label-success,
-.mailbox-grid_crm-status-label-danger {
-	width: 64px;
-	justify-content: center;
-}
-
-.mailbox-grid_crm-status-label-success {
-	color: var(--ui-color-accent-main-success-alt-2);
-	border-color: color-mix(in srgb, var(--ui-color-accent-main-success) 36%, transparent);
-	background-color: color-mix(in srgb, var(--ui-color-accent-main-success) 4%, transparent);
-}
-
-.mailbox-grid_crm-status-label-danger {
-	color: var(--ui-color-accent-main-alert);
-	border-color: color-mix(in srgb, var(--ui-color-accent-main-alert) 36%, transparent);
-	background-color: color-mix(in srgb, var(--ui-color-accent-main-alert) 4%, transparent);
 }
 
 .mailbox-grid_email-icon {
@@ -188,9 +168,13 @@
 	width: 145px;
 	height: 28px;
 	position: relative;
-	top: -4px;
 }
 
 .mailbox-grid_last-sync-error-message {
 	color: var(--ui-color-accent-main-alert);
+}
+
+.mailbox-grid_list-members-icon_element .ui-icon.ui-icon-common-company i,
+.mailbox-grid_user-list-popup-popup-avatar-new.--icon .ui-icon.ui-icon-common-company i {
+	background-color: #c6cdd3;
 }

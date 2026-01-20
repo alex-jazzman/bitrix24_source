@@ -1,15 +1,20 @@
+import { Type } from 'main.core';
+import { LocalStorageCache } from 'main.core.cache';
+
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
-import { ApiClient } from 'booking.lib.api-client';
+import { ApiClient, apiClient } from 'booking.lib.api-client';
 import type { BookingModel } from 'booking.model.bookings';
 
 import { MainPageDataExtractor } from './main-page-data-extractor';
 import { CountersExtractor } from './counters-extractor';
+import type { TimezonesDto } from './types';
 
 class MainPageService
 {
 	#dateCache: number[] = [];
+	#timezonesLocalStorageKey = 'bookingTimezones';
 
 	clearCache(ids: number[]): void
 	{
@@ -65,8 +70,16 @@ class MainPageService
 			Core.getStore().dispatch(`${Model.WaitList}/upsertMany`, extractor.getWaitListItems()),
 			Core.getStore().dispatch(`${Model.Clients}/upsertMany`, extractor.getClients()),
 			Core.getStore().dispatch(`${Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()),
-			Core.getStore().dispatch(`${Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable()),
+			Core.getStore().dispatch(
+				`${Model.Interface}/setIsCurrentSenderAvailable`,
+				extractor.getIsCurrentSenderAvailable(),
+			),
+			Core.getStore().dispatch(
+				`${Model.Interface}/setShouldShowWhatsAppEmergency`,
+				extractor.getShouldShowWhatsAppEmergency(),
+			),
 			Core.getStore().dispatch(`${Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu()),
+			Core.getStore().dispatch(`${Model.Bookings}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
 		]);
 	}
 
@@ -88,7 +101,14 @@ class MainPageService
 			Core.getStore().dispatch(`${Model.Bookings}/upsertMany`, extractor.getBookings()),
 			Core.getStore().dispatch(`${Model.Clients}/upsertMany`, extractor.getClients()),
 			Core.getStore().dispatch(`${Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()),
-			Core.getStore().dispatch(`${Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable()),
+			Core.getStore().dispatch(
+				`${Model.Interface}/setIsCurrentSenderAvailable`,
+				extractor.getIsCurrentSenderAvailable(),
+			),
+			Core.getStore().dispatch(
+				`${Model.Interface}/setShouldShowWhatsAppEmergency`,
+				extractor.getShouldShowWhatsAppEmergency(),
+			),
 		];
 
 		const editingBooking = extractor.getBookings()
@@ -141,7 +161,10 @@ class MainPageService
 
 			await Promise.all([
 				Core.getStore().dispatch(`${Model.Interface}/setTotalClients`, extractor.getTotalClients()),
-				Core.getStore().dispatch(`${Model.Interface}/setTotalNewClientsToday`, extractor.getTotalNewClientsToday()),
+				Core.getStore().dispatch(
+					`${Model.Interface}/setTotalNewClientsToday`,
+					extractor.getTotalNewClientsToday(),
+				),
 				Core.getStore().dispatch(`${Model.Interface}/setMoneyStatistics`, extractor.getMoneyStatistics()),
 				Core.getStore().dispatch(`${Model.Counters}/set`, extractor.getCounters()),
 			]);
@@ -164,6 +187,43 @@ class MainPageService
 		}
 
 		return Promise.resolve(false);
+	}
+
+	async getTimezones(): Promise<TimezonesDto>
+	{
+		try
+		{
+			const ls = new LocalStorageCache();
+			let timezones = this.#parseTimezonesFromLocalStorage(
+				ls.get(this.#timezonesLocalStorageKey, null),
+			);
+
+			if (Type.isArrayFilled(timezones))
+			{
+				return timezones;
+			}
+
+			timezones = await apiClient.get('MainPage.getTimezones');
+			ls.set(this.#timezonesLocalStorageKey, timezones);
+
+			return timezones;
+		}
+		catch (error)
+		{
+			console.error('BookingMainPage.GetTimezonesRequest: error', error);
+		}
+	}
+
+	#parseTimezonesFromLocalStorage(storageValue: string | null = null): TimezonesDto | null
+	{
+		if (Type.isStringFilled(storageValue))
+		{
+			const timezones = JSON.parse(storageValue) || [];
+
+			return Type.isArrayFilled(timezones) ? timezones : null;
+		}
+
+		return null;
 	}
 }
 

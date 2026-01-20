@@ -34,51 +34,15 @@ jn.define('settings-v2/manager', (require, exports, module) => {
 
 		async preparePage(settingsPage, pageParams)
 		{
-			const settingsData = await settingsPage.requestSettingsData?.(pageParams) ?? null;
-
 			return {
 				...settingsPage,
 				...pageParams,
-				items: this.prepareItems(settingsPage.items, settingsData),
 			};
-		}
-
-		prepareItems(items, settingsData)
-		{
-			const preparedItems = items.map((item) => {
-				if (item.prepareItems)
-				{
-					item.items = item.prepareItems(settingsData);
-				}
-
-				return item;
-			});
-
-			return this.filterItems(preparedItems, settingsData);
-		}
-
-		filterItems(items, settingsData)
-		{
-			items.forEach((item) => {
-				if (Type.isArrayFilled(item.items))
-				{
-					item.items = this.filterItems(item.items, settingsData);
-				}
-			});
-
-			return items.filter((item) => {
-				if (item.prefilter)
-				{
-					return item.prefilter(settingsData);
-				}
-
-				return true;
-			});
 		}
 
 		async #openWidget({ settingsPage, parentWidget = PageManager })
 		{
-			const { items, title } = settingsPage;
+			const { title } = settingsPage;
 			const currentWidget = await parentWidget.openWidget('layout', {
 				titleParams: {
 					text: title,
@@ -88,7 +52,7 @@ jn.define('settings-v2/manager', (require, exports, module) => {
 
 			currentWidget.showComponent(
 				new SettingsPage({
-					items,
+					...settingsPage,
 					openPage: this.openPage(currentWidget),
 				}),
 			);

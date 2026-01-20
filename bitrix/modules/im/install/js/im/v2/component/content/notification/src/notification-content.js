@@ -1,7 +1,7 @@
 import 'main.polyfill.intersectionobserver';
-import { Event, Runtime, Type } from 'main.core';
+import { Dom, Event, Runtime, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 import { mapState } from 'ui.vue3.vuex';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Logger } from 'im.v2.lib.logger';
 import { NotificationTypesCodes, Settings } from 'im.v2.const';
@@ -9,11 +9,14 @@ import { NotificationService } from 'im.v2.provider.service.notification';
 import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
 import { Loader } from 'im.v2.component.elements.loader';
 import { Utils } from 'im.v2.lib.utils';
+import { SpecialBackground, ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
+import { NotificationHeaderMenu } from './classes/notification-header-menu';
+import { NotificationMenu } from './classes/notification-menu';
 
-import { NotificationItem } from './components/notification-item';
-import { NotificationPlaceholder } from './components/notification-placeholder';
-import { NotificationSearchPanel } from './components/notification-search-panel';
-import { NotificationScrollButton } from './components/notification-scroll-button';
+import { NotificationComponents } from './components';
+import { ItemPlaceholder } from './components/elements/placeholder';
+import { SearchPanel } from './components/elements/search-panel';
+import { ScrollButton } from './components/elements/scroll-button';
 import { NotificationSearchService } from './classes/notification-search-service';
 import { NotificationReadService } from './classes/notification-read-service';
 
@@ -21,16 +24,16 @@ import './css/notification-content.css';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelNotification } from 'im.v2.model';
+import type { BitrixVueComponentProps } from 'ui.vue3';
 
 // @vue/component
 export const NotificationContent = {
 	name: 'NotificationContent',
 	components:
 	{
-		NotificationItem,
-		NotificationSearchPanel,
-		NotificationPlaceholder,
-		NotificationScrollButton,
+		SearchPanel,
+		ItemPlaceholder,
+		ScrollButton,
 		UserListPopup,
 		Loader,
 	},
@@ -52,6 +55,8 @@ export const NotificationContent = {
 	{
 		return {
 			isInitialLoading: false,
+			initialLoadComplete: false,
+			readQueue: new Set(),
 			isNextPageLoading: false,
 			notificationsOnScreen: new Set(),
 
@@ -72,6 +77,30 @@ export const NotificationContent = {
 		notificationCollection(): ImModelNotification[]
 		{
 			return this.$store.getters['notifications/getSortedCollection'];
+		},
+		confirmNotifications(): ImModelNotification[]
+		{
+			return this.notifications.filter((notification) => {
+				return notification.sectionCode === NotificationTypesCodes.confirm;
+			});
+		},
+		hasConfirmNotifications(): boolean
+		{
+			return this.confirmNotifications.length > 0;
+		},
+		simpleNotifications(): ImModelNotification[]
+		{
+			return this.notifications.filter((notification) => {
+				return notification.sectionCode !== NotificationTypesCodes.confirm;
+			});
+		},
+		confirmNotificationsCounter(): number
+		{
+			return this.confirmNotifications.length;
+		},
+		formattedCounter(): string
+		{
+			return this.confirmNotificationsCounter > 99 ? '99+' : String(this.confirmNotificationsCounter);
 		},
 		searchResultCollection(): ImModelNotification[]
 		{
@@ -110,7 +139,7 @@ export const NotificationContent = {
 		{
 			return this.showSearchResult
 				? this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_RESULTS_NOT_FOUND')
-				: this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_NO_ITEMS')
+				: this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_NO_NEW_ITEMS')
 			;
 		},
 		enableAutoRead(): boolean
@@ -137,6 +166,7 @@ export const NotificationContent = {
 		this.notificationService = new NotificationService();
 		this.notificationSearchService = new NotificationSearchService();
 		this.notificationReadService = new NotificationReadService();
+		this.headerMenu = new NotificationHeaderMenu();
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 1500, this);
 
 		Event.bind(window, 'focus', this.onWindowFocus);
@@ -151,12 +181,25 @@ export const NotificationContent = {
 
 		this.schema = await this.notificationService.loadFirstPage();
 		this.isInitialLoading = false;
+		this.initialLoadComplete = true;
+		this.processReadQueue();
 	},
 	beforeUnmount()
 	{
+		if (this.initialLoadComplete && this.enableAutoRead)
+		{
+			this.notificationReadService.readAll();
+		}
+
 		this.notificationService.destroy();
 		this.notificationSearchService.destroy();
 		this.notificationReadService.destroy();
+
+		if (this.headerMenu)
+		{
+			this.headerMenu.destroy();
+		}
+
 		Event.unbind(window, 'focus', this.onWindowFocus);
 		Event.unbind(window, 'blur', this.onWindowBlur);
 	},
@@ -211,8 +254,37 @@ export const NotificationContent = {
 				notificationIds = [notificationIds];
 			}
 
-			this.notificationReadService.addToReadQueue(notificationIds);
-			this.notificationReadService.read();
+			if (!this.initialLoadComplete)
+			{
+				notificationIds.forEach((id: number) => this.readQueue.add(id));
+
+				return;
+			}
+
+			const simpleNotificationIds = notificationIds.filter((notificationId) => {
+				const notification = this.$store.getters['notifications/getById'](notificationId);
+
+				return notification.sectionCode !== NotificationTypesCodes.confirm;
+			});
+
+			if (simpleNotificationIds.length > 0)
+			{
+				this.notificationReadService.addToReadQueue(simpleNotificationIds);
+				this.notificationReadService.read();
+			}
+		},
+		processReadQueue()
+		{
+			if (this.readQueue.size === 0)
+			{
+				return;
+			}
+
+			Logger.warn(`Processing initial read queue with ${this.readQueue.size} items.`);
+			const idsToRead = [...this.readQueue];
+			this.readQueue.clear();
+
+			this.read(idsToRead);
 		},
 		async searchOnServer(event)
 		{
@@ -226,6 +298,16 @@ export const NotificationContent = {
 				notifications: items,
 			});
 		},
+		getComponentForItem(notification: ImModelNotification): BitrixVueComponentProps
+		{
+			const componentId = notification.params?.componentId;
+			if (componentId && NotificationComponents[componentId])
+			{
+				return NotificationComponents[componentId];
+			}
+
+			return NotificationComponents.CompatibilityEntity;
+		},
 		onScrollButtonClick(offset)
 		{
 			this.$refs.listNotifications.scroll({
@@ -235,6 +317,8 @@ export const NotificationContent = {
 		},
 		onScroll(event)
 		{
+			NotificationMenu.closeMenuOnScroll();
+
 			this.showUserListPopup = false;
 
 			if (this.showSearchResult)
@@ -246,20 +330,9 @@ export const NotificationContent = {
 				this.onScrollNotifications(event);
 			}
 		},
-		onClickReadAll()
+		onClickHeaderMenu(event: BaseEvent): void
 		{
-			const messageBox = new MessageBox({
-				message: this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_WARNING_POPUP'),
-				buttons: MessageBoxButtons.YES_CANCEL,
-				onYes: () => {
-					this.notificationReadService.readAll();
-					messageBox.close();
-				},
-				onCancel: () => {
-					messageBox.close();
-				},
-			});
-			messageBox.show();
+			this.headerMenu.openMenu(this.isReadAllAvailable, event.currentTarget);
 		},
 		onScrollNotifications(event)
 		{
@@ -294,10 +367,6 @@ export const NotificationContent = {
 			const result = await this.notificationSearchService.loadNextPage();
 			this.isNextPageLoading = false;
 			this.setSearchResult(result);
-		},
-		onDoubleClick(notificationId: number)
-		{
-			this.notificationReadService.changeReadStatus(notificationId);
 		},
 		onConfirmButtonsClick(button: { id: string, value: string})
 		{
@@ -349,9 +418,42 @@ export const NotificationContent = {
 		{
 			this.windowFocused = false;
 		},
+		onLeave(element, done)
+		{
+			const ANIMATION_DURATION_MS = 250;
+
+			const { height } = element.getBoundingClientRect();
+			Dom.style(element, 'height', `${height}px`);
+
+			requestAnimationFrame(() => {
+				Dom.addClass(element, '--leave');
+				Dom.style(element, 'height', '0px');
+			});
+
+			setTimeout(done, ANIMATION_DURATION_MS);
+		},
+		onDoubleClick(notificationId: number)
+		{
+			if (this.enableAutoRead)
+			{
+				return;
+			}
+
+			const notification = this.$store.getters['notifications/getById'](notificationId);
+			if (!notification)
+			{
+				return;
+			}
+
+			Event.EventEmitter.emit(NotificationMenu.events.markAsUnreadClick, notification);
+		},
+		getNotificationsBackgroundStyle(): BackgroundStyle
+		{
+			return ThemeManager.getBackgroundStyleById(SpecialBackground.notifications);
+		},
 	},
 	template: `
-		<div class="bx-im-content-notification__container">
+		<div class="bx-im-content-notification__container --ui-context-content-light">
 			<div class="bx-im-content-notification__header-container">
 				<div class="bx-im-content-notification__header">
 					<div class="bx-im-content-notification__header-panel-container">
@@ -361,23 +463,20 @@ export const NotificationContent = {
 						</div>
 					</div>
 					<div v-if="notificationCollection.length > 0" class="bx-im-content-notification__header-buttons-container">
-						<transition name="notifications-read-all-fade">
-							<div
-								v-if="isReadAllAvailable"
-								class="bx-im-content-notification__header_button bx-im-content-notification__header_read-all-button"
-								@click="onClickReadAll"
-								:title="$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_BUTTON')"
-							></div>
-						</transition>
 						<div
 							class="bx-im-content-notification__header_button bx-im-content-notification__header_filter-button"
 							:class="[showSearchPanel ? '--active' : '']"
 							@click="showSearchPanel = !showSearchPanel"
 							:title="$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_OPEN_BUTTON')"
 						></div>
+						<div
+							v-if="!enableAutoRead"
+							class="bx-im-content-notification__header-menu"
+							@click="onClickHeaderMenu"
+						></div>
 					</div>
 				</div>
-				<NotificationSearchPanel 
+				<SearchPanel 
 					v-if="showSearchPanel" 
 					:schema="schema" 
 					@search="onSearch" 
@@ -385,31 +484,71 @@ export const NotificationContent = {
 				/>
 			</div>
 			<div class="bx-im-content-notification__elements-container">
-				<div class="bx-im-content-notification__elements" @scroll.passive="onScroll" ref="listNotifications">
-					<NotificationItem
-						v-for="notification in notifications"
-						:key="notification.id"
-						:data-id="notification.id"
-						:notification="notification"
-						@dblclick="onDoubleClick"
-						@confirmButtonsClick="onConfirmButtonsClick"
-						@deleteClick="onDeleteClick"
-						@moreUsersClick="onMoreUsersClick"
-						@sendQuickAnswer="onSendQuickAnswer"
-						v-notifications-item-observer
-					/>
+				<div
+					class="bx-im-content-notification__elements"
+					@scroll.passive="onScroll"
+					ref="listNotifications"
+					:style="getNotificationsBackgroundStyle()"
+				>
+					<div v-if="hasConfirmNotifications" class="bx-im-content-notification__elements-group">
+						 <div class="bx-im-content-notification__elements-title">
+							 {{ $Bitrix.Loc.getMessage('IM_NOTIFICATIONS_GROUP_TITLE') }}
+							 <div
+								 class="bx-im-content-notification__elements-group-counter"
+							 >
+								 {{ formattedCounter }}
+							 </div>
+						 </div>
+						<TransitionGroup 
+							name="notification-confirm-item"
+							tag="div" 
+							@leave="onLeave"
+						>
+							<component
+								v-for="notification in confirmNotifications"
+								:is="getComponentForItem(notification)"
+								:key="notification.id"
+								:data-id="notification.id"
+								:notification="notification"
+								@confirmButtonsClick="onConfirmButtonsClick"
+								@deleteClick="onDeleteClick"
+								@moreUsersClick="onMoreUsersClick"
+								@sendQuickAnswer="onSendQuickAnswer"
+								v-notifications-item-observer
+							/>
+						</TransitionGroup>
+					</div>
+					<TransitionGroup 
+						name="notification-simple-item"
+						tag="div"
+						@leave="onLeave"
+					>
+						<component
+							v-for="notification in simpleNotifications"
+							:is="getComponentForItem(notification)"
+							:key="notification.id"
+							:data-id="notification.id"
+							:notification="notification"
+							@confirmButtonsClick="onConfirmButtonsClick"
+							@deleteClick="onDeleteClick"
+							@moreUsersClick="onMoreUsersClick"
+							@sendQuickAnswer="onSendQuickAnswer"
+							@dblclick="onDoubleClick(notification.id)"
+							v-notifications-item-observer
+						/>
+					</TransitionGroup>
 					<div v-if="isEmptyState" class="bx-im-content-notification__empty-state-container">
 						<div :class="emptyStateIcon"></div>
 						<span class="bx-im-content-notification__empty-state-title">
 							{{ emptyStateTitle }}
 						</span>
 					</div>
-					<NotificationPlaceholder v-if="isInitialLoading" />
+					<ItemPlaceholder v-if="isInitialLoading" />
 					<div v-if="isNextPageLoading" class="bx-im-content-notification__loader-container">
 						<Loader />
 					</div>
 				</div>
-				<NotificationScrollButton
+				<ScrollButton
 					v-if="!isInitialLoading || !isNextPageLoading"
 					:unreadCounter="unreadCounter"
 					:notificationsOnScreen="notificationsOnScreen"

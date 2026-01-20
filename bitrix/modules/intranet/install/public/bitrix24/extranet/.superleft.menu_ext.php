@@ -26,49 +26,45 @@ $USER_ID = $USER->GetID();
 $isCollaber = $extEnabled && \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($USER_ID);
 
 $diskEnabled = \Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false);
-$arMenu = [];
+$arMenu = [
+	[
+		Loc::getMessage('MENU_IM_MESSENGER_NEW'),
+		'/extranet/online/',
+		[
+			'/extranet/desktop_app/',
+		],
+		[
+			'counter_id' => 'im-message',
+			'menu_item_id' => 'menu_im_messenger',
+			'my_tools_section' => true,
+		],
+		''
+	]
+];
 
-if ($isCollaber)
+if (!$isCollaber)
 {
-	$arMenu = [
-		[
-			Loc::getMessage('MENU_IM_MESSENGER_NEW'),
-			'/extranet/online/',
-			[],
-			[
-				'counter_id' => 'im-message',
-				'menu_item_id' => 'menu_im_messenger',
-				'my_tools_section' => true,
-			],
-			''
-		]
+	$arMenu[] = [
+		Loc::getMessage('MENU_LIVE_FEED3'),
+		'/extranet/index.php',
+		[],
+		['name' => 'live_feed', 'counter_id' => 'live-feed', 'menu_item_id' => 'menu_live_feed'],
+		'',
 	];
-}
-else
-{
-	$arMenu = [
+	$arMenu[] = [
+		Loc::getMessage('MENU_BLOG'),
+		'/extranet/contacts/personal/user/' . $USER_ID . '/blog/',
+		[],
 		[
-			Loc::getMessage('MENU_LIVE_FEED3'),
-			'/extranet/index.php',
-			[],
-			['name' => 'live_feed', 'counter_id' => 'live-feed', 'menu_item_id' => 'menu_live_feed'],
-			'',
+			'real_link' => getLeftMenuItemLink(
+				'blog_messages_panel_menu',
+				'/extranet/contacts/personal/user/' . $USER_ID . '/blog/'
+			),
+			'counter_id' => 'blog_post',
+			'menu_item_id' => 'menu_blog',
+			'top_menu_id' => 'blog_messages_panel_menu'
 		],
-		[
-			Loc::getMessage('MENU_BLOG'),
-			'/extranet/contacts/personal/user/' . $USER_ID . '/blog/',
-			[],
-			[
-				'real_link' => getLeftMenuItemLink(
-					'blog_messages_panel_menu',
-					'/extranet/contacts/personal/user/' . $USER_ID . '/blog/'
-				),
-				'counter_id' => 'blog_post',
-				'menu_item_id' => 'menu_blog',
-				'top_menu_id' => 'blog_messages_panel_menu'
-			],
-			'',
-		],
+		'',
 	];
 }
 
@@ -80,7 +76,9 @@ if (
 	$arMenu[] = [
 		Loc::getMessage('MENU_IM_MESSENGER_COLLAB'),
 		'/extranet/online/?IM_COLLAB',
-		[],
+		[
+			'/extranet/desktop_app/?IM_COLLAB'
+		],
 		[
 			'menu_item_id' => 'menu_im_collab',
 		],

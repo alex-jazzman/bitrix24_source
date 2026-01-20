@@ -10,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-class CBPDeleteDocumentActivity extends CBPActivity
+class CBPDeleteDocumentActivity extends CBPActivity implements IBPConfigurableActivity
 {
 	public function __construct($name)
 	{
@@ -102,15 +102,7 @@ class CBPDeleteDocumentActivity extends CBPActivity
 			]
 		);
 
-		$dialog->setMap([
-			'TerminateCurrentWorkflow' => [
-				'Name' => Loc::getMessage('BPDDA_TERMINATE_CURRENT_WORKFLOW'),
-				'FieldName' => 'TerminateCurrentWorkflow',
-				'Type' => 'bool',
-				'Default' => 'Y',
-				'Required' => true,
-			]
-		]);
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -140,5 +132,19 @@ class CBPDeleteDocumentActivity extends CBPActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	public static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'TerminateCurrentWorkflow' => [
+				'Name' => Loc::getMessage('BPDDA_TERMINATE_CURRENT_WORKFLOW'),
+				'FieldName' => 'TerminateCurrentWorkflow',
+				'Type' => \Bitrix\Bizproc\FieldType::BOOL,
+				'Default' => 'Y',
+				'Required' => true,
+				'AllowSelection' => false
+			],
+		];
 	}
 }

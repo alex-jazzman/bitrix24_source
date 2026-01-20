@@ -1,3 +1,5 @@
+import { Extension } from 'main.core';
+
 import { SidebarDetailBlock, SidebarFileGroups } from 'im.v2.const';
 import { Loader } from 'im.v2.component.elements.loader';
 
@@ -9,11 +11,11 @@ import { DetailEmptyState as StartState, DetailEmptyState } from '../../../eleme
 import { DetailEmptySearchState } from '../../../elements/detail-empty-search-state/detail-empty-search-state';
 import { FileMenu } from '../../../../classes/context-menu/file/file-menu';
 import { SidebarCollectionFormatter } from '../../../../classes/sidebar-collection-formatter';
-import { Extension } from 'main.core';
 
 import '../css/audio-tab.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelSidebarFileItem } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -92,7 +94,7 @@ export const AudioTab = {
 		this.service = new File({ dialogId: this.dialogId });
 		this.serviceSearch = new FileSearch({ dialogId: this.dialogId });
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new FileMenu();
+		this.contextMenu = new FileMenu({ emitter: this.getEmitter() });
 	},
 	beforeUnmount()
 	{
@@ -144,9 +146,13 @@ export const AudioTab = {
 			}
 			this.isLoading = false;
 		},
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		getEmitter(): EventEmitter
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `

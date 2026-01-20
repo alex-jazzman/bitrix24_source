@@ -6,6 +6,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
+	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
 	var _bindEscHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEscHandler");
 	var _unbindEscHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEscHandler");
 	var _onKeyPressCloseBulkActions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onKeyPressCloseBulkActions");
@@ -15,9 +16,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this();
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
-	  }
-	  static init() {
-	    BulkActionsManager.getInstance();
 	  }
 	  constructor() {
 	    Object.defineProperty(this, _onKeyPressCloseBulkActions, {
@@ -29,9 +27,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _bindEscHandler, {
 	      value: _bindEscHandler2
 	    });
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.openBulkActionsMode, this.enableBulkMode.bind(this));
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.closeBulkActionsMode, this.disableBulkMode.bind(this));
+	    Object.defineProperty(this, _emitter, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.keyPressHandler = babelHelpers.classPrivateFieldLooseBase(this, _onKeyPressCloseBulkActions)[_onKeyPressCloseBulkActions].bind(this);
+	  }
+	  bindEvents(context) {
+	    const {
+	      emitter
+	    } = context;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].subscribe(im_v2_const.EventType.dialog.openBulkActionsMode, this.enableBulkMode.bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].subscribe(im_v2_const.EventType.dialog.closeBulkActionsMode, this.disableBulkMode.bind(this));
 	  }
 	  enableBulkMode(event) {
 	    const {
@@ -59,10 +67,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 	function _bindEscHandler2() {
-	  main_core_events.EventEmitter.subscribe(im_v2_const.EventType.key.onBeforeEscape, this.keyPressHandler);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].subscribe(im_v2_const.EventType.key.onBeforeEscape, this.keyPressHandler);
 	}
 	function _unbindEscHandler2() {
-	  main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.keyPressHandler);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.keyPressHandler);
 	}
 	function _onKeyPressCloseBulkActions2() {
 	  this.clearCollection();

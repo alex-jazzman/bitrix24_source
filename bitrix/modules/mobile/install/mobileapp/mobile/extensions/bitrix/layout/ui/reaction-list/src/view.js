@@ -8,6 +8,10 @@ jn.define('layout/ui/reaction-list/src/view', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Type } = require('type');
 
+	/**
+	 * @deprecated
+	 * @see layout/ui/reaction/list
+	 */
 	class ReactionListView extends LayoutComponent
 	{
 		static constants = Object.freeze({

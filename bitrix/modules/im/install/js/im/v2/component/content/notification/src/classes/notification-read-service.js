@@ -1,8 +1,9 @@
 import { Runtime, Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { RestMethod } from 'im.v2.const';
+import { RestMethod, NotificationTypesCodes } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
+import { runAction } from 'im.v2.lib.rest';
 
 export class NotificationReadService
 {
@@ -57,11 +58,34 @@ export class NotificationReadService
 			return;
 		}
 
-		const idToReadFrom = Math.min(...this.itemsToRead);
+		const allNotifications = this.store.getters['notifications/getSortedCollection'];
 
-		this.restClient.callMethod(RestMethod.imNotifyRead, { id: idToReadFrom })
+		const confirmNotifications = allNotifications.filter((notification) => {
+			return notification.sectionCode === NotificationTypesCodes.confirm;
+		});
+
+		const confirmNotificationIds = new Set(confirmNotifications.map((notification) => notification.id));
+
+		const allIdsToRead = [...this.itemsToRead];
+
+		const notificationsToReadIds = allIdsToRead.filter((id) => {
+			return !confirmNotificationIds.has(id);
+		});
+
+		if (notificationsToReadIds.length === 0)
+		{
+			this.itemsToRead.clear();
+
+			return;
+		}
+
+		const params = {
+			ids: notificationsToReadIds,
+		};
+
+		runAction(RestMethod.imV2NotifyRead, { data: params })
 			.then((response) => {
-				Logger.warn(`I have read all the notifications from id ${idToReadFrom}`, response);
+				Logger.warn(`I have read all the notifications, total: ${notificationsToReadIds.length}`, response);
 			})
 			.catch((result: RestResult) => {
 				console.error('NotificationReadService: readRequest error', result.error());
@@ -77,10 +101,17 @@ export class NotificationReadService
 
 	readAll(): void
 	{
-		this.store.dispatch('notifications/readAll');
+		this.store.dispatch('notifications/readAllSimple');
 
-		this.restClient.callMethod(RestMethod.imNotifyRead, { id: 0 })
+		this.restClient.callMethod(RestMethod.imNotifyReadAll, { id: 0 })
 			.then((response) => {
+				const currentCounter = this.store.getters['notifications/getCounter'];
+				const newCounter = response.answer.result.newCounter;
+				if (newCounter < currentCounter)
+				{
+					void this.store.dispatch('notifications/setCounter', newCounter);
+				}
+
 				Logger.warn('I have read ALL the notifications', response);
 			}).catch((result: RestResult) => {
 				console.error('NotificationReadService: readAll error', result.error());

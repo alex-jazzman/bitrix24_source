@@ -41,6 +41,8 @@ jn.define('im/messenger/db/table/file', (require, exports, module) => {
 				{ name: 'urlDownload', type: FieldType.text },
 				{ name: 'mediaUrl', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
 				{ name: 'isTranscribable', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
+				{ name: 'isVoiceNote', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
+				{ name: 'isVideoNote', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
 			];
 		}
 	}

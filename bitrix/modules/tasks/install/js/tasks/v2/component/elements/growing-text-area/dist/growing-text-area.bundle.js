@@ -97,10 +97,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      main_core.Dom.style(textarea, 'maxHeight', `${maxHeight}px`);
 	    },
 	    focusToEnd() {
+	      const textarea = this.$refs.textarea;
+	      if (!textarea) {
+	        return;
+	      }
 	      if (this.readonly) {
 	        return;
 	      }
-	      const textarea = this.$refs.textarea;
 	      textarea.focus({
 	        preventScroll: true
 	      });
@@ -202,20 +205,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				class="b24-growing-text-area-edit"
 				rows="1"
 				:value="modelValue"
-				:placeholder="placeholder"
+				:placeholder
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
 				}"
-				:readonly="readonly"
+				:readonly
 				ref="textarea"
 				@input="handleInput"
 				@keydown="handleKeyDown"
 				@focus="handleFocus"
 				@blur="handleBlur"
-			></textarea>
+			/>
 		</div>
 	`
 	};

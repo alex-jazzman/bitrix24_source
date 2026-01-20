@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,main_core_events,ui_uploader_core,ui_uploader_vue,ui_vue3,ui_notification,disk_uploader_userFieldWidget,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient,main_core) {
+(function (exports,main_core_events,ui_uploader_core,ui_uploader_vue,ui_vue3,ui_notificationManager,tasks_v2_core,tasks_v2_const,tasks_v2_lib_apiClient,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,main_core) {
 	'use strict';
 
 	function mapDtoToModel(fileDto) {
@@ -19,6 +19,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    isVideo: fileDto.isVideo,
 	    treatImageAsFile: fileDto.treatImageAsFile,
 	    downloadUrl: fileDto.downloadUrl,
+	    previewUrl: fileDto.serverPreviewUrl,
 	    serverPreviewUrl: fileDto.serverPreviewUrl,
 	    serverPreviewWidth: fileDto.serverPreviewWidth,
 	    serverPreviewHeight: fileDto.serverPreviewHeight,
@@ -49,12 +50,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	const EntityTypes = Object.freeze({
 	  Task: 'task',
-	  CheckListItem: 'checkListItem'
+	  CheckListItem: 'checkListItem',
+	  Result: 'result'
 	});
 	var _entityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
 	var _entityType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
-	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
 	var _loadedIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadedIds");
 	var _objectsIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("objectsIds");
 	var _promises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("promises");
@@ -63,9 +63,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	var _filesToAttach = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filesToAttach");
 	var _filesToDetach = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filesToDetach");
 	var _isDetachedErrorMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDetachedErrorMode");
+	var _browseElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("browseElement");
 	var _saveAttachedFilesDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveAttachedFilesDebounced");
 	var _saveDetachedFilesDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveDetachedFilesDebounced");
-	var _browseElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("browseElement");
+	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
+	var _handleLoadedFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLoadedFiles");
 	var _addLoadedIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addLoadedIds");
 	var _addLoadedObjectsIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addLoadedObjectsIds");
 	var _removeLoadedObjectsIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeLoadedObjectsIds");
@@ -74,13 +77,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	var _detachFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("detachFiles");
 	var _getEntityFileIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntityFileIds");
 	var _processCheckListFileIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processCheckListFileIds");
-	var _isRealId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRealId");
-	var _isNewFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNewFile");
+	var _isObjectId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isObjectId");
 	var _saveAttachedFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveAttachedFiles");
 	var _saveDetachedFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveDetachedFiles");
 	var _entityFileIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityFileIds");
 	class FileService extends main_core_events.EventEmitter {
-	  constructor(entityId, entityType = EntityTypes.Task, options = {}) {
+	  constructor(entityId, entityType = EntityTypes.Task) {
 	    super();
 	    Object.defineProperty(this, _entityFileIds, {
 	      get: _get_entityFileIds,
@@ -92,11 +94,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _saveAttachedFiles, {
 	      value: _saveAttachedFiles2
 	    });
-	    Object.defineProperty(this, _isNewFile, {
-	      value: _isNewFile2
-	    });
-	    Object.defineProperty(this, _isRealId, {
-	      value: _isRealId2
+	    Object.defineProperty(this, _isObjectId, {
+	      value: _isObjectId2
 	    });
 	    Object.defineProperty(this, _processCheckListFileIds, {
 	      value: _processCheckListFileIds2
@@ -122,19 +121,20 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _addLoadedIds, {
 	      value: _addLoadedIds2
 	    });
+	    Object.defineProperty(this, _handleLoadedFiles, {
+	      value: _handleLoadedFiles2
+	    });
+	    Object.defineProperty(this, _unbindEvents, {
+	      value: _unbindEvents2
+	    });
+	    Object.defineProperty(this, _bindEvents, {
+	      value: _bindEvents2
+	    });
 	    Object.defineProperty(this, _entityId, {
 	      writable: true,
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _entityType, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _options, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _menu, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -152,7 +152,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    });
 	    Object.defineProperty(this, _adapter, {
 	      writable: true,
-	      value: void 0
+	      value: null
 	    });
 	    Object.defineProperty(this, _fileBrowserClosed, {
 	      writable: true,
@@ -170,6 +170,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _browseElement, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _saveAttachedFilesDebounced, {
 	      writable: true,
 	      value: void 0
@@ -178,21 +182,21 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _browseElement, {
-	      writable: true,
-	      value: void 0
-	    });
+	    this.handleSave = async () => {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _saveAttachedFiles)[_saveAttachedFiles]();
+	      await babelHelpers.classPrivateFieldLooseBase(this, _saveDetachedFiles)[_saveDetachedFiles]();
+	    };
 	    this.setEventNamespace('Tasks.V2.Provider.Service.FileService');
 	    this.setEntityId(entityId, entityType);
 	    this.initAdapter(entityId, entityType);
-	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _saveAttachedFilesDebounced)[_saveAttachedFilesDebounced] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _saveAttachedFiles)[_saveAttachedFiles], 3000, this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _saveDetachedFilesDebounced)[_saveDetachedFilesDebounced] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _saveDetachedFiles)[_saveDetachedFiles], 3000, this);
 	  }
 	  initAdapter(entityId, entityType) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter] = new ui_uploader_vue.VueUploaderAdapter({
-	      id: getServiceKey(entityId, entityType),
-	      controller: 'disk.uf.integration.diskUploaderController',
+	      id: getKey(entityId, entityType),
+	      controller: tasks_v2_core.Core.getParams().features.disk ? 'disk.uf.integration.diskUploaderController' : null,
 	      imagePreviewHeight: 1200,
 	      imagePreviewWidth: 1200,
 	      imagePreviewQuality: 0.85,
@@ -246,41 +250,46 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  getFiles() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getReactiveItems();
 	  }
+	  getFileItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems();
+	  }
 	  isUploading() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems().some(({
+	    return this.getFileItems().some(({
 	      status
 	    }) => [ui_uploader_core.FileStatus.UPLOADING, ui_uploader_core.FileStatus.LOADING].includes(status));
 	  }
 	  hasUploadingError() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems().some(({
+	    return this.getFileItems().some(({
 	      status
 	    }) => [ui_uploader_core.FileStatus.UPLOAD_FAILED, ui_uploader_core.FileStatus.LOAD_FAILED].includes(status));
 	  }
 	  browse(params) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] = new disk_uploader_userFieldWidget.UserFieldMenu({
-	      dialogId: 'task-card',
-	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader(),
-	      compact: params.compact || false,
-	      menuOptions: {
-	        minWidth: 220,
-	        animation: 'fading',
-	        closeByEsc: true,
-	        bindOptions: {
-	          forceBindPosition: true,
-	          forceTop: true,
-	          position: 'top'
-	        },
-	        events: {
-	          onPopupClose: () => {
-	            params.onHideCallback == null ? void 0 : params.onHideCallback();
+	    main_core.Runtime.loadExtension('disk.uploader.user-field-widget').then(({
+	      UserFieldMenu
+	    }) => {
+	      const menu = new UserFieldMenu({
+	        dialogId: 'task-card',
+	        uploader: babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader(),
+	        compact: params.compact || false,
+	        menuOptions: {
+	          minWidth: 220,
+	          animation: 'fading',
+	          closeByEsc: true,
+	          bindOptions: {
+	            forceBindPosition: true
 	          },
-	          onPopupShow: () => {
-	            params.onShowCallback == null ? void 0 : params.onShowCallback();
+	          events: {
+	            onPopupClose: () => {
+	              params.onHideCallback == null ? void 0 : params.onHideCallback();
+	            },
+	            onPopupShow: () => {
+	              params.onShowCallback == null ? void 0 : params.onShowCallback();
+	            }
 	          }
 	        }
-	      }
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].show(params.bindElement);
+	      });
+	      menu.show(params.bindElement);
+	    }).catch(error => console.error(error));
 	  }
 	  browseFiles() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _browseElement)[_browseElement]) {
@@ -290,14 +299,17 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _browseElement)[_browseElement].click();
 	  }
 	  browseMyDrive() {
-	    disk_uploader_userFieldWidget.openDiskFileDialog({
-	      dialogId: 'task-card',
-	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader()
-	    });
+	    main_core.Runtime.loadExtension('disk.uploader.user-field-widget').then(({
+	      openDiskFileDialog
+	    }) => {
+	      openDiskFileDialog({
+	        dialogId: 'task-card',
+	        uploader: babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader()
+	      });
+	    }).catch(error => console.error(error));
 	  }
 	  setFileBrowserClosed(value) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _fileBrowserClosed)[_fileBrowserClosed] = value;
-	    this.emit('onFileBrowserClosed');
 	  }
 	  isFileBrowserClosed() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _fileBrowserClosed)[_fileBrowserClosed];
@@ -310,15 +322,16 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].unsubscribeAll('Item:onComplete');
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].unsubscribeAll('Item:onRemove');
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _unbindEvents)[_unbindEvents]();
 	  }
 	  async sync(ids) {
 	    if (!main_core.Type.isArrayFilled(ids)) {
 	      return;
 	    }
 	    if (ids.every(id => babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].has(id))) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems().forEach(file => {
+	      this.getFileItems().forEach(file => {
 	        const uploaderIds = [file.serverFileId];
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _isNewFile)[_isNewFile](file.serverFileId)) {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isObjectId)[_isObjectId](file.serverFileId)) {
 	          const objectId = Number(file.serverFileId.slice(1));
 	          uploaderIds.push(...babelHelpers.classPrivateFieldLooseBase(this, _getIdsByObjectId)[_getIdsByObjectId](objectId));
 	        }
@@ -331,51 +344,63 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    await this.list(ids);
 	  }
 	  async list(ids) {
-	    const unloadedIds = ids.filter(id => !babelHelpers.classPrivateFieldLooseBase(this, _isNewFile)[_isNewFile](id) && !babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].has(id));
+	    const unloadedIds = ids.filter(id => !babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].has(id));
 	    if (unloadedIds.length === 0) {
 	      await Promise.all(babelHelpers.classPrivateFieldLooseBase(this, _promises)[_promises]);
-	      return babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems();
+	      return this.getFileItems();
 	    }
 	    const promise = new Resolvable();
 	    babelHelpers.classPrivateFieldLooseBase(this, _promises)[_promises].push(promise);
 	    babelHelpers.classPrivateFieldLooseBase(this, _addLoadedIds)[_addLoadedIds](unloadedIds);
 	    try {
-	      let data = [];
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
-	        data = await tasks_v2_lib_apiClient.apiClient.post('File.list', {
-	          taskId: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
-	          ids: unloadedIds
-	        });
-	      } else if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.CheckListItem) {
-	        data = await tasks_v2_lib_apiClient.apiClient.post('Task.CheckList.File.list', {
-	          taskId: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].parentEntityId,
-	          ids: unloadedIds
-	        });
-	      }
-	      const files = data.map(fileDto => mapDtoToModel(fileDto));
-	      const objectsIds = new Set(Object.values(babelHelpers.classPrivateFieldLooseBase(this, _objectsIds)[_objectsIds]));
-	      const newFiles = files.filter(({
-	        customData
-	      }) => !objectsIds.has(customData.objectId));
-	      babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().addFiles(newFiles);
-	      babelHelpers.classPrivateFieldLooseBase(this, _addLoadedObjectsIds)[_addLoadedObjectsIds](files);
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileListObjects, {
+	        ids: unloadedIds
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _handleLoadedFiles)[_handleLoadedFiles](data);
 	      promise.resolve();
 	      await Promise.all(babelHelpers.classPrivateFieldLooseBase(this, _promises)[_promises]);
-	      return babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems();
+	      return this.getFileItems();
 	    } catch (error) {
-	      console.error('FileService: list error', error);
+	      console.error(tasks_v2_const.Endpoint.FileListObjects, error);
 	      return [];
 	    }
 	  }
-	  notifyError(content) {
-	    ui_notification.UI.Notification.Center.notify({
-	      content,
-	      id: `file-service-error-${main_core.Text.getRandom()}`
+	  loadFilesFromData(data) {
+	    const ids = data.map(fileDto => fileDto.id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _addLoadedIds)[_addLoadedIds](ids);
+	    babelHelpers.classPrivateFieldLooseBase(this, _handleLoadedFiles)[_handleLoadedFiles](data);
+	  }
+	  hasPendingRequests() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].length > 0 || babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach].length > 0;
+	  }
+	  notifyError(text) {
+	    ui_notificationManager.Notifier.notifyViaBrowserProvider({
+	      id: `file-service-error-${main_core.Text.getRandom()}`,
+	      text
 	    });
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
 	  }
+	}
+	function _bindEvents2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
+	    main_core.Event.bind(window, 'beforeunload', this.handleSave);
+	  }
+	}
+	function _unbindEvents2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
+	    main_core.Event.unbind(window, 'beforeunload', this.handleSave);
+	  }
+	}
+	function _handleLoadedFiles2(data) {
+	  const files = data.map(fileDto => mapDtoToModel(fileDto));
+	  const objectsIds = new Set(Object.values(babelHelpers.classPrivateFieldLooseBase(this, _objectsIds)[_objectsIds]));
+	  const newFiles = files.filter(({
+	    customData
+	  }) => !objectsIds.has(customData.objectId));
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().addFiles(newFiles);
+	  babelHelpers.classPrivateFieldLooseBase(this, _addLoadedObjectsIds)[_addLoadedObjectsIds](files);
 	}
 	function _addLoadedIds2(ids) {
 	  ids.forEach(id => babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].add(id));
@@ -391,53 +416,85 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  });
 	}
 	function _getIdsByObjectId2(objectIdToFind) {
-	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _objectsIds)[_objectsIds]).filter(([, objectId]) => objectId === objectIdToFind).map(([id]) => babelHelpers.classPrivateFieldLooseBase(this, _isNewFile)[_isNewFile](id) ? id : Number(id));
+	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _objectsIds)[_objectsIds]).filter(([, objectId]) => objectId === objectIdToFind).map(([id]) => babelHelpers.classPrivateFieldLooseBase(this, _isObjectId)[_isObjectId](id) ? id : Number(id));
 	}
 	function _attachFiles2(fileIds, attachedFile) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
-	    const id = babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId];
-	    void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	      id,
-	      fields: {
-	        fileIds
+	  switch (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType]) {
+	    case EntityTypes.Task:
+	      {
+	        const id = babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId];
+	        void tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
+	          fileIds
+	        });
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode]) {
+	          return;
+	        }
+	        if (tasks_v2_lib_idUtils.idUtils.isReal(id) && babelHelpers.classPrivateFieldLooseBase(this, _isObjectId)[_isObjectId](attachedFile.serverFileId)) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].push(attachedFile);
+	          babelHelpers.classPrivateFieldLooseBase(this, _saveAttachedFilesDebounced)[_saveAttachedFilesDebounced]();
+	        }
+	        break;
 	      }
-	    });
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode]) {
-	      return;
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isRealId)[_isRealId](id) && babelHelpers.classPrivateFieldLooseBase(this, _isNewFile)[_isNewFile](attachedFile.serverFileId)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].push(attachedFile);
-	      babelHelpers.classPrivateFieldLooseBase(this, _saveAttachedFilesDebounced)[_saveAttachedFilesDebounced]();
-	    }
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.CheckListItem) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _processCheckListFileIds)[_processCheckListFileIds](fileIds);
+	    case EntityTypes.CheckListItem:
+	      {
+	        babelHelpers.classPrivateFieldLooseBase(this, _processCheckListFileIds)[_processCheckListFileIds](fileIds);
+	        break;
+	      }
+	    case EntityTypes.Result:
+	      {
+	        void this.$store.dispatch(`${tasks_v2_const.Model.Results}/update`, {
+	          id: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
+	          fields: {
+	            fileIds
+	          }
+	        });
+	        break;
+	      }
+	    default:
+	      break;
 	  }
 	}
 	function _detachFiles2(fileIds, detachedFile) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
-	    const id = babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId];
-	    void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	      id,
-	      fields: {
-	        fileIds
+	  switch (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType]) {
+	    case EntityTypes.Task:
+	      {
+	        const id = babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId];
+	        void tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
+	          fileIds
+	        });
+	        if (tasks_v2_lib_idUtils.idUtils.isReal(id)) {
+	          const detachedId = detachedFile.serverFileId;
+	          const attachedIndex = babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].findIndex(file => file.serverFileId === detachedId);
+	          if (attachedIndex === -1) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach].push(detachedFile);
+	            babelHelpers.classPrivateFieldLooseBase(this, _saveDetachedFilesDebounced)[_saveDetachedFilesDebounced]();
+	          } else {
+	            babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].splice(attachedIndex, 1);
+	          }
+	        }
+	        break;
 	      }
-	    });
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isRealId)[_isRealId](id)) {
-	      const detachedId = detachedFile.serverFileId;
-	      const attachedIndex = babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].findIndex(file => file.serverFileId === detachedId);
-	      if (attachedIndex === -1) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach].push(detachedFile);
-	        babelHelpers.classPrivateFieldLooseBase(this, _saveDetachedFilesDebounced)[_saveDetachedFilesDebounced]();
-	      } else {
-	        babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].splice(attachedIndex, 1);
+	    case EntityTypes.CheckListItem:
+	      {
+	        babelHelpers.classPrivateFieldLooseBase(this, _processCheckListFileIds)[_processCheckListFileIds](fileIds);
+	        break;
 	      }
-	    }
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.CheckListItem) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _processCheckListFileIds)[_processCheckListFileIds](fileIds);
+	    case EntityTypes.Result:
+	      {
+	        void this.$store.dispatch(`${tasks_v2_const.Model.Results}/update`, {
+	          id: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
+	          fields: {
+	            fileIds
+	          }
+	        });
+	        break;
+	      }
+	    default:
+	      break;
 	  }
 	}
 	function _getEntityFileIds2(excludedIds = new Set()) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task || babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Result) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds].filter(id => !excludedIds.has(id));
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.CheckListItem) {
@@ -454,23 +511,30 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	  });
 	}
-	function _isRealId2(id) {
-	  return Number.isInteger(id) && id > 0;
-	}
-	function _isNewFile2(id) {
+	function _isObjectId2(id) {
 	  return String(id).startsWith('n');
 	}
 	async function _saveAttachedFiles2() {
 	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach])) {
+	    const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]);
 	    try {
 	      const ids = babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].map(file => file.serverFileId);
 	      babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach] = [];
-	      void tasks_v2_lib_apiClient.apiClient.post('File.attach', {
-	        task: {
-	          id: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]
-	        },
-	        ids
-	      });
+	      if (tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
+	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
+	          template: {
+	            id,
+	            fileIds: babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]
+	          }
+	        });
+	      } else {
+	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileAttach, {
+	          task: {
+	            id
+	          },
+	          ids
+	        });
+	      }
 	    } catch (error) {
 	      console.error('FileService: saveAttachedFiles error', error);
 	      this.notifyError(main_core.Loc.getMessage('TASKS_V2_NOTIFY_FILE_ATTACH_ERROR'));
@@ -479,16 +543,26 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 	async function _saveDetachedFiles2() {
 	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach])) {
+	    const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]);
 	    const filesBeforeDetach = babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach];
 	    try {
 	      const ids = babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach].map(file => file.serverFileId);
 	      babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach] = [];
-	      await tasks_v2_lib_apiClient.apiClient.post('File.detach', {
-	        task: {
-	          id: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]
-	        },
-	        ids
-	      });
+	      if (tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
+	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
+	          template: {
+	            id,
+	            fileIds: babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]
+	          }
+	        });
+	      } else {
+	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileDetach, {
+	          task: {
+	            id
+	          },
+	          ids
+	        });
+	      }
 	    } catch (error) {
 	      console.error('FileService: saveDetachedFiles error', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode] = true;
@@ -500,31 +574,32 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 	function _get_entityFileIds() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
-	    return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]).fileIds;
+	    return tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]).fileIds;
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Result) {
+	    return this.$store.getters[`${tasks_v2_const.Model.Results}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]).fileIds;
 	  }
 	  return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]).attachments;
 	}
 	const services = {};
-	function getServiceKey(entityId, entityType) {
-	  return `${entityType}:${entityId}`;
-	}
+	const getKey = (entityId, entityType) => `${entityType}:${entityId}`;
 	const fileService = {
-	  get(entityId, entityType = EntityTypes.Task, options = {}) {
+	  get(entityId, entityType = EntityTypes.Task) {
 	    var _services$key;
-	    const key = getServiceKey(entityId, entityType);
-	    (_services$key = services[key]) != null ? _services$key : services[key] = new FileService(entityId, entityType, options);
+	    const key = getKey(entityId, entityType);
+	    (_services$key = services[key]) != null ? _services$key : services[key] = new FileService(entityId, entityType);
 	    return services[key];
 	  },
 	  replace(tempId, entityId, entityType = EntityTypes.Task) {
-	    const oldKey = getServiceKey(tempId, entityType);
-	    const newKey = getServiceKey(entityId, entityType);
+	    const oldKey = getKey(tempId, entityType);
+	    const newKey = getKey(entityId, entityType);
 	    services[newKey] = services[oldKey];
 	    services[newKey].setEntityId(entityId, entityType);
 	    delete services[oldKey];
 	  },
 	  delete(entityId, entityType = EntityTypes.Task) {
 	    var _services$key2;
-	    const key = getServiceKey(entityId, entityType);
+	    const key = getKey(entityId, entityType);
 	    (_services$key2 = services[key]) == null ? void 0 : _services$key2.destroy();
 	    delete services[key];
 	  }
@@ -540,5 +615,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.fileService = fileService;
 	exports.EntityTypes = EntityTypes;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Event,BX.UI.Uploader,BX.UI.Uploader,BX.Vue3,BX,BX.Disk.Uploader,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib,BX));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Event,BX.UI.Uploader,BX.UI.Uploader,BX.Vue3,BX.UI.NotificationManager,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX));
 //# sourceMappingURL=file-service.bundle.js.map

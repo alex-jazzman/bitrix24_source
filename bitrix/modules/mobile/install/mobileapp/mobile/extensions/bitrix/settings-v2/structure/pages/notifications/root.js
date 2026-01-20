@@ -5,13 +5,32 @@ jn.define('settings-v2/structure/pages/notifications/root', (require, exports, m
 	const {
 		createLink,
 		createSection,
-	} = require('settings-v2/structure/src/item-create-helper');
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { SettingsPageId } = require('settings-v2/const');
 	const { NotificationLoadService } = require('settings-v2/services/notification-load');
+	const { preloadAssets } = require('settings-v2/services/assets-preload');
 	const { Loc } = require('loc');
+	const { MessengerDBService } = require('settings-v2/services/db/messenger');
 
 	const requestSettingsData = async () => {
-		await NotificationLoadService.fetchAll();
+		preloadAssets();
+		const {
+			pushStatus,
+			smartFilter,
+			pushTypes,
+			pushConfig,
+			counterTypes,
+			counterConfig,
+		} = await NotificationLoadService.fetchAll();
+
+		void (new MessengerDBService()).setNotifyConfig({
+			pushStatus,
+			smartFilter,
+			pushTypes,
+			pushConfig,
+			counterTypes,
+			counterConfig,
+		});
 	};
 
 	/** @type SettingPage */
@@ -24,7 +43,7 @@ jn.define('settings-v2/structure/pages/notifications/root', (require, exports, m
 				id: 'notifications-root-section',
 				items: [
 					createLink({
-						id: 'notifications-counter',
+						id: 'notifications-push',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_NOTIFICATIONS_ROOT_NOTIFICATION_PUSH'),
 						subtitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_NOTIFICATIONS_ROOT_NOTIFICATION_PUSH_DESCRIPTION'),
 						nextPage: SettingsPageId.NOTIFICATIONS_PUSH,

@@ -1,252 +1,113 @@
-import { EventEmitter } from 'main.core.events';
-import { DurationFormat } from 'main.date';
-
-import type { DialogOptions } from 'ui.entity-selector';
-import { TextSm, TextMd } from 'ui.system.typography.vue';
+import { TextMd } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
 
-import { EventName, Model } from 'tasks.v2.const';
-import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
-import { calendar } from 'tasks.v2.lib.calendar';
+import { TaskCard } from 'tasks.v2.application.task-card';
+import { TaskStatus } from 'tasks.v2.const';
+import { Deadline } from 'tasks.v2.component.fields.deadline';
+import { Responsible } from 'tasks.v2.component.fields.responsible';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { Responsible, responsibleMeta } from 'tasks.v2.component.fields.responsible';
-import { DeadlinePopup } from 'tasks.v2.component.fields.deadline';
 import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { UserModel } from 'tasks.v2.model.users';
 
+import { Gantt } from './field/gantt';
 import './task-line.css';
 
 // @vue/component
 export const TaskLine = {
 	components: {
+		TextMd,
 		BIcon,
 		Responsible,
-		DeadlinePopup,
-		HoverPill,
-		TextMd,
-		TextSm,
+		Deadline,
+		Gantt,
 	},
 	props: {
-		context: {
-			type: String,
-			required: true,
-		},
 		taskId: {
 			type: [Number, String],
 			required: true,
 		},
-		readonly: {
-			type: Boolean,
+		fields: {
+			type: Set,
 			required: true,
-		},
-		last: {
-			type: Boolean,
-			default: false,
 		},
 	},
 	emits: ['remove'],
 	setup(): Object
 	{
 		return {
-			responsibleMeta,
 			Outline,
 		};
 	},
 	data(): Object
 	{
 		return {
-			isDeadlinePopupShown: false,
-			selectingDeadlineTs: null,
-			nowTs: Date.now(),
+			isHovered: false,
 		};
 	},
 	computed: {
 		task(): TaskModel
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+			return taskService.getStoreTask(this.taskId);
 		},
-		responsible(): UserModel
+		isTemplate(): boolean
 		{
-			return this.$store.getters[`${Model.Users}/getById`](this.task.responsibleId);
+			return idUtils.isTemplate(this.taskId);
 		},
-		dialogOptions(): DialogOptions
+		completed(): boolean
 		{
-			return responsibleMeta.dialogOptions(this.context);
+			return this.task.status === TaskStatus.Completed;
 		},
-		preselected(): [string, number][]
+		href(): string
 		{
-			return [['user', this.task.responsibleId || this.currentUserId]];
-		},
-		dataset(): Object
-		{
-			return {
-				'data-task-id': this.taskId,
-				'data-task-field-id': responsibleMeta.id,
-				'data-task-field-value': this.task.responsibleId,
-			};
-		},
-		deadlineTs(): number
-		{
-			return this.selectingDeadlineTs ?? this.task.deadlineTs;
-		},
-		expiredDuration(): number
-		{
-			if (!this.deadlineTs)
+			if (String(this.taskId).startsWith('tmp.'))
 			{
-				return 0;
+				return TaskCard.getUrl(idUtils.boxTemplate(this.taskId.replace('tmp.', '')));
 			}
 
-			return this.nowTs - this.deadlineTs;
-		},
-		isExpired(): boolean
-		{
-			return this.expiredDuration > 0 && !this.isFlowFilledOnAdd;
-		},
-		deadlineFormatted(): string
-		{
-			if (this.isFlowFilledOnAdd)
-			{
-				return this.loc('TASKS_V2_DEADLINE_AUTO');
-			}
-
-			if (!this.deadlineTs)
-			{
-				return this.loc('TASKS_V2_DEADLINE_EMPTY');
-			}
-
-			if (this.isExpired)
-			{
-				return this.loc('TASKS_V2_TASK_LIST_DEADLINE_EXPIRED', {
-					'#DURATION#': new DurationFormat(this.expiredDuration).formatClosest(),
-				});
-			}
-
-			return calendar.formatDateTime(this.deadlineTs);
-		},
-		isEdit(): boolean
-		{
-			return Number.isInteger(this.taskId) && this.taskId > 0;
-		},
-		isFlowFilledOnAdd(): boolean
-		{
-			return this.task.flowId > 0 && !this.isEdit;
-		},
-		deadlineReadonly(): boolean
-		{
-			return this.readonly || !this.task.rights.deadline || this.isFlowFilledOnAdd;
+			return TaskCard.getUrl(this.taskId);
 		},
 		detachReadonly(): boolean
 		{
-			const canDetach = this.task.rights.detachParent || this.task.rights.detachRelated;
+			const { detachParent, detachRelated, changeDependence } = this.task.rights;
+			const canDetach = detachParent || detachRelated || changeDependence;
 
-			return this.readonly || !canDetach;
+			return !canDetach;
 		},
-	},
-	mounted(): void
-	{
-		this.nowTsInterval = setInterval(() => {
-			this.nowTs = Date.now();
-		}, 1000);
-	},
-	beforeUnmount(): void
-	{
-		clearInterval(this.nowTsInterval);
 	},
 	methods: {
-		handleEditDeadline(): void
-		{
-			if (this.deadlineReadonly)
-			{
-				return;
-			}
-
-			this.isDeadlinePopupShown = true;
-		},
-		handleClearDeadline(): void
-		{
-			if (this.deadlineReadonly)
-			{
-				return;
-			}
-
-			void taskService.update(
-				this.taskId,
-				{ deadlineTs: 0 },
-			);
-		},
-		handleDeadlineUpdate(selectingDeadlineTs: number): void
-		{
-			this.selectingDeadlineTs = selectingDeadlineTs;
-		},
-		handleDeadlinePopupClose(): void
-		{
-			this.isDeadlinePopupShown = false;
-			this.selectingDeadlineTs = null;
-		},
-		handleTaskOpen(): void
-		{
-			EventEmitter.emit(EventName.OpenFullCard, {
-				taskId: this.taskId,
-				widthOffset: 48,
-			});
-		},
 		handleRemove(): void
 		{
-			if (this.readonly)
+			if (!this.detachReadonly)
 			{
-				return;
+				this.$emit('remove');
 			}
-
-			this.$emit('remove');
 		},
 	},
 	template: `
-		<div class="tasks-task-line-container" :class="{ '--last': last }">
-			<div class="tasks-task-line-wrapper">
-				<div class="tasks-task-line-title-container" @click="handleTaskOpen">
-					<TextMd class="tasks-task-line-title">
-						{{ task.title }}
-					</TextMd>
-				</div>
-				<div class="tasks-task-line-fields-container">
-					<Responsible
-						:context="context"
-						:taskId="taskId"
-						:selectorWithActionMenu="true"
-						:avatarOnly="true"
-					/>
-					<div
-						class="tasks-task-line-deadline"
-						:class="{ '--expired': isExpired }"
-						ref="deadline"
-					>
-						<HoverPill
-							:withClear="Boolean(deadlineTs) && !deadlineReadonly"
-							:readonly="deadlineReadonly"
-							@click="handleEditDeadline"
-							@clear="handleClearDeadline"
-						>
-							<TextSm class="tasks-task-line-deadline-text" :accent="isExpired">
-								{{ deadlineFormatted }}
-							</TextSm>
-						</HoverPill>
-					</div>
-				</div>
-				<div
-					class="tasks-task-line-cross"
-					:class="{ '--readonly': detachReadonly }"
-					@click="handleRemove"
-				>
-					<BIcon :name="Outline.CROSS_L" :hoverable="true"/>
-				</div>
-			</div>
+		<div class="tasks-task-line-cross-background" @mouseover="isHovered = true" @mouseleave="isHovered = false"/>
+		<div class="tasks-task-line-title-container" @mouseover="isHovered = true" @mouseleave="isHovered = false">
+			<TextMd class="tasks-task-line-title" :class="{ '--completed': completed }" :title="task.title">
+				<a :href>{{ task.title }}</a>
+			</TextMd>
 		</div>
-		<DeadlinePopup
-			v-if="isDeadlinePopupShown"
-			:taskId="taskId"
-			:bindElement="$refs.deadline"
-			@update="handleDeadlineUpdate"
-			@close="handleDeadlinePopupClose"
-		/>
+		<div v-if="fields.has('responsible')" class="tasks-task-line-field">
+			<Responsible :taskId avatarOnly/>
+		</div>
+		<div v-if="fields.has('deadline')" class="tasks-task-line-field">
+			<Deadline :taskId :isTemplate compact/>
+		</div>
+		<div v-if="fields.has('gantt')" class="tasks-task-line-field">
+			<Gantt :taskId/>
+		</div>
+		<div
+			class="tasks-task-line-cross"
+			:class="{ '--readonly': detachReadonly, '--hover': isHovered }"
+			@click="handleRemove"
+			@mouseover="isHovered = true"
+			@mouseleave="isHovered = false"
+		>
+			<BIcon :name="Outline.CROSS_L" hoverable/>
+		</div>
 	`,
 };

@@ -540,6 +540,31 @@ jn.define('im/messenger-v2/provider/pull/dialog', (require, exports, module) => 
 		}
 
 		/**
+		 * @param {CopilotChangeEnginePullHandlerParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		handleChangeEngine(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+			this.logger.info('handleChangeEngine params:', params, extra);
+			const dialogHelper = DialogHelper.createByChatId(params.chatId);
+
+			this.store.dispatch(
+				'dialoguesModel/copilotModel/update',
+				{
+					dialogId: dialogHelper.dialogId,
+					fields: {
+						engine: { code: params.engineCode, name: params.engineName },
+						changeEngine: false,
+					},
+				},
+			);
+		}
+
+		/**
 		 * @param {DialogId} dialogId
 		 * @returns {?DialoguesModelState}
 		 */

@@ -57,10 +57,6 @@ export const CommentsMessageList = {
 	},
 	methods:
 	{
-		onPostMessageMouseUp(message: ImModelMessage, event: MouseEvent)
-		{
-			this.$refs.messageList.onMessageMouseUp(message, event);
-		},
 		getMessageComponentName(message: ImModelMessage): $Values<typeof MessageComponent>
 		{
 			return (new MessageComponentManager(message)).getName();
@@ -83,7 +79,6 @@ export const CommentsMessageList = {
 								:item="postMessage"
 								:dialogId="dialogId"
 								:key="postMessage.id"
-								@mouseup="onPostMessageMouseUp(postMessage, $event)"
 							>
 							</component>
 						</template>

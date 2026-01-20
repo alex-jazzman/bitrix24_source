@@ -16,9 +16,11 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickCreateNew: 'click_create_new',
 		submitCreateNew: 'submit_create_new',
 		audioUse: 'audio_use',
+		record: 'record',
 		play: 'play',
 		pause: 'pause',
 		changeSpeed: 'change_speed',
+		viewTranscription: 'view_transcription',
 		openTab: 'open_tab',
 		openMessenger: 'open_messenger',
 		sendMessage: 'send_message',
@@ -63,6 +65,10 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		setCancelVote: 'set_cancel_vote',
 		pinChat: 'pin_chat',
 		typeMessage: 'type_message',
+		expandReactionList: 'expand_reaction_list',
+		modeOn: 'mode_on',
+		modeOff: 'mode_off',
+		clickMCPIntegrations: 'click_mcp_integrations',
 	});
 
 	const Tool = Object.freeze({
@@ -83,9 +89,49 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		limitBanner: 'limit_banner',
 		audiomessage: 'audiomessage',
 		audioplayer: 'audioplayer',
+		videomessage: 'videomessage',
 	});
 
 	const Type = Object.freeze({
+		Tab: {
+			task: 'tasksTask',
+			copilot: 'copilot',
+			channel: 'channel',
+			collab: 'collab',
+			openlines: 'openlines',
+		},
+		Dialog: {
+			user: 'user',
+			chat: 'chat',
+			open: 'open',
+			lines: 'lines',
+			general: 'general',
+			videoconf: 'videoconf',
+			announcement: 'announcement',
+			call: 'call',
+			support24Notifier: 'support24Notifier',
+			support24Question: 'support24Question',
+			crm: 'crm',
+			sonetGroup: 'sonetGroup',
+			calendar: 'calendar',
+			tasks: 'tasks',
+			thread: 'thread',
+			mail: 'mail',
+			private: 'user', // for analytics type list: private === user
+			copilot: 'copilot',
+			comment: 'comment',
+			channel: 'channel',
+			openChannel: 'openChannel',
+			generalChannel: 'generalChannel',
+			collab: 'collab',
+			tasksTask: 'tasksTask', // task comment chat
+			custom: 'custom', // case for custom dialog type
+			notes: 'notes',
+			aiAssistant: 'aiAssistant',
+		},
+
+		/** @deprecated the region approach bellow is deprecated, use nested objects instead */
+
 		ai: 'ai',
 
 		/* region tabs type */
@@ -119,6 +165,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		limitOfficeChatingHistory: 'limit_office_chating_history',
 		collab: 'collab',
 		notes: 'notes',
+		aiAssistant: 'aiAssistant',
 
 		/* region call type */
 		privateCall: 'private',
@@ -158,6 +205,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 
 		/* region message type */
 		deletedMessage: 'deleted_message',
+
+		think: 'think',
 	});
 
 	const Section = Object.freeze({
@@ -237,6 +286,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const Status = Object.freeze({
 		notFound: 'not_found',
 		success: 'success',
+		error: 'error',
 	});
 
 	const DownloadErrorStatus = {

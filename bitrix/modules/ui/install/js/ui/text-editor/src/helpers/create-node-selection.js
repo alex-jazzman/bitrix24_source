@@ -8,6 +8,8 @@ import {
 	type NodeSelection,
 } from 'ui.lexical.core';
 
+import { mergeRegister } from 'ui.lexical.utils';
+
 import { type TextEditor } from '../text-editor';
 
 function isNodeSelected(editor: TextEditor, key: NodeKey): boolean
@@ -31,13 +33,22 @@ export function createNodeSelection(editor: TextEditor, key: NodeKey)
 		subscribers.add(fn);
 	};
 
-	const unregisterListener = editor.registerUpdateListener(() => {
-		isSelected = isNodeSelected(editor, key);
-		for (const subscribeFunc of subscribers)
-		{
-			subscribeFunc(isSelected);
-		}
-	});
+	const unregisterListener = mergeRegister(
+		editor.registerUpdateListener(() => {
+			isSelected = isNodeSelected(editor, key);
+			for (const subscribeFunc of subscribers)
+			{
+				subscribeFunc(isSelected);
+			}
+		}),
+		editor.registerEditableListener((isEditable: boolean): boolean => {
+			isSelected = isNodeSelected(editor, key);
+			for (const subscribeFunc of subscribers)
+			{
+				subscribeFunc(isSelected && isEditable);
+			}
+		}),
+	);
 
 	const setSelected = (selected: boolean) => {
 		editor.update(() => {

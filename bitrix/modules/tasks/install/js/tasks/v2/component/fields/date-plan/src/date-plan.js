@@ -1,50 +1,83 @@
 import { FieldList } from 'tasks.v2.component.elements.field-list';
-import { Model } from 'tasks.v2.const';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { DatePlanDate } from './components/date-plan-date';
-import { DatePlanContent } from './components/date-plan-content';
 import { datePlanMeta } from './date-plan-meta';
+import { DatePlanDate } from './components/date-plan-date';
+import { DatePlanDuration } from './components/date-plan-duration';
+import { DatePlanContent } from './components/date-plan-content';
+import { DatePlanSheet } from './date-plan-sheet';
 import './date-plan.css';
 
 // @vue/component
 export const DatePlan = {
 	components: {
 		FieldList,
+		DatePlanSheet,
+	},
+	inject: {
+		task: {},
+		taskId: {},
+		isTemplate: {},
 	},
 	props: {
-		taskId: {
-			type: [Number, String],
+		isSheetShown: {
+			type: Boolean,
+			required: true,
+		},
+		sheetBindProps: {
+			type: Object,
 			required: true,
 		},
 	},
-	emits: ['open'],
-	setup(): Object
+	emits: ['update:isSheetShown'],
+	setup(): { task: TaskModel }
 	{
 		return {
 			datePlanMeta,
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		wasFilled(): boolean
-		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, datePlanMeta.id);
-		},
 		fields(): string[]
 		{
+			if (this.isTemplate)
+			{
+				const isEmpty = !this.task.startDatePlanAfter && !this.task.endDatePlanAfter;
+				if (isEmpty)
+				{
+					return [{
+						title: datePlanMeta.title,
+						component: DatePlanContent,
+					}];
+				}
+
+				return [
+					{
+						title: this.loc('TASKS_V2_DATE_PLAN_START_AFTER'),
+						component: DatePlanDuration,
+						props: {
+							dateTs: this.task.startDatePlanAfter,
+							matchWorkTime: this.task.matchesWorkTime,
+							readonly: this.readonly,
+						},
+					},
+					{
+						title: this.loc('TASKS_V2_DATE_PLAN_DURATION'),
+						component: DatePlanDuration,
+						props: {
+							dateTs: this.task.endDatePlanAfter - this.task.startDatePlanAfter,
+							matchWorkTime: this.task.matchesWorkTime,
+							readonly: this.readonly,
+						},
+					},
+				].filter(({ props: { dateTs } }) => dateTs);
+			}
+
 			const isEmpty = !this.task.startPlanTs && !this.task.endPlanTs;
-			if (isEmpty && (this.wasFilled || this.task.matchesSubTasksTime))
+			if (isEmpty && (this.task.filledFields[datePlanMeta.id] || this.task.matchesSubTasksTime))
 			{
 				return [{
 					title: datePlanMeta.title,
 					component: DatePlanContent,
-					props: {
-						taskId: this.taskId,
-					},
 				}];
 			}
 
@@ -77,8 +110,12 @@ export const DatePlan = {
 		{
 			if (!this.readonly)
 			{
-				this.$emit('open');
+				this.setSheetShown(true);
 			}
+		},
+		setSheetShown(isShown: boolean): void
+		{
+			this.$emit('update:isSheetShown', isShown);
 		},
 	},
 	template: `
@@ -91,7 +128,8 @@ export const DatePlan = {
 			:data-task-plan-end="task.endPlanTs"
 			@click="handleClick"
 		>
-			<FieldList :fields="fields"/>
+			<FieldList :fields/>
 		</div>
+		<DatePlanSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
 	`,
 };

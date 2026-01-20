@@ -24,11 +24,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  emits: ['close'],
 	  computed: {
-	    popupId() {
-	      return `tasks-hint-${main_core.Text.getRandom(10)}`;
-	    },
 	    popupOptions() {
 	      return {
+	        id: `tasks-hint-${main_core.Text.getRandom(10)}`,
 	        bindElement: this.bindElement,
 	        maxWidth: 320,
 	        offsetLeft: 40,
@@ -36,18 +34,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        padding: 13,
 	        angle: true,
 	        targetContainer: document.body,
+	        className: 'tasks-hint-popup',
 	        ...this.options
 	      };
 	    }
 	  },
 	  template: `
-		<Popup
-			:id="popupId"
-			:options="popupOptions"
-			@close="$emit('close')"
-		>
+		<Popup :options="popupOptions" @close="$emit('close')">
 			<div class="tasks-hint">
-				<slot></slot>
+				<slot/>
 			</div>
 		</Popup>
 	`

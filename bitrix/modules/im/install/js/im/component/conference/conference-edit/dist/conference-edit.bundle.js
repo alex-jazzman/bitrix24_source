@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_vue,im_lib_logger,im_lib_clipboard,main_core,calendar_planner,calendar_util,main_core_events,ui_vue_components_hint,im_const,ui_entitySelector) {
+(function (exports,ui_vue,im_lib_logger,im_lib_clipboard,main_core,calendar_planner,calendar_util,main_core_events,ui_vue_components_hint,call_const,ui_entitySelector) {
 	'use strict';
 
 	var FieldTitle = {
@@ -24,7 +24,7 @@ this.BX = this.BX || {};
 	    },
 	    computed: {
 	      isViewMode: function isViewMode() {
-	        return this.mode === im_const.ConferenceFieldState.view;
+	        return this.mode === call_const.ConferenceFieldState.view;
 	      },
 	      localize: function localize() {
 	        return BX.message;
@@ -74,7 +74,7 @@ this.BX = this.BX || {};
 	    },
 	    computed: {
 	      isViewMode: function isViewMode() {
-	        return this.mode === im_const.ConferenceFieldState.view;
+	        return this.mode === call_const.ConferenceFieldState.view;
 	      },
 	      codedValue: function codedValue() {
 	        if (this.passwordNeeded) {
@@ -146,10 +146,10 @@ this.BX = this.BX || {};
 	    },
 	    computed: {
 	      isViewMode: function isViewMode() {
-	        return this.invitation.mode === im_const.ConferenceFieldState.view;
+	        return this.invitation.mode === call_const.ConferenceFieldState.view;
 	      },
 	      isFormCreateMode: function isFormCreateMode() {
-	        return this.formMode === im_const.ConferenceFieldState.create;
+	        return this.formMode === call_const.ConferenceFieldState.create;
 	      },
 	      avatarClasses: function avatarClasses() {
 	        var classes = ['im-conference-create-invitation-user-avatar'];
@@ -181,7 +181,7 @@ this.BX = this.BX || {};
 	        var _this = this;
 	        var contentWidth = this.$refs['view'].offsetWidth;
 	        var contentHeight = this.$refs['view'].offsetHeight;
-	        this.invitation.mode = im_const.ConferenceFieldState.edit;
+	        this.invitation.mode = call_const.ConferenceFieldState.edit;
 	        this.invitation.value = main_core.Text.decode(this.invitation.value);
 	        this.$nextTick(function () {
 	          _this.$refs['editor'].style.width = contentWidth + 20 + 'px';
@@ -204,7 +204,7 @@ this.BX = this.BX || {};
 	        } else {
 	          this.invitation.value = main_core.Text.encode(this.invitation.value);
 	        }
-	        this.invitation.mode = im_const.ConferenceFieldState.view;
+	        this.invitation.mode = call_const.ConferenceFieldState.view;
 	      },
 	      discardChanges: function discardChanges() {
 	        if (this.initialValue) {
@@ -213,7 +213,7 @@ this.BX = this.BX || {};
 	          this.editedValue = null;
 	        }
 	        this.invitation.value = main_core.Text.encode(this.invitation.value);
-	        this.invitation.mode = im_const.ConferenceFieldState.view;
+	        this.invitation.mode = call_const.ConferenceFieldState.view;
 	      }
 	    },
 	    created: function created() {
@@ -269,7 +269,7 @@ this.BX = this.BX || {};
 	    },
 	    computed: {
 	      isViewMode: function isViewMode() {
-	        return this.mode === im_const.ConferenceFieldState.view;
+	        return this.mode === call_const.ConferenceFieldState.view;
 	      },
 	      userListForPlanner: function userListForPlanner() {
 	        return this.selectedUsers.map(function (user) {
@@ -398,7 +398,7 @@ this.BX = this.BX || {};
 	        });
 	      },
 	      onSwitchModeForAll: function onSwitchModeForAll(mode) {
-	        if (mode === im_const.ConferenceFieldState.edit) {
+	        if (mode === call_const.ConferenceFieldState.edit) {
 	          this.switchToEdit();
 	        }
 	      },
@@ -532,7 +532,7 @@ this.BX = this.BX || {};
 	    },
 	    computed: {
 	      isViewMode: function isViewMode() {
-	        return this.mode === im_const.ConferenceFieldState.view;
+	        return this.mode === call_const.ConferenceFieldState.view;
 	      },
 	      codedValue: function codedValue() {
 	        if (this.broadcastMode) {
@@ -558,7 +558,7 @@ this.BX = this.BX || {};
 	        this.$emit('broadcastModeChange');
 	      },
 	      onSwitchModeForAll: function onSwitchModeForAll(mode) {
-	        if (mode === im_const.ConferenceFieldState.edit) {
+	        if (mode === call_const.ConferenceFieldState.edit) {
 	          this.switchToEdit();
 	        }
 	      },
@@ -642,7 +642,7 @@ this.BX = this.BX || {};
 	    },
 	    mode: {
 	      type: String,
-	      "default": im_const.ConferenceFieldState.create
+	      "default": call_const.ConferenceFieldState.create
 	    },
 	    chatHost: {
 	      type: Object,
@@ -698,7 +698,7 @@ this.BX = this.BX || {};
 	      },
 	      invitation: {
 	        value: '',
-	        mode: im_const.ConferenceFieldState.view,
+	        mode: call_const.ConferenceFieldState.view,
 	        edited: false
 	      },
 	      password: {
@@ -785,25 +785,25 @@ this.BX = this.BX || {};
 	  },
 	  computed: {
 	    isFormCreateMode: function isFormCreateMode() {
-	      return this.mode === im_const.ConferenceFieldState.create;
+	      return this.mode === call_const.ConferenceFieldState.create;
 	    },
 	    isFormViewMode: function isFormViewMode() {
-	      return this.mode === im_const.ConferenceFieldState.view;
+	      return this.mode === call_const.ConferenceFieldState.view;
 	    },
 	    isTitleEdited: function isTitleEdited() {
-	      return this.fieldsMode['title'] === im_const.ConferenceFieldState.edit;
+	      return this.fieldsMode['title'] === call_const.ConferenceFieldState.edit;
 	    },
 	    isPasswordEdited: function isPasswordEdited() {
-	      return this.fieldsMode['password'] === im_const.ConferenceFieldState.edit;
+	      return this.fieldsMode['password'] === call_const.ConferenceFieldState.edit;
 	    },
 	    isPlannerEdited: function isPlannerEdited() {
-	      return this.fieldsMode['planner'] === im_const.ConferenceFieldState.edit;
+	      return this.fieldsMode['planner'] === call_const.ConferenceFieldState.edit;
 	    },
 	    isPasswordCheckboxEdited: function isPasswordCheckboxEdited() {
 	      return this.passwordNeeded.currentValue !== this.passwordNeeded.initialValue;
 	    },
 	    isBroadcastEdited: function isBroadcastEdited() {
-	      return this.fieldsMode['broadcast'] === im_const.ConferenceFieldState.edit;
+	      return this.fieldsMode['broadcast'] === call_const.ConferenceFieldState.edit;
 	    },
 	    isEditing: function isEditing() {
 	      return this.isFormViewMode && (this.isTitleEdited || this.isPasswordEdited || this.invitation.edited || this.isPasswordCheckboxEdited || this.isPlannerEdited || this.isBroadcastEdited);
@@ -832,7 +832,7 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    /* region 01. Mode switching */switchToEdit: function switchToEdit(fieldName) {
-	      this.fieldsMode[fieldName] = im_const.ConferenceFieldState.edit;
+	      this.fieldsMode[fieldName] = call_const.ConferenceFieldState.edit;
 	      this.$root.$emit('focus', fieldName);
 	    },
 	    switchModeForAllFields: function switchModeForAllFields(mode) {
@@ -932,7 +932,7 @@ this.BX = this.BX || {};
 	      this.selectedTime.currentValue = this.selectedTime.initialValue;
 	      this.selectedDuration.currentValue = this.selectedDuration.initialValue;
 	      this.selectedDurationType.currentValue = this.selectedDurationType.initialValue;
-	      this.switchModeForAllFields(im_const.ConferenceFieldState.view);
+	      this.switchModeForAllFields(call_const.ConferenceFieldState.view);
 	    },
 	    openConference: function openConference() {
 	      if (window.top["BX"]) {
@@ -966,7 +966,7 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    editAll: function editAll() {
-	      this.switchModeForAllFields(im_const.ConferenceFieldState.edit);
+	      this.switchModeForAllFields(call_const.ConferenceFieldState.edit);
 	    },
 	    /* endregion 03. Actions */
 	    /* region 04. Form handling */
@@ -1104,5 +1104,5 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div>\n\t\t\t<template v-if=\"errors.length > 0\">\n\t\t\t\t<div class=\"ui-alert ui-alert-danger\" id=\"im-conference-create-errors\">\n\t\t\t\t\t<span v-for=\"error in errors\" class=\"ui-alert-message\" v-html=\"error\"></span>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<div class=\"im-conference-create-block im-conference-create-fields-wrapper\">\n\t\t\t\t<!-- Form fields -->\n\t\t\t\t<conference-field-title\n\t\t\t\t\t:mode=\"fieldsMode['title']\"\n\t\t\t\t\t:title=\"title.currentValue\"\n\t\t\t\t\t:defaultValue=\"title.defaultValue\"\n\t\t\t\t\t@titleChange=\"onTitleChange\"\n\t\t\t\t\t@switchToEdit=\"switchToEdit\"\n\t\t\t\t/>\n\t\t\t\t<conference-field-planner\n\t\t\t\t\t:mode=\"fieldsMode['planner']\"\n\t\t\t\t\t:selectedUsers=\"selectedUsers.currentValue\"\n\t\t\t\t\t:selectedDate=\"selectedDate.currentValue\"\n\t\t\t\t\t:selectedTime=\"selectedTime.currentValue\"\n\t\t\t\t\t:selectedDuration=\"selectedDuration.currentValue\"\n\t\t\t\t\t:selectedDurationType=\"selectedDurationType.currentValue\"\n\t\t\t\t\t:chatHost=\"chatHost\"\n\t\t\t\t\t@userSelect=\"onUserSelect\"\n\t\t\t\t\t@userDeselect=\"onUserDeselect\"\n\t\t\t\t\t@dateChange=\"onDateChange\"\n\t\t\t\t\t@timeChange=\"onTimeChange\"\n\t\t\t\t\t@durationChange=\"onDurationChange\"\n\t\t\t\t\t@durationTypeChange=\"onDurationTypeChange\"\n\t\t\t\t\t@switchToEdit=\"switchToEdit\"\n\t\t\t\t/>\n\t\t\t\t<conference-field-password\n\t\t\t\t\t:mode=\"fieldsMode['password']\"\n\t\t\t\t\t:password=\"password.currentValue\"\n\t\t\t\t\t:passwordNeeded=\"passwordNeeded.currentValue\"\n\t\t\t\t\t@passwordChange=\"onPasswordChange\"\n\t\t\t\t\t@passwordNeededChange=\"onPasswordNeededChange\"\n\t\t\t\t\t@switchToEdit=\"switchToEdit\"\n\t\t\t\t/>\n<!--\t\t\t\t<div v-if=\"isFormCreateMode\" class=\"im-conference-create-delimiter im-conference-create-delimiter-small\"></div>-->\n\t\t\t\t<template v-if=\"broadcastingEnabled\">\n\t\t\t\t\t<conference-field-broadcast\n\t\t\t\t\t\t:mode=\"fieldsMode['broadcast']\"\n\t\t\t\t\t\t:broadcastMode=\"broadcastMode.currentValue\"\n\t\t\t\t\t\t:selectedPresenters=\"selectedPresenters.currentValue\"\n\t\t\t\t\t\t:chatHost=\"chatHost\"\n\t\t\t\t\t\t@broadcastModeChange=\"onBroadcastModeChange\"\n\t\t\t\t\t\t@switchToEdit=\"switchToEdit\"\n\t\t\t\t\t\t@presenterSelect=\"onPresenterSelect\"\n\t\t\t\t\t\t@presenterDeselect=\"onPresenterDeselect\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t\t<!-- Action buttons -->\n\t\t\t\t<template v-if=\"!isFormCreateMode\">\n\t\t\t\t\t<div class=\"im-conference-create-section im-conference-create-actions\">\n\t\t\t\t\t\t<button @click=\"openConference\" class=\"ui-btn ui-btn-sm ui-btn-primary ui-btn-icon-camera\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_START'] }}</button>\n\t\t\t\t\t\t<button @click=\"copyInvitation\" class=\"ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-share\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_INVITATION_COPY'] }}</button>\n\t\t\t\t\t\t<button @click=\"openChat\" class=\"ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-chat\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_CHAT'] }}</button>\n\t\t\t\t\t\t<button @click=\"editAll\" class=\"ui-btn ui-btn-sm ui-btn-light\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_EDIT'] }}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Bottom button panel -->\n\t\t\t\t<div v-if=\"isEditing\" class=\"im-conference-create-button-panel-edit ui-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\">\n\t\t\t\t\t<div class=\"ui-button-panel ui-button-panel-align-center\">\n\t\t\t\t\t\t<button @click=\"submitForm\" id=\"ui-button-panel-save\" :class=\"submitFormButtonClasses\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_SAVE'] }}</button>\n\t\t\t\t\t\t<a @click=\"discardChanges\" id=\"ui-button-panel-cancel\" class=\"ui-btn ui-btn-link\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_CANCEL'] }}</a>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div v-else-if=\"isFormCreateMode\" class=\"im-conference-create-button-panel-add ui-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\">\n\t\t\t\t\t<div class=\"ui-button-panel ui-button-panel-align-center\">\n\t\t\t\t\t\t<button @click=\"submitForm\" id=\"ui-button-panel-save\" name=\"save\" value=\"Y\" :class=\"submitFormButtonClasses\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_CREATE'] }}</button>\n\t\t\t\t\t\t<a @click=\"closeSlider\" id=\"ui-button-panel-cancel\" class=\"ui-btn ui-btn-link\">{{ localize['BX_IM_COMPONENT_CONFERENCE_BUTTON_CANCEL'] }}</a>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-conference-create-delimiter\"></div>\n\t\t\t\t<!-- Invitation -->\n\t\t\t\t<conference-field-invitation\n\t\t\t\t\t:invitation=\"invitation\"\n\t\t\t\t\t:chatHost=\"chatHost\"\n\t\t\t\t\t:title=\"title.currentValue\"\n\t\t\t\t\t:defaultTitle=\"title.defaultValue\"\n\t\t\t\t\t:publicLink=\"conferenceLink\"\n\t\t\t\t\t:formMode=\"mode\"\n\t\t\t\t\t@invitationUpdate=\"onInvitationUpdate\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.BX.Messenger = this.BX.Messenger || {}),BX,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Calendar,BX.Calendar,BX.Event,window,BX.Messenger.Const,BX.UI.EntitySelector));
+}((this.BX.Messenger = this.BX.Messenger || {}),BX,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Calendar,BX.Calendar,BX.Event,window,BX.Call.Const,BX.UI.EntitySelector));
 //# sourceMappingURL=conference-edit.bundle.js.map

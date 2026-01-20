@@ -1,0 +1,43 @@
+.bizproc-template-settings-lable
+{
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-text-subtle);
+}
+
+.bizproc-template-settings-title
+{
+	padding-top: 10px;
+	padding-bottom: 8px;
+}
+
+.bizproc-template-settings-description
+{
+	padding-top: 8px;
+
+}
+
+.bizproc-template-settings-title > .ui-ctl-textbox
+{
+	border-radius: var(--ui-border-radius-sm);
+	width: 100%;
+}
+
+.bizproc-template-settings-title .ui-ctl-textbox > .ui-ctl-element
+{
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.bizproc-template-settings-description > .ui-ctl-textarea
+{
+	width: 100%;
+	height: 96px;
+	padding-bottom: 6px;
+}
+
+.bizproc-template-settings-description .ui-ctl-textarea > .ui-ctl-element
+{
+	border-radius: var(--ui-border-radius-sm);
+}

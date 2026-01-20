@@ -4,7 +4,6 @@
 jn.define('im/messenger-v2/controller/recent/service/vuex/channel', (require, exports, module) => {
 	const { Type } = require('type');
 	const { NavigationTabId } = require('im/messenger/const');
-	const { RecentEventType } = require('im/messenger-v2/controller/recent/const');
 	const { BaseRecentService } = require('im/messenger-v2/controller/recent/service/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnchorMutationHandler } = require('im/messenger-v2/controller/recent/service/vuex/lib/handlers/anchor');
@@ -76,8 +75,7 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/channel', (require, ex
 			}
 
 			this.recentLocator.get('render').setItems(firstPageItems);
-			this.recentLocator.get('render').renderInstant();
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
+			void this.recentLocator.get('render').renderInstant();
 		};
 
 		/**
@@ -141,7 +139,6 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/channel', (require, ex
 			}
 
 			this.recentLocator.get('render').deleteItems([{ id: itemId }]);
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
 		};
 
 		/**
@@ -203,7 +200,6 @@ jn.define('im/messenger-v2/controller/recent/service/vuex/channel', (require, ex
 		#updateItems(items)
 		{
 			this.recentLocator.get('render').upsertItems(items);
-			this.recentLocator.get('emitter').emit(RecentEventType.render.updateUIByRecentCollectionSizeIfNeeded, []);
 		}
 
 		/**

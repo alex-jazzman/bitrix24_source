@@ -833,7 +833,7 @@ export class RobotSelector extends EventEmitter
 					<span class="bizproc-creating-robot__menu_item-icon-market">
 						${GroupIcon.COMMERCE}
 					</span>
-					<span class="bizproc-creating-robot__menu_item-text-market">${Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_MARKETPLACE')}</span>
+					<span class="bizproc-creating-robot__menu_item-text-market">${Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_GROUP_MARKETPLACE_MSGVER_1')}</span>
 				</div>
 			</a>
 		`;

@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/services/sending/files', (require, exports, module) => {
 	const { Type } = require('type');
+	const { isEmpty } = require('utils/object');
 	const { debounce } = require('utils/function');
 	const { Uuid } = require('utils/uuid');
 	const { getExtension } = require('utils/file');
@@ -25,9 +26,6 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		UploadManager,
 		UploaderManagerEvent,
 	} = require('im/messenger/provider/services/sending/upload-manager');
-
-	// TODO: remove it after solving the problem with listening to voice messages
-	window.debugUploadAudio = [];
 
 	/**
 	 * @class FilesUploadService
@@ -179,7 +177,6 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		async prepareTasks(files)
 		{
 			const tasksWithFile = await this.createTasks(files);
-			await this.addFilesToStore(tasksWithFile);
 
 			return tasksWithFile.map((taskWithFile) => taskWithFile.task);
 		}
@@ -219,18 +216,18 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		}
 
 		/**
-		 * @param {Array<Object>} tasksWithFile
+		 * @param {Array<PreparedUploadFile>} files
 		 * @return {Promise<Array>}
 		 */
-		async addFilesToStore(tasksWithFile)
+		async addFilesToStore(files)
 		{
-			const addFileToModelPromises = [];
-			for (const taskWithFile of tasksWithFile)
-			{
-				addFileToModelPromises.push(this.#addFileToModelByTask(taskWithFile));
-			}
+			const filesData = await Promise.all(
+				files.map((file) => this.uploadManager.getFileDataAndTask(file)),
+			);
 
-			return Promise.all(addFileToModelPromises);
+			return Promise.all(
+				filesData.map((fileData) => this.#addFileToModelByTask(fileData)),
+			);
 		}
 
 		/**
@@ -306,7 +303,9 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				urlPreview: file.previewUrl,
 				urlShow,
 				localUrl: file.path,
-				isTranscribable: params.isTranscribable ?? false,
+				isTranscribable: Boolean(params.isTranscribable),
+				isVoiceNote: Boolean(params.isVoiceNote),
+				isVideoNote: Boolean(params.isVideoNote),
 				...previewData,
 			};
 
@@ -339,6 +338,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				urlShow: fileData.file.url,
 				urlPreview: fileData.file.url,
 				image,
+				isVideoNote: Boolean(fileData.isVideoNote),
 			};
 
 			return this.#setFileModel(fields);
@@ -392,21 +392,6 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		{
 			const diskIdFromModel = this.#getDiskFolderIdFromModel(dialogId);
 
-			// TODO: remove it after solving the problem with listening to voice messages
-			try
-			{
-				const debugData = { getDiskFolderId: `diskIdFromModel: ${diskIdFromModel}` };
-				window.debugUploadAudio.push(debugData);
-				if (window.debugUploadAudio.length > 10)
-				{
-					window.debugUploadAudio.shift();
-				}
-			}
-			catch (e)
-			{
-				console.error(e);
-			}
-
 			if (diskIdFromModel > 0)
 			{
 				return Promise.resolve(diskIdFromModel);
@@ -454,16 +439,6 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 						this.isRequestingDiskFolderId = false;
 
-						// TODO: remove it after solving the problem with listening to voice messages
-						try
-						{
-							window.debugUploadAudio[window.debugUploadAudio.length - 1].requestDiskFolderId = `diskFolderId: ${diskFolderId}`;
-						}
-						catch (e)
-						{
-							console.error(e);
-						}
-
 						resolve(diskFolderId);
 					})
 					.catch((error) => {
@@ -510,13 +485,26 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		 */
 		#commitFiles(chatId, temporaryMessageId, filesIdsCollection, fromDisk = false)
 		{
+			const messageModel = this.store.getters['messagesModel/getByTemplateId'](temporaryMessageId);
 			const params = {
 				chat_id: chatId,
-				message: '', // we don't have to send files with text right now
 				template_id: temporaryMessageId,
-				as_file: false ? 'Y' : 'N', // TODO
+				as_file: 'N', // Y - "As a picture" – with compression. N - "As a file" – without compression.
+				file_params: {},
+				message: messageModel?.text ?? '',
 			};
-			const realFileIdsInt = filesIdsCollection.map((fileId) => fileId.realFileIdInt);
+
+			const realFileIdsInt = filesIdsCollection.map((fileId) => {
+				const fileParams = this.#prepareFileParams(fileId.temporaryFileId);
+
+				if (Type.isObject(fileParams))
+				{
+					params.file_params[fileId.realFileIdInt] = fileParams;
+				}
+
+				return fileId.realFileIdInt;
+			});
+
 			const fileIdParams = {};
 			if (fromDisk)
 			{
@@ -526,10 +514,6 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			{
 				fileIdParams.upload_id = realFileIdsInt;
 			}
-
-			params.transcribable_file_ids = filesIdsCollection
-				.filter((ids) => this.#isFileTranscribable(ids.temporaryFileId))
-				.map((ids) => ids.realFileIdInt);
 
 			BX.rest.callMethod(RestMethod.imDiskFileCommit, {
 				...params,
@@ -866,7 +850,65 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 			const filesModel = this.store.getters['filesModel/getById'](temporaryFileId);
 
-			return filesModel.isTranscribable ?? false;
+			return  Boolean(filesModel.isTranscribable);
+		}
+
+		/**
+		 * @param {string} temporaryFileId
+		 * @returns {boolean}
+		 */
+		#isVoiceNote(temporaryFileId)
+		{
+			if (!Type.isStringFilled(temporaryFileId))
+			{
+				return false;
+			}
+
+			const filesModel = this.store.getters['filesModel/getById'](temporaryFileId);
+
+			return  Boolean(filesModel.isVoiceNote);
+		}
+
+		/**
+		 * @param {string} temporaryFileId
+		 * @returns {boolean}
+		 */
+		#isVideoNote(temporaryFileId)
+		{
+			if (!Type.isStringFilled(temporaryFileId))
+			{
+				return false;
+			}
+
+			const filesModel = this.store.getters['filesModel/getById'](temporaryFileId);
+
+			return Boolean(filesModel?.isVideoNote);
+		}
+
+		/**
+		 * @param {string} temporaryFileId
+		 * @returns {FileParams | null}
+		 */
+		#prepareFileParams(temporaryFileId)
+		{
+			const fileParams = {};
+
+			if (this.#isFileTranscribable(temporaryFileId))
+			{
+				fileParams.is_transcribable = 'Y';
+			}
+
+			if (this.#isVoiceNote(temporaryFileId))
+			{
+				fileParams.is_voice_note = 'Y';
+			}
+
+			if (this.#isVideoNote(temporaryFileId))
+			{
+				fileParams.is_video_note = 'Y';
+			}
+
+			return isEmpty(fileParams) ? null : fileParams;
 		}
 	}
 

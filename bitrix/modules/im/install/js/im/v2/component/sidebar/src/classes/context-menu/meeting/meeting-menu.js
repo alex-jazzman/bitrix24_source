@@ -6,6 +6,7 @@ import { MeetingManager } from './meeting-manager';
 
 import type { MenuItemOptions } from 'ui.system.menu';
 import type { ImModelSidebarMeetingItem } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 type MeetingMenuContext = {
 	meeting: ImModelSidebarMeetingItem,
@@ -18,9 +19,9 @@ export class MeetingMenu extends SidebarMenu
 {
 	context: MeetingMenuContext;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.id = 'im-sidebar-context-menu';
 		this.meetingManager = new MeetingManager();

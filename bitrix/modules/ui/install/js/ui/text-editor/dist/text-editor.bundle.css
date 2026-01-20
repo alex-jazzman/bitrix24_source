@@ -80,6 +80,10 @@
 	width: 5px;
 }
 
+.ui-text-editor-scroller::-webkit-scrollbar:horizontal {
+	height: 5px;
+}
+
 .ui-text-editor-scroller::-webkit-scrollbar-track {
 	background: transparent;
 }

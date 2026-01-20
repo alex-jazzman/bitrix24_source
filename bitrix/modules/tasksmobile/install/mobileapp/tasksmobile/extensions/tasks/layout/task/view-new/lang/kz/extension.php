@@ -1,5 +1,8 @@
 <?php
+$MESS["M_TASK_CHAT_BUTTON_AHA_MOMENT_DESCRIPTION"] = "Чатта егжей-тегжейлерді талқылауға, қоңырау шалуға, файлдарды бөлісуге және міндеттегі барлық өзгерістерді бақылауға болады";
+$MESS["M_TASK_CHAT_BUTTON_AHA_MOMENT_TITLE"] = "Чат енді тікелей міндетте";
 $MESS["M_TASK_DETAILS_APPROVE_BUTTON"] = "Қабылдау";
+$MESS["M_TASK_DETAILS_CHAT_BUTTON"] = "Чат міндеттері";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_EMPTY"] = "Пікірлер";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_MSGVER_1"] = "Пікірлер: #COMMENTS_COUNT#";
 $MESS["M_TASK_DETAILS_COMMENTS_TITLE"] = "Пікірлер";
@@ -28,3 +31,4 @@ $MESS["M_TASK_RATING_LIKE_NO_WITH_COUNTER"] = "Жоқ: #QUANTITY#";
 $MESS["M_TASK_RATING_LIKE_QUESTION"] = "Сізге ұнай ма?";
 $MESS["M_TASK_RATING_LIKE_YES"] = "Иә";
 $MESS["M_TASK_RATING_LIKE_YES_WITH_COUNTER"] = "Иә: #QUANTITY#";
+$MESS["M_TASK_TOAST_FILES_DELETE_DENIED"] = "Басқа қызметкер қосқан файлдарды жою мүмкін емес";

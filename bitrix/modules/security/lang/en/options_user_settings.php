@@ -1,4 +1,5 @@
 <?php
+$MESS["SECT_OTP_PUSH_DESC"] = "Install the <b>Bitrix24 mobile app</b>. It will be used to confirm your login to Bitrix24.";
 $MESS["SEC_OTP_CONNECTED"] = "Connected";
 $MESS["SEC_OTP_CONNECT_DEVICE"] = "Connect dongle";
 $MESS["SEC_OTP_CONNECT_DEVICE_TITLE"] = "Connect dongle";
@@ -63,6 +64,13 @@ $MESS["SEC_OTP_NEW_SWITCH_ON"] = "Enable two-step authentication";
 $MESS["SEC_OTP_NO_DAYS"] = "forever";
 $MESS["SEC_OTP_PASS1"] = "The first device password (click and write down)";
 $MESS["SEC_OTP_PASS2"] = "The second device password (click again and write down)";
+$MESS["SEC_OTP_PUSH_ERROR"] = "Could not connect the mobile app. Make sure the time settings on your phone are correct, and try again.";
+$MESS["SEC_OTP_PUSH_SAVING"] = "Saving settings...";
+$MESS["SEC_OTP_PUSH_STEP1"] = "Make sure the time and time zone are correct on your phone. Otherwise, you cannot connect.";
+$MESS["SEC_OTP_PUSH_STEP2"] = "Scan the QR code with your device.";
+$MESS["SEC_OTP_PUSH_STEP3"] = "Follow the link you see on your phone.";
+$MESS["SEC_OTP_PUSH_STEP4"] = "Install the mobile app.";
+$MESS["SEC_OTP_PUSH_SUCCESS"] = "The app has been connected!";
 $MESS["SEC_OTP_RECOVERY_CODES_BUTTON"] = "Recovery codes";
 $MESS["SEC_OTP_RECOVERY_CODES_DESCRIPTION"] = "Copy the recovery codes you may need if you lost your mobile device or cannot get a code via the app for any other reason.";
 $MESS["SEC_OTP_RECOVERY_CODES_NOTE"] = "A code can only be used once. Hint: strike used codes off the list.";
@@ -81,6 +89,7 @@ $MESS["SEC_OTP_STATUS_ON"] = "Enabled";
 $MESS["SEC_OTP_SYNC_NOW"] = "Synchronize";
 $MESS["SEC_OTP_TYPE"] = "Password generation algorithm";
 $MESS["SEC_OTP_UNKNOWN_ERROR"] = "Unexpected error. Please try again later.";
+$MESS["SEC_OTP_WAITING_INSTALL"] = "Pending app installation...";
 $MESS["SEC_OTP_WARNING_RECOVERY_CODES"] = "Two-step authentication is enabled but you didn't create recovery codes. You may need them if you lost your mobile device or cannot get a code via the app for any other reason.";
 $MESS["security_TAB"] = "One-Time Password";
 $MESS["security_TAB_TITLE"] = "One-Time Password authentication settings";

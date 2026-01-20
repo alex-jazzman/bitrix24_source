@@ -17,10 +17,12 @@ export function getEmptyResource(): ResourceModel
 		typeId: null,
 		name: '',
 		description: null,
+		avatar: null,
 		slotRanges: [],
 		counter: null,
 		entities: [],
 		isMain: true,
+		isPrimary: false,
 		isDeleted: false,
 		isConfirmationNotificationOn: false,
 		isFeedbackNotificationOn: false,
@@ -35,5 +37,7 @@ export function getEmptyResource(): ResourceModel
 		createdBy: 0,
 		createdAt: 0,
 		updatedAt: null,
+		skus: [],
+		skusYandex: [],
 	};
 }

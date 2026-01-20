@@ -1,4 +1,3 @@
-import './port.css';
 import {
 	useTemplateRef,
 	computed,
@@ -8,14 +7,7 @@ import {
 } from 'ui.vue3';
 import { usePortState, useNewConnection } from '../../composables';
 import { PORT_POSITION } from '../../constants';
-import type {
-	// eslint-disable-next-line no-unused-vars
-	DiagramPortPosition,
-	// eslint-disable-next-line no-unused-vars
-	DiagramBlock,
-	// eslint-disable-next-line no-unused-vars
-	DiagramPort,
-} from '../../types';
+import './port.css';
 
 type PortSetup = {
 	portClassNames: { [string]: boolean },
@@ -28,11 +20,12 @@ const PORT_CLASS_NAMES = {
 	base: 'ui-block-diagram-port',
 	disabled: '--disabled',
 	active: '--active',
+	error: '--error',
 };
 
 // @vue/component
 export const Port = {
-	name: 'diagram-port',
+	name: 'DiagramPort',
 	props: {
 		/** @type DiagramBlock */
 		block: {
@@ -53,6 +46,16 @@ export const Port = {
 				return Object.values(PORT_POSITION).includes(position);
 			},
 		},
+		/** @type Array<DiagramValidationPortRuleFn> */
+		validationRules: {
+			type: Array,
+			default: () => ([]),
+		},
+		/** @type DiagramNormalyzeConnectionFn | null */
+		normalyzeConnectionFn: {
+			type: Function,
+			default: null,
+		},
 		disabled: {
 			type: Boolean,
 			default: false,
@@ -72,15 +75,23 @@ export const Port = {
 		});
 		const {
 			isSourcePort,
+			isValid,
 			onMouseDownPort,
 			onMouseOverPort,
 			onMouseLeavePort,
-		} = useNewConnection(props.block, props.port);
+		} = useNewConnection({
+			block: props.block,
+			port: props.port,
+			position: props.position,
+			validationRules: props.validationRules,
+			normalyzeConnectionFn: props.normalyzeConnectionFn,
+		});
 
 		const portClassNames = computed((): { [string]: boolean } => ({
 			[PORT_CLASS_NAMES.base]: true,
 			[PORT_CLASS_NAMES.active]: toValue(isSourcePort),
 			[PORT_CLASS_NAMES.disabled]: toValue(isDisabled),
+			[PORT_CLASS_NAMES.error]: !toValue(isValid),
 		}));
 
 		onMounted(() => {

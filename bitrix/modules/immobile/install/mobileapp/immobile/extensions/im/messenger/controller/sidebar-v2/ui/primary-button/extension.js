@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
+	const { Promotion } = require('im/messenger/lib/promotion');
 
 	/**
 	 * @param {object} props
@@ -19,6 +20,8 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 	 * @param {boolean} [props.selected=false]
 	 * @param {object} [props.style={}]
 	 * @param {object} [props.testIdSuffix]
+	 * @param {function} [props.renderCustomContent]
+	 * @param {string} [props.ahaMoment]
 	 */
 	class PrimaryButton extends LayoutComponent
 	{
@@ -29,9 +32,17 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 			this.cardRef = null;
 		}
 
+		componentDidMount()
+		{
+			if (this.props.ahaMoment)
+			{
+				this.#showAhaMoment();
+			}
+		}
+
 		render()
 		{
-			const { testId, testIdSuffix, title, selected, disabled = false, style = {} } = this.props;
+			const { testId, testIdSuffix, selected, disabled = false, style = {} } = this.props;
 
 			const testIdModifier = [
 				'container',
@@ -64,8 +75,23 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 							justifyContent: 'center',
 						},
 					},
-					this.renderIcon(),
 					this.renderBadgeCounter(),
+					...this.renderButtonContent(),
+				),
+			);
+		}
+
+		/**
+		 * @return {Array<LayoutComponent>}
+		 */
+		renderButtonContent()
+		{
+			const { testId, title, disabled = false, renderCustomContent } = this.props;
+
+			return renderCustomContent
+				? renderCustomContent()
+				: [
+					this.renderIcon(),
 					Text6({
 						testId: `${testId}-text`,
 						color: disabled ? Color.base5 : Color.base1,
@@ -76,8 +102,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 							marginBottom: Indent.XS2.toNumber(),
 						},
 					}),
-				),
-			);
+				];
 		}
 
 		renderBadgeCounter()
@@ -133,6 +158,15 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 
 			onClick?.(this.cardRef);
 		};
+
+		#showAhaMoment()
+		{
+			const promotion = Promotion.getInstance();
+			promotion.addToPromoQueue({
+				promoId: this.props.ahaMoment,
+				callback: () => promotion.showCopilotSidebarChangeEnginePromotion(this.cardRef),
+			});
+		}
 	}
 
 	module.exports = {

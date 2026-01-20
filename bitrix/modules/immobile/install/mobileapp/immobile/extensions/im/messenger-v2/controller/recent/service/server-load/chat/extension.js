@@ -201,7 +201,6 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/chat', (require
 					{ tab: this.recentLocator.get('id') ?? NavigationTabId.chats, itemList: modelData.recent },
 				);
 
-				this.renderService?.renderInstant();
 				this.showLoaderByRestResult(recentData);
 			}
 			catch (error)

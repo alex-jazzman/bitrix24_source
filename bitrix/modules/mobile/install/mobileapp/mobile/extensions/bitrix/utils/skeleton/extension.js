@@ -3,7 +3,6 @@
  */
 jn.define('utils/skeleton', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { ShimmerView } = require('layout/polyfill');
 
 	const DEFAULT_BG = Color.base6.toHex();
 

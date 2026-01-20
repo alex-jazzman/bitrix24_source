@@ -1,7 +1,8 @@
 import { Type } from 'main.core';
 import { BuilderModel, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+
 import { Core } from 'im.v2.application.core';
-import { type AnchorType } from 'im.v2.const';
+import { type AnchorType, ChatType } from 'im.v2.const';
 
 import { isAnchorsEqual, isAnchorWithTypeFromCurrentChat } from './helpers';
 
@@ -43,18 +44,14 @@ export class AnchorsModel extends BuilderModel
 			isMessageHasAnchors: (state: AnchorsState) => (
 				messageId: number,
 			): boolean => {
-				const currentUserId = Core.getUserId();
-
 				return state.anchors.some((anchor) => {
-					return (anchor.messageId === messageId && anchor.userId === currentUserId);
+					return anchor.messageId === messageId;
 				});
 			},
 			/** @function messages/anchors/isChatHasAnchors */
 			isChatHasAnchors: (state: AnchorsState) => (chatId: number): boolean => {
-				const currentUserId = Core.getUserId();
-
 				return state.anchors.some((anchor) => {
-					return (anchor.chatId === chatId && anchor.userId === currentUserId);
+					return anchor.chatId === chatId;
 				});
 			},
 			/** @function messages/anchors/isChatHasAnchorsWithType */
@@ -90,6 +87,14 @@ export class AnchorsModel extends BuilderModel
 				;
 
 				return anchors.at(0)?.messageId;
+			},
+			/** @function messages/anchors/getAnchorsByChatType */
+			getAnchorsByChatType: (state: AnchorsState) => (chatType: $Values<typeof ChatType>) => {
+				return state.anchors.filter((anchor: Anchor) => {
+					const { type } = Core.getStore().getters['chats/getByChatId'](anchor.chatId, true);
+
+					return type === chatType;
+				});
 			},
 		};
 	}
@@ -132,17 +137,21 @@ export class AnchorsModel extends BuilderModel
 				store.commit('removeAnchor', payload);
 			},
 			/** @function messages/anchors/removeUserAnchorsFromMessage */
-			removeUserAnchorsFromMessage: (store, payload: {userId: number, messageId: number}) => {
+			removeUserAnchorsFromMessage: (store, messageId: string) => {
 				store.state.anchors.forEach((anchor) => {
-					if (anchor.userId === payload.userId && anchor.messageId === payload.messageId)
+					if (anchor.messageId === messageId)
 					{
 						store.commit('removeAnchor', { anchor });
 					}
 				});
 			},
 			/** @function messages/anchors/removeChatAnchors */
-			removeChatAnchors: (store, payload: { chatId: number, userId: number }) => {
-				store.commit('removeChatAnchors', payload);
+			removeChatAnchors: (store, chatId: number) => {
+				store.commit('removeChatAnchors', chatId);
+			},
+			/** @function messages/anchors/removeAllAnchorsByChatType */
+			removeAllAnchorsByChatType: (store, payload: { type: $Values<typeof ChatType> }) => {
+				store.commit('removeAllAnchorsByChatType', payload);
 			},
 			/** @function messages/anchors/removeAllAnchors */
 			removeAllAnchors: (store) => {
@@ -171,10 +180,20 @@ export class AnchorsModel extends BuilderModel
 					state.anchors.splice(removedAnchorIndex, 1);
 				}
 			},
-			removeChatAnchors: (state: AnchorsState, payload: { chatId: number, userId: number }) => {
+			removeChatAnchors: (state: AnchorsState, chatId: number) => {
 				// eslint-disable-next-line no-param-reassign
 				state.anchors = state.anchors.filter((anchor: Anchor) => {
-					return anchor.chatId !== payload.chatId || anchor.userId !== payload.userId;
+					return anchor.chatId !== chatId;
+				});
+			},
+			removeAllAnchorsByChatType: (state: AnchorsState, payload: { type: $Values<typeof ChatType> }) => {
+				const { type } = payload;
+				const anchors = Core.getStore().getters['messages/anchors/getAnchorsByChatType'](type);
+				const chatIds = new Set(anchors.map((anchor: Anchor) => anchor.chatId));
+
+				// eslint-disable-next-line no-param-reassign
+				state.anchors = state.anchors.filter((anchor: Anchor) => {
+					return !chatIds.has(anchor.chatId);
 				});
 			},
 			removeAllAnchors: (state: AnchorsState) => {

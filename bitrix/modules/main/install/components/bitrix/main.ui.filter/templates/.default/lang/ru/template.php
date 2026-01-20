@@ -34,3 +34,4 @@ $MESS["MAIN_UI_FILTER__FIELD_SEARCH_PLACEHOLDER"] = "Поиск по полям"
 $MESS["MAIN_UI_FILTER__FIELD_EMPTY_STATE_TITLE"] = "Такого поля нет";
 $MESS["MAIN_UI_FILTER__FIELD_EMPTY_STATE_DESCRIPTION"] = "Проверьте, нет ли опечаток";
 $MESS["MAIN_UI_FILTER__FIELD_ALL_SECTIONS_DISABLED"] = "Выберите элемент для показа полей";
+$MESS["MAIN_UI_FILTER__ADMIN_PRESET_INFO"] = "Фильтр установлен администратором вашего Битрикс24 — изменить его не получится";

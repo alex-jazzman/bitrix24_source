@@ -49,6 +49,7 @@ $singleStartData = [
 	'duration' => $arResult['duration'],
 	'constants' => is_array($constants) ? \Bitrix\Bizproc\FieldType::normalizePropertyList($constants) : null,
 	'parameters' => is_array($parameters) ? \Bitrix\Bizproc\FieldType::normalizePropertyList($parameters) : null,
+	'triggerType' => $arResult['triggerType'] ?? null,
 
 	'errors' => $arResult['errors'] ?? null,
 	'workflowId' => $arResult['workflowId'] ?? null,

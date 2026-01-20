@@ -6,6 +6,7 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 	const { Component } = require('tokens');
 	const { isModuleInstalled } = require('module');
 	const { Loc } = require('loc');
+	const { PropTypes } = require('utils/validation');
 
 	let UserDepartmentSlider = null;
 	if (isModuleInstalled('intranet'))
@@ -20,11 +21,15 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 	 * @property {number[][]} [hierarchies]
 	 * @property {bool} canInviteUsers
 	 * @property {bool} canUseTelephony
+	 * @property {function} onClick
 
 	 * @class Department
 	 */
 	class Department extends LayoutComponent
 	{
+		/**
+		 * @param {DepartmentProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -43,15 +48,17 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 			const { hierarchies, ownerId } = this.props;
 
 			return UserDepartmentSlider({
+				testId: 'user-department-slider',
 				hierarchies,
 				userId: ownerId,
 				sliderWidth: device.screen.width - 2 * Component.areaPaddingLr,
 				chevron: true,
+				withPressed: true,
 				onClick: this.onClick,
 			});
 		}
 
-		onClick = () => {
+		onClick = ({ departmentId, departmentName, isRoot = false }) => {
 			const { parentWidget, canInviteUsers, canUseTelephony } = this.props;
 			const titleText = env.extranet
 				? Loc.getMessage('M_PROFILE_DEPARTMENT_CONTACTS_BOX_TITLE')
@@ -64,6 +71,10 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 				params: {
 					canInvite: canInviteUsers,
 					canUseTelephony: canUseTelephony ? 'Y' : 'N',
+					department: isRoot ? null : {
+						id: departmentId,
+						title: departmentName,
+					},
 				},
 				rootWidget: {
 					name: 'layout',
@@ -79,6 +90,15 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 			}, parentWidget);
 		};
 	}
+
+	Department.propTypes = {
+		testId: PropTypes.string,
+		ownerId: PropTypes.number,
+		hierarchies: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)),
+		canInviteUsers: PropTypes.bool.isRequired,
+		canUseTelephony: PropTypes.bool.isRequired,
+		parentWidget: PropTypes.object.isRequired,
+	};
 
 	module.exports = {
 		/**

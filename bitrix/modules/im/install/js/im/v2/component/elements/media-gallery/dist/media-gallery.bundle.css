@@ -20,7 +20,6 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: var(--bx-im-elements-dynamic-gallery__item-border-radius);
-	overflow: hidden;
 	margin-right: 1px;
 	cursor: var(--bx-im-elements-dynamic-gallery__item-cursor);
 	transition: 150ms transform ease;
@@ -33,6 +32,8 @@
 	justify-content: center;
 	position: relative;
 	height: 100%;
+	border-radius: 4px;
+	overflow: hidden;
 }
 
 .bx-im-elements-media-gallery__item.--draggable {

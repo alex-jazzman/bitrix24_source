@@ -1,11 +1,11 @@
 import { Type } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
+import { convertToNumber, convertToString, isNumberOrString } from 'im.v2.model';
 
-import { convertToNumber, convertToString, isNumberOrString } from '../../utils/format';
 import { prepareComponentId, prepareAuthorId, prepareKeyboard } from './format-functions';
 
-import type { FieldsConfig } from '../../utils/validate';
+import type { FieldsConfig } from 'im.v2.model';
 
 export const messageFieldsConfig: FieldsConfig = [
 	{

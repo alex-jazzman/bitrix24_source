@@ -235,7 +235,6 @@ export class WidgetLoader
 			<div class="intranet-widget-skeleton__footer">
 				<div style="height: ${height}px" class="intranet-widget-skeleton__line"></div>
 				<div style="height: ${height}px" class="intranet-widget-skeleton__line"></div>
-				<div style="height: ${height}px" class="intranet-widget-skeleton__line"></div>
 			</div>
 		`;
 	}
@@ -267,9 +266,9 @@ export class WidgetLoader
 			Dom.append(this.#createAvatarWidgetTimemanSkeleton(), wrapper);
 		}
 
-		if (config.hasTools)
+		if (config.toolsCount > 0)
 		{
-			Dom.append(this.#createAvatarWidgetToolsSkeleton(), wrapper);
+			Dom.append(this.#createAvatarWidgetToolsSkeleton(config.toolsCount), wrapper);
 		}
 
 		return wrapper;
@@ -290,27 +289,24 @@ export class WidgetLoader
 		`;
 	}
 
-	#createAvatarWidgetToolsSkeleton(): HTMLElement
+	#createAvatarWidgetToolsSkeleton(count: number = 4): HTMLElement
 	{
 		const toolsWrapper = Tag.render`
 			<div class="intranet-widget-skeleton-avatar__tools">
-				<div class="intranet-widget-skeleton__cubes">
-					<div class="intranet-widget-skeleton__cube"></div>
-					<div class="intranet-widget-skeleton__cube"></div>
-					<div class="intranet-widget-skeleton__cube"></div>
-					<div class="intranet-widget-skeleton__cube"></div>
-				</div>
+				<div class="intranet-widget-skeleton__cubes"></div>
 			</div>
 		`;
 
-		const labelsWrapper = Tag.render`
-			<div class="intranet-widget-skeleton-avatar__tools-labels">
-				<div class="intranet-widget-skeleton__line intranet-widget-skeleton-avatar__tools-label"></div>
-				<div class="intranet-widget-skeleton__line intranet-widget-skeleton-avatar__tools-label"></div>
-				<div class="intranet-widget-skeleton__line intranet-widget-skeleton-avatar__tools-label"></div>
-				<div class="intranet-widget-skeleton__line intranet-widget-skeleton-avatar__tools-label"></div>
-			</div>
-		`;
+		const labelsWrapper = Tag.render`<div class="intranet-widget-skeleton-avatar__tools-labels"></div>`;
+
+		for (let i = 0; i < count; i++)
+		{
+			const itemCube = Tag.render`<div class="intranet-widget-skeleton__cube"></div>`;
+			Dom.append(itemCube, toolsWrapper.querySelector('.intranet-widget-skeleton__cubes'));
+
+			const itemLabel = Tag.render`<div class="intranet-widget-skeleton__line intranet-widget-skeleton-avatar__tools-label"></div>`;
+			Dom.append(itemLabel, labelsWrapper);
+		}
 
 		Dom.append(labelsWrapper, toolsWrapper);
 

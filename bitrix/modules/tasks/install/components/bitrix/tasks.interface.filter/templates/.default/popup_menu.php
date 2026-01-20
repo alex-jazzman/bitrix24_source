@@ -2,6 +2,7 @@
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\UI\Toolbar\ButtonLocation;
@@ -25,6 +26,11 @@ $menuBtn->addClass('ui-btn-themes webform-cogwheel');
 $menuBtn->addAttribute('id', 'tasks-popupMenuOptions');
 
 Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
+
+$disabledDeadlineMenuScopes = [
+	ScopeDictionary::SCOPE_TASKS_KANBAN_SPRINT,
+	ScopeDictionary::SCOPE_TASKS_PLANNING,
+]
 ?>
 
 <script>
@@ -301,6 +307,8 @@ Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 		});
 		<?php endif?>
 
+		<?php if (!in_array((string)($arParams['SCOPE'] ?? ''), $disabledDeadlineMenuScopes)): ?>
+
 		menuItemsOptions.push({
 			tabId: 'popupMenuOptions',
 			delimiter: true,
@@ -308,6 +316,8 @@ Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 
 		const deadlineMenu = new BX.Tasks.Deadline.Menu();
 		menuItemsOptions.push(...deadlineMenu.menuItems);
+
+		<?php endif; ?>
 
 		<?php if($arParams['USE_EXPORT'] == 'Y'):?>
 
@@ -414,6 +424,8 @@ Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 		})
 		<?php endif;?>
 
+		const angle = <?= ($arResult['relationToId'] ?? 0) ? 'false' : 'true' ?>;
+
 		var buttonRect = BX("tasks-popupMenuOptions").getBoundingClientRect();
 		var menu = new BX.Main.Menu({
 			id: "popupMenuOptions",
@@ -421,7 +433,7 @@ Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 			items: menuItemsOptions,
 			closeByEsc: true,
 			offsetLeft: buttonRect.width / 2,
-			angle: true
+			angle,
 		});
 
 		BX.bind(BX("tasks-popupMenuOptions"), "click", BX.delegate(function() {

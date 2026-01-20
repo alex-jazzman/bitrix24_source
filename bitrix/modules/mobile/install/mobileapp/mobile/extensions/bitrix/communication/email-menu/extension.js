@@ -7,7 +7,7 @@ jn.define('communication/email-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { copyToClipboard } = require('utils/copy');
 	const { stringify } = require('utils/string');
-	const { Connector } = require('crm/mail/mailbox/connector');
+	const { Connector } = require('mail/mailbox/connector');
 	const AppTheme = require('apptheme');
 	let menu = null;
 

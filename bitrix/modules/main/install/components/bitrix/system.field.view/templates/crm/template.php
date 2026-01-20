@@ -25,27 +25,17 @@ $publicMode = isset($arParams["PUBLIC_MODE"]) && $arParams["PUBLIC_MODE"] === tr
 
 			if ($publicMode)
 			{
-				?><?=htmlspecialcharsbx($entity['ENTITY_TITLE'])?><?
+				echo htmlspecialcharsbx($entity['ENTITY_TITLE']);
 			}
 			else
 			{
-				$entityTypeLower = mb_strtolower($entityType);
-
-				if($entityType == 'ORDER')
-				{
-					$url = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
-				}
-				else
-				{
-					$url = '/bitrix/components/bitrix/crm.'.$entityTypeLower.'.show/card.ajax.php';
-				}
-
-				?><a href="<?=htmlspecialcharsbx($entity['ENTITY_LINK'])?>" target="_blank"
-					 bx-tooltip-user-id="<?=htmlspecialcharsbx($entityId)?>" bx-tooltip-loader="<?=htmlspecialcharsbx($url)?>" bx-tooltip-classname="crm_balloon<?=($entityType == 'LEAD' || $entityType == 'DEAL'? '_no_photo': '_'.$entityTypeLower)?>"><?=htmlspecialcharsbx($entity['ENTITY_TITLE'])?></a><?
+				echo (new \Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder($entity['ENTITY_TYPE_ID'], (int)$entityId))
+					->setTitle($entity['ENTITY_TITLE'])
+					->build();
 			}
 
 			$first = false;
-		};
+		}
 
 		?></td>
 		</tr><?

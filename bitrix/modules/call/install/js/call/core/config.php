@@ -9,12 +9,12 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Call\Settings;
 use Bitrix\Call\Integration\AI\CallAISettings;
+use Bitrix\Call\Integration\AI\CallAIBaasService;
 
 if (!Loader::includeModule('im') || !Loader::includeModule('call'))
 {
 	return [];
 }
-
 
 return [
 	'js' => [
@@ -30,8 +30,8 @@ return [
 		'ui.dialogs.messagebox',
 		'ui.buttons',
 		'im.v2.lib.desktop-api',
-		'im.v2.const',
 		'im.v2.lib.desktop',
+		'im.v2.const',
 		'intranet.desktop-download',
 		'im.v2.lib.utils',
 		'call.lib.call-token-manager',
@@ -89,16 +89,27 @@ return [
 					'recordingMinUsers' => CallAISettings::getRecordMinUsers(),
 					'agreementAccepted' => CallAISettings::isAgreementAccepted(),
 					'tariffAvailable' => CallAISettings::isTariffAvailable(),
-					'baasAvailable' => CallAISettings::isBaasServiceHasPackage(),
+					'baasAvailable' => CallAISettings::baasAvailable(),
+					'baasPromoSlider' => CallAIBaasService::getBaasSliderCode(),
+					'marketSubscriptionEnabled' => CallAISettings::checkMarketSubscription() ? CallAISettings::isMarketSubscriptionEnabled() : true,
+					'marketSubscriptionSlider' => CallAISettings::getMarketSliderCode(),
 					'feedBackLink' => CallAISettings::getFeedBackLink(),
-					'baasPromoSlider' => CallAISettings::getBaasSliderCode(),
-					'helpSlider' => CallAISettings::getHelpSliderCode(),
+					'helpSlider' => CallAISettings::checkMarketSubscription() ? CallAISettings::getMarketSliderCode() : CallAISettings::getHelpSliderCode(),
 					'disclaimerArticleCode' => CallAISettings::getDisclaimerArticleCode(),
+				],
+				'cloudRecord' => [
+					'serviceEnabled' => Settings::isCloudRecordEnabled(),
+					'tariffAvailable' => Settings::isCloudRecordingAvailable(),
+					'isCisRegion' => Settings::isCisRegion(),
+					'tariffSlider' => 'limit_v2_videocall_cloud_record',
 				],
 				'call' => [
 					'jwtCallsEnabled' => Settings::isNewCallsEnabled(),
 					'plainCallsUseJwt' => Settings::isPlainCallsUseNewScheme(),
+					'plainCallFollowUpEnabled' => Settings::isPlainCallFollowUpEnabled(),
+					'plainCallCloudRecordingEnabled' => Settings::isPlainCallCloudRecordingEnabled(),
 					'callBalancerUrl' => Settings::getBalancerUrl(),
+					'isCreateCallButtonEnabled' => Settings::isCreateCallButtonEnabled(),
 				],
 				'isUserControlFeatureEnabled' => Settings::isNewCallsEnabled(),
 				'isPictureInPictureFeatureEnabled' => Settings::isNewCallsEnabled(),
@@ -108,6 +119,10 @@ return [
 				'isNewQOSEnabled' => Settings::isNewQOSEnabled(),
 				'isAirDesignEnabled' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 				'shouldHideQuickAccess' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->shouldHideQuickAccess(),
+				'isCloudRecordEnabled' => Settings::isCloudRecordEnabled(),
+				'isCloudRecordTariffEnabled' => Settings::isCloudRecordTariffEnabled(),
+				'isCloudRecordCisRegion' => Settings::isCisRegion(),
+				'isCloudRecordLogEnabled' => Settings::isCloudRecordingAvailable(),
 				'callInstalled' => \Bitrix\Main\ModuleManager::isModuleInstalled('call'),
 			],
 		];

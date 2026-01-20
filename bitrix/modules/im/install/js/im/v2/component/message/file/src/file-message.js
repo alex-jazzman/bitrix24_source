@@ -7,6 +7,7 @@ import { UploaderFile } from 'ui.uploader.core';
 import { MediaMessage } from './components/media-message';
 import { BaseFileMessage } from './components/base-file-message';
 import { AudioMessage } from './components/audio-message';
+import { VideoNoteMessage } from './components/video-note-message';
 import { FileCollectionMessage } from './components/file-collection-message';
 import { MediaContent } from './components/media-content';
 
@@ -17,6 +18,7 @@ const FileMessageType = Object.freeze({
 	audio: 'AudioMessage',
 	base: 'BaseFileMessage',
 	collection: 'FileCollectionMessage',
+	videoNote: 'VideoNoteMessage',
 });
 
 // @vue/component
@@ -28,6 +30,7 @@ export const FileMessage = {
 		AudioMessage,
 		UnsupportedMessage,
 		FileCollectionMessage,
+		VideoNoteMessage,
 	},
 	props: {
 		item: {
@@ -91,6 +94,11 @@ export const FileMessage = {
 
 			const file = this.messageFiles[0];
 			const hasPreview = Boolean(file.image);
+
+			if (file.isVideoNote)
+			{
+				return FileMessageType.videoNote;
+			}
 
 			if (file.type === FileType.image && hasPreview)
 			{
@@ -158,7 +166,7 @@ export const FileMessage = {
 				}
 				else
 				{
-					void this.$store.dispatch('recent/delete', {
+					void this.$store.dispatch('recent/hide', {
 						id: chat.dialogId,
 					});
 				}

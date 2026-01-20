@@ -1,0 +1,80 @@
+.bizproc-setuptemplateactivity-block__header {
+	padding: 0 6px;
+}
+
+.bizproc-setuptemplateactivity-block__header-wrap {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	padding: 12.5px 8px 12.5px 12px;
+	border-left: 1px solid var(--ui-color-accent-main-primary-alt);
+	border-right: 1px solid var(--ui-color-accent-main-primary-alt);
+	border-top: 1px solid var(--ui-color-accent-main-primary-alt);
+	border-top-left-radius: 12px;
+	border-top-right-radius: 12px;
+}
+
+.bizproc-setuptemplateactivity-block__footer {
+	padding: 0 6px;
+}
+
+.bizproc-setuptemplateactivity-block__footer-wrap {
+	padding: 12px 18px 18px;
+	border-left: 1px solid var(--ui-color-accent-main-primary-alt);
+	border-right: 1px solid var(--ui-color-accent-main-primary-alt);
+	border-bottom: 1px solid var(--ui-color-accent-main-primary-alt);
+	border-bottom-left-radius: 12px;
+	border-bottom-right-radius: 12px;
+}
+
+.bizproc-setuptemplateactivity-block__title {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-setuptemplateactivity-block__items {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 18px 0 14px;
+}
+
+.bizproc-setuptemplateactivity-block__delete-icon {
+	cursor: pointer;
+}
+
+.bizproc-setuptemplateactivity-block__delete-icon:hover {
+	background-color: var(--ui-color-accent-main-primary-alt);
+}
+
+.bizproc-setuptemplateactivity-field-drag-icon {
+	opacity: 0;
+	position: absolute;
+	top: 0;
+	left: -11px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+}
+
+.bizproc-setuptemplateactivity-draggable-wrapper:hover .bizproc-setuptemplateactivity-field-drag-icon,
+.bizproc-setuptemplateactivity-field-wrapper.--ghost .bizproc-setuptemplateactivity-field-drag-icon {
+	opacity: 1;
+	cursor: grab;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
+}
+
+.bizproc-setuptemplateactivity-field-wrapper.--ghost .bizproc-setuptemplateactivity-field-drag-icon {
+	left: 0;
+}
+
+.bizproc-setuptemplateactivity-drop-placeholder {
+	height: 40px;
+	background-color: var(--ui-color-base-8);
+	border-radius: 8px;
+	border: 1px dashed var(--ui-color-base-4);
+	background: var(--ui-color-accent-soft-grey-2);
+	margin: 0 6px;
+}

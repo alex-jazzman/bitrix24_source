@@ -140,6 +140,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _renderButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderButtons");
 	var _handleTaskButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTaskButtonClick");
 	var _isNeedValidate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNeedValidate");
+	var _isCanceled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCanceled");
 	var _getRequiredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequiredFields");
 	var _getNextTaskOrClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNextTaskOrClose");
 	var _prepareErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareErrors");
@@ -190,6 +191,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    Object.defineProperty(this, _getRequiredFields, {
 	      value: _getRequiredFields2
 	    });
+	    Object.defineProperty(this, _isCanceled, {
+	      value: _isCanceled2
+	    });
 	    Object.defineProperty(this, _isNeedValidate, {
 	      value: _isNeedValidate2
 	    });
@@ -215,6 +219,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: null
 	    });
+	    this.commentRequired = 'N';
 	    Object.defineProperty(this, _canUseHumanResources, {
 	      writable: true,
 	      value: void 0
@@ -232,6 +237,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    this.canDelegateTask = options.canDelegateTask;
 	    this.fastClose = options.fastClose;
 	    this.saveVariables = options.saveVariables;
+	    this.commentRequired = options.commentRequired;
 	    babelHelpers.classPrivateFieldLooseBase(this, _canUseHumanResources)[_canUseHumanResources] = main_core.Text.toBoolean(options.canUseHumanResources);
 	    this.handleMarkAsRead = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _sendMarkAsRead)[_sendMarkAsRead], 100, this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _workflowResult)[_workflowResult] = main_core.Type.isNil(options.workflowResult) ? null : options.workflowResult;
@@ -367,7 +373,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	}
 	function _handleTaskButtonClick2(taskButton, uiButton) {
 	  const formData = new FormData(this.taskForm);
-	  const errors = babelHelpers.classPrivateFieldLooseBase(this, _isNeedValidate)[_isNeedValidate](taskButton.NAME) ? ValidateHelper.checkRequiredFieldsFilled(formData, babelHelpers.classPrivateFieldLooseBase(this, _getRequiredFields)[_getRequiredFields]()) : [];
+	  const errors = ValidateHelper.checkRequiredFieldsFilled(formData, babelHelpers.classPrivateFieldLooseBase(this, _getRequiredFields)[_getRequiredFields](taskButton.NAME));
 	  if (main_core.Type.isArrayFilled(errors)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _showErrors)[_showErrors](errors);
 	    return;
@@ -392,13 +398,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }).finally(() => uiButton.setDisabled(false));
 	}
 	function _isNeedValidate2(buttonName) {
-	  return !(buttonName === 'cancel' && !this.saveVariables);
+	  return !(babelHelpers.classPrivateFieldLooseBase(this, _isCanceled)[_isCanceled](buttonName) && !this.saveVariables);
 	}
-	function _getRequiredFields2() {
+	function _isCanceled2(buttonName) {
+	  return buttonName === 'cancel' || buttonName === 'nonapprove';
+	}
+	function _getRequiredFields2(buttonName) {
 	  if (main_core.Type.isNil(this.taskFields)) {
 	    return [];
 	  }
-	  return this.taskFields.filter(field => field.Required);
+	  const fields = babelHelpers.classPrivateFieldLooseBase(this, _isNeedValidate)[_isNeedValidate](buttonName) ? this.taskFields.filter(field => field.Required) : [];
+	  if (this.commentRequired === 'YA' && !babelHelpers.classPrivateFieldLooseBase(this, _isCanceled)[_isCanceled](buttonName) || this.commentRequired === 'YR' && babelHelpers.classPrivateFieldLooseBase(this, _isCanceled)[_isCanceled](buttonName)) {
+	    const comment = this.taskFields.find(field => field.Id === 'task_comment');
+	    if (comment) {
+	      fields.push(comment);
+	    }
+	  }
+	  return fields;
 	}
 	function _getNextTaskOrClose2(formData) {
 	  main_core.ajax.runAction('bizproc.task.getUserTaskByWorkflowId', {
@@ -549,6 +565,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    this.taskId = data.additionalParams.ID;
 	    this.fastClose = data.additionalParams.IS_LAST_TASK_FOR_USER;
 	    this.saveVariables = data.additionalParams.saveVariables;
+	    this.commentRequired = data.additionalParams.commentRequired;
 	    this.taskFields = data.additionalParams.FIELDS;
 	    const subject = this.workflowContent.querySelector('.bp-workflow-info__subject');
 	    if (subject) {

@@ -12,13 +12,12 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 	const { runAction, callMethod } = require('im/messenger/lib/rest');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
-	const { getLogger } = require('im/messenger/lib/logger');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { CounterHelper } = require('im/messenger/lib/helper');
 
 	const { ReadMessageQueue } = require('im/messenger/provider/services/read/read-message-queue');
 	const { CounterStoreWriter } = require('im/messenger/provider/services/read/store-writer');
-
-	const logger = getLogger('counters--read-message-service');
 
 	/**
 	 * @class ReadMessageService
@@ -34,13 +33,14 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 
 		constructor()
 		{
+			this.logger = getLoggerWithContext('counters--read-message-service', this);
 			this.#subscribeEvents();
 
 			if (!Feature.isMessengerV2Enabled)
 			{
 				this.#subscribeStoreEvents();
 				this.readMessagesFromQueue().catch((error) => {
-					logger.error('initializing readMessagesFromQueue error', error);
+					this.logger.error('initializing readMessagesFromQueue error', error);
 				});
 			}
 		}
@@ -80,16 +80,41 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 
 		async readAllMessages()
 		{
-			try
-			{
-				await this.#core.getStore().dispatch('counterModel/clear');
+			await this.#core.getStore().dispatch('counterModel/clear').catch((error) => {
+				this.logger.error('readAllMessages counterModel/clear error: ', error);
+			});
 
-				await callMethod('im.dialog.read.all');
-			}
-			catch (error)
-			{
-				logger.error('readAllMessages error', error);
-			}
+			await this.#core.getStore().dispatch('anchorModel/clear').catch((error) => {
+				this.logger.error('readAllMessages anchorModel/clear error: ', error);
+			});
+
+			await callMethod(RestMethod.imDialogReadAll).catch((error) => {
+				this.logger.error('readAllMessages imDialogReadAll error: ', error);
+			});
+		}
+
+		async readAllMessagesByDialogType(dialogType)
+		{
+			const counterType = CounterHelper.getCounterTypeByDialogType(dialogType);
+			await this.#core.getStore().dispatch('counterModel/clearByType', {
+				type: counterType,
+			}).catch((error) => {
+				this.logger.error('readAllMessagesByDialogType anchorModel/clearByType error: ', error);
+			});
+
+			await this.#core.getStore().dispatch('anchorModel/clearByDialogType', {
+				dialogType,
+			}).catch((error) => {
+				this.logger.error('readAllMessagesByDialogType anchorModel/clearByDialogType error: ', error);
+			});
+
+			await runAction(RestMethod.imV2ChatReadAllByType, {
+				data: {
+					type: dialogType,
+				},
+			}).catch((error) => {
+				this.logger.error('readAllMessagesByDialogType imV2ChatReadAllByType error: ', error);
+			});
 		}
 
 		/**
@@ -154,7 +179,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 			lastReadId,
 			unreadMessageList = null,
 		}) => {
-			logger.log(`${this.className}.readMessagesHandler`, chatId, messageIdList, lastReadId, unreadMessageList);
+			this.logger.log('readMessagesHandler', chatId, messageIdList, lastReadId, unreadMessageList);
 
 			const deductibleCounter = messageIdList.reduce((counter, messageId) => {
 				if (Type.isNull(unreadMessageList))
@@ -170,7 +195,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 				return counter;
 			}, 0);
 
-			logger.log(`${this.className}.readMessagesHandler deductibleCounter`, deductibleCounter);
+			this.logger.log('readMessagesHandler deductibleCounter', deductibleCounter);
 
 			await this.counterStorageWriter.decreaseCounter(chatId, deductibleCounter);
 
@@ -186,23 +211,23 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 
 			this.#readMessagesFromQueue()
 				.catch((error) => {
-					logger.error('readMessagesHandler error', error);
+					this.logger.error('readMessagesHandler error', error);
 				});
 		};
 
 		async #readMessagesFromQueue(ignoreAppStatus = false)
 		{
-			logger.log(`${this.className}.readMessagesFromQueue`);
+			this.logger.log('readMessagesFromQueue');
 			if (!this.#isActive)
 			{
-				logger.warn(`${this.className}.readMessagesFromQueue queue is not active. skip`);
+				this.logger.warn('readMessagesFromQueue queue is not active. skip');
 
 				return;
 			}
 
 			if (this.#isProcessing)
 			{
-				logger.warn(`${this.className}.readMessagesFromQueue read is processing. skip`);
+				this.logger.warn('readMessagesFromQueue read is processing. skip');
 
 				return;
 			}
@@ -210,7 +235,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 
 			if (!ignoreAppStatus && this.#core.getAppStatus() === AppStatus.networkWaiting)
 			{
-				logger.warn(`${this.className}.readMessagesFromQueue offline status. skip`);
+				this.logger.warn('readMessagesFromQueue offline status. skip');
 				this.#isProcessing = false;
 
 				return;
@@ -219,14 +244,14 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 			const isQueueEmpty = await this.#queue.isEmpty();
 			if (isQueueEmpty)
 			{
-				logger.warn(`${this.className}.readMessagesFromQueue queue is empty. skip`);
+				this.logger.warn('readMessagesFromQueue queue is empty. skip');
 				this.#isProcessing = false;
 
 				return;
 			}
 
 			const messageChunkToRead = await this.#queue.getMessageChunk();
-			logger.log(`${this.className}.readMessagesFromQueue messageChunkToRead`, messageChunkToRead);
+			this.logger.log('readMessagesFromQueue messageChunkToRead', messageChunkToRead);
 
 			const messageReadData = {
 				chatId: messageChunkToRead.chatId,
@@ -237,7 +262,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 			try
 			{
 				const result = await runAction(RestMethod.imV2ChatMessageRead, { data: messageReadData });
-				logger.log(`${this.className}.readMessagesFromQueue readMessages result`, result);
+				this.logger.log('readMessagesFromQueue readMessages result', result);
 
 				const {
 					chatId,
@@ -301,7 +326,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 
 			if (!networkError)
 			{
-				logger.error(`${this.className}.handleReadMessagesError errors without NETWORK_ERROR. delete from queue`, messageReadData.chatId);
+				this.logger.error('handleReadMessagesError errors without NETWORK_ERROR. delete from queue', messageReadData.chatId);
 				await this.#queue.deleteChats([messageReadData.chatId]);
 			}
 		}

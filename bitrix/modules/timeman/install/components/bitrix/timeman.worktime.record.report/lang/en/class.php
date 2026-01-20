@@ -1,15 +1,15 @@
-<?
+<?php
 $MESS["JS_CORE_TMP_EXPIRE"] = "Not clocked out";
 $MESS["JS_CORE_TMR_A"] = "Changed";
 $MESS["JS_CORE_TMR_APPROVE"] = "Approve";
 $MESS["JS_CORE_TMR_CANCEL"] = "Cancel";
 $MESS["JS_CORE_TMR_COMMENTS"] = "Comments";
 $MESS["JS_CORE_TMR_DEP"] = "Clocked out";
-$MESS["JS_CORE_TMR_DURATION"] = "Hours";
+$MESS["JS_CORE_TMR_DURATION"] = "Total";
 $MESS["JS_CORE_TMR_EDIT"] = "Edit";
 $MESS["JS_CORE_TMR_FROM"] = "From";
 $MESS["JS_CORE_TMR_NA"] = "Uncomfirmed";
-$MESS["JS_CORE_TMR_PAUSE"] = "Break";
+$MESS["JS_CORE_TMR_PAUSE"] = "Break duration";
 $MESS["JS_CORE_TMR_REPORT"] = "Report";
 $MESS["JS_CORE_TMR_REPORT_DURATION"] = "Reason for change (duration)";
 $MESS["JS_CORE_TMR_REPORT_FINISH"] = "Reason for change (clock-out time)";
@@ -19,10 +19,10 @@ $MESS["JS_CORE_TMR_REPORT_START"] = "Reason for change (clock-in time)";
 $MESS["JS_CORE_TMR_START_TITLE"] = "Clocked in";
 $MESS["JS_CORE_TMR_TITLE"] = "Daily report";
 $MESS["JS_CORE_TMR_TO"] = "To";
-$MESS["JS_CORE_TMR_WORKTIME"] = "Work hours";
+$MESS["JS_CORE_TMR_WORKTIME"] = "Worktime";
 $MESS["TIMEMAN_BTN_CANCEL_TITLE"] = "Close";
 $MESS["TIMEMAN_BTN_SAVE_TITLE"] = "Save";
-$MESS["TIMEMAN_POPUP_WORK_TIME_TITLE"] = "Work hours";
+$MESS["TIMEMAN_POPUP_WORK_TIME_TITLE"] = "Worktime";
 $MESS["TM_APPROVE_FORM_ACCEPT_LABEL"] = "Approve";
 $MESS["TM_RECORD_NOT_FOUND"] = "Record was not found.";
 $MESS["TM_RECORD_READ_ACCESS_DENIED"] = "Insufficient access permissions to view work schedule entry.";
@@ -33,4 +33,3 @@ $MESS["TM_RECORD_REPORT_MORE_EVENTS_TITLE"] = "#COUNT# more events";
 $MESS["TM_RECORD_REPORT_MORE_TASKS_TITLE"] = "#COUNT# more tasks";
 $MESS["TM_RECORD_REPORT_ROLL_UP_TITLE"] = "Collapse";
 $MESS["TM_RECORD_REPORT_TASKS_TITLE"] = "Tasks";
-?>

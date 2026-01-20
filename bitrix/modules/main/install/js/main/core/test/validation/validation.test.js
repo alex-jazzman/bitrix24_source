@@ -1,5 +1,6 @@
 import Validation from '../../src/lib/validation';
 import validEmails from './data/valid-emails';
+import invalidEmails from './data/invalid-emails';
 
 describe('Validation', () => {
 	it('Should be exported as function', () => {
@@ -13,7 +14,13 @@ describe('Validation', () => {
 
 		it('Should return true for each valid email', () => {
 			validEmails.forEach((email) => {
-				assert(Validation.isEmail(email));
+				assert(Validation.isEmail(email), email);
+			});
+		});
+
+		it('Should return false for each invalid email', () => {
+			invalidEmails.forEach((email) => {
+				assert(Validation.isEmail(email) === false, email);
 			});
 		});
 	});

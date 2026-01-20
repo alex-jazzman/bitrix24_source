@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 		MessageParams,
 		MessageMenuActionType,
 	} = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageMenuController } = require('im/messenger/controller/dialog/lib/message-menu');
 
 	/**
@@ -44,6 +45,8 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 						MessageMenuActionType.edit,
 						MessageMenuActionType.delete,
 						MessageMenuActionType.copy,
+						MessageMenuActionType.multiselect,
+						Feature.isMessengerV2Enabled && MessageMenuActionType.forward,
 					].includes(action));
 				})
 			;
@@ -80,8 +83,11 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 		{
 			return [
 				MessageMenuActionType.reaction,
+				Feature.isMessengerV2Enabled && MessageMenuActionType.forward,
 				MessageMenuActionType.feedback,
-			];
+				MessageMenuActionType.delete,
+				MessageMenuActionType.multiselect,
+			].filter(Boolean);
 		}
 	}
 

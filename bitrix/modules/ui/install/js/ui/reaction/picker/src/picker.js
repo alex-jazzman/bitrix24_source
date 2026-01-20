@@ -384,12 +384,6 @@ export class ReactionPicker extends EventEmitter
 		const excludedReactions = new Set([
 			ReactionName.signHorns,
 			ReactionName.faceWithStuckOutTongue,
-			ReactionName.handshake,
-			ReactionName.hundredPoints,
-			ReactionName.sleepingSymbol,
-			ReactionName.crossMark,
-			ReactionName.whiteHeavyCheckMark,
-			ReactionName.eyes,
 		]);
 
 		if (this.#allowedReactions)

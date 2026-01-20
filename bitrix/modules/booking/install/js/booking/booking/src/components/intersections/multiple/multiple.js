@@ -1,7 +1,7 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import { Dialog, Item } from 'ui.entity-selector';
 
-import { EntitySelectorEntity, EntitySelectorTab, Model } from 'booking.const';
+import { EntitySelectorEntity, EntitySelectorTab, LimitFeatureId, Model } from 'booking.const';
 import { limit } from 'booking.lib.limit';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
 import type { ResourceModel } from 'booking.model.resources';
@@ -70,6 +70,13 @@ export const Multiple = {
 		},
 		showSelector(): void
 		{
+			if (!this.isMultiResourcesFeatureEnabled)
+			{
+				void limit.show(LimitFeatureId.MultiResources);
+
+				return;
+			}
+
 			if (this.isFeatureEnabled)
 			{
 				this.selector.show();
@@ -102,6 +109,10 @@ export const Multiple = {
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 			resources: `${Model.Resources}/get`,
 		}),
+		isMultiResourcesFeatureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingMulti;
+		},
 		resourcesIds(): number[]
 		{
 			return this.resources.map(({ id }) => id);
@@ -161,7 +172,9 @@ export const Multiple = {
 						return;
 					}
 
-					const resourceType: ResourceTypeModel = this.$store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
+					const resourceType: ResourceTypeModel = this.$store.getters[`${Model.ResourceTypes}/getById`](
+						resource.typeId,
+					);
 
 					item.setTitle(resource.name);
 					item.setSubtitle(resourceType.name);
@@ -201,7 +214,7 @@ export const Multiple = {
 						<div class="bbi-resource-selector-tag-content" :title="firstItemTitle">
 							<div class="bbi-resource-selector-tag-title">{{ firstItemTitle }}</div>
 						</div>
-						<div 
+						<div
 							class="bbi-resource-selector-tag-remove"
 							@click="handleRemove(selectedItems[0].id)"
 							:data-id="'bbi-resource-selector-tag-remove-' + resourceId"
@@ -234,8 +247,8 @@ export const Multiple = {
 				<span
 					ref="selectorButton"
 					class="bbi-resource-selector-item bbi-resource-selector-add-button"
-					@click="showSelector"
 					:data-id="'bbi-resource-selector-add-button' + resourceId"
+					@click="showSelector"
 				>
 					<span class="bbi-resource-selector-add-button-caption">
 						{{ loc('BOOKING_BOOKING_INTERSECTION_BUTTON_MSGVER_1') }}

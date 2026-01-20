@@ -6,9 +6,23 @@ jn.define('tasks/entry', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
-	const { FeatureId } = require('tasks/enum');
+	const { FeatureId, TaskStatus } = require('tasks/enum');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { dispatch, getState } = require('statemanager/redux/store');
+	const { showToast } = require('toast');
+	const {
+		selectById,
+		selectByTaskIdOrGuid,
+		selectActions,
+		updateDeadline,
+		updateChecklist,
+		tasksUpserted,
+	} = require('tasks/statemanager/redux/slices/tasks');
+	const { Type } = require('type');
+	const { Notify } = require('notify');
 
+	const MS_PER_SECOND = 1000;
 	/**
 	 * @typedef {object} OpenTaskData
 	 * @property {string|number} [id]
@@ -89,6 +103,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 	 * @property {number} [initialTaskData.endDatePlan]
 	 * @property {number} [initialTaskData.IM_CHAT_ID]
 	 * @property {number} [initialTaskData.IM_MESSAGE_ID]
+	 * @property {number} [initialTaskData.mailMessageId]
 	 * @property {string} [view] - one of values from {@link tasks/enum.ViewMode}
 	 * @property {object} [stage]
 	 * @property {number} [copyId]
@@ -126,8 +141,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 		static async openEfficiency(data, params = {})
 		{
-			const efficiencyAvailable = await Entry.checkToolAvailable('effective', 'limit_tasks_off');
-			if (!efficiencyAvailable)
+			if (!await Entry.checkToolAvailable('effective', 'limit_tasks_off'))
 			{
 				return;
 			}
@@ -166,8 +180,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async openTask(data, params = {})
 		{
-			const isTaskToolAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
-			if (!isTaskToolAvailable)
+			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))
 			{
 				return;
 			}
@@ -184,6 +197,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
 			const isFlowToolDisabled = await checkDisabledToolById('flows', false);
+			const isChatFeatureEnabled = await Entry.#isChatFeatureEnabled();
 
 			if (parentWidget)
 			{
@@ -200,6 +214,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					kanbanOwnerId,
 					projectId,
 					isFlowToolDisabled,
+					isChatFeatureEnabled,
 				});
 			}
 			else
@@ -231,9 +246,284 @@ jn.define('tasks/entry', (require, exports, module) => {
 						analyticsLabel,
 						kanbanOwnerId,
 						IS_FLOW_TOOL_DISABLED: isFlowToolDisabled,
+						IS_CHAT_FEATURE_ENABLED: isChatFeatureEnabled,
 					},
 				});
 			}
+		}
+
+		/**
+		 * @public
+		 * @param {object} options
+		 * @param {number} options.taskId
+		 * @param {object} [options.analyticsLabel={}]
+		 * @returns {void}
+		 */
+		static async openComments(options)
+		{
+			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))
+			{
+				return;
+			}
+
+			const { taskId, analyticsLabel = {} } = options || {};
+			if (!taskId || taskId <= 0)
+			{
+				return;
+			}
+
+			const { CommentsOpener } = await requireLazy('tasks:layout/task/comments-opener');
+
+			const opener = new CommentsOpener(analyticsLabel);
+			opener.openCommentsWidget(taskId);
+		}
+
+		static async openDeadlinePicker(options = {})
+		{
+			const ctx = await Entry.#prepareTaskContext(options);
+			if (!ctx)
+			{
+				return;
+			}
+			const { task = null } = ctx;
+			if (!task)
+			{
+				return;
+			}
+
+			const { DeadlinePicker } = await requireLazy('tasks:deadline-picker');
+			const currentDeadline = task.deadline ? (task.deadline * MS_PER_SECOND) : null;
+			const { taskId, layout = PageManager } = options;
+
+			(new DeadlinePicker({
+				canSetNoDeadline: true,
+				task,
+				parentWidget: layout,
+			}))
+				.checkCanOpen()
+				.then((datePicker) => datePicker.show({
+					deadline: currentDeadline,
+				}))
+				.then(({ deadline, reason }) => {
+					if (deadline !== currentDeadline)
+					{
+						dispatch(
+							updateDeadline({
+								taskId,
+								deadline,
+								reason,
+							}),
+						);
+					}
+				})
+				.catch(console.error)
+			;
+		}
+
+		static async openChecklist(options)
+		{
+			const checklistId = Number(options.entityId);
+			if (!checklistId)
+			{
+				return;
+			}
+
+			const ctx = await Entry.#prepareTaskContext(options, { withChecklists: true });
+			if (!ctx)
+			{
+				return;
+			}
+
+			const { task, checklist } = ctx;
+
+			const { openChecklistWithPreparedData } = await requireLazy('tasks:checklist');
+
+			void openChecklistWithPreparedData({
+				taskId: Number(options?.taskId),
+				userId: Number(options?.userId),
+				checklistId,
+				groupId: task.groupId,
+				checklistTree: checklist?.tree,
+				onChange: (checklistController) => {
+					const { completed, uncompleted, checklistDetails } = checklistController.getReduxData();
+					dispatch(updateChecklist({
+						checklistDetails,
+						taskId: Number(options?.taskId),
+						checklist: { completed, uncompleted },
+					}));
+				},
+			});
+		}
+
+		static async openResult(params)
+		{
+			const resultId = Number(params?.entityId);
+
+			if (!resultId)
+			{
+				return;
+			}
+
+			const ctx = await Entry.#prepareTaskContext(params);
+			if (!ctx)
+			{
+				return;
+			}
+
+			const { ResultEntry } = await requireLazy('tasks:layout/fields/result-v2/entry');
+
+			void ResultEntry.openResult(
+				resultId,
+				params.isFocused,
+				Number(params.taskId),
+				params.parentWidget,
+				params.isWithAnotherResultsEmptyState,
+			);
+		}
+
+		static async completeTask(params)
+		{
+			const ctx = await Entry.#prepareTaskContext(params);
+			if (!ctx)
+			{
+				return;
+			}
+			const { task } = ctx;
+
+			const status = Number(task.status);
+
+			if (status === TaskStatus.COMPLETED)
+			{
+				showToast({
+					message: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_ALREADY_COMPLETED'),
+				});
+
+				return;
+			}
+
+			const actions = selectActions({ task: selectById(getState(), Number(params.taskId)) });
+
+			if (!actions?.complete && !actions?.approve)
+			{
+				showToast({
+					message: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_COMPLETE_NOT_ACCESSIBLE'),
+				});
+
+				return;
+			}
+
+			const { ActionId, ActionMeta } = await requireLazy('tasks:layout/action-menu/actions', false);
+			const isSupposedlyCompleted = status === TaskStatus.SUPPOSEDLY_COMPLETED;
+			const isTaskCreator = task.creator === Number(env.userId);
+			const canApprove = actions?.approve && isSupposedlyCompleted && isTaskCreator;
+
+			if (actions?.complete || canApprove)
+			{
+				await ActionMeta[ActionId.COMPLETE].handleAction({ task, layout: PageManager });
+			}
+			else
+			{
+				showToast({
+					message: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_COMPLETE_NOT_ACCESSIBLE'),
+				});
+			}
+		}
+
+		static async #prepareTaskContext(params, extra = {})
+		{
+			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))
+			{
+				return null;
+			}
+
+			const task = selectByTaskIdOrGuid(getState(), params?.taskId);
+
+			if (task)
+			{
+				return { task };
+			}
+
+			const data = await Entry.#getTaskData(params?.taskId, params?.userId, extra);
+
+			if (!data?.task)
+			{
+				await Entry.#showTaskAccessDeniedToast();
+
+				return null;
+			}
+
+			return data;
+		}
+
+		static async #showTaskAccessDeniedToast()
+		{
+			showToast({
+				message: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_NOT_ACCESSIBLE'),
+			});
+		}
+
+		static async #isChatFeatureEnabled()
+		{
+			return new Promise((resolve) => {
+				new RunActionExecutor('tasksmobile.Settings.isChatFeatureEnabled')
+					.setHandler((response) => resolve(response.data))
+					.call()
+				;
+			});
+		}
+
+		static async #getTaskData(taskId, userId, extra = {})
+		{
+			const taskIdNumber = Number(taskId);
+			const userIdNumber = Number(userId);
+			if (!taskIdNumber || taskIdNumber <= 0 || !userIdNumber || userIdNumber <= 0)
+			{
+				return null;
+			}
+
+			void Notify.showIndicatorLoading();
+
+			try
+			{
+				const response = await BX.ajax.runAction(
+					'tasksmobile.Task.get',
+					{
+						data: {
+							taskId: taskIdNumber,
+							params: {
+								WITH_CHECKLIST_DATA: extra?.withChecklists ? 'Y' : 'N',
+								MARKED_AS_VIEWED: 'N',
+							},
+						},
+					},
+				);
+
+				Notify.hideCurrentIndicator();
+
+				const { status, data } = response || {};
+				if (status === 'success' && data && Type.isArrayFilled(data.tasks))
+				{
+					const { tasks, checklist = [] } = data;
+
+					await dispatch(
+						tasksUpserted({
+							tasks,
+							ownerId: userIdNumber,
+						}),
+					);
+
+					return {
+						checklist,
+						task: selectByTaskIdOrGuid(getState(), taskIdNumber),
+					};
+				}
+			}
+			catch
+			{
+				Notify.hideCurrentIndicator();
+			}
+
+			return null;
 		}
 
 		/**
@@ -243,8 +533,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async openTaskCreation(data)
 		{
-			const isTaskToolAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
-			if (!isTaskToolAvailable)
+			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))
 			{
 				return;
 			}
@@ -257,8 +546,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 		static async openTaskList(data)
 		{
-			const tasksAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
-			if (!tasksAvailable)
+			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))
 			{
 				return;
 			}

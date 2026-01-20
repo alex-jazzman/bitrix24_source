@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_iconSet_api_vue,tasks_v2_component_elements_addBackground,tasks_v2_component_elements_fieldAdd,main_core,tasks_entitySelector,tasks_v2_lib_entitySelectorDialog,tasks_v2_core,tasks_v2_provider_service_taskService,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_lib_fieldHighlighter) {
+(function (exports,tasks_v2_component_elements_addButton,tasks_v2_component_elements_fieldAdd,main_core,main_core_events,tasks_entitySelector,tasks_v2_core,tasks_v2_const,tasks_v2_lib_entitySelectorDialog,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const tagsMeta = Object.freeze({
@@ -11,106 +11,56 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  title: main_core.Loc.getMessage('TASKS_V2_TAGS_TITLE')
 	});
 
+	var _onClose, _getDialog, _fillDialog, _getTagItem, _getEntityId;
 	const dialogs = {};
-	var _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId");
-	var _onCloseOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCloseOnce");
-	var _onUpdateOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUpdateOnce");
-	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
-	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
-	var _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask");
-	var _getTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTask");
-	var _currentUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
-	class TagsDialog {
+	const tagsDialog = new (_onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose"), _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog"), _fillDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillDialog"), _getTagItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTagItem"), _getEntityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntityId"), class {
 	  constructor() {
-	    Object.defineProperty(this, _currentUserId, {
-	      get: _get_currentUserId,
-	      set: void 0
+	    Object.defineProperty(this, _getEntityId, {
+	      value: _getEntityId2
 	    });
-	    Object.defineProperty(this, _getTask, {
-	      value: _getTask2
+	    Object.defineProperty(this, _getTagItem, {
+	      value: _getTagItem2
 	    });
-	    Object.defineProperty(this, _updateTask, {
-	      value: _updateTask2
+	    Object.defineProperty(this, _fillDialog, {
+	      value: _fillDialog2
 	    });
 	    Object.defineProperty(this, _getDialog, {
 	      value: _getDialog2
 	    });
-	    Object.defineProperty(this, _getItems, {
-	      value: _getItems2
-	    });
-	    Object.defineProperty(this, _taskId, {
+	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _onCloseOnce, {
-	      writable: true,
-	      value: null
+	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.TagDeleted, event => {
+	      const {
+	        tagName,
+	        groupId
+	      } = event.getData();
+	      Object.entries(dialogs).forEach(([key, dialog]) => {
+	        if (Number(key.split('-')[1]) === groupId) {
+	          const tagId = dialog.getItems().find(item => item.getTitle() === tagName).getId();
+	          dialog.removeItem([tasks_v2_const.EntitySelectorEntity.Tag, tagId]);
+	        }
+	      });
 	    });
-	    Object.defineProperty(this, _onUpdateOnce, {
-	      writable: true,
-	      value: null
-	    });
 	  }
-	  setTaskId(taskId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = taskId;
-	    return this;
+	  show(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = params.onClose;
+	    babelHelpers.classPrivateFieldLooseBase(this, _fillDialog)[_fillDialog](params.taskId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](params.taskId).showTo(params.targetNode);
 	  }
-	  onCloseOnce(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onCloseOnce)[_onCloseOnce] = callback;
-	    return this;
-	  }
-	  onUpdateOnce(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = callback;
-	  }
-	  showTo(targetNode) {
-	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
-	    if (dialog.isLoaded() && !dialog.isOpen()) {
-	      dialog.selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems](babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]));
-	    }
-	    dialog.showTo(targetNode);
-	  }
-	  updateItems() {
-	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
-	    if (dialog.isLoaded() && dialog.isOpen()) {
-	      dialog.selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems](babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]));
-	    }
-	  }
-	  get $store() {
-	    return tasks_v2_core.Core.getStore();
-	  }
-	}
-	function _getItems2(taskId) {
-	  const tags = new Set(babelHelpers.classPrivateFieldLooseBase(this, _getTask)[_getTask](taskId).tags);
-	  return babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](taskId).getItems().filter(item => tags.has(item.getTitle())).map(item => [tasks_v2_const.EntitySelectorEntity.Tag, item.getId()]);
-	}
+	})();
 	function _getDialog2(taskId) {
-	  var _babelHelpers$classPr;
-	  const userId = babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId];
-	  const groupId = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getTask)[_getTask](taskId).groupId) != null ? _babelHelpers$classPr : 0;
+	  var _taskService$getStore, _dialogs$key;
+	  const userId = tasks_v2_core.Core.getParams().currentUser.id;
+	  const groupId = (_taskService$getStore = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId).groupId) != null ? _taskService$getStore : 0;
 	  const key = `${taskId}-${groupId}`;
-	  if (dialogs[key]) {
-	    return dialogs[key];
-	  }
-	  let changed = false;
-	  const handleChanged = () => {
-	    changed = true;
-	  };
-	  const handleClose = () => {
-	    var _babelHelpers$classPr2, _babelHelpers$classPr3;
-	    if (changed) {
-	      void babelHelpers.classPrivateFieldLooseBase(this, _updateTask)[_updateTask](taskId);
-	      changed = false;
-	    }
-	    (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _onCloseOnce))[_onCloseOnce]) == null ? void 0 : _babelHelpers$classPr2.call(_babelHelpers$classPr3);
-	    babelHelpers.classPrivateFieldLooseBase(this, _onCloseOnce)[_onCloseOnce] = null;
-	  };
-	  dialogs[key] = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
-	    multiple: true,
+	  const entityId = babelHelpers.classPrivateFieldLooseBase(this, _getEntityId)[_getEntityId](taskId);
+	  (_dialogs$key = dialogs[key]) != null ? _dialogs$key : dialogs[key] = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	    enableSearch: true,
 	    dropdownMode: true,
-	    compactView: true,
 	    entities: [{
-	      id: tasks_v2_const.EntitySelectorEntity.Tag,
+	      id: entityId,
 	      options: {
 	        taskId,
 	        groupId
@@ -119,84 +69,91 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    searchOptions: {
 	      allowCreateItem: true
 	    },
-	    footer: tasks_entitySelector.Footer,
+	    footer: entityId === tasks_v2_const.EntitySelectorEntity.Tag ? tasks_entitySelector.Footer : false,
 	    footerOptions: {
 	      userId,
 	      groupId
 	    },
 	    clearUnavailableItems: true,
 	    events: {
-	      'Item:onSelect': handleChanged,
-	      'Item:onDeselect': handleChanged,
+	      onLoad: () => babelHelpers.classPrivateFieldLooseBase(this, _fillDialog)[_fillDialog](taskId),
 	      'Search:onItemCreateAsync': event => {
 	        const tag = event.getData().searchQuery.getQuery();
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _getTask)[_getTask](taskId).tags.includes(tag)) {
-	          return;
+	        if (!tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId).tags.includes(tag)) {
+	          dialogs[key].addItem(babelHelpers.classPrivateFieldLooseBase(this, _getTagItem)[_getTagItem](entityId, tag));
 	        }
-	        dialogs[key].addItem({
-	          id: tag,
-	          entityId: tasks_v2_const.EntitySelectorEntity.Tag,
-	          title: tag,
-	          tabs: 'all',
-	          selected: true
-	        });
-	        changed = true;
 	      }
 	    },
 	    popupOptions: {
 	      events: {
-	        onClose: handleClose
+	        onClose: () => {
+	          var _babelHelpers$classPr, _babelHelpers$classPr2;
+	          const tags = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](taskId).getSelectedItems().map(item => item.getTitle());
+	          void tasks_v2_provider_service_taskService.taskService.update(taskId, {
+	            tags
+	          });
+	          (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _onClose))[_onClose]) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2, tags);
+	        }
 	      }
 	    }
 	  });
 	  return dialogs[key];
 	}
-	async function _updateTask2(taskId) {
-	  var _babelHelpers$classPr4, _babelHelpers$classPr5;
-	  const tags = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](taskId).getSelectedItems().map(item => item.getTitle());
-	  void tasks_v2_provider_service_taskService.taskService.update(taskId, {
-	    tags
+	function _fillDialog2(taskId) {
+	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](taskId);
+	  const entityId = babelHelpers.classPrivateFieldLooseBase(this, _getEntityId)[_getEntityId](taskId);
+	  const tags = new Set(tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId).tags);
+	  const idsMap = new Map([...tags].map(tag => [tag, [entityId, tag]]));
+	  dialog.getItems().forEach(item => {
+	    if (tags.has(item.getTitle())) {
+	      idsMap.set(item.getTitle(), [entityId, item.getId()]);
+	    }
 	  });
-	  (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr4.call(_babelHelpers$classPr5, tags);
-	  babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = null;
+	  idsMap.entries().forEach(([tag, id]) => {
+	    if (!dialog.getItem(id)) {
+	      dialog.addItem(babelHelpers.classPrivateFieldLooseBase(this, _getTagItem)[_getTagItem](entityId, tag));
+	    }
+	  });
+	  dialog.selectItemsByIds([...idsMap.values()]);
 	}
-	function _getTask2(id) {
-	  return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](id);
+	function _getTagItem2(entityId, title) {
+	  return {
+	    id: title,
+	    entityId,
+	    title,
+	    tabs: 'all',
+	    selected: true
+	  };
 	}
-	function _get_currentUserId() {
-	  return this.$store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
+	function _getEntityId2(taskId) {
+	  return tasks_v2_lib_idUtils.idUtils.isTemplate(taskId) ? tasks_v2_const.EntitySelectorEntity.TemplateTag : tasks_v2_const.EntitySelectorEntity.Tag;
 	}
-	const tagsDialog = new TagsDialog();
 
 	// @vue/component
 	const Tags = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground,
+	    AddButton: tasks_v2_component_elements_addButton.AddButton,
 	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd
 	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {}
 	  },
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      tagsMeta
 	    };
 	  },
 	  data() {
 	    return {
 	      isDialogShown: false,
-	      tagsIndexes: {}
+	      tagsIndexes: {},
+	      isHovered: false
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    tags() {
 	      return [...this.task.tags].sort((a, b) => this.tagsIndexes[a] - this.tagsIndexes[b]);
 	    },
@@ -205,11 +162,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    readonly() {
 	      return !this.task.rights.edit;
-	    }
-	  },
-	  watch: {
-	    tags() {
-	      tagsDialog.setTaskId(this.taskId).updateItems();
+	    },
+	    isAddActive() {
+	      return !this.readonly && this.isFilled;
+	    },
+	    isAddVisible() {
+	      return this.isDialogShown || this.isHovered;
 	    }
 	  },
 	  created() {
@@ -220,12 +178,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (this.readonly) {
 	        return;
 	      }
-	      tagsDialog.setTaskId(this.taskId).onCloseOnce(this.handleClose).showTo(this.$refs.anchor);
-	      tagsDialog.onUpdateOnce(this.rememberTagsIndexes);
+	      tagsDialog.show({
+	        targetNode: this.$refs.anchor,
+	        taskId: this.taskId,
+	        onClose: this.handleDialogClose
+	      });
 	      this.isDialogShown = true;
 	    },
-	    handleClose() {
+	    handleDialogClose(tags) {
 	      this.isDialogShown = false;
+	      this.rememberTagsIndexes(tags);
 	    },
 	    handleCrossClick(tag) {
 	      const tags = this.tags.filter(it => it !== tag);
@@ -247,19 +209,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-id="taskId"
 			:data-task-field-id="tagsMeta.id"
 			:data-task-field-value="task.tags.join(',')"
-			@click="handleClick"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
-			<AddBackground v-if="!readonly && isFilled" :isActive="isDialogShown"/>
+			<AddButton v-if="isAddActive" :isVisible="isAddVisible" @click="handleClick"/>
 			<template v-for="tag in tags" :key="tag">
 				<div class="tasks-field-tag">
 					<span>{{ tag }}</span>
 					<div v-if="!readonly" class="tasks-field-tag-cross" @click.capture.stop="handleCrossClick(tag)">
-						<BIcon :name="Outline.CROSS_L" :hoverable="true"/>
+						<BIcon :name="Outline.CROSS_L" hoverable/>
 					</div>
 				</div>
 			</template>
-			<FieldAdd v-if="!isFilled" :icon="Outline.TAG"/>
-			<div class="tasks-field-tags-anchor" ref="anchor"></div>
+			<FieldAdd v-if="!isFilled" :icon="Outline.TAG" @click="handleClick"/>
+			<div class="tasks-field-tags-anchor" ref="anchor"/>
 		</div>
 	`
 	};
@@ -267,32 +230,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	// @vue/component
 	const TagsChip = {
 	  components: {
-	    Chip: tasks_v2_component_elements_chip.Chip
+	    Chip: ui_system_chip_vue.Chip
 	  },
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
+	  inject: {
+	    task: {},
+	    taskId: {}
 	  },
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline,
+	      Outline: ui_iconSet_api_vue.Outline,
 	      tagsMeta
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    design() {
-	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent;
+	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, tagsMeta.id);
-	    },
-	    readonly() {
-	      return !this.task.rights.edit;
+	      return this.task.filledFields[tagsMeta.id];
 	    }
 	  },
 	  methods: {
@@ -301,8 +256,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.highlightField();
 	        return;
 	      }
-	      tagsDialog.setTaskId(this.taskId).showTo(this.$el);
-	      tagsDialog.onUpdateOnce(this.highlightField);
+	      tagsDialog.show({
+	        targetNode: this.$el,
+	        taskId: this.taskId,
+	        onClose: this.highlightField
+	      });
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(tagsMeta.id);
@@ -310,8 +268,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
+			:design
 			:icon="Outline.TAG"
 			:text="loc('TASKS_V2_TAGS_TITLE_CHIP')"
 			:data-task-id="taskId"
@@ -326,5 +283,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.TagsChip = TagsChip;
 	exports.tagsMeta = tagsMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.EntitySelector,BX.Tasks.V2.Lib,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Event,BX.Tasks.EntitySelector,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Lib));
 //# sourceMappingURL=tags.bundle.js.map

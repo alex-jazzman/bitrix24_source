@@ -18,6 +18,7 @@ export type BookingDto = {
 	note: string | null,
 	externalData: DealDataDto,
 	messages: MessageDto[],
+	skus: SkuDto[],
 };
 
 export type DealDataDto = {
@@ -28,7 +29,6 @@ export type DealDataDto = {
 		createdTimestamp: number,
 		currencyId: string,
 		opportunity: number,
-		formattedOpportunity: string,
 	},
 };
 
@@ -36,6 +36,13 @@ export type BookingFromWaitListItemDto = {
 	waitListItemId: number,
 	datePeriod: DatePeriodDto,
 	resources: ResourceDto[],
+};
+
+export type SkuDto = {
+	id: number,
+	name: string,
+	price: number,
+	currencyId: string,
 };
 
 type DatePeriodDto = {

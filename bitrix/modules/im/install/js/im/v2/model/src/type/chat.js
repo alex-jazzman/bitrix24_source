@@ -33,6 +33,7 @@ export type Chat = {
 	quoteId: number,
 	ownerId: number,
 	entityLink: {
+		id: string,
 		type: string,
 		url: string,
 	},

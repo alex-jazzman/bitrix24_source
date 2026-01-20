@@ -11,7 +11,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 	const { CheckListFlatTreeItem } = require('tasks/checklist/flat-tree/item');
 
 	/**
-	 * {typedef} CheckListFlatTreeProps
+	 * @typedef {Object} CheckListFlatTreeProps
 	 * @property {boolean} [autoCompleteItem=true]
 	 * @property {number} [userId]
 	 * @property {number} [taskId]
@@ -23,6 +23,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 	 */
 	class CheckListFlatTree
 	{
+		/**
+		 * @param {CheckListFlatTreeProps} props
+		 */
 		constructor(props)
 		{
 			const {
@@ -49,7 +52,12 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		 */
 		static buildDefaultList(params = {})
 		{
-			const { addBlankItem = false, items = [], number = 0 } = params;
+			const {
+				addBlankItem = false,
+				items = [],
+				number = 0,
+				autoCompleteItem,
+			} = params;
 
 			const checklistNumber = number >= 1 ? number + 1 : '';
 			const title = Loc.getMessage(
@@ -65,7 +73,11 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				},
 			});
 
-			const flatCheckList = new CheckListFlatTree({ checklist: rootItem });
+			const flatCheckList = new CheckListFlatTree({
+				checklist: rootItem,
+				autoCompleteItem,
+			});
+
 			if (addBlankItem)
 			{
 				flatCheckList.addNewItem(flatCheckList.getTreeItem(rootItem));
@@ -787,7 +799,11 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			{
 				itemRequestData.MEMBERS = {};
 				members.forEach(({ id, type, name }) => {
-					itemRequestData.MEMBERS[id] = { TYPE: type, NAME: name };
+					itemRequestData.MEMBERS[id] = {
+						ID: id,
+						TYPE: type,
+						NAME: name,
+					};
 				});
 			}
 
@@ -796,12 +812,11 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 		/**
 		 * @param {CheckListFlatTreeItem} item
-		 * @returns {string}
+		 * @returns {String}
 		 */
 		#getTitleForSaving(item)
 		{
-			let title = item.getTitle();
-			const focus = item.isFocused();
+			const title = item.getTitle();
 			const members = item.getMembers();
 
 			if (members.length > 0)
@@ -810,12 +825,6 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 					(memberTitle, { name }) => (title.includes(name) ? memberTitle : `${memberTitle} ${name}`),
 					title,
 				);
-			}
-
-			if (!title && (!item.shouldRemove() || focus))
-			{
-				title = Loc.getMessage('TASKSMOBILE_TREE_CHECKLIST_ITEM_DEFAULT_TITLE');
-				item.setTitle(title);
 			}
 
 			return title;
@@ -888,7 +897,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 		isAutoCompleteItem()
 		{
-			const { autoCompleteItem } = this.props;
+			const {
+				autoCompleteItem = true,
+			} = this.props;
 
 			return Boolean(autoCompleteItem);
 		}

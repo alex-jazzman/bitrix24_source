@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,call_component_callButton,im_v2_component_elements_loader,im_v2_component_animation,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_utils,ui_vue3,im_v2_component_dialog_chat,im_v2_component_textarea,im_v2_lib_theme,im_v2_lib_textarea,im_v2_component_sidebar,im_v2_lib_bulkActions,ui_uploader_core,main_core,im_v2_provider_service_uploading,im_v2_provider_service_chat,main_core_events,ui_vue3_directives_hint,im_v2_application_core,im_v2_lib_analytics,im_v2_const,im_v2_lib_permission,im_v2_component_elements_button,im_v2_component_entitySelector,im_v2_lib_confirm,im_v2_provider_service_message) {
+(function (exports,call_component_callButton,im_v2_component_elements_loader,im_v2_component_animation,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_utils,main_core_events,ui_vue3,im_v2_component_dialog_chat,im_v2_component_textarea,im_v2_lib_theme,im_v2_lib_textarea,im_v2_component_sidebar,ui_uploader_core,main_core,im_v2_provider_service_uploading,im_v2_provider_service_chat,ui_vue3_directives_hint,im_v2_application_core,im_v2_lib_analytics,im_v2_const,im_v2_lib_permission,im_v2_component_elements_button,im_v2_component_entitySelector,im_v2_lib_confirm,im_v2_provider_service_message) {
 	'use strict';
 
 	const {
@@ -157,15 +157,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  methods: {
 	    onMembersClick() {
 	      if (this.isMembersPanelActive) {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	        this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	          panel: im_v2_const.SidebarDetailBlock.members
 	        });
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.members,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -442,15 +445,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  methods: {
 	    toggleSearchPanel() {
 	      if (this.isMessageSearchActive) {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	        this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	          panel: im_v2_const.SidebarDetailBlock.messageSearch
 	        });
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.messageSearch,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -484,15 +490,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  methods: {
 	    toggleRightPanel() {
 	      if (this.isSidebarOpened) {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close, {
+	        this.getEmitter().emit(im_v2_const.EventType.sidebar.close, {
 	          panel: ''
 	        });
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.open, {
+	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
 	        panel: im_v2_const.SidebarDetailBlock.main,
 	        dialogId: this.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -777,7 +786,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        autoUpload: false
 	      });
 	      if (main_core.Type.isArrayFilled(multiUploadingResult.uploaderIds)) {
-	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.openUploadPreview, {
+	        this.getEmitter().emit(im_v2_const.EventType.textarea.openUploadPreview, {
 	          multiUploadingResult
 	        });
 	      }
@@ -788,6 +797,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.multiUploadingService = new im_v2_provider_service_uploading.MultiUploadingService();
 	      }
 	      return this.multiUploadingService;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1027,7 +1039,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return true;
 	    },
 	    closeBulkActionsMode() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeBulkActionsMode, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.closeBulkActionsMode, {
 	        dialogId: this.dialogId
 	      });
 	    },
@@ -1038,6 +1050,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        });
 	      }
 	      return this.messageService;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -1213,7 +1228,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  created() {
 	    this.initTextareaResizeManager();
 	    this.bindEvents();
-	    im_v2_lib_bulkActions.BulkActionsManager.init();
 	  },
 	  beforeUnmount() {
 	    this.unbindEvents();
@@ -1257,12 +1271,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.currentSidebarPanel = panel;
 	    },
 	    bindEvents() {
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.showLoadingBar, this.onShowLoadingBar);
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.showLoadingBar, this.onShowLoadingBar);
+	      this.getEmitter().subscribe(im_v2_const.EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
 	    },
 	    unbindEvents() {
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.showLoadingBar, this.onShowLoadingBar);
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.showLoadingBar, this.onShowLoadingBar);
+	      this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.hideLoadingBar, this.onHideLoadingBar);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -1324,5 +1341,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.UserCounter = UserCounter;
 	exports.BaseChatContent = BaseChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Call.Component,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.UI.Uploader,BX,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Event,BX.Vue3.Directives,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX?.Call?.Component??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Event??{},BX?.Vue3??{},BX?.Messenger?.v2?.Component?.Dialog??{},BX?.Messenger?.v2?.Component??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component??{},BX?.UI?.Uploader??{},BX??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Service??{},BX?.Vue3?.Directives??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.EntitySelector??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{}));
 //# sourceMappingURL=registry.bundle.js.map

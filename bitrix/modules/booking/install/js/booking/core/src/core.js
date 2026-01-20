@@ -1,7 +1,6 @@
 import { Extension } from 'main.core';
 import { Builder, BuilderModel, Store } from 'ui.vue3.vuex';
 
-import { AhaMoment } from 'booking.const';
 import { Bookings } from 'booking.model.bookings';
 import { MessageStatus } from 'booking.model.message-status';
 import { Clients } from 'booking.model.clients';
@@ -16,37 +15,12 @@ import { WaitList } from 'booking.model.wait-list';
 import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
 import { Filter } from 'booking.model.filter';
 import { FormsMenu } from 'booking.model.forms-menu';
-import type { MoneyStatistics } from 'booking.model.interface';
+import { SaleChannels } from 'booking.model.sale-channels';
 
-export type BookingParams = {
-	container: HTMLElement,
-	afterTitleContainer: HTMLElement,
-	counterPanelContainer: HTMLElement,
-	isSlider: boolean,
-	currentUserId: number,
-	isFeatureEnabled: boolean,
-	canTurnOnTrial: boolean,
-	canTurnOnDemo: boolean,
-	timezone: string,
-	filterId: string,
-	editingBookingId: number,
-	ahaMoments: $Values<typeof AhaMoment>,
-	totalClients: number,
-	totalClientsToday: number,
-	moneyStatistics: MoneyStatistics,
-	isCalendarExpanded: boolean,
-	isWaitListExpanded: boolean,
-	embedItems: {
-		id: number,
-		code: string,
-		module: string,
-	}[],
-};
+import { extractFeatures } from './lib';
+import type { BookingParams, InitCoreOptions } from './types';
 
-type InitCoreOptions = {
-	skipBookingCore: ?boolean;
-	skipPull: ?boolean;
-}
+export type { BookingParams };
 
 class CoreApplication
 {
@@ -120,12 +94,12 @@ class CoreApplication
 								opportunity: 0,
 								currencyId: '',
 								createdTimestamp: 0,
-								formattedOpportunity: '',
 							},
 						};
 					}),
 					calendarExpanded: this.#params.isCalendarExpanded,
 					waitListExpanded: this.#params.isWaitListExpanded,
+					enabledFeature: extractFeatures(this.#params),
 				}))
 				.addModel(ResourceTypes.create())
 				.addModel(Resources.create())
@@ -134,7 +108,9 @@ class CoreApplication
 				.addModel(MainResources.create())
 				.addModel(WaitList.create())
 				.addModel(Filter.create())
-				.addModel(FormsMenu.create());
+				.addModel(FormsMenu.create())
+				.addModel(SaleChannels.create())
+			;
 		}
 
 		const builderResult = await this.#builder.build();

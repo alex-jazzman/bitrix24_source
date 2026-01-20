@@ -24,8 +24,6 @@
 	padding: var(--gap) 0 0 0;
 }
 
-.b24-field-list-title-text {}
-
 .b24-field-list-value {
 	position: relative;
 	min-width: 0;

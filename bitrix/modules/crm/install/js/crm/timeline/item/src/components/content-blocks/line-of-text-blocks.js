@@ -6,9 +6,11 @@ export default {
 		delimiter: String,
 		button: Object,
 	},
+
 	mounted(): void
 	{
 		const blocks = this.$refs.blocks;
+
 		this.visibleBlocks.forEach((block, index) => {
 			if (Type.isDomNode(blocks[index].$el))
 			{
@@ -20,16 +22,26 @@ export default {
 			}
 		});
 	},
+
 	methods: {
 		isShowDelimiter(index: number, length: number): boolean
 		{
 			return (Type.isString(this.delimiter) && !this.isLastElement(index, length));
 		},
+
 		isLastElement(index: number, length: number): boolean
 		{
 			return index === length - 1;
 		},
+
+		getLastElement(): Object | null
+		{
+			const lastKey = Object.keys(this.blocks)[Object.keys(this.blocks).length - 1];
+
+			return this.blocks[lastKey] ?? null;
+		},
 	},
+
 	computed: {
 		visibleBlocks(): Array
 		{
@@ -49,11 +61,13 @@ export default {
 
 			return blocks;
 		},
+
 		formattedDelimiter(): string
 		{
 			return Text.encode(this.delimiter).replace(' ', '&nbsp;');
 		},
 	},
+
 	// language=Vue
 	template: `
 		<span class="crm-timeline-block-line-of-texts">

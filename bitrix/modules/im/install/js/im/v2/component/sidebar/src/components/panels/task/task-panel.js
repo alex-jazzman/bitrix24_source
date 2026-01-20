@@ -1,4 +1,3 @@
-import { EventEmitter } from 'main.core.events';
 import { Runtime, Extension } from 'main.core';
 
 import { Loader } from 'im.v2.component.elements.loader';
@@ -21,6 +20,7 @@ import { SidebarCollectionFormatter } from '../../../classes/sidebar-collection-
 import './css/task-panel.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelSidebarTaskItem } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -121,7 +121,7 @@ export const TaskPanel = {
 	{
 		this.initSettings();
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new TaskMenu();
+		this.contextMenu = new TaskMenu({ emitter: this.getEmitter() });
 		this.service = new Task({ dialogId: this.dialogId });
 		this.serviceSearch = new TaskSearch({ dialogId: this.dialogId });
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 500, this);
@@ -206,7 +206,7 @@ export const TaskPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.task });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.task });
 		},
 		needToLoadNextPage(event: Event): boolean
 		{
@@ -241,6 +241,10 @@ export const TaskPanel = {
 		{
 			(new EntityCreator(this.chatId)).createTaskForChat();
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -268,7 +272,6 @@ export const TaskPanel = {
 						v-for="task in dateGroup.items"
 						:task="task"
 						:searchQuery="searchQuery"
-						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

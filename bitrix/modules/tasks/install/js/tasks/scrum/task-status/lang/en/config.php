@@ -1,7 +1,7 @@
 <?php
 $MESS["TST_ERROR_POPUP_TITLE"] = "There was an error";
 $MESS["TST_PARENT_COMPLETE_CANCEL_CAPTION"] = "Cancel";
-$MESS["TST_PARENT_COMPLETE_MESSAGE"] = "All subtasks of \"<b>#name#</b>\" parent task have been completed.<br><br>Do you want to close the parent task \"<b>#name#</b>\" or continue working on it?";
+$MESS["TST_PARENT_COMPLETE_MESSAGE"] = "All subtasks of parent task \"<b>#name#</b>\" have been completed.<br><br>Do you want to complete the parent task \"<b>#name#</b>\" or continue working on it?";
 $MESS["TST_PARENT_COMPLETE_NOTIFY"] = "Parent task has been completed successfully.";
 $MESS["TST_PARENT_COMPLETE_OK_CAPTION"] = "Complete";
 $MESS["TST_PARENT_PROCEED_CAPTION"] = "Continue";

@@ -1,0 +1,54 @@
+.editor-chart-catalog {
+	display: flex;
+	flex-direction: column;
+	align-items: normal;
+	padding: 8px 5px;
+	width: 54px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)), serif;
+	overflow: hidden;
+	transition: width 0.3s ease;
+}
+
+.editor-chart-catalog__container {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: calc(100% - 45px);
+}
+
+.editor-chart-catalog.--expanded {
+	width: 330px;
+}
+
+.editor-chart-catalog__header {
+	padding: 0 8px;
+    margin-bottom: 6px;
+}
+
+.editor-chart-catalog__content {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	padding-right: 2px;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.editor-chart-catalog__search-results {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.editor-chart-catalog__footer {
+	height: 45px;
+}
+
+.editor-chart-catalog__search {
+	display: flex;
+	align-items: center;
+	padding: 6px 7px 6px 7px;
+}

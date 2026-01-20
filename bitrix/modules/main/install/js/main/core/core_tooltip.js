@@ -603,3 +603,4 @@ BX.CTooltip.prototype.ShowOpacityEffect = function(oCallback, bFade)
 }
 
 })(window);
+

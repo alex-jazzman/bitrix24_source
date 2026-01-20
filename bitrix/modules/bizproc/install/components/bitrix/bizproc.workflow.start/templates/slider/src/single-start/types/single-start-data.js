@@ -18,6 +18,7 @@ export type SingleStartData = {
 	duration: ?number,
 	constants: ?Array<Property>,
 	parameters: ?Array<Property>,
+	triggerType: ?string,
 
 	workflowId: ?string,
 	errors: ?[],

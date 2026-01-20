@@ -1248,6 +1248,14 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    if (urlTemplate === '') {
 	      return;
 	    }
+	    const maxBindingsCount = Number(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings$1)[_extensionSettings$1].get('maxBindingsCount'));
+	    if (maxBindingsCount !== 0 && selectedIds.length > maxBindingsCount) {
+	      const alertText = main_core.Loc.getMessage('CRM_ENTITY_LIST_PANEL_CREATE_TASK_MAX_BINDINGS_ERROR', {
+	        '#MAX_BINDINGS_COUNT#': maxBindingsCount
+	      });
+	      ui_dialogs_messagebox.MessageBox.alert(alertText);
+	      return;
+	    }
 	    const entityTypeName = BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$g)[_entityTypeId$g]);
 	    const entityKeys = selectedIds.map(id => BX.CrmEntityType.prepareEntityKey(entityTypeName, id));
 	    const url = urlTemplate.replace(encodeURIComponent('#USER_ID#'), main_core.Loc.getMessage('USER_ID')).replace(encodeURIComponent('#ENTITY_KEYS#'), entityKeys.join(';'));

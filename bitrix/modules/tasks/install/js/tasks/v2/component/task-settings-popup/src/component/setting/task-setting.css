@@ -1,0 +1,24 @@
+.tasks-task-setting {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tasks-task-setting-switcher {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.tasks-task-setting-switcher-label {
+	padding-left: 10px;
+	padding-right: 6px;
+}
+
+
+.tasks-task-setting-switcher-lock {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-size: 20px;
+	margin-left: var(--ui-space-inline-3xs);
+	opacity: var(--ui-opacity-80);
+}

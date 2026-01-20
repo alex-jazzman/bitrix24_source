@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_message_unsupported,im_v2_provider_service_uploading,ui_uploader_core,im_v2_component_elements_mediaGallery,im_v2_component_elements_videoplayer,im_v2_provider_service_disk,im_v2_lib_menu,im_v2_lib_notifier,ui_icons_disk,im_v2_lib_utils,main_core,im_v2_component_elements_audioplayer,im_v2_component_elements_progressbar,im_v2_component_animation,ui_iconSet_api_vue,im_v2_component_elements_loader,im_v2_provider_service_message,im_v2_lib_feature,im_v2_lib_analytics,im_v2_component_message_elements,im_v2_component_message_base,im_v2_const) {
+(function (exports,im_v2_component_message_unsupported,im_v2_provider_service_uploading,ui_uploader_core,im_v2_component_elements_mediaGallery,ui_iconSet_api_vue,im_v2_provider_service_disk,im_v2_lib_menu,im_v2_lib_notifier,ui_icons_disk,im_v2_lib_utils,main_core,im_v2_component_elements_progressbar,im_v2_component_elements_player,im_v2_component_message_elements,im_v2_component_message_base,im_v2_const) {
 	'use strict';
 
 	const VIDEO_SIZE_TO_AUTOPLAY = 5000000;
@@ -18,7 +18,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const VideoItem = {
 	  name: 'VideoItem',
 	  components: {
-	    VideoPlayer: im_v2_component_elements_videoplayer.VideoPlayer,
+	    DefaultVideoPlayer: im_v2_component_elements_player.DefaultVideoPlayer,
 	    ProgressBar: im_v2_component_elements_progressbar.ProgressBar
 	  },
 	  props: {
@@ -124,7 +124,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:statusMap="getStatusMap()"
 				@cancelClick="onCancelClick"
 			/>
-			<VideoPlayer
+			<DefaultVideoPlayer
 				:fileId="file.id"
 				:src="file.urlDownload"
 				:previewImageUrl="file.urlPreview"
@@ -432,7 +432,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<template #after-message>
 				<div v-if="!showBottomContainer" class="bx-im-message-image__reaction-list-container">
-					<ReactionList :messageId="message.id" :contextDialogId="dialogId" />
+					<ReactionList :messageId="message.id" />
 				</div>
 			</template>
 		</BaseMessage>
@@ -669,177 +669,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const TranscriptionItem = {
-	  name: 'TranscriptionItem',
-	  components: {
-	    ExpandAnimation: im_v2_component_animation.ExpandAnimation
-	  },
-	  props: {
-	    file: {
-	      type: Object,
-	      required: true
-	    },
-	    messageId: {
-	      type: [String, Number],
-	      required: true
-	    },
-	    isOpened: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    transcription() {
-	      return this.$store.getters['files/getTranscription'](this.file.id);
-	    },
-	    text() {
-	      return this.isError ? this.loc('IM_MESSAGE_FILE_AUDIO_TRANSCRIPTION_ERROR') : this.transcription.transcriptText;
-	    },
-	    isError() {
-	      return this.transcription && this.transcription.status === im_v2_const.TranscriptionStatus.ERROR;
-	    },
-	    showDivider() {
-	      return this.isOpened && Boolean(this.message.text);
-	    },
-	    message() {
-	      return this.$store.getters['messages/getById'](this.messageId);
-	    }
-	  },
-	  methods: {
-	    loc(code) {
-	      return this.$Bitrix.Loc.getMessage(code);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-audio-player__transcription-container">
-			<ExpandAnimation>
-				<div
-					v-if="isOpened"
-					:class="{'--error': isError}"
-				>
-					<div class="bx-im-audio-player__transcription-content">
-						{{ text }}
-					</div>
-				</div>
-			</ExpandAnimation>
-			<div v-if="showDivider" class="bx-im-audio-player__transcription-divider"></div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const TranscriptionButtonItem = {
-	  name: 'TranscriptionButtonItem',
-	  components: {
-	    Spinner: im_v2_component_elements_loader.Spinner,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    file: {
-	      type: Object,
-	      required: true
-	    },
-	    isOpened: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  emits: ['transcriptionToggle'],
-	  computed: {
-	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    Color: () => im_v2_const.Color,
-	    fileId() {
-	      return this.file.id;
-	    },
-	    chatId() {
-	      return this.file.chatId;
-	    },
-	    transcription() {
-	      return this.$store.getters['files/getTranscription'](this.fileId);
-	    },
-	    status() {
-	      return this.transcription ? this.transcription.status : null;
-	    },
-	    isPending() {
-	      return this.status === im_v2_const.TranscriptionStatus.PENDING;
-	    },
-	    isSuccess() {
-	      return this.status === im_v2_const.TranscriptionStatus.SUCCESS;
-	    },
-	    buttonIcon() {
-	      return this.isOpened ? ui_iconSet_api_vue.Outline.CHEVRON_TOP_M : ui_iconSet_api_vue.Outline.TRANSCRIPTION;
-	    },
-	    withTranscription() {
-	      return this.file.isTranscribable && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.aiFileTranscriptionAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
-	    }
-	  },
-	  watch: {
-	    status(newValue, oldValue) {
-	      if (oldValue === im_v2_const.TranscriptionStatus.PENDING) {
-	        im_v2_lib_analytics.Analytics.getInstance().audioMessage.onViewTranscription(this.chatId, newValue);
-	        this.open();
-	      }
-	    }
-	  },
-	  methods: {
-	    async onButtonClick() {
-	      if (this.isPending) {
-	        return;
-	      }
-	      if (this.isOpened) {
-	        this.close();
-	        return;
-	      }
-	      if (this.isSuccess) {
-	        im_v2_lib_analytics.Analytics.getInstance().audioMessage.onViewTranscription(this.chatId, im_v2_const.TranscriptionStatus.SUCCESS);
-	        this.open();
-	        return;
-	      }
-	      const result = await this.transcribe();
-	      if (result) {
-	        this.open();
-	      }
-	    },
-	    async transcribe() {
-	      const messageService = new im_v2_provider_service_message.MessageService({
-	        chatId: this.chatId
-	      });
-	      return messageService.transcribe(this.fileId);
-	    },
-	    open() {
-	      this.$emit('transcriptionToggle', true);
-	    },
-	    close() {
-	      this.$emit('transcriptionToggle', false);
-	    }
-	  },
-	  template: `
-		<div
-			v-if="withTranscription"
-			class="bx-im-audio-player__transcription-button-container"
-		>
-			<button @click="onButtonClick">
-				<Spinner v-if="isPending" :size="SpinnerSize.XXS" />
-				<BIcon
-					v-else
-					:name="buttonIcon"
-					:color="Color.accentBlue"
-					:size="20"
-				/>
-			</button>
-		</div>
-	`
-	};
-
-	// @vue/component
 	const AudioItem = {
 	  name: 'AudioItem',
 	  components: {
-	    AudioPlayer: im_v2_component_elements_audioplayer.AudioPlayer,
-	    ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
-	    TranscriptionItem,
-	    TranscriptionButtonItem
+	    AudioPlayer: im_v2_component_elements_player.AudioPlayer,
+	    ProgressBar: im_v2_component_elements_progressbar.ProgressBar
 	  },
 	  props: {
 	    item: {
@@ -852,26 +686,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  emits: ['cancelClick'],
-	  data() {
-	    return {
-	      isTranscriptionOpened: false
-	    };
-	  },
 	  computed: {
 	    ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
 	    file() {
 	      return this.item;
-	    },
-	    timelineType() {
-	      return Math.floor(Math.random() * 5);
 	    }
 	  },
 	  methods: {
 	    onCancelClick(event) {
 	      this.$emit('cancelClick', event);
-	    },
-	    transcriptionToggle(status) {
-	      this.isTranscriptionOpened = status;
 	    }
 	  },
 	  template: `
@@ -886,23 +709,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:messageId="messageId"
 				:src="file.urlDownload"
 				:file="file"
-				:timelineType="timelineType"
 				:authorId="file.authorId"
 				:withContextMenu="false"
 				:withAvatar="false"
-			>
-				<template #transcription-control>
-					<TranscriptionButtonItem
-						:file="file"
-						:isOpened="isTranscriptionOpened"
-						@transcriptionToggle="transcriptionToggle"
-					/>
-				</template>
-			</AudioPlayer>
-			<TranscriptionItem
-				:file="file"
-				:isOpened="isTranscriptionOpened"
-				:messageId="messageId"
 			/>
 		</div>
 	`
@@ -967,6 +776,214 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>
+	`
+	};
+
+	// @vue/component
+	const VideoNote = {
+	  name: 'VideoNote',
+	  components: {
+	    ProgressBar: im_v2_component_elements_progressbar.ProgressBar,
+	    RoundVideoPlayer: im_v2_component_elements_player.RoundVideoPlayer,
+	    BaseMessage: im_v2_component_message_base.BaseMessage,
+	    ReactionList: im_v2_component_message_elements.ReactionList,
+	    MessageStatus: im_v2_component_message_elements.MessageStatus,
+	    MessageHeader: im_v2_component_message_elements.MessageHeader,
+	    CompactCommentsPanel: im_v2_component_message_elements.CompactCommentsPanel
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    fileId: {
+	      type: [String, Number],
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    },
+	    withTitle: {
+	      type: Boolean,
+	      default: true
+	    },
+	    startWithSound: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['cancelClick', 'openTranscription'],
+	  computed: {
+	    file() {
+	      return this.$store.getters['files/get'](this.fileId, true);
+	    },
+	    message() {
+	      return this.item;
+	    }
+	  },
+	  template: `
+		<BaseMessage :item="message" :dialogId="dialogId" :withBackground="false">
+			<template #before-message>
+				<div class="bx-im-video-note__header_container">
+					<MessageHeader :item="message" :isOverlay="true" />
+				</div>
+			</template>
+			<div class="bx-im-video-note__container">
+				<ProgressBar
+					:item="file"
+					@cancelClick="$emit('cancelClick')"
+				/>
+				<RoundVideoPlayer 
+					:item="file" 
+					:message="message"
+					:startWithSound="startWithSound"
+					@openTranscription="$emit('openTranscription')"
+				/>
+			</div>
+			<div class="bx-im-video-note__comments-panel">
+				<CompactCommentsPanel :item="message" :dialogId="dialogId" />
+			</div>
+			<div class="bx-im-video-note__status_container">
+				<MessageStatus :item="message" :isOverlay="true" />
+			</div>
+			<template #after-message>
+				<div class="bx-im-video-note__reaction-list-container">
+					<ReactionList :messageId="message.id" :contextDialogId="dialogId" />
+				</div>
+			</template>
+		</BaseMessage>
+	`
+	};
+
+	// @vue/component
+	const TranscribedVideoNote = {
+	  name: 'TranscribedVideoNote',
+	  components: {
+	    BaseMessage: im_v2_component_message_base.BaseMessage,
+	    DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
+	    MessageHeader: im_v2_component_message_elements.MessageHeader,
+	    MessageFooter: im_v2_component_message_elements.MessageFooter,
+	    TranscribedVideoPlayer: im_v2_component_elements_player.TranscribedVideoPlayer
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    fileId: {
+	      type: [String, Number],
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    },
+	    withTitle: {
+	      type: Boolean,
+	      default: true
+	    }
+	  },
+	  computed: {
+	    file() {
+	      return this.$store.getters['files/get'](this.fileId, true);
+	    },
+	    message() {
+	      return this.item;
+	    }
+	  },
+	  template: `
+		<BaseMessage :item="item" :dialogId="dialogId">
+			<div class="bx-im-transcribed-video-note-note__container">
+				<MessageHeader 
+					:withTitle="withTitle" 
+					:item="message" 
+					class="bx-im-transcribed-video-note__header" 
+				/>
+				<TranscribedVideoPlayer
+					:item="file"
+					:message="message"
+					@closeTranscription="$emit('closeTranscription')"
+					@clickPlay="$emit('clickPlay')"
+				/>
+			</div>
+			<div class="bx-im-transcribed-video-note__default-message-container">
+				<DefaultMessageContent :item="message" :dialogId="dialogId" :withText="false" />
+			</div>
+			<MessageFooter :item="message" :dialogId="dialogId" />
+		</BaseMessage>
+	`
+	};
+
+	// @vue/component
+	const VideoNoteMessage = {
+	  name: 'VideoNoteMessage',
+	  components: {
+	    VideoNote,
+	    TranscribedVideoNote
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    },
+	    withTitle: {
+	      type: Boolean,
+	      default: true
+	    }
+	  },
+	  emits: ['cancelClick'],
+	  data() {
+	    return {
+	      isTranscriptionOpened: false,
+	      startWithSound: false
+	    };
+	  },
+	  computed: {
+	    message() {
+	      return this.item;
+	    },
+	    firstFileId() {
+	      return this.message.files[0];
+	    }
+	  },
+	  methods: {
+	    onTranscribedVideoPlayClick() {
+	      this.isTranscriptionOpened = false;
+	      this.startWithSound = true;
+	    },
+	    onOpenTranscription() {
+	      this.isTranscriptionOpened = true;
+	      this.startWithSound = false;
+	    }
+	  },
+	  template: `
+		<transition name="fade" mode="out-in">
+			<TranscribedVideoNote
+				v-if="isTranscriptionOpened"
+				:fileId="firstFileId"
+				:dialogId="dialogId"
+				:item="item"
+				:withTitle="withTitle"
+				@closeTranscription="isTranscriptionOpened = false"
+				@clickPlay="onTranscribedVideoPlayClick"
+				@cancelClick="$emit('cancelClick', $event)"
+			/>
+			<VideoNote 
+				v-else
+				:startWithSound="startWithSound"
+				:fileId="firstFileId"
+				:dialogId="dialogId"
+				:item="item"
+				:withTitle="withTitle"
+				@openTranscription="onOpenTranscription"
+				@cancelClick="$emit('cancelClick', $event)"
+			/>
+		</transition>
 	`
 	};
 
@@ -1060,7 +1077,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  media: 'MediaMessage',
 	  audio: 'AudioMessage',
 	  base: 'BaseFileMessage',
-	  collection: 'FileCollectionMessage'
+	  collection: 'FileCollectionMessage',
+	  videoNote: 'VideoNoteMessage'
 	});
 
 	// @vue/component
@@ -1071,7 +1089,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    MediaMessage,
 	    AudioMessage,
 	    UnsupportedMessage: im_v2_component_message_unsupported.UnsupportedMessage,
-	    FileCollectionMessage
+	    FileCollectionMessage,
+	    VideoNoteMessage
 	  },
 	  props: {
 	    item: {
@@ -1123,6 +1142,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      const file = this.messageFiles[0];
 	      const hasPreview = Boolean(file.image);
+	      if (file.isVideoNote) {
+	        return FileMessageType.videoNote;
+	      }
 	      if (file.type === im_v2_const.FileType.image && hasPreview) {
 	        return FileMessageType.media;
 	      }
@@ -1174,7 +1196,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	            }
 	          });
 	        } else {
-	          void this.$store.dispatch('recent/delete', {
+	          void this.$store.dispatch('recent/hide', {
 	            id: chat.dialogId
 	          });
 	        }
@@ -1197,5 +1219,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.FileMessage = FileMessage;
 	exports.MediaContent = MediaContent;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Service,BX.UI.Uploader,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.UI.IconSet,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Service,BX.UI.Uploader,BX.Messenger.v2.Component.Elements,BX.UI.IconSet,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const));
 //# sourceMappingURL=file-message.bundle.js.map

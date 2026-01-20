@@ -111,6 +111,7 @@ jn.define('crm/timeline/controllers/calendar-sharing', (require, exports, module
 						void UserProfile.open({
 							ownerId: user.id,
 							parentWidget,
+							analyticsSection: 'crm_calendar_sharing_member_list',
 						});
 					});
 				},

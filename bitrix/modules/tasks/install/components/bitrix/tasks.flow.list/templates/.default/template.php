@@ -36,6 +36,11 @@ Extension::load([
 	'ai.copilot-chat.ui',
 ]);
 
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn();
+Extension::load([
+	'tasks.v2.application.task-card',
+]);
+
 /** intranet-settings-support */
 if (($arResult['isToolAvailable'] ?? null) === false)
 {
@@ -105,5 +110,16 @@ $currentUrl = $uri->getUri();
 		new BX.Tasks.Flow.Filter({
 			filterId: '<?= $arResult['filterId'] ?>',
 		});
+
+		const isV2Form = <?= $isV2Form ? 'true' : 'false' ?>;
+
+		const loadedExtensions = ['tasks.v2.application.task-card'];
+		if (isV2Form)
+		{
+			loadedExtensions.push('tasks.v2.application.task-compact-card');
+			loadedExtensions.push('tasks.v2.application.task-full-card');
+		}
+
+		top.BX.Runtime.loadExtension(loadedExtensions);
 	});
 </script>

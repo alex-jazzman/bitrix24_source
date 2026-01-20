@@ -237,7 +237,7 @@ this.BX = this.BX || {};
 	      VALUE: receiver.address.value,
 	      VALUE_FORMATTED: receiver.address.valueFormatted,
 	      COMPLEX_ID: receiver.address.complexId,
-	      COMPLEX_NAME: receiver.address.complexName,
+	      COMPLEX_NAME: receiver.address.valueTypeCaption,
 	      OWNER: {
 	        ID: receiver.addressSource.entityId,
 	        TYPE_ID: receiver.addressSource.entityTypeId,
@@ -645,14 +645,6 @@ this.BX = this.BX || {};
 	    key: "initHints",
 	    value: function initHints() {
 	      BX.UI.Hint.init(BX('ui-toolbar-after-title-buttons'));
-	      BX.UI.Hint.popupParameters = {
-	        closeByEsc: true,
-	        autoHide: true,
-	        angle: {
-	          offset: 60
-	        },
-	        offsetLeft: 40
-	      };
 	    }
 	  }, {
 	    key: "bindEvents",
@@ -753,7 +745,7 @@ this.BX = this.BX || {};
 	  const hash = document.location.hash;
 	  let guide = null;
 	  if (hash === '#robots') {
-	    const robotsBtn = document.querySelector('.crm-robot-btn');
+	    const robotsBtn = document.querySelector('.robot-button-container');
 	    if (robotsBtn) {
 	      guide = new ui_tour.Guide({
 	        steps: [{

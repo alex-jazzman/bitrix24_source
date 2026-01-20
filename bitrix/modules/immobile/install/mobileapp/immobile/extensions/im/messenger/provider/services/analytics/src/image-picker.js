@@ -31,7 +31,7 @@ jn.define('im/messenger/provider/services/analytics/image-picker', (require, exp
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.clickAttach)
 				.setSection(Analytics.Section.chatTextarea)
-				.setP1(AnalyticsHelper.getP1ByChatType())
+				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
 

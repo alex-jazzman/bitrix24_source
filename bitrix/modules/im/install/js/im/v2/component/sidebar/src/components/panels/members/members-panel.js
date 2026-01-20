@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { Analytics } from 'im.v2.lib.analytics';
 import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
@@ -17,8 +15,9 @@ import { MembersMenu } from '../../../classes/context-menu/main/members-menu';
 import './css/members-panel.css';
 
 import type { JsonObject } from 'main.core';
-import type { ImModelChat } from 'im.v2.model';
+import type { EventEmitter } from 'main.core.events';
 import type { BitrixVueComponentProps } from 'ui.vue3';
+import type { ImModelChat } from 'im.v2.model';
 
 const MemberTitleByChatType = {
 	[ChatType.channel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
@@ -118,7 +117,7 @@ export const MembersPanel = {
 	},
 	created()
 	{
-		this.contextMenu = new MembersMenu();
+		this.contextMenu = new MembersMenu({ emitter: this.getEmitter() });
 		this.service = new MembersService({ dialogId: this.dialogId });
 		void this.loadFirstPage();
 	},
@@ -173,7 +172,7 @@ export const MembersPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
 		},
 		needToLoadNextPage(event: Event): boolean
 		{
@@ -200,6 +199,10 @@ export const MembersPanel = {
 			Analytics.getInstance().userAdd.onChatSidebarClick(this.dialogId);
 			this.showAddToChatPopup = true;
 			this.showAddToChatTarget = event.target;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{

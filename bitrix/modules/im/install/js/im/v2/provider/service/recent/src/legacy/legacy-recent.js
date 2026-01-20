@@ -91,7 +91,7 @@ export class LegacyRecentService
 			return;
 		}
 
-		void Core.getStore().dispatch('recent/delete', { id: dialogId });
+		void Core.getStore().dispatch('recent/hide', { id: dialogId });
 
 		const chatIsOpened = Core.getStore().getters['application/isChatOpen'](dialogId);
 		if (chatIsOpened)

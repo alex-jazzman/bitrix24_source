@@ -11,6 +11,7 @@ BX.DocumentGenerator.UploadTemplate = {
 	nameBlockNode: 'add-template-name-block',
 	activeBlockNode: 'add-template-active-block',
 	userBlockNode: 'add-template-user-block',
+	userBlockNodeV2: 'add-template-user-block-v2',
 	numeratorSelectNode: 'docs-template-num-select',
 	productsTableVariantSelectNode: 'docs-template-products-table-variant-select',
 	numeratorBlockNode: 'add-template-numerator-block',
@@ -339,16 +340,37 @@ BX.DocumentGenerator.UploadTemplate.onFileUploadDone = function(id, item, data)
 		}
 		BX('upload-template-file-name').innerText = item.name || '';
 		BX('upload-template-file-size').innerText = item.size || '';
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.providerBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.nameBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.activeBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.userBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.buttonsBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.regionBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.numeratorBlockNode));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.customFieldsBlock));
-		BX.show(BX(BX.DocumentGenerator.UploadTemplate.fileBlockNode));
-		BX.hide(BX(BX.DocumentGenerator.UploadTemplate.uploadBlockNode));
+
+		const selectorsToShow = [
+			BX.DocumentGenerator.UploadTemplate.providerBlockNode,
+			BX.DocumentGenerator.UploadTemplate.nameBlockNode,
+			BX.DocumentGenerator.UploadTemplate.activeBlockNode,
+			BX.DocumentGenerator.UploadTemplate.userBlockNode,
+			BX.DocumentGenerator.UploadTemplate.userBlockNodeV2,
+			BX.DocumentGenerator.UploadTemplate.buttonsBlockNode,
+			BX.DocumentGenerator.UploadTemplate.regionBlockNode,
+			BX.DocumentGenerator.UploadTemplate.numeratorBlockNode,
+			BX.DocumentGenerator.UploadTemplate.customFieldsBlock,
+			BX.DocumentGenerator.UploadTemplate.fileBlockNode,
+		];
+
+		const selectorsToHide = [
+			BX.DocumentGenerator.UploadTemplate.uploadBlockNode,
+		];
+
+		selectorsToShow.forEach((selector) => {
+			if (BX(selector))
+			{
+				BX.show(BX(selector));
+			}
+		});
+
+		selectorsToHide.forEach((selector) => {
+			if (BX(selector))
+			{
+				BX.hide(BX(selector));
+			}
+		});
 	}
 };
 
@@ -504,33 +526,51 @@ BX.DocumentGenerator.UploadTemplate.onSliderClose = function(event)
 
 BX.DocumentGenerator.UploadTemplate.reInitForm = function()
 {
-	if(!BX.DocumentGenerator.UploadTemplate.templateId)
+	if (!BX.DocumentGenerator.UploadTemplate.templateId)
 	{
 		BX.DocumentGenerator.UploadTemplate.deletePreviousFile();
 		BX.DocumentGenerator.UploadTemplate.fileId = null;
 		BX(BX.DocumentGenerator.UploadTemplate.nameInputNode).value = '';
 		BX.DocumentGenerator.UploadTemplate.providerSelector.purge();
 		BX.DocumentGenerator.UploadTemplate.userSelector.purge();
-		try
-		{
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.errorMessageNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.progressMessageNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.providerBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.nameBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.activeBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.userBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.numeratorBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.customFieldsBlock));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.buttonsBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.regionBlockNode));
-			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.fileBlockNode));
-			BX.show(BX(BX.DocumentGenerator.UploadTemplate.uploadBlockNode));
-			if (this.providerPopup)
+
+		const selectorsToHide = [
+			BX.DocumentGenerator.UploadTemplate.errorMessageNode,
+			BX.DocumentGenerator.UploadTemplate.progressMessageNode,
+			BX.DocumentGenerator.UploadTemplate.providerBlockNode,
+			BX.DocumentGenerator.UploadTemplate.nameBlockNode,
+			BX.DocumentGenerator.UploadTemplate.activeBlockNode,
+			BX.DocumentGenerator.UploadTemplate.userBlockNode,
+			BX.DocumentGenerator.UploadTemplate.userBlockNodeV2,
+			BX.DocumentGenerator.UploadTemplate.numeratorBlockNode,
+			BX.DocumentGenerator.UploadTemplate.customFieldsBlock,
+			BX.DocumentGenerator.UploadTemplate.buttonsBlockNode,
+			BX.DocumentGenerator.UploadTemplate.regionBlockNode,
+			BX.DocumentGenerator.UploadTemplate.fileBlockNode,
+		];
+
+		const selectorsToShow = [
+			BX.DocumentGenerator.UploadTemplate.uploadBlockNode,
+		];
+
+		selectorsToShow.forEach((selector) => {
+			if (BX(selector))
 			{
-				this.providerPopup.close();
+				BX.show(BX(selector));
 			}
+		});
+
+		selectorsToHide.forEach((selector) => {
+			if (BX(selector))
+			{
+				BX.hide(BX(selector));
+			}
+		});
+
+		if (this.providerPopup)
+		{
+			this.providerPopup.close();
 		}
-		catch(e){}
 	}
 };
 
@@ -614,7 +654,7 @@ BX.DocumentGenerator.UploadTemplate.openUserSelector = function(bindNode)
 		contId: bindNode,
 		bindId: bindNode,
 		tagId: BX.DocumentGenerator.UploadTemplate.userSelectorId,
-		bindNode: bindNode
+		bindNode,
 	}]);
 };
 
@@ -666,6 +706,7 @@ BX.DocumentGenerator.UploadTemplate.setTemplateData = function(data)
 {
 	this.templateId = data.ID;
 	this.fileId = data.FILE_ID;
+	this.templateUserAccessCodes = data.USERS;
 	if(BX.type.isArray(data['PROVIDERS']))
 	{
 		for(var i = 0; i < data['PROVIDERS'].length; i++)
@@ -766,16 +807,38 @@ BX.DocumentGenerator.UploadTemplate.Selector.prototype.add = function(id, name)
 
 BX.DocumentGenerator.UploadTemplate.Selector.prototype.delete = function(id)
 {
-	if(!id)
+	if (!id)
 	{
 		return;
 	}
-	var index = this.values.indexOf(id);
-	if (index === -1) {
+
+	if (
+		BX.DocumentGenerator.UploadTemplate.templateUserTagSelector
+		&& this.id === BX.DocumentGenerator.UploadTemplate.userSelector.id
+	)
+	{
+		const itemId = BX.DocumentGenerator.UploadTemplate.getTagSelectorItemIdByAccessCode(id);
+		const dialog = BX.DocumentGenerator.UploadTemplate.templateUserTagSelector.getDialog();
+
+		dialog.getItem(itemId)?.deselect();
+
 		return;
 	}
+
+	const index = this.values.indexOf(id);
+	if (index === -1)
+	{
+		return;
+	}
+
 	this.values.splice(index, 1);
-	BX.remove(BX('item-' + this.id + id));
+
+	const tagId = `item-${this.id}${id}`;
+	if (BX(tagId))
+	{
+		BX.remove(BX(tagId));
+	}
+
 	this.onAfterDelete();
 };
 
@@ -791,18 +854,188 @@ BX.DocumentGenerator.UploadTemplate.Selector.prototype.getValue = function()
 
 BX.DocumentGenerator.UploadTemplate.Selector.prototype.purge = function()
 {
-	var value = this.getValue();
-	if(this.multiple)
+	const value = this.getValue();
+	if (this.multiple)
 	{
 		for(var i = 0; i < value.length; i++)
 		{
-			this.delete(value[i]);
+			if (value[i] !== 'UA')
+			{
+				this.delete(value[i]);
+			}
 		}
 	}
 	else
 	{
-		this.delete(value);
+		if (value !== 'UA')
+		{
+			this.delete(value);
+		}
 	}
+
+	if (
+		BX.DocumentGenerator.UploadTemplate.templateUserTagSelector
+		&& this.id === BX.DocumentGenerator.UploadTemplate.userSelector.id
+		&& this.values.length <= 0
+	)
+	{
+		const dialog = BX.DocumentGenerator.UploadTemplate.templateUserTagSelector.getDialog();
+		const itemId = BX.DocumentGenerator.UploadTemplate.getTagSelectorItemIdByAccessCode('UA');
+
+		dialog.getItem(itemId)?.select();
+	}
+};
+
+BX.DocumentGenerator.UploadTemplate.initTemplateUserTagSelector = function(){
+	const preselectedItems = this.templateUserAccessCodes
+		.filter((accessCode) => {
+			return BX.type.isStringFilled(accessCode);
+		})
+		.map((accessCode) => {
+			return this.getTagSelectorItemIdByAccessCode(accessCode);
+		});
+
+	BX.DocumentGenerator.UploadTemplate.userSelector.values = this.templateUserAccessCodes;
+
+	this.templateUserTagSelector = new BX.UI.EntitySelector.TagSelector({
+		multiple: BX.DocumentGenerator.UploadTemplate.userSelector.multiple,
+		deselectable: true,
+		dialogOptions: {
+			preselectedItems,
+			entities: [
+				{
+					id: 'user',
+					options: {
+						intranetUsersOnly: true,
+						emailUsers: false,
+						inviteEmployeeLink: false,
+						inviteGuestLink: false,
+					},
+				},
+				{
+					id: 'structure-node',
+					options: {
+						selectMode: 'usersAndDepartments',
+						allowSelectRootDepartment: true,
+						allowFlatDepartments: true,
+						includedNodeEntityTypes: [
+							'department',
+						],
+						useMultipleTabs: true,
+						visual: {
+							avatarMode: 'node',
+							tagStyle: 'none',
+						},
+					},
+				},
+				{
+					id: 'project-access-codes',
+				},
+				{
+					id: 'meta-user',
+					options: {
+						'all-users': true,
+					},
+				},
+			],
+		},
+		events: {
+			onTagAdd: (event) => {
+				const tag = event.getData().tag;
+				const accessCode = this.getAccessCodeByTagSelectorItem(tag);
+
+				if (!BX.DocumentGenerator.UploadTemplate.userSelector.values.includes(accessCode))
+				{
+					BX.DocumentGenerator.UploadTemplate.userSelector.values.push(accessCode);
+				}
+			},
+			onTagRemove: (event) => {
+				const tag = event.getData().tag;
+				const accessCode = this.getAccessCodeByTagSelectorItem(tag);
+
+				const newValues = BX.DocumentGenerator.UploadTemplate.userSelector.values
+					.filter((userSelectorAccessCode) => userSelectorAccessCode !== accessCode);
+
+				BX.DocumentGenerator.UploadTemplate.userSelector.values = newValues;
+			},
+		},
+	});
+
+	this.templateUserTagSelector.renderTo(document.querySelector('#docs-template-users-tag-selector-container'));
+};
+
+BX.DocumentGenerator.UploadTemplate.getTagSelectorItemIdByAccessCode = function(accessCode) {
+	if (/^I?U(\d+)$/.test(accessCode))
+	{
+		const match = accessCode.match(/^I?U(\d+)$/) || null;
+		const userId = match ? match[1] : null;
+
+		return ['user', userId];
+	}
+
+	if (/^SND(\d+)$/.test(accessCode))
+	{
+		const match = accessCode.match(/^SND(\d+)$/) || null;
+		const structureNodeId = match ? match[1] : null;
+
+		return ['structure-node', `${structureNodeId}:F`];
+	}
+
+	if (/^SNDR(\d+)$/.test(accessCode))
+	{
+		const match = accessCode.match(/^SNDR(\d+)$/) || null;
+		const structureNodeId = match ? match[1] : null;
+
+		return ['structure-node', structureNodeId];
+	}
+
+	if (/^SG(\d+)_([AEK])$/.test(accessCode))
+	{
+		return ['project-access-codes', accessCode];
+	}
+
+	if (accessCode === 'UA')
+	{
+		return ['meta-user', 'all-users'];
+	}
+
+	return ['unknown', accessCode];
+};
+
+BX.DocumentGenerator.UploadTemplate.getAccessCodeByTagSelectorItem = function(item) {
+	const entityId = item.entityId;
+
+	if (entityId === 'user')
+	{
+		return `U${item.id}`;
+	}
+
+	if (entityId === 'structure-node')
+	{
+		if (BX.type.isString(item.id) && item.id.endsWith(':F'))
+		{
+			const match = item.id.match(/^(\d+):F$/);
+			const originalId = match ? match[1] : null;
+
+			// only members of the department itself
+			return `SND${originalId}`;
+		}
+
+		// whole department recursively
+		return `SNDR${item.id}`;
+	}
+
+	if (entityId === 'project-access-codes')
+	{
+		return item.id;
+	}
+
+	if (entityId === 'meta-user')
+	{
+		return 'UA';
+	}
+
+	return '';
 };
 
 BX.DocumentGenerator.UploadTemplate.getLoader = function()

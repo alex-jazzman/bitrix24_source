@@ -5,7 +5,6 @@ return [
 		'analytics',
 		'loc',
 		'tokens',
-		'tourist',
 		'in-app-url',
 		'require-lazy',
 
@@ -19,6 +18,7 @@ return [
 		'utils/validation',
 		'utils/test',
 
-		'intranet:invite-opener-new',
+		'more-menu/ref-registry',
+		'layout/pure-component',
 	],
 ];

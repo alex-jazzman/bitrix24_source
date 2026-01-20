@@ -4,13 +4,15 @@
 jn.define('settings-v2/controller/push-status', (require, exports, module) => {
 	const { BaseSettingController } = require('settings-v2/controller/base');
 	const { Type } = require('type');
+	const { NotificationsCacheKey } = require('settings-v2/const');
+	const { MessengerDBService } = require('settings-v2/services/db/messenger');
 
 	class PushStatusSettingController extends BaseSettingController
 	{
 		async get()
 		{
 			return new Promise((resolve) => {
-				const cachedPushStatus = Application.storage.get('mobile.push.status');
+				const cachedPushStatus = Application.storage.get(NotificationsCacheKey.pushStatus);
 
 				if (!Type.isNil(cachedPushStatus))
 				{
@@ -48,7 +50,8 @@ jn.define('settings-v2/controller/push-status', (require, exports, module) => {
 
 		setToCache(value)
 		{
-			Application.storage.set('mobile.push.status', value);
+			Application.storage.set(NotificationsCacheKey.pushStatus, value);
+			(new MessengerDBService()).setNotifyConfig({ pushStatus: value });
 		}
 	}
 

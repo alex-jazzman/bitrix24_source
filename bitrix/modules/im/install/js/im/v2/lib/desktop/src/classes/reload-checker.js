@@ -1,3 +1,7 @@
+import { Event } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+
+import { EventType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { Logger } from 'im.v2.lib.logger';
@@ -23,6 +27,7 @@ export class ReloadChecker
 	{
 		this.#initDate = new Date();
 		this.#startReloadCheck();
+		this.#subscribeToReloadEvent();
 	}
 
 	#startReloadCheck(): void
@@ -74,5 +79,13 @@ export class ReloadChecker
 	{
 		Logger.desktop('Checker: checkDayForReload, new day - reload window');
 		DesktopApi.reloadWindow();
+	}
+
+	#subscribeToReloadEvent()
+	{
+		Event.bind(window, 'beforeunload', () => {
+			const event = new BaseEvent();
+			EventEmitter.emit(window, EventType.desktop.onReload, event);
+		});
 	}
 }

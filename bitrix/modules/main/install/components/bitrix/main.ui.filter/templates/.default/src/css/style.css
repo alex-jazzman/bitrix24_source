@@ -89,6 +89,19 @@
 	z-index: -1;
 }
 
+.main-ui-filter-sidebar-item {
+	display: flex;
+	position: relative;
+	z-index: 1;
+	padding: 0 0 0 3px;
+	max-width: 174px;
+	height: 39px;
+	border-bottom: 1px solid #e7eaec;
+	font: 12px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	cursor: pointer;
+}
+
 .main-ui-filter-new-filter { display: none; }
 
 .main-ui-filter-new-filter .main-ui-filter-edit-mask {
@@ -260,18 +273,6 @@
 .main-ui-filter-sidebar-item-container {
 	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
-}
-
-.main-ui-filter-sidebar-item {
-	position: relative;
-	z-index: 1;
-	padding: 0 0 0 3px;
-	max-width: 174px;
-	height: 39px;
-	border-bottom: 1px solid #e7eaec;
-	font: 12px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	cursor: pointer;
 }
 
 
@@ -1996,6 +1997,27 @@ input[type=number].main-ui-number-input::-webkit-outer-spin-button {
 
 .main-ui-filter-with-additional-filters .main-ui-filter-field-container-list > .main-ui-filter-field-with-additional-filter[data-type="NUMBER"] .main-ui-filter-additional-filters-button {
 	right: 0;
+}
+
+.main-ui-filter-sidebar-item.main-ui-filter-admin-preset .main-ui-filter-sidebar-item-text-container {
+	width: auto;
+}
+
+.main-ui-filter-sidebar-item.main-ui-filter-admin-preset .main-ui-filter-icon-edit,
+.main-ui-filter-sidebar-item.main-ui-filter-admin-preset .main-ui-delete {
+	opacity: .1;
+	pointer-events: none;
+}
+
+.main-ui-filter-edit .main-ui-filter-admin-preset-icon {
+	background-image: var(--o-ui-icon-set__path_info-circle);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 16px;
+	display: inline-flex;
+	width: 17px;
+	height: 39px;
+	opacity: .6;
 }
 
 @media (max-width: 1540px) {

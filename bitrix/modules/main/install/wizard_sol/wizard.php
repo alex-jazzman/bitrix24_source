@@ -657,7 +657,7 @@ class CDataInstallWizardStep extends CWizardStep
 			if(!$arMenuTypes['top'] || $arMenuTypes['top'] == GetMessage("WIZ_MENU_TOP_DEFAULT"))
 				$arMenuTypes['top'] = GetMessage("WIZ_MENU_TOP");
 
-			if(!$arMenuTypes['bottom'])
+			if(empty($arMenuTypes['bottom']))
 				$arMenuTypes['bottom'] = GetMessage("WIZ_MENU_BOTTOM");
 		}
 

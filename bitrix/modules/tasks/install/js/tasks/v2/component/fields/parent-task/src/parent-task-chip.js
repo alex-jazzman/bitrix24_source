@@ -1,9 +1,9 @@
-import { Outline } from 'ui.icon-set.api.core';
+import { Chip, ChipDesign } from 'ui.system.chip.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model } from 'tasks.v2.const';
-import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { parentTaskMeta } from './parent-task-meta';
@@ -14,82 +14,51 @@ export const ParentTaskChip = {
 	components: {
 		Chip,
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
-		isAutonomous: {
-			type: Boolean,
-			default: false,
-		},
+	inject: {
+		task: {},
+		taskId: {},
 	},
-	setup(): Object {
+	setup(): { task: TaskModel }
+	{
 		return {
 			parentTaskMeta,
 			Outline,
 		};
 	},
 	computed: {
-		task(): TaskModel
+		text(): string
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		parentTask(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.task.parentId);
-		},
-		hasParent(): boolean
-		{
-			return this.task.parentId > 0;
-		},
-		icon(): string
-		{
-			return Outline.SUBTASK;
+			if (idUtils.isTemplate(this.task.parentId))
+			{
+				return this.loc('TASKS_V2_PARENT_TEMPLATE_TITLE_CHIP');
+			}
+
+			return this.loc('TASKS_V2_PARENT_TASK_TITLE_CHIP');
 		},
 		design(): string
 		{
-			return {
-				[!this.isAutonomous && !this.isSelected]: ChipDesign.ShadowNoAccent,
-				[!this.isAutonomous && this.isSelected]: ChipDesign.ShadowAccent,
-				[this.isAutonomous && !this.isSelected]: ChipDesign.OutlineNoAccent,
-				[this.isAutonomous && this.isSelected]: ChipDesign.OutlineAccent,
-			}.true;
+			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
-			if (this.isAutonomous)
-			{
-				return this.hasParent;
-			}
-
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, parentTaskMeta.id);
-		},
-		readonly(): boolean
-		{
-			return !this.task.rights.edit;
-		},
-		text(): string
-		{
-			return parentTaskMeta.title;
+			return this.task.filledFields[parentTaskMeta.id];
 		},
 	},
 	methods: {
 		handleClick(): void
 		{
-			if (!this.isAutonomous && this.isSelected)
+			if (this.isSelected)
 			{
 				this.highlightField();
 
 				return;
 			}
 
-			parentTaskDialog.setTaskId(this.taskId).showTo(this.$el);
-
-			if (!this.isAutonomous)
-			{
-				parentTaskDialog.onUpdateOnce(this.highlightField);
-			}
+			parentTaskDialog.show({
+				targetNode: this.$el,
+				taskId: this.taskId,
+				onUpdate: this.highlightField,
+			});
 		},
 		highlightField(): void
 		{
@@ -98,10 +67,10 @@ export const ParentTaskChip = {
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
-			:design="design"
-			:text="text"
-			:icon="icon"
+			v-if="task.rights.edit || isSelected"
+			:design
+			:text
+			:icon="Outline.SUBTASK"
 			:data-task-id="taskId"
 			:data-task-chip-id="parentTaskMeta.id"
 			ref="chip"

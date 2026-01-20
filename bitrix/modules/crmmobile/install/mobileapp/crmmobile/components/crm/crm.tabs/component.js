@@ -134,19 +134,6 @@
 			});
 
 			this.bindEvents();
-			this.preloadCrmMode();
-		}
-
-		preloadCrmMode()
-		{
-			setTimeout(() => {
-				requireLazy('crm:crm-mode', false).then(({ CrmMode }) => {
-					void CrmMode.getCrmModeConfig();
-				})
-					.catch((error) => {
-						console.error(error);
-					});
-			}, 2000);
 		}
 
 		updateTabCounters(data)

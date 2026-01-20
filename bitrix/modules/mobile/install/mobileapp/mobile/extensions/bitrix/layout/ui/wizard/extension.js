@@ -313,7 +313,7 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 		{
 			const step = this.steps.get(stepId);
 
-			this.parentManager
+			return this.parentManager
 				.openWidget('layout', {
 					titleParams: {
 						text: step.isNeedToSkip() ? null : step.getTitle(),
@@ -355,6 +355,8 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 							},
 						}),
 					);
+
+					return layoutWidget;
 				})
 				.catch(console.error)
 			;

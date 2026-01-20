@@ -35,7 +35,7 @@ export class MessageService
 		this.#pinService = new PinService();
 		this.#markService = new MarkService(chatId);
 		this.#favoriteService = new FavoriteService(chatId);
-		this.#transcribeService = new TranscribeService(chatId);
+		this.#transcribeService = new TranscribeService();
 	}
 
 	// region 'pagination'
@@ -150,9 +150,9 @@ export class MessageService
 	// endregion 'delete'
 
 	// region 'transcribe'
-	transcribe(fileId: number): Promise
+	transcribe(fileId: number, messageId: number): Promise
 	{
-		return this.#transcribeService.transcribe(fileId);
+		return this.#transcribeService.transcribe(fileId, messageId);
 	}
 	// endregion 'delete'
 }

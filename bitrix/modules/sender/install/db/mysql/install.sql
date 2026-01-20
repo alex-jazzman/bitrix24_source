@@ -423,7 +423,7 @@ create table b_sender_timeline_queue
 
 create table b_sender_group_data
 (
-	ID int auto_increment primary key,
+	ID bigint unsigned auto_increment primary key,
 	GROUP_ID int not null,
 	DATE_INSERT DATETIME default NOW() not null,
 	FILTER_ID varchar(256) not null,

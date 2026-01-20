@@ -2,8 +2,9 @@ import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 
 import { locMixin } from 'booking.component.mixin.loc-mixin';
-// eslint-disable-next-line no-unused-vars
+
 import type { Resource, ResourceSlot } from '../../types';
+
 import './resource-slots.css';
 
 export type ResourceSlotsUiBlockSelectEventPayload = {
@@ -45,6 +46,12 @@ export const ResourceSlotsUiBlock = {
 		},
 	},
 	emits: ['select'],
+	data(): { showedMore: boolean }
+	{
+		return {
+			showedMore: false,
+		};
+	},
 	computed: {
 		formatDate(): string
 		{
@@ -67,6 +74,48 @@ export const ResourceSlotsUiBlock = {
 			return this.loc('BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE', {
 				'#BR#': '<br />',
 			});
+		},
+		hasResourceAvatar(): boolean
+		{
+			return Boolean(this.resource?.avatarUrl);
+		},
+		resourceAvatarUrl(): string
+		{
+			return this.hasResourceAvatar
+				? this.resource.avatarUrl
+				: '/bitrix/js/booking/crm-forms/field/images/resource-icon.svg';
+		},
+		resourceDescription(): string
+		{
+			return this.resource?.description || '';
+		},
+		shortResourceDescription(): string
+		{
+			const SHORT_SIZE = 150 - this.more.length;
+
+			if (this.showedMore || this.resourceDescription < SHORT_SIZE)
+			{
+				return this.resourceDescription;
+			}
+
+			const words = this.resourceDescription.split(' ');
+			let description = '';
+
+			for (const word of words)
+			{
+				if (description.length + word.length > SHORT_SIZE)
+				{
+					break;
+				}
+
+				description += `${word} `;
+			}
+
+			return description.trim();
+		},
+		more(): string
+		{
+			return this.loc('BOOKING_CRM_FORMS_RESOURCE_DESCRIPTION_MORE');
 		},
 	},
 	watch: {
@@ -108,16 +157,33 @@ export const ResourceSlotsUiBlock = {
 			<slot name="title"/>
 			<div class="booking--crm-forms--time-selector-block-header">
 				<div class="booking--crm-forms--time-selector-block-resource">
-					<div class="booking--crm-forms--time-selector-block-resource-name">
-						{{ resource.name }}
+					<div class="booking--crm-forms--resource-avatar">
+						<img
+							class="booking--crm-forms--resource-avatar-image"
+							:src="resourceAvatarUrl"
+							alt="Resource avatar"
+							draggable="false"
+						/>
 					</div>
-					<div class="booking--crm-forms--time-selector-block-resource-type-name">
-						{{ resource.typeName }}
+					<div class="booking--crm-forms--resource-info">
+						<div class="booking--crm-forms--resource-name">
+							{{ resource.name }}
+						</div>
+						<div class="booking--crm-forms--resource-type-name">
+							{{ resource.typeName }}
+						</div>
 					</div>
 				</div>
-				<div class="booking--crm-forms--time-selector-block-header__button">
-					<slot name="changeDateBtn" :date="date" :resource="resource"/>
-				</div>
+			</div>
+			<div v-if="shortResourceDescription" class="booking--crm-forms--field-description-text">
+				{{ shortResourceDescription }}
+				<span
+					v-if="shortResourceDescription.length < resourceDescription.length"
+					class="booking--crm-forms--field-description-text-more"
+					@click="showedMore = true"
+				>
+					{{ more }}
+				</span>
 			</div>
 			<div ref="slotsContainer" class="booking--crm-forms--resource-slots__slot-list-wrapper">
 				<div v-show="!loading" class="booking--crm-forms--resource-slots__slot-list">
@@ -141,6 +207,9 @@ export const ResourceSlotsUiBlock = {
 							</div>
 						</div>
 					</template>
+				</div>
+				<div class="booking--crm-forms--time-selector-block-header__button">
+					<slot name="changeDateBtn" :date="date" :resource="resource"/>
 				</div>
 			</div>
 		</div>

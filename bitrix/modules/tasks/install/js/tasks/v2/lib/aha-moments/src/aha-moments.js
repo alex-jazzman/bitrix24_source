@@ -7,6 +7,8 @@ import { Core } from 'tasks.v2.core';
 import { Option } from 'tasks.v2.const';
 import { optionService } from 'tasks.v2.provider.service.option-service';
 
+type Options = $Values<typeof Option>;
+
 type Params = {
 	id: string,
 	ahaMoment: string,
@@ -27,6 +29,7 @@ class AhaMoments
 {
 	#ahaPopupWidth: number = 380;
 	#shownPopups: { [name: string]: boolean } = {};
+	#activeAhaMoment: ?Options = null;
 
 	show(params: Params): Promise<void>
 	{
@@ -73,6 +76,7 @@ class AhaMoments
 			},
 		);
 
+		// eslint-disable-next-line consistent-return
 		return new Promise((resolve) => {
 			const guidePopup = guide.getPopup();
 
@@ -109,36 +113,52 @@ class AhaMoments
 		});
 	}
 
-	shouldShow(ahaMoment: $Values<typeof Option>, params: Object = {}): boolean
+	shouldShow(ahaMoment: Options): boolean
 	{
-		return {
-			[Option.AhaAuditorsInCompactFormPopup]: this.#shouldShowAuditorsInCard(),
-		}[ahaMoment];
+		if (this.#activeAhaMoment !== null && this.#activeAhaMoment !== ahaMoment)
+		{
+			return false;
+		}
+
+		return this.#wasNotShown(ahaMoment);
 	}
 
-	setShown(ahaMoment: $Values<typeof Option>): void
+	setShown(ahaMoment: Options): void
 	{
 		this.setPopupShown(ahaMoment);
 
 		void optionService.setBool(ahaMoment, true);
 	}
 
-	setPopupShown(ahaMoment: $Values<typeof Option>): void
+	setPopupShown(ahaMoment: Options): void
 	{
 		this.#shownPopups[ahaMoment] = true;
 	}
 
-	#shouldShowAuditorsInCard(): boolean
+	setActive(ahaMoment: Options): void
 	{
-		return this.#wasNotShown(Option.AhaAuditorsInCompactFormPopup);
+		this.#activeAhaMoment = ahaMoment;
 	}
 
-	#wasNotShown(ahaMoment: $Values<typeof Option>): boolean
+	setInactive(ahaMoment: Options): void
+	{
+		if (this.#activeAhaMoment === ahaMoment)
+		{
+			this.#activeAhaMoment = null;
+		}
+	}
+
+	isActive(ahaMoment: Options): boolean
+	{
+		return this.#activeAhaMoment === ahaMoment;
+	}
+
+	#wasNotShown(ahaMoment: Options): boolean
 	{
 		return !this.#wasShown(ahaMoment);
 	}
 
-	#wasShown(ahaMoment: $Values<typeof Option>): boolean
+	#wasShown(ahaMoment: Options): boolean
 	{
 		const { ahaMoments } = Core.getParams();
 

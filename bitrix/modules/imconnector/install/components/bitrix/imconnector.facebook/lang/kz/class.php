@@ -1,7 +1,6 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Серверде қате туындады";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INVALID_OAUTH_ACCESS_TOKEN"] = "Жария парақшаны басқаруға рұқсат жоғалды. Қосылуды қайта орындау керек.";
-$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_CATALOG"] = "Тауарлар каталогы";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_OPEN_LINES"] = "Ашық желілер";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED_MSGVER_1"] = "Мессенджер коннекторларының модулі орнатылмаған";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_ACTIVE_CONNECTOR"] = "Бұл коннектор белсенді емес";

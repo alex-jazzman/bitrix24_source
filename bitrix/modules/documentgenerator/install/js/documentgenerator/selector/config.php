@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -10,10 +11,10 @@ return [
 	],
 	'js' => '/bitrix/js/documentgenerator/selector/dist/selector.bundle.js',
 	'rel' => [
+		'documentgenerator.preview',
 		'main.loader',
 		'main.popup',
 		'main.core',
-		'documentpreview',
 	],
 	'skip_core' => false,
 ];

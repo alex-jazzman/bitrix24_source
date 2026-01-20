@@ -5,9 +5,10 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 	const { Type } = require('type');
 	const { isEmpty, isEqual } = require('utils/object');
 	const { Color } = require('tokens');
-	const { Loc } = require('im/messenger/loc');
 	const { TranscriptStatus } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { parser } = require('im/messenger/lib/parser');
+	const { parserCommon } = require('im/messenger/lib/parser/functions/common');
 
 	class Audio
 	{
@@ -127,7 +128,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 		 */
 		#getIsPlaying()
 		{
-			return this.messageModel.audioPlaying;
+			return this.messageModel.isPlaying;
 		}
 
 		/**
@@ -143,6 +144,9 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 			return 1;
 		}
 
+		/**
+		 * @returns {Speech2Text|null}
+		 */
 		#prepareTranscriptProps()
 		{
 			if (!this.#canTranscript())
@@ -152,6 +156,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 
 			const hasTranscript = Type.isObject(this.transcriptModel) && !isEmpty(this.transcriptModel);
 			const isPreparedFiles = isEqual(this.messageModel.params?.FILE_ID, this.messageModel.files);
+
 			const transcript = {
 				text: '',
 				textColor: Color.base2.toHex(),
@@ -165,13 +170,18 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 			transcript.status = this.transcriptModel.status;
 			if (transcript.status === TranscriptStatus.error)
 			{
-				transcript.text = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR');
+				transcript.text = this.transcriptModel.text;
 				transcript.textColor = Color.chatOtherBase1_1.toHex();
 
 				return transcript;
 			}
 
-			transcript.text = this.transcriptModel.text;
+			transcript.text = parserCommon.simplifyNewLine(this.transcriptModel.text, '\n');
+			if (!Feature.isTranscribationBbcodeSupported)
+			{
+				const parserConfig = { text: transcript.text, isReplaceNewLine: false };
+				transcript.text = parser.simplify(parserConfig);
+			}
 
 			return transcript;
 		}

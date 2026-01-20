@@ -5,19 +5,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('BPTA2_DESCR_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('BPTA2_DESCR_DESCR_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'Task2Activity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
-		'ID' => 'interaction',
-	],
-	'RETURN' => [
+$arActivityDescription = (
+	new ActivityDescription(
+		name: Loc::getMessage('BPTA2_DESCR_NAME_1'),
+		description: Loc::getMessage('BPTA2_DESCR_DESCR_1'),
+		type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value, ActivityType::NODE_ACTION->value ],
+	)
+)
+	->setClass('Task2Activity')
+	->setJsClass(ActivityDescription::DEFAULT_ACTIVITY_JS_CLASS)
+	->setCategory([ 'ID' => 'interaction' ])
+	->setReturn([
 		'TaskId' => [
 			'NAME' => Loc::getMessage('BPTA2_DESCR_TASKID'),
 			'TYPE' => 'int',
@@ -34,8 +39,8 @@ $arActivityDescription = [
 			'NAME' => Loc::getMessage('BPTA2_DESCR_IS_DELETED'),
 			'TYPE' => 'bool',
 		],
-	],
-	'ROBOT_SETTINGS' => [
+	])
+	->setRobotSettings([
 		'CATEGORY' => 'employee',
 		'RESPONSIBLE_PROPERTY' => 'Fields.RESPONSIBLE_ID',
 		'GROUP' => ['employeeControl', 'taskManagement'],
@@ -43,9 +48,13 @@ $arActivityDescription = [
 			'TASK_STATUS' => 1,
 		],
 		'SORT' => 2100,
-	],
-	'EXCLUDED' => (!\Bitrix\Main\Loader::includeModule('tasks')),
-];
+	])
+	->setNodeActionSettings([
+		'INCLUDE' => ['taskscomplexactivity'],
+		'HANDLES_DOCUMENT' => true,
+	])
+	->setExcluded(!Loader::includeModule('tasks'))
+;
 
 if (
 	isset($documentType)
@@ -53,7 +62,7 @@ if (
 	&& !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_CRM_INTEGRATION)
 )
 {
-	$arActivityDescription['LOCKED'] = [
-		'INFO_CODE' => \Bitrix\Tasks\Helper\RestrictionUrl::TASK_LIMIT_CRM_INTEGRATION,
-	];
+	$arActivityDescription->set('LOCKED', [ 'INFO_CODE' => RestrictionUrl::TASK_LIMIT_CRM_INTEGRATION ]);
 }
+
+$arActivityDescription = $arActivityDescription->toArray();

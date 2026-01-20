@@ -163,6 +163,16 @@
 	font-size: 0;
 }
 
+.landing-ui-panel-editor .landing-ui-button-editor-action[data-id="foreColor"],
+.landing-ui-panel-editor .landing-ui-button-editor-action[data-id="hiliteColor"] {
+	position: relative;
+}
+
+.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="foreColor"] .landing-ui-button-text,
+.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="hiliteColor"] .landing-ui-button-text {
+	opacity: .5;
+}
+
 .landing-ui-panel-editor-panel .landing-ui-button-editor-action[data-id="foreColor"]::before {
 	transform: translateY(50%);
 	margin-right: 0;

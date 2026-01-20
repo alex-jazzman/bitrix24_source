@@ -123,7 +123,7 @@
 	    -ms-flex-pack: start;
 	        justify-content: flex-start;
 	padding-left: 12px;
-	width: 324px;
+	width: 325px;
 	font-weight: 400;
 	text-transform: none;
 	font-size: 14px;
@@ -131,6 +131,10 @@
 
 .bic-setting-item-group{
 	margin-bottom: 24px;
+}
+
+.biconnector-group-selector .ui-selector-item-title {
+	font-size: 14px;
 }
 
 .biconnector-group-selector .ui-selector-tab-labels {

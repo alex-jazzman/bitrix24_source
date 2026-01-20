@@ -38,6 +38,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    });
 	    return this.handleResponse(response);
 	  }
+	  async postComponent(component, endpoint, data, mode = 'class') {
+	    const response = await main_core.ajax.runComponentAction(component, endpoint, {
+	      mode,
+	      data
+	    });
+	    return this.handleResponse(response);
+	  }
 	  async put(endpoint, data) {
 	    const url = this.buildUrl(endpoint);
 	    const response = await main_core.ajax.runAction(url, {

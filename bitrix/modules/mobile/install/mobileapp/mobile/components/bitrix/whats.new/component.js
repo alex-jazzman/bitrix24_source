@@ -1,7 +1,6 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 	const { WhatsNewList } = require('layout/ui/whats-new');
-	const { BackgroundUIManager } = require('background/ui-manager');
 	const { selectNewCount, selectIsIdleStatus } = require('statemanager/redux/slices/whats-new');
 	const store = require('statemanager/redux/store');
 
@@ -17,7 +16,7 @@
 		layout.setListener((eventName) => {
 			if (eventName === 'onViewHidden')
 			{
-				BackgroundUIManager.onCloseActiveComponent();
+				BX.postComponentEvent('BackgroundUIManager::onCloseActiveComponent', []);
 			}
 		});
 	});

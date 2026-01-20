@@ -24,6 +24,7 @@ export type CounterModelActions = 'counterModel/setList'
 	| 'counterModel/setDisableChatCounter'
 	| 'counterModel/delete'
 	| 'counterModel/clear'
+	| 'counterModel/clearByType'
 ;
 
 export type CounterModelMutation = 'counterModel/set'
@@ -36,6 +37,7 @@ declare type CounterDeleteActions = 'delete' | 'clear';
 export interface CounterDeleteData extends PayloadData
 {
 	chatIdList: Array<number>;
+	type?: string;
 }
 declare type CounterSetActions = 'setList'
 	| 'readChildChatsCounters'

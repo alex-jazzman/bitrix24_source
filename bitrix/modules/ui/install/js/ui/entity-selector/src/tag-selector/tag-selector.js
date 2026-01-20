@@ -691,7 +691,10 @@ export default class TagSelector extends EventEmitter
 			const className = this.addButtonVisible ? '' : ' ui-tag-selector-item-hidden';
 
 			return Tag.render`
-				<span class="ui-tag-selector-item ui-tag-selector-add-button${className}">
+				<span
+					class="ui-tag-selector-item ui-tag-selector-add-button${className}"
+					data-testid="ui-tag-selector-add-item-button"
+				>
 					${this.getAddButtonLink()}
 				</span>
 			`;

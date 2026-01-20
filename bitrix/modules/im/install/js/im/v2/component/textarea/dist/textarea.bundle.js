@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,ui_uploader_core,im_v2_lib_escManager,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,im_v2_model,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,im_v2_lib_copilot,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
+(function (exports,ui_iconSet_outline,ui_uploader_core,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,im_v2_lib_escManager,im_v2_lib_message,main_core_events,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_helpdesk,im_v2_lib_rest,ui_system_chip_vue,im_v2_lib_smileManager,im_v2_provider_service_sticker,main_polyfill_intersectionobserver,im_v2_provider_service_sending,im_v2_lib_stickerManager,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,im_v2_model,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,im_v2_lib_copilot,im_v2_lib_feature,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_chatTitle,im_v2_lib_textHighlighter,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -16,6 +16,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _mentionPopupOpened = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionPopupOpened");
 	var _mentionSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionSymbol");
 	var _textarea = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textarea");
+	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
 	var _mentionReplacementMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionReplacementMap");
 	var _onClosedMentionKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClosedMentionKeyDown");
 	var _onOpenedMentionKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onOpenedMentionKeyDown");
@@ -35,7 +36,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _hasNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasNumber");
 	var _hasSpecialSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSpecialSymbol");
 	class MentionManager extends main_core_events.EventEmitter {
-	  constructor(textarea) {
+	  constructor(payload) {
 	    super();
 	    Object.defineProperty(this, _hasSpecialSymbol, {
 	      value: _hasSpecialSymbol2
@@ -100,12 +101,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _emitter, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _mentionReplacementMap, {
 	      writable: true,
 	      value: {}
 	    });
 	    this.setEventNamespace(MentionManager.eventNamespace);
-	    babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea] = textarea;
+	    const {
+	      textareaElement,
+	      context: {
+	        emitter
+	      }
+	    } = payload;
+	    babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea] = textareaElement;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
 	  }
 
 	  // region 'popup'
@@ -240,7 +252,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _sendInsertMentionEvent2(event) {
 	  event.preventDefault();
-	  main_core_events.EventEmitter.emit(im_v2_const.EventType.mention.selectItem);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.mention.selectItem);
 	  babelHelpers.classPrivateFieldLooseBase(this, _sendHidePopupEvent)[_sendHidePopupEvent]();
 	}
 	function _getTextBeforeCursor2() {
@@ -538,6 +550,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// @vue/component
 	const AudioInput = {
 	  name: 'AudioInput',
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
 	  emits: ['inputStart', 'inputResult'],
 	  data() {
 	    return {
@@ -556,10 +574,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
 	  },
 	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
 	  },
 	  methods: {
 	    onClick() {
@@ -609,15 +627,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      return this.audioManager;
 	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    },
 	    handleOnAfterSendMessage() {
 	      if (this.audioUsed) {
-	        im_v2_lib_analytics.Analytics.getInstance().copilot.onUseAudioInput();
+	        im_v2_lib_analytics.Analytics.getInstance().copilot.onUseAudioInput(this.dialogId);
+	        im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onUseAudioInput(this.dialogId);
 	        this.audioUsed = false;
 	      }
 	      this.audioMode = false;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -3675,7 +3697,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      };
 	    },
 	    onSmileClick(smileCode, event) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
 	        text: smileCode,
 	        dialogId: this.dialogId
 	      });
@@ -3689,6 +3711,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    addEmojiToRecent(symbol) {
 	      this.recentEmoji.add(symbol);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -4280,6 +4305,623 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	// @vue/component
+	const TabEmoji = {
+	  name: 'TabEmoji',
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      recentEmoji: new Set()
+	    };
+	  },
+	  computed: {
+	    categoryTitles() {
+	      const categoryTitles = emoji.reduce((acc, category) => {
+	        const prefix = 'IM_TEXTAREA_EMOJI_CATEGORY_';
+	        const title = main_core.Loc.getMessage(`${prefix}${category.code}`);
+	        return {
+	          ...acc,
+	          [category.code]: title
+	        };
+	      }, {});
+	      categoryTitles[this.frequentlyUsedLoc] = main_core.Loc.getMessage(this.frequentlyUsedLoc);
+	      return categoryTitles;
+	    },
+	    visibleRecentEmoji() {
+	      const visibleEmoji = [...this.recentEmoji];
+	      return visibleEmoji.slice(0, this.maxRecentEmoji);
+	    }
+	  },
+	  created() {
+	    const smileManager = im_v2_lib_smileManager.SmileManager.getInstance();
+	    if (!smileManager.recentEmoji) {
+	      return;
+	    }
+	    this.emojiSetTitle = 'emoji';
+	    this.emoji = emoji;
+	    this.recentEmoji = new Set(smileManager.recentEmoji);
+	    this.maxRecentEmoji = 18;
+	    this.frequentlyUsedLoc = 'IM_TEXTAREA_EMOJI_CATEGORY_FREQUENTLY';
+	  },
+	  beforeUnmount() {
+	    const smileManager = im_v2_lib_smileManager.SmileManager.getInstance();
+	    if (this.visibleRecentEmoji.length > smileManager.recentEmoji.size) {
+	      smileManager.updateRecentEmoji(new Set(this.recentEmoji));
+	    }
+	  },
+	  methods: {
+	    insertInTextarea(emojiText) {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
+	        text: emojiText,
+	        dialogId: this.dialogId
+	      });
+	    },
+	    onRecentEmojiClick(emojiText) {
+	      this.insertInTextarea(emojiText);
+	    },
+	    onEmojiClick(emojiText) {
+	      this.insertInTextarea(emojiText);
+	      this.addEmojiToRecent(emojiText);
+	    },
+	    addEmojiToRecent(symbol) {
+	      this.recentEmoji.add(symbol);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    }
+	  },
+	  template: `
+		<div class="bx-im-emoji-content__scope">
+			<div class="bx-im-emoji-content__box">
+				<div
+					v-if="recentEmoji.size > 0"
+					class="bx-im-emoji-content__box_category"
+					key="frequently-used"
+				>
+					<p class="bx-im-emoji-content__box_category-title">
+						{{categoryTitles[frequentlyUsedLoc]}}
+					</p>
+					<span
+						v-for="symbol in visibleRecentEmoji"
+						class="bx-im-emoji-content__box_category-emoji"
+						role="img"
+						:key="'recent-'+ symbol"
+						@click="onRecentEmojiClick(symbol)"
+					>
+						{{symbol}}
+					</span>
+				</div>
+				<div
+					v-for="category in emoji"
+					:key="category.id"
+					class="bx-im-emoji-content__box_category"
+				>
+					<template v-if="category.showForWindows ?? true">
+						<p class="bx-im-emoji-content__box_category-title">
+							{{categoryTitles[category.code]}}
+						</p>
+						<span
+							v-for="element in category.emoji"
+							:key="element.symbol"
+							class="bx-im-emoji-content__box_category-emoji"
+							role="img"
+							@click="onEmojiClick(element.symbol)"
+						>
+							{{element.symbol}}
+						</span>
+					</template>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const StickerItem = {
+	  name: 'StickerItem',
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    },
+	    stickerKey: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['close'],
+	  computed: {
+	    sticker() {
+	      return this.$store.getters['messages/stickers/getStickerByKey'](this.stickerKey);
+	    }
+	  },
+	  methods: {
+	    getSendingService() {
+	      if (!this.sendingService) {
+	        this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
+	      }
+	      return this.sendingService;
+	    },
+	    addRecentStickerToStore() {
+	      void this.$store.dispatch('messages/stickers/updateRecentStickers', this.stickerKey);
+	    },
+	    sendSticker() {
+	      const stickerParams = new im_v2_lib_stickerManager.StickerManager().parseStickerKey(this.stickerKey);
+	      void this.getSendingService().sendMessageWithSticker({
+	        dialogId: this.dialogId,
+	        stickerParams
+	      });
+	    },
+	    onStickerClick() {
+	      this.addRecentStickerToStore();
+	      this.sendSticker();
+	      this.$emit('close');
+	    }
+	  },
+	  template: `
+		<div class="bx-im-sticker-item" @click="onStickerClick">
+			<img :src="sticker.uri" alt="" loading="lazy"/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const PackItem = {
+	  name: 'PackItem',
+	  components: {
+	    StickerItem
+	  },
+	  props: {
+	    packKey: {
+	      type: String,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['close', 'activePackChange'],
+	  computed: {
+	    pack() {
+	      if (this.isRecent) {
+	        return {
+	          name: this.loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT'),
+	          stickers: this.recent
+	        };
+	      }
+	      return this.$store.getters['messages/stickers/getPackByKey'](this.packKey);
+	    },
+	    isRecent() {
+	      return this.packKey === RECENT_PACK_KEY;
+	    },
+	    recent() {
+	      return this.$store.getters['messages/stickers/getRecent'];
+	    },
+	    stickers() {
+	      return this.pack.stickers;
+	    }
+	  },
+	  mounted() {
+	    this.getObserver().observe(this.$refs.packItem);
+	  },
+	  beforeUnmount() {
+	    this.getObserver().unobserve(this.$refs.packItem);
+	  },
+	  methods: {
+	    getObserver() {
+	      if (this.observer) {
+	        return this.observer;
+	      }
+	      this.observer = new IntersectionObserver(entries => {
+	        entries.forEach(entry => {
+	          if (entry.intersectionRatio > 0.5) {
+	            this.$emit('activePackChange', this.packKey);
+	          }
+	        });
+	      }, {
+	        threshold: [0, 0.5, 1]
+	      });
+	      return this.observer;
+	    },
+	    onClose() {
+	      this.$emit('close');
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-stickers-pack-item__container" ref="packItem">
+			<div class="bx-im-stickers-pack-item__header">
+				{{ pack.name }}
+			</div>
+			<div class="bx-im-stickers-pack-item__grid">
+				<StickerItem
+					v-for="key in stickers"
+					:dialogId="dialogId"
+					:key="key"
+					:stickerKey="key"
+					@close="onClose"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const SHIMMER_ROWS_COUNT = 2;
+	const SHIMMER_ITEMS_COUNT = 5;
+
+	// @vue/component
+	const PackShimmer = {
+	  name: 'PackShimmer',
+	  computed: {
+	    SHIMMER_ROWS_COUNT: () => SHIMMER_ROWS_COUNT,
+	    SHIMMER_ITEMS_COUNT: () => SHIMMER_ITEMS_COUNT
+	  },
+	  template: `
+		<div>
+			<div v-for="i in SHIMMER_ROWS_COUNT" :key="i" class="bx-im-stickers-pack-item__container">
+				<div class="bx-im-elements-gradient-shimmer bx-im-stickers-pack-item__header-shimmer"></div>
+				<div class="bx-im-stickers-pack-item__grid">
+					<div v-for="j in SHIMMER_ITEMS_COUNT * i" :key="i + '-' + j" class="bx-im-sticker-item">
+						<div class="bx-im-elements-gradient-shimmer bx-im-sticker-item__shimmer"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const ICON_SIZE$1 = 28;
+
+	// @vue/component
+	const HeaderItem = {
+	  name: 'HeaderItem',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    packKey: {
+	      type: String,
+	      required: true
+	    },
+	    active: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE$1,
+	    Color: () => im_v2_const.Color,
+	    packName() {
+	      if (this.packKey === RECENT_PACK_KEY) {
+	        return this.loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT');
+	      }
+	      const pack = this.$store.getters['messages/stickers/getPackByKey'](this.packKey);
+	      return (pack == null ? void 0 : pack.name) || '';
+	    },
+	    isRecent() {
+	      return this.packKey === RECENT_PACK_KEY;
+	    },
+	    classes() {
+	      return {
+	        '--active': this.active
+	      };
+	    },
+	    packCover() {
+	      return this.$store.getters['messages/stickers/getPackCover'](this.packKey);
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-stickers-header__item" :class="classes" :title="packName">
+			<BIcon
+				v-if="isRecent"
+				:name="OutlineIcons.CLOCK"
+				:color="Color.gray90"
+				:title="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT')"
+				:size="ICON_SIZE"
+			/>
+			<span v-else>
+				<img v-if="packCover" :src="packCover" alt="" loading="lazy"/>
+			</span>
+		</div>
+	`
+	};
+
+	const SHIMMER_ITEMS_COUNT$1 = 8;
+
+	// @vue/component
+	const HeaderShimmer = {
+	  name: 'HeaderShimmer',
+	  computed: {
+	    SHIMMER_ITEMS_COUNT: () => SHIMMER_ITEMS_COUNT$1
+	  },
+	  template: `
+		<div class="bx-im-stickers-header-shimmer__container">
+			<div v-for="i in SHIMMER_ITEMS_COUNT" :key="i" class="bx-im-stickers-header__item">
+				<div class="bx-im-elements-gradient-shimmer bx-im-stickers-header__shimmer"></div>
+			</div>
+		</div>
+	`
+	};
+
+	const RECENT_PACK_KEY = '0:recent';
+	const SCROLL_LOAD_HEADER_OFFSET = 200;
+	const SCROLL_LOAD_BODY_OFFSET = 500;
+
+	// @vue/component
+	const TabStickers = {
+	  name: 'TabStickers',
+	  components: {
+	    PackItem,
+	    PackShimmer,
+	    HeaderItem,
+	    HeaderShimmer
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['close'],
+	  data() {
+	    return {
+	      activePackKey: RECENT_PACK_KEY,
+	      isLoading: false
+	    };
+	  },
+	  computed: {
+	    packKeys() {
+	      const packs = this.$store.getters['messages/stickers/getPackKeys'];
+	      return [RECENT_PACK_KEY, ...packs];
+	    }
+	  },
+	  async created() {
+	    this.stickerService = im_v2_provider_service_sticker.StickerService.getInstance();
+	    this.isLoading = true;
+	    await this.stickerService.initFirstPage();
+	    this.isLoading = false;
+	  },
+	  methods: {
+	    onHeaderPick(packKey) {
+	      this.activePackKey = packKey;
+	      this.scrollToPack(packKey);
+	    },
+	    scrollToPack(packKey) {
+	      const packElem = this.$refs.packListContainer.querySelector(`[data-pack-key="${packKey}"]`);
+	      if (packElem && packElem.scrollIntoView) {
+	        packElem.scrollIntoView({
+	          block: 'start',
+	          behavior: 'smooth'
+	        });
+	      }
+	    },
+	    onActivePackChange(packKey) {
+	      this.activePackKey = packKey;
+	    },
+	    needToLoad(container, offset) {
+	      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+	      return remaining <= offset;
+	    },
+	    async loadNextPage() {
+	      this.isLoading = true;
+	      await this.stickerService.loadNextPage();
+	      this.isLoading = false;
+	    },
+	    async onScrollHeader(event) {
+	      const container = event.target;
+	      if (this.isLoading || !this.needToLoad(container, SCROLL_LOAD_HEADER_OFFSET)) {
+	        return;
+	      }
+	      void this.loadNextPage();
+	    },
+	    async onScrollBody(event) {
+	      const container = event.target;
+	      if (this.isLoading || !this.needToLoad(container, SCROLL_LOAD_BODY_OFFSET)) {
+	        return;
+	      }
+	      void this.loadNextPage();
+	    },
+	    onClose() {
+	      this.$emit('close');
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-stickers-tab__container">
+			<div
+				class="bx-im-stickers-header__container"
+				ref="headerListContainer"
+				@scroll="onScrollHeader"
+			>
+				<HeaderItem
+					v-for="key in packKeys"
+					:key="key"
+					:packKey="key"
+					:active="key === activePackKey"
+					@click="onHeaderPick(key)"
+				/>
+				<HeaderShimmer v-if="isLoading" />
+			</div>
+			<div
+				class="bx-im-stickers-pack-list__container"
+				ref="packListContainer"
+				@scroll="onScrollBody"
+			>
+				<PackItem
+					v-for="key in packKeys"
+					:dialogId="dialogId"
+					:key="key"
+					:packKey="key"
+					:data-pack-key="key"
+					@activePackChange="onActivePackChange"
+					@close="onClose"
+				/>
+				<PackShimmer v-if="isLoading" />
+			</div>
+		</div>
+	`
+	};
+
+	const TabType$1 = {
+	  emoji: 'emoji',
+	  stickers: 'stickers'
+	};
+	const TabList = [{
+	  type: TabType$1.emoji,
+	  title: main_core.Loc.getMessage('IM_TEXTAREA_STICKER_SELECTOR_EMOJI_TAB')
+	}, {
+	  type: TabType$1.stickers,
+	  title: main_core.Loc.getMessage('IM_TEXTAREA_STICKER_SELECTOR_STICKER_TAB')
+	}];
+	// @vue/component
+	const EmotePopup = {
+	  name: 'EmotePopup',
+	  components: {
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+	    TabEmoji,
+	    TabStickers,
+	    Chip: ui_system_chip_vue.Chip
+	  },
+	  props: {
+	    bindElement: {
+	      type: Object,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['close'],
+	  data() {
+	    return {
+	      currentTab: TabType$1.stickers
+	    };
+	  },
+	  computed: {
+	    TabType: () => TabType$1,
+	    TabList: () => TabList,
+	    PopupType: () => im_v2_const.PopupType,
+	    ChipDesign: () => ui_system_chip_vue.ChipDesign,
+	    ChipSize: () => ui_system_chip_vue.ChipSize,
+	    popupConfig() {
+	      return {
+	        width: 365,
+	        bindElement: this.bindElement,
+	        bindOptions: {
+	          position: 'top'
+	        },
+	        offsetTop: 25,
+	        offsetLeft: -110,
+	        padding: 0,
+	        contentBorderRadius: '18px'
+	      };
+	    }
+	  },
+	  methods: {
+	    selectTab(type) {
+	      this.currentTab = type;
+	    },
+	    chipDesign(type) {
+	      return this.currentTab === type ? ui_system_chip_vue.ChipDesign.Filled : ui_system_chip_vue.ChipDesign.Outline;
+	    }
+	  },
+	  template: `
+		<MessengerPopup
+			:config="popupConfig"
+			:id="PopupType.emoteSelector"
+			@close="$emit('close')"
+		>
+			<div class="bx-im-emote-popup__container">
+				<TabEmoji v-show="currentTab === TabType.emoji" :dialogId="dialogId" />
+				<TabStickers v-show="currentTab === TabType.stickers" :dialogId="dialogId" @close="$emit('close')" />
+				<div class="bx-im-emote-popup__tabs-controls">
+					<Chip
+						v-for="tab in TabList"
+						:key="tab.type"
+						:size="ChipSize.Sm"
+						:design="chipDesign(tab.type)"
+						:text="tab.title"
+						:rounded="true"
+						@click="selectTab(tab.type)"
+					/>
+				</div>
+			</div>
+		</MessengerPopup>
+	`
+	};
+
+	const ICON_SIZE$2 = 24;
+
+	// @vue/component
+	const EmoteSelector = {
+	  name: 'EmoteSelector',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    EmotePopup
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      showPopup: false
+	    };
+	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE$2,
+	    iconColor() {
+	      if (this.showPopup) {
+	        return im_v2_const.Color.accentBlue;
+	      }
+	      return im_v2_const.Color.gray40;
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div ref="addSticker" class="bx-im-textarea__icon-container">
+			<BIcon
+				:name="OutlineIcons.SMILE"
+				:title="loc('IM_TEXTAREA_ICON_SMILE')"
+				:size="ICON_SIZE"
+				:color="iconColor"
+				class="bx-im-textarea__icon"
+				@click="showPopup = true"
+			/>
+		</div>
+		<EmotePopup
+			v-if="showPopup"
+			:bindElement="$refs['addSticker']"
+			:dialogId="dialogId"
+			@close="showPopup = false"
+		/>
+	`
+	};
+
 	const FILE_DIALOG_ID = 'im-file-dialog';
 
 	/* eslint-disable @bitrix24/bitrix24-rules/no-bx */
@@ -4342,7 +4984,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  template: '<template></template>'
 	};
 
-	const ICON_SIZE$1 = 24;
+	const ICON_SIZE$3 = 24;
 	const DOCUMENT_SIGN_SLIDER_URL = '/sign/doc/0/?chat_id=';
 
 	// @vue/component
@@ -4368,7 +5010,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$1,
+	    ICON_SIZE: () => ICON_SIZE$3,
 	    menuItems() {
 	      return [{
 	        icon: im_v2_component_elements_menu.MenuItemIcon.file,
@@ -4983,14 +5625,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    },
 	    insertText(text) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
 	        text,
 	        dialogId: this.dialogId,
 	        replace: true
 	      });
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
 	    initResizeManager() {
 	      this.resizeManager = new ResizeManager({
@@ -5090,6 +5729,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onDrop(event) {
 	      event.preventDefault();
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
@@ -5287,107 +5932,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const ItemTextByChatType = {
-	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
-	  [im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_COLLAB_TYPE'),
-	  default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
-	};
-
 	// @vue/component
-	const MentionItem = {
-	  name: 'MentionItem',
-	  components: {
-	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
-	    ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    query: {
-	      type: String,
-	      default: ''
-	    },
-	    selected: {
-	      type: Boolean,
-	      default: false
-	    },
-	    contextDialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['itemClick', 'itemHover'],
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    user() {
-	      return this.$store.getters['users/get'](this.dialogId, true);
-	    },
-	    recentItem() {
-	      return this.$store.getters['recent/get'](this.dialogId);
-	    },
-	    isUser() {
-	      return this.dialog.type === im_v2_const.ChatType.user;
-	    },
-	    position() {
-	      if (!this.isUser) {
-	        return '';
-	      }
-	      return this.$store.getters['users/getPosition'](this.dialogId);
-	    },
-	    userItemText() {
-	      if (!this.position) {
-	        return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_USER_TYPE');
-	      }
-	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.position), this.query);
-	    },
-	    chatItemText() {
-	      var _ItemTextByChatType$t;
-	      return (_ItemTextByChatType$t = ItemTextByChatType[this.dialog.type]) != null ? _ItemTextByChatType$t : ItemTextByChatType.default;
-	    }
-	  },
-	  methods: {
-	    onClick() {
-	      this.$emit('itemClick', {
-	        dialogId: this.dialogId
-	      });
-	    }
-	  },
-	  template: `
-		<div 
-			@click="onClick" 
-			class="bx-im-mention-item__container bx-im-mention-item__scope" 
-			:class="{'--selected': selected}"
-			@mouseover="$emit('itemHover')"
-		>
-			<ChatAvatar 
-				:avatarDialogId="dialogId"
-				:contextDialogId="dialogId"
-				:size="AvatarSize.M" 
-				class="bx-im-mention-item__avatar-container" 
-			/>
-			<div class="bx-im-mention-item__content-container">
-				<ChatTitleWithHighlighting 
-					:dialogId="dialogId" 
-					:textToHighlight="query" 
-					class="bx-im-mention-item__title"
-				/>
-				<div v-if="isUser" class="bx-im-mention-item__position" :title="position" v-html="userItemText"></div>
-				<div v-else class="bx-im-mention-item__position" :title="chatItemText">{{ chatItemText }}</div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const MentionEmptyState = {
-	  name: 'MentionEmptyState',
+	const SearchEmptyState = {
+	  name: 'MentionSearchEmptyState',
 	  template: `
 		<div class="bx-im-mention-empty-state__scope bx-im-mention-empty-state__container">
 			<span class="bx-im-mention-empty-state__icon"></span>
@@ -5399,7 +5946,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const MentionLoadingState = {
+	const LoadingState = {
 	  name: 'MentionLoadingState',
 	  components: {
 	    Spinner: im_v2_component_elements_loader.Spinner
@@ -5421,7 +5968,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const MentionContentFooter = {
+	const ContentFooter = {
 	  name: 'MentionContentFooter',
 	  components: {
 	    Loader: im_v2_component_elements_loader.Loader
@@ -5608,15 +6155,493 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return items.map(item => item.dialogId);
 	}
 
+	const MentionItem = {
+	  name: 'MentionItem',
+	  components: {
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle
+	  },
+	  props: {
+	    id: {
+	      type: String,
+	      required: true
+	    },
+	    title: {
+	      type: String,
+	      default: ''
+	    },
+	    subtitle: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  computed: {
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize
+	  },
+	  template: `
+		<slot name="avatar">
+			<ChatAvatar
+				:avatarDialogId="id"
+				:size="AvatarSize.M"
+				class="bx-im-mention-item__avatar-container"
+			/>
+		</slot>
+		<div class="bx-im-mention-item__content-container">
+			<slot name="title">
+				<ChatTitle
+					:dialogId="id"
+					:text="title"
+					:withLeftIcon="false"
+					class="bx-im-mention-item__title"
+				/>
+			</slot>
+			<slot name="subtitle">
+				<div class="bx-im-mention-item__subtitle" :title="subtitle">{{ subtitle }}</div>
+			</slot>
+		</div>
+	`
+	};
+
+	const AllParticipantsItem = {
+	  name: 'AllParticipantsItem',
+	  components: {
+	    MentionItem
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    selected: {
+	      type: Boolean,
+	      default: false
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    currentItem() {
+	      return this.item;
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div
+			:class="{'--selected': selected}"
+			class="bx-im-mention-item__container bx-im-mention-item__scope"
+		>
+			<MentionItem
+				:id="currentItem.id"
+				:title="currentItem.title"
+				:subtitle="currentItem.subtitle"
+			>
+				<template #avatar>
+					<div 
+						class="bx-im-mention-item__all-avatar-container" 
+						:title="loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_AVATAR_TITLE')"
+					/>
+				</template>
+			</MentionItem>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CopilotItem = {
+	  name: 'CopilotMentionItem',
+	  components: {
+	    MentionItem
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    selected: {
+	      type: Boolean,
+	      default: false
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    subtitle() {
+	      return this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE');
+	    },
+	    currentItem() {
+	      return this.item;
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div
+			:class="{'--selected': selected}"
+			class="bx-im-mention-item__container bx-im-mention-item__scope"
+		>
+			<MentionItem
+				:id="currentItem.id"
+				:title="currentItem.title"
+				:subtitle="currentItem.subtitle"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DefaultItem = {
+	  name: 'DefaultMentionItem',
+	  components: {
+	    ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting,
+	    MentionItem
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    selected: {
+	      type: Boolean,
+	      default: false
+	    },
+	    query: {
+	      type: String,
+	      default: ''
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.item.id, true);
+	    },
+	    isUser() {
+	      return this.dialog.type === im_v2_const.ChatType.user;
+	    },
+	    subtitleWithHighlighting() {
+	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.item.subtitle), this.query);
+	    },
+	    currentItem() {
+	      return this.item;
+	    }
+	  },
+	  template: `
+		<div
+			:class="{'--selected': selected}"
+			class="bx-im-mention-item__container bx-im-mention-item__scope"
+		>
+			<MentionItem :id="currentItem.id">
+				<template #title>
+					<ChatTitleWithHighlighting
+						:dialogId="currentItem.id"
+						:textToHighlight="query"
+						:text="currentItem.title"
+						class="bx-im-mention-item__title"
+					/>
+				</template>
+				<template #subtitle>
+					<div v-if="isUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
+					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
+				</template>
+			</MentionItem>
+		</div>
+	`
+	};
+
+	var _emitter$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
+	var _handlersById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlersById");
+	var _emitBaseEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitBaseEvent");
+	var _emitAllParticipantsEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitAllParticipantsEvent");
+	class MentionInsertManager {
+	  constructor(context) {
+	    Object.defineProperty(this, _emitAllParticipantsEvent, {
+	      value: _emitAllParticipantsEvent2
+	    });
+	    Object.defineProperty(this, _emitBaseEvent, {
+	      value: _emitBaseEvent2
+	    });
+	    Object.defineProperty(this, _emitter$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _handlersById, {
+	      writable: true,
+	      value: {
+	        [im_v2_const.SpecialMentionDialogId.allParticipants]: params => babelHelpers.classPrivateFieldLooseBase(this, _emitAllParticipantsEvent)[_emitAllParticipantsEvent](params),
+	        default: params => babelHelpers.classPrivateFieldLooseBase(this, _emitBaseEvent)[_emitBaseEvent](params)
+	      }
+	    });
+	    const {
+	      emitter
+	    } = context;
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1] = emitter;
+	  }
+	  emit(params) {
+	    const handler = babelHelpers.classPrivateFieldLooseBase(this, _handlersById)[_handlersById][params.id] || babelHelpers.classPrivateFieldLooseBase(this, _handlersById)[_handlersById].default;
+	    handler(params);
+	  }
+	}
+	function _emitBaseEvent2(params) {
+	  const {
+	    id,
+	    dialogId,
+	    query
+	  } = params;
+	  const mentionText = im_v2_application_core.Core.getStore().getters['chats/get'](id, true).name;
+	  const mentionReplacement = im_v2_lib_utils.Utils.text.getMentionBbCode(id, mentionText);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1].emit(im_v2_const.EventType.textarea.insertMention, {
+	    mentionText,
+	    mentionReplacement,
+	    textToReplace: query,
+	    dialogId
+	  });
+	}
+	function _emitAllParticipantsEvent2(params) {
+	  const {
+	    dialogId,
+	    query
+	  } = params;
+	  const mentionText = main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TEXT');
+	  const mentionReplacement = `[USER=${im_v2_const.SpecialMentionDialogId.allParticipants}]${mentionText}[/USER]`;
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1].emit(im_v2_const.EventType.textarea.insertMention, {
+	    mentionText,
+	    mentionReplacement,
+	    textToReplace: query,
+	    dialogId
+	  });
+	}
+
+	function getNewScrollPosition(element, scrollContainer, marginTop) {
+	  const containerPosition = main_core.Dom.getPosition(scrollContainer);
+	  const targetElementPosition = main_core.Dom.getPosition(element);
+	  const shouldScrollUp = targetElementPosition.top < containerPosition.top;
+	  const shouldScrollDown = targetElementPosition.bottom > containerPosition.bottom;
+	  let newScrollTop = scrollContainer.scrollTop;
+	  if (shouldScrollUp) {
+	    newScrollTop -= containerPosition.top - targetElementPosition.top + marginTop;
+	  } else if (shouldScrollDown) {
+	    newScrollTop += targetElementPosition.bottom - containerPosition.bottom + marginTop;
+	  }
+	  return newScrollTop;
+	}
+	function getMarginTop(element) {
+	  return parseFloat(window.getComputedStyle(element).marginTop);
+	}
+
+	const GRADIENT_HEIGHT = 13;
+	const CONTAINER_MAX_HEIGHT = 200;
+
+	// @vue/component
+	const MentionItemsContainer = {
+	  name: 'MentionItemsContainer',
+	  components: {
+	    AllParticipantsItem,
+	    CopilotItem,
+	    DefaultItem,
+	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    },
+	    query: {
+	      type: String,
+	      default: ''
+	    },
+	    items: {
+	      type: Array,
+	      default: () => []
+	    }
+	  },
+	  emits: ['close'],
+	  data() {
+	    return {
+	      selectedIndex: 0
+	    };
+	  },
+	  computed: {
+	    GRADIENT_HEIGHT: () => GRADIENT_HEIGHT,
+	    CONTAINER_MAX_HEIGHT: () => CONTAINER_MAX_HEIGHT,
+	    preparedQuery() {
+	      return this.query.trim().toLowerCase();
+	    },
+	    copilotBotDialogId() {
+	      return this.$store.getters['users/bots/getCopilotBotDialogId'];
+	    }
+	  },
+	  watch: {
+	    preparedQuery() {
+	      this.selectedIndex = 0;
+	    }
+	  },
+	  created() {
+	    main_core.Event.bind(window, 'keydown', this.onKeyDown);
+	    this.getEmitter().subscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
+	  },
+	  beforeUnmount() {
+	    main_core.Event.unbind(window, 'keydown', this.onKeyDown);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
+	  },
+	  methods: {
+	    getComponentToShow(id) {
+	      var _components$id;
+	      const components = {
+	        [im_v2_const.SpecialMentionDialogId.allParticipants]: AllParticipantsItem,
+	        [this.copilotBotDialogId]: CopilotItem,
+	        default: DefaultItem
+	      };
+	      return (_components$id = components[id]) != null ? _components$id : components.default;
+	    },
+	    onKeyDown(event) {
+	      if (this.items.length === 0) {
+	        return;
+	      }
+	      const lastIndex = this.items.length - 1;
+	      let nextIndex = this.selectedIndex;
+	      if (im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowDown')) {
+	        nextIndex = nextIndex === lastIndex ? 0 : nextIndex + 1;
+	      }
+	      if (im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowUp')) {
+	        nextIndex = nextIndex === 0 ? lastIndex : nextIndex - 1;
+	      }
+	      this.selectedIndex = nextIndex;
+	      const element = this.getDomElementByIndex(this.selectedIndex);
+	      if (!element) {
+	        this.selectedIndex = 0;
+	      }
+	      this.scrollToItem(element);
+	    },
+	    getDomElementByIndex(index) {
+	      return this.$refs['popup-items'].querySelector(`[data-index="${index}"]`);
+	    },
+	    scrollToItem(element) {
+	      const scrollContainer = this.$refs['scroll-gradient'].getContainer();
+	      const marginTop = getMarginTop(this.$refs['popup-items']);
+	      scrollContainer.scrollTop = getNewScrollPosition(element, scrollContainer, marginTop);
+	    },
+	    onItemHover(index) {
+	      this.selectedIndex = index;
+	    },
+	    onInsertMentionText() {
+	      if (!main_core.Type.isArrayFilled(this.items)) {
+	        return;
+	      }
+	      this.insertMentionText();
+	    },
+	    onItemClick() {
+	      this.insertMentionText();
+	      this.$emit('close');
+	    },
+	    insertMentionText() {
+	      const {
+	        id
+	      } = this.items[this.selectedIndex];
+	      const insertManager = new MentionInsertManager({
+	        emitter: this.getEmitter()
+	      });
+	      insertManager.emit({
+	        id,
+	        dialogId: this.dialogId,
+	        query: this.query
+	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    }
+	  },
+	  template: `
+		<ScrollWithGradient
+			v-if="items.length > 0"
+			ref="scroll-gradient"
+			:gradientHeight="GRADIENT_HEIGHT"
+			:containerMaxHeight="CONTAINER_MAX_HEIGHT"
+			:withShadow="false"
+		>
+			<div class="bx-im-mention-popup-content__items" ref="popup-items">
+				<component
+					v-for="(item, index) in items"
+					:data-index="index"
+					:is="getComponentToShow(item.id)"
+					:item="item"
+					:query="query"
+					:dialogId="dialogId"
+					:selected="index === selectedIndex"
+					@click="onItemClick"
+					@close="$emit('close')"
+					@mouseover="onItemHover(index)"
+				/>
+			</div>
+		</ScrollWithGradient>
+	`
+	};
+
+	const ItemTextByChatType = {
+	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
+	  [im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_COLLAB_TYPE'),
+	  default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
+	};
+	var _getSubtitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSubtitle");
+	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
+	class MentionItemFormatter {
+	  constructor(dialogId) {
+	    Object.defineProperty(this, _getDialog, {
+	      value: _getDialog2
+	    });
+	    Object.defineProperty(this, _getSubtitle, {
+	      value: _getSubtitle2
+	    });
+	    this.dialogId = dialogId;
+	  }
+	  format() {
+	    return {
+	      id: this.dialogId,
+	      title: this.getTitle(),
+	      subtitle: babelHelpers.classPrivateFieldLooseBase(this, _getSubtitle)[_getSubtitle]()
+	    };
+	  }
+	  getTitle() {
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]();
+	    return dialog.name;
+	  }
+	}
+	function _getSubtitle2() {
+	  var _ItemTextByChatType$d;
+	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]();
+	  if (dialog.type === im_v2_const.ChatType.user) {
+	    var _Core$getStore$getter;
+	    return (_Core$getStore$getter = im_v2_application_core.Core.getStore().getters['users/getPosition'](this.dialogId)) != null ? _Core$getStore$getter : main_core.Loc.getMessage('IM_TEXTAREA_MENTION_USER_TYPE');
+	  }
+	  return (_ItemTextByChatType$d = ItemTextByChatType[dialog.type]) != null ? _ItemTextByChatType$d : ItemTextByChatType.default;
+	}
+	function _getDialog2() {
+	  return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
+	}
+
 	// @vue/component
 	const MentionPopupContent = {
 	  name: 'MentionPopupContent',
 	  components: {
-	    MentionItem,
-	    MentionContentFooter,
-	    MentionEmptyState,
+	    ContentFooter,
+	    SearchEmptyState,
 	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
-	    MentionLoadingState
+	    LoadingState,
+	    MentionItemsContainer
 	  },
 	  props: {
 	    dialogId: {
@@ -5645,23 +6670,50 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      chatParticipantsLoaded: false,
 	      currentServerQueries: 0,
 	      needTopShadow: false,
-	      needBottomShadow: true,
-	      selectedIndex: 0,
-	      selectedItem: ''
+	      needBottomShadow: true
 	    };
 	  },
 	  computed: {
-	    itemsToShow() {
-	      return this.items.filter(dialogId => !this.exclude.includes(dialogId));
+	    dialog() {
+	      return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
 	    },
 	    items() {
-	      if (this.preparedQuery.length === 0) {
-	        if (this.needToShowRecentUsersOnStartScreen) {
-	          return this.usersFromRecent;
-	        }
-	        return this.chatParticipants;
+	      if (!this.isEmptyQuery) {
+	        return this.formattedDynamicItems(this.searchResult);
 	      }
-	      return this.searchResult;
+	      return [...this.fixedItemsToShow, ...this.dynamicItemsToShow];
+	    },
+	    fixedItemsToShow() {
+	      const items = [{
+	        id: this.copilotBotDialogId,
+	        title: new MentionItemFormatter(this.copilotBotDialogId).getTitle(),
+	        subtitle: this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE'),
+	        showCondition: this.needToShowCopilot
+	      }, {
+	        id: im_v2_const.SpecialMentionDialogId.allParticipants,
+	        title: this.loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TITLE'),
+	        subtitle: this.loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_SUBTITLE'),
+	        showCondition: this.needToShowAllParticipants
+	      }];
+	      return items.filter(item => item.showCondition).map(({
+	        id,
+	        title,
+	        subtitle
+	      }) => ({
+	        id,
+	        title,
+	        subtitle
+	      }));
+	    },
+	    dynamicItemsToShow() {
+	      const dialogIdsToExclude = this.dynamicItems.filter(dialogId => !this.exclude.includes(dialogId));
+	      return this.formattedDynamicItems(dialogIdsToExclude);
+	    },
+	    dynamicItems() {
+	      if (this.needToShowRecentUsersOnStartScreen) {
+	        return this.usersFromRecent;
+	      }
+	      return this.chatParticipants;
 	    },
 	    needToShowRecentUsersOnStartScreen() {
 	      return this.chatParticipantsLoaded && this.chatParticipants.length <= 1;
@@ -5676,17 +6728,39 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    preparedQuery() {
 	      return this.query.trim().toLowerCase();
 	    },
-	    isEmptyState() {
-	      if (this.isLoading) {
+	    isEmptyQuery() {
+	      return this.preparedQuery.length === 0;
+	    },
+	    isSearchEmptyState() {
+	      if (this.isLoading || this.isEmptyQuery) {
 	        return false;
 	      }
-	      return this.itemsToShow.length === 0;
+	      return this.items.length === 0;
 	    },
 	    searchConfig() {
 	      return {
 	        chats: this.searchChats,
 	        users: true
 	      };
+	    },
+	    copilotBotDialogId() {
+	      return this.$store.getters['users/bots/getCopilotBotDialogId'];
+	    },
+	    needToShowCopilot() {
+	      const isChannel = im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
+	      if (isChannel) {
+	        return false;
+	      }
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCopilotMentionAvailable);
+	    },
+	    needToShowAllParticipants() {
+	      const {
+	        type
+	      } = this.dialog;
+	      if (type === im_v2_const.ChatType.user) {
+	        return false;
+	      }
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.mentionAllAvailable);
 	    }
 	  },
 	  watch: {
@@ -5700,7 +6774,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (newQuery === previousQuery) {
 	        return;
 	      }
-	      this.selectedIndex = 0;
 	      void this.startSearch(newQuery);
 	    }
 	  },
@@ -5709,12 +6782,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.searchService = new MentionSearchService(this.searchConfig);
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
 	    void this.loadChatParticipants();
-	    main_core.Event.bind(window, 'keydown', this.onKeyDown);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.mention.selectItem, this.onInsertItem);
-	  },
-	  beforeUnmount() {
-	    main_core.Event.unbind(window, 'keydown', this.onKeyDown);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.mention.selectItem, this.onInsertItem);
 	  },
 	  methods: {
 	    initSettings() {
@@ -5769,103 +6836,34 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      await this.$nextTick();
 	      this.$emit('adjustPosition');
 	    },
-	    onInsertItem() {
-	      if (!main_core.Type.isArrayFilled(this.itemsToShow)) {
-	        return;
-	      }
-	      this.sendInsertMentionEvent(this.itemsToShow[this.selectedIndex]);
-	    },
-	    onItemClick({
-	      dialogId
-	    }) {
-	      this.sendInsertMentionEvent(dialogId);
-	      this.$emit('close');
-	    },
-	    sendInsertMentionEvent(dialogId) {
-	      const mentionText = this.getMentionText(dialogId);
-	      const mentionReplacement = im_v2_lib_utils.Utils.text.getMentionBbCode(dialogId, mentionText);
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
-	        mentionText,
-	        mentionReplacement,
-	        textToReplace: this.query,
-	        dialogId: this.dialogId
-	      });
-	    },
-	    getMentionText(dialogId) {
-	      if (dialogId.startsWith('chat')) {
-	        return this.$store.getters['chats/get'](dialogId, true).name;
-	      }
-	      return this.$store.getters['users/get'](dialogId, true).name;
-	    },
-	    onKeyDown(event) {
-	      if (event.key === 'ArrowDown') {
-	        this.selectedIndex = this.selectedIndex === this.itemsToShow.length - 1 ? 0 : this.selectedIndex + 1;
-	      }
-	      if (event.key === 'ArrowUp') {
-	        this.selectedIndex = this.selectedIndex === 0 ? this.itemsToShow.length - 1 : this.selectedIndex - 1;
-	      }
-	      const element = this.getDomElementById(this.selectedIndex);
-	      if (!element) {
-	        this.selectedIndex = 0;
-	      }
-	      this.selectedItem = this.itemsToShow[this.selectedIndex];
-	      this.scrollToItem(element);
-	    },
-	    scrollToItem(element) {
-	      const scrollContainer = document.querySelector('.bx-im-mention-popup-content__container .bx-im-scroll-with-gradient__content');
-	      const tabRect = main_core.Dom.getPosition(scrollContainer);
-	      const nodeRect = main_core.Dom.getPosition(element);
-	      const margin = 12; // 'bx-im-mention-popup-content__items' margin
-
-	      if (nodeRect.top < tabRect.top)
-	        // scroll up
-	        {
-	          scrollContainer.scrollTop -= tabRect.top - nodeRect.top + margin;
-	        } else if (nodeRect.bottom > tabRect.bottom)
-	        // scroll down
-	        {
-	          scrollContainer.scrollTop += nodeRect.bottom - tabRect.bottom + margin;
-	        }
-	    },
-	    onItemHover(index) {
-	      this.selectedIndex = index;
-	      this.selectedItem = this.itemsToShow[this.selectedIndex];
-	    },
-	    getDomElementById(id) {
-	      return this.$refs['mention-content'].querySelector(`[data-index="${id}"]`);
-	    },
 	    appendResult(newItems) {
 	      const filtered = this.searchResult.filter(dialogId => newItems.includes(dialogId));
 	      return [...new Set([...filtered, ...newItems])];
 	    },
 	    isChat(dialogId) {
 	      return dialogId.startsWith('chat');
+	    },
+	    formattedDynamicItems(items) {
+	      return items.map(dialogId => {
+	        return new MentionItemFormatter(dialogId).format();
+	      });
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div class="bx-im-mention-popup-content__container" ref="mention-content">
-			<ScrollWithGradient 
-				v-if="itemsToShow.length > 0" 
-				:gradientHeight="13" 
-				:containerMaxHeight="200"
-				:withShadow="false"
-			>
-				<div class="bx-im-mention-popup-content__items">
-					<MentionItem
-						v-for="(itemDialogId, index) in itemsToShow"
-						:data-index="index"
-						:dialogId="itemDialogId"
-						:contextDialogId="dialogId"
-						:query="query"
-						:selected="selectedIndex === index"
-						@itemClick="onItemClick"
-						@itemHover="onItemHover(index)"
-					/>
-				</div>
-			</ScrollWithGradient>
-			<MentionEmptyState v-if="isEmptyState" />
-			<MentionLoadingState v-if="isLoading && itemsToShow.length === 0" />
-			<MentionContentFooter :isLoading="isLoading" />
+		<div class="bx-im-mention-popup-content__container">
+			<LoadingState v-if="isLoading" />
+			<MentionItemsContainer
+				v-else
+				:dialogId="dialogId"
+				:query="query"
+				:items="items"
+				@close="$emit('close')"
+			/>
+			<SearchEmptyState v-if="isSearchEmptyState" />
+			<ContentFooter :isLoading="isLoading" />
 		</div>
 	`
 	};
@@ -5915,9 +6913,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.isCopilotType) {
 	        return [];
 	      }
-	      const copilotUserId = this.$store.getters['users/bots/getCopilotUserId'];
-	      if (copilotUserId && this.isGroupCopilotChat) {
-	        return [copilotUserId.toString()];
+	      const copilotBotDialogId = this.$store.getters['users/bots/getCopilotBotDialogId'];
+	      if (copilotBotDialogId && this.isGroupCopilotChat) {
+	        return [copilotBotDialogId];
 	      }
 	      return [];
 	    },
@@ -6041,6 +7039,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    isMessageDeleted() {
 	      return this.message.isDeleted;
 	    },
+	    isSticker() {
+	      return this.$store.getters['messages/stickers/isStickerMessage'](this.message.id);
+	    },
 	    messageText() {
 	      if (this.isFile) {
 	        return this.truncatedFileName;
@@ -6050,6 +7051,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      if (this.isMessageDeleted) {
 	        return this.loc('IM_TEXTAREA_REPLY_DELETED_TITLE');
+	      }
+	      if (this.isSticker) {
+	        return this.loc('IM_TEXTAREA_REPLY_STICKER_TITLE');
 	      }
 	      return im_v2_lib_parser.Parser.purify(this.message);
 	    },
@@ -6206,44 +7210,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<div v-else class="bx-im-message-panel__text">
 					<span class="bx-im-message-panel__forward-author">{{ forwardAuthorName }}</span>
 					<span class="bx-im-message-panel__forward-message-text">{{ messageText }}</span>
-				</div>
-			</div>
-			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const ForwardEntityPanel = {
-	  name: 'ForwardEntityPanel',
-	  props: {
-	    context: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  computed: {
-	    forwardedEntityContext() {
-	      return this.context;
-	    },
-	    config() {
-	      return this.forwardedEntityContext.entityConfig;
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-message-panel__container">
-			<div class="bx-im-message-panel__icon --forward"></div>
-			<div class="bx-im-message-panel__content">
-				<div class="bx-im-message-panel__title">{{ config.title }}</div>
-				<div class="bx-im-message-panel__text">
-					<span class="bx-im-message-panel__forward-author">author</span>
-					<span class="bx-im-message-panel__forward-message-text">message</span>
 				</div>
 			</div>
 			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
@@ -6636,7 +7602,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div v-if="isEmptyState" class="bx-im-market-apps-panel__empty-state-container">
 				<div class="bx-im-market-apps-panel__empty-state-icon"></div>
 				<div class="bx-im-market-apps-panel__empty-state-text">
-					{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE') }}
+					{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_1') }}
 				</div>
 				<div class="bx-im-market-apps-panel__empty-state-button"></div>
 			</div>
@@ -6667,7 +7633,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    EditPanel,
 	    ReplyPanel,
 	    ForwardPanel,
-	    ForwardEntityPanel,
 	    MarketAppsPanel
 	  },
 	  props: {
@@ -6695,12 +7660,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<EditPanel v-if="type === PanelType.edit" :messageId="configContext.messageId" @close="$emit('close')" />
 		<ReplyPanel v-if="type === PanelType.reply" :messageId="configContext.messageId" @close="$emit('close')" />
 		<ForwardPanel v-if="type === PanelType.forward" :context="configContext" @close="$emit('close')" />
-		<ForwardEntityPanel v-if="type === PanelType.forwardEntity" :context="configContext" @close="$emit('close')" />
 		<MarketAppsPanel v-if="type === PanelType.market" :dialogId="dialogId" />
 	`
 	};
 
-	const ICON_SIZE$2 = 24;
+	const ICON_SIZE$4 = 24;
 	const AutoDeleteSelector = {
 	  name: 'AutoDeleteSelector',
 	  components: {
@@ -6730,7 +7694,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$2,
+	    ICON_SIZE: () => ICON_SIZE$4,
 	    Color: () => im_v2_const.Color,
 	    isAutoDeleteAllowed() {
 	      return im_v2_lib_autoDelete.AutoDeleteManager.isAutoDeleteAllowed(this.dialogId);
@@ -6796,18 +7760,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const MESSAGE_ACTION_PANELS = new Set([im_v2_const.TextareaPanelType.edit, im_v2_const.TextareaPanelType.reply, im_v2_const.TextareaPanelType.forward, im_v2_const.TextareaPanelType.forwardEntity]);
+	const MESSAGE_ACTION_PANELS = new Set([im_v2_const.TextareaPanelType.edit, im_v2_const.TextareaPanelType.reply, im_v2_const.TextareaPanelType.forward]);
 	const TextareaHeight$1 = {
 	  max: 400,
 	  min: 22
 	};
-	const ICON_SIZE$3 = 24;
+	const ICON_SIZE$5 = 24;
 
 	// @vue/component
 	const ChatTextarea = {
 	  components: {
 	    UploadMenu,
 	    SmileSelector,
+	    EmoteSelector,
 	    SendButton: im_v2_component_elements_sendButton.SendButton,
 	    UploadPreviewPopup,
 	    MentionPopup,
@@ -6869,7 +7834,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$3,
+	    ICON_SIZE: () => ICON_SIZE$5,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -6882,9 +7847,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    forwardMode() {
 	      return this.panelType === im_v2_const.TextareaPanelType.forward;
 	    },
-	    forwardEntityMode() {
-	      return this.panelType === im_v2_const.TextareaPanelType.forwardEntity;
-	    },
 	    editMode() {
 	      return this.panelType === im_v2_const.TextareaPanelType.edit;
 	    },
@@ -6892,7 +7854,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.panelType === im_v2_const.TextareaPanelType.market;
 	    },
 	    isDisabled() {
-	      return this.text.trim() === '' && !this.editMode && !this.forwardMode && !this.forwardEntityMode;
+	      return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 	    },
 	    textareaPlaceholder() {
 	      if (!this.placeholder) {
@@ -6928,6 +7890,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isFocused() {
 	      return this.$refs.textarea === document.activeElement;
+	    },
+	    areStickersAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.stickersAvailable);
+	    },
+	    showSmileSelector() {
+	      return this.withSmileSelector && !this.areStickersAvailable;
+	    },
+	    showEmoteSelector() {
+	      return this.withSmileSelector && this.areStickersAvailable;
 	    }
 	  },
 	  watch: {
@@ -6944,17 +7915,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.restoreTextareaHeight();
 	    void this.restorePanel();
 	    this.initSendingService();
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.forwardEntity, this.onForwardEntity);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
+	    this.getEmitter().subscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
+	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+	    this.getEmitter().subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
 	  },
 	  mounted() {
 	    void this.initMentionManager();
@@ -6966,17 +7936,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  beforeUnmount() {
 	    this.resizeManager.destroy();
 	    this.unbindUploadingService();
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.forwardEntity, this.onForwardEntity);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
 	  },
 	  methods: {
 	    sendMessage() {
@@ -6999,7 +7968,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.clear();
 	      this.getDraftManager().clearDraft(this.dialogId);
 	      this.focus();
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.onAfterSendMessage);
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.onAfterSendMessage);
 	    },
 	    handlePanelAction(text) {
 	      if (this.editMode) {
@@ -7011,8 +7980,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          forwardIds: this.panelContext.messagesIds
 	        });
 	        im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
-	      } else if (this.forwardEntityMode) {
-	        console.error('sending forwarded entity message');
 	      } else if (this.replyMode) {
 	        this.getSendingService().sendMessage({
 	          text,
@@ -7087,13 +8054,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.clear();
 	      this.focus();
 	      this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-	    },
-	    async openForwardEntityPanel(entityConfig) {
-	      this.panelType = im_v2_const.TextareaPanelType.forwardEntity;
-	      this.panelContext.messageId = 0;
-	      this.panelContext.entityConfig = entityConfig;
-	      this.clear();
-	      this.focus();
 	    },
 	    toggleMarketPanel() {
 	      if (this.marketMode) {
@@ -7214,8 +8174,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    handleLastOwnMessageEdit(event) {
 	      event.preventDefault();
 	      const lastOwnMessageId = this.$store.getters['messages/getLastOwnMessageId'](this.dialog.chatId);
-	      const isForward = this.$store.getters['messages/isForward'](lastOwnMessageId);
-	      if (lastOwnMessageId && !isForward) {
+	      const isEditable = im_v2_lib_message.MessageManager.isEditable(lastOwnMessageId);
+	      if (isEditable) {
 	        this.openEditPanel(lastOwnMessageId);
 	      }
 	    },
@@ -7308,16 +8268,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.openReplyPanel(messageId);
 	    },
-	    onForwardEntity(event) {
-	      const {
-	        dialogId,
-	        entityConfig
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      this.openForwardEntityPanel(entityConfig);
-	    },
 	    onInsertForward(event) {
 	      const {
 	        messagesIds,
@@ -7404,7 +8354,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const {
 	        mentions = {}
 	      } = await this.getDraftManager().getDraft(this.dialogId);
-	      this.mentionManager = new MentionManager(this.$refs.textarea);
+	      this.mentionManager = new MentionManager({
+	        textareaElement: this.$refs.textarea,
+	        context: {
+	          emitter: this.getEmitter()
+	        }
+	      });
 	      this.mentionManager.setMentionReplacements(mentions);
 	      this.mentionManager.subscribe(MentionManagerEvents.showMentionPopup, event => {
 	        const {
@@ -7525,6 +8480,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onCloseComments() {
 	      this.restoreTextareaHeight();
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -7573,10 +8531,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							@click="onMarketIconClick"
 						/>
 						<SmileSelector
-							v-if="withSmileSelector"
+							v-if="showSmileSelector"
+							:dialogId="dialogId"
+						/>
+						<EmoteSelector
+							v-if="showEmoteSelector"
 							:dialogId="dialogId"
 						/>
 						<AudioInput
+							:dialogId="dialogId"
 							@inputStart="onAudioInputStart"
 							@inputResult="onAudioInputResult"
 						/>
@@ -7607,5 +8570,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Chip?.Vue??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Provider?.Service??{},BX??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=textarea.bundle.js.map

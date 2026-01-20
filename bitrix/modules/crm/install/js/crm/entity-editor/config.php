@@ -1,19 +1,19 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-CJSCore::RegisterExt('crm_entity_editor_rel', array(
+CJSCore::RegisterExt('crm_entity_editor_rel', [
 	'js' => [
 		'/bitrix/js/main/dd.js',
 		'/bitrix/js/crm/interface_form.js',
 		'/bitrix/js/crm/dialog.js',
 	],
-));
+]);
 
-return array(
+return [
 	"css" => "/bitrix/js/crm/entity-editor/css/style.css",
 	"js" => [
 		"/bitrix/js/crm/entity-editor/js/config.js",
@@ -41,6 +41,7 @@ return array(
 		"/bitrix/js/crm/entity-editor/js/product-list.js",
 		"/bitrix/js/crm/entity-editor/js/store-document-product-list.js",
 		'/bitrix/js/crm/entity-editor/js/entity-selector.js',
+		'/bitrix/js/crm/entity-editor/js/recurring/recurring-v2.js',
 	],
 	'rel' => [
 		'ui.design-tokens',
@@ -63,6 +64,7 @@ return array(
 		'ui.notification',
 		'ui.dropdown',
 		'crm_disk_uploader',
+		'crm.client-selector',
 		'crm_common',
 		'crm_entity_editor_rel',
 		'ui.forms',
@@ -76,6 +78,7 @@ return array(
 		'crm.entity-editor.field-attr',
 		'crm.entity-editor.field.phone-number-input',
 		'crm.entity-editor.duplicate.summary-list',
+		'crm.entity-editor.field.recurring',
 		'main.popup',
-	]
-);
+	],
+];

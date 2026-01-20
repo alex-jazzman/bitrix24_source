@@ -1,18 +1,24 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { BaseMenu } from 'im.v2.lib.menu';
 import { Notifier } from 'im.v2.lib.notifier';
 import { EventType } from 'im.v2.const';
 
+import type { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class SidebarMenu extends BaseMenu
 {
-	constructor()
+	emitter: EventEmitter;
+
+	constructor(applicationContext: ApplicationContext)
 	{
 		super();
 		this.id = 'im-sidebar-context-menu';
+
+		const { emitter } = applicationContext;
+		this.emitter = emitter;
 	}
 
 	getMenuOptions(): MenuOptions
@@ -33,7 +39,7 @@ export class SidebarMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'),
 			onClick: () => {
-				EventEmitter.emit(EventType.dialog.goToMessageContext, {
+				this.emitter.emit(EventType.dialog.goToMessageContext, {
 					messageId: this.context.messageId,
 					dialogId: this.context.dialogId,
 				});

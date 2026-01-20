@@ -25,6 +25,7 @@ jn.define('im/messenger/const/message-menu-action-type', (require, exports, modu
 		revote: 'revote',
 		openVoteResult: 'open-vote-result',
 		goToMessage: 'go-to-message',
+		askCopilot: 'ask-copilot',
 	});
 
 	module.exports = { MessageMenuActionType };

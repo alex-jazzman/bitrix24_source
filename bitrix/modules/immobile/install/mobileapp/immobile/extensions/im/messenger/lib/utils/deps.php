@@ -19,6 +19,7 @@ return [
 		'./src/emoji-regex',
 		'./src/promise',
 		'./src/async-queue',
+		'./src/queue',
 		'./src/model',
 		'./src/normalizer',
 	],

@@ -43,6 +43,7 @@ jn.define('calendar/event-list-view/layout', (require, exports, module) => {
 		renderCalendarView()
 		{
 			return new CalendarGrid({
+				syncInfo: this.props.syncInfo,
 				layout: this.props.layout,
 			});
 		}

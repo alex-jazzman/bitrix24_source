@@ -101,7 +101,7 @@ export class ControlPage extends FormPage
 		}
 
 		return {
-			ownerId: flowData.ownerId || (ownerId || 0),
+			ownerId: Number(flowData.ownerId || (ownerId || 0)),
 
 			notifyOnQueueOverflow: flowData.notifyOnQueueOverflow ?? this.#getCheckerNumericValue(this.#layout.notifyOnQueueOverflow),
 			notifyOnTasksInProgressOverflow: flowData.notifyOnTasksInProgressOverflow ?? this.#getCheckerNumericValue(this.#layout.notifyOnTasksInProgressOverflow),

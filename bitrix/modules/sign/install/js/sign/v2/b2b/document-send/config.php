@@ -15,6 +15,7 @@ return [
 		'sign.v2.helper',
 		'sign.v2.lang-selector',
 		'sign.v2.document-summary',
+		'bitrix24.phoneverify',
 	],
 	'skip_core' => false,
 ];

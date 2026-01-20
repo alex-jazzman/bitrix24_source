@@ -227,4 +227,9 @@ export class BaseTour implements TourInterface
 
 		return true;
 	}
+
+	getParams(): MenuBarTourParams
+	{
+		return this.#params;
+	}
 }

@@ -40,7 +40,7 @@ class CBPMixedCondition extends CBPActivityCondition
 				'operator' => $cond['operator'],
 				'valueToCheck' => $value,
 				'fieldType' => $fieldTypeObject,
-				'value' => $property ? $rootActivity->parseValue($conditionValue, $property['Type']) : null,
+				'value' => $cond['object'] ? $rootActivity->parseValue($conditionValue, $property['Type'] ?? 'string') : null,
 				'fieldName' => $property['Name'] ?? $cond['field'],
 			];
 		}
@@ -67,14 +67,7 @@ class CBPMixedCondition extends CBPActivityCondition
 			$usages[] = Bizproc\Workflow\Template\SourceType::getObjectSourceType($cond['object'], $cond['field']);
 			if (is_string($cond['value']))
 			{
-				$parsed = $ownerActivity::parseExpression($cond['value']);
-				if ($parsed)
-				{
-					$usages[] = \Bitrix\Bizproc\Workflow\Template\SourceType::getObjectSourceType(
-						$parsed['object'],
-						$parsed['field']
-					);
-				}
+				$this->collectExpressionUsages($usages, $ownerActivity, $cond['value']);
 			}
 		}
 
@@ -296,7 +289,7 @@ class CBPMixedCondition extends CBPActivityCondition
 			{
 				return $activity;
 			}
-			if (is_array($activity['Children']))
+			if (is_array($activity['Children'] ?? null))
 			{
 				$found = self::findTemplateActivity($activity['Children'], $id);
 				if ($found)

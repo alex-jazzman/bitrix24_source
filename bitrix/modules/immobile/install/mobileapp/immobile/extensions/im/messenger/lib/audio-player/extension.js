@@ -95,7 +95,7 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 					this.store.dispatch('messagesModel/update', {
 						id: nextMessageToPlay.id,
 						fields: {
-							audioPlaying: true,
+							isPlaying: true,
 						},
 					});
 
@@ -144,7 +144,7 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 			this.store.dispatch('messagesModel/update', {
 				id: this.playingMessageId,
 				fields: {
-					audioPlaying: isPlaying,
+					isPlaying,
 				},
 			});
 		}

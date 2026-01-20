@@ -1,0 +1,22 @@
+.tasks-field-replication-wrapper {
+	display: flex;
+	gap: 14px;
+}
+
+.tasks-field-replication-title {
+	flex-shrink: 0;
+	width: 160px;
+	line-height: 25px;
+}
+
+.tasks-field-replication-content {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.tasks-field-replication-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}

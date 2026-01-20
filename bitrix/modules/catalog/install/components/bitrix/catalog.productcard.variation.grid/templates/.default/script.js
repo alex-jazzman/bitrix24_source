@@ -397,7 +397,7 @@
 	        _this4.addCellToTable(tableRow, store.title, false, 'left');
 	        _this4.addCellToTable(tableRow, store.quantityCommon, false);
 	        if (_this4.isShowedStoreReserve) {
-	          var quantityReservedNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<a class=\"main-grid-cell-content-catalog-reserved-quantity\">", "</a>"])), store.quantityReserved);
+	          var quantityReservedNode = _this4.reservedDealsSliderLink ? main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<a class=\"main-grid-cell-content-catalog-reserved-quantity\">", "</a>"])), store.quantityReserved) : store.quantityReserved;
 	          main_core.Event.bind(quantityReservedNode, 'click', _this4.openDealsWithReservedProductSlider.bind(_this4, rowId, store.storeId));
 	          _this4.addCellToTable(tableRow, quantityReservedNode, false);
 	          var quantityAvailable = parseInt(store.quantityAvailable, 10);

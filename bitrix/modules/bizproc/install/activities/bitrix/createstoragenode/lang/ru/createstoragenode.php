@@ -1,0 +1,9 @@
+<?php
+
+$MESS ['BPCSN_DESCRIPTION_TITLE_FIELD_NAME'] = "Название";
+$MESS ['BPCSN_DESCRIPTION_DESCRIPTION_FIELD_NAME'] = "Описание";
+$MESS ['BPCSN_DESCRIPTION_CODE_FIELD_NAME'] = "Символьный код хранилища";
+$MESS ['BPCSN_DESCRIPTION_RETURN_CODE_FIELD_NAME'] = "Символьный код записи";
+$MESS ['BPCSN_DESCRIPTION_SELECTED_FIELDS_NAME'] = "Добавить поле";
+$MESS ['BPCSN_DESCRIPTION_SELECTED_FIELD_CODE'] = "Код поля";
+$MESS ['BPCSN_DESCRIPTION_MODE_FIELD_NAME'] = "Обновить хранилище, если уже существует";

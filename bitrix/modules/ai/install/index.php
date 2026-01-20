@@ -150,10 +150,11 @@ class AI extends \CModule
 
 		// module
 		registerModule('ai');
+		$moduleLoaded = Loader::includeModule('ai');
 
 		try
 		{
-			if (Loader::includeModule('ai') && Facade\Bitrix24::shouldUseB24() === false)
+			if ($moduleLoaded && !$this->isCloudInstallation())
 			{
 				$registration = new Registration('en');
 				$autoRegisterResult = $registration->tryAutoRegister();
@@ -180,7 +181,6 @@ class AI extends \CModule
 		$eventManager->registerEventHandler('intranet', 'onSettingsProvidersCollect', 'ai', '\\Bitrix\\AI\\Handler\\Intranet', 'onSettingsProvidersCollect');
 		/** @see \Bitrix\AI\Handler\Baas */
 		$eventManager->registerEventHandler('baas', 'onPackagePurchased', 'ai', '\\Bitrix\\AI\\Handler\\Baas', 'onPackagePurchased');
-
 		// agents
 		/** @see \Bitrix\AI\QueueJob::clearOldAgent */
 		CAgent::AddAgent('Bitrix\AI\QueueJob::clearOldAgent();', 'ai', 'N', 120);
@@ -192,50 +192,16 @@ class AI extends \CModule
 			'ai',
 		);
 
-		if ((Loader::includeModule('ai') && Facade\Bitrix24::shouldUseB24()))
+		if ($moduleLoaded)
 		{
-			\COption::SetOptionString(
-				'ai',
-				'bitrixaudio_modules',
-				json_encode(['crm'])
-			);
-			\COption::SetOptionString(
-				'ai',
-				'bitrixaudio_availableIn',
-				json_encode(['crm_copilot_fill_item_from_call_engine_audio'])
-			);
-			\COption::SetOptionString(
-				'ai',
-				'bitrixaudio_portalSettingsItemsToForceReset',
-				json_encode(['crm_copilot_fill_item_from_call_engine_audio'])
-			);
-
-			/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent */
-			\CAgent::AddAgent(
-				'\Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent();',
-				'ai',
-				interval: 3600,
-				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-			);
-
-			/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent */
-			\CAgent::AddAgent(
-				'\Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent();',
-				'ai',
-				interval: 3600,
-				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-			);
-		}
-
-		if ((Loader::includeModule('ai') && !Facade\Bitrix24::shouldUseB24()))
-		{
-			/** @see \Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent */
-			\CAgent::AddAgent(
-				'\Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent();',
-				'ai',
-				interval: 3600,
-				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-			);
+			if ($this->isCloudInstallation())
+			{
+				$this->configureCloudBitrixGptFeatures();
+			}
+			else
+			{
+				$this->configureBoxBitrixGptFeatures();
+			}
 		}
 
 		// rights
@@ -252,6 +218,7 @@ class AI extends \CModule
 	{
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ai/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ai/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ai/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 
 		return true;
 	}
@@ -348,8 +315,91 @@ class AI extends \CModule
 		return true;
 	}
 
+	private function configureCloudBitrixGptFeatures(): void
+	{
+		$options = [
+			'modules' => ['crm', 'im', 'socialnetwork', 'calendar', 'tasks', 'mail', 'catalog', 'landing', 'call'],
+			'qualities' => ['fields_highlight', 'translate', 'scoring', 'meeting_processing', 'give_advice'],
+			'availableIn' => [
+				'crm_copilot_fill_item_from_call_engine_text',
+				'crm_copilot_call_assessment_engine_code',
+				'im_chat_answer_provider',
+				'engine_text',
+				'resume_transcription',
+				'tasks_flows_text_generate_engine',
+			],
+			'portalSettingsItemsToForceReset' => [
+				'crm_copilot_fill_item_from_call_engine_text',
+				'crm_copilot_call_assessment_engine_code',
+				'im_chat_answer_provider',
+				'engine_text',
+				'resume_transcription',
+				'tasks_flows_text_generate_engine',
+			],
+		];
+		\COption::SetOptionString('ai', 'bitrixgpt_options', json_encode($options));
+		\COption::SetOptionString('ai', 'bitrixgpt_enabled', 'Y');
+
+		\COption::SetOptionString(
+			'ai',
+			'bitrixaudio_portalSettingsItemsToForceReset',
+			json_encode([
+				'crm_copilot_fill_item_from_call_engine_audio',
+				'transcribe_track',
+				'im_file_transcription_provider'
+			])
+		);
+
+		/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent */
+		\CAgent::AddAgent(
+			'\Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent();',
+			'ai',
+			interval: 3600,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+		);
+
+		/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent */
+		\CAgent::AddAgent(
+			'\Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent();',
+			'ai',
+			interval: 3600,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+		);
+
+		/** @see \Bitrix\AI\Agents\EngineSettings::enforceEngineBaselineAgent */
+		\CAgent::AddAgent(
+			'\Bitrix\AI\Agents\EngineSettings::enforceEngineBaselineAgent();',
+			'ai',
+			interval: 3600,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 3600, 'FULL'),
+		);
+	}
+
+	private function configureBoxBitrixGptFeatures(): void
+	{
+		/** @see \Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent */
+		\CAgent::AddAgent(
+			'\Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent();',
+			'ai',
+			interval: 3600,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+		);
+		/** @see \Bitrix\AI\Agents\EngineSettings::resetFlowsToBGPTAgent */
+		\CAgent::AddAgent(
+			'\Bitrix\AI\Agents\EngineSettings::resetFlowsToBGPTAgent();',
+			'ai',
+			interval: 3600,
+			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+		);
+	}
+
 	private function getConnectionType(): string
 	{
 		return \Bitrix\Main\Application::getConnection()->getType();
+	}
+
+	private function isCloudInstallation(): bool
+	{
+		return (defined('BX24_HOST_NAME') && BX24_HOST_NAME !== '');
 	}
 }

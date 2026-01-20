@@ -7,4 +7,7 @@ return [
 	'services' => require __DIR__ . '/config/services.php',
 	'messenger' => require __DIR__ . '/config/messenger.php',
 	'consistency' => require __DIR__ . '/config/consistency.php',
+	'events' => require __DIR__ . '/config/events.php',
+	'rest' => require __DIR__ . '/config/rest.php',
+	'aiassistant.marta' => require __DIR__ . '/config/marta.php',
 ];

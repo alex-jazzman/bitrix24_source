@@ -150,7 +150,7 @@ BX.namespace('Tasks.Component');
 				}.bind(this));
 			},
 
-			restrictResponsible: function()
+			restrictResponsible: async function()
 			{
 				if(this.vars.responsibleRestrLock)
 				{

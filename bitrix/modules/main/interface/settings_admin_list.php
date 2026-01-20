@@ -35,7 +35,7 @@ $bNeedSort = false;
 foreach($aAllCols as $header)
 {
 	echo '<option value="'.$header["id"].'">'.(!empty($header["name"]) ? $header["name"] : $header["content"]).'</option>';
-	if($header["sort"] <> "")
+	if(!empty($header["sort"]))
 	{
 		$bNeedSort = true;
 	}
@@ -80,7 +80,7 @@ $by = mb_strtoupper($aOptions["by"]);
 $order = mb_strtoupper($aOptions["order"]);
 	foreach($aAllCols as $header)
 	{
-		if($header["sort"] <> "")
+		if(!empty($header["sort"]))
 		{
 			echo '<option value="'.$header["sort"].'"'.($by == mb_strtoupper($header["sort"])? ' selected':'').'>'.(!empty($header["name"]) ? $header["name"] : $header["content"]).'</option>';
 		}

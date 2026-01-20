@@ -64,6 +64,9 @@ export class ConfigurationPage extends BaseSettingsPage
 		let cardsProductPropertiesSection = this.#buildCardsProductPropertiesSection();
 		cardsProductPropertiesSection?.renderTo(contentNode);
 
+		const biconnectorSettingsSection = this.#buildBIConnectorSettingsSection();
+		biconnectorSettingsSection?.renderTo(contentNode);
+
 		let additionalSettingsSection = this.#buildAdditionalSettingsSection();
 		additionalSettingsSection?.renderTo(contentNode);
 
@@ -409,6 +412,51 @@ export class ConfigurationPage extends BaseSettingsPage
 						googleKeyProductPropertiesRow.show();
 					}
 				});
+		}
+
+		return settingsSection;
+	}
+
+	#buildBIConnectorSettingsSection(): ?SettingsSection
+	{
+		if (!this.hasValue('sectionBIConnector'))
+		{
+			return;
+		}
+
+		const biconnectorSettingsSection = new Section(this.getValue('sectionBIConnector'));
+
+		const settingsSection = new SettingsSection({
+			section: biconnectorSettingsSection,
+			parent: this,
+		});
+
+		if (this.hasValue('biconnectorDashboardLanguage'))
+		{
+			const alert = new BX.UI.Alert({
+				text: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT'),
+				inline: true,
+				size: BX.UI.Alert.Size.SMALL,
+				color: BX.UI.Alert.Color.PRIMARY,
+				animated: true,
+			});
+			const alertRow = new Row({
+				content: alert.getContainer(),
+				className: '--block',
+			});
+
+			const biconnectorLanguage = new Selector(this.getValue('biconnectorDashboardLanguage'));
+			const biconnectorLanguageRow = new Row({
+				separator: 'bottom',
+				className: '--block',
+			});
+
+			new SettingsRow({
+				row: alertRow,
+				parent: settingsSection,
+			});
+
+			ConfigurationPage.addToSectionHelper(biconnectorLanguage, settingsSection, biconnectorLanguageRow);
 		}
 
 		return settingsSection;

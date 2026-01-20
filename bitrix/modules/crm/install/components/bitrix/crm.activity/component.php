@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Integration\IntranetManager;
+use Bitrix\Crm\Integration\Report\DisablingHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
@@ -52,6 +53,11 @@ if ($arParams['SEF_MODE'] === 'Y')
 		'kanban' => 'kanban/',
 		'widget' => 'widget/',
 	];
+
+	if (DisablingHelper::areMyReportsInDemoMode())
+	{
+		unset($defaultUrlTemplates404['widget']);
+	}
 
 	$urlTemplates = CComponentEngine::MakeComponentUrlTemplates($defaultUrlTemplates404, $arParams['SEF_URL_TEMPLATES']);
 	$variableAliases = CComponentEngine::MakeComponentVariableAliases([], $arParams['VARIABLE_ALIASES']);

@@ -57,7 +57,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		{
 			const userList = this.prepareItems(this.getUserList());
 
-			NavigationSelector.open(
+			void NavigationSelector.open(
 				{
 					userList,
 				},

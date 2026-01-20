@@ -194,6 +194,7 @@ $zone = \Bitrix\Landing\Manager::getZone();
 			},
 			isNeedCreateCopilotPopup: isNeedCopilotPopup,
 			lang: lang,
+			zone: '<?= CUtil::JSEscape($zone)?>',
 		});
 
 		if (isNeedCopilotPopup && SiteTile.popupCopilot)

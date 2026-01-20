@@ -93,6 +93,13 @@ export default class PresetCollection extends EventEmitter
 		}
 	}
 
+	getAllPresets(): Array<Preset>
+	{
+		return Object.keys(this.presets)
+			.map((id) => this.getPresetById(id))
+			.filter(Boolean);
+	}
+
 	getPresetByItemValue(value: ColorValue | GradientValue | null): ?Preset
 	{
 		if (value === null)

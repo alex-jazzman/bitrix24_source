@@ -32,8 +32,8 @@ else
 {
 	$sTableID = 'b_baas_purchased_packages';
 	$lAdmin = new CAdminUiList($sTableID);
-	$package = Baas\Service\PackageService::getInstance()->getByCode($packageCode);
-	$purchaseInfo = $package->getPurchaseInfo();
+	$package = Baas\Public\Provider\PackageProvider::create()->getByCode($packageCode);
+	$purchaseInfo = $package->getPurchaseInfo(includeDepleted: true);
 	$serviceManager = Baas\Baas::getInstance()->getServiceManager();
 	if ($purchaseInfo->getCount() > 0)
 	{

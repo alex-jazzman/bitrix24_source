@@ -134,15 +134,6 @@ $aMenu[] = [
 	"LINK"  => "javascript:BCPProcessImport();",
 	"ICON"  => "",
 ];
-$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'autosave_temp_2025', 0);
-if ($isAvailable)
-{
-	$aMenu[] = [
-		'TEXT' => GetMessage("BIZPROC_WFEDIT_MENU_GLOBAL_DRAFTS_TITLE"),
-		'TITLE' => GetMessage("BIZPROC_WFEDIT_MENU_GLOBAL_DRAFTS_TITLE"),
-		'LINK' => 'javascript:BX.Bizproc.WorkflowEditComponent.Globals.showDrafts("' . CUtil::JSEscape($arResult['DOCUMENT_TYPE_SIGNED']) . '");',
-	];
-}
 
 $saveUrl = $arResult["LIST_PAGE_URL"];
 $applyUrl = $arResult["EDIT_PAGE_TEMPLATE"];
@@ -155,6 +146,11 @@ if ($arParams['BACK_URL'])
 <script>
 	let isSaving = false;
 	var BCPEmptyWorkflow =  <?=$ID > 0 ? 'false' : 'true'?>;
+
+	function showDrafts()
+	{
+		BX.Bizproc.WorkflowEditComponent.Globals.showDrafts("<?= CUtil::JSEscape($arResult['DOCUMENT_TYPE_SIGNED']) ?>");
+	}
 
 	function BCPProcessExport()
 	{
@@ -209,7 +205,15 @@ if ($arParams['BACK_URL'])
 					}).then((response) => {
 						let applyUrl = '<?= CUtil::JSEscape($applyUrl)?>';
 						const url = applyUrl.replace('#ID#', response.data);
-						applyUrl = BX.Uri.addParam(url, {back_url: '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL'])) ?>'});
+						const backUrl = '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL']))?>';
+						if (backUrl)
+						{
+							applyUrl = BX.Uri.addParam(url, {back_url: backUrl});
+						}
+						else
+						{
+							applyUrl = url;
+						}
 						window.location = applyUrl;
 					}).catch((response) => {
 						alert('<?=GetMessageJS("BIZPROC_WFEDIT_SAVE_ERROR")?>\n' + response.errors[0].message);
@@ -307,7 +311,15 @@ if ($arParams['BACK_URL'])
 			const saveUrl = '<?= CUtil::JSEscape($saveUrl)?>';
 			let applyUrl = '<?= CUtil::JSEscape($applyUrl)?>';
 			const url = applyUrl.replace('#ID#', response.data);
-			applyUrl = BX.Uri.addParam(url, {back_url: '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL'])) ?>'});
+			const backUrl = '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL']))?>';
+			if (backUrl)
+			{
+				applyUrl = BX.Uri.addParam(url, {back_url: backUrl});
+			}
+			else
+			{
+				applyUrl = url;
+			}
 
 			BCPEmptyWorkflow = false;
 			BPTemplateIsModified = false;

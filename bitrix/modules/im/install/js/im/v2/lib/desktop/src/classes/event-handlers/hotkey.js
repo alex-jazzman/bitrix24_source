@@ -18,15 +18,6 @@ export class HotkeyHandler
 	#bindHotkeys()
 	{
 		Event.bind(window, 'keydown', (event) => {
-			const reloadCombination = Utils.key.isCombination(event, 'Ctrl+R');
-			if (reloadCombination)
-			{
-				DesktopApi.reloadWindow();
-				Logger.desktop('NOTICE: User reload window (hotkey)');
-
-				return;
-			}
-
 			const logFolderCombination = Utils.key.isCombination(event, 'Ctrl+Shift+L');
 			if (logFolderCombination)
 			{

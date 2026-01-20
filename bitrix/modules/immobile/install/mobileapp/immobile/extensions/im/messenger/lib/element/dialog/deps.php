@@ -31,6 +31,7 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/params',
 		'im:messenger/lib/parser',
+		'im:messenger/lib/parser/functions/common',
 		'im:messenger/lib/date-formatter',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/feature',
@@ -42,6 +43,7 @@ return [
 		'im:messenger/controller/dialog/lib/helper/text',
 		'im:messenger/controller/dialog/lib/sidebar',
 		'im:messenger/lib/permission-manager',
+		'im:messenger/lib/reaction-assets-manager',
 	],
 	'bundle' => [
 		'./src/message/element/attach/attach',
@@ -113,5 +115,10 @@ return [
 		'./src/message/vote/message',
 		'./src/message/vote/factory',
 		'./src/message/vote/handler',
+
+		'./src/message/video-note',
+		'./src/message/video-note-text',
+		'./src/message/sticker',
+		'./src/message/deleted-sticker',
 	],
 ];

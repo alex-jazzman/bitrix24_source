@@ -85,30 +85,34 @@
 		{
 			activityType = template[i].Type.toLowerCase();
 			if (activities[activityType])
-				activityData =  activities[activityType];
+			{
+				activityData = activities[activityType];
+			}
 
 			if (activityData && activityData['RETURN'])
 			{
 				for (key in activityData['RETURN'])
 				{
 					if (!activityData['RETURN'].hasOwnProperty(key))
+					{
 						continue;
+					}
 
 					result.push({
-						text: activityData['RETURN'][key].NAME,
+						text: activityData['RETURN'][key].NAME || activityData['RETURN'][key].Name,
 						description: template[i].Properties.Title || activityData.NAME,
-						value: '{='+template[i].Name+':'+key+'}',
+						value: '{=' + template[i].Name + ':' + key + '}',
 						propertyObject: template[i].Name,
 						propertyField: key,
 						property: {
-							Name: activityData['RETURN'][key].NAME,
-							Type: activityData['RETURN'][key].TYPE,
-							Options: activityData['RETURN'][key].OPTIONS || null,
+							Name: activityData['RETURN'][key].NAME || activityData['RETURN'][key].Name,
+							Type: activityData['RETURN'][key].TYPE || activityData['RETURN'][key].Type,
+							Options: activityData['RETURN'][key].OPTIONS || activityData['RETURN'][key].Options || null,
 						}
 					});
 				}
 			}
-			else if (activityData && BX.type.isArray(activityData['ADDITIONAL_RESULT']))
+			if (activityData && BX.type.isArray(activityData['ADDITIONAL_RESULT']))
 			{
 				var props = template[i]['Properties'];
 				activityData['ADDITIONAL_RESULT'].forEach(function(addProperty)

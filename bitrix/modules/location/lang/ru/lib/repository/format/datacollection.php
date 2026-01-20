@@ -26,3 +26,6 @@ $MESS ['LOCATION_REPO_FRMT_BR_DESCR'] = "Avenida Presidente Affonso Camargo, 749
 $MESS ['LOCATION_REPO_FRMT_ADM_LEVEL_2'] = "Район";
 $MESS ['LOCATION_REPO_FRMT_ADM_LEVEL_2_MUNICIPALITY'] = "Муниципалитет";
 $MESS ['LOCATION_REPO_FRMT_DE_NAME'] = "Германия";
+$MESS ['LOCATION_REPO_FRMT_UZ_NAME'] = "Узбекистан";
+$MESS ['LOCATION_REPO_FRMT_UZ_DESCR'] = "100084<br/>Узбекистан<br/>Ташкент<br/>Юнусабадский район<br/>ул. Инжобод, д. 32, эт. 6, кв. 10";
+

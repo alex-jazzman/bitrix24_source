@@ -109,6 +109,13 @@ $fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleI
 /** @var \Bitrix\Crm\Conversion\EntityConversionConfig $conversionConfig */
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
 
+$userIds = array_merge(
+	array_column($arResult['QUOTE'], 'ASSIGNED_BY_ID'),
+	array_column($arResult['QUOTE'], 'MODIFY_BY'),
+	array_column($arResult['QUOTE'], 'CREATED_BY'),
+);
+$userRender = \Bitrix\Crm\Grid\Render\User\ClickableUser::createByUserIds($userIds);
+
 foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 {
 	$jsTitle = isset($arQuote['~TITLE']) ? CUtil::JSEscape($arQuote['~TITLE']) : '';
@@ -276,14 +283,13 @@ foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 			'TITLE' => '<a target="_self" href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'">'.$arQuote['TITLE'].'</a>',
 			'CLOSED' => ($arQuote['CLOSED'] ?? null) == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 			'ASSIGNED_BY' => $arQuote['~ASSIGNED_BY_ID'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "QUOTE_{$arQuote['~ID']}_RESPONSIBLE",
-						'USER_ID' => $arQuote['~ASSIGNED_BY_ID'],
-						'USER_NAME'=> $arQuote['ASSIGNED_BY'],
-						'USER_PROFILE_URL' => $arQuote['PATH_TO_USER_PROFILE']
-					)
-				) : '',
+				? $userRender->render(
+					$arQuote['~ASSIGNED_BY_ID'],
+					'ASSIGNED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
 			'COMMENTS' => htmlspecialcharsback($arQuote['COMMENTS'] ?? null),
 			'SUM' => '<nobr>'.$arQuote['FORMATTED_OPPORTUNITY'].'</nobr>',
 			'OPPORTUNITY' => '<nobr>'.$arQuote['OPPORTUNITY'].'</nobr>',
@@ -300,23 +306,21 @@ foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 				)
 			),
 			'CREATED_BY' => ($arQuote['~CREATED_BY'] ?? null) > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					[
-						'PREFIX' => "QUOTE_{$arQuote['~ID']}_CREATOR",
-						'USER_ID' => $arQuote['~CREATED_BY'],
-						'USER_NAME'=> $arQuote['CREATED_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arQuote['PATH_TO_USER_CREATOR']
-					]
-				) : '',
+				? $userRender->render(
+					$arQuote['~CREATED_BY'],
+					'CREATED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
 			'MODIFY_BY' => ($arQuote['~MODIFY_BY'] ?? null) > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "QUOTE_{$arQuote['~ID']}_MODIFIER",
-						'USER_ID' => $arQuote['~MODIFY_BY'],
-						'USER_NAME'=> $arQuote['MODIFY_BY_FORMATTED_NAME'],
-						'USER_PROFILE_URL' => $arQuote['PATH_TO_USER_MODIFIER']
-					)
-				) : '',
+				? $userRender->render(
+					$arQuote['~MODIFY_BY'],
+					'MODIFY_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: '',
 			'ENTITIES_LINKS' => $arQuote['FORMATTED_ENTITIES_LINKS'],
 			'CLOSEDATE' => empty($arQuote['CLOSEDATE']) ? '' : '<nobr>'.$arQuote['CLOSEDATE'].'</nobr>',
 			'ACTUAL_DATE' => empty($arQuote['ACTUAL_DATE']) ? '' : '<nobr>'.$arQuote['ACTUAL_DATE'].'</nobr>',

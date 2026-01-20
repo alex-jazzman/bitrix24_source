@@ -1,2 +1,2 @@
 export { Interface } from './interface';
-export type { InterfaceModelParams } from './types';
+export type { DeadlineUserOption, InterfaceModelParams, StateFlags, UserFieldScheme } from './types';

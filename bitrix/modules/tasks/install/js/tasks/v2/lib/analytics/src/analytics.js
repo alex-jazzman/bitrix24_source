@@ -5,9 +5,9 @@ import { FileOrigin } from 'ui.uploader.core';
 import { Analytics, CardType } from 'tasks.v2.const';
 import type { AnalyticsParams } from 'tasks.v2.application.task-card';
 
-const settings: AnalyticsSettings = Extension.getSettings('tasks.v2.lib.analytics');
+export const settings: AnalyticsSettings = Extension.getSettings('tasks.v2.lib.analytics');
 
-type AnalyticsSettings = {
+export type AnalyticsSettings = {
 	userType: string,
 	isDemo: boolean,
 };

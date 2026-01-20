@@ -1,0 +1,25 @@
+<?php
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_API_KEY"] = "API Key:";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_API_KEY_MSGVER_1"] = "API Key:";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANGE_ANY_TIME"] = "You can change or disconnect at any time.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANGE_ANY_TIME_MSGVER_1"] = "You can change or disconnect at any time.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL"] = "Channel:";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CONNECTED"] = "Wazzup is connected";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I want to </div><div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Connect</span> WhatsApp and Telegram via Wazzup</div>";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CONNECT_STEP_NEW"] = "To connect, you need to #LINK_START#perform a series of steps#LINK_END#.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CONNECT_TITLE"] = "Connect WhatsApp and Telegram to Open Line";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_CONNECT_TITLE_MSGVER_1"] = "Connect WhatsApp and Telegram to Open Line";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_COPY"] = "Copy";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_FINAL_FORM_DESCRIPTION"] = "Wazzup has been successfully connected to your Open Channel. Now all requests will be automatically routed to your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_FINAL_FORM_DESCRIPTION_MSGVER_1"] = "Wazzup has been successfully connected to your Open Channel. Now all requests will be automatically routed to your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_LIST_ITEM_1"] = "Contacts and correspondence are stored in the CRM.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_LIST_ITEM_2"] = "CRM helps guide clients through the sales funnel.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_LIST_ITEM_3"] = "You respond to clients quickly and wherever they prefer.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_LIST_ITEM_4"] = "Customer questions are automatically distributed among managers according to queue rules.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_SUBTITLE"] = "Respond to clients wherever they are comfortable and used to. If a client prefers to message you on WhatsApp or Telegram, give them that option. You'll see, clients will appreciate it.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_SUBTITLE_MSGVER_1"] = "Respond to clients wherever they are comfortable and used to. If a client prefers to message you on WhatsApp or Telegram, give them that option. You'll see, clients will appreciate it.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_TITLE"] = "Chat with clients on WhatsApp and Telegram.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INFO"] = "Information";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Instructions</span> for connecting WhatsApp and Telegram:";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_I_KNOW_TOKEN"] = "I know the token";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_TESTED"] = "Testing the connection";

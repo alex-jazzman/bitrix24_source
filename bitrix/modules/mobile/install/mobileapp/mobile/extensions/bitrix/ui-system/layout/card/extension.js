@@ -4,7 +4,8 @@
 jn.define('ui-system/layout/card', (require, exports, module) => {
 	const { Component, Indent, Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
-	const { CardDesign } = require('ui-system/layout/card/src/card-design-enum');
+	const { CardDesign } = require('ui-system/layout/card/src/design-enum');
+	const { CardCorner } = require('ui-system/layout/card/src/corner-enum');
 	const { BadgeStatus, BadgeStatusMode } = require('ui-system/blocks/badges/status');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
@@ -24,6 +25,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	 * @property {boolean} [selected=true]
 	 * @property {boolean} [accent=false]
 	 * @property {boolean} [border=false]
+	 * @property {boolean} [corner=CardCorner.L]
 	 * @property {boolean} [withPressed=false]
 	 * @property {BadgeStatusMode} [badgeMode=null]
 	 * @property {function} [onClose=null]
@@ -44,6 +46,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			style = {},
 			border = false,
 			design = CardDesign.PRIMARY,
+			corner = CardCorner.L,
 			badgeMode = null,
 			hideCross = true,
 			selected = false,
@@ -60,6 +63,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		const paddingRight = right || all || horizontal ? 0 : Component.cardPaddingLr.toNumber();
 		const paddingTop = top || all || vertical ? 0 : Component.cardPaddingT.toNumber();
 		const paddingBottom = bottom || all || vertical ? 0 : Component.cardPaddingB.toNumber();
+		const borderRadius = CardCorner.resolve(corner, CardCorner.L).toNumber();
 
 		const {
 			backgroundColor: designBackgroundColor,
@@ -67,7 +71,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		} = CardDesign.resolve(design, CardDesign.PRIMARY).getStyle({ withPressed });
 
 		const cardStyle = {
-			borderRadius: Component.cardCorner.toNumber(),
+			borderRadius,
 			backgroundColor: designBackgroundColor,
 		};
 
@@ -159,6 +163,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		withPressed: PropTypes.bool,
 		border: PropTypes.bool,
 		design: PropTypes.instanceOf(CardDesign),
+		corner: PropTypes.instanceOf(CardCorner),
 		badgeMode: PropTypes.instanceOf(BadgeStatusMode),
 		excludePaddingSide: PropTypes.objectOf(PropTypes.bool),
 		onClose: PropTypes.func,
@@ -168,6 +173,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	module.exports = {
 		Card,
 		CardDesign,
+		CardCorner,
 		BadgeStatusMode,
 	};
 });

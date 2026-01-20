@@ -40,6 +40,7 @@ $MESS["CAT_CONFIG_SETTINGS_PRODUCT_SETTINGS_CURRENT_CATALOG"] = "Processing cata
 $MESS["CAT_CONFIG_SETTINGS_PRODUCT_SETTINGS_UPDATE_TITLE"] = "Update product preferences";
 $MESS["CAT_CONFIG_SETTINGS_PRODUCT_SETTINGS_UPDATE_WAIT"] = "This may take a while. Please wait.";
 $MESS["CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION"] = "Select how the goods will be reserved when added to a deal.";
+$MESS["CAT_CONFIG_SETTINGS_RESERVATION_SECTION_DESCRIPTION_1C"] = "Reserves in 1C Inventory Management mode are controlled on the 1C end.";
 $MESS["CAT_CONFIG_SETTINGS_RESERVATION_SECTION_TITLE"] = "Reservation options";
 $MESS["CAT_CONFIG_SETTINGS_RETURN"] = "Back";
 $MESS["CAT_CONFIG_SETTINGS_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS"] = "Set \"Tax Included\" option for all new products and SKU's";

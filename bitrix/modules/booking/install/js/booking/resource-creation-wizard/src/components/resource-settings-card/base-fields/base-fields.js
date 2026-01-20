@@ -1,23 +1,34 @@
-import { Text } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-import { Dialog, ItemOptions } from 'ui.entity-selector';
+import { Model } from 'booking.const';
+import { BIcon, Set as IconSet } from 'ui.icon-set.api.vue';
+import { Actions } from 'ui.icon-set.api.core';
 
-import { EntitySelectorEntity, Model } from 'booking.const';
-import { ResourceTypeModel } from 'booking.model.resource-types';
-import { resourceTypeService } from 'booking.provider.service.resources-type-service';
-import { EmptyRichLoc } from 'booking.component.help-desk-loc';
+import { AvatarField } from './components/avatar-field';
+import { NameField } from './components/name-field';
+import { TypeField } from './components/type-field';
+import { DescriptionField } from './components/description-field';
+import { TitleLayout } from '../title-layout/title-layout';
+import { TextLayout } from '../text-layout/text-layout';
 
-import { ErrorMessage } from '../error-message/error-message';
 import './base-fields.css';
 
+// @vue/component
 export const BaseFields = {
 	name: 'ResourceSettingsCardBaseFields',
-	emits: [
-		'nameUpdate',
-		'typeUpdate',
-	],
+	components: {
+		TitleLayout,
+		TextLayout,
+		NameField,
+		TypeField,
+		DescriptionField,
+		AvatarField,
+		BIcon,
+	},
 	props: {
 		initialResourceName: {
+			type: String,
+			default: '',
+		},
+		initialResourceDescription: {
 			type: String,
 			default: '',
 		},
@@ -25,26 +36,31 @@ export const BaseFields = {
 			type: Object,
 			required: true,
 		},
+		initialResourceAvatarUrl: {
+			type: String,
+			default: '',
+		},
+	},
+	emits: [
+		'nameUpdate',
+		'descriptionUpdate',
+		'typeUpdate',
+		'avatarFileUpdate',
+	],
+	setup(): { IconSet: IconSet }
+	{
+		return {
+			IconSet,
+		};
 	},
 	data(): Object
 	{
 		return {
-			entityId: EntitySelectorEntity.ResourceType,
-			typeSelectorId: `booking-resource-creation-types${Text.getRandom()}`,
-			typeName: this.initialResourceType.typeName,
+			additionalInfoExpanded: this.initialAdditionalInfoExpanded(),
+			Actions,
 		};
 	},
 	computed: {
-		resourceName: {
-			get(): string
-			{
-				return this.initialResourceName;
-			},
-			set(name: string | null = '')
-			{
-				this.$emit('nameUpdate', name);
-			},
-		},
 		invalidResourceName(): boolean
 		{
 			return this.$store.state[Model.ResourceCreationWizard].invalidResourceName;
@@ -52,115 +68,6 @@ export const BaseFields = {
 		invalidResourceType(): boolean
 		{
 			return this.$store.state[Model.ResourceCreationWizard].invalidResourceType;
-		},
-		errorMessage(): string
-		{
-			return this.loc('BRCW_SETTINGS_CARD_REQUIRED_FIELD');
-		},
-	},
-	methods: {
-		showTypeSelector(): void
-		{
-			const dialog = this.getTypeSelectorDialog(this.$refs.typeSelectorAngle);
-
-			dialog.show();
-		},
-		getTypeSelectorDialog(bindElement: HTMLElement): Dialog
-		{
-			const typeSelectorDialog = Dialog.getById(this.typeSelectorId);
-
-			if (typeSelectorDialog)
-			{
-				typeSelectorDialog.setTargetNode(bindElement);
-
-				return typeSelectorDialog;
-			}
-
-			return new Dialog({
-				id: this.typeSelectorId,
-				targetNode: bindElement,
-				width: 300,
-				height: 400,
-				enableSearch: true,
-				dropdownMode: true,
-				context: 'bookingResourceCreationType',
-				multiple: false,
-				cacheable: true,
-				preselectedItems: [[this.entityId, this.initialResourceType?.typeId]],
-				entities: [
-					{
-						id: this.entityId,
-						dynamicLoad: true,
-						dynamicSearch: true,
-					},
-				],
-				popupOptions: {
-					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-				},
-				searchOptions: {
-					allowCreateItem: true,
-					footerOptions: {
-						label: this.loc('BRCW_SETTINGS_CARD_TYPE_SELECTOR_CREATE_BTN'),
-					},
-				},
-				events: {
-					'Search:onItemCreateAsync': (baseEvent: BaseEvent) => {
-						return new Promise((resolve) => {
-							const { searchQuery } = baseEvent.getData();
-							const dialog: Dialog = baseEvent.getTarget();
-
-							this.createType(searchQuery.getQuery())
-								.then((resourceType: ResourceTypeModel) => {
-									this.updateResourceType(resourceType.id, resourceType.name);
-									dialog.addItem(this.prepareTypeToDialog(resourceType));
-									dialog.hide();
-									resolve();
-								})
-								.catch(() => {
-									resolve();
-								})
-							;
-						});
-					},
-					'Item:onSelect': (baseEvent: BaseEvent) => {
-						const selectedItem = baseEvent.getData().item;
-						this.updateResourceType(selectedItem.getId(), selectedItem.getTitle());
-					},
-				},
-			});
-		},
-		async createType(typeName: string): Promise<ResourceTypeModel>
-		{
-			return resourceTypeService.add({
-				moduleId: 'booking',
-				name: typeName,
-			});
-		},
-		prepareTypeToDialog(type: ResourceTypeModel): ItemOptions
-		{
-			return {
-				id: type.id,
-				entityId: this.entityId,
-				title: type.name,
-				sort: 1,
-				selected: true,
-				tabs: 'recents',
-				supertitle: this.loc('BRCW_SETTINGS_CARD_TYPE_SELECTOR_SUPER_TITLE'),
-				avatar: '/bitrix/js/booking/images/entity-selector/resource-type.svg',
-			};
-		},
-		updateResourceType(typeId: number, typeName: string): void
-		{
-			this.typeName = typeName;
-
-			this.$emit('typeUpdate', typeId);
-		},
-		scrollToBaseFieldsForm(): void
-		{
-			this.$refs.baseFieldsForm?.scrollIntoView(true, {
-				behavior: 'smooth',
-				block: 'center',
-			});
 		},
 	},
 	watch: {
@@ -179,81 +86,62 @@ export const BaseFields = {
 			}
 		},
 	},
-	components: {
-		ErrorMessage,
-		EmptyRichLoc,
+	methods: {
+		scrollToBaseFieldsForm(): void
+		{
+			this.$refs.baseFieldsForm?.scrollIntoView(true, { behavior: 'smooth', block: 'center' });
+		},
+		initialAdditionalInfoExpanded(): boolean
+		{
+			return (this.initialResourceAvatarUrl.length > 0 || this.initialResourceDescription.length > 0);
+		},
+		toggleAdditionalInfo(): void
+		{
+			this.additionalInfoExpanded = !this.additionalInfoExpanded;
+		},
 	},
 	template: `
 		<div ref="baseFieldsForm" class="ui-form resource-creation-wizard__form-settings --base">
+			<TitleLayout
+				:title="loc('BRCW_SETTINGS_CARD_BASE_TITLE')"
+				:icon-type="IconSet.INFO"
+			/>
+			<TextLayout
+				type="BaseFields"
+				:text="loc('BRCW_SETTINGS_CARD_BASE_DESCRIPTION')"
+			/>
 			<div class="ui-form-row-inline booking--rcw--form-row-align">
-				<div class="ui-form-row">
-					<div class="ui-form-label">
-						<label class="ui-ctl-label-text" for="brcw-settings-resource-name">
-							{{ loc('BRCW_SETTINGS_CARD_NAME_LABEL') }}
-						</label>
-					</div>
-					<div class="ui-form-content booking--rcw--field-with-validation">
-						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-							<input
-								v-model.trim="resourceName"
-								id="brcw-settings-resource-name"
-								data-id="brcw-settings-resource-name-input"
-								type="text"
-								class="ui-ctl-element"
-								:class="{ '--error': invalidResourceName }"
-								:placeholder="loc('BRCW_SETTINGS_CARD_NAME_LABEL')"
-							/>
-						</div>
-						<ErrorMessage
-							v-if="invalidResourceName"
-							:message="errorMessage"
+				<NameField
+					:resourceName="initialResourceName"
+					:invalid="invalidResourceName"
+					@nameUpdate="$emit('nameUpdate', $event)"
+				/>
+				<TypeField
+					:initialTypeId="initialResourceType.typeId"
+					:initialTypeName="initialResourceType.typeName"
+					:invalid="invalidResourceType"
+					@typeUpdate="$emit('typeUpdate', $event)"
+				/>
+			</div>
+			<div class="booking--rcw--additional-info">
+				<div class="booking--rcw--additional-info-header" @click="toggleAdditionalInfo">
+					<span class="booking--rcw--additional-info-title">
+						{{ loc('BRCW_SETTINGS_CARD_ADDITIONAL_INFO_TITLE') }}
+					</span>
+					<BIcon :name="additionalInfoExpanded ? Actions.CHEVRON_UP : Actions.CHEVRON_DOWN" />
+				</div>
+				<Transition name="booking--rcw--additional-info">
+					<div v-if="additionalInfoExpanded" class="booking--rcw--additional-info-content">
+						<AvatarField
+							:avatarUrl="initialResourceAvatarUrl"
+							@avatarFileUpdate="$emit('avatarFileUpdate', $event)"
+						/>
+						<DescriptionField
+							:description="initialResourceDescription"
+							@descriptionUpdate="$emit('descriptionUpdate', $event)"
 						/>
 					</div>
-					<div class="ui-form-line">
-						<div class="booking--rcw--resource-name-description">
-							<EmptyRichLoc
-								:message="loc('BRCW_SETTINGS_CARD_NAME_DESCRIPTION')"
-								:rules="['nowrap']"
-							/>
-						</div>
-					</div>
-				</div>
-				<div class="ui-form-row">
-					<div class="ui-form-label">
-						<div class="ui-ctl-label-text">
-							{{ loc('BRCW_SETTINGS_CARD_TYPE_LABEL') }}
-						</div>
-					</div>
-					<div class="ui-form-content booking--rcw--field-with-validation">
-						<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
-							<div
-								ref="typeSelectorAngle"
-								class="ui-ctl-after ui-ctl-icon-angle"
-							></div>
-							<div
-								ref="typeSelectorElement"
-								data-id="brcw-settings-resource-type-selector"
-								class="ui-ctl-element resource-creation-wizard__form-settings-element"
-								:class="{
-									'--placeholder': !typeName,
-									'--error': invalidResourceType,
-								}"
-								@click="showTypeSelector"
-							>
-								<template v-if="typeName">
-									{{ typeName }}
-								</template>
-								<template v-else>
-									{{ loc('BRCW_SETTINGS_CARD_TYPE_PLACEHOLDER') }}
-								</template>
-							</div>
-						</div>
-						<ErrorMessage
-							v-if="invalidResourceType"
-							:message="errorMessage"
-						/>
-					</div>
-				</div>
+				</Transition>
 			</div>
 		</div>
 	`,

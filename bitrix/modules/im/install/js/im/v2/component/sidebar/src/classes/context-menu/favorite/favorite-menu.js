@@ -5,12 +5,13 @@ import { MessageService } from 'im.v2.provider.service.message';
 import { SidebarMenu } from '../sidebar-base-menu';
 
 import type { MenuItemOptions } from 'ui.system.menu';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class FavoriteMenu extends SidebarMenu
 {
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.id = 'im-sidebar-context-menu';
 	}

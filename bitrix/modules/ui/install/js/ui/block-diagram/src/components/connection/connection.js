@@ -1,4 +1,3 @@
-import './connection.css';
 import { computed, toValue } from 'ui.vue3';
 import {
 	useConnectionState,
@@ -6,9 +5,8 @@ import {
 	useBlockDiagram,
 	useLoc,
 } from '../../composables';
+import './connection.css';
 import type { UseConnectionState } from '../../composables';
-import { CONNECTION_VIEW_TYPE } from '../../constants';
-import type { DiagramConnection, DiagramConnectionViewType } from '../../types';
 
 type ConnectionSetup = {
 	connectionPathInfo: Pick<UseConnectionState, 'connectionPathInfo'>;
@@ -30,15 +28,6 @@ export const Connection = {
 		connection: {
 			type: Object,
 			required: true,
-		},
-		/** @type DiagramConnectionViewType */
-		viewType: {
-			type: String,
-			default: CONNECTION_VIEW_TYPE.SMOOTHSTEP,
-			validator(viewType): boolean
-			{
-				return Object.values(CONNECTION_VIEW_TYPE).includes(viewType);
-			},
 		},
 		barWidth: {
 			type: Number,
@@ -62,10 +51,7 @@ export const Connection = {
 		const {
 			connectionPathInfo,
 			isDisabled,
-		} = useConnectionState({
-			connection: props.connection,
-			viewType: props.viewType,
-		});
+		} = useConnectionState(props.connection);
 		const { deleteConnectionById } = useBlockDiagram();
 		const loc = useLoc();
 		const { isOpen, showContextMenu } = useContextMenu([

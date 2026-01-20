@@ -1,0 +1,34 @@
+.editor-chart-block-switcher {
+	position: relative;
+	z-index: -1;
+	width: 17px;
+	height: 29px;
+	padding-top: 1px;
+	border: none;
+	border-top-left-radius: 6px;
+	border-bottom-left-radius: 6px;
+	background: var(--ui-color-bg-content-secondary);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	color: var(--ui-color-gray-50);
+	text-align: center;
+}
+
+.editor-chart-block-switcher__icon {
+	background-color: var(--ui-color-gray-50);
+}
+
+.editor-chart-block-switcher__icon.--on {
+	background-color: var(--ui-color-white-base);
+}
+
+.editor-chart-block-switcher.editor-chart-block-switcher__on {
+	background: var(--pallete-blue-blue-57, #4A9DFF);
+	color: var(--ui-color-white-base);
+}
+
+.editor-chart-block-switcher__label {
+	margin: 0 auto;
+	line-height: 1em;
+	text-align: center;
+	font-size: var(--ui-font-size-6xs);
+}

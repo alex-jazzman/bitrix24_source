@@ -5,6 +5,9 @@ use Bitrix\TasksMobile\Integration\UI\EntitySelector\EditableTaskProvider;
 return [
 	'controllers' => [
 		'value' => [
+			'namespaces' => [
+				'Bitrix\\TasksMobile\\Infrastructure\\Controller' => 'v2',
+			],
 			'defaultNamespace' => '\\Bitrix\\TasksMobile\\Controller',
 			'restIntegration' => [
 				'enabled' => true,

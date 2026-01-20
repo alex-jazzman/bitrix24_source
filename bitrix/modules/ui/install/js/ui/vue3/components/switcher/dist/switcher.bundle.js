@@ -48,7 +48,7 @@ this.BX.UI.Vue3 = this.BX.UI.Vue3 || {};
 	      this.switcher.check(this.isChecked, false);
 	    },
 	    isDisabled() {
-	      this.switcher.setDisabled(this.isDisabled);
+	      this.switcher.disable(this.isDisabled, false);
 	    },
 	    options(newOptions, oldOptions) {
 	      if (this.isOptionsEqual(newOptions, oldOptions)) {

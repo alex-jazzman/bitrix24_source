@@ -23,7 +23,7 @@ jn.define('im/messenger/lib/helper/date', (require, exports, module) => {
 			{
 				result = date;
 			}
-			else if (Type.isString(date))
+			else if (Type.isStringFilled(date))
 			{
 				result = new Date(date);
 			}

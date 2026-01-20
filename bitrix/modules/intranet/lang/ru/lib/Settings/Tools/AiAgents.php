@@ -1,0 +1,3 @@
+<?php
+
+$MESS['INTRANET_SETTINGS_TOOLS_AI_AGENTS_MAIN'] = 'AI-агенты';

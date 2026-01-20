@@ -10,10 +10,11 @@ export class App
 	#container: HTMLElement;
 	#initialActiveTabId: string;
 	#initialState: ?Object;
+	#readOnly: boolean;
 
 	#app: ?VueCreateAppResult = null;
 
-	constructor({ containerId, activeTabId, state })
+	constructor({ containerId, activeTabId, state, readOnly })
 	{
 		this.#container = document.getElementById(containerId);
 
@@ -23,6 +24,7 @@ export class App
 		}
 
 		this.#initialActiveTabId = String(activeTabId);
+		this.#readOnly = Boolean(readOnly);
 
 		if (Type.isPlainObject(state))
 		{
@@ -45,6 +47,7 @@ export class App
 			},
 			{
 				initialActiveTabId: this.#initialActiveTabId,
+				readOnly: this.#readOnly,
 			},
 		);
 

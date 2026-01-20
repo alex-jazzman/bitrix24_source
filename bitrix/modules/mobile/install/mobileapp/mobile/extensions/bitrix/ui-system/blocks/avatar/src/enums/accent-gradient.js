@@ -12,12 +12,14 @@ jn.define('ui-system/blocks/avatar/src/enums/accent-gradient', (require, exports
 	 */
 	class AvatarAccentGradient extends BaseEnum
 	{
-		static GREEN = new AvatarAccentGradient('GREEN', ['#1bce42', '#bbed21', '#26d357']);
+		static GREEN = new AvatarAccentGradient('GREEN', [Color.collabAccentPrimary.toHex()]);
 
-		static BLUE = new AvatarAccentGradient('BLUE', ['#86ffc7', '#0075ff']);
+		static BLUE = new AvatarAccentGradient('BLUE', [Color.accentMainPrimary.toHex()]);
 
 		static ORANGE = new AvatarAccentGradient('ORANGE', [Color.accentMainWarning.toHex()]);
 	}
 
-	module.exports = { AvatarAccentGradient };
+	module.exports = {
+		AvatarAccentGradient: AvatarAccentGradient.export(),
+	};
 });

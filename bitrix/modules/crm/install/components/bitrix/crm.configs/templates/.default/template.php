@@ -243,13 +243,6 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_other']['CONFIG']['ICON_CLASS'] = 'img-other';
 	$items['tab_content_other']['CONFIG']['NAME'] = GetMessage("CRM_CONFIGS_CONFIG");
 
-	if (\Bitrix\Main\Loader::includeModule('faceid') && \Bitrix\FaceId\FaceId::isAvailable())
-	{
-		$items['tab_content_other']['FACE_TRACKER']['URL'] = $siteDir.'/crm/configs/face-tracker/';
-		$items['tab_content_other']['FACE_TRACKER']['ICON_CLASS'] = 'img-other';
-		$items['tab_content_other']['FACE_TRACKER']['NAME'] = GetMessage("CRM_CONFIGS_FACE_TRACER");
-	}
-
 	/*
 	$items['tab_content_other']['REFERENCE']['URL'] = '#';
 	$items['tab_content_other']['REFERENCE']['ICON_CLASS'] = 'img-help';

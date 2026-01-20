@@ -2,20 +2,21 @@
  * @module bizproc/in-app-url/routes
  */
 jn.define('bizproc/in-app-url/routes', (require, exports, module) => {
-	const { Type } = require('type');
+	const openTask = (taskOrWorkflowId, targetUserId, context) => {
+		void requireLazy('bizproc:workflow/info')
+			.then(({ WorkflowInfo }) => {
+				const isTaskId = String(parseInt(taskOrWorkflowId, 10)) === taskOrWorkflowId;
+				const isCorrectUserId = String(parseInt(targetUserId, 10)) === targetUserId;
 
-	const openTask = (taskId, targetUserId, context) => {
-		void requireLazy('bizproc:task/details')
-			.then(({ TaskDetails }) => {
-				if (
-					TaskDetails
-					&& Type.isNumber(parseInt(taskId, 10))
-					&& (Type.isNil(targetUserId) || Type.isNumber(parseInt(targetUserId, 10)))
-				)
+				if (WorkflowInfo)
 				{
-					void TaskDetails.open(
+					void WorkflowInfo.open(
+						{
+							workflowId: isTaskId ? null : taskOrWorkflowId,
+							taskId: isTaskId ? parseInt(taskOrWorkflowId, 10) : null,
+							targetUserId: isCorrectUserId ? parseInt(targetUserId, 10) : null,
+						},
 						context.parentWidget || PageManager,
-						{ taskId, targetUserId },
 					);
 				}
 			})
@@ -28,21 +29,21 @@ jn.define('bizproc/in-app-url/routes', (require, exports, module) => {
 	module.exports = (inAppUrl) => {
 		inAppUrl
 			.register(
-				'/company/personal/bizproc/:taskId/$',
-				({ taskId }, { context }) => {
-					openTask(taskId, null, context);
+				'/company/personal/bizproc/:taskOrWorkflowId/$',
+				({ taskOrWorkflowId }, { context }) => {
+					openTask(taskOrWorkflowId, null, context);
 				},
 			)
-			.name('bizproc:myTask')
+			.name('bizproc:myWorkflow')
 		;
 		inAppUrl
 			.register(
-				'/company/personal/bizproc/:taskId/\\?USER_ID=:userId',
-				({ taskId, userId }, { context }) => {
-					openTask(taskId, userId, context);
+				'/company/personal/bizproc/:taskOrWorkflowId/\\?USER_ID=:userId',
+				({ taskOrWorkflowId, userId }, { context }) => {
+					openTask(taskOrWorkflowId, userId, context);
 				},
 			)
-			.name('bizproc:task')
+			.name('bizproc:workflow')
 		;
 		inAppUrl
 			.register(

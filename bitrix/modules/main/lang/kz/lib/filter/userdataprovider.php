@@ -1,4 +1,5 @@
 <?php
+$MESS["MAIN_USER_FILTER_ID"] = "ID";
 $MESS["MAIN_USER_FILTER_ADMIN"] = "Әкімші";
 $MESS["MAIN_USER_FILTER_BIRTHDAY"] = "Туған күні";
 $MESS["MAIN_USER_FILTER_COMPANY"] = "Компания";

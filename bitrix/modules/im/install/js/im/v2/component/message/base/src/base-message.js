@@ -1,5 +1,4 @@
 import { Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { Utils } from 'im.v2.lib.utils';
 import { Core } from 'im.v2.application.core';
@@ -8,9 +7,11 @@ import { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector } from 'im.
 import { ActionByRole, EventType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { MessageMenuManager } from 'im.v2.lib.menu';
 
 import './css/base-message.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 
 // @vue/component
@@ -131,7 +132,7 @@ export const BaseMessage = {
 	{
 		onContainerClick(event: PointerEvent)
 		{
-			Parser.executeClickEvent(event);
+			Parser.executeClickEvent(event, { emitter: this.getEmitter() });
 		},
 		openContextMenu(event: PointerEvent & { target: HTMLElement })
 		{
@@ -141,9 +142,19 @@ export const BaseMessage = {
 				return;
 			}
 
+			const messageMenuManager = MessageMenuManager.getInstance();
+			const shouldUseNativeContextMenu = messageMenuManager.shouldUseNativeContextMenu(event.target);
+
+			if (shouldUseNativeContextMenu)
+			{
+				messageMenuManager.destroyMenuInstance();
+
+				return;
+			}
+
 			event.preventDefault();
 
-			EventEmitter.emit(EventType.dialog.onClickMessageContextMenu, {
+			this.getEmitter().emit(EventType.dialog.onClickMessageContextMenu, {
 				message: this.message,
 				dialogId: this.dialogId,
 				event,
@@ -157,7 +168,7 @@ export const BaseMessage = {
 				return;
 			}
 
-			EventEmitter.emit(EventType.dialog.showQuoteButton, {
+			this.getEmitter().emit(EventType.dialog.showQuoteButton, {
 				message,
 				event,
 			});
@@ -167,6 +178,10 @@ export const BaseMessage = {
 			const selection = window.getSelection().toString().trim();
 
 			return Type.isStringFilled(selection);
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

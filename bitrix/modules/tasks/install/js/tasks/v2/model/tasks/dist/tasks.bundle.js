@@ -7,9 +7,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	/* eslint-disable no-param-reassign */
 	const aliasFields = {
-	  [tasks_v2_const.TaskField.DatePlan]: new Set(['startPlanTs', 'endPlanTs', 'matchesSubTasksTime']),
+	  [tasks_v2_const.TaskField.DatePlan]: new Set(['startPlanTs', 'endPlanTs', 'matchesSubTasksTime', 'startDatePlanAfter', 'endDatePlanAfter']),
 	  [tasks_v2_const.TaskField.SubTasks]: new Set(['containsSubTasks']),
-	  [tasks_v2_const.TaskField.RelatedTasks]: new Set(['containsRelatedTasks'])
+	  [tasks_v2_const.TaskField.RelatedTasks]: new Set(['containsRelatedTasks']),
+	  [tasks_v2_const.TaskField.Gantt]: new Set(['containsGanttLinks']),
+	  [tasks_v2_const.TaskField.Placements]: new Set(['containsPlacements']),
+	  [tasks_v2_const.TaskField.Results]: new Set(['containsResults']),
+	  [tasks_v2_const.TaskField.Reminders]: new Set(['numberOfReminders']),
+	  [tasks_v2_const.TaskField.Replication]: new Set(['replicate'])
 	};
 	var _setFieldsFilled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setFieldsFilled");
 	var _getAliasField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAliasField");
@@ -23,24 +28,45 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      value: _setFieldsFilled2
 	    });
 	  }
+	  static createWithVariables(params) {
+	    return Tasks.create().setVariables({
+	      stateFlags: params.stateFlags,
+	      deadlineUserOption: params.deadlineUserOption
+	    });
+	  }
 	  getName() {
 	    return tasks_v2_const.Model.Tasks;
 	  }
 	  getState() {
 	    return {
+	      titles: {},
 	      partiallyLoadedIds: new Set()
 	    };
 	  }
 	  getElementState() {
+	    const stateFlags = this.getVariable('stateFlags', {
+	      needsControl: false,
+	      matchesWorkTime: false
+	    });
+	    const deadlineUserOption = this.getVariable('deadlineUserOption', {
+	      canChangeDeadline: false,
+	      maxDeadlineChangeDate: null,
+	      maxDeadlineChanges: null,
+	      requireDeadlineChangeReason: false
+	    });
 	    return {
 	      id: 0,
 	      title: '',
 	      isImportant: false,
 	      description: '',
+	      descriptionChecksum: '',
+	      forceUpdateDescription: false,
 	      creatorId: 0,
 	      createdTs: Date.now(),
-	      responsibleId: 0,
+	      responsibleIds: [],
+	      isForNewUser: false,
 	      deadlineTs: 0,
+	      deadlineAfter: null,
 	      startPlanTs: null,
 	      endPlanTs: null,
 	      fileIds: [],
@@ -53,30 +79,52 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      tags: [],
 	      status: 'pending',
 	      statusChangedTs: Date.now(),
-	      needsControl: false,
+	      needsControl: stateFlags.needsControl,
+	      matchesWorkTime: stateFlags.matchesWorkTime,
 	      filledFields: {},
 	      parentId: 0,
 	      subTaskIds: [],
 	      containsSubTasks: false,
 	      relatedTaskIds: [],
 	      containsRelatedTasks: false,
+	      ganttTaskIds: [],
+	      containsGanttLinks: false,
+	      placementIds: null,
+	      containsPlacements: false,
+	      results: [],
+	      resultsMessageMap: {},
+	      containsResults: false,
+	      allowsChangeDeadline: deadlineUserOption.canChangeDeadline,
+	      requireDeadlineChangeReason: deadlineUserOption.requireDeadlineChangeReason,
+	      maxDeadlineChangeDate: deadlineUserOption.maxDeadlineChangeDate,
+	      maxDeadlineChanges: deadlineUserOption.maxDeadlineChanges,
+	      deadlineChangeReason: '',
+	      allowsChangeDatePlan: false,
+	      numberOfReminders: 0,
 	      rights: {
 	        edit: true,
 	        deadline: true,
 	        datePlan: true,
-	        delegate: true
+	        delegate: true,
+	        addAuditors: true,
+	        changeAccomplices: true,
+	        checklistAdd: true,
+	        createGanttDependence: true,
+	        resultRead: true,
+	        reminder: true,
+	        elapsedTime: true
 	      },
-	      inFavorite: [],
-	      inMute: []
+	      isFavorite: false,
+	      isMuted: false,
+	      requireResult: false,
+	      userFields: [],
+	      permissions: null
 	    };
 	  }
 	  getGetters() {
 	    return {
-	      /** @function tasks/wasFieldFilled */
-	      wasFieldFilled: state => (id, fieldName) => {
-	        var _state$collection$id$, _state$collection$id$2;
-	        return (_state$collection$id$ = (_state$collection$id$2 = state.collection[id].filledFields) == null ? void 0 : _state$collection$id$2[fieldName]) != null ? _state$collection$id$ : false;
-	      },
+	      /** @function tasks/getTitle */
+	      getTitle: state => id => state.titles[id],
 	      /** @function tasks/isPartiallyLoaded */
 	      isPartiallyLoaded: state => id => {
 	        return state.partiallyLoadedIds.has(id);
@@ -85,15 +133,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  }
 	  getActions() {
 	    return {
-	      /** @function tasks/setFieldFilled */
-	      setFieldFilled: (store, {
-	        id,
-	        fieldName
-	      }) => {
-	        store.commit('setFieldFilled', {
+	      /** @function tasks/setTitles */
+	      setTitles: (store, titles) => {
+	        titles.forEach(({
 	          id,
-	          fieldName
-	        });
+	          title
+	        }) => store.commit('setTitle', {
+	          id,
+	          title
+	        }));
+	      },
+	      /** @function tasks/setFieldFilled */
+	      setFieldFilled: (store, fieldFilledPayload) => {
+	        store.commit('setFieldFilled', fieldFilledPayload);
 	      },
 	      /** @function tasks/clearFieldsFilled */
 	      clearFieldsFilled: (store, id) => {
@@ -103,7 +155,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      addPartiallyLoaded: (store, id) => {
 	        store.commit('addPartiallyLoaded', id);
 	      },
-	      /** @function tasks/removePartiaalyLoaded */
+	      /** @function tasks/removePartiallyLoaded */
 	      removePartiallyLoaded: (store, id) => {
 	        store.commit('removePartiallyLoaded', id);
 	      }
@@ -119,18 +171,26 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        id,
 	        fields
 	      }) => {
+	        var _fields$id;
 	        ui_vue3_vuex.BuilderEntityModel.defaultModel.getMutations(this).update(state, {
 	          id,
 	          fields
 	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _setFieldsFilled)[_setFieldsFilled](state, id);
+	        babelHelpers.classPrivateFieldLooseBase(this, _setFieldsFilled)[_setFieldsFilled](state, (_fields$id = fields.id) != null ? _fields$id : id);
+	      },
+	      setTitle: (state, {
+	        id,
+	        title
+	      }) => {
+	        state.titles[id] = title;
 	      },
 	      setFieldFilled: (state, {
 	        id,
-	        fieldName
+	        fieldName,
+	        isFilled
 	      }) => {
-	        var _state$collection$id, _state$collection$id$3;
-	        ((_state$collection$id$3 = (_state$collection$id = state.collection[id]).filledFields) != null ? _state$collection$id$3 : _state$collection$id.filledFields = {})[fieldName] = true;
+	        var _state$collection$id, _state$collection$id$;
+	        ((_state$collection$id$ = (_state$collection$id = state.collection[id]).filledFields) != null ? _state$collection$id$ : _state$collection$id.filledFields = {})[fieldName] = isFilled != null ? isFilled : true;
 	      },
 	      clearFieldsFilled: (state, id) => {
 	        if (!state.collection[id]) {

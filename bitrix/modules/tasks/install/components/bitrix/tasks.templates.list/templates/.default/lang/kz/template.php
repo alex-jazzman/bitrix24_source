@@ -11,6 +11,7 @@ $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK"] = "Қалып бойынша м�
 $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK_V2"] = "Қалып бойынша міндетті құру";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_DELETE"] = "Жою";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_EDIT"] = "Редакциялау";
+$MESS["TASKS_TEMPLATES_ROW_ACTION_UNLINK"] = "Байланысты жою";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_VIEW"] = "Қарау";
 $MESS["TASKS_TEMPLATES_TITLE"] = "Міндет қалыптары";
 $MESS["TASKS_TEMPLATES_YES"] = "Иә";

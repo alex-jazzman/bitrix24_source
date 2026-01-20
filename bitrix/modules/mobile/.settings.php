@@ -13,7 +13,10 @@ return [
 		'value' => [
 			\Bitrix\Mobile\Feature\SupportFeature::class,
 			\Bitrix\Mobile\Feature\WhatsNewFeature::class,
+			\Bitrix\Mobile\Feature\OnboardingFeature::class,
 			\Bitrix\Mobile\Feature\MenuFeature::class,
+			\Bitrix\Mobile\Feature\SettingsV2Feature::class,
+			\Bitrix\Mobile\Feature\SecuritySettingsFeature::class,
 		],
 		'readonly' => true,
 	],

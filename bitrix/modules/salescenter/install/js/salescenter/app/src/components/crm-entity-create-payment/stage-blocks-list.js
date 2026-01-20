@@ -37,29 +37,22 @@ export default {
 			message: {
 				initSenders: this.$root.$app.options.senders,
 				initCurrentSenderCode: this.$root.$app.options.currentSenderCode,
+				messageSenderData: this.$root.$app.options.messageSenderData,
 				initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
-				status: Status.complete,
 				selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
 				manager: this.$root.$app.options.entityResponsible,
 				phone: this.$root.$app.options.contactPhone,
 				ownerId: this.$root.$app.options.ownerId,
 				ownerTypeId: this.$root.$app.options.ownerTypeId,
 				contactEditorUrl: this.$root.$app.options.contactEditorUrl,
-				titleTemplate: this.$root.$app.sendingMethodDesc.sent
-					? Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME')
-					: Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
+				titleTemplate: this.getTitleTemplate(),
 				showHint: this.$root.$app.options.templateMode !== 'view',
 				editorTemplate: this.$root.$app.sendingMethodDesc.text,
 				editorUrl: this.$root.$app.orderPublicUrl,
 				selectedMode: 'payment',
 			},
 			product: {
-				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
-					? Status.complete
-					: Status.current,
-				title: this.$root.$app.options.templateMode === 'view'
-					? Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW')
-					: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+				title: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_MSGVER_1'),
 				hintTitle: this.$root.$app.options.templateMode === 'view'
 					? ''
 					: Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'),
@@ -149,6 +142,20 @@ export default {
 		},
 	},
 	methods: {
+		getTitleTemplate(): string
+		{
+			if (this.$root.$app.options.messageSenderData)
+			{
+				return Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_SENDER_MSGVER_1');
+			}
+
+			if (this.$root.$app.sendingMethodDesc.sent)
+			{
+				return Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME');
+			}
+
+			return Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2');
+		},
 		initCounter()
 		{
 			this.counter = 1;
@@ -250,12 +257,17 @@ export default {
 	},
 	template: `
 		<div>
+			<product-block
+				:counter="counter++"
+				:title="stages.product.title"
+				:hintTitle="stages.product.hintTitle"
+			/>
 			<sms-message-block
 				@stage-block-sms-send-on-change-provider="changeProvider"
 				:counter="counter++"
-				:status="stages.message.status"
 				:initSenders="stages.message.initSenders"
 				:initCurrentSenderCode="stages.message.initCurrentSenderCode"
+				:messageSenderData="stages.message.messageSenderData"
 				:initPushedToUseBitrix24Notifications="stages.message.initPushedToUseBitrix24Notifications"
 				:selectedSmsSender="stages.message.selectedSmsSender"
 				:manager="stages.message.manager"
@@ -268,12 +280,6 @@ export default {
 				:editorTemplate="stages.message.editorTemplate"
 				:editorUrl="stages.message.editorUrl"
 				:selectedMode="stages.message.selectedMode"
-			/>
-			<product-block
-				:counter="counter++"
-				:status="stages.product.status"
-				:title="stages.product.title"
-				:hintTitle="stages.product.hintTitle"
 			/>
 			<paysystem-block
 				v-if="editable"

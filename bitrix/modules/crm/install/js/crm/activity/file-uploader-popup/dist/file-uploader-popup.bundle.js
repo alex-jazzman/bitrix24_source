@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_popup,ui_buttons,crm_activity_fileUploader) {
+(function (exports,crm_activity_fileUploader,main_core,main_popup,ui_buttons) {
 	'use strict';
 
 	let _ = t => t,
@@ -19,6 +20,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var _revertButtonsState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("revertButtonsState");
 	var _closePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closePopup");
 	var _getPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContent");
+	var _getSaveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSaveButton");
+	var _getCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCancelButton");
 	var _getPopupTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupTitle");
 	var _getPopupButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupButtons");
 	var _changeUploaderContainerSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeUploaderContainerSize");
@@ -32,6 +35,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _getPopupTitle, {
 	      value: _getPopupTitle2
+	    });
+	    Object.defineProperty(this, _getCancelButton, {
+	      value: _getCancelButton2
+	    });
+	    Object.defineProperty(this, _getSaveButton, {
+	      value: _getSaveButton2
 	    });
 	    Object.defineProperty(this, _getPopupContent, {
 	      value: _getPopupContent2
@@ -106,9 +115,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _updateFiles2() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
-	  (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.getButton(SAVE_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr2.setState(ui_buttons.ButtonState.WAITING);
-	  (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.getButton(CANCEL_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr4.setState(ui_buttons.ButtonState.DISABLED);
+	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
+	  if (((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getSaveButton)[_getSaveButton]()) == null ? void 0 : _babelHelpers$classPr.getState()) === ui_buttons.ButtonState.DISABLED) {
+	    return;
+	  }
+	  (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getSaveButton)[_getSaveButton]()) == null ? void 0 : _babelHelpers$classPr2.setState(ui_buttons.ButtonState.WAITING);
+	  (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton)[_getCancelButton]()) == null ? void 0 : _babelHelpers$classPr3.setState(ui_buttons.ButtonState.DISABLED);
 	  main_core.ajax.runAction('crm.activity.todo.updateFiles', {
 	    data: {
 	      ownerTypeId: babelHelpers.classPrivateFieldLooseBase(this, _ownerTypeId)[_ownerTypeId],
@@ -126,13 +138,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 	function _revertButtonsState2() {
-	  var _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8;
-	  (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr6 = _babelHelpers$classPr5.getButton(SAVE_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr6.setState(null);
-	  (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr8 = _babelHelpers$classPr7.getButton(CANCEL_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr8.setState(null);
+	  var _babelHelpers$classPr4, _babelHelpers$classPr5;
+	  (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _getSaveButton)[_getSaveButton]()) == null ? void 0 : _babelHelpers$classPr4.setState(null);
+	  (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton)[_getCancelButton]()) == null ? void 0 : _babelHelpers$classPr5.setState(null);
 	}
 	function _closePopup2() {
-	  var _babelHelpers$classPr9;
-	  (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr9.close();
+	  var _babelHelpers$classPr6;
+	  (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr6.close();
 	}
 	function _getPopupContent2() {
 	  const uploaderContainer = main_core.Tag.render(_t || (_t = _`<div></div>`));
@@ -151,11 +163,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _changeUploaderContainerSize)[_changeUploaderContainerSize]();
 	        babelHelpers.classPrivateFieldLooseBase(this, _revertButtonsState)[_revertButtonsState]();
 	      },
-	      'onUploadStart': event => {
-	        var _babelHelpers$classPr10, _babelHelpers$classPr11, _babelHelpers$classPr12, _babelHelpers$classPr13;
+	      onUploadStart: event => {
+	        var _babelHelpers$classPr7, _babelHelpers$classPr8;
 	        babelHelpers.classPrivateFieldLooseBase(this, _changeUploaderContainerSize)[_changeUploaderContainerSize]();
-	        (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr11 = _babelHelpers$classPr10.getButton(SAVE_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr11.setState(ui_buttons.ButtonState.DISABLED);
-	        (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr13 = _babelHelpers$classPr12.getButton(CANCEL_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr13.setState(ui_buttons.ButtonState.DISABLED);
+	        (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _getSaveButton)[_getSaveButton]()) == null ? void 0 : _babelHelpers$classPr7.setState(ui_buttons.ButtonState.DISABLED);
+	        (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton)[_getCancelButton]()) == null ? void 0 : _babelHelpers$classPr8.setState(ui_buttons.ButtonState.DISABLED);
 	      }
 	      // TODO: not implemented yet
 	      //		'onUploadComplete'
@@ -168,6 +180,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _fileUploader)[_fileUploader].renderTo(uploaderContainer);
 	  return content;
+	}
+	function _getSaveButton2() {
+	  var _babelHelpers$classPr9;
+	  return (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr9.getButton(SAVE_BUTTON_ID);
+	}
+	function _getCancelButton2() {
+	  var _babelHelpers$classPr10;
+	  return (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr10.getButton(CANCEL_BUTTON_ID);
 	}
 	function _getPopupTitle2() {
 	  return main_core.Loc.getMessage('CRM_FILE_UPLOADER_POPUP_TITLE_2');
@@ -198,5 +218,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.FileUploaderPopup = FileUploaderPopup;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX,BX.Main,BX.UI,BX.Crm.Activity));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX,BX.Main,BX.UI));
 //# sourceMappingURL=file-uploader-popup.bundle.js.map

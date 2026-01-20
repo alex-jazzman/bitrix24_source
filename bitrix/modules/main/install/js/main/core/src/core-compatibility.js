@@ -15,10 +15,15 @@ import getElement from './internal/get-element';
 import getWindow from './internal/get-window';
 import EventEmitter from './lib/event/event-emitter';
 import BaseEvent from './lib/event/base-event';
+import { Easing } from './lib/animation/easing';
+import { FX } from './lib/animation/fx';
+import { localStorage } from './lib/local-storage';
 
 // BX.*
 export const {getClass, namespace} = Reflection;
 export const message = messageFunction;
+export const easing = Easing;
+export const fx = FX;
 
 /**
  * @memberOf BX
@@ -365,4 +370,14 @@ export function removeAllCustomEvents(eventObject, eventName)
 	eventName = eventName.toLowerCase();
 
 	EventEmitter.unsubscribeAll(eventObject, eventName, { useGlobalNaming: true });
+}
+
+export function onGlobalCustomEvent(eventName, arEventParams, bSkipSelf)
+{
+	localStorage.set('BXGCE', { e: eventName, p: arEventParams }, 1);
+
+	if (!bSkipSelf)
+	{
+		onCustomEvent(eventName, arEventParams);
+	}
 }

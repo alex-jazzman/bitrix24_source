@@ -1,12 +1,14 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
-import { BIcon as Icon, Main } from 'ui.icon-set.api.vue';
+import { BIcon, Main } from 'ui.icon-set.api.vue';
 
-import { EntitySelectorEntity, Model } from 'booking.const';
+import { EntitySelectorEntity, LimitFeatureId, Model } from 'booking.const';
 import { Switcher } from 'booking.component.switcher';
 import { Reminder as UiReminder } from 'booking.component.reminder';
+import { limit } from 'booking.lib.limit';
 
 import { SettingsItem } from '../settings-item';
 import { SettingsSelector } from '../settings-selector';
+import './integration-calendar.css';
 
 const { mapGetters: mapResourceGetters, mapActions } = createNamespacedHelpers(Model.ResourceCreationWizard);
 
@@ -14,26 +16,21 @@ const { mapGetters: mapResourceGetters, mapActions } = createNamespacedHelpers(M
 export const IntegrationCalendar = {
 	name: 'IntegrationCalendar',
 	components: {
-		Icon,
+		BIcon,
 		Switcher,
 		SettingsItem,
 		SettingsSelector,
 		UiReminder,
 	},
-	setup(): IntegrationCalendarData
+	setup(): Object & IntegrationCalendarData
 	{
-		const iconName = Main.CALENDAR_1;
-		const iconColor = 'var(--ui-color-primary)';
-		const iconSize = 22;
 		const entityRoomId = EntitySelectorEntity.Room;
 		const entityUserId = EntitySelectorEntity.User;
 
 		return {
-			iconName,
-			iconColor,
-			iconSize,
 			entityRoomId,
 			entityUserId,
+			Main,
 		};
 	},
 	data(): Object
@@ -48,10 +45,14 @@ export const IntegrationCalendar = {
 			isIntegrationCalendarEnabled: 'isIntegrationCalendarEnabled',
 			invalidIntegrationCalendarUser: 'invalidIntegrationCalendarUser',
 		}),
+		featureEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingCalendar;
+		},
 		isEnabled: {
 			get(): boolean
 			{
-				return this.$store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+				return this.featureEnabled && this.$store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
 			},
 			set(isIntegrationCalendarEnabled: boolean): boolean
 			{
@@ -108,7 +109,7 @@ export const IntegrationCalendar = {
 	},
 	beforeMount(): void
 	{
-		this.isVisible = this.$store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+		this.isVisible = this.featureEnabled && this.$store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
 	},
 	methods: {
 		...mapActions([
@@ -160,20 +161,37 @@ export const IntegrationCalendar = {
 				block: 'center',
 			});
 		},
+		switcherClick(): void
+		{
+			if (!this.featureEnabled)
+			{
+				void limit.show(LimitFeatureId.CalendarIntegration);
+			}
+		},
 	},
 	template: `
-		<div class="resource-creation-wizard__integration-block">
+		<div
+			class="resource-creation-wizard__integration-block booking--rcw--integration-calendar"
+			:class="{'--disabled': !featureEnabled}"
+			data-id="brcw-resource-settings-integration-calendar"
+		>
 			<div class="resource-creation-wizard__integration-block-header">
-				<Icon :name="iconName" :size="iconSize" :color="iconColor"/>
+				<BIcon
+					:name="featureEnabled ? Main.CALENDAR_1 : Main.LOCK"
+					:size="22"
+					:color="featureEnabled ? 'var(--ui-color-primary)' : 'var(--ui-color-gray-40)'"
+				/>
 				<div class="resource-creation-wizard__integration-block-title">
 					{{ loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_TITLE') }}
 				</div>
 				<Switcher
 					class="resource-creation-wizard__integration-block-switcher"
 					data-id="resource-creation-wizard__integration-block-switcher-calendar"
+					:disabled="!featureEnabled"
 					:hiddenText="true"
 					:model-value="isEnabled"
 					@toggle="toggleEnabled"
+					@click="switcherClick"
 				/>
 			</div>
 			<div class="resource-creation-wizard__integration-block-description">
@@ -210,7 +228,8 @@ export const IntegrationCalendar = {
 						:multiple="false"
 						:values="entityCalendar?.data.locationId ? [String(entityCalendar.data.locationId)] : []"
 						:disabled="isDisabled"
-						tab
+						:emptyTitle="loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_ROOM_TITLE')"
+						:emptySubtitle="loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_ROOM_SUBTITLE')"
 						@change="updateLocationId"
 					/>
 				</SettingsItem>
@@ -229,9 +248,6 @@ export const IntegrationCalendar = {
 };
 
 type IntegrationCalendarData = {
-	iconName: string;
-	iconColor: string;
-	iconSize: number;
 	entityRoomId: string;
 	entityUserId: string;
 }

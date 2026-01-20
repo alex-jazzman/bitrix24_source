@@ -30,6 +30,7 @@ BX.CRM.Kanban.Item = function(options)
 	this.notChangeTotal = false;
 	this.itemActivityZeroClass = 'crm-kanban-item-activity-zero';
 	this.activityAddingPopup = null;
+	this.ufTooltipNodes = [];
 
 	// eslint-disable-next-line prefer-rest-params
 	BX.Kanban.Item.apply(this, arguments);
@@ -293,8 +294,8 @@ BX.CRM.Kanban.Item.prototype = {
 			'CRM_KANBAN_REST_DEMO_FILE_IMPORT',
 			'CRM_KANBAN_REST_DEMO_FILE_EXPORT',
 			'CRM_KANBAN_REST_DEMO_CRM_MIGRATION',
-			'CRM_KANBAN_REST_DEMO_MARKET_2',
-			'CRM_KANBAN_REST_DEMO_PUBLICATION_2',
+			'CRM_KANBAN_REST_DEMO_MARKET_2_MSGVER_1',
+			'CRM_KANBAN_REST_DEMO_PUBLICATION_2_MSGVER_1',
 		];
 
 		const importListNode = document.createDocumentFragment();
@@ -762,6 +763,29 @@ BX.CRM.Kanban.Item.prototype = {
 		const titleText = BX.Tag.render`<div class="crm-kanban-item-fields-item-title-text"></div>`;
 		titleText.innerHTML = fieldConfig.title;
 
+		let titleTooltip = null;
+		const tooltipText = fieldConfig?.helpMessage ?? '';
+		if (tooltipText && this.getGrid().shouldShowTooltips())
+		{
+			titleTooltip = BX.Tag.render`
+				<span
+					class="crm-kanban-item-fields-item-title-tooltip --hidden">
+				</span>
+			`;
+
+			titleTooltip.dataset.hint = tooltipText;
+
+			this.ufTooltipNodes.push(titleTooltip);
+		}
+
+		const titleTextWrapper = BX.Tag.render`
+			<div class="crm-kanban-item-fields-item-title-wrapper">
+				${titleText}
+				${titleTooltip}
+			</div>
+		`;
+
+
 		const fieldParamsData = { ...field, ...fieldConfig };
 		if (BX.Type.isBoolean(field.html))
 		{
@@ -773,13 +797,14 @@ BX.CRM.Kanban.Item.prototype = {
 			<div class="crm-kanban-item-fields-item">
 				<div class="crm-kanban-item-fields-item-title">
 					${titleIcon}
-					${titleText}
+					${titleTextWrapper}
 				</div>
 				${fieldsElement}
 			</div>
 		`;
 
 		BX.Dom.append(fieldsItem, this.fieldsWrapper);
+		BX.UI.Hint.init(BX(this.fieldsWrapper));
 	},
 
 	/**
@@ -848,26 +873,42 @@ BX.CRM.Kanban.Item.prototype = {
 				...this.getUserTypeFieldParams(field),
 			};
 		}
-		else if (field.value.includes('data-mini-card="true"'))
+		else if (
+			field.value.includes('data-mini-card="true"')
+			|| (
+				BX.Type.isArray(field.value)
+				&& field.value.every((fieldValue) => fieldValue.includes('data-mini-card="true"'))
+			)
+		)
 		{
-			const element = BX.Tag.render`${field.value}`;
+			const fieldValues = BX.Type.isArray(field.value)
+				? field.value
+				: [field.value];
 
-			const entityTypeId = Number(element.dataset.entityTypeId);
-			const entityId = Number(element.dataset.entityId);
+			const miniCardListContainer = BX.Tag.render`<div class="crm-mini-card-list-container"></div>`;
 
-			BX.Runtime
-				.loadExtension('crm.mini-card')
-				.then(({ EntityMiniCard }) => {
-					new BX.Crm.EntityMiniCard({
-						bindElement: element,
-						entityTypeId,
-						entityId,
-					});
-				})
-			;
+			fieldValues.forEach((fieldValue) => {
+				const element = BX.Tag.render`${fieldValue}`;
+
+				const entityTypeId = Number(element.dataset.entityTypeId);
+				const entityId = Number(element.dataset.entityId);
+
+				void BX.Runtime
+					.loadExtension('crm.mini-card')
+					.then(({ EntityMiniCard }) => {
+						new EntityMiniCard({
+							bindElement: element,
+							entityTypeId,
+							entityId,
+						});
+					})
+				;
+
+				BX.Dom.append(element, miniCardListContainer);
+			});
 
 			params.children = [
-				element,
+				miniCardListContainer,
 			];
 		}
 		else if (field.type === 'money' || field.html === true)
@@ -1153,6 +1194,7 @@ BX.CRM.Kanban.Item.prototype = {
 				class="${containerClassname}"
 				onclick="${this.onContainerClick.bind(this)}"
 				ondblclick="${this.onContainerDblClick.bind(this)}"
+				onmouseenter="${this.onContainerMouseEnter.bind(this)}"
 				onmouseleave="${this.onContainerMouseLeave.bind(this)}"
 			></div>
 		`;
@@ -1214,7 +1256,27 @@ BX.CRM.Kanban.Item.prototype = {
 
 	onContainerMouseLeave()
 	{
+		this.hideUfTooltips();
 		this.removeHoverClass(this.container);
+	},
+
+	onContainerMouseEnter()
+	{
+		this.showUfTooltips();
+	},
+
+	hideUfTooltips()
+	{
+		this.ufTooltipNodes.forEach((node, idx) => {
+			this.ufTooltipNodes[idx].classList.add('--hidden');
+		});
+	},
+
+	showUfTooltips()
+	{
+		this.ufTooltipNodes.forEach((node, idx) => {
+			this.ufTooltipNodes[idx].classList.remove('--hidden');
+		});
 	},
 
 	createTitleLink()

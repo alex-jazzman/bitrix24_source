@@ -66,8 +66,7 @@ jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exp
 
 			if (UserHelper.isCurrentUser(dialogId))
 			{
-				result.detailText = '';
-
+				// now CoPilot can write to notes chat
 				return result;
 			}
 

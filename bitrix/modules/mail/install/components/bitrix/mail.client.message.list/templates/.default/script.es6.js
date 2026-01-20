@@ -112,3 +112,15 @@ namespaceMailHome.LeftMenu = LeftMenu;
 
 const namespaceClientMessage = Reflection.namespace('BX.Mail.Client.Message');
 namespaceClientMessage.List = List;
+
+const LimitHelpers = {
+	showLimitSlider(code)
+	{
+		const activeFeaturePromoter = BX.UI.FeaturePromotersRegistry.getPromoter({
+			code,
+		});
+		activeFeaturePromoter.show();
+	},
+};
+
+namespaceClientMessage.LimitHelpers = LimitHelpers;

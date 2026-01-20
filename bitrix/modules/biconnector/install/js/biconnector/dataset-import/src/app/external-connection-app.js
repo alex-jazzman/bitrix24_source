@@ -67,6 +67,10 @@ export const ExternalConnectionApp = {
 		{
 			return this.sourceCode === 'rest';
 		},
+		connectionIsSupportMapping(): boolean
+		{
+			return this.$store.getters.connectionProperties?.connectionIsSupportMapping ?? false;
+		},
 		sourceCode(): string
 		{
 			return this.$store.state.config.connectionProperties?.connectionType ?? '';
@@ -124,22 +128,24 @@ export const ExternalConnectionApp = {
 		},
 		fieldsSettingsStepHint(): string
 		{
-			if (this.isEditMode)
-			{
-				if (this.isRestEntity)
-				{
-					return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
-				}
+			let articleCode = '';
+			let hintCode = '';
 
-				return '';
+			if (!this.isEditMode && !this.isRestEntity)
+			{
+				articleCode = '23508958';
+				hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
 			}
 
-			let articleCode = '23508958';
-			let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
-			if (this.isRestEntity)
+			if (this.isRestEntity && !this.connectionIsSupportMapping)
 			{
 				articleCode = '24486426';
-				hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST';
+				hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST_NOT_SUPPORT_MAPPING';
+			}
+
+			if (articleCode === '' && hintCode === '')
+			{
+				return '';
 			}
 
 			return this.$Bitrix.Loc.getMessage(hintCode)
@@ -299,6 +305,7 @@ export const ExternalConnectionApp = {
 			})
 				.then((response) => {
 					this.isLoading = false;
+					this.steps.fields.disabledElements = null;
 					this.onLoadSuccess(response);
 				})
 				.catch((response) => {
@@ -314,7 +321,7 @@ export const ExternalConnectionApp = {
 			this.$refs.propertiesStep.open();
 			this.$refs.fieldsStep.open();
 			this.toggleStepState('properties', false);
-			if (this.isRestEntity)
+			if (this.isRestEntity && !this.connectionIsSupportMapping)
 			{
 				this.steps.fields.disabledElements = {
 					name: true,

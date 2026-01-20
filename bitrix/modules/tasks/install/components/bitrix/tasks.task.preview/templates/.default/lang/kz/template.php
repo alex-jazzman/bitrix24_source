@@ -12,7 +12,6 @@ $MESS["TASKS_PRIORITY"] = "Басымдық";
 $MESS["TASKS_PRIORITY_0"] = "Төмен";
 $MESS["TASKS_PRIORITY_1"] = "Орташа";
 $MESS["TASKS_PRIORITY_2"] = "Жоғары";
-$MESS["TASKS_RESPONSIBLE"] = "Жауапты";
 $MESS["TASKS_SIDEBAR_START_DATE"] = "бастап";
 $MESS["TASKS_START_DATE_PLAN"] = "Басталу күні";
 $MESS["TASKS_STATUS"] = "Мәртебе";

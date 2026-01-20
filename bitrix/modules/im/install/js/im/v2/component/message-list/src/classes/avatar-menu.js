@@ -2,12 +2,13 @@ import { Core } from 'im.v2.application.core';
 import { UserMenu } from 'im.v2.lib.menu';
 
 import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
+import type { ApplicationContext } from 'im.v2.const';
 
 export class AvatarMenu extends UserMenu
 {
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.id = 'bx-im-avatar-context-menu';
 	}

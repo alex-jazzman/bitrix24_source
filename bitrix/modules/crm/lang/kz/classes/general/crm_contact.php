@@ -23,7 +23,6 @@ $MESS["CRM_CONTACT_FIELD_CREATED_BY_ID"] = "Кім жасады";
 $MESS["CRM_CONTACT_FIELD_DATE_CREATE"] = "Жасалған күні";
 $MESS["CRM_CONTACT_FIELD_DATE_MODIFY"] = "Өзгерту күні";
 $MESS["CRM_CONTACT_FIELD_EXPORT_NEW"] = "Байланыстарды экспорттауға қатысады";
-$MESS["CRM_CONTACT_FIELD_FACE_ID"] = "FaceID модулінен бет-жүздерге байланыстыру";
 $MESS["CRM_CONTACT_FIELD_FULL_NAME"] = "Толық аты";
 $MESS["CRM_CONTACT_FIELD_HAS_EMAIL"] = "E-mail орнатылды";
 $MESS["CRM_CONTACT_FIELD_HAS_IMOL"] = "Ашық сызық орнатылды";

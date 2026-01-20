@@ -9,24 +9,26 @@ import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 
 import { RecentItem } from './components/recent-item/recent-item';
-import { ActiveCall } from './components/active-call';
 import { CreateChat } from './components/create-chat';
 import { EmptyState } from './components/empty-state';
+import { ActiveCallList } from './components/active-call-list';
 
 import { BroadcastManager } from './classes/broadcast-manager';
 import { LikeManager } from './classes/like-manager';
 
 import './css/recent-list.css';
 
-export { RecentItem } from './components/recent-item/recent-item';
-
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem, ImModelCallItem } from 'im.v2.model';
+
+export { RecentItem } from './components/recent-item/recent-item';
+export { RecentUnreadList } from './components/modes/recent-unread-list';
 
 // @vue/component
 export const RecentList = {
 	name: 'RecentList',
-	components: { LoadingState, RecentItem, ActiveCall, CreateChat, EmptyState },
+	components: { LoadingState, RecentItem, ActiveCallList, CreateChat, EmptyState },
 	emits: ['chatClick'],
 	data(): JsonObject
 	{
@@ -102,7 +104,7 @@ export const RecentList = {
 	},
 	async created()
 	{
-		this.contextMenuManager = new RecentMenu();
+		this.contextMenuManager = new RecentMenu({ emitter: this.getEmitter() });
 
 		this.initBroadcastManager();
 		this.initLikeManager();
@@ -228,6 +230,10 @@ export const RecentList = {
 
 			return this.service;
 		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -235,18 +241,13 @@ export const RecentList = {
 	},
 	template: `
 		<div class="bx-im-list-recent__container">
-			<div v-if="activeCalls.length > 0" class="bx-im-list-recent__calls_container" :class="{'--with-shadow': listIsScrolled}">
-				<ActiveCall
-					v-for="activeCall in activeCalls"
-					:key="activeCall.dialogId"
-					:item="activeCall"
-					@click="onCallClick"
-				/>
-			</div>
+			<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick"/>
 			<CreateChat v-if="isCreatingChat" />
 			<LoadingState v-if="isLoading && !firstPageLoaded" />
 			<div v-else @scroll="onScroll" class="bx-im-list-recent__scroll-container">
-				<EmptyState v-if="isEmptyCollection" />
+				<EmptyState 
+					v-if="isEmptyCollection"
+				/>
 				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent__pinned_container">
 					<RecentItem
 						v-for="item in pinnedItems"

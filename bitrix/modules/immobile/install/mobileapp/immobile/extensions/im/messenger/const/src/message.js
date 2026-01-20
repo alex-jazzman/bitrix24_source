@@ -22,6 +22,8 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		banner: 'banner',
 		checkIn: 'check-in',
 		vote: 'vote',
+		videoNote: 'video-note',
+		videoNoteText: 'video-note-text',
 	});
 
 	const MessageIdType = {
@@ -97,6 +99,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		generalChannelCreationMessage: 'GeneralChannelCreationMessage',
 		channelCreationMessage: 'ChannelCreationMessage',
 		vote: 'VoteMessage',
+		sticker: 'StickerMessage',
 	});
 
 	module.exports = {

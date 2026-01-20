@@ -258,7 +258,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const isTaskComments = chatContext => chatContext.type === im_v2_const.ChatType.taskComments;
 	const taskCommentsPreset = new SidebarPreset({
-	  blocks: [im_v2_const.SidebarMainPanelBlock.task, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.meetingList],
+	  blocks: [im_v2_const.SidebarMainPanelBlock.task, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.taskCommentsHistory],
 	  isHeaderMenuEnabled: () => false
 	});
 

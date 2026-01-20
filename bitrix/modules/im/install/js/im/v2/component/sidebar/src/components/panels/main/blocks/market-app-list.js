@@ -1,5 +1,3 @@
-import { EventEmitter } from 'main.core.events';
-
 import { MarketManager } from 'im.v2.lib.market';
 import { EventType, PlacementType, SidebarDetailBlock } from 'im.v2.const';
 
@@ -7,6 +5,7 @@ import { MarketItem } from '../../../elements/market-item/market-item';
 
 import '../css/market.css';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelMarketApplication } from 'im.v2.model';
 
 // @vue/component
@@ -31,11 +30,15 @@ export const MarketAppListPreview = {
 	{
 		onMarketItemClick(entityId)
 		{
-			EventEmitter.emit(EventType.sidebar.open, {
+			this.getEmitter().emit(EventType.sidebar.open, {
 				panel: SidebarDetailBlock.market,
 				dialogId: this.dialogId,
 				entityId,
 			});
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

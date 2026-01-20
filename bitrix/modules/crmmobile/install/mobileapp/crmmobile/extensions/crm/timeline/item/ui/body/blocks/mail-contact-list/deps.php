@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		'crm:mail/message/elements/contact/list',
+		'mail:message/elements/contact/list',
 	],
 ];

@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE"] = "Предлагает заменить поля:";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE"] = "Предлагает обновить данные в полях:";
 $MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_APPLY_ALL"] = "Заменить все поля";
 $MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_ROLLBACK"] = "Вернуть мои данные";
 $MESS["CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_FORTH"] = "Заменить";
@@ -13,4 +13,4 @@ $MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CLOSE"] = "Закрыть";
 $MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CANCEL"] = "Отмена";
 $MESS["CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION"] = "Расшифровка";
 $MESS["CRM_AI_FORM_FILL_MERGER_RESUME"] = "Резюме";
-$MESS["CRM_AI_FORM_FILL_MERGER_TITLE"] = "CoPilot предлагает заменить поля";
+$MESS["CRM_AI_FORM_FILL_MERGER_TITLE"] = "CoPilot предлагает обновить данные в полях";

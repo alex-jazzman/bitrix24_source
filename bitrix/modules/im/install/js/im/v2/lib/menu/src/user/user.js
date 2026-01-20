@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { Utils } from 'im.v2.lib.utils';
@@ -10,8 +9,10 @@ import { ActionByRole, ChatType, EventType, UserType } from 'im.v2.const';
 
 import { BaseMenu } from '../base/base';
 
+import type { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions } from 'ui.system.menu';
 import type { ImModelUser, ImModelChat } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 type UserMenuContext = {
 	user: ImModelUser,
@@ -20,15 +21,19 @@ type UserMenuContext = {
 
 export class UserMenu extends BaseMenu
 {
+	emitter: EventEmitter;
 	context: UserMenuContext;
 	permissionManager: PermissionManager;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
 		super();
 
 		this.id = 'bx-im-user-context-menu';
 		this.permissionManager = PermissionManager.getInstance();
+
+		const { emitter } = applicationContext;
+		this.emitter = emitter;
 	}
 
 	getKickItem(): ?MenuItemOptions
@@ -59,7 +64,7 @@ export class UserMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_LIB_MENU_USER_MENTION'),
 			onClick: () => {
-				EventEmitter.emit(EventType.textarea.insertMention, {
+				this.emitter.emit(EventType.textarea.insertMention, {
 					mentionText: this.context.user.name,
 					mentionReplacement: Utils.text.getMentionBbCode(this.context.user.id, this.context.user.name),
 					dialogId: this.context.dialog.dialogId,

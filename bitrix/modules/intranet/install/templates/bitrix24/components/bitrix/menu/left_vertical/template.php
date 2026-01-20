@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -240,7 +241,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 							<?endif?>">
 							<span class="menu-item-icon-box"><span class="menu-item-icon"></span></span><?
 							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text">
-							<?= htmlspecialcharsbx($item['TEXT']) ?>
+							<?= htmlspecialcharsbx(htmlspecialcharsback($item["TEXT"])) ?>
 							</span><?
 							if (isset($item["PARAMS"]["is_beta"]))
 							{
@@ -418,6 +419,7 @@ $arJSParams = array(
 	'showSitemapMenuItem' => $arResult['SHOW_SITEMAP_BUTTON'],
 	'showLicenseButton' => $arResult['SHOW_LICENSE_BUTTON'] ?? false,
 	'licenseButtonPath' => $arResult['B24_LICENSE_PATH'] ?? '',
+	'isMessengerEmbedded' => AirTemplate::isMessengerEmbedded() ? 'Y' : 'N',
 );
 ?>
 

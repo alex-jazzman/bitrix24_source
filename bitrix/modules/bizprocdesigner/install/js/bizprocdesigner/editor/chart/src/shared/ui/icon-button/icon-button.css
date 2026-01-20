@@ -1,0 +1,37 @@
+.editor-chart-icon-button {
+	display: block;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+}
+
+.editor-chart-icon-button {
+	display: block;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+}
+
+.editor-chart-icon-button.--disabled {
+	opacity: 0.5;
+}
+
+.editor-chart-icon-button__icon {
+	opacity: 1;
+}
+
+.editor-chart-icon-button__icon.--active {
+	opacity: 1;
+	background: var(--ui-color-blue-57, #4A9DFF);
+}
+
+.editor-chart-icon-button.--disabled .editor-chart-icon-button__icon:hover {
+	background: var(--ui-color-gray-50, #A8ADB4);
+}
+
+.editor-chart-icon-button__icon:hover {
+	opacity: 1;
+	background: var(--ui-color-blue-57, #4A9DFF);
+}

@@ -82,6 +82,14 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {Set<string>}
+		 */
+		getSmilesUrl()
+		{
+			return this.smilesUrl;
+		}
+
+		/**
 		 * @private
 		 * @return {Promise<void>}
 		 */

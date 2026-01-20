@@ -40,7 +40,6 @@ export const ChatPreview = {
 				<div class="bx-im-sidebar-main-preview-group-chat__avatar">
 					<ChatAvatar 
 						:avatarDialogId="dialogId" 
-						:contextDialogId="dialogId" 
 						:size="AvatarSize.XXXL" 
 					/>
 				</div>

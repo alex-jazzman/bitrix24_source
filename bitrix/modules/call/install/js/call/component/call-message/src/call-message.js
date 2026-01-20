@@ -1,19 +1,16 @@
 import { hint } from 'ui.vue3.directives.hint';
-
-import { Type, Loc } from 'main.core';
-
+import { Loc } from 'main.core';
 import { MessageHeader } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
-import { DateCode, DateFormatter } from 'im.v2.lib.date-formatter';
-import { CallManager } from 'im.v2.lib.call';
 import { Messenger } from 'im.public';
 import { ChatType } from 'im.v2.const';
+import { DateCode, DateFormatter } from 'im.v2.lib.date-formatter';
+import { CallManager } from 'call.lib.call-manager';
 import { Analytics } from 'call.lib.analytics';
 
 import './css/call-message.css';
 
-import type { ImModelMessage } from 'im.v2.model';
-import type { ImModelChat } from 'im.v2.model';
+import type { ImModelMessage, ImModelChat } from 'im.v2.model';
 
 type ComponentParams = {
 	messageType: $Values<typeof MESSAGE_TYPE>,

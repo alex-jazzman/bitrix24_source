@@ -1,4 +1,4 @@
-import { ajax, Event, Runtime } from 'main.core';
+import { ajax, Event, Runtime, Type } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { LicenseWidget as Bitrix24LicenseWidget } from 'bitrix24.license-widget';
 import { LicenseWidget as IntranetLicenseWidget } from 'intranet.license-widget';
@@ -9,22 +9,19 @@ import {Counter, CounterColor, CounterStyle} from 'ui.cnt';
 import { PULL } from 'pull.client';
 
 type LicenseButtonOptions = {
-	ordersCount: {
+	counters: {
 		awaitingPayment: number,
 		failedPayment: number,
 		awaitingInvoice: number,
 		inCheckout: number,
 	},
 	ordersInfo: {
-		lastCheckoutTime: number,
-		showDelay: number,
-		hideAfterCheckoutDelay: number,
 		checkoutPath: string,
 		invoicePath: string,
-		isAvailable: boolean,
+		orderPath: string,
 	},
-	shouldShow: boolean,
-	ordersTotalCount: number,
+	commonTotalCount: number,
+	personalTotalCount: number,
 	skeleton: Object,
 	isSidePanelDemoLicense: boolean,
 	isAdmin: boolean,
@@ -47,9 +44,9 @@ export class LicenseButton
 		this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
 		this.#setEventHandlers();
 
-		if (this.#options.isCloud && this.#options.shouldShow)
+		if (this.#options.isCloud)
 		{
-			this.#setCounterValue(this.#options.ordersTotalCount);
+			this.#setCounterValue(this.#options.personalTotalCount, this.#options.commonTotalCount);
 		}
 
 		Event.bind(this.#buttonWrapper, 'click', () => {
@@ -166,8 +163,9 @@ export class LicenseButton
 		});
 	}
 
-	static #setCounterValue(value: number): void
+	static #setCounterValue(personalTotalCount: number, commonTotalCount: number): void
 	{
+		const value = personalTotalCount + commonTotalCount;
 		if (value < 1)
 		{
 			this.#getCounter().destroy();
@@ -202,7 +200,7 @@ export class LicenseButton
 			});
 		}
 
-		if (this.#options.isCloud && this.#options.isAdmin)
+		if (this.#options.isCloud)
 		{
 			PULL.subscribe({
 				moduleId: 'bitrix24',
@@ -222,31 +220,46 @@ export class LicenseButton
 			return;
 		}
 
-		this.#options.ordersCount = params.orders.ordersCount;
-		this.#options.ordersInfo = params.orders.ordersInfo;
-
-		if (params.shouldShow)
+		if (params.scope === 'common')
 		{
-			this.#setCounterValue(params.ordersTotalCount);
+			this.#options.commonTotalCount = params.commonTotalCount;
+
+			if (params.commonTotalCount !== 0 && !Type.isNil(params.commonTotalCount))
+			{
+				this.#options.ordersInfo = params.orders.ordersInfo;
+				this.#options.counters.awaitingInvoice = params.orders.awaitingInvoice;
+				this.#options.counters.awaitingPayment = params.orders.awaitingPayment;
+				this.#options.counters.failedPayment = params.orders.failedPayment;
+			}
+
+			this.#setCounterValue(this.#options.personalTotalCount, params.commonTotalCount);
 		}
-		else
+		else if (params.scope === 'personal')
 		{
-			this.#setCounterValue(0);
+			this.#options.personalTotalCount = params.personalTotalCount;
+
+			if (params.personalTotalCount !== 0 && !Type.isNil(params.personalTotalCount))
+			{
+				this.#options.ordersInfo.checkoutPath = params.orders.checkoutPath;
+				this.#options.counters.inCheckout = params.orders.inCheckout;
+			}
+
+			this.#setCounterValue(params.personalTotalCount, this.#options.commonTotalCount);
 		}
 
-		this.#emitOrdersUpdate(params);
+		this.#emitOrdersUpdate();
 	}
 
-	static #emitOrdersUpdate(params): void
+	static #emitOrdersUpdate(): void
 	{
 		EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new BaseEvent({
 			data: {
 				orders: {
-					ordersCount: params.orders?.ordersCount,
-					ordersInfo: params.orders?.ordersInfo,
+					counters: this.#options.counters,
+					ordersInfo: this.#options.ordersInfo,
 				},
-				shouldShow: params.shouldShow,
-				ordersTotalCount: params.ordersTotalCount,
+				commonTotalCount: this.#options.commonTotalCount,
+				personalTotalCount: this.#options.personalTotalCount,
 			},
 		}));
 	}

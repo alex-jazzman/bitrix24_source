@@ -14,6 +14,8 @@ return [
 		'main.loader',
 		'main.popup',
 		'ui.icons.service',
+		'ui.buttons',
+		'ui.icon-set.api.core',
 		'ui.menu-configurable',
 		'ui.notification',
 	],

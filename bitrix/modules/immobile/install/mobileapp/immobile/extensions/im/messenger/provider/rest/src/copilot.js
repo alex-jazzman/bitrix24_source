@@ -23,7 +23,7 @@ jn.define('im/messenger/provider/rest/copilot', (require, exports, module) => {
 		{
 			if (!options.dialogId)
 			{
-				throw new Error('CopilotRest: options.chatId is required.');
+				throw new Error('CopilotRest: options.dialogId is required.');
 			}
 
 			if (Type.isUndefined(options.roleCode))
@@ -37,6 +37,32 @@ jn.define('im/messenger/provider/rest/copilot', (require, exports, module) => {
 			};
 
 			return runAction(RestMethod.imV2ChatCopilotUpdateRole, { data });
+		}
+
+		/**
+		 * @desc changeEngine
+		 * @param {object} options
+		 * @param {string} options.dialogId
+		 * @param {string} options.engineCode
+		 */
+		changeEngine(options = {})
+		{
+			if (!options.dialogId)
+			{
+				throw new Error('CopilotRest: options.dialogId is required.');
+			}
+
+			if (Type.isUndefined(options.engineCode))
+			{
+				throw new TypeError('CopilotRest: options.engineCode must be filled string value or Null.');
+			}
+
+			const data = {
+				dialogId: options.dialogId,
+				engineCode: options.engineCode,
+			};
+
+			return runAction(RestMethod.imV2ChatCopilotUpdateEngine, { data });
 		}
 	}
 

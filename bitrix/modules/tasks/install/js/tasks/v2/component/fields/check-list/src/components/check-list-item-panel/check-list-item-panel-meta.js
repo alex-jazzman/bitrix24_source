@@ -1,4 +1,4 @@
-import { Outline } from 'ui.icon-set.api.core';
+import { Outline } from 'ui.icon-set.api.vue';
 
 export const PanelSection = Object.freeze({
 	Important: 'important',
@@ -113,7 +113,7 @@ export const PanelMeta = Object.freeze({
 				},
 			],
 		},
-	],
+	].filter(Boolean),
 });
 
 export type Section = {

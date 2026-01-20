@@ -2,17 +2,20 @@
  * @module im/messenger/controller/dialog/lib/pin/manager
  */
 jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, module) => {
-	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
+	const { isOnline } = require('device/connection');
 	const { isEqual } = require('utils/object');
 	const { intersection } = require('utils/array');
+
+	const { Loc } = require('im/messenger/loc');
+	const { DialogType, EventType, PinCount } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { DialogType, EventType, PinCount } = require('im/messenger/const');
 	const { parser } = require('im/messenger/lib/parser');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const { isOnline } = require('device/connection');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+
 	const { PinList } = require('im/messenger/controller/dialog/lib/pin/list');
 
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -449,11 +452,14 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				;
 			}
 
+			const helper = MessageHelper.createByModel(modelMessage, messageFiles);
+
 			const simplifyMessage = parser.simplify({
 				text: modelMessage.text,
 				attach: modelMessage?.params?.ATTACH ?? false,
 				files: messageFiles,
 				showFilePrefix: false,
+				sticker: Boolean(helper?.isSticker),
 			});
 
 			messegeData.message = [

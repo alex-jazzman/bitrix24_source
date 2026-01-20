@@ -22,29 +22,45 @@ export const WaitListItemActions = {
 			required: true,
 		},
 	},
-	data(): { showPopup: boolean }
-	{
-		return {
-			showPopup: false,
-		};
-	},
 	computed: {
 		...mapGetters({
 			editingWaitListItemId: `${Model.Interface}/editingWaitListItemId`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+			isMenuOpenedForWaitListItem: `${Model.Interface}/isMenuOpenedForWaitListItem`,
 		}),
 	},
-	mounted(): void
+	async mounted(): void
 	{
 		if (this.isEditingBookingMode && this.editingWaitListItemId === this.waitListItem.id)
 		{
-			this.showPopup = true;
+			await this.$store.dispatch(
+				`${Model.Interface}/setMenuOpenedForWaitListItem`,
+				this.waitListItem.id,
+			);
 		}
 	},
 	methods: {
-		clickHandler(): void
+		async clickHandler(): void
 		{
-			this.showPopup = !this.showPopup;
+			const currentId = this.waitListItem.id;
+			const waitListItemId = this.isMenuOpenedForWaitListItem(currentId)
+				? 0
+				: currentId
+			;
+			await this.$store.dispatch(
+				`${Model.Interface}/setMenuOpenedForWaitListItem`,
+				waitListItemId,
+			);
+		},
+		async onClose(): void
+		{
+			if (this.isMenuOpenedForWaitListItem(this.waitListItem.id))
+			{
+				await this.$store.dispatch(
+					`${Model.Interface}/setMenuOpenedForWaitListItem`,
+					0,
+				);
+			}
 		},
 	},
 	template: `
@@ -60,10 +76,10 @@ export const WaitListItemActions = {
 			</div>
 		</div>
 		<WaitListItemActionsPopup
-			v-if="showPopup"
+			v-if="isMenuOpenedForWaitListItem(waitListItem.id)"
 			:waitListItem
-			:bindElement="this.$refs.node"
-			@close="showPopup = false"
+			:bindElement="$refs.node"
+			@close="onClose()"
 		/>
 	`,
 };

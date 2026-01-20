@@ -24,10 +24,18 @@
 	border: 1px solid var(--ui-color-blue-57);
 }
 
+.ui-block-diagram-port.--error {
+	border: 1px solid var(--ui-color-palette-red-70);
+}
+
 .ui-block-diagram-port:hover.ui-block-diagram-port.--disabled {
 	border: 1px solid var(--ui-color-palette-gray-40);
 }
 
 .ui-block-diagram-port:hover {
 	border: 1px solid var(--ui-color-blue-57);
+}
+
+.ui-block-diagram-port.--error:hover {
+	border: 1px solid var(--ui-color-palette-red-70);
 }

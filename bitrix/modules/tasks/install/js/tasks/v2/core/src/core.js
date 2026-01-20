@@ -3,23 +3,28 @@ import { Builder, BuilderModel, Store } from 'ui.vue3.vuex';
 
 import { CheckList } from 'tasks.v2.model.check-list';
 import { CrmItems } from 'tasks.v2.model.crm-items';
+import { ElapsedTimes } from 'tasks.v2.model.elapsed-times';
 import { Epics } from 'tasks.v2.model.epics';
 import { Flows } from 'tasks.v2.model.flows';
+import { GanttLinks } from 'tasks.v2.model.gantt-links';
 import { Groups } from 'tasks.v2.model.groups';
 import { Interface } from 'tasks.v2.model.interface';
+import { Placements } from 'tasks.v2.model.placements';
+import { Results } from 'tasks.v2.model.results';
 import { Stages } from 'tasks.v2.model.stages';
 import { Tasks } from 'tasks.v2.model.tasks';
+import { Reminders } from 'tasks.v2.model.reminders';
 import { Users } from 'tasks.v2.model.users';
 
 import { PullManager } from 'tasks.v2.provider.pull.pull-manager';
 
-import type { CoreParams } from './types';
-export type { CoreParams };
+import type { CoreParams, RightsParams } from './types';
+export type { CoreParams, RightsParams };
+
+const params = Extension.getSettings('tasks.v2.core');
 
 class CoreApplication
 {
-	#params: CoreParams = Extension.getSettings('tasks.v2.core');
-
 	#store: Store;
 	#builder: Builder;
 	#initPromise: Promise;
@@ -27,7 +32,7 @@ class CoreApplication
 
 	getParams(): CoreParams
 	{
-		return this.#params;
+		return params;
 	}
 
 	getStore(): Store
@@ -77,13 +82,18 @@ class CoreApplication
 		this.#builder
 			.addModel(CheckList.create())
 			.addModel(CrmItems.create())
+			.addModel(ElapsedTimes.create())
 			.addModel(Epics.create())
 			.addModel(Flows.create())
-			.addModel(Groups.create())
-			.addModel(Interface.createWithVariables(this.#params))
+			.addModel(GanttLinks.create())
+			.addModel(Groups.createWithGroups([params.defaultCollab].filter((it) => it)))
+			.addModel(Interface.createWithVariables(params))
+			.addModel(Results.create())
+			.addModel(Placements.create())
 			.addModel(Stages.create())
-			.addModel(Tasks.create())
-			.addModel(Users.create())
+			.addModel(Tasks.createWithVariables(params))
+			.addModel(Reminders.create())
+			.addModel(Users.createWithCurrentUser(params.currentUser))
 		;
 
 		const builderResult = await this.#builder.build();
@@ -94,7 +104,7 @@ class CoreApplication
 	#initPull(): void
 	{
 		this.#pullManager = new PullManager({
-			currentUserId: this.#params.currentUserId,
+			currentUserId: params.currentUser.id,
 		});
 
 		this.#pullManager.initQueueManager();

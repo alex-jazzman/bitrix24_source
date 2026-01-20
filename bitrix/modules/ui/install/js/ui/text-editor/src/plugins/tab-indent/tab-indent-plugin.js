@@ -54,20 +54,32 @@ export class TabIndentPlugin extends BasePlugin
 			// Turn off RichText built-in indents
 			this.getEditor().registerCommand(
 				INDENT_CONTENT_COMMAND,
-				(): boolean => {
+				(payload): boolean => {
 					const selection = $getSelection();
+					if ($isSelectionInList(selection))
+					{
+						payload?.event.preventDefault();
 
-					return !$isSelectionInList(selection);
+						return false;
+					}
+
+					return true;
 				},
 				COMMAND_PRIORITY_LOW,
 			),
 
 			this.getEditor().registerCommand(
 				OUTDENT_CONTENT_COMMAND,
-				(): boolean => {
+				(payload): boolean => {
 					const selection = $getSelection();
+					if ($isSelectionInList(selection))
+					{
+						payload?.event.preventDefault();
 
-					return !$isSelectionInList(selection);
+						return false;
+					}
+
+					return true;
 				},
 				COMMAND_PRIORITY_LOW,
 			),
@@ -86,7 +98,7 @@ function $isSelectionInList(selection: null | RangeSelection): boolean
 	const firstPoint = isBackward ? selection.focus : selection.anchor;
 	const firstNode = firstPoint.getNode();
 
-	if ($isListItemNode(firstNode) && firstPoint.offset === 0)
+	if ($isListItemNode(firstNode))
 	{
 		return true;
 	}
@@ -96,5 +108,5 @@ function $isSelectionInList(selection: null | RangeSelection): boolean
 		(node: ElementNode) => $isElementNode(node) && !node.isInline(),
 	);
 
-	return $isListItemNode(parentNode) && firstPoint.offset === 0;
+	return $isListItemNode(parentNode);
 }

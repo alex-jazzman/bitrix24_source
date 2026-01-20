@@ -552,9 +552,9 @@ export class VoximplantCall extends AbstractCall
 		this.signaling.sendFloorRequest(requestActive);
 	};
 
-	sendRecordState(recordState)
+	sendLocalRecordState(recordState)
 	{
-		this.signaling.sendRecordState(recordState);
+		this.signaling.sendLocalRecordState(recordState);
 	};
 
 	sendEmotion(toUserId, emotion)
@@ -1844,7 +1844,7 @@ export class VoximplantCall extends AbstractCall
 		}
 		else if (eventName === clientEvents.recordState)
 		{
-			this.runCallback(CallEvent.onUserRecordState, {
+			this.runCallback(CallEvent.onUserCommonRecordState, {
 				userId: message.senderId,
 				recordState: message.recordState
 			});
@@ -2044,7 +2044,7 @@ class Signaling
 		});
 	};
 
-	sendRecordState(recordState)
+	sendLocalRecordState(recordState)
 	{
 		return this.#sendMessage(clientEvents.recordState, recordState);
 	};

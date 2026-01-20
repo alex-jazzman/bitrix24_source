@@ -1,0 +1,7 @@
+.bx-im-content-notification-item-confirm-buttons__container {
+	padding-top: 12px;
+}
+
+.bx-im-content-notification-item-confirm-buttons__container .ui-btn.--air + .ui-btn {
+	margin-left: 10px;
+}

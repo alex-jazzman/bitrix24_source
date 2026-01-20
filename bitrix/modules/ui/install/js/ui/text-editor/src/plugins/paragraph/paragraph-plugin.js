@@ -168,6 +168,23 @@ export class ParagraphPlugin extends BasePlugin
 	{
 		this.cleanUpRegister(
 			this.getEditor().registerNodeTransform(RootNode, (root: RootNode) => {
+				const selection = $getSelection();
+				if ($isRangeSelection(selection))
+				{
+					const anchorNode = selection.anchor.getNode();
+					const focusNode = selection.focus.getNode();
+					if (!anchorNode.isAttached() || !focusNode.isAttached())
+					{
+						root.selectEnd();
+						// eslint-disable-next-line no-console
+						console.warn(
+							'TextEditor: selection has been moved to the end of the editor because the previously '
+							+ 'selected nodes have been removed and selection wasn\'t moved to another node. '
+							+ 'Ensure selection changes after removing/replacing a selected node.',
+						);
+					}
+				}
+
 				const lastChild = root.getLastChild();
 				if (!$isParagraphNode(lastChild))
 				{
@@ -220,11 +237,11 @@ export class ParagraphPlugin extends BasePlugin
 
 	#handlePaste(event): boolean
 	{
-		if (this.getEditor().getNewLineMode() === NewLineMode.PARAGRAPH)
-		{
-			// use a build-in algorithm (Rich Text Plugin)
-			return false;
-		}
+		// if (this.getEditor().getNewLineMode() === NewLineMode.PARAGRAPH)
+		// {
+		// 	// use a build-in algorithm (Rich Text Plugin)
+		// 	return false;
+		// }
 
 		if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK)
 		{

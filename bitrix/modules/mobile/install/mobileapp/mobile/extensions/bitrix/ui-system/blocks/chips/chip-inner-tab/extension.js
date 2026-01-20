@@ -79,10 +79,13 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 			if (icon instanceof ReactionIcon)
 			{
+				const type = Application.getPlatform() === 'ios' ? 'png' : 'svg'; // ios bug with render gradient in svg
+
 				return ReactionIconView({
 					icon,
 					size: iconSize,
 					style: iconStyle,
+					type,
 				});
 			}
 

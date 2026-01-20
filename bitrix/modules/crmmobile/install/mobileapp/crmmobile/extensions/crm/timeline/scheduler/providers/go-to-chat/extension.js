@@ -470,7 +470,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		{
 			const { toPhoneId } = this.state;
 
-			return (this.isFetchedConfig && !Type.isStringFilled(toPhoneId));
+			return (this.isFetchedConfig && toPhoneId <= 0);
 		}
 
 		shouldShowClientWarningBlock()
@@ -583,7 +583,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		{
 			const { toName, toPhoneId, currentChannelId } = this.state;
 
-			return (Type.isStringFilled(toName) && Type.isStringFilled(toPhoneId) && currentChannelId);
+			return (Type.isStringFilled(toName) && toPhoneId <= 0 && currentChannelId);
 		}
 
 		send(lineId)

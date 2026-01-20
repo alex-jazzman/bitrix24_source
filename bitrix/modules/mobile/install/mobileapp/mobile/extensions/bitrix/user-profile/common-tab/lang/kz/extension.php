@@ -7,6 +7,8 @@ $MESS["M_PROFILE_AVATAR_CHOOSE_ERROR_TITLE"] = "Фотосуретті жүкт�
 $MESS["M_PROFILE_COMMON_FIELDS_ADD_VALUE_BUTTON_TEXT"] = "Қосу";
 $MESS["M_PROFILE_COMMON_FIELDS_EXPAND_BUTTON"] = "Барлығын көрсету";
 $MESS["M_PROFILE_COMMON_FIELDS_INFO_BOX_TITLE"] = "Ақпарат";
+$MESS["M_PROFILE_COMMON_FIELDS_PHONE_ERROR_TEXT"] = "Дұрыс емес телефон нөмірі";
+$MESS["M_PROFILE_DELETE"] = "Профильді жою";
 $MESS["M_PROFILE_DEPARTMENTS_TITLE"] = "Компанияның құрылымы";
 $MESS["M_PROFILE_DEPARTMENT_CONTACTS_BOX_TITLE"] = "Байланыс";
 $MESS["M_PROFILE_DEPARTMENT_EMPLOYEE_BOX_TITLE"] = "Қызметкерлер";
@@ -24,6 +26,8 @@ $MESS["M_PROFILE_TAGS_EDIT_MODE_TITLE"] = "ҚЫЗЫҒУШЫЛЫҚТАР";
 $MESS["M_PROFILE_TAGS_EXPAND_BUTTON"] = "Барлығын көрсету";
 $MESS["M_PROFILE_TAGS_REMOVE_ERROR"] = "Тегті жою мүмкін болмады";
 $MESS["M_PROFILE_TAGS_TITLE"] = "Қызығушылықтар";
+$MESS["M_PROFILE_USER_ROLE_COLLAB"] = "Қонақ";
+$MESS["M_PROFILE_USER_ROLE_EXTRANET"] = "Сыртқы пайдаланушы";
 $MESS["M_PROFILE_USER_STATUS_DND"] = "Мазаламаңыз [COLOR=#COLOR#]#GMT#[/COLOR]";
 $MESS["M_PROFILE_USER_STATUS_FIRED"] = "Жұмыстан шығарылды";
 $MESS["M_PROFILE_USER_STATUS_OFFLINE"] = "Желіде емес";

@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'alert',
+		'asset-manager',
 		'tokens',
 		'loc',
 		'in-app-url',
@@ -15,5 +17,6 @@ return [
 		'utils/time',
 		'utils/validation',
 		'utils/object',
+		'utils/skeleton',
 	],
 ];

@@ -103,3 +103,5 @@ $MESS['OL_COMPONENT_SESSION_GROUP_ACTION_OPEN_LINES_TITLE'] = 'Открытые 
 $MESS['OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE'] = 'Пользовательские поля диалогов открытых линий';
 $MESS['OL_COMPONENT_SESSION_FILTER_SHARE_URL'] = 'Скопировать ссылку';
 $MESS['OL_COMPONENT_SESSION_FILTER_SHARE_URL_DONE'] = 'Ссылка скопирована в буфер обмена.';
+$MESS['OL_COMPONENT_COUNT_ROW_ALL'] = 'Всего:';
+$MESS['OL_COMPONENT_COUNT_ROW_SHOW'] = 'Показать количество';

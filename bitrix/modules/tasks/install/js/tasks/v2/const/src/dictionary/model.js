@@ -1,11 +1,16 @@
 export const Model = Object.freeze({
-	CheckList: 'checklist',
+	CheckList: 'check-list',
 	CrmItems: 'crm-items',
 	Epics: 'epics',
 	Flows: 'flows',
+	GanttLinks: 'gantt-links',
 	Groups: 'groups',
 	Interface: 'interface',
+	Placements: 'placements',
+	Results: 'results',
 	Stages: 'stages',
 	Tasks: 'tasks',
 	Users: 'users',
+	Reminders: 'reminders',
+	ElapsedTimes: 'elapsed-times',
 });

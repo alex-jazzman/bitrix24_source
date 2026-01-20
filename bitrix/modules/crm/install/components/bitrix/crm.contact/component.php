@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Report\DisablingHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 
 if (!CModule::IncludeModule('crm'))
@@ -75,6 +76,11 @@ $arDefaultUrlTemplates404 = [
 	'requisiteselect' => 'requisite/select/#contact_id#/',
 	'requisite' => 'requisite/#requisite_id#/'
 ];
+
+if (DisablingHelper::areMyReportsInDemoMode())
+{
+	unset($arDefaultUrlTemplates404['widget']);
+}
 
 $arDefaultVariableAliases404 = [];
 $arDefaultVariableAliases = [];

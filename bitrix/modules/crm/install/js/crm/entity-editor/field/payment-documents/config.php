@@ -11,6 +11,7 @@ return [
 		'main.popup',
 		'ui.dialogs.messagebox',
 		'catalog.tool-availability-manager',
+		'ui.hint',
 		'main.core',
 		'main.core.events',
 		'ui.label',

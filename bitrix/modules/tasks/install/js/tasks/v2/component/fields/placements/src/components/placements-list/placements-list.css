@@ -1,0 +1,19 @@
+.tasks-field-placements-list-container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+
+	border-radius: 10px;
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
+}
+
+.tasks-field-placements-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-placements-list > div:not(:last-child) {
+	margin-bottom: 6px;
+}

@@ -1,8 +1,5 @@
-import { AudioPlayer } from 'im.v2.component.elements.audioplayer';
+import { AudioPlayer } from 'im.v2.component.elements.player';
 import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
-
-import { TranscriptionItem } from './transcription';
-import { TranscriptionButtonItem } from './transcription-button';
 
 import '../../css/items/audio.css';
 
@@ -11,7 +8,7 @@ import type { ImModelFile } from 'im.v2.model';
 // @vue/component
 export const AudioItem = {
 	name: 'AudioItem',
-	components: { AudioPlayer, ProgressBar, TranscriptionItem, TranscriptionButtonItem },
+	components: { AudioPlayer, ProgressBar },
 	props: {
 		item: {
 			type: Object,
@@ -23,12 +20,6 @@ export const AudioItem = {
 		},
 	},
 	emits: ['cancelClick'],
-	data(): { transcriptionStatus: boolean }
-	{
-		return {
-			isTranscriptionOpened: false,
-		};
-	},
 	computed:
 	{
 		ProgressBarSize: () => ProgressBarSize,
@@ -36,20 +27,12 @@ export const AudioItem = {
 		{
 			return this.item;
 		},
-		timelineType(): number
-		{
-			return Math.floor(Math.random() * 5);
-		},
 	},
 	methods:
 	{
 		onCancelClick(event: PointerEvent): void
 		{
 			this.$emit('cancelClick', event);
-		},
-		transcriptionToggle(status: boolean): void
-		{
-			this.isTranscriptionOpened = status;
 		},
 	},
 	template: `
@@ -64,23 +47,9 @@ export const AudioItem = {
 				:messageId="messageId"
 				:src="file.urlDownload"
 				:file="file"
-				:timelineType="timelineType"
 				:authorId="file.authorId"
 				:withContextMenu="false"
 				:withAvatar="false"
-			>
-				<template #transcription-control>
-					<TranscriptionButtonItem
-						:file="file"
-						:isOpened="isTranscriptionOpened"
-						@transcriptionToggle="transcriptionToggle"
-					/>
-				</template>
-			</AudioPlayer>
-			<TranscriptionItem
-				:file="file"
-				:isOpened="isTranscriptionOpened"
-				:messageId="messageId"
 			/>
 		</div>
 	`,

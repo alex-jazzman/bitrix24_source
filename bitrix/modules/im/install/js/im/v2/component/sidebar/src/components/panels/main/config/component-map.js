@@ -17,6 +17,7 @@ import { TariffLimitPreview } from '../blocks/tariff-limit';
 import { CollabHelpdeskPreview } from '../blocks/collab-helpdesk';
 import { NotesPreview } from '../blocks/notes';
 import { TaskPreview } from '../blocks/task';
+import { TaskCommentsHistory } from '../blocks/task-comments-history';
 
 export const ComponentMap = {
 	[SidebarMainPanelBlock.chat]: ChatPreview,
@@ -28,6 +29,7 @@ export const ComponentMap = {
 	[SidebarMainPanelBlock.fileList]: FileListPreview,
 	[SidebarMainPanelBlock.task]: TaskPreview,
 	[SidebarMainPanelBlock.taskList]: TaskListPreview,
+	[SidebarMainPanelBlock.taskCommentsHistory]: TaskCommentsHistory,
 	[SidebarMainPanelBlock.meetingList]: MeetingListPreview,
 	[SidebarMainPanelBlock.fileUnsortedList]: FileUnsortedListPreview,
 	[SidebarMainPanelBlock.marketAppList]: MarketAppListPreview,

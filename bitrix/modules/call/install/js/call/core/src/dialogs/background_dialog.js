@@ -40,7 +40,7 @@ export class BackgroundDialog
 			<div id="placeholder"></div>`
 		;
 
-		const js = `BX.Runtime.loadExtension("im.v2.component.call-background").then(function(exports) {
+		const js = `BX.Runtime.loadExtension("call.component.v2.call-background").then(function(exports) {
 				BX.Vue3.BitrixVue.createApp({
 					components: {CallBackground: exports.CallBackground},
 					template: '<CallBackground tab="${tab}"/>',

@@ -957,24 +957,24 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 					);
 				}
 
-				var fieldParams = BX.clone(fieldInfo);
+				const fieldParams = BX.clone(fieldInfo);
 				fieldParams["SIGNATURE"] = signature;
-				if(fieldType === BX.UI.EntityUserFieldType.file && BX.type.isObject(fieldParams["ADDITIONAL"]))
+				if (fieldType === BX.UI.EntityUserFieldType.file && BX.type.isObject(fieldParams["ADDITIONAL"]))
 				{
-					var ownerToken = BX.prop.getString(
+					const ownerToken = BX.prop.getString(
 						BX.prop.getObject(fieldData, "EXTRAS", {}),
 						"OWNER_TOKEN",
-						""
+						"",
 					);
-					if(ownerToken !== "")
+					if (ownerToken !== "")
 					{
 						fieldParams["ADDITIONAL"]["URL_TEMPLATE"] += "&owner_token=" + encodeURIComponent(ownerToken);
 					}
 				}
-				if(this.checkIfNotEmpty(fieldData))
+				if (this.checkIfNotEmpty(fieldData))
 				{
-					var value = BX.prop.getArray(fieldData, "VALUE", null);
-					if(value === null)
+					let value = BX.prop.getArray(fieldData, "VALUE", null);
+					if (value === null)
 					{
 						value = BX.prop.getString(fieldData, "VALUE", "");
 					}
@@ -1014,14 +1014,17 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 			fieldParams["SETTINGS"]["LABEL_CHECKBOX"] = this.getTitle();
 		}
 
-		//HACK: We have to assign fake ENTITY_VALUE_ID for render predefined value of new entity
 		if(isLayoutContext
 			&& typeof fieldParams["VALUE"] !== "undefined"
 			&& this._mode === BX.UI.EntityEditorMode.edit
 			&& BX.prop.getInteger(fieldParams, "ENTITY_VALUE_ID") <= 0
 		)
 		{
-			fieldParams["ENTITY_VALUE_ID"] = 1;
+			if (!BX.type.isObject(fieldParams['ADDITIONAL']))
+			{
+				fieldParams['ADDITIONAL'] = {}
+			}
+			fieldParams['ADDITIONAL']['FORCE_USE_VALUE'] = 'Y'; //We have to force for render predefined value of new entity
 		}
 
 	};

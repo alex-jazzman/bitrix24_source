@@ -1,9 +1,10 @@
+import { groupMeta } from 'tasks.v2.component.fields.group';
 import { FileStatus, UploaderFileInfo } from 'ui.uploader.core';
-import { Animated, Outline } from 'ui.icon-set.api.core';
+import { Chip, ChipDesign } from 'ui.system.chip.vue';
+import { Animated, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.animated';
 import 'ui.icon-set.outline';
 
-import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
 import { GroupType, Model, CardType } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
@@ -20,7 +21,11 @@ export const FilesChip = {
 		Chip,
 		FilesPopup,
 	},
-	inject: ['analytics', 'cardType'],
+	inject: {
+		analytics: {},
+		cardType: {},
+		task: {},
+	},
 	props: {
 		taskId: {
 			type: [Number, String],
@@ -31,7 +36,7 @@ export const FilesChip = {
 			default: false,
 		},
 	},
-	setup(props): { fileService: FileService }
+	setup(props): { task: TaskModel, fileService: FileService }
 	{
 		return {
 			filesMeta,
@@ -47,10 +52,6 @@ export const FilesChip = {
 		};
 	},
 	computed: {
-		task(): TaskModel
-		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
 		group(): ?GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
@@ -76,9 +77,7 @@ export const FilesChip = {
 				return this.files.length > 0;
 			}
 
-			const wasFilesFilled = this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, filesMeta.id);
-
-			return wasFilesFilled || this.files.length > 0;
+			return this.task.filledFields[filesMeta.id] || this.files.length > 0;
 		},
 		icon(): string
 		{
@@ -204,9 +203,9 @@ export const FilesChip = {
 	template: `
 		<Chip
 			v-if="isSelected || canAttachFiles"
-			:design="design"
-			:icon="icon"
-			:text="text"
+			:design
+			:icon
+			:text
 			:data-task-id="taskId"
 			:data-task-chip-id="filesMeta.id"
 			ref="chip"
@@ -214,7 +213,7 @@ export const FilesChip = {
 		/>
 		<FilesPopup
 			v-if="isPopupShown"
-			:taskId="taskId"
+			:taskId
 			:getBindElement="() => $refs.chip.$el"
 			@upload="browseFiles"
 			@close="closePopup"

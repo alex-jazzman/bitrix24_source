@@ -3,8 +3,9 @@
  */
 jn.define('ui-system/layout/area-list', (require, exports, module) => {
 	const { Component } = require('tokens');
-	const { ScrollView } = require('layout/ui/scroll-view');
+	const { PropTypes } = require('utils/validation');
 	const { mergeImmutable } = require('utils/object');
+	const { ScrollView } = require('layout/ui/scroll-view');
 
 	/**
 	 * @function AreaList

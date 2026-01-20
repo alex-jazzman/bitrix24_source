@@ -19,7 +19,7 @@ return [
 		'assets/icons',
 		'layout/ui/scroll-view',
 		'haptics',
-		'tourist',
+		'require-lazy',
 
 		'ui-system/blocks/icon',
 		'ui-system/blocks/badges/counter',
@@ -52,7 +52,6 @@ return [
 		'calendar:data-managers/collab-manager',
 		'calendar:data-managers/user-manager',
 		'calendar:date-helper',
-		'calendar:aha-moments-manager',
 		'calendar:event-edit-form',
 		'calendar:event-view-form',
 		'calendar:statemanager/redux/slices/events',

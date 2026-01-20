@@ -7,16 +7,20 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 		createToggle,
 		createDescription,
 		createImage,
-	} = require('settings-v2/structure/src/item-create-helper');
+	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { NotificationCounterSettingController } = require('settings-v2/controller/notification-counter');
 	const { NotificationLoadService } = require('settings-v2/services/notification-load');
 
-	const { SettingsPageId, NotificationCounterKey } = require('settings-v2/const');
+	const {
+		SettingsPageId,
+		NotificationsCacheKey,
+		ImageName,
+	} = require('settings-v2/const');
 	const { Loc } = require('loc');
 
 	const requestSettingsData = async () => {
-		const cachedCounterTypes = Application.storage.get(NotificationCounterKey.TYPES);
-		const cachedCounterConfig = Application.storage.get(NotificationCounterKey.CONFIG);
+		const cachedCounterTypes = Application.storage.get(NotificationsCacheKey.counterTypes);
+		const cachedCounterConfig = Application.storage.get(NotificationsCacheKey.counterConfig);
 		if (cachedCounterTypes && cachedCounterConfig)
 		{
 			return cachedCounterTypes;
@@ -62,7 +66,7 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 		items: [
 			createImage({
 				id: 'notifications-counter-image',
-				name: 'notifications-counter',
+				name: ImageName.NOTIFICATIONS_COUNTER,
 				externalStyle: {
 					height: 246,
 				},

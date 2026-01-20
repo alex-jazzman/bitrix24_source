@@ -12,6 +12,7 @@ const taskCommentsPreset = new SidebarPreset({
 		SidebarMainPanelBlock.info,
 		SidebarMainPanelBlock.fileList,
 		SidebarMainPanelBlock.meetingList,
+		SidebarMainPanelBlock.taskCommentsHistory,
 	],
 	isHeaderMenuEnabled: () => false,
 });

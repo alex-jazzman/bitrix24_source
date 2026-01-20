@@ -31,4 +31,5 @@ export type ConditionSelectorOptions = {
 	onOpenFieldMenu?: (BaseEvent) => void,
 	onOpenMenu?: (BaseEvent) => void,
 	showValuesSelector: ?boolean,
+	customSelectorFn: ?Function,
 }

@@ -87,5 +87,7 @@ jn.define('ui-system/form/buttons/button/src/design-enum', (require, exports, mo
 		}
 	}
 
-	module.exports = { ButtonDesign };
+	module.exports = {
+		ButtonDesign: ButtonDesign.export(),
+	};
 });

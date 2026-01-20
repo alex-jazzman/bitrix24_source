@@ -12,6 +12,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 	const { runAction } = require('im/messenger/lib/rest');
 	const { RestMethod, DialogType } = require('im/messenger/const');
 	const { QueueService } = require('im/messenger/provider/services/queue');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	class ActionService
 	{
@@ -52,7 +53,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 
 			await this.saveMessages([modelMessage]);
 
-			this.#localDelete([modelMessage], dialogId)
+			this.#localDeleteByDialogType([modelMessage], dialogId)
 				.then(() => this.deleteRequest([modelMessage.id]))
 				.catch((errors) => {
 					Logger.error('ActionService.delete.deleteRequest.catch: ', errors);
@@ -73,7 +74,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 			const messageModels = this.store.getters['messagesModel/getListByIds'](listId);
 			await this.saveMessages(messageModels);
 
-			this.#localDelete(messageModels, dialogId)
+			this.#localDeleteByDialogType(messageModels, dialogId)
 				.then(() => this.deleteRequest(listId))
 				.catch((error) => {
 					Logger.error(`${this.constructor.name}.deleteByIdList.deleteRequest.catch: `, error);
@@ -85,7 +86,44 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 			;
 		}
 
-		async #localDelete(messageModels, dialogId)
+		/**
+		 * @param {MessagesModelState[]} messageModels
+		 * @param {string} dialogId
+		 */
+		async #localDeleteByViewed(messageModels, dialogId)
+		{
+			const viewedMessages = [];
+			const newMessages = [];
+			messageModels.forEach((message) => {
+				if (this.isViewedByOtherUsers(message))
+				{
+					return viewedMessages.push(message);
+				}
+
+				return newMessages.push(message);
+			});
+
+			if (newMessages)
+			{
+				await this.fullDeleteMessage(newMessages, dialogId)
+					.catch((error) => Logger.error(error));
+			}
+
+			return this.updateMessage(
+				viewedMessages,
+				Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
+				dialogId,
+				true,
+			)
+				.catch((error) => Logger.error(error))
+			;
+		}
+
+		/**
+		 * @param {MessagesModelState[]} messageModels
+		 * @param {string} dialogId
+		 */
+		async #localDeleteByDialogType(messageModels, dialogId)
 		{
 			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
 
@@ -112,32 +150,25 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 					;
 				}
 
-				default:
+				case DialogType.collab:
+				case DialogType.chat:
+				case DialogType.copilot:
+				case DialogType.tasks:
+				case DialogType.calendar:
 				{
-					const viewedMessages = [];
-					const newMessages = [];
-					messageModels.forEach((message) => {
-						if (this.isViewedByOtherUsers(message))
-						{
-							return viewedMessages.push(message);
-						}
-
-						return newMessages.push(message);
-					});
-
-					if (newMessages)
+					const dialogHelper = DialogHelper.createByModel(dialogModel);
+					if (dialogHelper?.isCurrentUserManager || dialogHelper?.isCurrentUserOwner)
 					{
-						await this.fullDeleteMessage(newMessages, dialogId).catch((error) => Logger.error(error));
+						return this.fullDeleteMessage(messageModels, dialogId)
+							.catch((error) => Logger.error(error));
 					}
 
-					return this.updateMessage(
-						viewedMessages,
-						Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
-						dialogId,
-						true,
-					)
-						.catch((error) => Logger.error(error))
-					;
+					return this.#localDeleteByViewed(messageModels, dialogId);
+				}
+
+				default:
+				{
+					return this.#localDeleteByViewed(messageModels, dialogId);
 				}
 			}
 		}

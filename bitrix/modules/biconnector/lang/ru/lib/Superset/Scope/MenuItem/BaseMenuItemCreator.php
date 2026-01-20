@@ -1,4 +1,4 @@
 <?php
 
-$MESS['BIC_SCOPE_MENU_ITEM_TITLE'] = 'BI Конструктор';
+$MESS['BIC_SCOPE_MENU_ITEM_TITLE_MSGVER_1'] = 'Аналитика';
 $MESS['BIC_SCOPE_MENU_ITEM_MARKETPLACE'] = 'Маркетплейс';

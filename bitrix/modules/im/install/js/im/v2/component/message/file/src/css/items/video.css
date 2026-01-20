@@ -3,7 +3,6 @@
 }
 
 .bx-im-video-item__container {
-	overflow: hidden;
 	border-radius: 6px;
 	position: relative;
 	background-color: var(--im-video-item__background-color_container);

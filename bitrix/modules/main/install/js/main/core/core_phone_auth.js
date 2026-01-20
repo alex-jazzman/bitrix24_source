@@ -89,3 +89,4 @@ BX.PhoneAuth.prototype.resendCode = function()
 };
 
 })();
+

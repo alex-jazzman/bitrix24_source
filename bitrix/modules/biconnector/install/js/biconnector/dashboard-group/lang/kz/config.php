@@ -21,3 +21,5 @@ $MESS["BI_GROUP_SUBTITLE_PLURAL_1"] = "#COUNT# есеп";
 $MESS["BI_GROUP_SUBTITLE_PLURAL_2"] = "#COUNT# есеп";
 $MESS["BI_GROUP_SYSTEM_NAME_HINT"] = "Жүйелік топтың атауын өзгерту мүмкін емес";
 $MESS["BI_GROUP_SYSTEM_SCOPES_HINT"] = "Жүйелік топтың көріну аймағын өзгерту мүмкін емес";
+$MESS["DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE"] = "Осы есептің көріну аймағын жою үшін <br>есепті #GROUP_NAME# тобынан жойыңыз";
+$MESS["DASHBOARD_PARAMS_SELECTOR_NO_DELETE_GROUP_SCOPE_MANY"] = "Осы есептің көріну аймағын жою үшін <br>есепті келесі топтардан жойыңыз:";

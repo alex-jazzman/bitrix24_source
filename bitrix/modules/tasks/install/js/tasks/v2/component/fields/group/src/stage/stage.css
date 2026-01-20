@@ -4,7 +4,6 @@
 
 	position: relative;
 	display: flex;
-	margin-top: 10px;
 	max-width: max-content;
 	font-weight: var(--ui-font-weight-medium);
 	font-size: var(--ui-font-size-xs);
@@ -28,6 +27,7 @@
 .tasks-field-group-stage-text {
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tasks-field-group-stage.--dark .tasks-field-group-stage-text {
@@ -60,7 +60,6 @@
 }
 
 .tasks-field-group-stage-loader {
-	margin-top: 10px;
 	position: relative;
 	display: flex;
 	align-items: center;

@@ -4,6 +4,7 @@ import {Logger} from './logger'
 import {CallType, CallEvent, CallState, CallEngine, Provider} from './engine'
 import {Hardware} from '../call_hardware';
 import Util from '../util'
+import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
 
 /**
  * Abstract call class
@@ -81,6 +82,16 @@ export class AbstractCall
 		this.connectionData = params.connectionData || {};
 
 		this._microphoneLevel = 0;
+
+		this.commonRecordState = {
+			state: CallCommonRecordState.Stopped,
+			type: CallCommonRecordType.None,
+			userId: 0,
+			date: {
+				start: null,
+				pause: [],
+			},
+		};
 	};
 
 	get provider()
@@ -252,5 +263,86 @@ export class AbstractCall
 
 		this.state = CallState.Finished;
 		this.runCallback(CallEvent.onDestroy);
+	}
+
+	updateCommonRecordState({ action, type, senderId, date })
+	{
+		const { state, userId } = this.commonRecordState;
+
+		if (action !== CallCommonRecordState.Started && userId !== senderId)
+		{
+			return false;
+		}
+
+		switch (action)
+		{
+			case CallCommonRecordState.Started:
+			{
+				if (!Util.isCommonRecordStateInactive(state))
+				{
+					return false;
+				}
+
+				Object.assign(this.commonRecordState, {
+					state: CallCommonRecordState.Started,
+					type,
+					userId: senderId,
+					date: { start: date, pause: [] },
+				});
+
+				break;
+			}
+
+			case CallCommonRecordState.Paused:
+			{
+				if (state !== CallCommonRecordState.Started)
+				{
+					return false;
+				}
+
+				this.commonRecordState.state = CallCommonRecordState.Paused;
+				this.commonRecordState.date.pause.push({ start: date, finish: null });
+
+				break;
+			}
+
+			case CallCommonRecordState.Resumed:
+			{
+				if (state !== CallCommonRecordState.Paused)
+				{
+					return false;
+				}
+
+				this.commonRecordState.state = CallCommonRecordState.Started;
+
+				const lastPause = [...this.commonRecordState.date.pause].reverse().find((item) => item.finish === null);
+
+				if (lastPause)
+				{
+					lastPause.finish = date;
+				}
+
+				break;
+			}
+
+			case CallCommonRecordState.Stopped:
+			{
+				Object.assign(this.commonRecordState, {
+					state: CallCommonRecordState.Stopped,
+					type: CallCommonRecordType.None,
+					userId: 0,
+					date: { start: null, pause: [] },
+				});
+
+				break;
+			}
+
+			default:
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

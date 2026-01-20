@@ -3,11 +3,12 @@ function JCTitleSearch(arParams)
 	var _this = this;
 
 	this.arParams = {
-		'AJAX_PAGE': arParams.AJAX_PAGE,
+		'AJAX_PAGE': BX.util.htmlspecialcharsback(arParams.AJAX_PAGE),
 		'CONTAINER_ID': arParams.CONTAINER_ID,
 		'INPUT_ID': arParams.INPUT_ID,
 		'MIN_QUERY_LEN': parseInt(arParams.MIN_QUERY_LEN, 10),
 	};
+
 	if (arParams.WAIT_IMAGE)
 	{
 		this.arParams.WAIT_IMAGE = arParams.WAIT_IMAGE;

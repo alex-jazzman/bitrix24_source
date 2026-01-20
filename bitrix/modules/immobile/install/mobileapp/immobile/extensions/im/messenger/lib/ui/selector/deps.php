@@ -10,6 +10,9 @@ return [
 		'im:messenger/lib/ui/base/full-screen-shadow',
 		'im:messenger/lib/ui/base/loader',
 		'im:messenger/lib/ui/search/input',
+		'ui-system/layout/area',
+		'tokens',
+		'utils/object',
 	],
 	'bundle' => [
 		'./single-selector',

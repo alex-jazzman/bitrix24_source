@@ -154,6 +154,7 @@ jn.define('layout/ui/gratitude-list/src/list', (require, exports, module) => {
 				name: medalName,
 				ownerId: this.#ownerId,
 				relatedPostId: Number(item.post_id),
+				feedId: item.GRATITUDE_MEDAL,
 				title: item.POST_MESSAGE,
 			};
 		}
@@ -309,7 +310,6 @@ jn.define('layout/ui/gratitude-list/src/list', (require, exports, module) => {
 				}),
 				title: Loc.getMessage('M_UI_GRATITUDE_LIST_EMPTY_TITLE'),
 				titleColor: Color.base3,
-				emptyScreen: true,
 				preventRefresh: true,
 			};
 

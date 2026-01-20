@@ -5,6 +5,7 @@ return [
 		'type',
 		'logger',
 		'utils/object',
+		'im:messenger/const',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/logger',

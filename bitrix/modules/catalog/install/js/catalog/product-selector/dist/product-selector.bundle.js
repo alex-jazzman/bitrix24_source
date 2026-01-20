@@ -145,7 +145,7 @@ this.BX = this.BX || {};
 	function _getLabelContainer2() {
 	  return this.cache.remember('label', () => {
 	    return main_core.Tag.render(_t6 || (_t6 = _`
-				<span>
+				<span class="catalog-footers-label-container">
 					<span
 						onclick="${0}"
 						class="ui-selector-footer-link  ui-selector-footer-link-add"
@@ -298,12 +298,8 @@ this.BX = this.BX || {};
 	var _handleNameInputBlur = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleNameInputBlur");
 	var _getHiddenNameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHiddenNameInput");
 	var _getArrowIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getArrowIcon");
-	var _getSearchIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSearchIcon");
 	class ProductSearchInputBase {
 	  constructor(id, options = {}) {
-	    Object.defineProperty(this, _getSearchIcon, {
-	      value: _getSearchIcon2
-	    });
 	    Object.defineProperty(this, _getArrowIcon, {
 	      value: _getArrowIcon2
 	    });
@@ -359,8 +355,8 @@ this.BX = this.BX || {};
 	      if (this.selector.isProductSearchEnabled()) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _initHasDialogItems)[_initHasDialogItems]();
 	      }
-	      this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), main_core.Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block');
-	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), block);
+	      this.toggleIcon(this.getSearchIcon(), main_core.Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block');
+	      main_core.Dom.append(this.getSearchIcon(), block);
 	      main_core.Event.bind(this.getNameInput(), 'click', this.handleClickNameInput.bind(this));
 	      main_core.Event.bind(this.getNameInput(), 'input', this.handleSearchInput);
 	      main_core.Event.bind(this.getNameInput(), 'blur', babelHelpers.classPrivateFieldLooseBase(this, _handleNameInputBlur)[_handleNameInputBlur].bind(this));
@@ -369,7 +365,7 @@ this.BX = this.BX || {};
 	    }
 	    if (this.showDetailLink() && main_core.Type.isStringFilled(this.getValue())) {
 	      this.toggleIcon(this.getClearIcon(), 'none');
-	      this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), 'none');
+	      this.toggleIcon(this.getSearchIcon(), 'none');
 	      this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getArrowIcon)[_getArrowIcon](), 'block');
 	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getArrowIcon)[_getArrowIcon](), block);
 	    }
@@ -567,7 +563,7 @@ this.BX = this.BX || {};
 	  onProductSelect(event) {
 	    const item = event.getData().item;
 	    item.getDialog().getTargetNode().value = item.getTitle();
-	    this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), 'none');
+	    this.toggleIcon(this.getSearchIcon(), 'none');
 	    this.clearErrors();
 	    if (this.selector) {
 	      this.selector.onProductSelect(item.getId(), this.getOnProductSelectConfig(item));
@@ -618,16 +614,26 @@ this.BX = this.BX || {};
 	    this.loadedSelectedItem = null;
 	    dialog.load();
 	  }
+	  getSearchIcon() {
+	    return this.cache.remember('searchIcon', () => {
+	      return main_core.Tag.render(_t6$1 || (_t6$1 = _$2`
+				<button
+					class="ui-ctl-after ui-ctl-icon-search"
+					onclick="${0}"
+				></button>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _handleSearchIconClick)[_handleSearchIconClick].bind(this));
+	    });
+	  }
 	}
 	function _handleIconsSwitchingOnNameInput2(event) {
 	  this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getArrowIcon)[_getArrowIcon](), 'none');
 	  if (main_core.Type.isStringFilled(event.target.value)) {
 	    this.toggleIcon(this.getClearIcon(), 'block');
-	    this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), 'none');
+	    this.toggleIcon(this.getSearchIcon(), 'none');
 	  } else {
 	    this.toggleIcon(this.getClearIcon(), 'none');
 	    if (this.isSearchEnabled()) {
-	      this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), 'block');
+	      this.toggleIcon(this.getSearchIcon(), 'block');
 	    }
 	  }
 	}
@@ -724,13 +730,13 @@ this.BX = this.BX || {};
 	    this.toggleIcon(this.getClearIcon(), 'none');
 	    if (this.showDetailLink() && main_core.Type.isStringFilled(this.getValue())) {
 	      if (this.isSearchEnabled()) {
-	        this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), 'none');
+	        this.toggleIcon(this.getSearchIcon(), 'none');
 	      }
 	      this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getArrowIcon)[_getArrowIcon](), 'block');
 	    } else {
 	      this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getArrowIcon)[_getArrowIcon](), 'none');
 	      if (this.isSearchEnabled()) {
-	        this.toggleIcon(babelHelpers.classPrivateFieldLooseBase(this, _getSearchIcon)[_getSearchIcon](), main_core.Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block');
+	        this.toggleIcon(this.getSearchIcon(), main_core.Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block');
 	      }
 	    }
 	  }, 200);
@@ -745,7 +751,7 @@ this.BX = this.BX || {};
 	}
 	function _getHiddenNameInput2() {
 	  return this.cache.remember('hiddenNameInput', () => {
-	    return main_core.Tag.render(_t6$1 || (_t6$1 = _$2`
+	    return main_core.Tag.render(_t7$1 || (_t7$1 = _$2`
 				<input
 				 	type="hidden"
 					name="${0}"
@@ -756,23 +762,13 @@ this.BX = this.BX || {};
 	}
 	function _getArrowIcon2() {
 	  return this.cache.remember('arrowIcon', () => {
-	    return main_core.Tag.render(_t7$1 || (_t7$1 = _$2`
+	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$2`
 				<a
 					href="${0}"
 					target="_blank"
 					class="ui-ctl-after ui-ctl-icon-forward"
 				>
 			`), main_core.Text.encode(this.model.getDetailPath()));
-	  });
-	}
-	function _getSearchIcon2() {
-	  return this.cache.remember('searchIcon', () => {
-	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$2`
-				<button
-					class="ui-ctl-after ui-ctl-icon-search"
-					onclick="${0}"
-				></button>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _handleSearchIconClick)[_handleSearchIconClick].bind(this));
 	  });
 	}
 
@@ -1452,7 +1448,7 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _getProductIdByBarcode2(barcode) {
-	  return main_core.ajax.runAction('catalog.ProductSelector.#getProductIdByBarcode', {
+	  return main_core.ajax.runAction('catalog.ProductSelector.getProductIdByBarcode', {
 	    json: {
 	      barcode
 	    }

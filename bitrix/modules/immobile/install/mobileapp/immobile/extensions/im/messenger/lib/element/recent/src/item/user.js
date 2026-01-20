@@ -168,7 +168,8 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 		createActions()
 		{
-			const canMuted = ChatPermission.сanMute(this.getDialogItem().dialogId);
+			const dialogId = this.getModelItem().id;
+			const canMuted = ChatPermission.сanMute(dialogId);
 
 			this.actions = [
 				this.getPinAction(),

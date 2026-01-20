@@ -268,6 +268,30 @@ class booking extends CModule
 			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
 			'onRestServiceBuildDescription',
 		);
+
+		EventManager::getInstance()->registerEventHandlerCompatible(
+			'im',
+			'OnGetNotifySchema',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Im\NotifySchema',
+			'onGetNotifySchema',
+		);
+
+		EventManager::getInstance()->registerEventHandlerCompatible(
+			'iblock',
+			'OnBeforeIBlockElementDelete',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Catalog\SkuDeleteEventHandler',
+			'onBeforeIBlockElementDelete',
+		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'catalog',
+			'onBeforeConvertProductsType',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Catalog\SkuTypeChangeEventHandler',
+			'onBeforeConvertProductsType',
+		);
 	}
 
 	public function InstallAgents(): void
@@ -317,6 +341,14 @@ class booking extends CModule
 			module: 'booking',
 			interval: 60,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+			existError: false
+		);
+
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\UpYandexMapsCounter::execute();',
+			module: 'booking',
+			interval: 60,
+			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
 			existError: false
 		);
 	}
@@ -369,6 +401,30 @@ class booking extends CModule
 			'booking',
 			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
 			'onRestServiceBuildDescription',
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'im',
+			'OnGetNotifySchema',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Im\NotifySchema',
+			'onGetNotifySchema',
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'iblock',
+			'OnBeforeIBlockElementDelete',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Catalog\SkuDeleteEventHandler',
+			'onBeforeIBlockElementDelete',
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'catalog',
+			'onBeforeConvertProductsType',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Catalog\SkuTypeChangeEventHandler',
+			'onBeforeConvertProductsType',
 		);
 	}
 

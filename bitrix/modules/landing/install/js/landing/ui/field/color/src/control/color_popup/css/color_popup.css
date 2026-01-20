@@ -1,0 +1,101 @@
+.landing-ui-field-color-popup-footer {
+	margin-top: 14px;
+	display: flex;
+	justify-content: center;
+}
+
+.landing-ui-field-color-popup-tab-btn {
+	flex: 1;
+	padding: 5px 6px;
+	height: 28px;
+	max-width: 100%;
+	background: #fff;
+	border: none;
+	border-top: 1px solid var(--ui-color-base-10);
+	border-bottom: 1px solid var(--ui-color-base-10);
+	font-size: 13px;
+	color: var(--ui-color-base-90);
+	-webkit-appearance: none!important;
+	outline: none!important;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.landing-ui-field-color-popup-tab-btn:nth-child(1) {
+	border-radius: 8px 0 0 8px;
+	border-left: 1px solid var(--ui-color-base-10);
+	border-right: 1px solid var(--ui-color-base-10);
+}
+
+.landing-ui-field-color-popup-tab-btn:nth-child(3) {
+	border-radius: 0 8px 8px 0;
+	border-right: 1px solid var(--ui-color-base-10);
+	border-left: 1px solid var(--ui-color-base-10);
+}
+
+.landing-ui-field-color-popup-tab-btn.active {
+	background: #edf7ff;
+	border: 1px solid #c4e6ff;
+	color: #0075ff;
+}
+
+.landing-ui-field-color-popup-tabs {
+	display: flex;
+	margin-bottom: 9px;
+}
+
+.landing-ui-field-color-popup-container {
+	/*
+	height: 309px;
+	 */
+}
+
+.landing-ui-field-color-popup-container-recent {
+	padding-top: 3px;
+	max-height: 174px;
+	height: fit-content;
+	padding-bottom: 16px;
+}
+
+.landing-ui-field-color-popup-container-spectrum,
+.landing-ui-field-color-popup-container-presets {
+	height: 174px;
+}
+
+.landing-ui-field-color-popup-container-recent,
+.landing-ui-field-color-popup-container-spectrum,
+.landing-ui-field-color-popup-container-presets {
+	margin-bottom: 16px;
+}
+
+.landing-ui-field-color-popup-picker {
+	display: flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 7px;
+	margin-bottom: 16px;
+	border-radius: var(--ui-border-radius-xs);
+	border: 1px solid var(--ui-color-base-10);
+	box-sizing: border-box;
+}
+
+.landing-ui-field-color-popup-picker-preview {
+	margin-right: 6px;
+	min-width: 18px;
+	height: 18px;
+	border-radius: var(--ui-border-radius-2xs);
+	border: 1px solid var(--ui-color-base-35);
+	box-sizing: border-box;
+}
+
+.landing-ui-field-color-popup-picker-input {
+	width: 100px;
+	border: none;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-90);
+	outline: none;
+	text-transform: lowercase;
+	box-sizing: border-box;
+}

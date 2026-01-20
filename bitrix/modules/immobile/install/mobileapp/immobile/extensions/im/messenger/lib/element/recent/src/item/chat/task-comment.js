@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/task-comment', (require, ex
 			this.actions = [
 				this.getHideAction(),
 				this.getPinAction(),
+				this.getReadAction(),
 			];
 
 			return this;

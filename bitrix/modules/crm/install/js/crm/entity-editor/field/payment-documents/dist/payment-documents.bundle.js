@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,ui_dialogs_messagebox,catalog_toolAvailabilityManager,main_core,main_core_events,ui_label,currency_currencyCore) {
+(function (exports,main_popup,ui_dialogs_messagebox,catalog_toolAvailabilityManager,ui_hint,main_core,main_core_events,ui_label,currency_currencyCore) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1437,5 +1437,5 @@ this.BX = this.BX || {};
 	exports.EntityEditorPaymentDocuments = EntityEditorPaymentDocuments;
 	exports.TimelineSummaryDocuments = TimelineSummaryDocuments;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI.Dialogs,BX.Catalog,BX,BX.Event,BX.UI,BX.Currency));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI.Dialogs,BX.Catalog,BX,BX,BX.Event,BX.UI,BX.Currency));
 //# sourceMappingURL=payment-documents.bundle.js.map

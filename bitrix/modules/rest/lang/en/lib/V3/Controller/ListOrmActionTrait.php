@@ -1,0 +1,3 @@
+<?php
+$MESS["REST_V3_CONTROLLER_LISTORMACTIONTRAIT_ACTION_DESCRIPTION"] = 'Retrieves a list of specified records.';
+$MESS["REST_V3_CONTROLLER_LISTORMACTIONTRAIT_ACTION_TITLE"] = 'Retrieve record list';

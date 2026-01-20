@@ -131,3 +131,11 @@ export type HcmLinkNotMappedUsersData = {
 	userIds: Array<number>,
 	allUserIds: Array<number>,
 };
+
+export type Restrictions = {
+	isAvailable: boolean;
+	smsAllowed: boolean;
+	newDocAllowed: boolean;
+	availableOnTariff: boolean;
+	b2bPhoneVerificationRequired: boolean;
+};

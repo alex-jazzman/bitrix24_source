@@ -23,7 +23,7 @@ jn.define('ui-system/blocks/chips/chip-text-input', (require, exports, module) =
 		initStyle(props)
 		{
 			this.design = this.getDesign(props);
-			this.size = ChipButtonSize.SMALL;
+			this.size = ChipButtonSize.S;
 		}
 
 		getTypography()

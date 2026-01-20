@@ -7,11 +7,11 @@ if($errors!=false)
 	$alErrors = '';
 	foreach($errors as $val)
 		$alErrors .= $val."<br>";
-	echo CAdminMessage::ShowMessage(Array("TYPE"=>"ERROR", "MESSAGE" =>GetMessage("MOD_INST_ERR"), "DETAILS"=>$alErrors, "HTML"=>true));
+	CAdminMessage::ShowMessage(Array("TYPE"=>"ERROR", "MESSAGE" =>GetMessage("MOD_INST_ERR"), "DETAILS"=>$alErrors, "HTML"=>true));
 }
 else
 {
-	echo CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
+	CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
 }
 ?>
 <form action="<?echo $APPLICATION->GetCurPage()?>">

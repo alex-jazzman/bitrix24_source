@@ -64,11 +64,7 @@ export default {
 				isCatalogDiscountSetEnabled: this.$root.$app.options.isCatalogDiscountSetEnabled,
 				fieldHints: this.$root.$app.options.fieldHints,
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
-				showCompilationModeSwitcher: (
-					this.$root.$app.options.templateMode === 'create'
-					&& this.$root.$app.options.showCompilationModeSwitcher === 'Y'
-					&& this.$root.$app.options.mode === ModeDictionary.paymentDelivery
-				),
+				showCompilationModeSwitcher: this.showCompilationModeSwitcher(),
 				compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
 				facebookFailProducts: this.$root.$app.compilation?.FAIL_PRODUCTS,
 				ownerId: this.$root.$app.options.ownerId,
@@ -106,7 +102,27 @@ export default {
 			this.onProductFormCompilationCreated.bind(this),
 		);
 	},
+	watch: {
+		messageDataSenderCode()
+		{
+			this.productForm.setShowCompilationModeSwitcher(this.showCompilationModeSwitcher());
+		},
+	},
+	computed: {
+		messageDataSenderCode()
+		{
+			return this.$store.state.orderCreation.messageData.senderCode;
+		},
+	},
 	methods: {
+		showCompilationModeSwitcher(): boolean
+		{
+			return this.$root.$app.options.templateMode === 'create'
+				&& this.$root.$app.options.showCompilationModeSwitcher === 'Y'
+				&& this.$root.$app.options.mode === ModeDictionary.paymentDelivery
+				&& this.messageDataSenderCode !== 'bitrix24'
+			;
+		},
 		onProductFormCompilationCreated(event: BaseEvent)
 		{
 			const data = event.getData();
@@ -180,11 +196,13 @@ export default {
 			if (this.isNeedDisableSubmit())
 			{
 				this.$store.commit('orderCreation/disableSubmit');
+				this.$store.commit('orderCreation/setHasAvailableProducts', false);
 
 				return;
 			}
 
 			this.$store.commit('orderCreation/enableSubmit');
+			this.$store.commit('orderCreation/setHasAvailableProducts', true);
 
 			const requestId = Text.getRandom(20);
 			this.refreshId = requestId;
@@ -254,20 +272,31 @@ export default {
 			if (this.isNeedDisableSubmit())
 			{
 				this.$store.commit('orderCreation/disableSubmit');
+				this.$store.commit('orderCreation/setHasAvailableProducts', false);
 			}
 			else
 			{
 				this.$store.commit('orderCreation/enableSubmit');
+				this.$store.commit('orderCreation/setHasAvailableProducts', true);
 			}
 		},
 		isNeedDisableSubmit(): boolean
 		{
 			const basket = this.$store.getters['orderCreation/getBasket']();
 
-			return (
+			if (
 				basket.length <= 0
 				|| (this.productForm && Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors())
-			);
+			)
+			{
+				return true;
+			}
+
+			const filledProducts = basket.filter((item) => {
+				return (Type.isStringFilled(item.module) && item.productId > 0) || item.name.length > 0;
+			});
+
+			return filledProducts.length <= 0;
 		},
 	},
 	template: `

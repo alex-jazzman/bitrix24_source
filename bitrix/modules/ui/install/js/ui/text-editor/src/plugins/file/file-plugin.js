@@ -7,12 +7,22 @@ import {
 	$insertNodes,
 	$createParagraphNode,
 	$nodesOfType,
+	$isRangeSelection,
+	$createLineBreakNode,
+	$isParagraphNode,
+	$getSelection,
 	COMMAND_PRIORITY_EDITOR,
+	type ElementNode,
+	type TextNode,
+	type ParagraphNode,
+	type PointType,
+	type RangeSelection,
 	type LexicalCommand,
 	type LexicalNode,
 } from 'ui.lexical.core';
 
-import { $wrapNodeInElement } from 'ui.lexical.utils';
+import { $wrapNodeInElement, $findMatchingParent } from 'ui.lexical.utils';
+import { NewLineMode } from '../../constants';
 import { calcImageSize } from '../../helpers/calc-image-size';
 
 import { registerDraggableNode } from '../../helpers/register-draggable-node';
@@ -384,57 +394,58 @@ export class FilePlugin extends BasePlugin
 						node = $createFileNode(payload.serverFileId, payload.info);
 					}
 
-					// const selection: RangeSelection = $getSelection();
-					// if ($isRangeSelection(selection) && fileType !== FileType.FILE && payload.inline !== true)
-					// {
-					// 	const focus: PointType = selection.focus;
-					// 	const focusNode: TextNode | ElementNode = focus.getNode();
-					// 	if (!selection.isCollapsed())
-					// 	{
-					// 		focusNode.selectEnd();
-					// 	}
-					//
-					// 	const parentNode: ParagraphNode = $findMatchingParent(
-					// 		focusNode,
-					// 		(parent: ElementNode) => $isParagraphNode(parent),
-					// 	);
-					//
-					// 	if (parentNode === null)
-					// 	{
-					// 		$insertNodes([node]);
-					// 		if ($isRootOrShadowRoot(node.getParentOrThrow()))
-					// 		{
-					// 			$wrapNodeInElement(node, $createParagraphNode).selectEnd();
-					// 		}
-					// 	}
-					// 	else if (parentNode.isEmpty())
-					// 	{
-					// 		parentNode.append(node);
-					// 		node.selectEnd();
-					// 	}
-					// 	else
-					// 	{
-					// 		// const paragraph = $createParagraphNode();
-					// 		// paragraph.append(node);
-					// 		// parentNode.insertAfter(paragraph);
-					// 		parentNode.append($createLineBreakNode());
-					// 		parentNode.append(node);
-					// 		node.selectEnd();
-					// 	}
-					// }
-					// else
-					// {
-					// 	$insertNodes([node]);
-					// 	if ($isRootOrShadowRoot(node.getParentOrThrow()))
-					// 	{
-					// 		$wrapNodeInElement(node, $createParagraphNode).selectEnd();
-					// 	}
-					// }
-
-					$insertNodes([node]);
-					if ($isRootOrShadowRoot(node.getParentOrThrow()))
+					const selection: RangeSelection = $getSelection();
+					if ($isRangeSelection(selection) && fileType !== FileType.FILE && payload.inline !== true)
 					{
-						$wrapNodeInElement(node, $createParagraphNode).selectEnd();
+						const focus: PointType = selection.focus;
+						const focusNode: TextNode | ElementNode = focus.getNode();
+						if (!selection.isCollapsed())
+						{
+							focusNode.selectEnd();
+						}
+
+						const parentNode: ParagraphNode = $findMatchingParent(
+							focusNode,
+							(parent: ElementNode) => $isParagraphNode(parent),
+						);
+
+						if (parentNode === null)
+						{
+							$insertNodes([node]);
+							if ($isRootOrShadowRoot(node.getParentOrThrow()))
+							{
+								$wrapNodeInElement(node, $createParagraphNode).selectEnd();
+							}
+						}
+						else if (parentNode.isEmpty())
+						{
+							parentNode.append(node);
+							node.selectEnd();
+						}
+						else
+						{
+							if (this.getEditor().getNewLineMode() === NewLineMode.LINE_BREAK)
+							{
+								parentNode.append($createLineBreakNode());
+								parentNode.append(node);
+							}
+							else
+							{
+								const paragraph = $createParagraphNode();
+								paragraph.append(node);
+								parentNode.insertAfter(paragraph);
+							}
+
+							node.selectEnd();
+						}
+					}
+					else
+					{
+						$insertNodes([node]);
+						if ($isRootOrShadowRoot(node.getParentOrThrow()))
+						{
+							$wrapNodeInElement(node, $createParagraphNode).selectEnd();
+						}
 					}
 
 					return true;

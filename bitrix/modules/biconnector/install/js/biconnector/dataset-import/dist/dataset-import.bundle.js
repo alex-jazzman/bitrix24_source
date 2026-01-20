@@ -1596,13 +1596,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      const originalName = this.fieldSettings.originalName;
 	      let typeText = '';
 	      if (originalType) {
-	        typeText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_TYPE', {
+	        typeText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_TYPE_MSGVER_1', {
 	          '#CLASS#': '<span class="format-table__orig_info_title">',
 	          '#/CLASS#': '</span>',
 	          '#TYPENAME#': DataTypeDescriptions[originalType].title
 	        });
 	      }
-	      const nameText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_NAME', {
+	      const nameText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_NAME_MSGVER_1', {
 	        '#CLASS#': '<span class="format-table__orig_info_title">',
 	        '#/CLASS#': '</span>',
 	        '#FIELDNAME#': originalName
@@ -1613,8 +1613,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return `${typeText}<br>${nameText}`;
 	    },
 	    isNeedShowOriginalNameHint() {
-	      var _this$$store$state$co, _this$$store$state$co2, _this$$store$state$co3, _this$$store$state$co4;
-	      return ((_this$$store$state$co = (_this$$store$state$co2 = this.$store.state.config.fileProperties) == null ? void 0 : _this$$store$state$co2.firstLineHeader) != null ? _this$$store$state$co : true) && ((_this$$store$state$co3 = this.$store.state.config.connectionProperties) == null ? void 0 : _this$$store$state$co3.connectionType) && ((_this$$store$state$co4 = this.$store.state.config.connectionProperties) == null ? void 0 : _this$$store$state$co4.connectionType) !== 'rest';
+	      var _this$$store$state$co;
+	      const {
+	        connectionType,
+	        connectionIsSupportMapping
+	      } = this.$store.state.config.connectionProperties || {};
+	      const firstLineHeader = (_this$$store$state$co = this.$store.state.config.fileProperties) == null ? void 0 : _this$$store$state$co.firstLineHeader;
+	      return (firstLineHeader != null ? firstLineHeader : true) && !(connectionType === 'rest' && connectionIsSupportMapping === false);
 	    },
 	    hintOptions() {
 	      return {
@@ -1640,7 +1645,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    canEditName() {
 	      var _this$fieldSettings, _this$fieldSettings2;
-	      const isNew = !Boolean(((_this$fieldSettings = this.fieldSettings) == null ? void 0 : _this$fieldSettings.id) > 0);
+	      const isNew = !(((_this$fieldSettings = this.fieldSettings) == null ? void 0 : _this$fieldSettings.id) > 0);
 	      return isNew || ((_this$fieldSettings2 = this.fieldSettings) == null ? void 0 : _this$fieldSettings2.visible) && this.sourceTypeExternal;
 	    }
 	  },
@@ -3762,6 +3767,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    preparedItems() {
 	      const selectorItems = [];
 	      this.items.forEach(item => {
+	        var _item$IS_SUPPORT_MAPP;
 	        const itemOptions = {
 	          id: item.ID,
 	          title: item.TITLE,
@@ -3770,7 +3776,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${item.ID}&closeAfterCreate=Y`,
 	          linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
 	          customData: {
-	            connectionType: item.TYPE
+	            connectionType: item.TYPE,
+	            isSupportMapping: (_item$IS_SUPPORT_MAPP = item.IS_SUPPORT_MAPPING) != null ? _item$IS_SUPPORT_MAPP : false
 	          }
 	        };
 	        if (item.AVATAR) {
@@ -4055,6 +4062,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      var _this$$store$getters$;
 	      return (_this$$store$getters$ = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$.connectionType;
 	    },
+	    selectedConnectionIsSupportMapping() {
+	      var _this$$store$getters$2;
+	      return (_this$$store$getters$2 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$2.connectionIsSupportMapping;
+	    },
 	    selectedConnectionAvatar() {
 	      const id = this.selectedConnectionId;
 	      if (id > 0) {
@@ -4066,16 +4077,16 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return `/bitrix/images/biconnector/database-connections/${this.selectedConnectionType}.svg`;
 	    },
 	    selectedConnectionId() {
-	      var _this$$store$getters$2, _this$$store$getters$3;
-	      return (_this$$store$getters$2 = (_this$$store$getters$3 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$3.connectionId) != null ? _this$$store$getters$2 : 0;
+	      var _this$$store$getters$3, _this$$store$getters$4;
+	      return (_this$$store$getters$3 = (_this$$store$getters$4 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$4.connectionId) != null ? _this$$store$getters$3 : 0;
 	    },
 	    selectedConnectionName() {
-	      var _this$$store$getters$4;
-	      return (_this$$store$getters$4 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$4.connectionName;
+	      var _this$$store$getters$5;
+	      return (_this$$store$getters$5 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$5.connectionName;
 	    },
 	    selectedTableName() {
-	      var _this$$store$getters$5;
-	      return (_this$$store$getters$5 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$5.tableName;
+	      var _this$$store$getters$6;
+	      return (_this$$store$getters$6 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$6.tableName;
 	    },
 	    isEditMode() {
 	      return this.$store.getters.isEditMode;
@@ -4093,6 +4104,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      const sourceId = parseInt(event.data.tag.getId(), 10);
 	      this.$store.commit('setConnectionProperties', {
 	        connectionType: event.data.tag.getCustomData().get('connectionType'),
+	        connectionIsSupportMapping: Boolean(event.data.tag.getCustomData().get('isSupportMapping')),
 	        connectionId: sourceId,
 	        tableName: null
 	      });
@@ -4115,6 +4127,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    onConnectionDeselected() {
 	      this.$store.commit('setConnectionProperties', {
 	        connectionType: null,
+	        connectionIsSupportMapping: null,
 	        connectionId: null,
 	        tableName: null
 	      });
@@ -4124,6 +4137,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    onTableSelected(event) {
 	      this.$store.commit('setConnectionProperties', {
 	        connectionType: this.selectedConnectionType,
+	        connectionIsSupportMapping: this.selectedConnectionIsSupportMapping,
 	        connectionId: this.selectedConnectionId,
 	        tableName: event.data.tag.getTitle()
 	      });
@@ -4149,6 +4163,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    onTableDeselected(event) {
 	      this.$store.commit('setConnectionProperties', {
 	        connectionType: this.selectedConnectionType,
+	        connectionIsSupportMapping: this.selectedConnectionIsSupportMapping,
 	        connectionId: this.selectedConnectionId,
 	        tableName: null
 	      });
@@ -4175,8 +4190,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    handleSliderMessage(event) {
 	      const [messageEvent] = event.getData();
 	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave') {
+	        var _messageEvent$data$co;
 	        const connectionProperties = this.$store.getters.connectionProperties;
 	        connectionProperties.connectionName = main_core.Text.decode(messageEvent.data.connection.name);
+	        connectionProperties.connectionIsSupportMapping = Boolean((_messageEvent$data$co = messageEvent.data.connection.isSupportMapping) != null ? _messageEvent$data$co : null);
 	        this.$store.commit('setConnectionProperties', connectionProperties);
 	      }
 	    }
@@ -4305,6 +4322,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    isRestEntity() {
 	      return this.sourceCode === 'rest';
 	    },
+	    connectionIsSupportMapping() {
+	      var _this$$store$getters$, _this$$store$getters$2;
+	      return (_this$$store$getters$ = (_this$$store$getters$2 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$2.connectionIsSupportMapping) != null ? _this$$store$getters$ : false;
+	    },
 	    sourceCode() {
 	      var _this$$store$state$co, _this$$store$state$co2;
 	      return (_this$$store$state$co = (_this$$store$state$co2 = this.$store.state.config.connectionProperties) == null ? void 0 : _this$$store$state$co2.connectionType) != null ? _this$$store$state$co : '';
@@ -4345,17 +4366,18 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_ERROR_EDIT_TITLE') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_ERROR_TITLE');
 	    },
 	    fieldsSettingsStepHint() {
-	      if (this.isEditMode) {
-	        if (this.isRestEntity) {
-	          return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
-	        }
-	        return '';
+	      let articleCode = '';
+	      let hintCode = '';
+	      if (!this.isEditMode && !this.isRestEntity) {
+	        articleCode = '23508958';
+	        hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
 	      }
-	      let articleCode = '23508958';
-	      let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
-	      if (this.isRestEntity) {
+	      if (this.isRestEntity && !this.connectionIsSupportMapping) {
 	        articleCode = '24486426';
-	        hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST';
+	        hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST_NOT_SUPPORT_MAPPING';
+	      }
+	      if (articleCode === '' && hintCode === '') {
+	        return '';
 	      }
 	      return this.$Bitrix.Loc.getMessage(hintCode).replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=' + articleCode + '`)">').replace('[/link]', '</a>');
 	    },
@@ -4470,6 +4492,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        }
 	      }).then(response => {
 	        this.isLoading = false;
+	        this.steps.fields.disabledElements = null;
 	        this.onLoadSuccess(response);
 	      }).catch(response => {
 	        var _response$errors$0$me, _response$errors$;
@@ -4483,7 +4506,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      this.$refs.propertiesStep.open();
 	      this.$refs.fieldsStep.open();
 	      this.toggleStepState('properties', false);
-	      if (this.isRestEntity) {
+	      if (this.isRestEntity && !this.connectionIsSupportMapping) {
 	        this.steps.fields.disabledElements = {
 	          name: true,
 	          type: true

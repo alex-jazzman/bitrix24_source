@@ -37,6 +37,11 @@ return [
 		'tasks:statemanager/redux/slices/kanban-settings',
 
 		'tasks:utils/stages',
+		'tasks:onboarding',
+		'apptheme',
+		'statemanager/redux/store',
+		'tasks:deadline-picker/deadline-restrictions',
+		'tasks:deadline-picker/reason-widget',
 	],
 	'bundle' => [
 		'./src/field',

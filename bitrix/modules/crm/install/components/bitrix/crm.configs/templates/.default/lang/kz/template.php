@@ -40,7 +40,6 @@ $MESS["CRM_CONFIGS_EXCH1C"] = "&laquo;1С:Кәсіпорынмен&raquo; инт
 $MESS["CRM_CONFIGS_EXCLUSION"] = "Ерекшеліктер тізімі";
 $MESS["CRM_CONFIGS_EXTERNAL_SALE"] = "CMS";
 $MESS["CRM_CONFIGS_EXTERNAL_SALE_BX"] = "1С-Битрикс";
-$MESS["CRM_CONFIGS_FACE_TRACER"] = "Face-трекер";
 $MESS["CRM_CONFIGS_FIELDS"] = "Пайдаланушы өрістері";
 $MESS["CRM_CONFIGS_INVOICE"] = "Шот";
 $MESS["CRM_CONFIGS_LEAD"] = "Лид";

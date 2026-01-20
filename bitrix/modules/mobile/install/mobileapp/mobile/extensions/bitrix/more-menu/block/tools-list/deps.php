@@ -6,5 +6,6 @@ return [
 		'more-menu/block/tools-list/utils',
 		'more-menu/ui/list',
 		'utils/validation',
+		'layout/pure-component',
 	],
 ];

@@ -1,7 +1,7 @@
 <?php
 $MESS["INTRANET_SETTINGS_FIELD_HINT_COLLABERS_INVITE_ON"] = "Allows the employees to invite guests to collabs. Invite permissions can be specified for each collab individually.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1"] = "Enable this option to allow external users in your Bitrix24. These users will be added to a special user group with restricted access permissions, any access to internal company data denied. #MORE_DETAILS#";
-$MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = "New users can quick register by clicking a link created by existing users. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = "New users can quicky register by clicking a link created by existing users. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_LF_ON"] = "A post about the new employee is posted to Feed and visible to everyone.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_ON"] = "New employee notification is posted to the General chat and visible to everyone.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_QUIT_EMPLOYEE_ON"] = "The list of dismissed employees is visible to all employees.";
@@ -11,7 +11,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_NUMBER_FORMAT"] = "Phone sample:";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON"] = "All employees can invite new users to this Bitrix24. If this option is disabled, only the administrators can invite new users to this Bitrix24.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ADDRESS_FORMAT"] = "Default address region:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_COLLABERS_INVITE"] = "Guests (external users) can be invited to collabs";
-$MESS["INTRANET_SETTINGS_FIELD_LABEL_COMPANY_PULSE_DESCRIPTION"] = "This widget shows to what extent Bitrix24 is utilized inside your company: the number of mobile log-ons, tasks and messages by users.";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_COMPANY_PULSE_DESCRIPTION"] = "This widget shows to what extent Bitrix24 is utilized inside your company: the number of sign-ons from mobile devices, tasks and messages by users.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER"] = "Default phone number country:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_EXTRANET"] = "Extranet";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_FAST_REG"] = "Allow quick registration";

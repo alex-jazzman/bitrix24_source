@@ -2,11 +2,12 @@ export type SettingPage = {
 	title: string;
 	id: string;
 	items: Array<SettingItem>;
+	requestSettingsData?: () => Promise<unknown>;
 };
 
 type SettingSectionType = 'section';
 type SettingLinkType = 'link';
-type SettingInfoType = 'info';
+type SettingCacheInfoType = 'cache-info';
 type SettingToggleType = 'toggle';
 type SettingButtonType = 'button';
 type SettingThemeSwitchType = 'theme-switch';
@@ -17,6 +18,12 @@ type SettingDescriptionType = 'description';
 type SettingBannerType = 'banner';
 type SettingImageType = 'image';
 type SettingStyleSwitchType = 'style-switch';
+type SettingCacheInfoButtonType = 'cache-info-button';
+type SettingLinkButtonType = 'link-button';
+type SettingCacheIntervalSelectorType = 'cache-interval-selector';
+type SecurityInfoType = 'security-info';
+type SecurityBannerType = 'security-banner';
+type SecurityAlertBannerType = 'security-alert-banner';
 
 type SettingItemType =
 	SettingSectionType
@@ -27,9 +34,15 @@ type SettingItemType =
 	| SettingVideoQualitySwitchType
 	| SettingLocSelectorType
 	| SettingDescriptionType
-	| SettingInfoType
+	| SettingCacheInfoType
 	| SettingBannerType
 	| SettingStyleSwitchType
+	| SettingCacheInfoButtonType
+	| SettingLinkButtonType
+	| SettingCacheIntervalSelectorType
+	| SecurityInfoType
+	| SecurityBannerType
+	| SecurityAlertBannerType
 ;
 
 interface BaseSettingController
@@ -64,11 +77,15 @@ export interface SettingLink extends SettingItem
 	icon?: string;
 }
 
-export interface SettingInfo extends SettingItem
+export interface SettingCacheInfo extends SettingItem
 {
-	type: SettingInfoType;
+	type: SettingCacheInfoType;
 	subtitle?: string;
 	icon?: string;
+	modeText?: string;
+	controller?: BaseSettingController,
+	iconColor?: Color,
+	onClick?: Function;
 }
 
 export interface SettingToggle extends SettingItem
@@ -81,6 +98,22 @@ export interface SettingToggle extends SettingItem
 export interface SettingButton extends SettingItem
 {
 	type: SettingButtonType;
+	onClick: Function;
+	subtitle?: string;
+	icon?: string;
+}
+
+export interface SettingCacheInfoButton extends SettingItem
+{
+	type: SettingCacheInfoButtonType;
+	onClick: Function;
+	subtitle?: string;
+	icon?: string;
+}
+
+export interface SettingLinkButton extends SettingItem
+{
+	type: SettingLinkButtonType;
 	onClick: Function;
 	subtitle?: string;
 	icon?: string;
@@ -113,7 +146,7 @@ export interface SettingLocSelector extends SettingItem
 
 export interface SettingCacheIntervalSelector extends SettingItem
 {
-	type: SettingLocSelectorType;
+	type: SettingCacheIntervalSelectorType;
 	controller: BaseSettingController;
 }
 
@@ -152,3 +185,24 @@ export type ItemProps = SettingItem & {
 	onChange: (id: string, controller: BaseSettingController, value: unknown) => void;
 	value?: unknown;
 };
+
+export interface SecurityInfo extends SettingItem
+{
+	type: SecurityInfoType;
+	subtitle?: string;
+	controller?: BaseSettingController;
+	isOtpMandatory?: boolean;
+}
+
+export interface SecurityBanner extends SettingItem
+{
+	type: SecurityBannerType;
+	controllers: Array<BaseSettingController>;
+	progress: boolean;
+}
+
+export interface SecurityAlertBanner extends SettingItem
+{
+	type: SecurityAlertBannerType;
+	controller: BaseSettingController;
+}

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_dateFormatter,ui_vue3,im_v2_component_elements_attach,im_v2_component_elements_keyboard,ui_lottie,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,ui_reactionsSelect,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_provider_service_message,im_v2_provider_service_uploading,ui_system_menu,im_v2_lib_copilot,im_v2_lib_channel,main_core_events,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service_comments,main_core,ui_vue3_components_reactions,im_v2_lib_parser) {
+(function (exports,im_v2_lib_dateFormatter,ui_vue3,im_v2_component_elements_attach,im_v2_component_elements_keyboard,main_core_events,ui_reaction_item_vue,im_v2_component_elements_userListPopup,im_v2_provider_service_user,im_v2_lib_logger,im_v2_lib_rest,ui_reactionsSelect,ui_reaction_picker,ui_reaction_item,im_v2_lib_feature,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_provider_service_message,im_v2_provider_service_uploading,ui_system_menu,ui_iconSet_api_vue,im_v2_lib_copilot,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service_comments,im_v2_lib_parser,main_core,im_v2_lib_channel) {
 	'use strict';
 
 	// @vue/component
@@ -48,7 +48,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-message-status__container bx-im-message-status__scope" :class="{'--overlay': isOverlay}">
+		<div class="bx-im-message-status__container" :class="{'--overlay': isOverlay}">
 			<div v-if="message.isEdited && !message.isDeleted" class="bx-im-message-status__edit-mark">
 				{{ loc('IM_MESSENGER_MESSAGE_EDITED') }}
 			</div>
@@ -136,16 +136,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const ReactionUser = {
+	  name: 'ReactionUser',
 	  components: {
 	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
 	  },
 	  props: {
 	    userId: {
 	      type: Number,
-	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
 	      required: true
 	    }
 	  },
@@ -167,7 +164,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-reaction-list__user_avatar">
 			<ChatAvatar 
 				:avatarDialogId="userId" 
-				:contextDialogId="contextDialogId" 
 				:size="AvatarSize.XS" 
 				:withAvatarLetters="false"
 				:withTooltip="false"
@@ -176,36 +172,34 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
-	var _userManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userManager");
-	class UserService {
-	  constructor() {
-	    Object.defineProperty(this, _restClient, {
+	var _reaction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reaction");
+	class UserService extends im_v2_provider_service_user.BaseUserService {
+	  constructor(reaction) {
+	    super();
+	    Object.defineProperty(this, _reaction, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _userManager, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
-	    babelHelpers.classPrivateFieldLooseBase(this, _userManager)[_userManager] = new im_v2_lib_user.UserManager();
+	    babelHelpers.classPrivateFieldLooseBase(this, _reaction)[_reaction] = reaction;
 	  }
-	  async loadReactionUsers(messageId, reaction) {
-	    im_v2_lib_logger.Logger.warn('Reactions: UserService: loadReactionUsers', messageId, reaction);
-	    const queryParams = {
-	      messageId,
-	      filter: {
-	        reaction
-	      }
+	  getRequestFilter(firstPage = false) {
+	    return {
+	      ...super.getRequestFilter(firstPage),
+	      reaction: babelHelpers.classPrivateFieldLooseBase(this, _reaction)[_reaction]
 	    };
-	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(im_v2_const.RestMethod.imV2ChatMessageReactionTail, queryParams).catch(result => {
-	      console.error('Reactions: UserService: loadReactionUsers error', result.error());
-	      throw result.error();
-	    });
-	    const users = response.data().users;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _userManager)[_userManager].setUsersToModel(Object.values(users));
-	    return users.map(user => user.id);
+	  }
+	  getRestMethodName() {
+	    return im_v2_const.RestMethod.imV2ChatMessageReactionTail;
+	  }
+	  getLastId(result) {
+	    const {
+	      reactions
+	    } = result;
+	    if (!reactions || reactions.length === 0) {
+	      return 0;
+	    }
+	    const sortedReactions = [...reactions].sort((a, b) => b.id - a.id);
+	    return sortedReactions[sortedReactions.length - 1].id;
 	  }
 	}
 
@@ -230,10 +224,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    bindElement: {
 	      type: Object,
 	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
-	      required: true
 	    }
 	  },
 	  emits: ['close'],
@@ -253,14 +243,24 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  methods: {
-	    loadUsers() {
+	    async loadUsers() {
 	      this.loadingAdditionalUsers = true;
-	      this.getUserService().loadReactionUsers(this.messageId, this.reaction).then(userIds => {
-	        this.additionalUsers = userIds;
+	      try {
+	        this.additionalUsers = await this.getUserService().loadFirstPage(this.messageId);
 	        this.loadingAdditionalUsers = false;
-	      }).catch(() => {
+	      } catch {
 	        this.loadingAdditionalUsers = false;
-	      });
+	      }
+	    },
+	    async onScroll(event) {
+	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.getUserService().hasMoreItemsToLoad()) {
+	        return;
+	      }
+	      const userIds = await this.getUserService().loadNextPage(this.messageId);
+	      if (!userIds) {
+	        return;
+	      }
+	      this.additionalUsers = [...this.additionalUsers, ...userIds];
 	    },
 	    onPopupClose() {
 	      this.showPopup = false;
@@ -274,7 +274,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getUserService() {
 	      if (!this.userService) {
-	        this.userService = new UserService();
+	        this.userService = new UserService(this.reaction);
 	      }
 	      return this.userService;
 	    }
@@ -285,24 +285,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:showPopup="showPopup"
 			:loading="loadingAdditionalUsers"
 			:userIds="additionalUsers"
-			:contextDialogId="contextDialogId"
 			:bindElement="bindElement || {}"
 			:withAngle="false"
 			:offsetLeft="-112"
 			:forceTop="true"
 			@close="onPopupClose"
+			@scroll="onScroll"
 		/>
 	`
 	};
 
 	const USERS_TO_SHOW = 5;
+	const REACTION_SIZE = 16;
 	const SHOW_USERS_DELAY = 500;
 
 	// @vue/component
 	const ReactionItem = {
 	  components: {
 	    ReactionUser,
-	    AdditionalUsers
+	    AdditionalUsers,
+	    Reaction: ui_reaction_item_vue.Reaction
 	  },
 	  props: {
 	    messageId: {
@@ -333,59 +335,30 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: Boolean,
 	      required: false,
 	      default: true
-	    },
-	    contextDialogId: {
-	      type: String,
-	      required: true
 	    }
 	  },
-	  emits: ['click'],
+	  emits: ['click', 'animationFinish'],
 	  data() {
 	    return {
 	      showAdditionalUsers: false
 	    };
 	  },
 	  computed: {
-	    showUsers() {
+	    REACTION_SIZE: () => REACTION_SIZE,
+	    needToShowUsers() {
 	      if (!this.showAvatars) {
 	        return false;
 	      }
 	      const userLimitIsNotReached = this.counter <= USERS_TO_SHOW;
+	      // after reaction removal we do not receive all users data to show avatar list properly
 	      const weHaveUsersData = this.counter === this.users.length;
 	      return userLimitIsNotReached && weHaveUsersData;
 	    },
 	    preparedUsers() {
-	      return [...this.users].sort((a, b) => a - b).reverse();
-	    },
-	    reactionClass() {
-	      return ui_reactionsSelect.reactionCssClass[this.type];
-	    }
-	  },
-	  mounted() {
-	    if (this.animate) {
-	      this.playAnimation();
+	      return [...this.users].sort((a, b) => b - a);
 	    }
 	  },
 	  methods: {
-	    playAnimation() {
-	      this.animation = ui_lottie.Lottie.loadAnimation({
-	        animationData: ui_reactionsSelect.ReactionsSelect.getLottieAnimation(this.type),
-	        container: this.$refs.reactionIcon,
-	        loop: false,
-	        autoplay: false,
-	        renderer: 'svg',
-	        rendererSettings: {
-	          viewBoxOnly: true
-	        }
-	      });
-	      main_core.Event.bind(this.animation, 'complete', () => {
-	        this.animation.destroy();
-	      });
-	      main_core.Event.bind(this.animation, 'destroy', () => {
-	        this.animation = null;
-	      });
-	      this.animation.play();
-	    },
 	    startShowUsersTimer() {
 	      this.showUsersTimeout = setTimeout(() => {
 	        this.showAdditionalUsers = true;
@@ -396,9 +369,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onClick() {
 	      this.clearShowUsersTimer();
-	      this.$emit('click', {
-	        animateItemFunction: this.playAnimation
-	      });
+	      this.$emit('click');
 	    }
 	  },
 	  template: `
@@ -409,14 +380,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			class="bx-im-reaction-list__item"
 			:class="{'--selected': selected}"
 		>
-			<div class="bx-im-reaction-list__item_icon" :class="reactionClass" ref="reactionIcon"></div>
-			<div v-if="showUsers" class="bx-im-reaction-list__user_container" ref="users">
+			<div class="bx-im-reaction-list__item_icon">
+				<Reaction
+					:size="REACTION_SIZE"
+					:name="type"
+					:animate="animate"
+					@animationFinish="$emit('animationFinish')"
+				/>
+			</div>
+			<div v-if="needToShowUsers" class="bx-im-reaction-list__user_container" ref="users">
 				<TransitionGroup name="bx-im-reaction-list__user_animation">
 					<ReactionUser 
 						v-for="user in preparedUsers" 
-						:key="user" 
+						:key="type + user" 
 						:userId="user"
-						:contextDialogId="contextDialogId"
 					/>
 				</TransitionGroup>
 			</div>
@@ -425,7 +402,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:show="showAdditionalUsers"
 				:bindElement="$refs['users'] || $refs['counter'] || {}"
 				:messageId="messageId"
-				:contextDialogId="contextDialogId"
 				:reaction="type"
 				@close="showAdditionalUsers = false"
 			/>
@@ -433,47 +409,41 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _restClient$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class ReactionService {
-	  constructor() {
-	    Object.defineProperty(this, _store, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _restClient$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1] = im_v2_application_core.Core.getRestClient();
-	  }
 	  setReaction(messageId, reaction) {
 	    im_v2_lib_logger.Logger.warn('ReactionService: setReaction', messageId, reaction);
 	    const payload = {
-	      messageId,
-	      reaction
+	      data: {
+	        messageId,
+	        reaction
+	      }
 	    };
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/reactions/setReaction', {
-	      ...payload,
-	      userId: im_v2_application_core.Core.getUserId()
+	    const canSetMultipleReactions = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.reactionsV2Available);
+	    void im_v2_application_core.Core.getStore().dispatch('messages/reactions/setReaction', {
+	      messageId,
+	      reaction,
+	      userId: im_v2_application_core.Core.getUserId(),
+	      withReplace: !canSetMultipleReactions
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1].callMethod(im_v2_const.RestMethod.imV2ChatMessageReactionAdd, payload).catch(result => {
-	      console.error('ReactionService: error setting reaction', result.error());
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionAdd, payload).catch(([error]) => {
+	      console.error('ReactionService: error setting reaction', error);
 	    });
 	  }
 	  removeReaction(messageId, reaction) {
 	    im_v2_lib_logger.Logger.warn('ReactionService: removeReaction', messageId, reaction);
 	    const payload = {
-	      messageId,
-	      reaction
+	      data: {
+	        messageId,
+	        reaction
+	      }
 	    };
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/reactions/removeReaction', {
-	      ...payload,
+	    void im_v2_application_core.Core.getStore().dispatch('messages/reactions/removeReaction', {
+	      messageId,
+	      reaction,
 	      userId: im_v2_application_core.Core.getUserId()
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1].callMethod(im_v2_const.RestMethod.imV2ChatMessageReactionDelete, payload).catch(result => {
-	      console.error('ReactionService: error removing reaction', result.error());
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionDelete, payload).catch(([error]) => {
+	      console.error('ReactionService: error removing reaction', error);
 	    });
 	  }
 	}
@@ -488,19 +458,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    messageId: {
 	      type: [String, Number],
 	      required: true
-	    },
-	    contextDialogId: {
-	      type: String,
-	      required: true
 	    }
 	  },
 	  data() {
 	    return {
-	      mounted: false
+	      reactionsToAnimate: new Set()
 	    };
 	  },
 	  computed: {
-	    Reaction: () => ui_reactionsSelect.reactionType,
 	    message() {
 	      return this.$store.getters['messages/getById'](this.messageId);
 	    },
@@ -518,7 +483,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _this$reactionsData$o, _this$reactionsData2;
 	      return (_this$reactionsData$o = (_this$reactionsData2 = this.reactionsData) == null ? void 0 : _this$reactionsData2.ownReactions) != null ? _this$reactionsData$o : new Set();
 	    },
-	    showReactionsContainer() {
+	    reactionListToShow() {
+	      return Object.keys(ui_reaction_item.ReactionName).filter(reaction => {
+	        return Boolean(this.reactionCounters[reaction]);
+	      });
+	    },
+	    needToShowReactionsContainer() {
 	      return Object.keys(this.reactionCounters).length > 0;
 	    },
 	    isChannel() {
@@ -529,7 +499,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  watch: {
-	    showReactionsContainer(newValue, oldValue) {
+	    reactionCounters(newCounters, oldCounters) {
+	      const newReactions = Object.keys(newCounters);
+	      const oldReactions = Object.keys(oldCounters);
+	      for (const reaction of newReactions) {
+	        if (!oldReactions.includes(reaction)) {
+	          this.reactionsToAnimate.add(reaction);
+	        }
+	      }
+	    },
+	    needToShowReactionsContainer(newValue, oldValue) {
 	      if (!oldValue && newValue) {
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.scrollToBottom, {
 	          chatId: this.message.chatId,
@@ -540,24 +519,35 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  mounted() {
-	    this.mounted = true;
+	    const MAX_LISTENERS = 500;
+	    this.getEmitter().setMaxListeners(im_v2_const.EventType.reaction.onReactionSelected, MAX_LISTENERS);
+	    this.getEmitter().subscribe(im_v2_const.EventType.reaction.onReactionSelected, this.onPickerReactionSelected);
+	  },
+	  beforeUnmount() {
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.reaction.onReactionSelected, this.onPickerReactionSelected);
 	  },
 	  methods: {
-	    onReactionSelect(reaction, event) {
-	      var _this$ownReactions;
+	    onReactionClick(reaction) {
 	      const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 	      if (!permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.setReaction, this.dialog.dialogId)) {
 	        return;
 	      }
-	      const {
-	        animateItemFunction
-	      } = event;
-	      if ((_this$ownReactions = this.ownReactions) != null && _this$ownReactions.has(reaction)) {
+	      if (this.ownReactions.has(reaction)) {
 	        this.getReactionService().removeReaction(this.messageId, reaction);
 	        return;
 	      }
+	      this.reactionsToAnimate.add(reaction);
 	      this.getReactionService().setReaction(this.messageId, reaction);
-	      animateItemFunction();
+	    },
+	    async onPickerReactionSelected(event) {
+	      const {
+	        messageId,
+	        reaction
+	      } = event.getData();
+	      if (this.messageId !== messageId) {
+	        return;
+	      }
+	      this.onReactionClick(reaction);
 	    },
 	    getReactionUsers(reaction) {
 	      const users = this.reactionsData.reactionUsers[reaction];
@@ -571,31 +561,32 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.reactionService = new ReactionService();
 	      }
 	      return this.reactionService;
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
-		<div v-if="showReactionsContainer" class="bx-im-reaction-list__container bx-im-reaction-list__scope">
-			<template v-for="reactionType in Reaction">
-				<ReactionItem
-					v-if="reactionCounters[reactionType] > 0"
-					:key="reactionType + messageId"
-					:messageId="messageId"
-					:type="reactionType"
-					:counter="reactionCounters[reactionType]"
-					:users="getReactionUsers(reactionType)"
-					:selected="ownReactions.has(reactionType)"
-					:animate="mounted"
-					:showAvatars="showAvatars"
-					:contextDialogId="contextDialogId"
-					@click="onReactionSelect(reactionType, $event)"
-				/>
-			</template>
+		<div v-if="needToShowReactionsContainer" class="bx-im-reaction-list__container bx-im-reaction-list__scope">
+			<ReactionItem
+				v-for="reactionType in reactionListToShow"
+				:key="reactionType + messageId"
+				:messageId="messageId"
+				:type="reactionType"
+				:counter="reactionCounters[reactionType]"
+				:users="getReactionUsers(reactionType)"
+				:selected="ownReactions.has(reactionType)"
+				:animate="reactionsToAnimate.has(reactionType)"
+				:showAvatars="showAvatars"
+				@click="onReactionClick(reactionType)"
+				@animationFinish="reactionsToAnimate.delete(reactionType)"
+			/>
 		</div>
 	`
 	};
 
-	const SHOW_DELAY = 500;
-	const HIDE_DELAY = 800;
+	const SHOW_DELAY = 250;
+	const HIDE_DELAY = 500;
 
 	// @vue/component
 	const ReactionSelector = {
@@ -616,9 +607,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    reactionsData() {
 	      return this.$store.getters['messages/reactions/getByMessageId'](this.messageId);
 	    },
-	    ownReactionSet() {
-	      var _this$reactionsData, _this$reactionsData$o;
-	      return ((_this$reactionsData = this.reactionsData) == null ? void 0 : (_this$reactionsData$o = _this$reactionsData.ownReactions) == null ? void 0 : _this$reactionsData$o.size) > 0;
+	    ownReactions() {
+	      var _this$reactionsData$o, _this$reactionsData;
+	      return (_this$reactionsData$o = (_this$reactionsData = this.reactionsData) == null ? void 0 : _this$reactionsData.ownReactions) != null ? _this$reactionsData$o : new Set();
+	    },
+	    ownPlainLikeSet() {
+	      return this.ownReactions.has(ui_reaction_item.ReactionName.like);
 	    },
 	    isChatWithBot() {
 	      const user = this.$store.getters['users/get'](this.dialog.dialogId);
@@ -667,10 +661,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.startHideTimer();
 	    },
 	    showSelector() {
-	      this.selector = new ui_reactionsSelect.ReactionsSelect({
-	        name: 'im-base-message-reaction-selector',
-	        position: this.$refs.selector
-	      });
+	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.reactionsV2Available)) {
+	        this.selector = new ui_reaction_picker.ReactionPicker({
+	          target: this.$refs.selector
+	        });
+	      } else {
+	        this.selector = new ui_reactionsSelect.ReactionsSelect({
+	          name: 'im-base-message-reaction-selector',
+	          position: this.$refs.selector
+	        });
+	      }
 	      this.subscribeToSelectorEvents();
 	      this.selector.show();
 	    },
@@ -680,7 +680,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        const {
 	          reaction
 	        } = selectEvent.getData();
-	        this.getReactionService().setReaction(this.messageId, reaction);
+	        this.getEmitter().emit(im_v2_const.EventType.reaction.onReactionSelected, {
+	          messageId: this.messageId,
+	          reaction
+	        });
 	        (_this$selector2 = this.selector) == null ? void 0 : _this$selector2.hide();
 	      });
 	      this.selector.subscribe('mouseleave', this.startHideTimer);
@@ -703,18 +706,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onIconClick() {
 	      this.clearShowTimer();
-	      if (this.ownReactionSet) {
-	        const [currentReaction] = [...this.reactionsData.ownReactions];
-	        this.getReactionService().removeReaction(this.messageId, currentReaction);
-	        return;
-	      }
-	      this.getReactionService().setReaction(this.messageId, ui_reactionsSelect.reactionType.like);
+	      this.getEmitter().emit(im_v2_const.EventType.reaction.onReactionSelected, {
+	        messageId: this.messageId,
+	        reaction: ui_reaction_item.ReactionName.like
+	      });
 	    },
-	    getReactionService() {
-	      if (!this.reactionService) {
-	        this.reactionService = new ReactionService();
-	      }
-	      return this.reactionService;
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -726,7 +724,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				class="bx-im-reaction-selector__selector"
 				ref="selector"
 			>
-				<div class="bx-im-reaction-selector__icon" :class="{'--active': ownReactionSet}"></div>
+				<div class="bx-im-reaction-selector__icon" :class="{'--active': ownPlainLikeSet}"></div>
 			</div>
 		</div>
 	`
@@ -867,11 +865,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!authorId || authorId === im_v2_application_core.Core.getUserId() || this.isCopilot) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
+	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertMention, {
 	        mentionText: this.user.name,
 	        mentionReplacement: im_v2_lib_utils.Utils.text.getMentionBbCode(this.user.id, this.user.name),
 	        dialogId: this.dialog.dialogId
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -930,12 +931,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onMenuClick(event) {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onClickMessageContextMenu, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.onClickMessageContextMenu, {
 	        message: this.message,
 	        dialogId: this.dialogId,
 	        bindElement: event.currentTarget,
 	        event
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -1079,11 +1083,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const FORWARD_ICON_SIZE = 20;
+
 	// @vue/component
 	const MessageHeader = {
 	  name: 'MessageHeader',
 	  components: {
-	    AuthorTitle
+	    AuthorTitle,
+	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
 	  props: {
 	    item: {
@@ -1093,9 +1100,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    withTitle: {
 	      type: Boolean,
 	      default: false
+	    },
+	    isOverlay: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    Color: () => im_v2_const.Color,
+	    FORWARD_ICON_SIZE: () => FORWARD_ICON_SIZE,
 	    message() {
 	      return this.item;
 	    },
@@ -1115,7 +1129,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	      if (copilotManager.isCopilotBot(this.forwardAuthorId)) {
 	        const forwardMessageId = this.forwardContextId.split('/')[1];
-	        return copilotManager.getNameWithRole({
+	        return copilotManager.getName({
 	          dialogId: this.forwardAuthorId,
 	          messageId: forwardMessageId
 	        });
@@ -1145,29 +1159,47 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        '#CHANNEL_NAME#': main_core.Text.encode(this.forwardChatName),
 	        '[/channel_name]': '</span>'
 	      });
+	    },
+	    iconColor() {
+	      return this.isOverlay ? im_v2_const.Color.white : im_v2_const.Color.blue60;
 	    }
 	  },
 	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
 	    onForwardClick() {
 	      const contextCode = im_v2_lib_parser.Parser.getContextCodeFromForwardId(this.forwardContextId);
 	      if (contextCode.length === 0) {
 	        return;
 	      }
 	      const [dialogId, messageId] = contextCode.split('/');
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	        messageId: Number.parseInt(messageId, 10),
 	        dialogId: dialogId.toString()
 	      });
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div v-if="isForwarded" class="bx-im-message-header__container" @click="onForwardClick">
-			<span v-if="isSystemMessage">{{ loc('IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_SYSTEM')}}</span>
-			<span v-else-if="isChannelForward" v-html="forwardChannelTitle"></span>
-			<span v-else v-html="forwardAuthorTitle"></span>
+		<div 
+			v-if="isForwarded" 
+			:class="{'--overlay': isOverlay}"
+			class="bx-im-message-header__container" 
+			@click="onForwardClick"
+		>
+			<BIcon
+				:name="OutlineIcons.FORWARD"
+				:color="iconColor"
+				:size="FORWARD_ICON_SIZE"
+			/>
+			<span v-if="isSystemMessage" class="--ellipsis">
+				{{ loc('IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_SYSTEM')}}
+			</span>
+			<span v-else-if="isChannelForward" v-html="forwardChannelTitle" class="--ellipsis"></span>
+			<span v-else v-html="forwardAuthorTitle" class="--ellipsis"></span>
 		</div>
 		<AuthorTitle v-else-if="withTitle" :item="item" />
 	`
@@ -1189,9 +1221,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: String,
 	      required: true
 	    }
-	  },
-	  data() {
-	    return {};
 	  },
 	  computed: {
 	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
@@ -1257,7 +1286,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.openComments, this.dialogId)) {
 	        return;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.openComments, {
+	      this.getEmitter().emit(im_v2_const.EventType.dialog.openComments, {
 	        messageId: this.message.id
 	      });
 	    },
@@ -1268,44 +1297,49 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      im_v2_provider_service_comments.CommentsService.subscribe(this.message.id);
 	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div class="bx-im-message-comments-panel__container" @click="onCommentsClick">
-			<div class="bx-im-message-comments-panel__left">
-				<div v-if="noComments" class="bx-im-message-comments-panel__empty_container">
-					<div class="bx-im-message-comments-panel__empty_icon"></div>
-					<div class="bx-im-message-comments-panel__text">{{ loc('IM_MESSAGE_COMMENTS_PANEL_EMPTY_TEXT') }}</div>
-				</div>
-				<div v-else class="bx-im-message-comments-panel__meta_container">
-					<div class="bx-im-message-comments-panel__user_container">
-						<TransitionGroup name="bx-im-message-comments-panel__user_animation">
-							<div v-for="(user, index) in lastUsers" :key="user.id" class="bx-im-message-comments-panel__user_avatar" :class="'--image-' + (index + 1)">
-								<ChatAvatar
-									:avatarDialogId="user.id"
-									:contextDialogId="dialogId"
-									:size="AvatarSize.S"
-									:withTooltip="false"
-								/>
-							</div>
-						</TransitionGroup>
+		<slot :totalCount="commentsCount" :unreadCount="unreadCount" :onCommentsClick="onCommentsClick">
+			<div class="bx-im-message-comments-panel__container" @click="onCommentsClick">
+				<div class="bx-im-message-comments-panel__left">
+					<div v-if="noComments" class="bx-im-message-comments-panel__empty_container">
+						<div class="bx-im-message-comments-panel__empty_icon"></div>
+						<div class="bx-im-message-comments-panel__text">{{ loc('IM_MESSAGE_COMMENTS_PANEL_EMPTY_TEXT') }}</div>
 					</div>
-					<div class="bx-im-message-comments-panel__text">{{ commentsCountText }}</div>
-					<FadeAnimation :duration="200">
-						<div v-if="unreadCount" class="bx-im-message-comments-panel__unread-counter">{{ unreadCount }}</div>
-					</FadeAnimation>
+					<div v-else class="bx-im-message-comments-panel__meta_container">
+						<div class="bx-im-message-comments-panel__user_container">
+							<TransitionGroup name="bx-im-message-comments-panel__user_animation">
+								<div v-for="(user, index) in lastUsers" :key="user.id" class="bx-im-message-comments-panel__user_avatar" :class="'--image-' + (index + 1)">
+									<ChatAvatar
+										:avatarDialogId="user.id"
+										:contextDialogId="dialogId"
+										:size="AvatarSize.S"
+										:withTooltip="false"
+									/>
+								</div>
+							</TransitionGroup>
+						</div>
+						<div class="bx-im-message-comments-panel__text">{{ commentsCountText }}</div>
+						<FadeAnimation :duration="200">
+							<div v-if="unreadCount" class="bx-im-message-comments-panel__unread-counter">{{ unreadCount }}</div>
+						</FadeAnimation>
+					</div>
+				</div>
+				<div v-if="showSubscribeIcon" :title="subscribeIconTitle" class="bx-im-message-comments-panel__right">
+					<div
+						@click.stop="onSubscribeIconClick"
+						class="bx-im-message-comments-panel__subscribe-icon"
+						:class="{'--active': isSubscribed}"
+					></div>
 				</div>
 			</div>
-			<div v-if="showSubscribeIcon" :title="subscribeIconTitle" class="bx-im-message-comments-panel__right">
-				<div
-					@click.stop="onSubscribeIconClick"
-					class="bx-im-message-comments-panel__subscribe-icon"
-					:class="{'--active': isSubscribed}"
-				></div>
-			</div>
-		</div>
+		</slot>
 	`
 	};
 
@@ -1354,7 +1388,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const DefaultMessageContent$$1 = {
 	  name: 'DefaultMessageContent',
 	  components: {
-	    Reactions: ui_vue3_components_reactions.Reactions,
 	    MessageStatus,
 	    MessageAttach,
 	    ReactionList,
@@ -1410,7 +1443,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<ReactionList 
 					v-if="canSetReactions" 
 					:messageId="message.id" 
-					:contextDialogId="dialogId"
 					class="bx-im-message-default-content__reaction-list" 
 				/>
 				<div v-if="withMessageStatus" class="bx-im-message-default-content__status-container">
@@ -1418,6 +1450,73 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				</div>
 			</div>
 		</div>
+	`
+	};
+
+	// @vue/component
+	const CompactCommentsPanel = {
+	  name: 'CompactCommentsPanel',
+	  components: {
+	    CommentsPanel
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId);
+	    },
+	    message() {
+	      return this.item;
+	    },
+	    isChannelPost() {
+	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
+	    },
+	    isSystemMessage() {
+	      return this.message.authorId === 0;
+	    },
+	    showCommentsPanel() {
+	      return this.isChannelPost && !this.isSystemMessage;
+	    }
+	  },
+	  methods: {
+	    hasComments(totalCount) {
+	      return totalCount > 0;
+	    },
+	    hasUnreadComments(unreadCount) {
+	      return main_core.Type.isStringFilled(unreadCount);
+	    }
+	  },
+	  template: `
+		<CommentsPanel 
+			v-if="showCommentsPanel"
+			v-slot="{ onCommentsClick, totalCount, unreadCount }"
+			:item="item"
+			:dialogId="dialogId"
+		>
+			<div 
+				:class="{'--has-comments': hasComments(totalCount)}"
+				class="bx-im-message-compact-comments-panel__container"
+				@click="onCommentsClick"
+			>
+				<div class="bx-im-message-compact-comments-panel__icon"></div>
+				<div v-if="hasComments(totalCount)" class="bx-im-message-compact-comments-panel__counter-container">
+					<div class="bx-im-message-compact-comments-panel__total-counter">
+						{{ totalCount }}
+					</div>
+					<div v-if="hasUnreadComments(unreadCount)" class="bx-im-message-compact-comments-panel__unread-counter">
+						{{ unreadCount }}
+					</div>
+				</div>
+			</div>
+		</CommentsPanel>
 	`
 	};
 
@@ -1433,6 +1532,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MessageHeader = MessageHeader;
 	exports.MessageFooter = MessageFooter;
 	exports.DefaultMessageContent = DefaultMessageContent$$1;
+	exports.CompactCommentsPanel = CompactCommentsPanel;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Service,BX,BX.Vue3.Components,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Event,BX.UI.Reaction.Item.Vue,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.UI.Reaction.Picker,BX.UI.Reaction.Item,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.UI.System,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

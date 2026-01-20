@@ -1,7 +1,5 @@
 import { Event } from 'main.core';
-import { mapGetters } from 'ui.vue3.vuex';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
-import { Model } from 'tasks.v2.const';
 
 // @vue/component
 export const CheckListSheet = {
@@ -10,30 +8,21 @@ export const CheckListSheet = {
 		BottomSheet,
 	},
 	props: {
+		isEmpty: {
+			type: Boolean,
+			default: false,
+		},
 		isShown: {
 			type: Boolean,
 			required: true,
 		},
-		getBindElement: {
-			type: Function,
-			default: null,
-		},
-		getTargetContainer: {
-			type: Function,
-			default: null,
+		sheetBindProps: {
+			type: Object,
+			required: true,
 		},
 	},
-	emits: ['show', 'close', 'isShown'],
-	computed: {
-		...mapGetters({
-			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
-		}),
-	},
+	emits: ['show', 'close', 'isShown', 'addFastCheckList', 'resize'],
 	watch: {
-		titleFieldOffsetHeight(): void
-		{
-			this.$refs.childComponent?.adjustPosition();
-		},
 		async isShown(value): void
 		{
 			await this.$nextTick();
@@ -51,10 +40,6 @@ export const CheckListSheet = {
 		},
 	},
 	methods: {
-		handleShow(): void
-		{
-			this.$emit('show');
-		},
 		handleClose(): void
 		{
 			this.$emit('close');
@@ -72,15 +57,12 @@ export const CheckListSheet = {
 	template: `
 		<BottomSheet
 			v-if="isShown"
+			:sheetBindProps
 			:padding="0"
-			:getBindElement="getBindElement"
-			:getTargetContainer="getTargetContainer"
-			ref="childComponent"
+			:popupPadding="0"
+			@close="handleClose"
 		>
-			<slot
-				:handleShow="handleShow"
-				:handleClose="handleClose"
-			></slot>
+			<slot :handleShow="$emit('show')" :handleClose="handleClose"/>
 		</BottomSheet>
 	`,
 };

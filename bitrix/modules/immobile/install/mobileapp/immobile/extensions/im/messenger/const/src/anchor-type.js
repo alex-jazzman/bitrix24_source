@@ -3,8 +3,8 @@
  */
 jn.define('im/messenger/const/anchor-type', (require, exports, module) => {
 	const AnchorType = Object.freeze({
-		mention: 'MENTION',
-		reaction: 'REACTION',
+		mention: 'mention',
+		reaction: 'reaction',
 	});
 
 	module.exports = {

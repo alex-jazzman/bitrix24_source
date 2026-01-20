@@ -4,3 +4,6 @@ $MESS["MAIN_FIELD_CONFIG_DETAIL_FIELD_NOT_FOUND_ERROR"] = "Пользовате�
 $MESS["MAIN_FIELD_CONFIG_DETAIL_DEFAULT_LABEL"] = "Новое поле";
 $MESS["MAIN_FIELD_CONFIG_DETAIL_TITLE_EDIT"] = "Редактирование поля";
 $MESS["MAIN_FIELD_CONFIG_DETAIL_TITLE_ADD"] = "Новое поле";
+$MESS["MAIN_FIELD_CONFIG_TOOLTIP_TEXT"] = "Текст подсказки";
+$MESS["MAIN_FIELD_CONFIG_TOOLTIP_TEXT_MULTILANG"] = "Текст подсказки (#LANGUAGE_NAME#)";
+$MESS["MAIN_FIELD_CONFIG_TOOLTIP_ALL_LANGUAGES"] = "Подсказки";

@@ -19,5 +19,7 @@ export function mapStageDtoToModel(stageDto: StageDto): StageModel
 		id: stageDto.id,
 		title: stageDto.title,
 		color: stageDto.color,
+		systemType: stageDto.systemType,
+		sort: stageDto.sort,
 	};
 }

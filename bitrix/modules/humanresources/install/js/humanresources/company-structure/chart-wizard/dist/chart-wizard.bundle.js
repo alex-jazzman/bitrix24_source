@@ -2841,6 +2841,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        userCount: 0,
 	        createDefaultChat: false,
 	        createDefaultChannel: false,
+	        createDefaultCollab: false,
 	        teamColor: humanresources_companyStructure_utils.NodeColorsSettingsDict.blue,
 	        entityType: humanresources_companyStructure_utils.EntityTypes.department,
 	        settings: {
@@ -3058,7 +3059,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          entityType,
 	          teamColor,
 	          createDefaultChat: false,
-	          createDefaultChannel: false
+	          createDefaultChannel: false,
+	          createDefaultCollab: false
 	        };
 	        const rawSettings = await WizardAPI.getSettings(this.nodeId);
 	        const newSettings = this.mapRawSettings(rawSettings);

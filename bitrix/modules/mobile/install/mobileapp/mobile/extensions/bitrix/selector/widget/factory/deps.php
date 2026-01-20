@@ -26,10 +26,13 @@ return [
 		'crm:selector/entity/element',
 		'crm:selector/documentgenerator/template',
 
+		'mail:selector/entity/addressbook',
+
 		'tasks:selector/task',
 		'tasks:selector/editable-task',
 
 		'utils/logger/warn-logger',
 		'selector/widget/entity/intranet/department',
+        'mail:selector/entity/mail-crm-element',
 	],
 ];

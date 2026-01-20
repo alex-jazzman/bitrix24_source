@@ -2,7 +2,6 @@ import { Type } from 'main.core';
 
 import { ActionParams, Base } from '../base';
 import ConfigurableItem from '../../configurable-item';
-import { Call } from 'crm.ai.call';
 
 export class TranscriptSummaryResult extends Base
 {
@@ -39,6 +38,8 @@ export class TranscriptSummaryResult extends Base
 			ownerTypeId: actionData.ownerTypeId,
 			ownerId: actionData.ownerId,
 			languageTitle: actionData.languageTitle,
+			activityProvider: actionData.activityProvider,
+			jobId: actionData.jobId,
 		});
 
 		summary.open();
@@ -46,6 +47,6 @@ export class TranscriptSummaryResult extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'AI:Call:TranscriptSummaryResult');
+		return (item.getType() === 'AI:TranscriptSummaryResult');
 	}
 }

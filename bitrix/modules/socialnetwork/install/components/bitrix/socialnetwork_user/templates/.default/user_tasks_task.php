@@ -32,12 +32,13 @@ $action =
 		: 'view'
 ;
 $usePadding = $action === 'edit' ?? false;
-$formFeatureEnabled = Loader::includeModule('tasks')
-	&& class_exists(FormV2Feature::class)
-	&& FormV2Feature::isOn()
+$formFeatureEnabled = Loader::includeModule('tasks') && FormV2Feature::isOn()
 ;
 $request = Context::getCurrent()->getRequest();
-$isOldForm = $request->get('OLD_FORM') === 'Y';
+$isOldForm = $request->get('OLD_FORM') === 'Y'
+	&& Loader::includeModule('tasks')
+	&& FormV2Feature::isOn('old_form')
+;
 $hasTemplate = (int)$request->get('TEMPLATE') > 0 || (int)$request->get('FLOW_ID') > 0;
 $isCommentLink = (bool)$request->get('MID');
 
@@ -46,7 +47,7 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 	include("util_menu.php");
 	include("util_profile.php");
 
-	Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'].$this->getFolder().'/result_modifier.php');
+	Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/result_modifier.php');
 
 	if (
 		!CSocNetFeatures::IsActiveFeature(
@@ -110,8 +111,11 @@ else if (
 	&& !$isCommentLink
 )
 {
-	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+	Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/../../.parameters.php');
+
 	$APPLICATION->SetTitle('');
+	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+	$APPLICATION->SetPageProperty('title', Loc::getMessage('INT_TASKS_GROUP'));
 	Toolbar::deleteFavoriteStar();
 
 	$pathMaker = new TaskPathMaker(

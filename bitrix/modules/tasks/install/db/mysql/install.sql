@@ -963,7 +963,7 @@ create table if not exists b_tasks_deadline_user_option
 	IS_EXACT_DEADLINE_TIME tinyint default 0,
 	SKIP_NOTIFICATION_PERIOD varchar(16) not null default '',
 	SKIP_NOTIFICATION_START_DATE datetime default null,
-	CAN_CHANGE_DEADLINE tinyint(1) not null default 0,
+	CAN_CHANGE_DEADLINE tinyint(1) not null default 1,
 	MAX_DEADLINE_CHANGE_DATE datetime null,
 	MAX_DEADLINE_CHANGES int null,
 	REQUIRE_DEADLINE_CHANGE_REASON tinyint(1) not null default 0,
@@ -1001,10 +1001,10 @@ CREATE TABLE IF NOT EXISTS b_tasks_deadline_change_log (
 	index task_deadline_change_log (TASK_ID, USER_ID)
 );
 
-create table if not exists b_tasks_task_result_file (
-	ID int not null auto_increment,
-	RESULT_ID  int(11) unsigned not null,
-	FILE_ID int(11) not null ,
-	PRIMARY KEY (ID),
-	index task_result_file_index (RESULT_ID)
+create table if not exists b_tasks_result_message (
+	RESULT_ID int(11) unsigned not null,
+	MESSAGE_ID int(11) unsigned not null,
+	primary key (RESULT_ID, MESSAGE_ID),
+	index ix_b_tasks_result_message_message_id (MESSAGE_ID)
 );
+

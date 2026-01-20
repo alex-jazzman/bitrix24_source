@@ -268,6 +268,10 @@ export class CountersModel extends BuilderModel
 
 				store.commit('deleteForChannel', payload);
 			},
+			/** @function counters/clearUnloadedTaskCounters */
+			clearUnloadedTaskCounters: (store) => {
+				store.commit('clearUnloadedTaskCounters');
+			},
 			/** @function counters/clear */
 			clear: (store) => {
 				store.commit('clear');
@@ -371,6 +375,9 @@ export class CountersModel extends BuilderModel
 				}
 
 				delete state.commentCounters[channelChatId][commentChatId];
+			},
+			clearUnloadedTaskCounters: (state: CountersState) => {
+				state.unloadedTaskCounters = {};
 			},
 			clear: (state: CountersState) => {
 				state.unloadedChatCounters = {};

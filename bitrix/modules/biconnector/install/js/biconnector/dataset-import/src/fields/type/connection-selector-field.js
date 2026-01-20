@@ -103,6 +103,7 @@ export const ConnectionSelectorField = {
 					linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
 					customData: {
 						connectionType: item.TYPE,
+						isSupportMapping: item.IS_SUPPORT_MAPPING ?? false,
 					},
 				};
 

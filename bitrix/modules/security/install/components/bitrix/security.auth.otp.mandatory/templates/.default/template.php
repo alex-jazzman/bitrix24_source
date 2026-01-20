@@ -97,9 +97,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 					<span class="bx-otp-section-desc">
 						<?=GetMessage("SECURITY_OTP_MANDATORY_AUTH_HAND_DESCR")?>
 						<b><?
-							if ($arResult['TYPE'] === \Bitrix\Security\Mfa\Otp::TYPE_TOTP):
+							if ($arResult['TYPE'] === \Bitrix\Security\Mfa\OtpType::Totp->value):
 								echo getMessage('SECURITY_OTP_MANDATORY_AUTH_CODE_INFO_TOTP');
-							elseif ($arResult['TYPE'] === \Bitrix\Security\Mfa\Otp::TYPE_HOTP):
+							elseif ($arResult['TYPE'] === \Bitrix\Security\Mfa\OtpType::Hotp->value):
 								echo getMessage('SECURITY_OTP_MANDATORY_AUTH_CODE_INFO_HOTP');
 							endif;
 							?></b>.

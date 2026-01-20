@@ -1,4 +1,3 @@
-import { EventEmitter } from 'main.core.events';
 import { Runtime, Extension } from 'main.core';
 
 import { EventType, SidebarDetailBlock, ActionByRole } from 'im.v2.const';
@@ -21,6 +20,7 @@ import { MeetingSearch } from '../../../classes/panels/search/meeting-search';
 import './css/meeting-panel.css';
 
 import type { JsonObject } from 'main.core';
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelSidebarMeetingItem, ImModelChat } from 'im.v2.model';
 
 const DEFAULT_MIN_TOKEN_SIZE = 3;
@@ -121,7 +121,7 @@ export const MeetingPanel = {
 	{
 		this.initSettings();
 		this.collectionFormatter = new SidebarCollectionFormatter();
-		this.contextMenu = new MeetingMenu();
+		this.contextMenu = new MeetingMenu({ emitter: this.getEmitter() });
 		this.service = new Meeting({ dialogId: this.dialogId });
 		this.serviceSearch = new MeetingSearch({ dialogId: this.dialogId });
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 500, this);
@@ -206,7 +206,7 @@ export const MeetingPanel = {
 		},
 		onBackClick()
 		{
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.meeting });
+			this.getEmitter().emit(EventType.sidebar.close, { panel: SidebarDetailBlock.meeting });
 		},
 		needToLoadNextPage(event: Event): boolean
 		{
@@ -241,9 +241,13 @@ export const MeetingPanel = {
 		{
 			(new EntityCreator(this.chatId)).createMeetingForChat();
 		},
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		getEmitter(): EventEmitter
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			return this.$Bitrix.eventEmitter;
+		},
+		loc(phraseCode: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `

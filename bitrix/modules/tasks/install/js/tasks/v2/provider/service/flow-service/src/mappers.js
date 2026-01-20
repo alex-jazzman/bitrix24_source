@@ -6,6 +6,5 @@ export function mapDtoToModel(flowDto: FlowDto): FlowModel
 	return {
 		id: flowDto.id,
 		name: flowDto.name,
-		efficiency: flowDto.efficiency,
 	};
 }

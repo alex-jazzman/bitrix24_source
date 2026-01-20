@@ -11,7 +11,7 @@ jn.define('im/messenger-v2/controller/recent/const/event-type', (require, export
 		onInit: 'onInit',
 		pagination: {},
 		render: {
-			updateUIByRecentCollectionSizeIfNeeded: 'updateUIByRecentCollectionSizeIfNeeded',
+			itemCollectionSizeChanged: 'itemCollectionSizeChanged',
 		},
 	};
 

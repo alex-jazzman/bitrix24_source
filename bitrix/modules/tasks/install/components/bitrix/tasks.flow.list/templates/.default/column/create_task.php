@@ -27,7 +27,7 @@ if (!function_exists('renderCreateTaskColumn'))
 			'noCaps' => true,
 			'text' => Loc::getMessage('TASKS_FLOW_LIST_CREATE_TASK'),
 			'size' => Bitrix\UI\Buttons\Size::EXTRA_SMALL,
-			'click' => getClickAction($flow, $arResult, $isActive),
+			...getClickAction($flow, $arResult, $isActive),
 		]);
 		$buttonBuilder->setRound();
 		$buttonBuilder->addAttribute('id', 'tasks-flow-list-create-task-' . $flow->getId());
@@ -69,23 +69,30 @@ if (!function_exists('renderCreateTaskColumn'))
 
 	if (!function_exists('getClickAction'))
 	{
-		function getClickAction(Flow $flow, array $arResult, bool $isActive): JsCode
+		function getClickAction(Flow $flow, array $arResult, bool $isActive): array
 		{
 			$isFlowFeatureAvailable = $arResult['isFeatureEnabled'] || $arResult['canTurnOnTrial'];
 			if (!$isFlowFeatureAvailable)
 			{
-				return new JsCode(
-					'BX.Tasks.Flow.Grid.showFlowLimit()',
-				);
+				return [
+					'click' => new JsCode(
+						'BX.Tasks.Flow.Grid.showFlowLimit()',
+					),
+				];
+			}
+
+			if ($flow->isImmutable())
+			{
+				return ['click' => ''];
 			}
 
 			if ($isActive)
 			{
 				$createButtonUri = getCreateButtonUri($flow, $arResult);
 
-				return new JsCode(
-					'BX.SidePanel.Instance.open("' . $createButtonUri->getUri() . '")',
-				);
+				return [
+					'link' => $createButtonUri->getUri(),
+				];
 			}
 
 			if ($flow->isDemo())
@@ -100,16 +107,20 @@ if (!function_exists('renderCreateTaskColumn'))
 						'isFeatureTrialable' => $arResult['isFeatureTrialable'],
 					]);
 
-					return new JsCode(
-						"BX.Tasks.Flow.EditForm.createInstance({$editFormParams});",
-					);
+					return [
+						'click' => new JsCode(
+							"BX.Tasks.Flow.EditForm.createInstance({$editFormParams});",
+						),
+					];
 				}
 			}
 
-			return new JsCode(
-				'BX.Tasks.Flow.Grid.showNotificationHint("flow-off", "'
-				. Loc::getMessage('TASKS_FLOW_LIST_FLOW_OFF') . '")',
-			);
+			return [
+				'click' => new JsCode(
+					'BX.Tasks.Flow.Grid.showNotificationHint("flow-off", "'
+					. Loc::getMessage('TASKS_FLOW_LIST_FLOW_OFF') . '")',
+				),
+			];
 		}
 	}
 

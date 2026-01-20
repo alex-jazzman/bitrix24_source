@@ -7,8 +7,6 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	const { Uuid } = require('utils/uuid');
 
 	const {
-		CopilotButtonType,
-		EventType,
 		BotCode,
 		DialogWidgetType,
 		OpenDialogContextType,
@@ -16,15 +14,18 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	const { MessageService } = require('im/messenger/provider/services/message');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
-	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { DialogConfigurator } = require('im/messenger/controller/dialog/lib/configurator');
 
 	const { CopilotMessageMenu } = require('im/messenger/controller/dialog/copilot/component/message-menu');
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
+	const { Reasoning } = require('im/messenger/lib/reasoning');
+	const { ReasoningButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/const/buttons');
+	const { AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/const/type');
 
 	const logger = getLogger('dialog--dialog');
 
@@ -33,14 +34,6 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	 */
 	class CopilotDialog extends Dialog
 	{
-		constructor()
-		{
-			super();
-
-			this.messageButtonTapHandler = this.messageButtonTapHandler.bind(this);
-			this.copilotFootnoteTapHandler = this.copilotFootnoteTapHandler.bind(this);
-		}
-
 		getDialogType()
 		{
 			return DialogWidgetType.copilot;
@@ -48,6 +41,13 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 		checkCanHaveAttachments()
 		{
+			return false;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		checkCanRecordVideo() {
 			return false;
 		}
 
@@ -63,21 +63,10 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		{
 			super.subscribeViewEvents();
 			this.disableParentClassViewEvents();
-			this.subscribeCustomViewEvents();
 		}
 
 		disableParentClassViewEvents()
 		{}
-
-		subscribeCustomViewEvents()
-		{
-			this.view
-				.on(EventType.dialog.messageButtonTap, this.messageButtonTapHandler)
-			;
-			this.view
-				.on(EventType.dialog.copilotFootnoteTap, this.copilotFootnoteTapHandler)
-			;
-		}
 
 		subscribeStoreEvents()
 		{
@@ -128,7 +117,10 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				withMessageHighlight,
 				dialogTitleParams,
 				integrationSettings,
+				onClose = () => {},
 			} = options;
+
+			this.onClose = onClose;
 
 			this.configurator = new DialogConfigurator(integrationSettings);
 			this.locator.add('configurator', this.configurator);
@@ -180,6 +172,25 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		}
 
 		/**
+		 * @return {Array<AssistantButton>}
+		 */
+		getAssistantButtons()
+		{
+			const buttons = [];
+
+			if (Feature.isCopilotReasoningAvailable)
+			{
+				const design = Reasoning.isSupported(this.dialogId)
+					? AssistantButtonDesign.grey
+					: AssistantButtonDesign.disabledAlike;
+
+				buttons.push({ ...ReasoningButton, design });
+			}
+
+			return buttons;
+		}
+
+		/**
 		 *
 		 * @param index
 		 * @param {Message} message
@@ -195,53 +206,6 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			}
 
 			super.messageAvatarLongTapHandler(index, message);
-		}
-
-		/**
-		 *
-		 * @param messageId
-		 * @param {MessageButton} button
-		 */
-		async messageButtonTapHandler(messageId, button)
-		{
-			logger.log('Dialog.messageButtonTapHandler', messageId, button);
-
-			if (button.id === CopilotButtonType.copy)
-			{
-				const modelMessage = this.store.getters['messagesModel/getById'](messageId);
-				DialogTextHelper.copyToClipboard(
-					modelMessage.text,
-					{
-						parentWidget: this.view.ui,
-					},
-				);
-
-				return true;
-			}
-
-			if (button.id === CopilotButtonType.promptEdit)
-			{
-				const currentText = this.view.textField.getText();
-				const text = (currentText.endsWith(' ') ? button.text : ` ${button.text}`)
-					.replace('...', ' ')
-				;
-				this.view.textField.replaceText(currentText.length, currentText.length, text);
-				this.view.textField.showKeyboard();
-
-				return true;
-			}
-
-			if (button.id === CopilotButtonType.promptSend)
-			{
-				await this.sendMessage(button.text, button.code);
-			}
-		}
-
-		copilotFootnoteTapHandler()
-		{
-			const articleCode = '20418172';
-			logger.log('Dialog.copilotFootnoteTapHandler, articleCode:', articleCode);
-			helpdesk.openHelpArticle(articleCode, 'helpdesk');
 		}
 
 		/**

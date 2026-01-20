@@ -468,7 +468,7 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	}
 	function _getReactionsNames2() {
 	  const rankedReactions = babelHelpers.classPrivateFieldLooseBase(this, _ranking)[_ranking].getRankedReactionsNames();
-	  const excludedReactions = new Set([ui_reaction_item.ReactionName.signHorns, ui_reaction_item.ReactionName.faceWithStuckOutTongue, ui_reaction_item.ReactionName.handshake, ui_reaction_item.ReactionName.hundredPoints, ui_reaction_item.ReactionName.sleepingSymbol, ui_reaction_item.ReactionName.crossMark, ui_reaction_item.ReactionName.whiteHeavyCheckMark, ui_reaction_item.ReactionName.eyes]);
+	  const excludedReactions = new Set([ui_reaction_item.ReactionName.signHorns, ui_reaction_item.ReactionName.faceWithStuckOutTongue]);
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _allowedReactions)[_allowedReactions]) {
 	    return rankedReactions.filter(reaction => babelHelpers.classPrivateFieldLooseBase(this, _allowedReactions)[_allowedReactions].includes(reaction));
 	  }

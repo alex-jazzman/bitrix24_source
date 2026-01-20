@@ -1,4 +1,5 @@
 export const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
+export const AI_ASSISTANT_CHAT_TYPE = 'chatType_aiAssistant';
 
 export const CopilotChatType = Object.freeze({
 	private: 'chatType_private',
@@ -56,11 +57,17 @@ export const AnalyticsEvent = Object.freeze({
 	seeLater: 'see_later',
 	select: 'select',
 	addFeedback: 'add_feedback',
+	viewPopup: 'view_popup',
+	selectAppMode: 'select_app_mode',
 	copyChatLink: 'copy_chat_link',
 	viewTranscription: 'view_transcription',
 	play: 'play',
 	pause: 'pause',
 	changeSpeed: 'change_speed',
+	askCopilot: 'ask_copilot',
+	modeOn: 'mode_on',
+	modeOff: 'mode_off',
+	clickMcpIntegrations: 'click_mcp_integrations',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -87,7 +94,8 @@ export const AnalyticsCategory = Object.freeze({
 	call: 'call',
 	collab: 'collab',
 	updateAppPopup: 'update_app_popup',
-	audiomessage: 'audiomessage',
+	audioMessage: 'audiomessage',
+	videoMessage: 'videomessage',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -101,6 +109,10 @@ export const AnalyticsType = Object.freeze({
 	privateCall: 'private',
 	groupCall: 'group',
 	may25DesktopRelease: 'may_25_desktop_release',
+	selectAppMode: 'select_app_mode',
+	oneWindow: 'single_window',
+	aiAssistant: 'aiAssistant',
+	think: 'think',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -121,6 +133,8 @@ export const AnalyticsSection = Object.freeze({
 	userAdd: 'user_add',
 	chatCreateMenu: 'chat_create_menu',
 	chatEmptyState: 'chat_empty_state',
+	settings: 'settings',
+	miniChat: 'mini_chat',
 });
 
 export const AnalyticsSubSection = Object.freeze({

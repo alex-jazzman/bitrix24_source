@@ -118,7 +118,22 @@ this.BX = this.BX || {};
 	      if (userId === 0 || typeId === EntityCounterType.UNDEFINED) {
 	        return false;
 	      }
-	      var isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName) && main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName]) && babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName].length === 1 && (isOtherUsersFilter ? babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0] === EntityCounterFilterManager.FILTER_OTHER_USERS : parseInt(babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0], 10) === userId);
+	      var isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName);
+	      if (main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName]) && babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName].length === 1) {
+	        var nodeValue = babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0];
+	        try {
+	          var _JSON$parse = JSON.parse(babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0]),
+	            _JSON$parse2 = babelHelpers.slicedToArray(_JSON$parse, 2),
+	            type = _JSON$parse2[0],
+	            value = _JSON$parse2[1];
+	          nodeValue = value;
+	        } catch (error) {
+	          nodeValue = babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0];
+	        }
+	        isFilteredByUser && (isFilteredByUser = isOtherUsersFilter ? nodeValue === EntityCounterFilterManager.FILTER_OTHER_USERS : parseInt(nodeValue, 10) === userId);
+	      } else {
+	        isFilteredByUser = false;
+	      }
 	      var hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD) && main_core.Type.isObject(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]);
 	      var filteredTypeValues = hasFilteredByTypeValue ? Object.values(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]).map(function (item) {
 	        return parseInt(item, 10);
@@ -126,11 +141,11 @@ this.BX = this.BX || {};
 	      var isFilteredByType = filteredTypeValues.length === 1 && filteredTypeValues[0] === typeId || filteredTypeValues.length === 2 && typeId === EntityCounterType.CURRENT && filteredTypeValues[0] === EntityCounterType.READY_TODO && filteredTypeValues[1] === EntityCounterType.OVERDUE;
 	      var counterFields = [counterUserFieldName, EntityCounterFilterManager.COUNTER_TYPE_FIELD].concat(babelHelpers.toConsumableArray(EntityCounterFilterManager.EXCLUDED_FIELDS));
 	      var keysFields = Object.keys(babelHelpers.classPrivateFieldGet(this, _fields));
-	      var otherFields = counterFields.filter(function (item) {
+	      var otherFields = [].concat(babelHelpers.toConsumableArray(counterFields.filter(function (item) {
 	        return !keysFields.includes(item);
-	      }).concat(keysFields.filter(function (x) {
+	      })), babelHelpers.toConsumableArray(keysFields.filter(function (x) {
 	        return !counterFields.includes(x);
-	      })); // exclude checked fields
+	      })));
 	      var isOtherFilterUsed = otherFields.some(function (item) {
 	        return _this2.isFilteredByFieldEx(item);
 	      });
@@ -690,6 +705,7 @@ this.BX = this.BX || {};
 	      var userId = isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : babelHelpers.classPrivateFieldGet(this, _userId).toString();
 	      var userName = isOtherUsersFilter ? main_core.Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : babelHelpers.classPrivateFieldGet(this, _userName);
 	      var counterTypeId = _classPrivateMethodGet$2(this, _prepareFilterTypeId, _prepareFilterTypeId2).call(this, typeId);
+	      var filterItem = JSON.stringify([isOtherUsersFilter ? 'meta-user' : 'user', userId]);
 	      var api = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getApi();
 	      var fields = {
 	        "ACTIVITY_COUNTER": BX.Type.isPlainObject(counterTypeId) ? counterTypeId : {
@@ -698,8 +714,8 @@ this.BX = this.BX || {};
 	      };
 	      var responsibleField = babelHelpers.classPrivateFieldGet(this, _filterResponsibleFiledName);
 	      fields = _objectSpread(_objectSpread({}, fields), {}, (_objectSpread2 = {}, babelHelpers.defineProperty(_objectSpread2, responsibleField, {
-	        0: userId
-	      }), babelHelpers.defineProperty(_objectSpread2, responsibleField + '_label', [userName]), _objectSpread2));
+	        0: filterItem
+	      }), babelHelpers.defineProperty(_objectSpread2, "".concat(responsibleField, "_label"), [userName]), _objectSpread2));
 	      api.setFields(fields);
 	      api.apply({
 	        'COUNTER': _classPrivateMethodGet$2(this, _makeFilterAnalyticsLabel, _makeFilterAnalyticsLabel2).call(this, counterTypeId)

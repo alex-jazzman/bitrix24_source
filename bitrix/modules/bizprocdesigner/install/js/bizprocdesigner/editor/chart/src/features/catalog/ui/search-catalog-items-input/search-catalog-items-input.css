@@ -1,0 +1,32 @@
+.editor-chart-catalog__search .ui-node-catalog-icon {
+	margin: 0 20px 0 8px;
+}
+
+.editor-chart-catalog__search {
+	position: relative;
+}
+
+.editor-chart-catalog-input__clear-btn {
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	cursor: pointer;
+	margin-left: 6px;
+	position: absolute;
+	right: 15px;
+	transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.editor-chart-catalog .editor-chart-catalog-input__clear-btn
+{
+	opacity: 0;
+	visibility: hidden;
+}
+
+section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
+{
+	opacity: 1;
+	visibility: visible;
+}

@@ -14,6 +14,7 @@ import { helpDesk } from 'booking.lib.help-desk';
 import { DealHelper } from 'booking.lib.deal-helper';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { Loader } from 'booking.component.loader';
+import { currencyFormat } from 'booking.lib.currency-format';
 import type { DealData } from 'booking.model.bookings';
 
 import './deal.css';
@@ -85,6 +86,10 @@ export const Deal = {
 			const format = DateTimeFormat.getFormat('DAY_MONTH_FORMAT');
 
 			return DateTimeFormat.format(format, this.deal.data.createdTimestamp);
+		},
+		priceFormatted(): string
+		{
+			return currencyFormat.format(this.deal.data.currencyId, this.deal.data.opportunity);
 		},
 	},
 	mounted(): void
@@ -270,7 +275,7 @@ export const Deal = {
 								:data-element="dataElementPrefix + '-menu-deal-profit'"
 								:data-profit="deal.data.opportunity"
 								v-bind="dataAttributes"
-								v-html="deal.data.formattedOpportunity"
+								v-html="priceFormatted"
 							></div>
 							<div
 								class="booking-actions-popup-item-subtitle"

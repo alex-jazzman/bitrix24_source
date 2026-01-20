@@ -1,0 +1,60 @@
+.editor-chart-search-results-layout {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+}
+
+.editor-chart-search-results-layout__result-label {
+    height: 26px;
+    padding: 0 8px;
+}
+
+.editor-chart-search-results-layout__content {
+    height: calc(100% - 26px);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-base-10, #dddee0) var(--ui-color-base-02);
+}
+
+.editor-chart-search-results-layout__content::-webkit-scrollbar {
+    display: none;
+	width: 5px;
+	background-color: transparent;
+}
+
+.editor-chart-search-results-layout__content::-webkit-scrollbar-thumb {
+	width: 5px;
+	background-color: var(--ui-color-base-10, #dddee0);
+}
+
+.editor-chart-search-results-layout__content:hover::-webkit-scrollbar {
+    display: block;
+}
+
+.editor-chart-search-results-layout__title {
+    max-width: 54px;
+    padding: 16px 0 0 8px;
+    margin: 0;
+    font-size: var(--ui-font-size-xs);
+    font-weight: var(--ui-font-weight-regular);
+    color: var(--ui-color-gray-35);
+    text-align: left;
+    overflow: hidden;
+}
+
+.editor-chart-search-results-layout__title.--collapsed {
+    text-align: center;
+    padding: 16px 0 0 0;
+}
+
+.editor-chart-search-results-layout__empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 70%;
+}

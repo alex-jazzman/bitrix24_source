@@ -234,10 +234,14 @@ if ($arParams['SUCCESS_SAVE'])
 													<script>
 														BX.ready(function()
 														{
+															const metrikaParams = {
+																p1: 'site_design',
+															};
 															this.corporateColor = new BX.Landing.ColorPickerTheme(
 																BX('<?= $template->getFieldId('COLORPICKER_THEME') ?>'),
 																<?= CUtil::PhpToJSObject($arResult['PREPARE_COLORS']['allColors']) ?>,
 																<?= CUtil::PhpToJSObject($arResult['CURRENT_COLORS']['currentColor']) ?>,
+																metrikaParams,
 															);
 														});
 													</script>
@@ -333,9 +337,14 @@ if ($arParams['SUCCESS_SAVE'])
 									}
 									BX.ready(function ()
 									{
+										const metrikaParams = {
+											subSection: 'text',
+											p1: 'site_design',
+										};
 										this.textColor = new BX.Landing.ColorPicker(
 											BX('<?= $template->getFieldId('THEMEFONTS_COLOR') ?>'),
-											paramsColor
+											paramsColor,
+											metrikaParams,
 										);
 									});
 								</script>
@@ -386,9 +395,14 @@ if ($arParams['SUCCESS_SAVE'])
 									}
 									BX.ready(function ()
 									{
+										const metrikaParams = {
+											subSection: 'title',
+											p1: 'site_design',
+										};
 										this.hColor = new BX.Landing.ColorPicker(
 											BX('<?= $template->getFieldId('THEMEFONTS_COLOR_H') ?>'),
-											paramsColorH
+											paramsColorH,
+											metrikaParams,
 										);
 									});
 								</script>
@@ -473,9 +487,14 @@ if ($arParams['SUCCESS_SAVE'])
 												defaultColor: <?=CUtil::PhpToJSObject(LandingSiteEditComponent::COLOR_PICKER_DEFAULT_BG_COLOR)?>,
 											}
 											BX.ready(function() {
+												const metrikaParams = {
+													subSection: 'background',
+													p1: 'site_design',
+												};
 												this.bgColor = new BX.Landing.ColorPicker(
 													BX('<?= $template->getFieldId('BACKGROUND_COLOR') ?>'),
-													paramsBgColor
+													paramsBgColor,
+													metrikaParams,
 												);
 											});
 										</script>
@@ -503,9 +522,14 @@ if ($arParams['SUCCESS_SAVE'])
 										defaultColor: <?=CUtil::PhpToJSObject(LandingSiteEditComponent::COLOR_PICKER_DEFAULT_BG_COLOR)?>,
 									}
 									BX.ready(function() {
+										const metrikaParams = {
+											subSection: 'transition',
+											p1: 'site_design',
+										};
 										this.transitionColor = new BX.Landing.ColorPicker(
 											BX('<?= $template->getFieldId('TRANSITION_COLOR') ?>'),
-											paramsTransitionBgColor
+											paramsTransitionBgColor,
+											metrikaParams,
 										);
 									});
 								</script>

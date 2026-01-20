@@ -15,11 +15,26 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 	const FIXED_IMAGE_WIDTH = 98;
 	const CLOSE_SIZE = 24;
 
+	/**
+	 * @typedef {object} HintProps
+	 * @property {string} [testId]
+	 * @property {object} [targetParams]
+	 * @property {string} [title]
+	 * @property {string} [description]
+	 * @property {Function} [onClose]
+	 * @property {Function} [onClick]
+	 *
+	 * @class Hint
+	 */
 	class Hint extends LayoutComponent
 	{
+		/**
+		 * @param {HintProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
+
 			this.direction = this.getDirection();
 			this.svgSize = this.direction.getSvgSize();
 			this.state = {
@@ -55,11 +70,14 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 			return Boolean(buttonText);
 		}
 
-		shouldRenderDescription()
+		#hasTitle()
 		{
-			const { description } = this.props;
+			return Boolean(this.#getTitle());
+		}
 
-			return Boolean(description);
+		#hasDescription()
+		{
+			return Boolean(this.#getDescription());
 		}
 
 		getEarPosition()
@@ -88,12 +106,10 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 
 		render()
 		{
-			const { testId } = this.props;
-
 			return this.#renderWrapper(
 				View(
 					{
-						testId,
+						testId: this.#getTestId(),
 						style: {
 							position: 'relative',
 							padding: Indent.XL.toNumber(),
@@ -126,7 +142,7 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 						paddingLeft: Indent.XL.toNumber(),
 					},
 				},
-				this.#renderHeader(),
+				this.#renderTitle(),
 				this.#renderDescription(),
 				this.#renderButtons(),
 			);
@@ -139,17 +155,17 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 				return null;
 			}
 
-			const { buttonText, testId, handleOnClick } = this.props;
+			const { buttonText, onClick } = this.props;
 
 			return Button({
-				testId: testId ? `${testId}__actionButton` : null,
+				testId: this.#getTestId('action-button'),
 				text: buttonText,
 				stretched: true,
 				size: ButtonSize.S,
 				design: ButtonDesign.OUTLINE,
 				color: Color.baseWhiteFixed,
 				borderColor: Color.baseWhiteFixed,
-				onClick: handleOnClick,
+				onClick,
 				style: {
 					marginVertical: Indent.XS.toNumber(),
 				},
@@ -158,40 +174,61 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 
 		#renderDescription()
 		{
-			if (!this.shouldRenderDescription())
+			if (!this.#hasDescription())
 			{
 				return null;
 			}
 
-			const { description } = this.props;
+			const style = {};
+
+			if (this.#hasTitle())
+			{
+				style.marginTop = Indent.S.toNumber();
+			}
+
+			if (this.shouldShowActionButton())
+			{
+				style.marginBottom = Indent.S.toNumber();
+			}
+
+			if (this.#hasCloseButton() && !this.#hasTitle())
+			{
+				style.marginRight = Indent.XL2.toNumber();
+			}
 
 			return Text4({
-				text: description,
+				testId: this.#getTestId('description'),
+				text: this.#getDescription(),
 				color: Color.baseWhiteFixed,
-				style: {
-					marginVertical: Indent.S.toNumber(),
-				},
+				style,
 			});
 		}
 
-		#renderHeader()
+		#renderTitle()
 		{
-			const { title } = this.props;
-
-			if (!title)
+			if (!this.#hasTitle())
 			{
 				return null;
 			}
 
+			const style = {};
+
+			if (this.#hasCloseButton())
+			{
+				style.marginRight = Indent.XL2.toNumber();
+			}
+
 			return H4({
-				text: title,
+				testId: this.#getTestId('title'),
+				text: this.#getTitle(),
 				color: Color.baseWhiteFixed,
+				style,
 			});
 		}
 
 		#renderImage()
 		{
-			const { image } = this.props;
+			const { image, shouldShowImageBackgroundColor = true } = this.props;
 
 			if (!image)
 			{
@@ -205,7 +242,7 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 					width: FIXED_IMAGE_WIDTH,
 					padding: Indent.L.toNumber(),
 					borderRadius: Component.elementMCorner.toNumber(),
-					backgroundColor: Color.baseWhiteFixed.toHex(0.12),
+					backgroundColor: shouldShowImageBackgroundColor && Color.baseWhiteFixed.toHex(0.12),
 				},
 			}, image);
 		}
@@ -266,10 +303,7 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 		{
 			return Image({
 				ref: (ref) => {
-					if (ref)
-					{
-						this.earRef = ref;
-					}
+					this.earRef = ref;
 				},
 				style: {
 					position: 'absolute',
@@ -287,27 +321,66 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 
 		#renderCloseButton()
 		{
-			const { closeButton, testId, handleOnClose } = this.props;
+			if (!this.#hasCloseButton())
+			{
+				return null;
+			}
 
-			return closeButton
-				? IconView({
-					testId: testId ? `${testId}_close` : null,
-					icon: Icon.CROSS,
-					color: Color.baseWhiteFixed,
-					opacity: 0.3,
-					size: CLOSE_SIZE,
+			const { onClose } = this.props;
+
+			return View(
+				{
 					style: {
+						opacity: 0.3,
 						position: 'absolute',
 						right: Indent.S.toNumber(),
 						top: Indent.S.toNumber(),
 					},
-					onClick: handleOnClose,
-				})
-				: null;
+				},
+				IconView({
+					testId: this.#getTestId('close'),
+					icon: Icon.CROSS,
+					color: Color.baseWhiteFixed,
+					size: CLOSE_SIZE,
+					onClick: onClose,
+				}),
+			);
+		}
+
+		#getTestId(suffix = '')
+		{
+			const { testId } = this.props;
+
+			return [testId, suffix].filter(Boolean).join('-');
+		}
+
+		#getTitle()
+		{
+			const { title } = this.props;
+
+			return title;
+		}
+
+		#getDescription()
+		{
+			const { description } = this.props;
+
+			return description;
+		}
+
+		#hasCloseButton()
+		{
+			const { closeButton } = this.props;
+
+			return Boolean(closeButton);
 		}
 	}
 
 	module.exports = {
+		/**
+		 * @param {HintProps} props
+		 * @returns {Hint}
+		 */
 		Hint: (props) => new Hint(props),
 	};
 });

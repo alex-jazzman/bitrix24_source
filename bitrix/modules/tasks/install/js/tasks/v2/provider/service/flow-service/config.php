@@ -11,6 +11,7 @@ return [
 		'tasks.v2.const',
 		'tasks.v2.core',
 		'tasks.v2.lib.api-client',
+		'tasks.v2.provider.service.group-service',
 	],
 	'skip_core' => true,
 ];

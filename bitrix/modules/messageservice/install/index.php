@@ -52,6 +52,9 @@ class messageservice extends \CModule
 		/** @see \Bitrix\MessageService\RestService::onRestAppUpdate */
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestAppUpdate', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppUpdate');
 
+		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusReading', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusRead');
+		$eventManager->registerEventHandler('imconnector', 'onReceivedStatusDelivery', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusDelivered');
+
 		\Bitrix\Main\Config\Option::set('messageservice', 'clean_up_period', '14');
 
 		/** @see \Bitrix\MessageService\Providers\Edna\RegionHelper::REGION_RU */
@@ -101,6 +104,9 @@ class messageservice extends \CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppDelete');
 		/** @see \Bitrix\MessageService\RestService::onRestAppUpdate */
 		$eventManager->unRegisterEventHandler('rest', 'OnRestAppUpdate', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppUpdate');
+
+		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusReading', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusRead');
+		$eventManager->unRegisterEventHandler('imconnector', 'onReceivedStatusDelivery', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusDelivered');
 
 		\Bitrix\Main\ModuleManager::unRegisterModule('messageservice');
 

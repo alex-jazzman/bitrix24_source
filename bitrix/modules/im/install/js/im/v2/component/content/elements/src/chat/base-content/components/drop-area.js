@@ -1,12 +1,12 @@
 import { getFilesFromDataTransfer, hasDataTransferOnlyFiles } from 'ui.uploader.core';
 import { Event, Type, type JsonObject } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 import { MultiUploadingService, type MultiUploadingResult } from 'im.v2.provider.service.uploading';
 
 import { Height } from '../const/size';
 
+import type { EventEmitter } from 'main.core.events';
 import type { ImModelChat } from 'im.v2.model';
 
 import '../css/drop-area.css';
@@ -130,7 +130,7 @@ export const DropArea = {
 
 			if (Type.isArrayFilled(multiUploadingResult.uploaderIds))
 			{
-				EventEmitter.emit(EventType.textarea.openUploadPreview, { multiUploadingResult });
+				this.getEmitter().emit(EventType.textarea.openUploadPreview, { multiUploadingResult });
 			}
 			this.showDropArea = false;
 		},
@@ -142,6 +142,10 @@ export const DropArea = {
 			}
 
 			return this.multiUploadingService;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

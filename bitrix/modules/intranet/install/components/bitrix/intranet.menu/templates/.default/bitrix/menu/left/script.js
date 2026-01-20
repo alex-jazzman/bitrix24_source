@@ -192,14 +192,17 @@ this.BX = this.BX || {};
 					<i></i>
 				</span>
 				<span class="intranet__desktop-menu_popup-label">${0}</span>
-				<div class="intranet__desktop-menu_popup-header-user" onclick="BX.SidePanel.Instance.open('${0}')">
-					<span class="intranet__desktop-menu_popup-name intranet__desktop-menu_popup-name--chevron">
+				<div
+					class="intranet__desktop-menu_popup-header-user ${0}"
+					onclick="if (this.currentUser.profile) { BX.SidePanel.Instance.open('${0}'); }"
+					>
+					<span class="intranet__desktop-menu_popup-name">
 						${0}
 					</span>
 					${0}
 				</div>
 			</div>
-		`), this.currentUser.portal, this.currentUser.profile, `${this.currentUser.first_name} ${this.currentUser.last_name}`, position);
+		`), this.currentUser.portal, this.currentUser.profile ? 'intranet__desktop-menu_popup-header-user--chevron' : '', this.currentUser.profile, `${this.currentUser.first_name} ${this.currentUser.last_name}`, position);
 	    main_core.Dom.insertBefore(item, menuPopup.firstElementChild);
 	    const avatar = document.getElementsByClassName('ui-icon-common-user-popup')[0];
 	    const previewImage = this.getAvatarUrl(this.currentUser);

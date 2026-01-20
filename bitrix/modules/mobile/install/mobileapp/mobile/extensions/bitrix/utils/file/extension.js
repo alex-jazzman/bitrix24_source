@@ -3,6 +3,7 @@
  */
 jn.define('utils/file', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { showSafeToast } = require('toast');
 	const { RequestExecutor } = require('rest');
 	const { fileSaver } = require('utils/file/src/saver');
@@ -93,6 +94,11 @@ jn.define('utils/file', (require, exports, module) => {
 	 */
 	function getMimeType(fileExtOrMimeType, fileName = '')
 	{
+		if (!Type.isString(fileExtOrMimeType))
+		{
+			return '';
+		}
+
 		let mimeType = fileExtOrMimeType.toString().toLowerCase();
 
 		if (mimeType === 'application/octet-stream')

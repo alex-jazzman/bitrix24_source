@@ -115,19 +115,14 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 			return this.#healthCheckService;
 		}
 
-		async writingMessageNotify(dialogId)
+		/**
+		 * @param {string} dialogId
+		 * @param {string} type
+		 * @return {Promise}
+		 */
+		async inputActionNotify(dialogId, type)
 		{
-			return this.inputActionNotifyService.writingMessageNotify(dialogId);
-		}
-
-		async recordVoiceMessageNotify(dialogId)
-		{
-			return this.inputActionNotifyService.recordVoiceMessageNotify(dialogId);
-		}
-
-		async uploadFileMessageNotify(dialogId)
-		{
-			return this.inputActionNotifyService.uploadFileMessageNotify(dialogId);
+			return this.inputActionNotifyService.notify(dialogId, type);
 		}
 
 		loadChatWithMessages(dialogId)

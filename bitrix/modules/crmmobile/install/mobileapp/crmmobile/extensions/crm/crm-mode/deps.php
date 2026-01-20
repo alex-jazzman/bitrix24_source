@@ -17,5 +17,6 @@ return [
 		'crm:conversion/utils',
 		'crm:crm-mode/wizard/steps',
 		'crm:statemanager/redux/slices/kanban-settings',
+		'rest',
 	],
 ];

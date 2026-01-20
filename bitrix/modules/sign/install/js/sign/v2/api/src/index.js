@@ -1,4 +1,4 @@
-import type { DocumentInitiatedType } from 'sign.type';
+import { type DocumentInitiatedType, type MemberStatusType, MemberRole, type MemberRoleType } from 'sign.type';
 import { post } from './request';
 import { TemplateApi } from './template/template-api';
 import { TemplateFolderApi } from './template/template-folder-api';
@@ -11,9 +11,9 @@ import type {
 	LoadedDocumentData,
 	HcmLinkMultipleVacancyEmployeesLoadData,
 	EmployeeSaveData, HcmLinkNotMappedUsersData,
+	Restrictions,
 } from './type';
-import { CountMember, DocumentPreview, SetupMember } from './type';
-import { type MemberStatusType, MemberRole, type MemberRoleType } from 'sign.type';
+import { CountMember, SetupMember } from './type';
 
 export * from './type';
 export * from './template/type';
@@ -275,7 +275,7 @@ export class Api
 		return this.#post('sign.api_v1.portal.changeDomain');
 	}
 
-	loadRestrictions(): Promise<{ smsAllowed: boolean; }>
+	loadRestrictions(): Promise<Restrictions>
 	{
 		return this.#post('sign.api_v1.portal.hasRestrictions');
 	}

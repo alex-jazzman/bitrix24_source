@@ -17,5 +17,6 @@ return [
 		'assets/icons',
 		'toast',
 		'user/profile',
+		'user-profile/analytics',
 	],
 ];

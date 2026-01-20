@@ -24,6 +24,7 @@ export class CurtainFactory
 			type: this.config.type,
 			expireDays: this.config.expireDays,
 			curtainPage,
+			isRenamedMarket: this.config.isRenamedMarket,
 		});
 	}
 

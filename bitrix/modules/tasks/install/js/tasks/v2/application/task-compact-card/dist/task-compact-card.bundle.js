@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_vue3,ui_vue3_mixins_locMixin,main_core_events,main_popup,ui_vue3_vuex,ui_notificationManager,ui_uploader_tileWidget,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_component_addTaskButton,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_elements_fieldList,tasks_v2_component_dropZone,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_checkList,tasks_v2_component_fields_files,tasks_v2_component_fields_group,tasks_v2_provider_service_taskService,tasks_v2_provider_service_checkListService,main_core,ui_vue3_components_button,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_lib_ahaMoments,tasks_v2_provider_service_fileService) {
+(function (exports,ui_vue3_mixins_locMixin,tasks_v2_application_taskCard,tasks_v2_model_users,main_core_events,ui_vue3,ui_vue3_vuex,ui_notificationManager,ui_uploader_tileWidget,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_component_addTaskButton,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_elements_fieldList,tasks_v2_component_dropZone,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_checkList,tasks_v2_component_fields_files,tasks_v2_component_fields_group,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,main_core,ui_vue3_components_button,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_lib_ahaMoments,tasks_v2_provider_service_fileService) {
 	'use strict';
 
 	// @vue/component
@@ -11,23 +11,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Hint: tasks_v2_component_elements_hint.Hint,
 	    UiButton: ui_vue3_components_button.Button
 	  },
-	  inject: ['analytics'],
+	  inject: {
+	    analytics: {},
+	    task: {},
+	    taskId: {}
+	  },
 	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
 	    isOpening: {
 	      type: Boolean,
 	      required: true
 	    }
 	  },
 	  emits: ['update:isOpening'],
-	  setup(props) {
+	  setup() {
 	    return {
 	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      ButtonSize: ui_vue3_components_button.ButtonSize,
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.taskId)
+	      ButtonSize: ui_vue3_components_button.ButtonSize
 	    };
 	  },
 	  data() {
@@ -39,26 +38,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    };
 	  },
 	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
 	    checkLists() {
-	      var _this$task;
-	      return (_this$task = this.task) != null && _this$task.checklist ? this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist) : [];
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
 	    },
 	    isDisabled() {
 	      return this.isUploading || this.isCheckListUploading;
 	    },
 	    isUploading() {
-	      return this.fileService.isUploading();
+	      return tasks_v2_provider_service_fileService.fileService.get(this.taskId).isUploading();
 	    },
 	    isCheckListUploading() {
 	      var _this$task$checklist;
 	      return (_this$task$checklist = this.task.checklist) == null ? void 0 : _this$task$checklist.some(itemId => tasks_v2_provider_service_fileService.fileService.get(itemId, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem).isUploading());
 	    },
 	    hasAuditors() {
-	      var _this$task2;
-	      return Array.isArray((_this$task2 = this.task) == null ? void 0 : _this$task2.auditorsIds) && this.task.auditorsIds.length > 0;
+	      var _this$task;
+	      return Array.isArray((_this$task = this.task) == null ? void 0 : _this$task.auditorsIds) && this.task.auditorsIds.length > 0;
 	    },
 	    auditorsHintOptions() {
 	      return {
@@ -78,6 +73,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  mounted() {
 	    // Show auditors hint if auditorsIds is not empty
 	    if (this.hasAuditors && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup)) {
+	      tasks_v2_lib_ahaMoments.ahaMoments.setActive(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup);
 	      this.$nextTick(() => {
 	        // Bind to the button element
 	        this.auditorsHintBindElement = this.$refs.fullCardButtonContainer;
@@ -118,17 +114,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      this.$emit('update:isOpening', true);
 	      const features = tasks_v2_core.Core.getParams().features;
 	      tasks_v2_lib_analytics.analytics.sendOpenFullCard(this.analytics);
-	      if (features.isMiniformEnabled && !features.isV2Enabled) {
+	      const canOpenFullCard = features.isV2Enabled || main_core.Type.isArray(features.allowedGroups) && features.allowedGroups.includes(this.task.groupId);
+	      if (canOpenFullCard) {
+	        main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.OpenFullCard}:${this.taskId}`, this.taskId);
+	      } else {
 	        main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.OpenSliderCard}:${this.taskId}`, {
 	          task: this.task,
 	          checkLists: this.checkLists
 	        });
-	      } else {
-	        main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.OpenFullCard}:${this.taskId}`, this.taskId);
 	      }
 	    },
 	    closeAuditorsHint() {
 	      this.showAuditorsHint = false;
+	      tasks_v2_lib_ahaMoments.ahaMoments.setInactive(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup);
 	    },
 	    handleAuditorsHintLinkClick() {
 	      tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup);
@@ -202,47 +200,30 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  provide() {
 	    return {
 	      analytics: this.analytics,
-	      cardType: tasks_v2_const.CardType.Compact
+	      cardType: tasks_v2_const.CardType.Compact,
+	      /** @type { TaskModel } */
+	      task: ui_vue3.computed(() => tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId)),
+	      /** @type { number | string } */
+	      taskId: ui_vue3.computed(() => this.taskId),
+	      /** @type { boolean } */
+	      isEdit: ui_vue3.computed(() => false),
+	      /** @type { boolean } */
+	      isTemplate: ui_vue3.computed(() => tasks_v2_lib_idUtils.idUtils.isTemplate(this.taskId))
 	    };
 	  },
 	  props: {
-	    taskId: {
+	    id: {
 	      type: [Number, String],
-	      default: () => main_core.Text.getRandom()
+	      required: true
 	    },
-	    groupId: {
-	      type: [Number],
-	      default: null
-	    },
-	    parentId: {
-	      type: [Number],
-	      default: null
-	    },
-	    relatedToTaskId: {
-	      type: [Number],
-	      default: null
-	    },
-	    deadlineTs: {
-	      type: [Number, null],
-	      default: null
-	    },
-	    title: {
-	      type: [String, null],
-	      default: ''
-	    },
-	    description: {
-	      type: [String, null],
-	      default: ''
-	    },
-	    auditorsIds: {
-	      type: Array,
-	      default: () => []
+	    initialTask: {
+	      /**
+	       * @type TaskModel
+	       */
+	      type: Object,
+	      required: true
 	    },
 	    analytics: {
-	      type: Object,
-	      default: () => ({})
-	    },
-	    source: {
 	      type: Object,
 	      default: () => ({})
 	    }
@@ -251,110 +232,102 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return {
 	      ButtonSize: ui_vue3_components_button.ButtonSize,
 	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      Outline: ui_iconSet_api_core.Outline
+	      Outline: ui_iconSet_api_vue.Outline,
+	      EntityTypes: tasks_v2_provider_service_fileService.EntityTypes
 	    };
 	  },
 	  data() {
 	    return {
+	      taskId: this.id,
 	      openingFullCard: false,
 	      isCheckListPopupShown: false,
-	      chipsEventHandlers: {
-	        showCheckList: this.showCheckListPopup
-	      },
 	      creationError: false,
-	      popupCount: 0
+	      popupCount: 0,
+	      isHovered: false
 	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`,
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
-	      defaultDeadline: `${tasks_v2_const.Model.Interface}/defaultDeadline`
+	      defaultDeadlineTs: `${tasks_v2_const.Model.Interface}/defaultDeadlineTs`,
+	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`
 	    }),
-	    hasDefaultDeadline() {
-	      return this.defaultDeadline.defaultDeadlineDate !== '';
-	    },
-	    defaultDeadlineTs() {
-	      return new Date(this.defaultDeadline.defaultDeadlineDate).getTime();
-	    },
 	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
+	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+	    },
+	    isTemplate() {
+	      return tasks_v2_lib_idUtils.idUtils.isTemplate(this.taskId);
 	    },
 	    group() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId);
 	    },
-	    checkLists() {
-	      var _this$task;
-	      return (_this$task = this.task) != null && _this$task.checklist ? this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist) : [];
-	    },
-	    isEdit() {
-	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
-	    },
-	    primaryFields() {
+	    fields() {
 	      return [{
-	        title: tasks_v2_component_fields_responsible.responsibleMeta.title,
+	        title: tasks_v2_component_fields_responsible.responsibleMeta.getTitle(false),
 	        component: tasks_v2_component_fields_responsible.Responsible,
 	        props: {
 	          taskId: this.taskId,
-	          context: this.$options.name
+	          isSingle: true
 	        }
 	      }, {
 	        title: tasks_v2_component_fields_deadline.deadlineMeta.title,
 	        component: tasks_v2_component_fields_deadline.Deadline,
 	        props: {
-	          taskId: this.taskId
+	          taskId: this.taskId,
+	          isTemplate: this.isTemplate,
+	          isAutonomous: true,
+	          isHovered: this.isHovered
 	        }
-	      }];
+	      }, tasks_v2_core.Core.getParams().features.disk && {
+	        chip: {
+	          component: tasks_v2_component_fields_files.FilesChip,
+	          props: {
+	            taskId: this.taskId
+	          }
+	        }
+	      }, {
+	        chip: {
+	          component: tasks_v2_component_fields_checkList.CheckListChip,
+	          events: {
+	            showCheckList: this.showCheckListPopup
+	          }
+	        }
+	      }, tasks_v2_core.Core.getParams().features.isProjectsEnabled && {
+	        chip: {
+	          component: tasks_v2_component_fields_group.GroupChip
+	        }
+	      }].filter(field => field);
+	    },
+	    primaryFields() {
+	      return this.getFields(new WeakMap([[tasks_v2_component_fields_responsible.Responsible, true], [tasks_v2_component_fields_deadline.Deadline, true]]));
 	    },
 	    chips() {
-	      return [tasks_v2_component_fields_files.FilesChip, tasks_v2_component_fields_checkList.CheckListChip, ...(tasks_v2_core.Core.getParams().features.isProjectsEnabled ? [tasks_v2_component_fields_group.GroupChip] : [])];
+	      return this.fields.filter(({
+	        chip
+	      }) => chip).map(({
+	        chip
+	      }) => chip);
+	    },
+	    isDiskModuleInstalled() {
+	      return tasks_v2_core.Core.getParams().features.disk;
 	    }
 	  },
 	  created() {
-	    var _this$group;
-	    if (!this.isEdit) {
-	      this.destroy();
-	      const payload = {
-	        id: this.taskId,
-	        creatorId: this.currentUserId,
-	        responsibleId: this.currentUserId,
-	        ...(this.groupId ? {
-	          groupId: this.groupId
-	        } : {}),
-	        ...(this.title ? {
-	          title: this.title
-	        } : ''),
-	        ...(this.description ? {
-	          description: this.description
-	        } : ''),
-	        ...(this.auditorsIds ? {
-	          auditorsIds: this.auditorsIds
-	        } : []),
-	        ...(this.parentId ? {
-	          parentId: this.parentId
-	        } : {}),
-	        ...(this.relatedToTaskId ? {
-	          relatedToTaskId: this.relatedToTaskId
-	        } : {}),
-	        ...(this.source ? {
-	          source: this.source
-	        } : {})
-	      };
-	      if (this.deadlineTs !== null) {
-	        payload.deadlineTs = this.deadlineTs;
-	      } else if (this.hasDefaultDeadline) {
-	        payload.deadlineTs = this.defaultDeadlineTs;
-	      }
-	      if (this.auditorsIds !== null && this.auditorsIds.length > 0) {
-	        this.auditorsIds.forEach(auditorId => {
-	          this.insertUser({
-	            id: auditorId
-	          });
-	        });
-	      }
-	      this.insert(payload);
+	    var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc, _this$stateFlags$defa, _this$task$fileIds, _this$group;
+	    this.insert({
+	      ...this.initialTask,
+	      id: this.taskId,
+	      creatorId: this.currentUserId,
+	      responsibleIds: [this.currentUserId],
+	      deadlineTs: (_this$initialTask$dea = this.initialTask.deadlineTs) != null ? _this$initialTask$dea : this.defaultDeadlineTs,
+	      needsControl: (_this$stateFlags$need = this.stateFlags.needsControl) != null ? _this$stateFlags$need : null,
+	      matchesWorkTime: (_this$stateFlags$matc = this.stateFlags.matchesWorkTime) != null ? _this$stateFlags$matc : null,
+	      requireResult: (_this$stateFlags$defa = this.stateFlags.defaultRequireResult) != null ? _this$stateFlags$defa : false
+	    });
+	    if (((_this$task$fileIds = this.task.fileIds) == null ? void 0 : _this$task$fileIds.length) > 0) {
+	      void tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	    }
-	    this.fileService = tasks_v2_provider_service_fileService.fileService.get(this.taskId);
 	    tasks_v2_lib_analytics.analytics.sendOpenCard(this.analytics, {
 	      collabId: ((_this$group = this.group) == null ? void 0 : _this$group.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null
 	    });
@@ -372,27 +345,28 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    this.subscribeEvents();
 	  },
 	  beforeUnmount() {
-	    if (this.resizeObserver) {
-	      this.resizeObserver.disconnect();
-	    }
+	    var _this$resizeObserver;
+	    (_this$resizeObserver = this.resizeObserver) == null ? void 0 : _this$resizeObserver.disconnect();
 	    this.unsubscribeEvents();
 	  },
 	  unmounted() {
-	    if (!this.isEdit && this.openingFullCard === false) {
+	    if (this.openingFullCard === false) {
 	      this.destroy();
 	    }
 	  },
 	  methods: {
 	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Tasks, ['insert', 'delete']),
 	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['updateTitleFieldOffsetHeight']),
-	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Users, {
-	      insertUser: 'insert'
-	    }),
+	    getFields(map) {
+	      return this.fields.filter(({
+	        component
+	      }) => map.get(component));
+	    },
 	    close() {
-	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.CloseCard}:${this.taskId}`);
+	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.CloseCard}:${this.id}`);
 	    },
 	    async addTask() {
-	      var _this$task2, _this$$refs, _this$$refs$descripti;
+	      var _this$task, _this$$refs, _this$$refs$descripti;
 	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add(this.task);
 	      if (!id) {
 	        this.creationError = true;
@@ -403,46 +377,39 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        this.sendAddTaskAnalytics(false);
 	        return;
 	      }
+	      this.taskId = id;
 	      this.sendAddTaskAnalytics(true);
 	      tasks_v2_lib_analytics.analytics.sendDescription(this.analytics, {
-	        hasDescription: main_core.Type.isStringFilled((_this$task2 = this.task) == null ? void 0 : _this$task2.description),
+	        hasDescription: main_core.Type.isStringFilled((_this$task = this.task) == null ? void 0 : _this$task.description),
 	        hasScroll: (_this$$refs = this.$refs) == null ? void 0 : (_this$$refs$descripti = _this$$refs.description) == null ? void 0 : _this$$refs$descripti.hasScroll()
 	      });
-	      if (this.checkLists.length > 0) {
-	        await tasks_v2_provider_service_checkListService.checkListService.save(id, this.checkLists);
-	      }
-	      tasks_v2_provider_service_fileService.fileService.replace(this.taskId, id);
-	      const baseEvent = new main_core_events.BaseEvent({
+	      tasks_v2_provider_service_fileService.fileService.replace(this.id, id);
+	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.NotifyGrid, new main_core_events.BaseEvent({
 	        data: id,
 	        compatData: ['ADD', {
 	          task: this.task,
 	          options: {}
 	        }]
-	      });
-	      main_core.Event.EventEmitter.emit(tasks_v2_const.EventName.NotifyGrid, baseEvent);
-	      const features = tasks_v2_core.Core.getParams().features;
-	      if (features.isMiniformEnabled && !features.isV2Enabled) {
-	        this.close();
-	        return;
-	      }
+	      }));
 	      this.close();
 	    },
 	    sendAddTaskAnalytics(isSuccess) {
 	      var _this$group2;
 	      const collabId = ((_this$group2 = this.group) == null ? void 0 : _this$group2.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null;
-	      if (this.checkLists.length > 0) {
-	        const checkLists = this.checkLists.filter(({
+	      const checkLists = this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
+	      if (checkLists.length > 0) {
+	        const checklistCount = checkLists.filter(({
 	          parentId
-	        }) => parentId === 0);
-	        const checkListsItems = this.checkLists.filter(({
+	        }) => parentId === 0).length;
+	        const checklistItemsCount = checkLists.filter(({
 	          parentId
-	        }) => parentId !== 0);
+	        }) => parentId !== 0).length;
 	        tasks_v2_lib_analytics.analytics.sendAddTaskWithCheckList(this.analytics, {
 	          isSuccess,
 	          collabId,
 	          viewersCount: this.task.auditorsIds.length,
-	          checklistCount: checkLists.length,
-	          checklistItemsCount: checkListsItems.length
+	          checklistCount,
+	          checklistItemsCount
 	        });
 	      } else {
 	        tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
@@ -454,14 +421,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	    },
 	    handleShowingPopup(event) {
-	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.ShowOverlay}:${this.taskId}`);
-	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
+	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.ShowOverlay}:${this.taskId}`);
+	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
 	      this.externalPopup = event.popupInstance;
 	      this.adjustCardPopup(true);
 	    },
 	    handleHidingPopup() {
-	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.HideOverlay}:${this.taskId}`);
-	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
+	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.HideOverlay}:${this.taskId}`);
+	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
 	      this.externalPopup = null;
 	    },
 	    handleResizingPopup() {
@@ -469,10 +436,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    adjustCardPopup(animate = false) {
 	      if (!this.externalPopup) {
-	        main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
+	        main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
 	        return;
 	      }
-	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`, {
+	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`, {
 	        titleFieldHeight: this.titleFieldOffsetHeight,
 	        innerPopup: this.externalPopup,
 	        animate
@@ -483,17 +450,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    closeCheckListPopup() {
 	      this.isCheckListPopupShown = false;
-	    },
-	    getEventListeners(chip, handlers) {
-	      const listeners = {};
-	      if (chip.emits) {
-	        Object.keys(handlers).forEach(event => {
-	          if (chip.emits.includes(event)) {
-	            listeners[event] = handlers[event];
-	          }
-	        });
-	      }
-	      return listeners;
 	    },
 	    subscribeEvents() {
 	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.handlePopupShow);
@@ -525,16 +481,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
 	        this.$refs.addTaskButton.handleClick();
 	      } else if (event.key === 'Escape') {
-	        this.close();
+	        setTimeout(() => this.close());
 	      }
 	    },
 	    destroy() {
-	      this.delete(this.taskId);
-	      tasks_v2_provider_service_fileService.fileService.delete(this.taskId);
+	      this.delete(this.id);
+	      tasks_v2_provider_service_fileService.fileService.delete(this.id);
 	    }
 	  },
 	  template: `
-		<div v-drop class="tasks-compact-card-container">
+		<div v-drop class="tasks-compact-card-container" ref="main">
 			<div v-if="task" class="tasks-compact-card" :data-task-id="taskId" data-task-compact>
 				<div class="tasks-compact-card-fields">
 					<div
@@ -542,8 +498,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						:class="{'--no-gap': task.description.length > 0}"
 						ref="title"
 					>
-						<FieldTitle :taskId="taskId" :disabled="isCheckListPopupShown"/>
-						<Importance :taskId="taskId"/>
+						<FieldTitle :disabled="isCheckListPopupShown"/>
+						<Importance/>
 						<BIcon
 							class="tasks-compact-card-fields-close"
 							:name="Outline.CROSS_L"
@@ -551,14 +507,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							@click="close"
 						/>
 					</div>
-					<DescriptionInline ref="description" :taskId="taskId"/>
-					<div class="tasks-compact-card-fields-list">
+					<DescriptionInline ref="description"/>
+					<div
+						class="tasks-compact-card-fields-list"
+						@mouseover="isHovered = true"
+						@mouseleave="isHovered = false"
+					>
 						<FieldList :fields="primaryFields"/>
 					</div>
 					<CheckList
 						v-if="isCheckListPopupShown"
-						:taskId="taskId"
-						:isAutonomous="true"
+						isAutonomous
 						@show="handleShowingPopup"
 						@close="handleHidingPopup(); closeCheckListPopup();"
 						@resize="handleResizingPopup"
@@ -566,11 +525,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				</div>
 				<div class="tasks-compact-card-footer">
 					<div class="tasks-compact-card-chips">
-						<template v-for="(chip, index) of chips" :key="index">
+						<template v-for="(chip, key) of chips" :key>
 							<component
-								:is="chip"
-								v-bind="{ taskId, isAutonomous: true }"
-								v-on="getEventListeners(chip, chipsEventHandlers)"
+								:is="chip.component"
+								v-bind="{ isAutonomous: true, ...chip.props }"
+								v-on="chip.events ?? {}"
 							/>
 						</template>
 					</div>
@@ -578,14 +537,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						<div class="tasks-compact-card-main-buttons">
 							<AddTaskButton
 								ref="addTaskButton"
-								:taskId="taskId"
-								:size="ButtonSize.MEDIUM"
+								:size="ButtonSize.LARGE"
 								v-model:hasError="creationError"
 								@addTask="addTask"
 							/>
 							<UiButton
 								:text="loc('TASKS_V2_TCC_CANCEL_BTN')"
-								:size="ButtonSize.MEDIUM"
+								:size="ButtonSize.LARGE"
 								:style="AirButtonStyle.PLAIN"
 								:dataset="{
 									taskButtonId: 'cancel',
@@ -593,11 +551,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 								@click="close"
 							/>
 						</div>
-						<FullCardButton v-model:isOpening="openingFullCard" :taskId="taskId"/>
+						<FullCardButton v-model:isOpening="openingFullCard"/>
 					</div>
 				</div>
 			</div>
-			<DropZone v-if="!isCheckListPopupShown" :taskId="taskId" :bottom="18"/>
+			<DropZone
+				v-if="isDiskModuleInstalled && !isCheckListPopupShown"
+				:container="$refs.main || {}"
+				:entityId="taskId"
+				:entityType="EntityTypes.Task"
+				:bottom="18"
+			/>
 		</div>
 	`
 	};
@@ -608,6 +572,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
 	var _handlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlers");
+	var _openingFullCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openingFullCard");
 	var _mountApplication = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountApplication");
 	var _unmountApplication = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unmountApplication");
 	var _subscribe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribe");
@@ -620,8 +585,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _handleAdjustPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAdjustPosition");
 	var _adjustPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustPosition");
 	var _handlePopupShow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePopupShow");
+	var _getInitialGroupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInitialGroupId");
 	class TaskCompactCard {
 	  constructor(params = {}) {
+	    var _babelHelpers$classPr6;
+	    Object.defineProperty(this, _getInitialGroupId, {
+	      value: _getInitialGroupId2
+	    });
 	    Object.defineProperty(this, _adjustPosition, {
 	      value: _adjustPosition2
 	    });
@@ -653,24 +623,35 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _openingFullCard, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _openFullCard, {
 	      writable: true,
-	      value: async baseEvent => {
+	      value: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _openingFullCard)[_openingFullCard] = true;
 	        babelHelpers.classPrivateFieldLooseBase(this, _closeCard)[_closeCard]();
-	        const {
-	          TaskCard
-	        } = await main_core.Runtime.loadExtension('tasks.v2.application.task-card');
-	        babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId = baseEvent.getData();
-	        TaskCard.showFullCard(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]);
+	        tasks_v2_application_taskCard.TaskCard.showFullCard(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]);
 	      }
 	    });
 	    Object.defineProperty(this, _openSliderCard, {
 	      writable: true,
 	      value: baseEvent => {
+	        var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
 	        const task = baseEvent.getData().task;
 	        const checkLists = baseEvent.getData().checkLists;
 	        const data = tasks_v2_provider_service_taskService.TaskMappers.mapModelToSliderData(task, checkLists);
-	        const path = tasks_v2_core.Core.getParams().paths.editPath;
+	        // Analytic data
+	        // ta_sec=tasks&ta_sub=list&ta_el=create_button&p1=isDemo_N&p2=user_intranet
+	        const path = BX.Uri.addParam(tasks_v2_core.Core.getParams().paths.editPath, {
+	          SCOPE: 'tasks_grid',
+	          ta_sec: (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics) == null ? void 0 : _babelHelpers$classPr.context,
+	          ta_sub: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics) == null ? void 0 : _babelHelpers$classPr2.additionalContext,
+	          ta_el: (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics) == null ? void 0 : _babelHelpers$classPr3.element,
+	          p1: tasks_v2_lib_analytics.settings.isDemo ? 'isDemo_Y' : 'isDemo_N',
+	          p2: tasks_v2_lib_analytics.settings.userType
+	        });
 	        BX.SidePanel.Instance.open(path, {
 	          requestMethod: 'post',
 	          requestParams: data,
@@ -729,8 +710,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _handlePopupShow, {
 	      writable: true,
 	      value: event => {
-	        var _babelHelpers$classPr, _babelHelpers$classPr2;
-	        (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow]).openedPopupsCount) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr.openedPopupsCount = 0;
+	        var _babelHelpers$classPr4, _babelHelpers$classPr5;
+	        (_babelHelpers$classPr5 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow]).openedPopupsCount) != null ? _babelHelpers$classPr5 : _babelHelpers$classPr4.openedPopupsCount = 0;
 	        const popup = event.getCompatData()[0];
 	        const popupContainer = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].getPopupContainer();
 	        const onClose = () => {
@@ -748,28 +729,43 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId || main_core.Text.getRandom();
+	    (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]).taskId || (_babelHelpers$classPr6.taskId = main_core.Text.getRandom());
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId === 'template0') {
+	      babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId = tasks_v2_lib_idUtils.idUtils.boxTemplate(main_core.Text.getRandom());
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId = babelHelpers.classPrivateFieldLooseBase(this, _getInitialGroupId)[_getInitialGroupId]();
 	  }
-	  async mountCard(popup) {
+	  async mount(popup) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = popup;
 	    await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](popup.getContentContainer());
 	    babelHelpers.classPrivateFieldLooseBase(this, _adjustPosition)[_adjustPosition]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribe)[_subscribe]();
-	    const dragHandle = main_core.Tag.render(_t || (_t = _`<div class="tasks-compact-card-popup-drag-handle"></div>`));
+	    const dragHandle = main_core.Tag.render(_t || (_t = _`<div class="tasks-compact-card-popup-drag-handle"/>`));
 	    main_core.Dom.append(dragHandle, popup.getContentContainer());
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].setDraggable({
 	      element: dragHandle,
 	      restrict: true
 	    });
 	  }
-	  unmountCard() {
+	  unmount() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _unmountApplication)[_unmountApplication]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe)[_unsubscribe]();
 	  }
 	}
 	async function _mountApplication2(container) {
 	  await tasks_v2_core.Core.init();
-	  const application = ui_vue3.BitrixVue.createApp(App, babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]);
+	  const {
+	    taskId,
+	    analytics,
+	    url,
+	    closeCompleteUrl,
+	    ...initialTask
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params];
+	  const application = ui_vue3.BitrixVue.createApp(App, {
+	    id: taskId,
+	    initialTask: Object.fromEntries(Object.entries(initialTask).filter(([, value]) => !main_core.Type.isNil(value))),
+	    analytics
+	  });
 	  application.mixin(ui_vue3_mixins_locMixin.locMixin);
 	  application.use(tasks_v2_core.Core.getStore());
 	  application.mount(container);
@@ -777,6 +773,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	}
 	function _unmountApplication2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].unmount();
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _openingFullCard)[_openingFullCard]) {
+	    main_core_events.EventEmitter.emit(tasks_v2_const.EventName.CardClosed, babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]);
+	  }
 	}
 	function _subscribe2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _handlers)[_handlers] = {
@@ -798,8 +797,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    forceBindPosition: true
 	  });
 	}
+	function _getInitialGroupId2() {
+	  var _Core$getParams$curre, _Core$getParams$defau2;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId && ((_Core$getParams$curre = tasks_v2_core.Core.getParams().currentUser) == null ? void 0 : _Core$getParams$curre.type) === tasks_v2_model_users.UserTypes.Collaber) {
+	    var _Core$getStore;
+	    const group = (_Core$getStore = tasks_v2_core.Core.getStore()) == null ? void 0 : _Core$getStore.getters[`${tasks_v2_const.Model.Groups}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId);
+	    if (group && group.type !== tasks_v2_const.GroupType.Collab) {
+	      var _Core$getParams$defau;
+	      return (_Core$getParams$defau = tasks_v2_core.Core.getParams().defaultCollab) == null ? void 0 : _Core$getParams$defau.id;
+	    }
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId || ((_Core$getParams$defau2 = tasks_v2_core.Core.getParams().defaultCollab) == null ? void 0 : _Core$getParams$defau2.id) || undefined;
+	}
 
 	exports.TaskCompactCard = TaskCompactCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Event,BX.Main,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.UI.Uploader,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3.Mixins,BX.Tasks.V2.Application,BX.Tasks.V2.Model,BX.Event,BX.Vue3,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.UI.Uploader,BX.UI.IconSet,BX,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=task-compact-card.bundle.js.map

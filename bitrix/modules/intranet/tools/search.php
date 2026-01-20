@@ -792,7 +792,7 @@ class CIntranetSearch
 			$userNewFields[] = 'DATE_REGISTER';
 		}
 
-		if(CModule::IncludeModule('search'))
+		if (isset($arFields['ID']) && CModule::IncludeModule('search'))
 		{
 			$result = \Bitrix\Main\UserTable::getList([
 				'select' => $userNewFields,
@@ -858,10 +858,10 @@ class CIntranetSearch
 						"TITLE" => CUser::FormatName(
 							CSite::GetNameFormat(false),
 							array(
-								"NAME" => $arUser["NAME"],
-								"LAST_NAME" => $arUser["LAST_NAME"],
-								"SECOND_NAME" => $arUser["SECOND_NAME"],
-								"LOGIN" => $arUser["LOGIN"],
+								"NAME" => $arUser["NAME"] ?? '',
+								"LAST_NAME" => $arUser["LAST_NAME"] ?? '',
+								"SECOND_NAME" => $arUser["SECOND_NAME"] ?? '',
+								"LOGIN" => $arUser["LOGIN"] ?? '',
 							), false, false
 						),
 						"BODY" => $BODY,

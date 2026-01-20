@@ -6,6 +6,7 @@ jn.define('intranet/invite-new/src/inviter/link', (require, exports, module) => 
 	const { BaseInviter } = require('intranet/invite-new/src/inviter/base');
 	const { InviteCases } = require('intranet/invite-new/src/inviter/type');
 	const { Icon } = require('assets/icons');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @param {Object} props
@@ -23,7 +24,12 @@ jn.define('intranet/invite-new/src/inviter/link', (require, exports, module) => 
 		}
 
 		updateDepartment = async (department) => {
-			this.getAnalytics().setDepartmentParam(department !== null);
+			const analytics = this.getAnalytics();
+			if (analytics instanceof AnalyticsEvent)
+			{
+				analytics?.setDepartmentParam(department !== null);
+			}
+
 			this.inviteLink = null;
 			this.inviteLinkLoadingPromise = this.#getInviteLink();
 			const response = await this.inviteLinkLoadingPromise;

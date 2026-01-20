@@ -100,35 +100,31 @@ export class PurchaseTileDefault extends EventEmitter
 			const modifiedClass = count > 2 ? '--more' : '--two';
 
 			return Tag.render`
-			<div class="ui-popupcomponentmaker__content--section ${modifiedClass}">
-				<div class="ui-popupcomponentmaker__content--section-item">
-					<div class="ui-popupconstructor-content-item-wrapper">
-						<div class="ui-popupconstructor-content-item-wrapper_information">
-							<div class="ui-popupconstructor-content-item-wrapper-title">
-								<div class="ui-popupconstructor-content-item__title">
-									${[Loc.getMessage('BAAS_WIDGET_PURCHASES_TITLE'), ': ', count].join('')}
-								</div>
-								<div class="ui-popupconstructor-content-item-subject">
-									<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE')}</span>
+				<div class="ui-popupcomponentmaker__content--section ${modifiedClass}">
+					<div class="ui-popupcomponentmaker__content--section-item">
+						<div class="ui-popupconstructor-content-item-wrapper">
+							<div class="ui-popupconstructor-content-item-wrapper_information">
+								<div class="ui-popupconstructor-content-item-wrapper-title">
+									<div class="ui-popupconstructor-content-item__title">
+										${[Loc.getMessage('BAAS_WIDGET_PURCHASES_TITLE'), ': ', count].join('')}
 									</div>
-									<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
+									<div class="ui-popupconstructor-content-item-subject">
+										<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
+											<div class="ui-label-status"></div>
+											<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_ACTIVE')}</span>
+										</div>
+										<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
+									</div>
 								</div>
-							</div>
-							<div class="ui-popupconstructor-content-item-progressbar">${this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer()}</div>
-							<div class="ui-popupconstructor-content-item-limit">
-								<span>${this.getLeftUnitsLabel()} </span>
-								${Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
-									'#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
-									'#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
-									'#date#': `<span class="ui-popupconstructor-content-item-date">${pack.expirationDate}</span>`,
-								})}
+								<div class="ui-popupconstructor-content-item-progressbar">${this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer()}</div>
+								<div class="ui-popupconstructor-content-item-limit">
+									${this.getLeftUnitsString(serviceGrouped, pack)}
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>`;
+			`;
 		}
 
 		return Tag.render`
@@ -141,36 +137,30 @@ export class PurchaseTileDefault extends EventEmitter
 									${Loc.getMessage('BAAS_WIDGET_PURCHASE_TITLE')}
 								</div>
 								<div class="ui-popupconstructor-content-item-subject">
-									<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill" ${pack.actual === 'Y' ? '' : 'style="display: none;"'}>
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE')}</span>
-									</div>
-									<div class="ui-label ui-label-success ui-label-sm --paid ui-label-fill" ${pack.actual === 'Y' ? 'style="display: none;"' : ''}>
-										<div class="ui-label-status"></div>
-										<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_PAID')}</span>
-									</div>
+									${this.renderStatusLabel(pack)}
 									<button class="ui-popupconstructor-content-item-menu" style="display: none;" type="button"></button>
 								</div>
 							</div>
 							<div class="ui-popupconstructor-content-item-progressbar">${this.createProgressBar(serviceGrouped.current, serviceGrouped.maximal).getContainer()}</div>
 							<div class="ui-popupconstructor-content-item-limit">
-								<span>${this.getLeftUnitsLabel()} </span>
-								${Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
-									'#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
-									'#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
-									'#date#': `<span class="ui-popupconstructor-content-item-date">${pack.expirationDate}</span>`,
-								})}
+								${this.getLeftUnitsString(serviceGrouped, pack)}
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>`
-		;
+			</div>
+		`;
 	}
 
-	getLeftUnitsLabel(): string
+	getLeftUnitsString(serviceGrouped: ServiceInPurchasedPackageType, pack: ResponsePurchasedPackageDataType): string
 	{
-		return Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT');
+		return `
+			${Loc.getMessage('BAAS_WIDGET_PURCHASE_LEFT_STATUS', {
+			'#left#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.current}</span>`,
+			'#total#': `<span class="ui-popupconstructor-content-item-num">${serviceGrouped.maximal}</span>`,
+			'#date#': String(pack.expirationDate),
+		})}
+		`;
 	}
 
 	getData(): ResponsePurchasedPackageDataType[]
@@ -184,5 +174,50 @@ export class PurchaseTileDefault extends EventEmitter
 			value: Math.round(current / maximal * 100),
 			size: 4,
 		});
+	}
+
+	renderStatusLabel(pack: ResponsePurchasedPackageDataType): HTMLElement
+	{
+		const firstService = Object.values(pack.services)[0];
+		const isActual = pack.actual === 'Y';
+		const current = firstService.current;
+
+		if (isActual && current > 0)
+		{
+			const limitPercentLeft = (current / firstService.maximal) * 100;
+			if (limitPercentLeft <= 20)
+			{
+				return Tag.render`
+					<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
+						<div class="ui-label-status"></div>
+						<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED')}</span>
+					</div>
+				`;
+			}
+
+			return Tag.render`
+				<div class="ui-label ui-label-success ui-label-sm --active ui-label-fill">
+					<div class="ui-label-status"></div>
+					<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASE_IS_ACTIVE')}</span>
+				</div>
+			`;
+		}
+
+		if (isActual && current <= 0)
+		{
+			return Tag.render`
+				<div class="ui-label ui-label-sm --exceeded ui-label-fill">
+					<div class="ui-label-status"></div>
+					<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED')}</span>
+				</div>
+			`;
+		}
+
+		return Tag.render`
+			<div class="ui-label ui-label-success ui-label-sm --paid ui-label-fill">
+				<div class="ui-label-status"></div>
+				<span class="ui-label-inner">${Loc.getMessage('BAAS_WIDGET_PURCHASES_ARE_PAID')}</span>
+			</div>
+		`;
 	}
 }

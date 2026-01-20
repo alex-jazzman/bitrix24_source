@@ -15,10 +15,12 @@ this.BX.Booking = this.BX.Booking || {};
 	    typeId: null,
 	    name: '',
 	    description: null,
+	    avatar: null,
 	    slotRanges: [],
 	    counter: null,
 	    entities: [],
 	    isMain: true,
+	    isPrimary: false,
 	    isDeleted: false,
 	    isConfirmationNotificationOn: false,
 	    isFeedbackNotificationOn: false,
@@ -32,7 +34,9 @@ this.BX.Booking = this.BX.Booking || {};
 	    templateTypeReminder: 'base',
 	    createdBy: 0,
 	    createdAt: 0,
-	    updatedAt: null
+	    updatedAt: null,
+	    skus: [],
+	    skusYandex: []
 	  };
 	}
 
@@ -45,8 +49,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    return {
 	      resourceId: this.getVariable('resourceId', null),
 	      resourceName: '',
+	      resourceAvatarFile: null,
 	      resource: getEmptyResource(),
 	      advertisingResourceTypes: [],
+	      catalogSkuEntityOptions: {},
 	      companyScheduleSlots: [],
 	      fetching: false,
 	      step: 1,
@@ -69,6 +75,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      resourceId: state => state.resourceId,
 	      /** @function resource-creation-wizard/getResource */
 	      getResource: state => state.resource,
+	      /** @function resource-creation-wizard/getResourceAvatarFile */
+	      getResourceAvatarFile: state => state.resourceAvatarFile,
 	      /** @function resource-creation-wizard/isSaving */
 	      isSaving: state => state.isSaving,
 	      /** @function resource-creation-wizard/getCompanyScheduleSlots */
@@ -97,6 +105,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      /** @function resource-creation-wizard/isCompanyScheduleAccess */
 	      isCompanyScheduleAccess: state => state.isCompanyScheduleAccess,
+	      /** @function resource-creation-wizard/showLicenseWarning */
+	      showLicenseWarning: state => state.showLicenseWarning,
 	      /** @function resource-creation-wizard/companyScheduleUrl */
 	      companyScheduleUrl: state => state.companyScheduleUrl,
 	      /** @function resource-creation-wizard/weekStart */
@@ -122,6 +132,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      isIntegrationCalendarEnabled: state => {
 	        return state.isIntegrationCalendarEnabled;
+	      },
+	      skus: state => {
+	        var _state$resource2;
+	        return (_state$resource2 = state.resource) == null ? void 0 : _state$resource2.skus;
 	      }
 	    };
 	  }
@@ -208,6 +222,12 @@ this.BX.Booking = this.BX.Booking || {};
 	        }
 	        commit('updateResource', patch);
 	      },
+	      /** @function resource-creation-wizard/setResourceAvatarFile */
+	      setResourceAvatarFile({
+	        commit
+	      }, file) {
+	        commit('setResourceAvatarFile', file);
+	      },
 	      /** @function resource-creation-wizard/createResourceEntityCalendar */
 	      createResourceEntityCalendar({
 	        commit
@@ -237,11 +257,23 @@ this.BX.Booking = this.BX.Booking || {};
 	      }, checked) {
 	        commit('setGlobalSchedule', checked);
 	      },
+	      /** @function resource-creation-wizard/setCatalogSkuEntityOptions */
+	      setCatalogSkuEntityOptions({
+	        commit
+	      }, options) {
+	        commit('setCatalogSkuEntityOptions', options);
+	      },
 	      /** @function resource-creation-wizard/setCompanyScheduleAccess */
 	      setCompanyScheduleAccess({
 	        commit
 	      }, isCompanyScheduleAccess) {
 	        commit('setCompanyScheduleAccess', isCompanyScheduleAccess);
+	      },
+	      /** @function resource-creation-wizard/setLicenseWarning */
+	      setLicenseWarning({
+	        commit
+	      }, showLicenseWarning) {
+	        commit('setLicenseWarning', showLicenseWarning);
 	      },
 	      /** @function resource-creation-wizard/setCompanyScheduleUrl */
 	      setCompanyScheduleUrl({
@@ -311,6 +343,18 @@ this.BX.Booking = this.BX.Booking || {};
 	        commit
 	      }, invalidIntegrationCalendarUser) {
 	        commit('setInvalidIntegrationCalendarUser', invalidIntegrationCalendarUser);
+	      },
+	      /** @function resource-creation-wizard/addSku */
+	      addSku({
+	        commit
+	      }, skuId) {
+	        commit('addSku', skuId);
+	      },
+	      /** @function resource-creation-wizard/deleteSku */
+	      deleteSku({
+	        commit
+	      }, skuId) {
+	        commit('deleteSku', skuId);
 	      }
 	    };
 	  }
@@ -328,8 +372,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      setCurrentResourceName(state, name) {
 	        state.resourceName = name;
 	      },
+	      setResourceAvatarFile(state, file) {
+	        state.resourceAvatarFile = file;
+	      },
 	      setAdvertisingTypes(state, types) {
 	        state.advertisingResourceTypes = types;
+	      },
+	      setCatalogSkuEntityOptions(state, options) {
+	        state.catalogSkuEntityOptions = options;
 	      },
 	      setCompanyScheduleSlots(state, slots) {
 	        state.companyScheduleSlots = slots;
@@ -344,11 +394,11 @@ this.BX.Booking = this.BX.Booking || {};
 	        };
 	      },
 	      createResourceEntityCalendar(state) {
-	        var _state$resource2, _state$resource2$enti;
-	        const hasCalendarEntity = (_state$resource2 = state.resource) == null ? void 0 : (_state$resource2$enti = _state$resource2.entities) == null ? void 0 : _state$resource2$enti.some(entity => entity.entityType === booking_const.ResourceEntityType.Calendar);
+	        var _state$resource3, _state$resource3$enti;
+	        const hasCalendarEntity = (_state$resource3 = state.resource) == null ? void 0 : (_state$resource3$enti = _state$resource3.entities) == null ? void 0 : _state$resource3$enti.some(entity => entity.entityType === booking_const.ResourceEntityType.Calendar);
 	        if (!hasCalendarEntity) {
-	          var _state$resource3, _state$resource3$enti;
-	          (_state$resource3 = state.resource) == null ? void 0 : (_state$resource3$enti = _state$resource3.entities) == null ? void 0 : _state$resource3$enti.push({
+	          var _state$resource4, _state$resource4$enti;
+	          (_state$resource4 = state.resource) == null ? void 0 : (_state$resource4$enti = _state$resource4.entities) == null ? void 0 : _state$resource4$enti.push({
 	            entityType: booking_const.ResourceEntityType.Calendar,
 	            entityId: 0,
 	            data: {
@@ -361,8 +411,8 @@ this.BX.Booking = this.BX.Booking || {};
 	        }
 	      },
 	      updateResourceEntityCalendar(state, calendarPath) {
-	        var _state$resource4;
-	        const index = (_state$resource4 = state.resource) == null ? void 0 : _state$resource4.entities.findIndex(ent => ent.entityType === booking_const.ResourceEntityType.Calendar);
+	        var _state$resource5;
+	        const index = (_state$resource5 = state.resource) == null ? void 0 : _state$resource5.entities.findIndex(ent => ent.entityType === booking_const.ResourceEntityType.Calendar);
 	        if (index >= 0) {
 	          const entityCalendar = state.resource.entities[index];
 	          entityCalendar.data = {
@@ -382,6 +432,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setCompanyScheduleAccess(state, isCompanyScheduleAccess) {
 	        state.isCompanyScheduleAccess = isCompanyScheduleAccess;
+	      },
+	      setLicenseWarning(state, showLicenseWarning) {
+	        state.showLicenseWarning = showLicenseWarning;
 	      },
 	      setCompanyScheduleUrl(state, companyScheduleUrl) {
 	        state.companyScheduleUrl = companyScheduleUrl;
@@ -414,6 +467,24 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setInvalidIntegrationCalendarUser(state, invalidIntegrationCalendarUser = false) {
 	        state.invalidIntegrationCalendarUser = invalidIntegrationCalendarUser;
+	      },
+	      addSku(state, skuId) {
+	        var _state$resource6;
+	        const existingSku = (_state$resource6 = state.resource) == null ? void 0 : _state$resource6.skus.some(sku => sku.id === skuId);
+	        if (!existingSku) {
+	          var _state$resource7;
+	          (_state$resource7 = state.resource) == null ? void 0 : _state$resource7.skus.push({
+	            id: skuId
+	          });
+	        }
+	      },
+	      deleteSku(state, skuId) {
+	        var _state$resource8;
+	        const index = (_state$resource8 = state.resource) == null ? void 0 : _state$resource8.skus.findIndex(sku => sku.id === skuId);
+	        if (index !== -1) {
+	          var _state$resource9;
+	          (_state$resource9 = state.resource) == null ? void 0 : _state$resource9.skus.splice(index, 1);
+	        }
 	      }
 	    };
 	  }

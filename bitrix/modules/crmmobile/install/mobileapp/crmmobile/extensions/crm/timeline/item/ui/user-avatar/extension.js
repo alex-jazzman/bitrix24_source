@@ -26,6 +26,7 @@ jn.define('crm/timeline/item/ui/user-avatar', (require, exports, module) => {
 					detailUrl,
 					{
 						backdrop: true,
+						analyticsSection: 'crm_timeline_user_avatar',
 					},
 				);
 			}, [id]),

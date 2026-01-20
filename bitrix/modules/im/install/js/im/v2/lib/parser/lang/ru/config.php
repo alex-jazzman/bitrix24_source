@@ -9,6 +9,7 @@ $MESS["IM_PARSER_ICON_TYPE_CALL"] = "Звонок";
 $MESS["IM_PARSER_ICON_TYPE_CODE"] = "Фрагмент кода";
 $MESS["IM_PARSER_ICON_TYPE_ATTACH"] = "Вложение";
 $MESS["IM_PARSER_ICON_TYPE_QUOTE"] = "Цитата";
+$MESS["IM_PARSER_ICON_TYPE_STICKER"] = "Стикер";
 $MESS["IM_PARSER_IMAGE_ICON"] = "Иконка";
 $MESS["IM_PARSER_LINES_RATING"] = "Рейтинг";
 $MESS["IM_PARSER_LINES_RATING_LIKE"] = "Нравится";

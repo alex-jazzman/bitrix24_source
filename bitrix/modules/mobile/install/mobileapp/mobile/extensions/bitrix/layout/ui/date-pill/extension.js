@@ -103,6 +103,13 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 						justifyContent: 'flex-start',
 					},
 					onClick: () => {
+						if (this.props.onClick)
+						{
+							this.props.onClick();
+
+							return;
+						}
+
 						if (!this.isReadonly)
 						{
 							this.openDatePicker();
@@ -186,7 +193,7 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 					{
 						const moment = new Moment(ms);
 						this.setState({ moment }, () => {
-							this.props.onChange && this.props.onChange(moment);
+							this.props.onChange?.(moment);
 						});
 					}
 				},

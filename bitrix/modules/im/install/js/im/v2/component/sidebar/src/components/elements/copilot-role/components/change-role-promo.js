@@ -40,7 +40,7 @@ export const ChangeRolePromo = {
 	{
 		this.promoPopup = new PromoVideoPopup({
 			videoSrc: this.videoSource,
-			title: 'Copilot',
+			title: this.loc('IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE'),
 			text: this.text,
 			targetOptions: this.bindElement,
 			angleOptions: {

@@ -1,6 +1,6 @@
 import { ClientSelector, Communication, CommunicationItem } from 'crm.client-selector';
 import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
-import { ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Menu, MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
@@ -45,6 +45,7 @@ export default class GoToChat extends Item
 
 	#chatServiceButtons: Map<string, HTMLElement> = new Map();
 	#region: ?string = null;
+	#isBox: ?string = null;
 	#entityEditor: ?BX.Crm.EntityEditor = null;
 	marketplaceUrl: string = '';
 	#userSelectorDialog: ?BX.UI.EntitySelector.Dialog = null;
@@ -61,6 +62,7 @@ export default class GoToChat extends Item
 		this.onSelectClientPhone = this.onSelectClientPhone.bind(this);
 		this.onSelectSender = this.onSelectSender.bind(this);
 		this.onSelectSenderPhone = this.onSelectSenderPhone.bind(this);
+		this.onSelectTelegramOpenLineId = this.onSelectTelegramOpenLineId.bind(this);
 	}
 
 	initializeLayout()
@@ -89,6 +91,7 @@ export default class GoToChat extends Item
 	initializeSettings(): void
 	{
 		this.#region = this.getSetting('region');
+		this.#isBox = this.getSetting('isBox');
 	}
 
 	activate()
@@ -207,6 +210,14 @@ export default class GoToChat extends Item
 
 	createLayout(): HTMLElement
 	{
+		for (const tourString of this.getSetting('tours', []))
+		{
+			if (Type.isStringFilled(tourString))
+			{
+				Runtime.html(null, tourString);
+			}
+		}
+
 		return Tag.render`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-gotochat --hidden --skeleton">
 			<div class="crm-entity-stream-content-new-detail-gotochat-container hidden">
 				<div class="crm-entity-stream-content-gotochat-settings-container">
@@ -460,6 +471,21 @@ export default class GoToChat extends Item
 						},
 					},
 				},
+				{
+					delimiter: true,
+					text: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECTOR_SETTINGS'),
+				},
+				{
+					id: 'telegramBotSubmenu',
+					text: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_TELEGRAMBOT_OPENLINE_SELECTOR'),
+					items,
+					disabled: !this.openLineItems.telegrambot?.selected,
+					events: {
+						onSubMenuShow: (event: BaseEvent) => {
+							this.#onSubMenuShow(event, this.getTelegramOpenLinesSubMenuItems());
+						},
+					},
+				},
 			],
 		});
 	}
@@ -677,17 +703,26 @@ export default class GoToChat extends Item
 	{
 		this.#fillChatServiceButtons();
 
-		return Tag.render`
+		const buttonsContainer = Tag.render`
 			<div class="${BUTTONS_CONTAINER_CLASS}">
 				${[...this.#chatServiceButtons.values()]}
 			</div>
 		`;
+
+		BX.UI.Hint.init(buttonsContainer);
+
+		return buttonsContainer;
 	}
 
 	#fillChatServiceButtons(): void
 	{
 		ServicesConfig.forEach((service: ChatService) => {
 			if (!this.#isServiceSupportedInRegion(service))
+			{
+				return;
+			}
+
+			if (service.hideOnBox === true && this.#isBox)
 			{
 				return;
 			}
@@ -716,11 +751,13 @@ export default class GoToChat extends Item
 	{
 		let className = service.commonClass;
 		let label = service.connectLabel;
+		let hint = null;
 
 		if (!this.#isAvailableService(service.id))
 		{
 			className += ' --disabled';
-			label = service.soonLabel;
+			label = service.disabledLabel || service.soonLabel;
+			hint = service.disabledHint;
 		}
 		else if (this.#isServiceSelected(service))
 		{
@@ -728,7 +765,7 @@ export default class GoToChat extends Item
 			label = service.inviteLabel;
 		}
 
-		return Tag.render`
+		const button = Tag.render`
 			<div 
 				class="crm-entity-stream-content-gotochat-button"
 				onclick="${this.showRegistrarAndSend.bind(this, service.id)}"
@@ -742,6 +779,17 @@ export default class GoToChat extends Item
 				</button>
 			</div>
 		`;
+
+		if (Type.isStringFilled(hint))
+		{
+			Dom.attr(button, {
+				'data-hint': hint,
+				'data-hint-no-icon': 'Y',
+				'data-hint-center': 'Y',
+			});
+		}
+
+		return button;
 	}
 
 	#renderButtonIcon(service: ChatService | undefined): HTMLElement
@@ -1038,17 +1086,14 @@ export default class GoToChat extends Item
 		];
 	}
 
-	onSelectSender(event, item)
+	onSelectSender(event, { id })
 	{
-		const { id } = item;
-
 		this.currentChannelId = id;
 
 		const channel = this.#getChannelById(id);
 		this.fromPhoneId = channel.fromList[0].id;
 
-		this.settingsMenu.destroy();
-		this.initSettingsMenu();
+		this.#refreshSettingsMenu();
 	}
 
 	getPhoneSubMenuItems(): Array
@@ -1072,17 +1117,67 @@ export default class GoToChat extends Item
 		return items;
 	}
 
+	getTelegramOpenLinesSubMenuItems(): Array
+	{
+		const telegram = this.openLineItems?.telegrambot ?? {};
+
+		const items = [];
+		telegram.list.forEach(({ id, name, selected }) => {
+			const className = (selected ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS);
+
+			items.push({
+				id,
+				text: name,
+				className,
+				onclick: this.onSelectTelegramOpenLineId,
+			});
+		});
+
+		return items;
+	}
+
 	#getChannelById(id: string): Channel
 	{
 		return this.channels.find((channel) => channel.id === id);
 	}
 
-	onSelectSenderPhone(event, item)
+	onSelectSenderPhone(event: BaseEvent, { id }): void
 	{
-		const { id } = item;
-
 		this.fromPhoneId = id;
 
+		this.#refreshSettingsMenu();
+	}
+
+	onSelectTelegramOpenLineId(event: BaseEvent, { id }): void
+	{
+		const list = this.openLineItems?.telegrambot?.list ?? null;
+		if (list === null)
+		{
+			return;
+		}
+
+		const selectedItem = list.find((item) => item.selected);
+		if (!selectedItem)
+		{
+			return;
+		}
+
+		if (selectedItem.id === id)
+		{
+			return;
+		}
+
+		// eslint-disable-next-line no-return-assign
+		list.forEach((item) => item.selected = false);
+		list.find((item) => item.id === id).selected = true;
+
+		BX.userOptions.save('crm', 'gotochat-selected-openline-ids', 'telegrambot', id);
+
+		this.#refreshSettingsMenu();
+	}
+
+	#refreshSettingsMenu(): void
+	{
 		this.settingsMenu.destroy();
 		this.initSettingsMenu();
 	}

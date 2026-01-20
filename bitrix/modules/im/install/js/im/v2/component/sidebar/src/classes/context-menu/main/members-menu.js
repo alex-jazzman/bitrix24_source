@@ -5,12 +5,13 @@ import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
 import { CallManager } from 'im.v2.lib.call';
 import { ChatService } from 'im.v2.provider.service.chat';
-import { ActionByRole, ActionByUserType, ChatType, UserType } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, UserType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
 
-import type { ImModelUser, ImModelChat } from 'im.v2.model';
 import type { MenuItemOptions } from 'ui.system.menu';
+import type { ImModelUser, ImModelChat } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
 
 type MembersMenuContext = {
 	dialog: ImModelChat,
@@ -24,9 +25,9 @@ export class MembersMenu extends UserMenu
 	callManager: CallManager;
 	permissionManager: PermissionManager;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.chatService = new ChatService();
 		this.callManager = CallManager.getInstance();
@@ -62,9 +63,8 @@ export class MembersMenu extends UserMenu
 			ActionByRole.changeManagers,
 			this.context.dialog.dialogId,
 		);
-		const isCollabType = this.context.dialog.type === ChatType.collab;
 
-		if (isOwner || !canChangeManagers || isCollabType)
+		if (isOwner || !canChangeManagers)
 		{
 			return null;
 		}

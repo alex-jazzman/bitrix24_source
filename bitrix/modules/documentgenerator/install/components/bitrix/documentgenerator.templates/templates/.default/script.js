@@ -151,18 +151,7 @@ BX.DocumentGenerator.TemplateList.initSettingsMenu = function(menuItems)
 				{
 					menuItems[i].items[j].onclick = function(event, item)
 					{
-						if(BX.SidePanel)
-						{
-							BX.SidePanel.Instance.open(item.uri, {width: 845});
-						}
-						else
-						{
-							top.location.href = item.uri;
-						}
-						if(BX.PopupMenu.getCurrentMenu())
-						{
-							BX.PopupMenu.getCurrentMenu().popupWindow.close();
-						}
+						BX.DocumentGenerator.TemplateList.onClickMenuItem(event, item);
 					};
 				}
 			}
@@ -170,18 +159,7 @@ BX.DocumentGenerator.TemplateList.initSettingsMenu = function(menuItems)
 			{
 				menuItems[i].onclick = function(event, item)
 				{
-					if(BX.SidePanel)
-					{
-						BX.SidePanel.Instance.open(item.uri, {width: 845});
-					}
-					else
-					{
-						top.location.href = item.uri;
-					}
-					if(BX.PopupMenu.getCurrentMenu())
-					{
-						BX.PopupMenu.getCurrentMenu().popupWindow.close();
-					}
+					BX.DocumentGenerator.TemplateList.onClickMenuItem(event, item);
 				};
 			}
 			items.push(menuItems[i])
@@ -196,6 +174,32 @@ BX.DocumentGenerator.TemplateList.initSettingsMenu = function(menuItems)
 				}
 			);
 		}, this));
+	}
+};
+
+BX.DocumentGenerator.TemplateList.onClickMenuItem = function(event, item)
+{
+	if (BX.SidePanel)
+	{
+		let sidePanelOptions = {
+			width: 845,
+		};
+
+		if (item.id === 'documentgenerator_permissions')
+		{
+			sidePanelOptions = {};
+		}
+
+		BX.SidePanel.Instance.open(item.uri, sidePanelOptions);
+	}
+	else
+	{
+		top.location.href = item.uri;
+	}
+
+	if (BX.PopupMenu.getCurrentMenu())
+	{
+		BX.PopupMenu.getCurrentMenu().popupWindow.close();
 	}
 };
 

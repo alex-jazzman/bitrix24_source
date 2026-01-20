@@ -24,7 +24,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 	 * @property {boolean} [showSelectedImage]
 	 * @property {boolean} [disabled]
 	 * @property {boolean} [destructive]
-	 * @property {boolean} [divide]
+	 * @property {boolean} [divider]
 	 * @property {boolean} [dimmed]
 	 * @property {boolean} [showArrow]
 	 * @property {boolean} [badgeNew=false]
@@ -39,6 +39,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 	 * @property {Function} [onClickCallback]
 	 * @property {Function} [onDisableClick]
 	 * @property {Function} [onActiveCallback]
+	 * @property {Icon} [rightIcon]
 	 *
 	 * @class ContextMenuItem
 	 * @param {...ContextMenuItemProps} props
@@ -179,6 +180,11 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 		get onDisableClick()
 		{
 			return this.props.onDisableClick;
+		}
+
+		get rightIcon()
+		{
+			return this.props.rightIcon;
 		}
 
 		getParentWidget()
@@ -417,7 +423,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 					},
 					this.renderBadgeCounter(),
 					this.renderSelected(),
-					this.renderArrow(),
+					this.renderRightIcon(),
 				),
 			);
 		}
@@ -611,9 +617,10 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			});
 		}
 
-		renderArrow()
+		renderRightIcon()
 		{
-			if (!this.showArrow())
+			const isIconType = this.rightIcon instanceof Icon;
+			if (!this.showArrow() && !isIconType)
 			{
 				return null;
 			}
@@ -623,7 +630,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			return IconView({
 				color,
 				size: 22,
-				icon: Icon.CHEVRON_TO_THE_RIGHT_SIZE_M,
+				icon: isIconType ? this.rightIcon : Icon.CHEVRON_TO_THE_RIGHT_SIZE_M,
 				style: {
 					marginLeft: Indent.XL.toNumber(),
 				},

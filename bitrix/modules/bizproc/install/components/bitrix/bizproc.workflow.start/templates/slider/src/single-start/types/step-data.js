@@ -23,4 +23,5 @@ export type ParametersStepData = StepData & {
 	documentType: [],
 	signedDocumentType: string,
 	signedDocumentId: string,
+	triggerType: ?string,
 };

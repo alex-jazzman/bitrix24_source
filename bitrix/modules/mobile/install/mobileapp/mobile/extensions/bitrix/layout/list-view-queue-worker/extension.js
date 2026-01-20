@@ -2,6 +2,8 @@
  * @module layout/list-view-queue-worker
  */
 jn.define('layout/list-view-queue-worker', (require, exports, module) => {
+	const { AsyncQueue } = require('utils/async-queue');
+
 	/**
 	 * @class ListViewQueueWorker
 	 */
@@ -9,21 +11,33 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 
 	class ListViewQueueWorker
 	{
+		#listViewRef = null;
+
 		constructor()
 		{
-			this.queueList = [];
-
-			this.inProgress = false;
-			this.listViewRef = null;
-			this.result = new Set();
+			this.asyncQueue = new AsyncQueue();
 		}
 
 		/**
-		 * @return ListViewMethods
+		 * @return {ListView}
+		 * @throws {Error} If listViewRef is not set
+		 */
+		get listViewRef()
+		{
+			if (!this.#listViewRef)
+			{
+				throw new Error('ListViewRef is not set. Call setListViewRef() first.');
+			}
+
+			return this.#listViewRef;
+		}
+
+		/**
+		 * @return {ListView|null}
 		 */
 		getListViewRef()
 		{
-			return this.listViewRef;
+			return this.#listViewRef;
 		}
 
 		/**
@@ -31,7 +45,7 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		 */
 		setListViewRef(ref)
 		{
-			this.listViewRef = ref;
+			this.#listViewRef = ref;
 		}
 
 		/**
@@ -45,7 +59,7 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 
 		/**
 		 * @param {number} section
-		 * @param {index} index
+		 * @param {number} index
 		 * @param {boolean} animated
 		 * @param {string} position
 		 * @return {void}
@@ -69,38 +83,64 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		 * @param {number} sectionIndex
 		 * @param {number} elementIndex
 		 * @param {ListViewAnimate} animation
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @return {Promise<Object[]>}
 		 */
 		insertRows(items = [], sectionIndex = 0, elementIndex = 0, animation = DEFAULT_ANIMATION)
 		{
-			const preparedItems = this.prepareAddArray(items);
+			const preparedItems = this.#prepareAddArray(items);
 			if (preparedItems.length === 0)
 			{
-				return Promise.resolve();
+				return Promise.resolve([]);
 			}
 
-			return this.add({
+			return this.asyncQueue.add({
 				name: 'insertRows',
-				task: () => this.listViewRef.insertRows(preparedItems, sectionIndex, elementIndex, animation),
+				task: () => Promise.resolve(
+					this.listViewRef.insertRows(preparedItems, sectionIndex, elementIndex, animation),
+				),
 			}).run();
 		}
 
 		/**
 		 * @param {ListViewRow[]} items
 		 * @param {ListViewAnimate} animation
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @return {Promise<Object[]>}
 		 */
 		appendRows(items = [], animation = DEFAULT_ANIMATION)
 		{
-			const preparedItems = this.prepareAddArray(items);
+			const preparedItems = this.#prepareAddArray(items);
 			if (preparedItems.length === 0)
 			{
-				return Promise.resolve();
+				return Promise.resolve([]);
 			}
 
-			return this.add({
+			return this.asyncQueue.add({
 				name: 'appendRows',
-				task: () => this.listViewRef.appendRows(preparedItems, animation),
+				task: () => Promise.resolve(
+					this.listViewRef.appendRows(preparedItems, animation),
+				),
+			}).run();
+		}
+
+		/**
+		 * @param {ListViewRow[]} items
+		 * @param {Number} sectionIndex
+		 * @param {ListViewAnimate} animation
+		 * @returns {Promise<Object[]>}
+		 */
+		appendRowsToSection(items = [], sectionIndex = 0, animation = DEFAULT_ANIMATION)
+		{
+			const preparedItems = this.#prepareAddArray(items);
+			if (preparedItems.length === 0)
+			{
+				return Promise.resolve([]);
+			}
+
+			return this.asyncQueue.add({
+				name: 'appendRowsToSection',
+				task: () => Promise.resolve(
+					this.listViewRef.appendRowsToSection(preparedItems, sectionIndex, animation),
+				),
 			}).run();
 		}
 
@@ -108,73 +148,79 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		 * @param {ListViewRow[]} items
 		 * @param {ListViewAnimate} animation
 		 * @param {boolean} shouldRender
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @return {Promise<Object[]>}
 		 */
 		updateRows(items = [], animation = 'automatic', shouldRender = true)
 		{
-			const preparedItems = [...this.prepareAddArray(items)];
+			const preparedItems = this.#prepareAddArray(items);
 
 			if (preparedItems.length === 0)
 			{
-				return Promise.resolve();
+				return Promise.resolve([]);
 			}
 
-			return this.add({
+			return this.asyncQueue.add({
 				name: 'updateRows',
-				task: () => this.listViewRef.updateRows(preparedItems, animation, shouldRender),
+				task: () => Promise.resolve(
+					this.listViewRef.updateRows(preparedItems, animation, shouldRender),
+				),
 			}).run();
 		}
 
 		/**
-		 * @param {String} key
+		 * @param {string} key
 		 * @param {Object} item
-		 * @param {Boolean} animation
-		 * @param {Boolean} shouldRender
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @param {boolean} animation
+		 * @param {boolean} shouldRender
+		 * @return {Promise<Object[]>}
 		 */
 		updateRowByKey(key = null, item = null, animation = false, shouldRender = true)
 		{
 			if (!key || !item)
 			{
-				return Promise.reject();
+				return Promise.reject(new Error('Key and item are required'));
 			}
 
-			return this.add({
+			return this.asyncQueue.add({
 				name: 'updateRowByKey',
-				task: () => this.listViewRef.updateRowByKey(key, item, animation, shouldRender),
+				task: () => Promise.resolve(
+					this.listViewRef.updateRowByKey(key, item, animation, shouldRender),
+				),
 			}).run();
 		}
 
 		/**
-		 * @public
-		 * @param {string[]}keys
+		 * @param {string[]} keys
 		 * @param {ListViewAnimate} animation
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @return {Promise<Object[]>}
 		 */
 		deleteRowsByKeys(keys = [], animation = DEFAULT_ANIMATION)
 		{
-			const preparedKeys = this.prepareAddArray(keys);
+			const preparedKeys = this.#prepareAddArray(keys);
+			if (preparedKeys.length === 0)
+			{
+				return Promise.resolve([]);
+			}
 
-			return this.add({
+			return this.asyncQueue.add({
 				name: 'deleteRowsByKeys',
 				task: () => new Promise((resolve) => {
 					this.listViewRef.deleteRowsByKeys(preparedKeys, animation, () => {
-						resolve(keys);
+						resolve(preparedKeys);
 					});
 				}),
 			}).run();
 		}
 
 		/**
-		 * @public
 		 * @param {number} section
 		 * @param {number} index
 		 * @param {ListViewAnimate} animation
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @return {Promise<Object[]>}
 		 */
 		deleteRow(section = 0, index = 0, animation = DEFAULT_ANIMATION)
 		{
-			return this.add({
+			return this.asyncQueue.add({
 				name: 'deleteRow',
 				task: () => new Promise((resolve) => {
 					this.listViewRef.deleteRow(section, index, animation, resolve);
@@ -183,66 +229,12 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
-		 * @param {Function} promisesFn
-		 * @return {ListViewQueueWorker}
+		 * @param {*} values
+		 * @return {Array}
 		 */
-		add(promisesFn)
-		{
-			this.queueList.push(promisesFn);
-
-			return this;
-		}
-
-		/**
-		 * @public
-		 * @return {Promise<void>}
-		 */
-		async run()
-		{
-			if (!this.inProgress && this.queueList.length > 0)
-			{
-				this.inProgress = true;
-				const executableTask = this.queueList.shift();
-				const promiseResult = await executableTask.task().catch(console.error);
-				this.result.add({ name: executableTask.name, result: promiseResult });
-				this.inProgress = false;
-
-				return this.run();
-			}
-
-			return Promise.resolve(this.#getResult(true));
-		}
-
-		/**
-		 * @private
-		 * @param values
-		 * @return {Function[]}
-		 */
-		prepareAddArray(values)
+		#prepareAddArray(values)
 		{
 			return Array.isArray(values) ? values : [values];
-		}
-
-		#clearResult()
-		{
-			this.result.clear();
-		}
-
-		/**
-		 * @param {boolean} clear
-		 * @returns {Object[]}
-		 */
-		#getResult(clear = false)
-		{
-			const result = [...this.result.values()];
-
-			if (clear)
-			{
-				this.#clearResult();
-			}
-
-			return result;
 		}
 	}
 

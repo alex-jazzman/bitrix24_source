@@ -18,6 +18,11 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 	 */
 	class RunActionExecutor
 	{
+		/**
+		 * @param {String} action
+		 * @param {Object} [options]
+		 * @param {Object} [navigation]
+		 */
 		constructor(action, options, navigation = {})
 		{
 			this.action = action;

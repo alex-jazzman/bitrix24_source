@@ -1,13 +1,15 @@
 import 'ui.viewer';
+
+import { Loc } from 'main.core';
+
 import { Utils } from 'im.v2.lib.utils';
-import { Loc, Dom } from 'main.core';
+import { Notifier } from 'im.v2.lib.notifier';
 
 import { SidebarMenu } from '../sidebar-base-menu';
 import { FileManager } from './file-manager';
 
-import { Notifier } from 'im.v2.lib.notifier';
-
 import type { MenuItemOptions } from 'ui.system.menu';
+import type { ApplicationContext } from 'im.v2.const';
 import type { ImModelFile, ImModelSidebarFileItem } from 'im.v2.model';
 
 type MediaMenuContext = {
@@ -21,9 +23,9 @@ export class FileMenu extends SidebarMenu
 {
 	context: MediaMenuContext;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.id = 'im-sidebar-context-menu';
 		this.mediaManager = new FileManager();

@@ -1,4 +1,4 @@
-import {ConferenceFieldState} from "im.const";
+import {ConferenceFieldState} from "call.const";
 
 export const FieldTitle =
 	{

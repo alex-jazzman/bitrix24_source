@@ -1,9 +1,9 @@
-import { ChatManager } from 'im.v2.lib.chat';
 import { Loc, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 import { MenuItemDesign } from 'ui.system.menu';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
+import { ChatManager } from 'im.v2.lib.chat';
+import { MessageManager } from 'im.v2.lib.message';
 import { PromoManager } from 'im.v2.lib.promo';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChannelManager } from 'im.v2.lib.channel';
@@ -12,41 +12,54 @@ import { Parser } from 'im.v2.lib.parser';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { MessageService } from 'im.v2.provider.service.message';
 import { DiskService } from 'im.v2.provider.service.disk';
-import { EventType, PlacementType, ActionByRole, PromoId, GetParameter } from 'im.v2.const';
+import { EventType, PlacementType, ActionByRole, PromoId } from 'im.v2.const';
 import { MarketManager } from 'im.v2.lib.market';
 import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { showDeleteChannelPostConfirm, showDownloadAllFilesConfirm } from 'im.v2.lib.confirm';
 import { Notifier } from 'im.v2.lib.notifier';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
 // noinspection ES6PreferShortImport
 import { BaseMenu } from '../../base/base';
 
-import type { ImModelMessage, ImModelChat, ImModelFile } from 'im.v2.model';
+import type { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
+import type { ImModelMessage, ImModelChat, ImModelFile } from 'im.v2.model';
+import type { ApplicationContext } from 'im.v2.const';
+
 export type MessageMenuContext = ImModelMessage & { dialogId: string };
 
-const MenuSectionCode = Object.freeze({
-	main: 'main',
-	select: 'select',
-	create: 'create',
-	market: 'market',
-});
+export const MenuSectionCode = {
+	first: 'first',
+	second: 'second',
+	third: 'third',
+};
+
+export const NestedMenuSectionCode = {
+	first: 'first',
+	second: 'second',
+	third: 'third',
+};
 
 export class MessageMenu extends BaseMenu
 {
+	emitter: EventEmitter;
 	context: MessageMenuContext;
 	diskService: DiskService;
 
 	maxPins: number = 20;
 
-	constructor()
+	constructor(applicationContext: ApplicationContext)
 	{
 		super();
 
 		this.id = 'bx-im-message-context-menu';
 		this.diskService = new DiskService();
 		this.marketManager = MarketManager.getInstance();
+
+		const { emitter } = applicationContext;
+		this.emitter = emitter;
 	}
 
 	getMenuOptions(): MenuOptions
@@ -62,37 +75,41 @@ export class MessageMenu extends BaseMenu
 
 	getMenuItems(): (MenuItemOptions | null)[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
 			this.getReplyItem(),
 			this.getCopyItem(),
 			this.getEditItem(),
 			this.getDownloadFileItem(),
-			this.getPinItem(),
 			this.getForwardItem(),
+			this.getAskCopilotItem(),
+			this.getCreateTaskItem(),
 			...this.getAdditionalItems(),
+		];
+
+		const secondGroupItems = [
 			this.getDeleteItem(),
+			this.getSelectItem(),
 		];
 
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
+			...this.groupItems(firstGroupItems, MenuSectionCode.first),
+			...this.groupItems(secondGroupItems, MenuSectionCode.second),
 		];
 	}
 
 	getMenuGroups(): MenuSectionOptions[]
 	{
 		return [
-			{ code: MenuSectionCode.main },
-			{ code: MenuSectionCode.select },
+			{ code: MenuSectionCode.first },
+			{ code: MenuSectionCode.second },
 		];
 	}
 
 	getNestedMenuGroups(): MenuSectionOptions[]
 	{
 		return [
-			{ code: MenuSectionCode.main },
-			{ code: MenuSectionCode.create },
-			{ code: MenuSectionCode.market },
+			{ code: NestedMenuSectionCode.first },
+			{ code: NestedMenuSectionCode.second },
 		];
 	}
 
@@ -109,7 +126,7 @@ export class MessageMenu extends BaseMenu
 			onClick: () => {
 				Analytics.getInstance().messageContextMenu.onSelect(this.context.dialogId);
 
-				EventEmitter.emit(EventType.dialog.openBulkActionsMode, {
+				this.emitter.emit(EventType.dialog.openBulkActionsMode, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
@@ -124,7 +141,7 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_REPLY'),
 			onClick: () => {
 				Analytics.getInstance().messageContextMenu.onReply(this.context.dialogId);
-				EventEmitter.emit(EventType.textarea.replyMessage, {
+				this.emitter.emit(EventType.textarea.replyMessage, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
@@ -146,7 +163,7 @@ export class MessageMenu extends BaseMenu
 			icon: OutlineIcons.FORWARD,
 			onClick: () => {
 				Analytics.getInstance().messageContextMenu.onForward(this.context.dialogId);
-				EventEmitter.emit(EventType.dialog.showForwardPopup, {
+				this.emitter.emit(EventType.dialog.showForwardPopup, {
 					messagesIds: [this.context.id],
 				});
 				this.menuInstance.close();
@@ -375,11 +392,7 @@ export class MessageMenu extends BaseMenu
 
 	getEditItem(): ?MenuItemOptions
 	{
-		if (
-			!this.#isOwnMessage()
-			|| this.#isDeletedMessage()
-			|| this.#isForwardedMessage()
-		)
+		if (!MessageManager.isEditable(this.context.id))
 		{
 			return null;
 		}
@@ -390,11 +403,52 @@ export class MessageMenu extends BaseMenu
 			onClick: () => {
 				Analytics.getInstance().messageContextMenu.onEdit(this.context.dialogId);
 
-				EventEmitter.emit(EventType.textarea.editMessage, {
+				this.emitter.emit(EventType.textarea.editMessage, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
 				this.menuInstance.close();
+			},
+		};
+	}
+
+	getAskCopilotItem(): ?MenuItemOptions
+	{
+		if (!FeatureManager.isFeatureAvailable(Feature.isCopilotMentionAvailable))
+		{
+			return null;
+		}
+
+		if (!this.#canSendMessage())
+		{
+			return null;
+		}
+
+		const isChannel = ChannelManager.isChannel(this.context.dialogId);
+		if (isChannel)
+		{
+			return null;
+		}
+
+		const copilotBotDialogId = this.store.getters['users/bots/getCopilotBotDialogId'];
+		const { name: mentionText } = this.store.getters['users/get'](copilotBotDialogId, true);
+
+		return {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT'),
+			icon: OutlineIcons.COPILOT,
+			design: MenuItemDesign.Copilot,
+			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onAskCopilot(this.context.dialogId);
+				this.emitter.emit(EventType.textarea.insertMention, {
+					mentionText,
+					mentionReplacement: Utils.text.getMentionBbCode(copilotBotDialogId, mentionText),
+					dialogId: this.context.dialogId,
+				});
+
+				this.emitter.emit(EventType.textarea.replyMessage, {
+					messageId: this.context.id,
+					dialogId: this.context.dialogId,
+				});
 			},
 		};
 	}
@@ -509,23 +563,19 @@ export class MessageMenu extends BaseMenu
 
 	getNestedItems(): MenuItemOptions[]
 	{
-		const mainGroupItems = [
+		const firstGroupItems = [
+			this.getPinItem(),
 			this.getCopyLinkItem(),
 			this.getCopyFileItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getSaveToDiskItem(),
-		];
-
-		const createGroupItems = [
-			this.getCreateTaskItem(),
 			this.getCreateMeetingItem(),
 		];
 
 		return [
-			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems(createGroupItems, MenuSectionCode.create),
-			...this.groupItems(this.getMarketItems(), MenuSectionCode.market),
+			...this.groupItems(firstGroupItems, NestedMenuSectionCode.first),
+			...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.second),
 		];
 	}
 
@@ -555,11 +605,6 @@ export class MessageMenu extends BaseMenu
 	#isSingleFile(): boolean
 	{
 		return this.context.files.length === 1;
-	}
-
-	#isForwardedMessage(): boolean
-	{
-		return Type.isStringFilled(this.context.forward.id);
 	}
 
 	#isRealMessage(): boolean
@@ -653,5 +698,17 @@ export class MessageMenu extends BaseMenu
 		const pins = this.store.getters['messages/pin/getPinned'](this.context.chatId);
 
 		return pins.length >= this.maxPins;
+	}
+
+	#canSendMessage(): boolean
+	{
+		const dialog = Core.getStore().getters['chats/get'](this.context.dialogId, true);
+
+		if (!dialog.isTextareaEnabled)
+		{
+			return false;
+		}
+
+		return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.send, this.context.dialogId);
 	}
 }

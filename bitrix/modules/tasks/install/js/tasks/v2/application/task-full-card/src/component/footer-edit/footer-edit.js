@@ -1,37 +1,65 @@
+import { Type } from 'main.core';
+import { BitrixVue } from 'ui.vue3';
 import { mapGetters } from 'ui.vue3.vuex';
+import { BLine } from 'ui.system.skeleton.vue';
 import { Button as UiButton, AirButtonStyle, ButtonSize, ButtonIcon } from 'ui.vue3.components.button';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { TextMd, TextXs } from 'ui.system.typography.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Model, TaskStatus } from 'tasks.v2.const';
+import { TaskCard } from 'tasks.v2.application.task-card';
+import { GroupType, Model, Option, TaskStatus, Mark, EventName } from 'tasks.v2.const';
+import { Hint } from 'tasks.v2.component.elements.hint';
+import { ahaMoments } from 'tasks.v2.lib.aha-moments';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { statusService } from 'tasks.v2.provider.service.status-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { MarkTaskButton } from 'tasks.v2.component.mark-task-button';
+import type { GroupModel } from 'tasks.v2.model.groups';
+import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 
 import { More } from './more/more';
+import { ButtonId } from './footer-edit-const';
+
 import './footer-edit.css';
 
-type ButtonOptions = {
+export type ButtonOptions = {
+	id: string,
 	text: string,
 	color: string,
 	disabled: boolean,
 	onClick: Function,
+	icon?: ?string,
 };
 
 // @vue/component
 export const FooterEdit = {
 	components: {
+		Hint,
 		UiButton,
 		BIcon,
 		More,
+		TextMd,
+		TextXs,
+		MarkTaskButton,
+		TemplatePermissionsButton: BitrixVue.defineAsyncComponent(
+			'tasks.v2.component.template-permissions-button',
+			'TemplatePermissionsButton',
+			{
+				delay: 0,
+				loadingComponent: {
+					components: { BLine },
+					template: '<BLine :width="131" :height="22"/>',
+				},
+			},
+		),
 	},
-	props: {
-		taskId: {
-			type: [Number, String],
-			required: true,
-		},
+	inject: {
+		task: {},
+		taskId: {},
+		isTemplate: {},
+		settings: {},
 	},
-	setup(): Object
+	setup(): { task: TaskModel, Outline: typeof Outline }
 	{
 		return {
 			AirButtonStyle,
@@ -41,63 +69,141 @@ export const FooterEdit = {
 			TaskStatus,
 		};
 	},
+	data(): Object
+	{
+		return {
+			loading: false,
+			showStartTimeTrackingHint: false,
+			computedSecondaryButton: null,
+		};
+	},
 	computed: {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
 		}),
-		task(): TaskModel
+		timer(): ?TimerModel
 		{
-			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+			return this.task.timers?.find((timer: TimerModel) => timer.userId === this.currentUserId);
+		},
+		group(): ?GroupModel
+		{
+			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
+		},
+		isScrum(): boolean
+		{
+			return this.group?.type === GroupType.Scrum;
 		},
 		isCreator(): boolean
 		{
 			return this.currentUserId === this.task.creatorId;
 		},
-		isResponsible(): boolean
+		primaryButton(): ButtonOptions | null
 		{
-			return this.currentUserId === this.task.responsibleId;
-		},
-		statusButton(): ButtonOptions | null
-		{
+			const inProgress = (this.task.rights.timeTracking)
+				? [
+					this.getStartTimerButton(),
+					this.getPauseButton(AirButtonStyle.OUTLINE),
+				]
+				: [this.getCompleteButton()];
+
 			const statuses = {
-				[TaskStatus.Pending]: {
-					[this.isCreator]: this.getCompleteButton(),
-					[this.isResponsible]: this.getStartButton(),
-				},
-				[TaskStatus.InProgress]: {
-					[this.isResponsible]: this.getCompleteButton(),
-					[this.isCreator]: this.getCompleteButton(),
-				},
-				[TaskStatus.Deferred]: {
-					[this.isResponsible]: this.getRenewButton(),
-					[this.isCreator]: this.getRenewButton(),
-				},
-				[TaskStatus.SupposedlyCompleted]: {
-					[this.isResponsible]: this.getReviewButton(),
-					[this.isCreator]: this.getApproveButton(),
-				},
-				[TaskStatus.Completed]: {
-					[this.isResponsible && !this.isCreator]: this.getRenewButton(AirButtonStyle.PLAIN),
-				},
+				[TaskStatus.Pending]: [
+					this.getStartTimerButton(),
+					this.getPauseButton(AirButtonStyle.OUTLINE),
+					this.getStartButton(),
+					this.getCompleteButton(),
+				],
+				[TaskStatus.InProgress]: inProgress,
+				[TaskStatus.Deferred]: this.getRenewButton(),
+				[TaskStatus.SupposedlyCompleted]: [
+					this.getApproveButton(),
+					this.getReviewButton(),
+				],
+				[TaskStatus.Completed]: this.getRenewButton(AirButtonStyle.PLAIN),
 			};
 
-			return statuses[this.task.status].true;
+			if (Type.isArray(statuses[this.task.status]))
+			{
+				return statuses[this.task.status].find((item) => item !== null);
+			}
+
+			return statuses[this.task.status] || null;
+		},
+		secondaryButton(): ButtonOptions | null
+		{
+			return this.computedSecondaryButton;
+		},
+		selectedButtons(): ButtonOptions[]
+		{
+			return [this.primaryButton, this.secondaryButton];
+		},
+		shouldShowStartTimeTrackingHint(): boolean
+		{
+			return (
+				this.showStartTimeTrackingHint
+				&& this.primaryButton?.id === ButtonId.Start
+			);
+		},
+		shouldShowMarkTaskButton(): boolean
+		{
+			return this.task.rights.mark || (this.task.mark !== Mark.None);
+		},
+		showFooter(): boolean
+		{
+			if (this.isTemplate)
+			{
+				return this.settings.rights.tasks.createFromTemplate || this.task.rights.edit;
+			}
+
+			return Boolean(
+				this.primaryButton
+				|| this.secondaryButton
+				|| this.shouldShowMarkTaskButton,
+			);
 		},
 	},
+	watch: {
+		primaryButton: {
+			handler: 'updateSecondaryButton',
+			immediate: true,
+		},
+		'task.status': {
+			handler: 'updateSecondaryButton',
+		},
+	},
+	mounted(): void
+	{
+		this.$bitrix.eventEmitter.subscribe(EventName.TimeTrackingChange, this.handleTimeTrackingActivating);
+	},
 	methods: {
-		getStartButton(): ButtonOptions
+		getStartButton(): ?ButtonOptions
 		{
-			if (!this.task.rights.start)
+			if (!this.task.rights.start || this.timer)
 			{
 				return null;
 			}
 
 			return {
+				id: ButtonId.Start,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
-				onClick: (): void => statusService.start(this.taskId),
+				onClick: (): void => this.waitStatus(statusService.start(this.taskId)),
 			};
 		},
-		getCompleteButton(): ButtonOptions
+		getStartTimerButton(): ?ButtonOptions
+		{
+			if (!this.task.rights.timeTracking || this.timer)
+			{
+				return null;
+			}
+
+			return {
+				id: ButtonId.Start,
+				text: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
+				onClick: (): void => this.waitStatus(statusService.startTimer(this.taskId)),
+				icon: ButtonIcon.START,
+			};
+		},
+		getCompleteButton(style: string): ?ButtonOptions
 		{
 			if (!this.task.rights.complete)
 			{
@@ -105,11 +211,27 @@ export const FooterEdit = {
 			}
 
 			return {
+				id: ButtonId.Complete,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
-				onClick: (): void => statusService.complete(this.taskId),
+				style,
+				onClick: (): void => this.handleTaskComplete(),
 			};
 		},
-		getRenewButton(style: string): ButtonOptions
+		getPauseButton(style: string): ?ButtonOptions
+		{
+			if (!this.task.rights.timeTracking || !this.timer)
+			{
+				return null;
+			}
+
+			return {
+				id: ButtonId.Pause,
+				text: this.loc('TASKS_V2_TASK_FULL_CARD_PAUSE_TIMER'),
+				style,
+				onClick: (): void => this.waitStatus(statusService.pauseTimer(this.taskId)),
+			};
+		},
+		getRenewButton(style: string): ?ButtonOptions
 		{
 			if (!this.task.rights.renew)
 			{
@@ -117,15 +239,17 @@ export const FooterEdit = {
 			}
 
 			return {
+				id: ButtonId.Renew,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_RENEW'),
 				style,
-				onClick: (): void => statusService.renew(this.taskId),
+				onClick: (): void => this.waitStatus(statusService.renew(this.taskId)),
 			};
 		},
 		getReviewButton(): ButtonOptions
 		{
 			return {
-				text: this.loc('TASKS_V2_TASK_FULL_CARD_ON_REVIEW'),
+				id: ButtonId.Review,
+				text: this.loc('TASKS_V2_TASK_FULL_CARD_ON_REVIEW_MSGVER_1'),
 				disabled: true,
 			};
 		},
@@ -137,33 +261,160 @@ export const FooterEdit = {
 			}
 
 			return {
+				id: ButtonId.Approve,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_APPROVE'),
-				onClick: (): void => statusService.complete(this.taskId),
+				onClick: (): void => this.handleTaskApprove(),
 			};
+		},
+		updateSecondaryButton(): void
+		{
+			void this.$nextTick(() => {
+				const inProgress = this.task.rights.timeTracking
+					? this.getCompleteButton(this.timer ? '' : AirButtonStyle.OUTLINE)
+					: null;
+
+				const statuses = {
+					[TaskStatus.Pending]: this.getCompleteButton(AirButtonStyle.OUTLINE),
+					[TaskStatus.InProgress]: inProgress,
+				};
+
+				let secondary = statuses[this.task.status] || null;
+
+				if (secondary && this.primaryButton && secondary.id === this.primaryButton.id)
+				{
+					secondary = null;
+				}
+
+				this.computedSecondaryButton = secondary;
+			});
+		},
+		async handleTaskComplete(): void
+		{
+			await this.waitStatus(statusService.complete(this.taskId));
+		},
+		async handleTaskApprove(): void
+		{
+			await this.waitStatus(statusService.approve(this.taskId));
+		},
+		handleOverPrimaryButton(): void
+		{
+			if (
+				this.task.rights.timeTracking
+				&& this.primaryButton?.id === ButtonId.Start
+				&& ahaMoments.shouldShow(Option.AhaStartTimeTracking)
+			)
+			{
+				ahaMoments.setActive(Option.AhaStartTimeTracking);
+				this.showStartTimeTrackingHint = true;
+			}
+		},
+		handleTimeTrackingActivating(): void
+		{
+			void this.waitStatus(new Promise((resolve) => {
+				const unwatch = this.$watch(
+					() => this.task.rights.timeTracking,
+					async () => {
+						await this.$nextTick();
+						resolve();
+					},
+					{ immediate: false },
+				);
+				setTimeout(() => {
+					unwatch();
+					resolve();
+				}, 5000);
+			}));
+		},
+		hideStartTimeTrackingHint(): void
+		{
+			this.showStartTimeTrackingHint = false;
+		},
+		hidePermanentStartTimeTrackingHint(): void
+		{
+			this.hideStartTimeTrackingHint();
+
+			ahaMoments.setInactive(Option.AhaStartTimeTracking);
+			ahaMoments.setShown(Option.AhaStartTimeTracking);
+		},
+		async waitStatus(statusPromise: Promise): Promise<void>
+		{
+			this.loading = true;
+			await statusPromise;
+			this.loading = false;
+		},
+		createTaskFromTemplate(): void
+		{
+			TaskCard.showFullCard({ templateId: idUtils.unbox(this.taskId) });
 		},
 	},
 	template: `
-		<div class="tasks-full-card-footer-edit">
-			<UiButton
-				v-if="statusButton"
-				:text="statusButton.text"
-				:size="ButtonSize.LARGE"
-				:style="statusButton.style ?? AirButtonStyle.FILLED"
-				:disabled="statusButton.disabled ?? false"
-				data-task-status-button
-				@click="statusButton.onClick"
-			/>
-			<More :taskId="taskId"/>
-			<div class="tasks-full-card-footer-actions">
-				<div class="tasks-full-card-footer-reaction">
-					<BIcon :name="Outline.LIKE"/>
-					<div class="tasks-full-card-footer-reaction-text">Нравится</div>
-				</div>
-				<div class="tasks-full-card-footer-views">
-					<BIcon :name="Outline.OBSERVER"/>
-					<div class="tasks-full-card-footer-views-text">1</div>
-				</div>
+		<div v-if="showFooter" class="tasks-full-card-footer">
+			<div class="tasks-full-card-footer-edit">
+				<UiButton
+					v-if="isTemplate && settings.rights.tasks.createFromTemplate"
+					:text="loc('TASKS_V2_TASK_TEMPLATE_CREATE_TASK')"
+					:size="ButtonSize.LARGE"
+					:loading
+					:dataset="{ taskButtonId: 'createFromTemplate' }"
+					:leftIcon="Outline.PLUS_L"
+					@click="createTaskFromTemplate"
+				/>
+				<template v-if="!isTemplate">
+					<div
+						v-if="primaryButton"
+						ref="primaryButton"
+						class="tasks-full-card-footer-edit-primaryButton"
+						@mouseover="handleOverPrimaryButton"
+					>
+						<UiButton
+							:text="primaryButton.text"
+							:size="ButtonSize.LARGE"
+							:style="primaryButton.style ?? AirButtonStyle.FILLED"
+							:disabled="Boolean(primaryButton.disabled)"
+							:loading
+							:leftIcon="primaryButton.icon"
+							:dataset="{ taskButtonId: 'status' }"
+							@click="primaryButton.onClick"
+						/>
+					</div>
+					<UiButton
+						v-if="secondaryButton && !loading"
+						:text="secondaryButton.text"
+						:size="ButtonSize.LARGE"
+						:style="secondaryButton.style ?? AirButtonStyle.FILLED"
+						:disabled="secondaryButton.disabled ?? false"
+						:dataset="{ taskButtonId: 'secondary' }"
+						@click="secondaryButton.onClick"
+					/>
+				</template>
+				<More :selectedButtons/>
+				<div class="tasks-full-card-footer-edit-grow"/>
+				<MarkTaskButton v-if="!isTemplate && shouldShowMarkTaskButton"/>
+				<TemplatePermissionsButton v-if="isTemplate && task.rights.edit"/>
 			</div>
+			<Hint
+				v-if="shouldShowStartTimeTrackingHint"
+				:bindElement="$refs.primaryButton"
+				:options="{
+					closeIcon: true,
+					offsetLeft: 24,
+					minWidth: 344,
+					maxWidth: 344,
+				}"
+				@close="hideStartTimeTrackingHint"
+			>
+				<div class="tasks-full-card-start-time-tracking-hint">
+					<TextMd class="tasks-full-card-start-time-tracking-hint-info-text">
+						{{ loc('TASKS_V2_TASK_FULL_CARD_AHA_START_TIME_TRACKING_HINT_TEXT') }}
+					</TextMd>
+					<TextXs
+						class="tasks-full-card-start-time-tracking-hint-info-link"
+						@click.stop="hidePermanentStartTimeTrackingHint"
+					>
+						{{ loc('TASKS_V2_TASK_FULL_CARD_AHA_START_TIME_TRACKING_HINT_MORE') }}
+					</TextXs>
+				</div>
+			</Hint>
 		</div>
 	`,
 };

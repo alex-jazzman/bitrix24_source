@@ -5,8 +5,9 @@ import { Api } from 'sign.v2.api';
 import { Hint } from 'sign.v2.helper';
 import { LangSelector } from 'sign.v2.lang-selector';
 import { DocumentSummary } from 'sign.v2.document-summary';
-import './style.css';
+import { PhoneVerify } from 'bitrix24.phoneverify';
 import type { DocumentSendConfig, DocumentData } from './types/config';
+import './style.css';
 
 const menuPrefix = 'sign-member-communication';
 
@@ -340,10 +341,12 @@ export class DocumentSend extends EventEmitter
 	{
 		try
 		{
+			const restrictions = await this.#api.loadRestrictions();
+
 			const { communications, entityData } = this;
 			const entries = Object.entries(communications);
 			let allowToComplete = true;
-			const restrictions = await this.#api.loadRestrictions();
+
 			for (const [entityType, item] of entries)
 			{
 				const { type, value } = item;
@@ -357,6 +360,23 @@ export class DocumentSend extends EventEmitter
 				}
 
 				this.#api.modifyCommunicationChannel(memberUid, type, value);
+			}
+
+			if (restrictions.b2bPhoneVerificationRequired)
+			{
+				if (!Type.isObject(PhoneVerify))
+				{
+					console.error('PhoneVerify is not loaded');
+
+					return false;
+				}
+
+				const verified = await PhoneVerify.getInstance().startVerify();
+
+				if (!verified)
+				{
+					return false;
+				}
 			}
 
 			const {

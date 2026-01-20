@@ -29,6 +29,10 @@ export const ExtraResourcesDialog = {
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			getByInterval: `${Model.Bookings}/getByInterval`,
 		}),
+		featureOverbookingEnabled(): boolean
+		{
+			return this.$store.state[Model.Interface].enabledFeature.bookingOverbooking;
+		},
 		extraResourcesIds(): number[]
 		{
 			return this.booking.resourcesIds.filter((resourceId) => resourceId !== this.resourceId);
@@ -57,6 +61,10 @@ export const ExtraResourcesDialog = {
 		excludedResourceIds(): Set<number>
 		{
 			return new Set([this.resourceId]);
+		},
+		maxBusyBookingsCount(): number
+		{
+			return this.featureOverbookingEnabled ? 2 : 1;
 		},
 	},
 	watch: {
@@ -105,7 +113,7 @@ export const ExtraResourcesDialog = {
 				},
 				'Item:onBeforeSelect': (event): void => {
 					const item = event.data.item;
-					if ((this.resourceBookingsMap.get(item.id) || []).length > 1)
+					if ((this.resourceBookingsMap.get(item.id) || []).length > (this.maxBusyBookingsCount - 1))
 					{
 						// eslint-disable-next-line no-param-reassign
 						event.defaultPrevented = true;
@@ -159,7 +167,7 @@ export const ExtraResourcesDialog = {
 		{
 			const resourceBookingsCount = (this.resourceBookingsMap.get(resource.id) || []).length;
 
-			if (resourceBookingsCount >= 2)
+			if (resourceBookingsCount >= this.maxBusyBookingsCount)
 			{
 				return {
 					title: this.loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_RESOURCE_SELECTOR_BADGE_BUSY'),

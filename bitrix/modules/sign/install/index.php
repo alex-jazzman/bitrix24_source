@@ -46,6 +46,8 @@ class sign extends CModule
 				[\Bitrix\Sign\Rest\B2e\MySafe::class, 'onRestServiceBuildDescription'],
 				[\Bitrix\Sign\Rest\B2e\Provider::class, 'onRestServiceBuildDescription'],
 				[\Bitrix\Sign\Rest\B2e\HcmLink\SignedFile::class, 'onRestServiceBuildDescription'],
+				[\Bitrix\Sign\Rest\B2e\CompanyProvider::class, 'onRestServiceBuildDescription'],
+				[\Bitrix\Sign\Rest\B2e\Document::class, 'onRestServiceBuildDescription'],
 			]
 		],
 		'im' => [
@@ -200,7 +202,6 @@ class sign extends CModule
 
 		$errors = false;
 
-		// db
 		if (isset($arParams['savedata']) && !$arParams['savedata'])
 		{
 			$errors = $DB->runSQLBatch(
@@ -213,13 +214,14 @@ class sign extends CModule
 			return false;
 		}
 
-		// agents
 		\CAgent::removeModuleAgents($this->MODULE_ID);
 
-		$this->uninstallUserLegalFields();
-		$this->UnInstallEvents();
+		if (empty($arParams['savedata']))
+		{
+			$this->uninstallUserLegalFields();
+		}
 
-		// module
+		$this->UnInstallEvents();
 		unregisterModule($this->MODULE_ID);
 
 		return true;

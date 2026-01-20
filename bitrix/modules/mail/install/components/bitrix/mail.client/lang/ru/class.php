@@ -5,8 +5,6 @@ $MESS["BITRIX"] = "Битрикс";
 
 $MESS["MAIL_CLIENT_AJAX_ERROR"] = "Ошибка при обработке запроса";
 $MESS["MAIL_CLIENT_FORM_ERROR"] = "Ошибка при обработке формы";
-$MESS["MAIL_THE_MAILBOX_HAS_BEEN_DELETED"] = "Почтового ящика больше не существует";
-$MESS["MAIL_SYNC_NOT_AVAILABLE"] = "Синхронизация почты недоступна для текущего тарифа";
 $MESS["MAIL_CLIENT_SAVE_ERROR"] = "Ошибка при сохранении данных";
 
 $MESS["MAIL_CLIENT_ELEMENT_NOT_FOUND"] = "Элемент не найден";
@@ -168,6 +166,7 @@ $MESS['MAIL_MESSAGE_LIST_FILTER_PRESET_BIND_CALENDAR_EVENT'] = "Встреча";
 $MESS['MAIL_MESSAGE_LIST_SETTINGS_LINK'] = "Настройки ящика";
 $MESS['MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK'] = "Адресная книга";
 $MESS['MAIL_MESSAGE_LIST_BLACKLIST_LINK'] = "Черный список";
+$MESS['MAIL_MESSAGE_LIST_CONFIG_PERMISSIONS_LINK'] = "Права доступа";
 $MESS['MAIL_MESSAGE_LIST_SIGNATURE_LINK'] = "Настроить подпись";
 $MESS['MAIL_MESSAGE_LIST_COLUMN_MANAGEMENT'] = "Управление колонками";
 $MESS['MAIL_MESSAGE_LIST_INTEGRATION_WITH_CRM'] = "Интеграция с CRM";
@@ -218,3 +217,11 @@ $MESS["MAIL_MESSAGE_WARNING_GO_TO_MAILBOX"] = "Ошибка синхрониза
 $MESS["MAIL_MESSAGE_WARNING_SYNC_ERROR"] = "Ошибка синхронизации";
 
 $MESS["MAIL_MESSAGE_SEPARATOR_OF_NAMES_AND_EMAILS_IN_LISTS"] = ',';
+
+$MESS["MAIL_MESSAGE_MAILBOX_GRID_POPUP_TITLE"] = 'Централизованное управление почтой';
+$MESS["MAIL_MESSAGE_MAILBOX_GRID_POPUP_FEATURE_1_TITLE"] = 'Подключите почту сразу всей команде';
+$MESS["MAIL_MESSAGE_MAILBOX_GRID_POPUP_FEATURE_1_DESCRIPTION"] = 'Просто выберите сотрудников и укажите данные всех ящиков';
+$MESS["MAIL_MESSAGE_MAILBOX_GRID_POPUP_FEATURE_2_TITLE"] = 'Держите всю почту под контролем';
+$MESS["MAIL_MESSAGE_MAILBOX_GRID_POPUP_FEATURE_2_DESCRIPTION"] = 'Не нужно проверять каждый ящик отдельно — вся информация всегда перед глазами: связь с CRM, последняя активность, настройки';
+$MESS['MAIL_MESSAGE_MAILBOX_GRID_POPUP_OK_BUTTON'] = 'Подключить ящики';
+$MESS['MAIL_MESSAGE_MAILBOX_GRID_POPUP_SKIP_BUTTON'] = 'Пропустить';

@@ -7,7 +7,7 @@ export default class EntityCounterFilterManager
 	static COUNTER_TYPE_FIELD = 'ACTIVITY_COUNTER';
 
 	static EXCLUDED_FIELDS = [
-		'FIND'
+		'FIND',
 	];
 
 	static FILTER_OTHER_USERS = 'other-users';
@@ -104,6 +104,7 @@ export default class EntityCounterFilterManager
 		{
 			return false;
 		}
+
 		return this.#isFilteredByField(field);
 	}
 
@@ -112,7 +113,7 @@ export default class EntityCounterFilterManager
 		typeId: number,
 		entityTypeId: number,
 		isOtherUsersFilter: boolean,
-		counterUserFieldName: string
+		counterUserFieldName: string,
 	): boolean
 	{
 		if (userId === 0 || typeId === EntityCounterType.UNDEFINED)
@@ -120,15 +121,33 @@ export default class EntityCounterFilterManager
 			return false;
 		}
 
-		const isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName)
-			&& Type.isArray(this.#fields[counterUserFieldName])
+		let isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName);
+
+		if (
+			Type.isArray(this.#fields[counterUserFieldName])
 			&& this.#fields[counterUserFieldName].length === 1
-			&& (
-				isOtherUsersFilter
-					? this.#fields[counterUserFieldName][0] === EntityCounterFilterManager.FILTER_OTHER_USERS
-					: parseInt(this.#fields[counterUserFieldName][0], 10) === userId
-			)
-		;
+		)
+		{
+			let nodeValue = this.#fields[counterUserFieldName][0];
+			try
+			{
+				const [type, value] = JSON.parse(this.#fields[counterUserFieldName][0]);
+				nodeValue = value;
+			}
+			catch (error)
+			{
+				nodeValue = this.#fields[counterUserFieldName][0];
+			}
+
+			isFilteredByUser &&= isOtherUsersFilter
+				? nodeValue === EntityCounterFilterManager.FILTER_OTHER_USERS
+				: parseInt(nodeValue, 10) === userId
+			;
+		}
+		else
+		{
+			isFilteredByUser = false;
+		}
 
 		const hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD)
 			&& Type.isObject(this.#fields[EntityCounterFilterManager.COUNTER_TYPE_FIELD])
@@ -141,8 +160,7 @@ export default class EntityCounterFilterManager
 			: []
 		;
 
-		const isFilteredByType =
-			(filteredTypeValues.length === 1 && filteredTypeValues[0] === typeId)
+		const isFilteredByType = (filteredTypeValues.length === 1 && filteredTypeValues[0] === typeId)
 			|| (
 				filteredTypeValues.length === 2
 				&& typeId === EntityCounterType.CURRENT
@@ -154,14 +172,16 @@ export default class EntityCounterFilterManager
 		const counterFields = [
 			counterUserFieldName,
 			EntityCounterFilterManager.COUNTER_TYPE_FIELD,
-			... EntityCounterFilterManager.EXCLUDED_FIELDS
+			...EntityCounterFilterManager.EXCLUDED_FIELDS,
 		];
 
 		const keysFields = Object.keys(this.#fields);
-		const otherFields = counterFields
-			.filter(item => !keysFields.includes(item))
-			.concat(keysFields.filter(x => !counterFields.includes(x))); // exclude checked fields
-		const isOtherFilterUsed = otherFields.some(item => this.isFilteredByFieldEx(item));
+		const otherFields = [
+			...counterFields.filter((item) => !keysFields.includes(item)),
+			...keysFields.filter((x) => !counterFields.includes(x)),
+		];
+
+		const isOtherFilterUsed = otherFields.some((item) => this.isFilteredByFieldEx(item));
 
 		return isFilteredByUser && isFilteredByType && !isOtherFilterUsed;
 	}

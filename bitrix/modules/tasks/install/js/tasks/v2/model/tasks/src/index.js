@@ -1,2 +1,13 @@
 export { Tasks } from './tasks';
-export type { TaskModel } from './types';
+export type {
+	TaskModel,
+	TimerModel,
+	Source,
+	TaskRights,
+	EmailModel,
+	TaskReplicateParams,
+	TaskReplicationDaily,
+	TaskReplicationWeekly,
+	TaskReplicationMonthly,
+	TaskReplicationYearly,
+} from './types';

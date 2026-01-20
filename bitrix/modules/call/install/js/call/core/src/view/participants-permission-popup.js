@@ -295,7 +295,6 @@ export class ParticipantsPermissionPopup
 			},
 			autoHide: true,
 			closeByEsc: true,
-			background: 'linear-gradient(327.21deg, #060825 -10.27%, #173855 103.11%)',
 			angle: {position: 'top'},
 			contentNoPaddings: true,
 			animation: 'fading',
